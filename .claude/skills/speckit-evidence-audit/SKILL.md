@@ -1,1 +1,0 @@
-../../../.specify/extensions/evidence/.specify-dev/agent-commands/claude/speckit-evidence-audit/SKILL.md

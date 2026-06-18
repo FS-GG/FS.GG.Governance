@@ -1,6 +1,5 @@
 installed:
 - agent-context
-- evidence
 settings:
   auto_execute_hooks: true
 hooks:
@@ -21,24 +20,4 @@ hooks:
     priority: 10
     prompt: Execute speckit.agent-context.update?
     description: Refresh agent context after planning
-    condition: null
-  before_implement:
-  - extension: evidence
-    command: speckit.evidence.graph
-    enabled: true
-    optional: false
-    priority: 10
-    prompt: Validate task DAG before implementation begins?
-    description: Refuse to start /speckit.implement on a broken graph (cycles, dangling
-      refs)
-    condition: null
-  after_implement:
-  - extension: evidence
-    command: speckit.evidence.audit
-    enabled: true
-    optional: false
-    priority: 10
-    prompt: Run evidence audit now?
-    description: Merge-gate audit — hard-blocks on [S]/[S*] or diff-scan hits unless
-      --accept-synthetic
     condition: null

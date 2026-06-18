@@ -7,26 +7,23 @@
 ## Status Legend
 
 - `[ ]` — pending
-- `[X]` — done with real evidence
-- `[S]` — done with synthetic evidence only (must be disclosed per Principle V)
-- `[F]` — failed
+- `[X]` — done with real evidence (or with synthetic evidence disclosed per
+  Principle V)
 - `[-]` — skipped (with written rationale)
 
-The `[S*]` marker is computed, not written: any task whose dependency is
-`[S]` or `[S*]` and which otherwise would be `[X]` is promoted to `[S*]` by
-the evidence audit. See `readiness/task-graph.md` for the propagated view.
+Never mark a failing task `[X]`; never weaken an assertion to green a build.
 
 ## Vertical-slice rule (US phases)
 
-A task tagged `[US*]` may only be marked `[X]` when the change is
-reachable from a user-facing entry point and that path was actually
-exercised — an FSI session against the packed library, a smoke run of the
-application, a manual walk-through with transcript, or a screenshot
-captured under `readiness/`. Domain, model, or core-layer changes alone
-do **not** satisfy `[X]` for a `[US*]` task, even if their unit tests
-pass green. If the user-reachable surface is missing, stubbed, or not
-yet wired, mark `[ ]` (work continues) or `[S]` with a disclosed reason
-in the Synthetic-Evidence Inventory — never `[X]`.
+A task tagged `[US*]` may only be marked `[X]` when the change is reachable from a
+user-facing entry point and that path was actually exercised — an FSI session
+against the packed library, a smoke run of the application, a manual walk-through
+with transcript, or a screenshot captured under `readiness/`. Domain, model, or
+core-layer changes alone do **not** satisfy `[X]` for a `[US*]` task, even if
+their unit tests pass green. If the user-reachable surface is missing, stubbed, or
+not yet wired, mark `[ ]` (work continues). If the path can only be exercised with
+synthetic evidence for now, keep it honest: disclose the synthetic evidence per
+Principle V and open a tracking issue for the real wire-up.
 
 For stateful or I/O-bearing stories, `[X]` also requires Elmish/MVU evidence:
 the public `Model` / `Msg` / `Effect` or `Cmd<Msg>` contract was exercised,
@@ -38,13 +35,13 @@ phase tasks; those are evaluated against their own phase verification.
 
 ## Task Annotations
 
-- **[P]** — parallel-safe (no deps inside the current phase)
+- **[P]** — parallel-safe (no dependency on another incomplete task in this phase)
 - **[US1]**, **[US2]**, … — user-story scope
 - **[T1]** / **[T2]** — Tier 1 (contracted) vs Tier 2 (internal) change
 
-Every task must have a matching entry in `tasks.deps.yml` even if its
-dependency list is empty. The `speckit.evidence.graph` command refuses to
-proceed with dangling references.
+Phases run in sequence; tasks within a phase may run in parallel. When a task
+depends on a non-obvious earlier task, note it in the task description (e.g.
+"after T011"). There is no separate dependency graph to maintain.
 
 ---
 
@@ -110,16 +107,4 @@ proceed with dangling references.
 
 - [ ] T023 Surface-area baseline refresh (Tier 1 only)
 - [ ] T024 Run the packed library through the numbered example scripts and confirm none are broken
-- [ ] T025 Run `speckit.evidence.graph` — confirm no cycles, no dangling refs, no `[S*]` surprises
-- [ ] T026 Run `speckit.evidence.audit` — confirm verdict PASS or document every `--accept-synthetic` override
-
----
-
-## Synthetic-Evidence Inventory
-
-List every `[S]` task here with its Principle V disclosures. This section is
-the source for the PR description's synthetic-evidence section.
-
-| Task | Reason | Real-evidence path | Tracking issue |
-|------|--------|---------------------|----------------|
-| _(none yet)_ | | | |
+- [ ] T025 Confirm every synthetic dependency is disclosed per Principle V (use-site comment, `Synthetic` test token, PR description entry)

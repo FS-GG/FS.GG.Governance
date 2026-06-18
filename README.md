@@ -54,8 +54,13 @@ Cross-repo design and the staged plan live in the org `.github` repository:
 
 Standard Spec Kit with the
 [`fsharp-opinionated`](https://github.com/EHotwagner/speckit-fsharp-tooling)
-preset and the `evidence` extension. Use the `/speckit-*` skills to specify,
-plan, and implement features.
+preset. Use the `/speckit-*` skills to specify, plan, and implement features.
+
+There is no evidence-audit or DAG-validation machinery in this repository: the
+governance constitution
+([`.specify/memory/constitution.md`](.specify/memory/constitution.md)) follows the
+same lightweight, standard-Spec-Kit shape as the sibling
+[FS.GG.Rendering](https://github.com/FS-GG/FS.GG.Rendering) constitution.
 
 ## License
 

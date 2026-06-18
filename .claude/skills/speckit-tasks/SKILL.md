@@ -1,6 +1,6 @@
 ---
 name: speckit-tasks
-description: Emit tasks.md and tasks.deps.yml in lockstep, then validate the DAG.
+description: Generate the feature's tasks.md from its spec and plan.
 compatibility: Requires spec-kit project structure with .specify/ directory
 metadata:
   author: github-spec-kit
@@ -13,73 +13,49 @@ disable-model-invocation: false
 
 # /speckit.tasks
 
-Generate the feature's task breakdown from its spec and plan. This preset
-requires TWO files, both in `specs/[FEATURE_ID]/`:
+Generate the feature's task breakdown from its spec and plan into a single
+`tasks.md` in `specs/[FEATURE_ID]/`. Use the `tasks-template.md` as the starting
+point; replace the example task bodies with real work items derived from the spec
+and plan.
 
-1. **`tasks.md`** — the human checklist. Status legend:
-   - `[ ]` pending / `[X]` done (real evidence) / `[S]` synthetic-only /
-     `[F]` failed / `[-]` skipped.
-   - Never write `[S*]` yourself. That marker is computed by the evidence
-     audit from the DAG; writing it by hand will confuse the script.
+This repository follows standard Spec Kit: `tasks.md` is an authored checklist,
+not a generated dependency graph. There is no `tasks.deps.yml`, no DAG validator,
+and no evidence audit — express ordering directly in `tasks.md` (phases run in
+sequence; tasks within a phase may run in parallel).
 
-2. **`tasks.deps.yml`** — the dependency topology. Sibling to `tasks.md`.
-   Every Tnnn id in `tasks.md` MUST appear as a key here, even if its deps
-   list is empty.
+## Status legend
 
-Use the preset's `tasks-template.md` and `tasks.deps-template.yml` as
-starting points; replace the example task bodies with real work items
-derived from the spec and plan.
+- `[ ]` — pending
+- `[X]` — done with real evidence (or with synthetic evidence disclosed per
+  Principle V — see `/speckit.implement`)
+- `[-]` — skipped, with written rationale on the task line
+
+Never mark a failing task `[X]`. Never weaken an assertion to green a build —
+narrow the scope and document it.
 
 ## Discipline
 
-- **Lockstep emission.** You MUST write both files in the same turn. Never
-  emit `tasks.md` without `tasks.deps.yml`, and vice versa. If you only
-  have partial information, write placeholder deps (`Tnnn: []`) and note
-  which ones need review in your summary.
-- **Phase-checkpoint edges are implicit.** The graph compute script
-  auto-injects an edge from every task in Phase N+1 to the last foundation
-  task of Phase N. You do NOT repeat those edges in the yml — write only
-  non-phase cross-edges (e.g., `T015: [T011, T013]` says US1 impl depends
-  on US1 tests and US1 fixtures).
 - **Story grouping.** Tasks belong to a phase (Phase 1..N) and optionally a
-  user story (`[US1]`, `[US2]`, ...). Keep phases sequential; stories
-  within a phase may run in parallel.
+  user story (`[US1]`, `[US2]`, ...). Keep phases sequential; stories within a
+  phase may run in parallel.
 - **Tier annotation.** Mark each task `[T1]` or `[T2]` if the phase
-  classification differs from the spec's overall tier. Omit when it
-  matches.
-- **Parallel-safe marker.** `[P]` means "no deps inside this phase" — the
-  script can verify it; you SHOULD emit it as a hint.
+  classification differs from the spec's overall tier. Omit when it matches.
+- **Parallel-safe marker.** `[P]` means "no dependency on another incomplete
+  task in this phase." Emit it as a hint where it holds.
+- **Cross-task dependencies.** When a task depends on a non-obvious earlier task
+  (beyond plain phase ordering), state it in the task description (e.g. "after
+  T011") or in a short Dependencies section. Keep it readable; do not maintain a
+  separate machine-validated graph.
 - **Elmish/MVU applicability.** For any stateful or I/O-bearing story, emit
   explicit tasks for the `.fsi` contract (`Model`, `Msg`, `Effect` or
   `Cmd<Msg>`, `init`, `update`, interpreter boundary), pure transition tests,
   emitted-effect assertions, and real interpreter evidence where safe. For a
-  simple pure feature, state that Principle IV is not applicable in the
-  evidence-obligations task.
-- **Synthetic-evidence inventory.** Include the empty Synthetic-Evidence
-  Inventory table from the template. It will grow as `/speckit.implement`
-  adds `[S]` tasks.
+  simple pure feature, note in the evidence-obligations task that Principle IV is
+  not applicable.
 
-## Validation
+## Completion
 
-Immediately after writing both files, run:
-
-```bash
-.specify/extensions/evidence/scripts/bash/run-audit.sh specs/<FEATURE_ID> --graph-only
-```
-
-(or invoke `/speckit.evidence.graph` if the extension is installed).
-
-This validates:
-- Every Tnnn in `tasks.md` has a matching key in `tasks.deps.yml`.
-- Every dep reference resolves to a known Tnnn.
-- The graph is acyclic.
-
-Report any failures to the user immediately; refuse to declare the tasks
-phase complete until the DAG is clean.
-
-## If the evidence extension is not installed
-
-Fall back to emitting both files without running the validator. Warn the
-user: *"The evidence extension is not installed, so the DAG cannot be
-validated. Run `specify extension add evidence` to enable
-`speckit.evidence.graph` and `speckit.evidence.audit`."*
+Report the path to the generated `tasks.md`, the task count per user story, the
+parallel opportunities identified, and the suggested MVP scope (typically User
+Story 1). Each task must be specific enough that it can be completed without
+additional context: a clear action and an exact file path.

@@ -14,21 +14,6 @@
       },
       "registered_skills": [],
       "installed_at": "2026-06-18T07:15:09.170141+00:00"
-    },
-    "evidence": {
-      "version": "1.0.0",
-      "source": "local",
-      "manifest_hash": "sha256:3418dfa9877c1b0f9817c06165ed2aa122f9b7676b94479e69c96f373b17173a",
-      "enabled": true,
-      "priority": 10,
-      "registered_commands": {
-        "claude": [
-          "speckit.evidence.graph",
-          "speckit.evidence.audit"
-        ]
-      },
-      "registered_skills": [],
-      "installed_at": "2026-06-18T07:15:14.116925+00:00"
     }
   }
 }
