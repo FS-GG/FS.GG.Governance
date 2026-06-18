@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F11 design-system adapter: the SECOND concrete production adapter, domain #2 of
+       Milestone M3 (the adoption bar). A pure value/fold layer above the F09 SPI — it
+       takes a SINGLE ProjectReference on the SPI (which transitively brings the kernel)
+       and adds ZERO PackageReference (FR-016): BCL + FSharp.Core + Spi + Kernel only, NO
+       rendering library, NO serializer. It is a SIBLING of the F10 Spec Kit adapter and
+       MUST NOT reference it (FR-005/FR-016) — the two adapters are independent; the
+       dependency direction is adapter -> SPI -> kernel, never the reverse and never
+       adapter -> adapter (SC-008). It is PURE — values and total folds, no I/O, no
+       Model/Msg/Effect, no interpreter (Principle IV N/A). Does NOT pack — IsPackable=false
+       inherited from Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Adapters.DesignSystem</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile order DesignSystem -> Catalog: Catalog references DesignSystem's
+         vocabulary / bridge / probes and the F09 Adapter<...> (build order, research D1). -->
+    <Compile Include="DesignSystem.fsi" />
+    <Compile Include="DesignSystem.fs" />
+    <Compile Include="Catalog.fsi" />
+    <Compile Include="Catalog.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+  </ItemGroup>
+
+</Project>

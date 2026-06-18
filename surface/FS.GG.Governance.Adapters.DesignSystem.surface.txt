@@ -1,0 +1,182 @@
+TYPE FS.GG.Governance.Adapters.DesignSystem.CatalogModule
+  [Method] FS.GG.Governance.Adapters.Spi.Adapter`3[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact,FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef,FS.GG.Governance.Adapters.DesignSystem.DesignChange] adapter(FS.GG.Governance.Kernel.JudgeId)
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_adoptNewPolicy()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_colourInformational()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_contrastPolicy()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_controlHeightDefaults()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_elevationLayering()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_evidenceMeasured()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_fourValues()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_intentCoverage()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_motionRestraint()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_pagePatternCorrect()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_renderedMatchesIntent()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_spacingScale()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_tokenDrift()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_tokenSurfaceGate()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_visualStateResolution()
+  [Method] FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange] get_tokenSurfaceFence()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact]] get_catalog()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange]] get_fences()
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] adoptNewPolicy
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] colourInformational
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] contrastPolicy
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] controlHeightDefaults
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] elevationLayering
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] evidenceMeasured
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] fourValues
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] intentCoverage
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] motionRestraint
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] pagePatternCorrect
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] renderedMatchesIntent
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] spacingScale
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] tokenDrift
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] tokenSurfaceGate
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] visualStateResolution
+  [Property] FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange] tokenSurfaceFence
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact]] catalog
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange]] fences
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGeneratedTokenSurface()
+  [Method] Boolean get_IsInteractionStateSpec()
+  [Method] Boolean get_IsPagePatternSpec()
+  [Method] Boolean get_IsRenderedCapture()
+  [Method] Boolean get_IsTokenDocument()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_GeneratedTokenSurface()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_InteractionStateSpec()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_PagePatternSpec()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_RenderedCapture()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_TokenDocument()
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef+Tags
+  [Property] Boolean IsGeneratedTokenSurface
+  [Property] Boolean IsInteractionStateSpec
+  [Property] Boolean IsPagePatternSpec
+  [Property] Boolean IsRenderedCapture
+  [Property] Boolean IsTokenDocument
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef GeneratedTokenSurface
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef InteractionStateSpec
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef PagePatternSpec
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef RenderedCapture
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef TokenDocument
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef+Tags
+  [Field] Int32 GeneratedTokenSurface
+  [Field] Int32 InteractionStateSpec
+  [Field] Int32 PagePatternSpec
+  [Field] Int32 RenderedCapture
+  [Field] Int32 TokenDocument
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignChange
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef])
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignChange)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignChange, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.DesignSystem.DesignChange)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef] get_Surfaces()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef] Surfaces
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactPresent()
+  [Method] Boolean get_IsDesignGov()
+  [Method] Boolean get_IsDesignRule()
+  [Method] Boolean get_IsMeasurementState()
+  [Method] Boolean get_IsPolicySelected()
+  [Method] Boolean get_IsSurfaceObservation()
+  [Method] Boolean get_IsVerdictRestsOn()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewArtifactPresent(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewDesignGov(FS.GG.Governance.Kernel.RuleOutcome)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewDesignRule(System.String)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewMeasurementState(System.String, FS.GG.Governance.Kernel.EvidenceState)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewPolicySelected(System.String)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewSurfaceObservation(System.String, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef, Boolean)
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact NewVerdictRestsOn(System.String, System.String)
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+ArtifactPresent
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+DesignGov
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+DesignRule
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+MeasurementState
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+PolicySelected
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+SurfaceObservation
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+Tags
+  [NestedType] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+VerdictRestsOn
+  [Property] Boolean IsArtifactPresent
+  [Property] Boolean IsDesignGov
+  [Property] Boolean IsDesignRule
+  [Property] Boolean IsMeasurementState
+  [Property] Boolean IsPolicySelected
+  [Property] Boolean IsSurfaceObservation
+  [Property] Boolean IsVerdictRestsOn
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+ArtifactPresent
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_Item()
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef Item
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+DesignGov
+  [Method] FS.GG.Governance.Kernel.RuleOutcome get_Item()
+  [Property] FS.GG.Governance.Kernel.RuleOutcome Item
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+DesignRule
+  [Method] System.String get_ruleId()
+  [Property] System.String ruleId
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+MeasurementState
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_state()
+  [Method] System.String get_measurementId()
+  [Property] FS.GG.Governance.Kernel.EvidenceState state
+  [Property] System.String measurementId
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+PolicySelected
+  [Method] System.String get_policy()
+  [Property] System.String policy
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+SurfaceObservation
+  [Method] Boolean get_met()
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef get_subject()
+  [Method] System.String get_probe()
+  [Property] Boolean met
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef subject
+  [Property] System.String probe
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+Tags
+  [Field] Int32 ArtifactPresent
+  [Field] Int32 DesignGov
+  [Field] Int32 DesignRule
+  [Field] Int32 MeasurementState
+  [Field] Int32 PolicySelected
+  [Field] Int32 SurfaceObservation
+  [Field] Int32 VerdictRestsOn
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact+VerdictRestsOn
+  [Method] System.String get_measurementId()
+  [Method] System.String get_verdictId()
+  [Property] System.String measurementId
+  [Property] System.String verdictId
+TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemModule
+  [Method] FS.GG.Governance.Kernel.ArtifactRef toRef(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] FS.GG.Governance.Kernel.Bridge`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] bridge(FS.GG.Governance.Kernel.JudgeId)
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] contrastMeets(System.String, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_evidenceMeasured()
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] surfaceMatches(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] surfaceObserved(System.String, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
+  [Method] FS.GG.Governance.Kernel.FactId identify(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact]] get_probes()
+  [Property] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] evidenceMeasured
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact]] probes
