@@ -1,0 +1,19 @@
+{
+  "present": true,
+  "_note": "the public, consumed token API generated from the token document; the high-stakes surface",
+  "observations": {
+    "surface-matches": true,
+    "contrast-meets": true,
+    "token-surface-gate": true,
+    "spacing-scale": true,
+    "control-height": true,
+    "intent-coverage": true
+  },
+  "measurements": [
+    { "id": "contrast-px", "state": "Real" },
+    { "id": "contrast-verdict", "state": "Real" }
+  ],
+  "verdictRestsOn": [
+    { "verdict": "contrast-verdict", "measurement": "contrast-px" }
+  ]
+}

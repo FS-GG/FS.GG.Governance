@@ -37,7 +37,8 @@ FS.GG.Governance.Kernel   pure, BCL-only — the inference core (M1, done)
 FS.GG.Governance.Host     effects shell (I/O) — sense → plan → act (F08, done)
 FS.GG.Governance.Adapters.Spi      adapter SPI + lift/compose      (F09, done)
 FS.GG.Governance.Adapters.SpecKit  first concrete adapter — Spec Kit as data (F10, done)
-FS.GG.Governance.Adapters.* · .Cli   more domains, CLI             (F11–F13, planned)
+FS.GG.Governance.Adapters.DesignSystem  second adapter — a design language as data (F11, done)
+FS.GG.Governance.Adapters.* · .Cli   more domains, CLI             (F12–F13, planned)
 ```
 
 The kernel is a pure, **zero-dependency** forward-chaining (Datalog-style,
@@ -55,14 +56,18 @@ fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 |---|---|---|
 | **M1** | Pure kernel + evidence + explanation (F01–F06) | ✅ Reached |
 | **M2** | Light routing + effects edge (F07–F08) | ✅ Reached |
-| **M3** | Adapter SPI + two domains (F09–F11) | 🚧 In progress — F09 (SPI) + F10 (Spec Kit adapter) done; F11 next |
+| **M3** | Adapter SPI + two domains (F09–F11) | ✅ Reached — F09 (SPI) + F10 (Spec Kit) + F11 (design system) done |
 | **M4** | CLI + external validation (F12–F13) | Planned |
 
-F01–F10 are merged to `main` (129/129 tests green). The kernel packs to
+F01–F11 are merged to `main` (150/150 tests green). The kernel packs to
 `~/.local/share/nuget-local/`; the `Host` effects edge depends on it (zero new dependency).
 F10 is the **first concrete production adapter** — it governs this repository's own Spec Kit
 workflow as data, supplying only its five SPI components and reusing 100% of the kernel
-(pure: no I/O, no new dependency; depends on the F09 SPI, never the reverse).
+(pure: no I/O, no new dependency; depends on the F09 SPI, never the reverse). F11 is the
+**second** — it governs adherence to a **design language** (Ant Design as the worked example)
+from a fixture token tree, adopting the kernel **by difference**: it shares none of F10's shape
+(no phase, no `whenPhase`, no merge fence, no dial), proving the SPI sits at the right altitude.
+Its faithful lift is proven by composing it alongside the **real** F10 adapter at one root.
 
 ## Design lineage
 

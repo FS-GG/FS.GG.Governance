@@ -521,3 +521,54 @@ printfn "[F10] light merge blocking = %d (fewer than default %d)" f10LightMerge.
 for r in Catalog.catalog do
     let (RuleId id) = r.Id
     printfn "[F10]   %-24s :: %s" id (Check.render r.Check)
+
+// ── Design-system adapter sketch (F11) — a second, UNRELATED domain adopts the kernel ──
+// (quickstart.md §"FSI sketch"). Exercised against the REAL bodies through the BUILT library.
+// The F10 namespace is already open above, so the design domain's `Catalog` is reached via a
+// full-path alias (its `ArtifactPresent`/`Catalog` would otherwise clash with F10's).
+#r "../src/FS.GG.Governance.Adapters.DesignSystem/bin/Debug/net10.0/FS.GG.Governance.Adapters.DesignSystem.dll"
+
+open FS.GG.Governance.Adapters.DesignSystem
+module DsCatalog = FS.GG.Governance.Adapters.DesignSystem.Catalog
+
+let f11Judge: JudgeId = { ModelId = "design-judge"; Version = "1" }
+let f11Adapter = DsCatalog.adapter f11Judge          // the ONE Adapter value — NO dial (FR-003, D8)
+
+// 1. FIVE-COMPONENT + NO-F10-SHAPE (SC-001): five SPI components + the Bridge; no authoring
+//    op, no Phase/whenPhase/merge fence/dial. fences = 1 (token-surface only).
+printfn "[F11] rules = %d / probes = %d / fences = %d"
+    f11Adapter.Rules.Length f11Adapter.Probes.Length f11Adapter.Fences.Length
+
+// 2. THE TIER SPLIT (SC-002): deterministic token/contrast/surface checks block; judgement is
+//    Opaque (AgentReviewed); adopting a new policy is HumanOnly.
+let f11DriftOk = [ { Id = FactId "m"; Value = SurfaceObservation("surface-matches", GeneratedTokenSurface, true); Provenance = [] } ]
+let f11DriftBad = [ { Id = FactId "m"; Value = SurfaceObservation("surface-matches", GeneratedTokenSurface, false); Provenance = [] } ]
+printfn "[F11] drift ok = %A / drift bad = %A / contrast absent = %A"
+    (Check.eval f11DriftOk DsCatalog.tokenDrift.Check)
+    (Check.eval f11DriftBad DsCatalog.tokenDrift.Check)
+    (Check.eval [] DsCatalog.contrastPolicy.Check)          // Uncertain — never a silent Pass (Pr3)
+printfn "[F11] colour-informational reified = %b / adopt-new-policy tier = %A"
+    (Check.isReified DsCatalog.colourInformational.Check)   // false ⇒ AgentReviewed (FR-008)
+    DsCatalog.adoptNewPolicy.Tier                            // HumanOnly (escalates, never decides)
+
+// 3. ADVISORY BY DEFAULT; THE TOKEN-SURFACE FENCE (SC-002): only a change touching the public
+//    token surface trips the single fence — there is NO merge fence and NO phase (the F10 diff).
+let f11Plain = { Surfaces = Set.ofList [ RenderedCapture ] }
+let f11Surface = { Surfaces = Set.ofList [ GeneratedTokenSurface ] }
+let f11PlainRoute = Route.route f11Adapter.Fences f11Adapter.Rules Gate f11Plain
+let f11FencedRoute = Route.route f11Adapter.Fences f11Adapter.Rules Gate f11Surface
+printfn "[F11] plain blocking = %d / fenced blocking = %d" f11PlainRoute.Blocking.Length f11FencedRoute.Blocking.Length
+
+// 4. EVIDENCE / TAINT via the KERNEL (SC-003): a deterministic verdict resting on a synthetic
+//    input is AutoSynthetic via F05's fixed point; evidenceMeasured fails and NO flag flips it.
+let f11Tainted =
+    [ { Id = FactId "x"; Value = MeasurementState("contrast-px", Synthetic); Provenance = [] }
+      { Id = FactId "v"; Value = MeasurementState("contrast-verdict", Real); Provenance = [] }
+      { Id = FactId "e"; Value = VerdictRestsOn("contrast-verdict", "contrast-px"); Provenance = [] } ]
+printfn "[F11] evidence (synthetic upstream) = %A (Fail — contrast-verdict is AutoSynthetic)"
+    (Check.eval f11Tainted DsCatalog.evidenceMeasured.Check)
+
+// 5. RENDER & EXPLAIN (SC-004): every rule renders to a sentence and explains itself.
+for r in DsCatalog.catalog do
+    let (RuleId id) = r.Id
+    printfn "[F11]   %-24s :: %s" id (Check.render r.Check)

@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test-only project. Exercises the design-system adapter through its PUBLIC surface (the
+       ProjectReference resolves the built library — Principle I, SC-008). Expecto + FsCheck
+       give the probe/tier/lift properties. None of these deps reach the adapter assembly.
+       The faithful-lift proof composes the design-system adapter alongside the REAL F10 Spec
+       Kit adapter — so this test project references F10 (the ONLY place in the feature that
+       does; the shipped adapter never does, enforced by the dependency-hygiene test). There
+       is NO synthetic domain in this feature: both composed adapters are real (Principle V). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="FixtureFacts.fs" />
+    <Compile Include="ProjectFact.fs" />
+    <Compile Include="DesignSystemTests.fs" />
+    <Compile Include="CatalogTests.fs" />
+    <Compile Include="LiftTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The fixture token tree — the domain's real input; copied next to the test binary so
+         FixtureFacts reads it at runtime (sensing a live design system is F08/F12, FR-015). -->
+    <Content Include="fixtures/**/*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+    <!-- F10, for the faithful-lift / adoption-bar proof ONLY (D9). -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
+  </ItemGroup>
+
+</Project>
