@@ -20,6 +20,12 @@
          probe's Eval consumes), so it compiles AFTER both. -->
     <Compile Include="Check.fsi" />
     <Compile Include="Check.fs" />
+    <!-- CheckRule (F04): the CheckTier arbitration model + the Rule bridge. Depends on
+         Check (the algebra it bridges/folds), Verdict (the verdict a RuleOutcome carries),
+         and Kernel (the Rule<'fact>/FactSet/ProvenanceStep it emits into), so it compiles
+         LAST. SHA-256 only — no new dependency (FR-016, SC-009). -->
+    <Compile Include="CheckRule.fsi" />
+    <Compile Include="CheckRule.fs" />
   </ItemGroup>
 
 </Project>

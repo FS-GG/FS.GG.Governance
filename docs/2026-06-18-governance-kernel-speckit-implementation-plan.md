@@ -161,7 +161,7 @@ parallel once their dependencies land.
   decision #4 / hazard 3:** commutative-node hash canonicalization (ordinal-sort child
   digests for `All`/`Any`; positional for `Implies` and probe `Args`/`Reads`).
 
-#### F04 · `004-checktier-rule-bridge`
+#### F04 · `004-checktier-rule-bridge` — ✅ Done (merged to `main`)
 - **Intent:** every rule declares who is competent to decide it, and agent
   reviews are cached so a stochastic judge stays reproducible.
 - **Tier:** 1.
