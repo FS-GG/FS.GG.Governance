@@ -15,6 +15,7 @@
     <Compile Include="VerdictTests.fs" />
     <Compile Include="CheckTests.fs" />
     <Compile Include="CheckRuleTests.fs" />
+    <Compile Include="EvidenceTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

@@ -164,6 +164,66 @@ TYPE FS.GG.Governance.Kernel.EvaluationResult`1
   [Method] System.String ToString()
   [Property] Int32 Rounds
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] Facts
+TYPE FS.GG.Governance.Kernel.EvidenceGraph`1
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.EvidenceGraph`1[id])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.EvidenceGraph`1[id])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+TYPE FS.GG.Governance.Kernel.EvidenceModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[id,FS.GG.Governance.Kernel.EvidenceState]] nodes[id](FS.GG.Governance.Kernel.EvidenceGraph`1[id])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[id,id]] dependencies[id](FS.GG.Governance.Kernel.EvidenceGraph`1[id])
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[id,FS.GG.Governance.Kernel.EvidenceState] effective[id](FS.GG.Governance.Kernel.EvidenceGraph`1[id])
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Kernel.EvidenceGraph`1[id],FS.GG.Governance.Kernel.GraphError`1[id]] build[id](Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[id,FS.GG.Governance.Kernel.EvidenceState]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[id,id]])
+TYPE FS.GG.Governance.Kernel.EvidenceState
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.EvidenceState)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.EvidenceState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAutoSynthetic()
+  [Method] Boolean get_IsFailed()
+  [Method] Boolean get_IsPending()
+  [Method] Boolean get_IsReal()
+  [Method] Boolean get_IsSkipped()
+  [Method] Boolean get_IsSynthetic()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_AutoSynthetic()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Failed()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Pending()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Real()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Skipped()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Synthetic()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.EvidenceState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.EvidenceState+Tags
+  [Property] Boolean IsAutoSynthetic
+  [Property] Boolean IsFailed
+  [Property] Boolean IsPending
+  [Property] Boolean IsReal
+  [Property] Boolean IsSkipped
+  [Property] Boolean IsSynthetic
+  [Property] FS.GG.Governance.Kernel.EvidenceState AutoSynthetic
+  [Property] FS.GG.Governance.Kernel.EvidenceState Failed
+  [Property] FS.GG.Governance.Kernel.EvidenceState Pending
+  [Property] FS.GG.Governance.Kernel.EvidenceState Real
+  [Property] FS.GG.Governance.Kernel.EvidenceState Skipped
+  [Property] FS.GG.Governance.Kernel.EvidenceState Synthetic
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.EvidenceState+Tags
+  [Field] Int32 AutoSynthetic
+  [Field] Int32 Failed
+  [Field] Int32 Pending
+  [Field] Int32 Real
+  [Field] Int32 Skipped
+  [Field] Int32 Synthetic
 TYPE FS.GG.Governance.Kernel.Explanation
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Explanation)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Explanation, System.Collections.IEqualityComparer)
@@ -283,6 +343,45 @@ TYPE FS.GG.Governance.Kernel.FactId
   [Property] System.String Item
 TYPE FS.GG.Governance.Kernel.FixedPoint
   [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
+TYPE FS.GG.Governance.Kernel.GraphError`1
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.GraphError`1[id])
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.GraphError`1[id], System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAutoSyntheticDeclared()
+  [Method] Boolean get_IsCycle()
+  [Method] Boolean get_IsUnknownNode()
+  [Method] FS.GG.Governance.Kernel.GraphError`1[id] NewAutoSyntheticDeclared(id)
+  [Method] FS.GG.Governance.Kernel.GraphError`1[id] NewCycle(Microsoft.FSharp.Collections.FSharpList`1[id])
+  [Method] FS.GG.Governance.Kernel.GraphError`1[id] NewUnknownNode(id)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.GraphError`1[id])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.GraphError`1+AutoSyntheticDeclared[id]
+  [NestedType] FS.GG.Governance.Kernel.GraphError`1+Cycle[id]
+  [NestedType] FS.GG.Governance.Kernel.GraphError`1+Tags[id]
+  [NestedType] FS.GG.Governance.Kernel.GraphError`1+UnknownNode[id]
+  [Property] Boolean IsAutoSyntheticDeclared
+  [Property] Boolean IsCycle
+  [Property] Boolean IsUnknownNode
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.GraphError`1+AutoSyntheticDeclared
+  [Method] id get_node()
+  [Property] id node
+TYPE FS.GG.Governance.Kernel.GraphError`1+Cycle
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[id] get_cycle()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[id] cycle
+TYPE FS.GG.Governance.Kernel.GraphError`1+Tags
+  [Field] Int32 AutoSyntheticDeclared
+  [Field] Int32 Cycle
+  [Field] Int32 UnknownNode
+TYPE FS.GG.Governance.Kernel.GraphError`1+UnknownNode
+  [Method] id get_node()
+  [Property] id node
 TYPE FS.GG.Governance.Kernel.JudgeId
   [Constructor] Void .ctor(System.String, System.String)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.JudgeId)

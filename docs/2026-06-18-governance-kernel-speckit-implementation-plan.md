@@ -178,7 +178,7 @@ parallel once their dependencies land.
   **Notes decision #2** (single-sample noise — whether to aggregate N runs /
   require a confidence threshold before freezing) for the F08 interpreter.
 
-#### F05 · `005-evidence-model` [P after F01]
+#### F05 · `005-evidence-model` [P after F01] — ✅ Done (merged to `main`)
 - **Intent:** evidence state is tracked and synthetic taint propagates over the
   dependency graph and clears when the root cause is upgraded.
 - **Tier:** 1.
