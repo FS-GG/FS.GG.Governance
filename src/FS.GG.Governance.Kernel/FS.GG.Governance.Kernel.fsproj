@@ -6,6 +6,7 @@
        Directory.Build.props. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Kernel</RootNamespace>
+    <Version>0.1.1</Version>
     <!-- M1 exit (F06 T024): the kernel is now the first useful product, so it packs
          (overrides IsPackable=false from Directory.Build.props). The test project stays
          non-packable. Packaging metadata only — no .fsi, no behaviour, no new dependency. -->

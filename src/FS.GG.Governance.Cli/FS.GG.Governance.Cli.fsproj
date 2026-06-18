@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Cli</RootNamespace>
+    <Version>0.1.1</Version>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fsgg-governance</ToolCommandName>
