@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F09 adapter SPI & composition root: a pure value/fold layer above the kernel —
+       the adoption bar (Milestone M3). It takes a SINGLE ProjectReference on the kernel
+       and adds ZERO PackageReference (FR-015): BCL + FSharp.Core + Kernel only. The
+       kernel does NOT reference this project (dependency direction adapters -> kernel,
+       SC-008). It is PURE — values and total folds, no I/O, no Model/Msg/Effect, no
+       interpreter (Principle IV N/A). Does NOT pack (the kernel packs at F06; the CLI
+       tool packs at F12) — IsPackable=false inherited from Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Adapters.Spi</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile order Adapter -> Composition: Composition references Adapter's
+         Adapter<...>/Lift and the kernel (research D1/build order). -->
+    <Compile Include="Adapter.fsi" />
+    <Compile Include="Adapter.fs" />
+    <Compile Include="Composition.fsi" />
+    <Compile Include="Composition.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+  </ItemGroup>
+
+</Project>

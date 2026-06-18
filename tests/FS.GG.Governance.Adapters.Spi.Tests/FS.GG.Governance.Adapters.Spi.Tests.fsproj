@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test-only project. Exercises the SPI through its PUBLIC surface (the
+       ProjectReference resolves the built library — Principle I, SC-008). Expecto +
+       FsCheck give the order-independence property (SC-003/SC-007); the VSTest adapters
+       let `dotnet test` drive the Expecto runner. None of these deps reach the SPI
+       assembly. The two example domains it authors are SYNTHETIC (Principle V). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ExampleAdapters.fs" />
+    <Compile Include="AdapterTests.fs" />
+    <Compile Include="CompositionTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+  </ItemGroup>
+
+</Project>

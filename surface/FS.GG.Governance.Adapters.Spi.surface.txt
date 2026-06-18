@@ -1,0 +1,40 @@
+TYPE FS.GG.Governance.Adapters.Spi.AdapterModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]] toRules[fact,artifact,change](FS.GG.Governance.Adapters.Spi.Adapter`3[fact,artifact,change])
+TYPE FS.GG.Governance.Adapters.Spi.Adapter`3
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Core.FSharpFunc`2[artifact,FS.GG.Governance.Kernel.ArtifactRef], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]], FS.GG.Governance.Kernel.Bridge`1[fact])
+  [Method] FS.GG.Governance.Kernel.Bridge`1[fact] get_Bridge()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]] get_Rules()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] get_Fences()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[fact]] get_Probes()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[artifact,FS.GG.Governance.Kernel.ArtifactRef] get_ToRef()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId] get_Identify()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Kernel.Bridge`1[fact] Bridge
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]] Rules
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] Fences
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[fact]] Probes
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[artifact,FS.GG.Governance.Kernel.ArtifactRef] ToRef
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId] Identify
+TYPE FS.GG.Governance.Adapters.Spi.Composed`2
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]] get_Catalog()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] get_Fences()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]] Catalog
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] Fences
+TYPE FS.GG.Governance.Adapters.Spi.CompositionModule
+  [Method] FS.GG.Governance.Adapters.Spi.Composed`2[project,change] compose[project,change](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.Spi.Lifted`2[project,change]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]])
+  [Method] FS.GG.Governance.Adapters.Spi.Lifted`2[project,change] lift[project,dom,change,domChange,artifact](Microsoft.FSharp.Core.FSharpFunc`2[project,Microsoft.FSharp.Core.FSharpOption`1[dom]], Microsoft.FSharp.Core.FSharpFunc`2[change,domChange], FS.GG.Governance.Adapters.Spi.Adapter`3[dom,artifact,domChange])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[project]] toRules[project,change](FS.GG.Governance.Kernel.Bridge`1[project], FS.GG.Governance.Adapters.Spi.Composed`2[project,change])
+TYPE FS.GG.Governance.Adapters.Spi.LiftModule
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[big] checkRule[big,small](Microsoft.FSharp.Core.FSharpFunc`2[big,Microsoft.FSharp.Core.FSharpOption`1[small]], FS.GG.Governance.Kernel.CheckRule`1[small])
+  [Method] FS.GG.Governance.Kernel.Check`1[big] check[big,small](Microsoft.FSharp.Core.FSharpFunc`2[big,Microsoft.FSharp.Core.FSharpOption`1[small]], FS.GG.Governance.Kernel.Check`1[small])
+  [Method] FS.GG.Governance.Kernel.Fence`1[big] fence[big,small](Microsoft.FSharp.Core.FSharpFunc`2[big,small], FS.GG.Governance.Kernel.Fence`1[small])
+  [Method] FS.GG.Governance.Kernel.Rule`1[big] rule[small,big](Microsoft.FSharp.Core.FSharpFunc`2[small,big], Microsoft.FSharp.Core.FSharpFunc`2[big,Microsoft.FSharp.Core.FSharpOption`1[small]], FS.GG.Governance.Kernel.Rule`1[small])
+TYPE FS.GG.Governance.Adapters.Spi.Lifted`2
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]] get_Rules()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] get_Fences()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[project]] Rules
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] Fences
