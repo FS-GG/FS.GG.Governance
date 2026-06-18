@@ -1,83 +1,91 @@
 # FS.GG.Governance
 
 Optional rule, evidence, and route-explanation tooling for the
-[FS-GG](https://github.com/FS-GG) projects, developed as a normal tool product
-using standard [Spec Kit](https://github.com/github/spec-kit).
+[FS-GG](https://github.com/FS-GG) projects, built as a normal F# tool product with
+standard [Spec Kit](https://github.com/github/spec-kit).
 
-This repository is the **governance** half of the FS-GG split. The other half,
-the UI runtime, lives in
-[**FS.GG.Rendering**](https://github.com/FS-GG/FS.GG.Rendering). The two are
-deliberately separate so that rendering can be built, tested, documented,
-packaged, and released without an experimental governance platform.
+**In one sentence:** governance is a *pure inference kernel* over typed facts and
+rules, where every rule declares **who is competent to decide it** (machine, agent,
+or human), every rule's check is **reified data** that can be evaluated, rendered,
+hashed, and explained from one source, and enforcement is **light and advisory by
+default** with a loud, local-only escape hatch.
+
+The kernel is domain-neutral: what changes between governing F# code, an essay, or a
+research project is the *fact vocabulary* — the inference, arbitration, evidence, and
+rule language stay the same. See the [design overview](docs/governance-design/index.md).
 
 ## Operating rule
 
 > Governance tooling may *inspect* rendering; rendering must never *require*
 > governance tooling to build, test, document, package, or release.
 
-Generic code here must not assume rendering's package IDs, template names, target
-names, or directory layout. Rendering is treated as one external customer, not as
-this tool's internal shape.
+Generic code here must not assume any consumer's package IDs, template names, target
+names, or directory layout. Rendering is one external customer, not this tool's shape.
 
-## Scope
+## Architecture
 
-This project may own deterministic fact and rule evaluation, explanation and
-diagnostics primitives, evidence-freshness helpers, route-analysis helpers,
-package/docs/template drift analyzers, support-bundle tooling, and optional Spec
-Kit extensions. It does **not** own rendering product identity, package IDs, docs
-URLs, template profiles, design-system choices, controls, themes, or release
-decisions.
+```text
+FS.GG.Governance.Kernel   pure, BCL-only — the inference core (M1, done)
+  ├─ facts · rules · fixed-point · provenance              (F01)
+  ├─ verdicts + Kleene three-valued logic                  (F02)
+  ├─ reified Check algebra + eval/render/hash/explain       (F03)
+  ├─ CheckTier arbitration + rule bridge + review cache key  (F04)
+  ├─ evidence model + synthetic-taint over a DAG            (F05)
+  ├─ JSON explanation + evidence-freshness                  (F06)
+  └─ routing: Stakes / Severity / RunMode / Route           (F07)
 
-## First useful product
+FS.GG.Governance.Host     effects shell (I/O) — sense → plan → act (F08, in progress)
+FS.GG.Governance.Adapters.* · .Cli   SPI, domain adapters, CLI    (F09–F13, planned)
+```
 
-The first target is a compact rule/evidence helper library with nominal IDs and
-diagnostics, deterministic fact storage, fixed-point rule evaluation, provenance
-for derived facts, JSON-friendly explanation output, and simple evidence-freshness
-predicates — with no dependency on FAKE, git, filesystem scanning, Skia, NuGet
-publishing, template profiles, or rendering project paths.
+The kernel is a pure, **zero-dependency** forward-chaining (Datalog-style,
+stratified-monotonic) reasoner: `FixedPoint.evaluate identify rules supplied` returns
+the least fixed point of the facts under the rules, with provenance for every derived
+fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 
-## Kernel (F01) — usage precondition
-
-The kernel — `FS.GG.Governance.Kernel` (`src/FS.GG.Governance.Kernel/`) — is a pure,
-BCL-only forward-chaining reasoner: `FixedPoint.evaluate identify rules supplied`
-returns the least fixed point of the supplied facts under the rules, with provenance
-for every derived fact and a `Rounds` convergence count.
-
-> **Precondition (documented, not runtime-enforced — FR-012).** Rules must be
-> **monotonic** (add-only): given a larger fact set a rule never retracts a
-> previously producible fact. Negated, aggregated, or recursively-negated facts are
-> **supplied** from a lower stratum, never derived within the same fixed point. The
-> kernel does not reject non-monotonic rule sets; honoring this is the caller's
-> responsibility (stratification analysis may enforce it in a later feature).
+> **Kernel precondition (documented, not runtime-enforced).** Rules must be
+> **monotonic** (add-only); negated or aggregated facts are *supplied* from a lower
+> stratum, never derived in the same fixed point. See [the kernel](docs/governance-design/kernel.md).
 
 ## Status
 
-**Bootstrapping (Stage G1).** Fresh Spec Kit repository established; the first
-narrow tool slice is not yet implemented. See the cross-repo plan below.
+| Milestone | Scope | State |
+|---|---|---|
+| **M1** | Pure kernel + evidence + explanation (F01–F06) | ✅ Reached |
+| **M2** | Light routing + effects edge (F07–F08) | 🚧 F07 merged; F08 in spec |
+| **M3** | Adapter SPI + two domains (F09–F11) | Planned |
+| **M4** | CLI + external validation (F12–F13) | Planned |
+
+F01–F07 are merged to `main`. The kernel packs to `~/.local/share/nuget-local/`.
+
+## Design lineage
+
+The checker paradigm follows [Cedar](https://cedarpolicy.com/en) (and OPA/Rego):
+**policy as analyzable data**, **forbid-trumps-permit** order-independent precedence
+(the F07 routing layer), and decisions that are **explainable by construction**.
+Planning and optimization are deliberately *not* native — the kernel checks a
+planner's outputs at the edge rather than being one. It is **not** Cedar and does not
+depend on it; Cedar is a reference for the evaluation semantics. See
+[theory & composition](docs/governance-design/theory-and-composition.md) and
+[scope: planning & optimization](docs/governance-design/planning-and-optimization.md).
 
 ## Design & plans
 
-The governance design notes now live in this repository under
-[`docs/governance-design/`](docs/governance-design/index.md) (moved out of the org
-`.github` repository). The remaining cross-repo plans still live in `.github`:
-
-- [Governance design notes](docs/governance-design/index.md) — comprehensive kernel/adapter/rule design
-- [Implementation plan (Spec Kit), 2026-06-18](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design decomposed into ordered Spec Kit features (F01–F13)
-- [Governance project scope & adoption bar](https://github.com/FS-GG/.github/blob/main/docs/governance-project.md)
-- [Governance implementation plan (Stages G1–G5)](https://github.com/FS-GG/.github/blob/main/docs/governance-implementation-plan.md)
-- [FS.GG project split index](https://github.com/FS-GG/.github/blob/main/docs/index.md)
+- [Design overview](docs/governance-design/index.md) — start here; the comprehensive design
+  - [The theory of the rule engine](docs/governance-design/rule-engine-theory.md) — the connected, textbook story
+  - [Goals & principles](docs/governance-design/principles.md) · [the kernel](docs/governance-design/kernel.md) · [the rule eDSL](docs/governance-design/rule-edsl.md)
+  - [Routing, severity & run modes](docs/governance-design/routing-and-modes.md) · [domain adapters](docs/governance-design/adapters.md) · [Spec Kit in the system](docs/governance-design/speckit-in-the-system.md)
+- [Implementation plan (Spec Kit, F01–F13)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design decomposed into ordered features
+- [Feature specs](specs/) · [decision records](docs/decisions/)
 
 ## Workflow
 
 Standard Spec Kit with the
-[`fsharp-opinionated`](https://github.com/EHotwagner/speckit-fsharp-tooling)
-preset. Use the `/speckit-*` skills to specify, plan, and implement features.
-
-There is no evidence-audit or DAG-validation machinery in this repository: the
-governance constitution
-([`.specify/memory/constitution.md`](.specify/memory/constitution.md)) follows the
-same lightweight, standard-Spec-Kit shape as the sibling
-[FS.GG.Rendering](https://github.com/FS-GG/FS.GG.Rendering) constitution.
+[`fsharp-opinionated`](https://github.com/EHotwagner/speckit-fsharp-tooling) preset:
+specify → plan → tasks → implement, via the `/speckit-*` skills. Visibility lives in
+`.fsi` signatures with per-module surface-area baselines; there is no evidence-audit
+or DAG-validation machinery — see the
+[constitution](.specify/memory/constitution.md).
 
 ## License
 
