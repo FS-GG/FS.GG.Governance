@@ -368,3 +368,105 @@ printfn "[F08] first  run dispatches = %d" hDispatches   // 1
 let hSecond = Interpreter.run hPorts hCfg hChange
 printfn "[F08] second run dispatches = %d (cache hit)" hDispatches  // 1 — zero new
 printfn "[F08] final phase = %A · failures = %b" hSecond.Phase (List.isEmpty hSecond.Failures)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F09 · adapter SPI & composition root sketch — a domain plugs in by supplying ONLY
+// its own vocabulary; lifting is faithful; composition is deterministic. Exercised
+// against the BUILT FS.GG.Governance.Adapters.Spi library (Principle I, SC-008).
+//   dotnet build src/FS.GG.Governance.Adapters.Spi   # before running this script
+// ─────────────────────────────────────────────────────────────────────────────
+#r "../src/FS.GG.Governance.Adapters.Spi/bin/Debug/net10.0/FS.GG.Governance.Adapters.Spi.dll"
+
+open FS.GG.Governance.Adapters.Spi
+open Check // the ==> operator
+
+let f09GovKey (o: RuleOutcome) =
+    match o with
+    | Decided (RuleId r, _) -> r
+    | NeedsReview rq -> rq.Key
+    | RuleOutcome.Reviewed rr -> rr.Key
+    | Escalated (RuleId r) -> r
+
+// ── Toy domain A (SYNTHETIC example domain) — a tiny "document" domain ──
+type DocFact = HasTitle of bool | DocGov of RuleOutcome
+type DocArtifact = TheDoc
+let docToRef (a: DocArtifact) = match a with TheDoc -> { Kind = "doc"; Key = "the-doc" }
+let titledProbe: Probe<DocFact> =
+    { Name = "has-title"; Reads = [ docToRef TheDoc ]; Args = []
+      Eval = fun fs -> if fs |> List.exists (fun f -> f.Value = HasTitle true) then Met else Unmet "no title" }
+let docRule =
+    CheckRule.rule (RuleId "doc-titled") Deterministic { Document = "doc-policy"; Section = "title" } (Atom titledProbe)
+    |> function Ok r -> CheckRule.blocking r | Error e -> failwithf "%A" e
+let docIdentify = function HasTitle b -> FactId(sprintf "doc:title:%b" b) | DocGov o -> FactId("doc:gov:" + f09GovKey o)
+let docBridge: Bridge<DocFact> =
+    { Judge = { ModelId = "sketch"; Version = "1" }; ArtifactHash = fun _ _ -> ""
+      Embed = DocGov; Project = function DocGov o -> Some o | HasTitle _ -> None }
+let docAdapter: Adapter<DocFact, DocArtifact, Set<string>> =
+    { Identify = docIdentify; ToRef = docToRef; Probes = [ titledProbe ]
+      Rules = [ docRule ]; Fences = [ { Name = "doc"; Trips = Set.contains "doc.md" } ]; Bridge = docBridge }
+
+// 1. STANDALONE: the adapter governs itself using ONLY kernel facilities.
+let f09Supplied = [ { Id = FactId "t"; Value = HasTitle true; Provenance = [] } ]
+let f09Std = FixedPoint.evaluate docAdapter.Identify (Adapter.toRules docAdapter) f09Supplied
+printfn "\n[F09] standalone facts = %d (rounds %d)" f09Std.Facts.Length f09Std.Rounds
+
+// ── Toy domain B (SYNTHETIC) — an UNRELATED "task" domain (distinct vocabulary) ──
+type TaskFact = TaskOpen of bool | TaskGov of RuleOutcome
+type TaskArtifact = TheTask
+let taskToRef (a: TaskArtifact) = match a with TheTask -> { Kind = "task"; Key = "the-task" }
+let taskProbe: Probe<TaskFact> =
+    { Name = "task-closed"; Reads = [ taskToRef TheTask ]; Args = []
+      Eval = fun fs -> if fs |> List.exists (fun f -> f.Value = TaskOpen false) then Met else Unmet "open" }
+let taskRule =
+    CheckRule.rule (RuleId "task-closed") Deterministic { Document = "task-policy"; Section = "closure" } (Atom taskProbe)
+    |> function Ok r -> r | Error e -> failwithf "%A" e
+let taskIdentify = function TaskOpen b -> FactId(sprintf "task:open:%b" b) | TaskGov o -> FactId("task:gov:" + f09GovKey o)
+let taskBridge: Bridge<TaskFact> =
+    { Judge = { ModelId = "sketch"; Version = "1" }; ArtifactHash = fun _ _ -> ""
+      Embed = TaskGov; Project = function TaskGov o -> Some o | TaskOpen _ -> None }
+let taskAdapter: Adapter<TaskFact, TaskArtifact, Set<string>> =
+    { Identify = taskIdentify; ToRef = taskToRef; Probes = [ taskProbe ]
+      Rules = [ taskRule ]; Fences = [ { Name = "task"; Trips = Set.contains "task.md" } ]; Bridge = taskBridge }
+
+// ── The composition root (consumer-authored): the closed coproduct + its wiring ──
+type ProjF = Doc of DocFact | Task of TaskFact | Gov of RuleOutcome
+let (|DocP|_|) = function Doc f -> Some f | _ -> None
+let (|TaskP|_|) = function Task f -> Some f | _ -> None
+let projIdentify = function Doc d -> docIdentify d | Task t -> taskIdentify t | Gov o -> FactId("proj:gov:" + f09GovKey o)
+let projBridge: Bridge<ProjF> =
+    { Judge = { ModelId = "sketch"; Version = "1" }; ArtifactHash = fun _ _ -> ""
+      Embed = Gov; Project = function Gov o -> Some o | _ -> None }
+
+// 2. FAITHFUL LIFT: the lifted check's render & hash are byte-identical to standalone.
+let f09Lifted = Lift.checkRule (|DocP|_|) docRule
+printfn "[F09] render invariant = %b" (Check.render f09Lifted.Check = Check.render docRule.Check)
+printfn "[F09] hash invariant   = %b (cache key stable)" (Check.hash f09Lifted.Check = Check.hash docRule.Check)
+
+// 3. COMPOSE two unrelated adapters + one cross-domain Implies at the one root.
+let f09Cross =
+    [ CheckRule.rule (RuleId "doc-implies-task") Deterministic { Document = "root"; Section = "x" }
+        (Lift.check (|DocP|_|) (Atom titledProbe)
+         ==> Check.probe "task-closed?" [] [] (fun (fs: FactSet<ProjF>) ->
+             if fs |> List.exists (fun f -> match f.Value with Task (TaskOpen false) -> true | _ -> false) then Met
+             else Unmet "open"))
+      |> function Ok r -> CheckRule.blocking r | Error e -> failwithf "%A" e ]
+let f09Composed =
+    Composition.compose
+        [ Composition.lift (|DocP|_|) id docAdapter; Composition.lift (|TaskP|_|) id taskAdapter ]
+        f09Cross
+printfn "[F09] composed = %d rules / %d fences" f09Composed.Catalog.Length f09Composed.Fences.Length
+let f09ProjFacts =
+    [ { Id = FactId "d"; Value = Doc(HasTitle true); Provenance = [] }
+      { Id = FactId "k"; Value = Task(TaskOpen false); Provenance = [] } ]
+let f09Proj = FixedPoint.evaluate projIdentify (Composition.toRules projBridge f09Composed) f09ProjFacts
+let f09CrossOk = f09Proj.Facts |> List.exists (fun f -> f.Value = Gov(Decided(RuleId "doc-implies-task", Pass)))
+printfn "[F09] project facts = %d (rounds %d) · cross-domain Pass = %b" f09Proj.Facts.Length f09Proj.Rounds f09CrossOk
+
+// 4. REMOVAL/BOUNDARY: drop the Doc adapter — the rest is intact and the cross-domain
+//    rule (whose ANTECEDENT domain is now gone) goes INERT (vacuous Pass), never errors.
+let f09NoDoc = Composition.compose [ Composition.lift (|TaskP|_|) id taskAdapter ] f09Cross
+let f09NoDocResult =
+    FixedPoint.evaluate projIdentify (Composition.toRules projBridge f09NoDoc)
+        [ { Id = FactId "k"; Value = Task(TaskOpen false); Provenance = [] } ]
+let f09Inert = f09NoDocResult.Facts |> List.exists (fun f -> f.Value = Gov(Decided(RuleId "doc-implies-task", Pass)))
+printfn "[F09] after removal = %d rules (kernel + task intact) · cross rule inert = %b" f09NoDoc.Catalog.Length f09Inert

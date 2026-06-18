@@ -24,6 +24,27 @@ can govern itself **without** copying another domain's vocabulary or layout.
 Nothing else. Inference, arbitration, evidence, rendering, hashing, explanation,
 severity, and run modes all come from the kernel.
 
+**Shipped surface (F09, `FS.GG.Governance.Adapters.Spi`).** These five are bundled
+with the F04 `Bridge` (kernel wiring — how the domain-neutral `RuleOutcome` embeds in
+`'fact`, the judge identity, the artifact-content hash read from facts) into one total
+record:
+
+```fsharp
+type Adapter<'fact, 'artifact, 'change> =
+    { Identify: 'fact -> FactId          // (1) names the closed fact union
+      ToRef:    'artifact -> ArtifactRef // (2) artifact mapping
+      Probes:   Probe<'fact> list        // (3) declared probe vocabulary
+      Rules:    CheckRule<'fact> list    // (4) the catalog
+      Fences:   Fence<'change> list      // (5) high-stakes surfaces
+      Bridge:   Bridge<'fact> }          //     F04 kernel wiring (not new domain logic)
+```
+
+Because it is a record, an adapter that omits a component **does not compile** — adoption
+is total, never silently partial. A single adapter governs itself through the kernel via
+`Adapter.toRules adapter` (`= Rules |> List.map (CheckRule.toRule Bridge)`), then
+`FixedPoint.evaluate`, `Route.route`, and `Check.render`/`explain` — the adapter contains
+none of those facilities.
+
 ## Design-system adapter (the first adapter)
 
 The design-system adapter governs adherence to a design language (the worked
@@ -144,6 +165,28 @@ type ProjectFact =
 This is a closed-union specialization of *Data Types à la Carte*: the kernel
 folds one `ProjectFact` algebra assembled from the per-domain pieces. Single-domain
 adapters stay dumb and independent; everything cross-cutting lives in the root.
+
+**Shipped surface (F09).** The consumer authors the closed `ProjectFact` coproduct (with
+its own `Gov of RuleOutcome` case), its single-case active patterns, its `inject`
+constructors, and the project `Identify`/`Bridge` at the one root; F09 ships the *generic*
+machinery that lifts and composes:
+
+```fsharp
+// per adapter: lift its catalog (via Lift.checkRule) + contramap its fences (Lift.fence)
+let lifted = Composition.lift (|Design|_|) narrowDesign designAdapter   // Lifted<ProjectFact, ProjectChange>
+// assemble: concat catalogs + the small named cross-domain set; union fences deduped by name
+let composed = Composition.compose [ lifted; … ] crossDomainRules        // Composed<ProjectFact, ProjectChange>
+// evaluate & route through the UNCHANGED kernel
+let rules = Composition.toRules projBridge composed                      // = Catalog |> map (CheckRule.toRule projBridge)
+let result = FixedPoint.evaluate projIdentify rules supplied
+let route  = Route.route composed.Fences composed.Catalog mode change
+```
+
+The lift is semantics-preserving: a lifted rule's `(verdict, provenance)` and its
+`Check.render`/`hash`/`reads`/`isReified` are byte-for-byte identical to the standalone
+original (the F04 agent-review cache key does not move). Removing a domain is dropping one
+`Lifted` from the `compose` list; a cross-domain rule whose antecedent domain is gone goes
+**inert** (its antecedent probe reports `Unmet`, so the `Implies` is vacuously satisfied).
 
 **Cross-domain coupling is an explicit, deterministic combinator, never ad-hoc
 glue** — a "design task must carry a recorded review" rule is written as `Implies`
