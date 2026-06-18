@@ -36,6 +36,20 @@ for derived facts, JSON-friendly explanation output, and simple evidence-freshne
 predicates — with no dependency on FAKE, git, filesystem scanning, Skia, NuGet
 publishing, template profiles, or rendering project paths.
 
+## Kernel (F01) — usage precondition
+
+The kernel — `FS.GG.Governance.Kernel` (`src/FS.GG.Governance.Kernel/`) — is a pure,
+BCL-only forward-chaining reasoner: `FixedPoint.evaluate identify rules supplied`
+returns the least fixed point of the supplied facts under the rules, with provenance
+for every derived fact and a `Rounds` convergence count.
+
+> **Precondition (documented, not runtime-enforced — FR-012).** Rules must be
+> **monotonic** (add-only): given a larger fact set a rule never retracts a
+> previously producible fact. Negated, aggregated, or recursively-negated facts are
+> **supplied** from a lower stratum, never derived within the same fixed point. The
+> kernel does not reject non-monotonic rule sets; honoring this is the caller's
+> responsibility (stratification analysis may enforce it in a later feature).
+
 ## Status
 
 **Bootstrapping (Stage G1).** Fresh Spec Kit repository established; the first
