@@ -30,6 +30,12 @@ default** with a loud, local-only escape hatch for everyday work.
 
 Read in order:
 
+- [The theory of the rule engine — a textbook](rule-engine-theory.md) — a
+  self-contained teaching narrative tying the whole design together: the logic and
+  algebra, reduction to a fixed point (with diagrams), the failure modes and their
+  mitigations, four worked adapter examples, the planning/optimization boundary, and
+  the pros and cons of governing an agent. Start here for the connected story; the
+  documents below are the per-topic reference.
 - [Goals and principles](principles.md) — what the system is, the pivot away from
   the monolith, kernel-as-product, and the four principles the design is built
   to guarantee (light by default, advisory by default, explainable by
