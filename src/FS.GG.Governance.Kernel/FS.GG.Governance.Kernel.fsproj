@@ -6,6 +6,10 @@
        Directory.Build.props. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Kernel</RootNamespace>
+    <!-- M1 exit (F06 T024): the kernel is now the first useful product, so it packs
+         (overrides IsPackable=false from Directory.Build.props). The test project stays
+         non-packable. Packaging metadata only — no .fsi, no behaviour, no new dependency. -->
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +39,18 @@
          LAST. SHA-256 only — no new dependency (FR-016, SC-009). -->
     <Compile Include="CheckRule.fsi" />
     <Compile Include="CheckRule.fs" />
+    <!-- F06 output layer: the three derivations that turn the kernel's in-memory reasoning
+         into portable data and complete Milestone M1. Compiled AFTER CheckRule.* in the
+         order Freshness → Contract → Json (Json LAST): Contract references F04
+         CheckRule/Severity/SpecSource + F03 Check.render; Json references F03 Explanation,
+         F05 EvidenceState, and F06 ContractEntry. JSON via the shared-framework
+         System.Text.Json — zero new dependency (plan Structure Decision, data-model §6). -->
+    <Compile Include="Freshness.fsi" />
+    <Compile Include="Freshness.fs" />
+    <Compile Include="Contract.fsi" />
+    <Compile Include="Contract.fs" />
+    <Compile Include="Json.fsi" />
+    <Compile Include="Json.fs" />
   </ItemGroup>
 
 </Project>
