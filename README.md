@@ -35,7 +35,9 @@ FS.GG.Governance.Kernel   pure, BCL-only — the inference core (M1, done)
   └─ routing: Stakes / Severity / RunMode / Route           (F07)
 
 FS.GG.Governance.Host     effects shell (I/O) — sense → plan → act (F08, done)
-FS.GG.Governance.Adapters.* · .Cli   SPI, domain adapters, CLI    (F09–F13, planned)
+FS.GG.Governance.Adapters.Spi      adapter SPI + lift/compose      (F09, done)
+FS.GG.Governance.Adapters.SpecKit  first concrete adapter — Spec Kit as data (F10, done)
+FS.GG.Governance.Adapters.* · .Cli   more domains, CLI             (F11–F13, planned)
 ```
 
 The kernel is a pure, **zero-dependency** forward-chaining (Datalog-style,
@@ -53,11 +55,14 @@ fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 |---|---|---|
 | **M1** | Pure kernel + evidence + explanation (F01–F06) | ✅ Reached |
 | **M2** | Light routing + effects edge (F07–F08) | ✅ Reached |
-| **M3** | Adapter SPI + two domains (F09–F11) | Planned |
+| **M3** | Adapter SPI + two domains (F09–F11) | 🚧 In progress — F09 (SPI) + F10 (Spec Kit adapter) done; F11 next |
 | **M4** | CLI + external validation (F12–F13) | Planned |
 
-F01–F08 are merged to `main` (91/91 tests green). The kernel packs to
+F01–F10 are merged to `main` (129/129 tests green). The kernel packs to
 `~/.local/share/nuget-local/`; the `Host` effects edge depends on it (zero new dependency).
+F10 is the **first concrete production adapter** — it governs this repository's own Spec Kit
+workflow as data, supplying only its five SPI components and reusing 100% of the kernel
+(pure: no I/O, no new dependency; depends on the F09 SPI, never the reverse).
 
 ## Design lineage
 

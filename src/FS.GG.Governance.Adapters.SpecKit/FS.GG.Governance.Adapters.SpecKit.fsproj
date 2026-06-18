@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F10 Spec Kit adapter: the FIRST concrete production adapter, domain #1 of
+       Milestone M3 (the adoption bar). A pure value/fold layer above the F09 SPI — it
+       takes a SINGLE ProjectReference on the SPI (which transitively brings the kernel)
+       and adds ZERO PackageReference (FR-016): BCL + FSharp.Core + Spi + Kernel only.
+       Neither the kernel nor the SPI references this project (dependency direction
+       adapter -> SPI -> kernel, SC-008). It is PURE — values and total folds, no I/O,
+       no Model/Msg/Effect, no interpreter (Principle IV N/A). Does NOT pack (the kernel
+       packs at F06; the CLI tool packs at F12) — IsPackable=false inherited from
+       Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Adapters.SpecKit</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile order SpecKit -> Catalog: Catalog references SpecKit's vocabulary /
+         whenPhase / bridge / probes and the F09 Adapter<...> (research D1/build order). -->
+    <Compile Include="SpecKit.fsi" />
+    <Compile Include="SpecKit.fs" />
+    <Compile Include="Catalog.fsi" />
+    <Compile Include="Catalog.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+  </ItemGroup>
+
+</Project>
