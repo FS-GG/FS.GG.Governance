@@ -1,166 +1,324 @@
-# FS-Skia-UI governance as a replacement for Spec Kit
+# FS.GG.Governance replacement capability analysis for FS-Skia-UI
 
 **Timestamp:** 2026-06-18T23:37:18+02:00
-**Revision:** 2026-06-18T23:44:06+02:00
+**Revision:** 2026-06-18T23:54:39+02:00
 **Author:** Codex
-**Status:** Analysis, no implementation changes
-**Scope:** Research FS-Skia-UI / local SkiaViewer governance and analyze how this repository's rule system should become a custom framework that replaces Spec Kit rather than layering on top of it.
+**Status:** Research update, no implementation changes
+**Scope:** Research the current FS-Skia-UI repository and define what FS.GG.Governance must own so the new FS.GG system replaces FS-Skia-UI's governance/build/product-generation capability envelope, not merely Spec Kit.
 
 ## Executive summary
 
-The target should be a full FS.GG governance framework, not a Spec Kit adapter. Spec Kit is useful as historical input because it gave the repository a constitution, feature artifacts, plans, tasks, and lifecycle vocabulary. It should not remain the governing source of truth.
+The target should be a full FS.GG governance and generation framework that makes FS-Skia-UI unnecessary as a capability provider. The prior direction, "replace Spec Kit," was correct but too narrow. FS-Skia-UI is not just a Spec Kit wrapper. It combines:
 
-The right replacement architecture is:
+- a governed F# desktop UI/product template;
+- a compiled F# build/governance engine;
+- route selection from git diffs;
+- typed gate identities and target metadata;
+- synthetic-evidence tracking and merge audit;
+- generated product validation;
+- capability catalogs, package/API surface baselines, and FSI transcript checks;
+- design-token, control-catalog, contrast, docs, and fidelity checks;
+- synchronized agent skills;
+- single-source generated views with drift gates;
+- CI documentation, docs deployment, and NuGet trusted publishing.
 
-- A custom FS.GG lifecycle with its own stages, commands, artifact names, and storage layout.
-- A pure rule system as the authority for checks, routing, explanation, evidence, and gates.
-- Domain adapters for workflow, design/rendering, package/API surface, docs, and product-specific invariants.
-- A generated readiness layer for machine-readable reports, not hand-maintained status prose.
-- CI and local commands that run the same rule catalog in different modes.
+Replacing FS-Skia-UI in capability means FS.GG.Governance must become the product-neutral rule and evidence platform, while FS.GG.Rendering supplies the rendering/UI packages, generated product templates, samples, and product skills. Governance alone should not reimplement the renderer, controls, or window host. It must, however, govern those surfaces well enough that an FS.GG generated product no longer needs FS-Skia-UI's `FS.Skia.UI.Build`, template, skill tree, route selector, evidence engine, package-surface checks, or release gates.
 
-FS-Skia-UI's governance prior art is valuable because it already solved practical problems that Spec Kit leaves mostly as prompt discipline: route selection from changed paths, evidence taint, generated-view currency, and merge-time enforcement. This repo already implements the deeper general machinery: reified checks, `CheckTier`, deterministic routing, evidence propagation, a host effects loop, review caching, contracts, explanations, and a CLI. What remains is to replace the SpecKit-specific adapter/terminology with a first-class custom workflow adapter and artifact model.
+The replacement architecture is:
 
-The local sibling checkout is named `SkiaViewer`, not `FS-Skia-UI`. It has many Spec Kit-style artifacts today: 9 `tasks.md` files, 21 `.fsi` files, 3 surface-area test/baseline files, 14 F# scripts, and a constitution. Those should be treated as migration material. They are not the desired future contract. The desired future contract is an FS.GG-owned feature/work/evidence model with machine-readable topology, phase/stage facts, and gate reports.
+- Keep the FS.GG.Governance kernel as the reusable rule algebra: reified `Check`, `CheckRule`, evidence, route, contract, explanation, JSON, adapters, host loop, and CLI.
+- Add an FS.GG-owned workflow/product adapter that replaces the SpecKit adapter as the main path.
+- Add concrete rule packs for workflow, package/API surface, generated product/template, skill quality, docs/examples, design/rendering, distribution, provenance, and CI.
+- Replace FS-Skia-UI's FAKE-bound gates with stable CLI/library contracts. FAKE can remain an optional runner, not the architecture.
+- Make generated readiness files machine-readable first, with Markdown only as rendered views.
+- Make `fsgg ship --mode gate --json` the branch-protection status check.
 
-## Sources and method
+The local FS.GG.Governance codebase already has the harder reusable core: 39 non-generated source/interface files under `src/`, 50 non-generated F# test files, 12 feature specs, a reified check algebra, an adapter SPI, SpecKit and design-system adapters, a host loop, and a CLI that can emit route, contract, explain, and evidence output. The missing work is not theory. It is parity engineering against FS-Skia-UI's capability surface.
 
-Offline sources inspected:
+## Research snapshot
 
-- This repository: `src/FS.GG.Governance.Kernel`, `src/FS.GG.Governance.Host`, `src/FS.GG.Governance.Adapters.SpecKit`, `src/FS.GG.Governance.Adapters.DesignSystem`, `src/FS.GG.Governance.Cli`, `docs/governance-design`, `specs/010-adapter-speckit`, and CLI tests.
-- Local sibling: `/home/developer/projects/SkiaViewer`, especially `.specify/memory/constitution.md`, `CLAUDE.md`, `README.md`, `specs/**`, `src/**/*.fsi`, `tests/**/*Surface*`, and `scripts/**/*.fsx`.
-- Empirical CLI runs, cache-only and read-only:
-  - `dotnet run --project src/FS.GG.Governance.Cli -- route --root /home/developer/projects/SkiaViewer --mode inner --json --review-budget 0 --domain speckit`
-  - `dotnet run --project src/FS.GG.Governance.Cli -- evidence --root /home/developer/projects/SkiaViewer --mode inner --json --review-budget 0 --domain speckit`
-  - `dotnet run --project src/FS.GG.Governance.Cli -- route --root /home/developer/projects/SkiaViewer --mode gate --json --review-budget 0 --domain speckit`
+Online source of truth inspected:
 
-Online sources inspected:
+- GitHub repository: <https://github.com/EHotwagner/FS-Skia-UI>
+- Fresh research clone at commit `f943406829a9218b2882e09eb88d4ddb539c5e72` (`2026-06-16 10:01:40 +0200`, subject `docs: add design-system governance domain detailed design`)
+- GitHub repository metadata on 2026-06-18: `created_at=2026-05-12T13:18:59Z`, `pushed_at=2026-06-16T08:16:52Z`, `archived=false`, default branch `main`, 2 stars, 0 forks, 0 open issues
+- FS-Skia-UI governance docs:
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/index.md>
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/routing-and-gates.md>
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/evidence-and-audit.md>
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/single-source-generation.md>
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/speckit-placement.md>
+- FS-Skia-UI architecture/distribution docs:
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/architecture/governance.md>
+  - <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/distribution.md>
+- FS-Skia-UI implementation files in the research clone:
+  - `README.md`
+  - `AGENTS.md`
+  - `.github/workflows/docs.yml`
+  - `.github/workflows/publish.yml`
+  - `build/Governance/**`
+  - `validation.contract.yml`
+  - `template/capabilities.yml`
+  - `.agents/skills/**`
+  - `.claude/skills/**`
+  - `specs/**`
+  - `readiness/**`
+  - `src/**/*.fsi`
+  - `tests/**`
+- External references used as comparison points:
+  - GitHub status checks / branch protection: <https://docs.github.com/articles/about-status-checks>
+  - NuGet trusted publishing: <https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing>
+  - F# signature files: <https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/signature-files>
+  - SLSA v1.2 requirements and provenance: <https://slsa.dev/spec/v1.2/requirements>, <https://slsa.dev/spec/v1.2/provenance>
+  - in-toto attestation framework: <https://github.com/in-toto/attestation>
+  - Cedar: <https://docs.cedarpolicy.com/>
+  - Open Policy Agent: <https://www.openpolicyagent.org/docs>
 
-- FS-Skia-UI governance index: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/index.md>
-- FS-Skia-UI routing and gates: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/routing-and-gates.md>
-- FS-Skia-UI evidence and audit: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/evidence-and-audit.md>
-- FS-Skia-UI single-source generation: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/single-source-generation.md>
-- FS-Skia-UI Spec Kit placement: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/governance/speckit-placement.md>
-- FS-Skia-UI design-system governance design: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/reports/2026-06-16-0958-design-system-governance-domain-detailed-design.md>
-- FS-Skia-UI kernel split design: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/reports/2026-06-07-0838-governance-kernel-split-detailed-design.md>
-- FS-Skia-UI kernel extraction plan: <https://raw.githubusercontent.com/EHotwagner/FS-Skia-UI/main/docs/reports/2026-06-06-1055-governance-kernel-extraction-implementation-plan.md>
-- GitHub Spec Kit quickstart and repository, used only as replacement baseline: <https://github.github.com/spec-kit/quickstart.html>, <https://github.com/github/spec-kit>
-- Microsoft F# signature files: <https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/signature-files>
-- Cedar documentation: <https://docs.cedarpolicy.com/>
-- Open Policy Agent documentation: <https://openpolicyagent.org/docs>
-- SLSA provenance requirements: <https://slsa.dev/spec/v1.0/requirements>
-- in-toto attestation framework: <https://github.com/in-toto/attestation>
-- GitHub status checks / branch protection: <https://docs.github.com/articles/about-status-checks>
+Local sources inspected:
 
-## What should be replaced
+- This repository: `src/FS.GG.Governance.Kernel`, `src/FS.GG.Governance.Host`, `src/FS.GG.Governance.Adapters.Spi`, `src/FS.GG.Governance.Adapters.SpecKit`, `src/FS.GG.Governance.Adapters.DesignSystem`, `src/FS.GG.Governance.Cli`, `docs/governance-design`, `specs/**`, and CLI tests.
+- Local generated-product sibling: `/home/developer/projects/SkiaViewer`, especially `.specify/memory/constitution.md`, `CLAUDE.md`, `README.md`, `specs/**`, `src/**/*.fsi`, surface-area tests/baselines, and scripts.
 
-Spec Kit provides five things today:
+## FS-Skia-UI capability inventory
 
-| Spec Kit role | Why replace it | FS.GG replacement |
+The FS-Skia-UI repository currently carries a broad, integrated capability surface:
+
+| Area | Observed evidence | Replacement implication |
 |---|---|---|
-| Lifecycle commands (`specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`) | The lifecycle is prompt/tool convention, not a typed product contract | FS.GG commands backed by typed workflow state and rule catalogs |
-| Artifact layout (`.specify`, `specs/<feature>/*`) | Names and structure are external and too prose-heavy for gates | `.fsgg/` project policy plus `work/<id>/` feature artifacts and `readiness/<id>/` generated evidence |
-| Constitution as prompt context | Good as prose, weak as executable configuration | Policy/dial as data, rendered to human docs and enforced by rules |
-| Task statuses as Markdown checkboxes | Human-readable, weak for dependency/evidence semantics | Machine-readable work graph plus rendered Markdown view |
-| Analyze as an agent pass | Produces reports but does not define durable semantics | Deterministic `contract`, `route`, `explain`, and `evidence` outputs from the same rule values |
+| Repository scale | 11,538 tracked files in the shallow research clone; GitHub page reports 438 commits | Replacement must be a migration path, not a hand rewrite. |
+| Feature workflow | 120 `specs/*/tasks.md` files and 8,969 files under `specs/*/readiness/**` | FS.GG needs import and durable readiness support, not just new greenfield schemas. |
+| Compiled governance | 106 `.fs`/`.fsi` files under `build/Governance` | FS.GG.Governance must absorb behavior into reusable libraries/adapters. |
+| Target model | Closed `Targets.Target` union with routeable gates, metadata, prerequisites, costs, failure owners | FS.GG needs typed gate ids and generated target metadata. |
+| Routing | `Routing.Diff`, tiers, path globs, default-deny, dogfood forcing, expected artifacts, `Route --enforce` | FS.GG must provide diff-sensitive route selection with JSON and explanation. |
+| Evidence graph | Five authored task states plus computed `AutoSynthetic` / `[S*]`, dependency graph, cycle detection | FS.GG evidence model already maps conceptually; it needs product workflow sensing. |
+| Merge audit | `EvidenceAudit` combines synthetic taint, SEH classification, accepted deferrals, and diff-scan blockers | FS.GG `ship` must produce a blocking audit and machine-readable verdict. |
+| Single-source generation | `validation.contract.yml`, `.claude` skills, docs, API-surface docs, tokens, controls catalog, baselines | FS.GG must make generated views output, not peer sources. |
+| Capability catalog | `template/capabilities.yml` maps packages, projects, `.fsi` contracts, tests, skills, fragments, evidence, baselines | FS.GG.Rendering needs an equivalent catalog consumed by FS.GG.Governance. |
+| Public API control | 65 `.fsi` files; package surface checks, baselines, FSI transcripts, per-package diffs | FS.GG package adapters must govern `.fsi` and generated reference surfaces. |
+| Tests/samples | 217 F# test/interface files under `tests/`; 13 sample apps | Replacement needs generated-product and sample smoke gates, not just library tests. |
+| Skills | 37 Codex `.agents/skills/**/SKILL.md` files mirrored to 37 Claude skills; 8 template/product skill files | FS.GG must govern skill contracts, paths, sync/mirroring, and generated product skills. |
+| Docs/design | 72 files under governance, architecture, controls, controls-design, and examples docs | Docs/examples are product-facing surfaces and must route to checks. |
+| Distribution | Docs workflow, publish workflow, 11 libraries plus template, NuGet trusted publishing, pre-publish checks | FS.GG must define release/publish governance if it replaces generated-product distribution. |
 
-The replacement should not be "Spec Kit with renamed files." It should make the rule system the product and leave Markdown as a view.
+FS-Skia-UI's README says the repository is "archived for now" in prose, but GitHub metadata reports `archived=false`. Treat the project as active source material frozen at the inspected commit, not as a dead repository whose behavior can be ignored.
+
+## What "replace FS-Skia-UI in capability" means
+
+FS-Skia-UI is two things at once:
+
+1. A UI/runtime stack: Scene, SkiaViewer, Elmish, Input, KeyboardInput, Layout, Controls, Testing, SkillSupport, samples, docs, and a `dotnet new` template.
+2. A governed development system: route, gates, evidence, generated products, capability catalog, skills, single-source generation, surface governance, CI, and publishing.
+
+FS.GG.Governance should replace the second category directly. FS.GG.Rendering should replace the first category directly. The new system only replaces FS-Skia-UI in capability when the two are integrated:
+
+- FS.GG.Rendering publishes or generates the runtime/product surfaces.
+- FS.GG.Governance senses those surfaces, routes changes, checks contracts, validates generated products, emits readiness, and blocks ship when evidence is insufficient.
+- Generated products consume FS.GG packages and FS.GG governance commands, not `FS.Skia.UI.Build`, `FS.Skia.UI.Template`, or FS-Skia-UI skills.
+
+Therefore the replacement target is not "rename Spec Kit" and not "port `build/Governance`." It is "deliver every externally useful governance, generation, evidence, and distribution capability that made FS-Skia-UI usable."
+
+## Capability parity matrix
+
+| FS-Skia-UI capability | Current FS.GG.Governance position | Required replacement work |
+|---|---|---|
+| Compiled typed policy | Stronger kernel exists: reified `Check`, `CheckRule`, verdict, contract, explanation, evidence | Add product-level target/gate registry and rule packs. |
+| Diff route selection | Kernel has route model; CLI has `route`; SpecKit adapter is not enough | Add git/CI snapshot sensor, changed-path facts, default-deny, `--paths`, branch/base support, and JSON route trace. |
+| Tiers and modes | FS.GG has `RunMode` and rule severity concepts | Define FS.GG-specific tiers/modes: inner, focused, verify, ship, release. |
+| Target identities | No FS-Skia-style target union for products yet | Add typed `GateId`/`TargetId` registry with metadata, prerequisites, cost, timeout, failure owner. |
+| Evidence graph | Kernel evidence supports authored and effective states | Add workflow/product evidence schemas and import from old `tasks.md`/`tasks.deps.yml`. |
+| Merge audit | Kernel can report failures; CLI can emit evidence | Add `fsgg ship` audit: synthetic taint, blocking findings, stale generated views, missing product evidence, exit codes. |
+| Single-source generated views | Kernel renders contract/explain; no broad regeneration command yet | Add generation manifest, currency checks, and `fsgg refresh` for contracts, skill views, docs views, surface baselines. |
+| Capability catalog | No product catalog schema in Governance | Define `.fsgg/capabilities.yml` for FS.GG.Rendering packages, skills, tests, surfaces, samples, docs, evidence. |
+| Public `.fsi` governance | Spec and design adapters do not own F# package surfaces | Add package/API adapter for `.fsi`, surface baselines, compatibility notes, FSI transcripts. |
+| Template/generated product checks | CLI can inspect a root but does not instantiate products | Add generated product adapter: instantiate template, run product Dev/Test/Verify, verify generated guidance and capabilities. |
+| Skill quality/sync | Skills exist outside current repo model | Add skill adapter for `SKILL.md` metadata, required references, product-skill paths, mirror/currency if multiple agent surfaces are supported. |
+| Design/rendering checks | Design-system adapter exists as pure facts/rules | Connect sensors to FS.GG.Rendering: tokens, captures, contrast, interaction states, catalog/docs fidelity. |
+| Docs/examples | Not yet a first-class rule pack | Add docs/examples adapter for fsdocs/literate scripts, links, examples, public API docs, generated docs currency. |
+| Distribution/publish | Out of current kernel scope | Add package/release rule pack: version bump, packability, metadata, trusted-publishing readiness, provenance artifact. |
+| CI/branch protection | CLI can exit; no prescribed status contract | Make `fsgg ship --mode gate --json` the required GitHub status check. |
 
 ## What to keep from FS-Skia-UI
 
-FS-Skia-UI governance is the best source material because it already moved beyond pure Spec Kit. Keep these concepts:
+Keep the ideas, not the coupling:
 
-| Concept | Keep? | Reason |
+| Concept | Keep | Notes |
 |---|---:|---|
-| Typed routing targets | Yes | A closed F# union catches invalid gate names at compile time. |
-| Path-diff route selection | Yes | Real governance starts from what changed, not from which command the user remembered to run. |
-| Evidence states `[ ]`, `[X]`, `[S]`, `[F]`, `[-]`, computed `[S*]` | Yes | This is stronger than task checkboxes and maps directly to this repo's `EvidenceState`. |
-| Evidence audit as merge gate | Yes | Synthetic or tainted evidence should not reach trunk silently. |
-| Single-source generation | Yes | Generated views must be rendered from canonical sources and checked for currency. |
-| Design-system rule catalog and `CheckTier` | Yes | Machine/agent/human judgement split is the right abstraction. |
-| FAKE target coupling | No | The framework should expose CLI/library contracts; FAKE can be one consumer, not the architecture. |
-| Spec Kit placement docs | No as runtime contract | Useful migration notes, but future placement should be FS.GG-owned stages. |
+| Typed gate identities | Yes | FS-Skia-UI uses a closed F# union. FS.GG should do the same or use an equally typed registry. |
+| Changed-path route selection | Yes | This is essential. Governance must start from repository facts, not from which command an agent remembered. |
+| Default-deny for unknown paths | Yes | Unknown blast radius should route to stronger proof. |
+| Evidence states and synthetic propagation | Yes | FS.GG already has matching kernel vocabulary; make it workflow/product-visible. |
+| Merge-time audit | Yes | `ship` must be a hard gate with machine-readable reasons. |
+| Single-source generation | Yes | Generated files are views and must be currency-checked. |
+| Capability catalog | Yes | It is the bridge from packages/templates/skills/tests to governance facts. |
+| Public `.fsi` surface discipline | Yes | F# signature files are a natural package contract boundary. |
+| Skill path/quality governance | Yes | Generated products need reliable agent capabilities. |
+| Design-token/control checks | Yes | FS.GG.Rendering needs these as domain adapters. |
+| NuGet trusted-publishing flow | Yes, if FS.GG publishes templates/packages | Release governance should cover publish credentials, metadata, pack outputs, and idempotency. |
+| Spec Kit as primary workflow | No | Treat `.specify` and `specs/**` as import/migration input, not the future contract. |
+| FAKE as required architecture | No | Use CLI/library contracts; FAKE can call them. |
+| Plain-text-only route output | No | FS.GG should emit JSON and explain traces from day one. |
+| Presence-only `--enforce` | No | FS.GG should include freshness, source hash, commit/base, and provenance where practical. |
 
-## Proposed FS.GG framework lifecycle
+## Proposed FS.GG replacement model
 
-Replace Spec Kit phases with FS.GG stages. These are facts in the workflow adapter, not hard-coded command branches.
+### Product split
+
+| Concern | Owner |
+|---|---|
+| Rule algebra, verdicts, evidence propagation, route/contract/explain/evidence JSON | `FS.GG.Governance.Kernel` |
+| Adapter composition and cross-domain lifting | `FS.GG.Governance.Adapters.Spi` |
+| Workflow state, work graph, evidence declarations, ship audit | New `FS.GG.Governance.Adapters.Workflow` |
+| Package/API surfaces, `.fsi`, baselines, FSI transcripts | New package/API adapter |
+| Generated product/template validation | New generated-product adapter, consuming FS.GG.Rendering templates |
+| Skills, skill lists, skill path contracts, mirrors | New skill adapter |
+| Design/rendering facts: tokens, captures, contrast, interaction states | Existing design-system adapter plus FS.GG.Rendering sensors |
+| Docs/examples/reference generation | New docs/examples adapter |
+| Release/publish/provenance | New distribution adapter |
+| CLI user/CI surface | `FS.GG.Governance.Cli` |
+| Rendering/UI packages/templates/samples | `FS.GG.Rendering` |
+
+### Lifecycle
+
+Replace Spec Kit phases with FS.GG stages. These stages are facts in the workflow adapter, not command folklore.
 
 | Stage | Purpose | Primary command | Gate posture |
 |---|---|---|---|
-| `Charter` | Establish project policy, packages, surfaces, domains, enforcement dial | `fsgg work charter` | Advisory until first protected branch setup |
+| `Charter` | Establish project policy, package surfaces, domains, default gates, branch policy | `fsgg init` / `fsgg charter` | Advisory until branch protection is configured |
 | `Intent` | Capture user value, scope, non-goals, acceptance criteria | `fsgg work intent <id>` | Advisory |
-| `Design` | Decide architecture, public contracts, dependencies, evidence plan | `fsgg work design <id>` | Advisory, with high-stakes preview |
-| `WorkGraph` | Produce typed tasks, dependencies, owners, required evidence | `fsgg work graph <id>` | Advisory or optional early fence |
-| `Implement` | Execute tasks and update evidence declarations | `fsgg work update <id>` | Advisory |
-| `Verify` | Run product tests, surface checks, docs checks, generated-view currency checks | `fsgg verify <id>` | Advisory locally, blocking in CI for selected surfaces |
-| `Ship` | Recompute from base/head, enforce blocking rules, publish readiness | `fsgg ship <id>` | Blocking under `Gate` mode |
+| `Design` | Decide architecture, public contracts, dependencies, evidence plan | `fsgg work design <id>` | Advisory with route preview |
+| `WorkGraph` | Produce typed tasks, dependencies, owners, required evidence | `fsgg work graph <id>` | Advisory or early fence |
+| `Implement` | Execute tasks and declare evidence | `fsgg work update <id>` | Advisory local checks |
+| `Verify` | Run product tests, surface checks, docs checks, generated-view currency checks | `fsgg verify <id>` | Blocking in selected CI contexts |
+| `Ship` | Recompute from base/head, enforce blocking rules, publish readiness | `fsgg ship <id> --mode gate` | Blocking |
+| `Release` | Pack/publish after ship, with provenance and metadata checks | `fsgg release <id>` | Blocking for package publication |
 
-This keeps the useful Spec Kit separation of intent/design/work, but the semantics are FS.GG-owned and typed.
+This preserves the useful intent/design/work separation while removing Spec Kit as the governing artifact model.
 
-## Proposed artifacts
+### Artifacts
 
-Use Markdown for authoring where it is pleasant, but make YAML/JSON/F# generated contracts authoritative for gates.
+Use Markdown where it helps humans author, but make structured files authoritative for gates.
 
-| Artifact | Source/generated | Owner | Purpose |
-|---|---|---|---|
-| `.fsgg/project.yml` | Source | Maintainers | Project id, package surfaces, domains, default run modes, branch policy |
-| `.fsgg/policy.yml` | Source | Maintainers | Enforcement dial: blocking rules, early fences, review budgets, generated-view policy |
-| `.fsgg/rules/README.md` | Generated view | Governance CLI | Human-readable rendered rule catalog |
-| `work/<id>/intent.md` | Source | Product author/agent | User value, scope, non-goals, acceptance criteria |
-| `work/<id>/design.md` | Source | Engineer/agent | Architecture, API impact, dependency decisions, migration notes |
-| `work/<id>/contracts/` | Source | Engineer/agent | `.fsi`, OpenAPI, gRPC, package-surface contracts or links to canonical files |
-| `work/<id>/graph.yml` | Source | Agent/engine | Typed work items, dependencies, skills/tools, required evidence |
-| `work/<id>/evidence.yml` | Source | Implementer/agent | Declared evidence state per work item and evidence URI |
-| `work/<id>/notes.md` | Source | Maintainers/agent | Human context that is not used as a gate input |
-| `readiness/<id>/route.json` | Generated | Governance CLI | Fences tripped, advisory requirements, blocking gates |
-| `readiness/<id>/contract.json` | Generated | Governance CLI | Rendered rule contract from `Check.render` |
-| `readiness/<id>/explain.json` | Generated | Governance CLI | Proof trees for applicable rules |
-| `readiness/<id>/evidence.json` | Generated | Governance CLI | Effective evidence states, taint propagation, failures |
-| `readiness/<id>/audit.json` | Generated | CI / `fsgg ship` | Merge verdict and reasons |
-| `readiness/<id>/summary.md` | Generated view | Governance CLI | Human PR summary rendered from JSON |
-| Review cache records | Generated | Review edge / maintainer | Frozen agent verdicts keyed by judge, prompt, check hash, and artifact hashes |
+| Artifact | Source/generated | Purpose |
+|---|---|---|
+| `.fsgg/project.yml` | Source | Project id, package surfaces, capability catalog pointer, domains, default modes |
+| `.fsgg/policy.yml` | Source | Enforcement dial, blocking rules, review budgets, generated-view policy |
+| `.fsgg/capabilities.yml` | Source | FS.GG.Rendering package/template/skill/test/surface/doc/evidence catalog |
+| `.fsgg/gates.yml` or generated `gates.json` | Generated view | Human/tool view of typed gate registry |
+| `.fsgg/rules.md` | Generated view | Rendered rule catalog from `Check.render` |
+| `work/<id>/intent.md` | Source | User value, scope, non-goals, acceptance criteria |
+| `work/<id>/design.md` | Source | Architecture, API impact, dependency decisions, migration notes |
+| `work/<id>/contracts/` | Source | `.fsi`, OpenAPI, gRPC, package-surface contracts or links |
+| `work/<id>/graph.yml` | Source | Typed work items, dependencies, owners, skills, required evidence |
+| `work/<id>/evidence.yml` | Source | Declared evidence state per work item and evidence URI |
+| `readiness/<id>/route.json` | Generated | Matched rules, tiers, gates, paths, default-deny, trace |
+| `readiness/<id>/contract.json` | Generated | Rendered rule contract and input reads |
+| `readiness/<id>/explain.json` | Generated | Proof trees for applicable rules |
+| `readiness/<id>/evidence.json` | Generated | Effective evidence states, taint propagation, graph failures |
+| `readiness/<id>/audit.json` | Generated | Ship verdict, blockers, warnings, provenance references |
+| `readiness/<id>/summary.md` | Generated view | PR-friendly human summary rendered from JSON |
+| `readiness/<id>/attestations/` | Generated | Optional SLSA/in-toto-style provenance and verification summaries |
 
-Migration rule: existing `.specify/memory/constitution.md` maps once into `.fsgg/project.yml` and `.fsgg/policy.yml`; existing `specs/<feature>/spec.md`, `plan.md`, and `tasks.md` map once into `work/<id>/intent.md`, `design.md`, `graph.yml`, and `evidence.yml`.
+Migration rule: `.specify/memory/constitution.md`, `specs/<feature>/spec.md`, `plan.md`, `tasks.md`, `tasks.deps.yml`, and `readiness/**` are import sources. They are not the future source of truth.
 
-## Rule-system mapping
+## Rules and adapters needed
 
-The existing repo pieces map well, but the names should move away from SpecKit.
+| Adapter/rule pack | Facts it owns | Example rules |
+|---|---|---|
+| Workflow | Stage, work artifacts, graph nodes, dependencies, evidence declarations, policy dial | `workGraphWellFormed`, `designSatisfiesIntent`, `evidenceNotSynthetic`, `shipFence` |
+| Git/CI | Base/head, changed paths, branch, PR labels, status checks, dirty worktree, unknown paths | `changedPathsRouted`, `unknownPathDefaultsSafe`, `requiredStatusPresent` |
+| Package/API | Public `.fsi`, package projects, surface baselines, compatibility notes, FSI transcripts | `publicSurfaceHasSignature`, `surfaceBaselineCurrent`, `breakingChangeHasMigration` |
+| Generated product | Template profile, generated root, generated package pins, product tests, generated guidance | `templateInstantiates`, `generatedProductVerifies`, `generatedGuidanceCurrent` |
+| Skills | Skill ids, paths, references, capability mappings, mirrors, loaded-skill evidence | `skillExists`, `skillContractPathValid`, `declaredSkillLoadedBeforeWork` |
+| Docs/examples | FsDocs pages, examples, reference docs, API docs, links | `examplesRun`, `publicApiDocumented`, `generatedDocsCurrent` |
+| Design/rendering | Token source, generated token surface, captures, contrast, controls catalog, interaction states | `tokensCurrent`, `contrastPasses`, `interactionStatesCovered`, `captureMatchesPolicy` |
+| Build/package | Test commands, pack commands, package metadata, versioning, local/staging feeds | `testsPassed`, `packableProjectsPacked`, `versionBumpedWhenPacked`, `publishMetadataComplete` |
+| Provenance | Source commit, base/head, command, artifacts, digests, environment, generator identity | `readinessHasProvenance`, `artifactDigestMatches`, `attestationCurrent` |
 
-| Current piece | Replacement direction |
+The kernel should remain generic. Product vocabulary belongs in adapters and capability catalogs.
+
+## Current FS.GG.Governance strengths
+
+FS.GG.Governance already improves on FS-Skia-UI in several important ways:
+
+- `Check<'fact>` is a reified algebra with six folds: evaluate, render, hash, explain, reads, and reified-ness. FS-Skia-UI's routing and evidence are typed, but its gates are not generalized into a reusable rule algebra.
+- `CheckRule` and bridge concepts separate deterministic checks, agent-reviewed checks, and human-only rules.
+- Evidence is already domain-neutral and can represent synthetic and auto-synthetic propagation.
+- The adapter SPI lets domains keep their own vocabulary while reusing kernel behavior.
+- The CLI already exposes route, explain, contract, and evidence commands with text/JSON output.
+- The design-system adapter proves the approach is not Spec Kit-specific.
+
+That means the replacement should not copy FS-Skia-UI's `build/Governance` library. It should mine it for requirements and implement them as FS.GG adapters, sensors, generated views, and CLI commands.
+
+## Current gaps
+
+| Gap | Why it blocks replacement |
 |---|---|
-| `FS.GG.Governance.Adapters.SpecKit` | Replace with `FS.GG.Governance.Adapters.Workflow` or `...Work` |
-| `Phase` | Rename/redefine as `Stage` (`Charter`, `Intent`, `Design`, `WorkGraph`, `Implement`, `Verify`, `Ship`) |
-| `SpecKitArtifact` | Replace with `WorkArtifact` / `GovernanceArtifact` |
-| `SpecKitFact` | Replace with `WorkflowFact` carrying stage, artifact, work item, dependency, policy, surface, evidence facts |
-| `ConstitutionDial` | Replace with `PolicyDial` sourced from `.fsgg/policy.yml` |
-| `whenPhase` | Generalize to `whenStage` |
-| `tasksGraphWellFormed` | Rename to `workGraphWellFormed` and evaluate `work/<id>/graph.yml` |
-| `planSatisfiesSpec` | Rename to `designSatisfiesIntent` |
-| `tasksCompleteOrdered` | Rename to `workGraphCompleteOrdered` |
-| `featureInScope` | Keep as `HumanOnly`, maybe `workInScope` |
-| `evidenceNotSynthetic` | Keep semantics, source facts from `work/<id>/evidence.yml` |
-| `contractsCurrent` | Keep semantics, source from `.fsgg/project.yml` surfaces and generated-view manifests |
-| `mergeFence` | Rename to `shipFence` |
+| No FS.GG workflow adapter | The current main adapter is SpecKit-shaped. Replacement needs FS.GG-owned stages/artifacts. |
+| No git/CI snapshot adapter with path facts | Route parity requires base/head diff, dirty paths, unknown-path handling, and CI context. |
+| No typed product gate registry | FS-Skia-UI's target union/metadata is a major capability; FS.GG needs equivalent target identity. |
+| No generated-product/template adapter | FS-Skia-UI validates generated consumers; FS.GG cannot replace the template workflow without this. |
+| No capability catalog schema | Package/tests/skills/docs/evidence need a central catalog analogous to `template/capabilities.yml`. |
+| No package/API surface adapter | `.fsi` and baselines are central to F# product governance. |
+| No skill-quality adapter | Product generation depends on skills as artifacts, not incidental files. |
+| No single regeneration entry point | FS-Skia-UI's `RefreshSurfaceBaselines` pattern needs an FS.GG equivalent. |
+| No release/publish/provenance adapter | Replacement of distribution capability needs version/pack/publish checks. |
+| No branch-protection recipe | The final interface should be a required `fsgg ship` status check. |
 
-The kernel should remain unchanged. The replacement is mostly an adapter, CLI, and artifact-model change. The old SpecKit adapter can remain temporarily as a migration importer, but it should not be the main product surface.
+## Implementation roadmap
 
-## Who runs what
+### Phase 1: Route parity
 
-| Stage | Actor | Command | What is produced |
-|---|---|---|---|
-| Project setup | Maintainer | `fsgg init` | `.fsgg/project.yml`, `.fsgg/policy.yml`, initial rendered rule catalog |
-| Intent | Product author or agent | `fsgg work intent <id>` | `work/<id>/intent.md` and initial stage fact |
-| Design | Engineer/agent | `fsgg work design <id>` | `work/<id>/design.md`, `contracts/`, route preview |
-| Work graph | Agent | `fsgg work graph <id>` | `work/<id>/graph.yml`, rendered `work.md` if desired |
-| Implementation | Developer/agent | `fsgg work update <id>` | Updated `work/<id>/evidence.yml`, task evidence URIs |
-| Local check | Developer/agent | `fsgg check <id> --mode inner` | `readiness/<id>/route.json`, `contract.json`, `explain.json`, `evidence.json`; advisory exit |
-| Verification | Developer/CI | `fsgg verify <id>` plus product test commands | Product test evidence and generated-view currency evidence |
-| Agent review | Review edge | `fsgg review <id> --budget N` | Recorded review verdicts or pending review failures |
-| Ship gate | CI/maintainer | `fsgg ship <id> --mode gate` | `readiness/<id>/audit.json`, process exit `0` or blocking failure |
-| Release/pack | CI/maintainer | Product-specific package command after `fsgg ship` | Packages only after governance and tests pass |
+- Add a git/CI snapshot sensor that records base ref, head ref, changed paths, uncommitted paths, untracked paths, and path classifications.
+- Add typed `GateId`/`TargetId` metadata: name, prerequisites, timeout class, cost, failure owner, product-check flag.
+- Add path-glob route rules as reified checks or a typed route table rendered into `route.json` and `contract.json`.
+- Implement default-deny for unknown paths and a `--paths` authoring mode for scoped local checks.
+- Emit JSON route traces naming matched rules, unmatched paths, selected tier, gates, expected artifacts, and why each gate is present.
 
-This makes "who runs what" independent of Spec Kit. A GitHub required status check should run `fsgg ship` for protected branches. Local agent loops should run `fsgg check` often because it is advisory and cheap.
+### Phase 2: Workflow and evidence parity
+
+- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and `work/<id>/evidence.yml` schemas.
+- Add import from `.specify` and `specs/**` with explicit uncertainty warnings.
+- Port task DAG validation, dependency propagation, synthetic taint, SEH/accepted-deferral concepts, and diff-scan blocking into FS.GG terms.
+- Make `fsgg evidence` and `fsgg ship` produce `evidence.json`, `audit.json`, and `summary.md`.
+
+### Phase 3: Single-source generation parity
+
+- Add `fsgg refresh` as the one regeneration entry point.
+- Define a generation manifest listing source, generated view, renderer, and currency gate.
+- Generate rule catalog, gate metadata, capability docs, skill references, API-surface docs, and surface baselines.
+- Fail on stale generated views with diagnostics that name the source and the regeneration command.
+
+### Phase 4: Capability catalog and generated-product parity
+
+- Define `.fsgg/capabilities.yml` for FS.GG.Rendering packages, contracts, tests, product skills, template fragments, profiles, evidence tags, and baselines.
+- Add generated-product checks: instantiate template, restore, build, test, verify guidance, verify package pins, and validate generated governance artifacts.
+- Ensure generated products can run FS.GG governance locally without depending on the monorepo.
+
+### Phase 5: Package/API, design, docs, and skills parity
+
+- Add `.fsi` surface baseline generation and drift checks.
+- Add FSI transcript checks for public examples and package contracts.
+- Wire the design-system adapter to real FS.GG.Rendering token/capture/control facts.
+- Add docs/examples checks for FsDocs, literate scripts, public API docs, and link/reference currency.
+- Add skill-quality checks for local product skills, task skill lists, path contracts, and optional multi-agent mirrors.
+
+### Phase 6: Ship, release, and provenance
+
+- Define `fsgg verify` and `fsgg ship --mode gate --json` exit codes and stable output schema.
+- Add GitHub Actions workflow guidance so `fsgg ship` is the required protected-branch status.
+- Add release rules for version bumps, packable projects, package metadata, template pins, dry-run publish plans, and NuGet trusted publishing.
+- Emit optional SLSA/in-toto-style attestations for readiness artifacts, package outputs, and generated products.
+
+### Phase 7: Migration and retirement
+
+- Import FS-Skia-UI/SkiaViewer-style `specs/**` into `work/**`.
+- Keep the SpecKit adapter as compatibility/import tooling.
+- Move active generated products to `.fsgg` and FS.GG commands.
+- Retire `.specify` and FS-Skia-UI build/package dependencies from the main path.
 
 ## SkiaViewer migration assessment
+
+The local sibling checkout is named `SkiaViewer`, not `FS-Skia-UI`. It is a generated-product-style input, not the full upstream repository.
 
 Current local facts:
 
@@ -169,93 +327,58 @@ Current local facts:
 - 3 surface-area test/baseline files exist.
 - 14 F# scripts/prelude/example files exist.
 - 0 `tasks.deps.yml` files exist.
-- 0 `readiness/` generated reports exist.
+- 0 generated `readiness/` reports exist.
 - No `.governance-phase` marker exists.
 
-Under the replacement model, these are migration inputs:
+Under the replacement model:
 
 | Existing SkiaViewer artifact | Migration target |
 |---|---|
-| `.specify/memory/constitution.md` | `.fsgg/project.yml` + `.fsgg/policy.yml` + optional human `charter.md` |
-| `CLAUDE.md` generated from feature plans | Generated agent context from `.fsgg/project.yml` + latest `work/<id>` |
+| `.specify/memory/constitution.md` | `.fsgg/project.yml`, `.fsgg/policy.yml`, optional `charter.md` |
+| `CLAUDE.md` generated from feature plans | Generated agent context from `.fsgg`, active work, route, pending evidence, rule contract |
 | `specs/<id>/spec.md` | `work/<id>/intent.md` |
 | `specs/<id>/plan.md` | `work/<id>/design.md` |
-| `specs/<id>/contracts/` | `work/<id>/contracts/` or direct links to canonical `.fsi` files |
+| `specs/<id>/contracts/` | `work/<id>/contracts/` or links to canonical `.fsi` |
 | `specs/<id>/tasks.md` | `work/<id>/graph.yml` plus rendered `work.md` |
 | Markdown checkbox states | `work/<id>/evidence.yml` |
-| Surface-area tests | Package/API adapter facts and `contractsCurrent` checks |
-| Scripts/examples | Scriptability/domain rules and generated-view currency checks |
+| Surface-area tests | Package/API adapter facts and `surfaceBaselineCurrent` checks |
+| Scripts/examples | Docs/examples and scriptability rule facts |
 
-Empirical dry run of the current CLI over SkiaViewer is still useful as a baseline. It showed the current SpecKit adapter can read the sibling, but it also showed exactly why replacement work is needed: the existing data is not sufficiently machine-readable for reliable graph/evidence enforcement.
+## External policy comparison
 
-## Custom framework adapters needed
+Cedar and OPA are useful reminders that policy languages should be explainable, testable, and embeddable, but they do not replace the FS.GG kernel. FS.GG's domain is not only authorization. It needs typed F# facts, artifact reads, evidence propagation, route selection, generated views, and human/agent review tiers.
 
-| Adapter | Facts it owns | Example rules |
-|---|---|---|
-| Workflow adapter | Stage, work artifacts, graph nodes, dependencies, evidence declarations, policy dial | `workGraphWellFormed`, `designSatisfiesIntent`, `evidenceNotSynthetic`, `shipFence` |
-| Surface/API adapter | Public `.fsi`, package projects, surface baselines, compatibility notes | `publicSurfaceHasSignature`, `surfaceBaselineCurrent`, `breakingChangeHasMigration` |
-| Docs/scripts adapter | FsDocs pages, FSI preludes, example scripts, generated docs | `examplesRun`, `publicApiDocumented`, `generatedDocsCurrent` |
-| Design/rendering adapter | Token policy, rendered captures, accessibility measures, page/control states | `tokensCurrent`, `contrastPasses`, `interactionStatesCovered`, `captureMatchesPolicy` |
-| Build/package adapter | Test commands, pack commands, NuGet metadata, versioning | `testsPassed`, `packableProjectsPacked`, `versionBumpedWhenPacked` |
-| Git/CI adapter | Diff paths, base/head, branch, PR labels, status checks | `shipFenceTrips`, `requiredStatusesPresent`, `unknownPathDefaultsSafe` |
+SLSA and in-toto are better fits for the readiness/provenance layer. FS.GG should not claim SLSA compliance casually, but readiness outputs should be shaped so they can carry the same kind of artifact, digest, builder, source, and command facts. That would improve on FS-Skia-UI's presence-oriented readiness files and make stale evidence easier to detect.
 
-This is the point where FS-Skia-UI's old routing implementation matters: changed-path facts are essential. The current CLI's `Scope` field is not enough. The custom framework needs a snapshot layer that senses git diff, package metadata, generated view manifests, and feature/work ids.
+GitHub status checks are the practical enforcement edge. A required check must pass before protected-branch merge, so FS.GG's blocking interface should be one stable CI job running `fsgg ship --mode gate --json`, with product test jobs feeding evidence rather than existing as undocumented parallel policy.
 
-## Implementation roadmap
-
-1. Define the replacement vocabulary.
-   Add a new workflow spec for FS.GG-owned `Stage`, `WorkArtifact`, `WorkflowFact`, `WorkChange`, and `PolicyDial`. Treat `SpecKit` names as deprecated in new design docs.
-
-2. Add `.fsgg` and `work/` contracts.
-   Specify schemas for `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and `work/<id>/evidence.yml`. Keep Markdown files as source text or generated views, but not as the only machine input.
-
-3. Build `Adapters.Workflow`.
-   Port the existing SpecKit adapter semantics to the new vocabulary: `whenStage`, `workGraphWellFormed`, `designSatisfiesIntent`, `workGraphCompleteOrdered`, `evidenceNotSynthetic`, `contractsCurrent`, `workInScope`, and `shipFence`.
-
-4. Build a migration/import command.
-   Read `.specify` and `specs/**` once and emit `.fsgg` / `work/**`. The importer should mark uncertain mappings explicitly rather than hiding them.
-
-5. Extend snapshot sensing.
-   Sense changed paths from git, work id/stage from `.fsgg`, surface baselines, package projects, docs/scripts, design JSON facts, review cache, and generated-readiness outputs.
-
-6. Redesign CLI commands.
-   Keep low-level `route`, `contract`, `explain`, and `evidence`, but add product commands: `init`, `work intent`, `work design`, `work graph`, `work update`, `check`, `verify`, `review`, and `ship`.
-
-7. Replace agent context generation.
-   Stop generating agent guidance from Spec Kit plans. Generate it from `.fsgg/project.yml`, active `work/<id>`, current route, pending evidence, and rule contract.
-
-8. Enforce through CI.
-   Make `fsgg ship --mode gate` the required protected-branch status. Product tests and package commands should be evidence-producing steps consumed by the gate, not separate undocumented tribal checks.
-
-9. Retire Spec Kit adapter from the main path.
-   Keep it only as compatibility/import tooling until active repositories no longer use `.specify` / `specs/**` as primary state.
+NuGet trusted publishing matters only if FS.GG replaces FS-Skia-UI's distribution capability. If it does, release governance must verify package metadata, version pins, template pins, and publish plan before GitHub OIDC exchanges for a short-lived NuGet credential.
 
 ## Risks and mitigations
 
 | Risk | Why it matters | Mitigation |
 |---|---|---|
-| Recreating Spec Kit with different names | Adds churn without stronger guarantees | Make typed facts, schemas, evidence graph, and generated readiness authoritative |
-| Losing readable authoring flow | Spec Kit's appeal is simple Markdown workflow | Keep Markdown authoring views, but pair them with machine-readable state |
-| Migration ambiguity | Old `tasks.md` prose may not encode dependencies or evidence cleanly | Import with explicit warnings and require humans/agents to fill `graph.yml` and `evidence.yml` |
-| Over-coupling to FAKE | FS-Skia-UI had useful targets but also build-system coupling | Keep FAKE as optional command runner; framework contract is CLI/library/schema |
-| Agent judgement becoming a hidden gate | Agent review can be noisy and hard to reproduce | Keep `AgentReviewed` cached, budgeted, and advisory unless explicitly promoted by policy |
-| CI gate lacks diff facts | Without base/head path facts, route precision is weak | Add Git/CI adapter before making route parity claims |
-| Product adapters leak into kernel | Custom framework could become less reusable | Keep the kernel generic; put workflow/product facts in adapters |
+| Replacing Spec Kit but not FS-Skia-UI capability | Leaves generated-product, skill, package, surface, docs, and release checks behind | Treat FS-Skia-UI's full capability inventory as parity scope. |
+| Copying FS-Skia-UI's FAKE coupling | Recreates the same concurrency and build-runner constraints | Make CLI/library contracts primary; FAKE only calls them. |
+| Recreating Spec Kit with different names | Adds churn without stronger guarantees | Make structured state, typed facts, evidence graph, and generated readiness authoritative. |
+| Losing readable authoring flow | Spec Kit's Markdown was approachable | Keep Markdown authoring/rendered views, but pair them with source-of-truth YAML/JSON. |
+| Route output becomes another opaque oracle | Agents need to know why gates were selected | Emit JSON traces and proof/explain trees. |
+| Generated view drift | Hand-synced docs/contracts become stale | Add source/view/currency manifest and `fsgg refresh`. |
+| Stale evidence passes by presence | FS-Skia-UI documents this weakness in `Route --enforce` | Include source hash, command, base/head, generated-at, and artifact digest in readiness. |
+| Migration ambiguity | Old `tasks.md` prose may not encode dependencies/evidence | Import with warnings; require humans/agents to complete `graph.yml` and `evidence.yml`. |
+| Product adapters leak into kernel | Kernel loses reuse value | Keep product facts in adapters and capability catalogs. |
+| Release governance overclaims provenance | SLSA/in-toto have precise meanings | Emit compatible metadata first; claim formal compliance only after explicit verification. |
 
 ## Bottom line
 
-The corrected direction is replacement:
+The corrected direction is replacement of FS-Skia-UI's useful capabilities, not merely replacement of Spec Kit:
 
-- Do not make this repo "Spec Kit, but stricter."
-- Do not keep `.specify` and `specs/**` as the authoritative future artifact model.
-- Do not treat the SpecKit adapter as the end-state adoption path.
+1. FS.GG.Governance owns the generic rule system, adapters, route/contract/explain/evidence outputs, readiness/audit, and CI gate.
+2. FS.GG.Rendering owns the UI/runtime packages, templates, samples, product skills, and design/rendering artifacts.
+3. `.fsgg` and `work/<id>` replace `.specify` and `specs/<id>` as the authoritative lifecycle model.
+4. Capability catalogs connect package surfaces, tests, skills, docs, generated products, design captures, and release artifacts to governance facts.
+5. Generated readiness is structured, fresh, and auditable; Markdown is a view.
+6. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
+7. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
 
-Use FS-Skia-UI and SkiaViewer to mine lessons and migrate existing work. Then make FS.GG.Governance own the lifecycle:
-
-1. `.fsgg` project/policy files define the governance dial.
-2. `work/<id>` owns intent, design, graph, and evidence.
-3. Domain adapters turn repository state into typed facts.
-4. The kernel evaluates reified rules and produces route/contract/explain/evidence outputs.
-5. `fsgg ship` is the merge gate.
-
-That gives FS.GG an actual custom governance framework instead of a stricter wrapper around someone else's workflow.
+That gives FS.GG a real replacement for FS-Skia-UI's governance/build/generated-product capability instead of a stricter wrapper around someone else's workflow.
