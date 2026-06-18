@@ -93,3 +93,43 @@ TYPE FS.GG.Governance.Kernel.Rule`1
   [Property] FS.GG.Governance.Kernel.RuleId Id
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]] Apply
   [Property] System.String Description
+TYPE FS.GG.Governance.Kernel.Verdict
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFail()
+  [Method] Boolean get_IsPass()
+  [Method] Boolean get_IsUncertain()
+  [Method] FS.GG.Governance.Kernel.Verdict NewFail(System.String)
+  [Method] FS.GG.Governance.Kernel.Verdict NewUncertain(System.String)
+  [Method] FS.GG.Governance.Kernel.Verdict get_Pass()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Verdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Verdict+Fail
+  [NestedType] FS.GG.Governance.Kernel.Verdict+Tags
+  [NestedType] FS.GG.Governance.Kernel.Verdict+Uncertain
+  [Property] Boolean IsFail
+  [Property] Boolean IsPass
+  [Property] Boolean IsUncertain
+  [Property] FS.GG.Governance.Kernel.Verdict Pass
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Verdict+Fail
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.Kernel.Verdict+Tags
+  [Field] Int32 Fail
+  [Field] Int32 Pass
+  [Field] Int32 Uncertain
+TYPE FS.GG.Governance.Kernel.Verdict+Uncertain
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.Kernel.VerdictModule
+  [Method] FS.GG.Governance.Kernel.Verdict all(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Verdict])
+  [Method] FS.GG.Governance.Kernel.Verdict any(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Verdict])
+  [Method] FS.GG.Governance.Kernel.Verdict negate(FS.GG.Governance.Kernel.Verdict)

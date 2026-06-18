@@ -109,7 +109,7 @@ parallel once their dependencies land.
 
 ### Phase A — The kernel (the first useful product) · org G2–G3
 
-#### F01 · `001-kernel-core`
+#### F01 · `001-kernel-core` — ✅ Done (merged to `main`)
 - **Intent:** a pure reasoner derives facts from asserted facts + rules to a fixed
   point and records why each derived fact holds.
 - **Tier:** 1.
@@ -128,14 +128,17 @@ parallel once their dependencies land.
   monotonic; negated/aggregated facts are *supplied* (lower stratum), never
   derived in the same fixed point — documented as a precondition.
 
-#### F02 · `002-verdicts-kleene` [P after F01]
+#### F02 · `002-verdicts-kleene` [P after F01] — ✅ Done (merged to `main`)
 - **Intent:** three-valued verdicts compose order-independently.
 - **Tier:** 1. **Surface:** `Verdict = Pass | Fail of string | Uncertain of string`
-  + Kleene `and`/`or`/`negate` combinators.
-- **Tests:** commutativity/associativity of `All`/`Any` combination; `Uncertain`
+  + Kleene combinators `Verdict.all`/`any`/`negate` (list reductions, not binary
+  operators — see `specs/002-verdicts-kleene/research.md` D2).
+- **Tests:** commutativity/associativity of `all`/`any` combination; byte-for-byte
+  order-/nesting-/duplication-independent reason aggregation; `Uncertain`
   is not silently coerced to pass/fail. **MVU:** N/A. **Depends on:** F01.
-- **Exit:** verdict algebra ready for the `Check` interpreters. *(May be folded
-  into F03 if small.)*
+- **Exit:** verdict algebra ready for the `Check` interpreters — `Verdict.fsi`/`.fs`
+  added to the kernel, surface baseline re-blessed, 11 new tests (V1–V10b) green,
+  zero new dependencies. *(Kept separate from F03, not folded in.)*
 
 #### F03 · `003-check-algebra`
 - **Intent:** a rule's check is one reified value that can be evaluated, rendered,

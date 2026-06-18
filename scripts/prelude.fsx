@@ -42,3 +42,36 @@ printfn "Facts:  %A" (result.Facts |> List.map (fun f -> f.Id))
 printfn "Rounds: %d" result.Rounds
 for f in result.Facts do
     printfn "  %A  provenance=%A" f.Id f.Provenance
+
+// ── Verdict sketch (F02) — exercise the Kleene algebra through the public surface ──
+// (quickstart.md §"FSI sketch"). Calls `failwith` against the T003 stub until the
+// real Verdict.fs lands — the point of this pass is that the SHAPES typecheck.
+
+// 1. Construct the three kinds.
+let pass = Pass
+let fail = Fail "spacing 6px off-scale"
+let pending = Uncertain "agent has not reviewed tone"
+
+printfn "\nVerdict kinds: %A | %A | %A" pass fail pending
+
+// 2. An undecided clause survives a conjunction of otherwise-passing clauses.
+printfn "all [Pass; Uncertain; Pass] = %A" (Verdict.all [ Pass; Uncertain "tone?"; Pass ])
+
+// 3. A definite fail dominates, even with an undecided sibling.
+printfn "all [Fail; Uncertain]       = %A" (Verdict.all [ Fail "a"; Uncertain "b" ])
+
+// 4. Disjunction: a pass dominates; otherwise an uncertain survives over fail.
+printfn "any [Fail; Pass]            = %A" (Verdict.any [ Fail "a"; Pass ])
+printfn "any [Fail; Uncertain]       = %A" (Verdict.any [ Fail "a"; Uncertain "b" ])
+
+// 5. Order- and nesting-independence — outcome AND reason string byte-for-byte equal.
+printfn "all reorder equal?  %b" (Verdict.all [ Fail "a"; Fail "z" ] = Verdict.all [ Fail "z"; Fail "a" ])
+printfn "all re-nest equal?  %b" (Verdict.all [ Verdict.all [ Fail "a"; Fail "z" ]; Fail "m" ] = Verdict.all [ Fail "a"; Fail "z"; Fail "m" ])
+
+// 6. Negation: pass⇄fail tags swap; uncertain fixed.
+printfn "negate (Fail x)  = %A" (Verdict.negate (Fail "x"))
+printfn "negate Pass      = %A" (Verdict.negate Pass)
+printfn "negate Uncertain = %A" (Verdict.negate (Uncertain "y"))
+
+// 7. Identities.
+printfn "all [] = %A ; any [] = %A" (Verdict.all []) (Verdict.any [])
