@@ -19,6 +19,7 @@
     <Compile Include="FreshnessTests.fs" />
     <Compile Include="ContractTests.fs" />
     <Compile Include="JsonTests.fs" />
+    <Compile Include="RouteTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

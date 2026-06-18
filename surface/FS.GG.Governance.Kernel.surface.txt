@@ -364,6 +364,13 @@ TYPE FS.GG.Governance.Kernel.FactId
   [Method] System.String get_Item()
   [Property] Int32 Tag
   [Property] System.String Item
+TYPE FS.GG.Governance.Kernel.Fence`1
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Core.FSharpFunc`2[change,System.Boolean])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[change,System.Boolean] get_Trips()
+  [Method] System.String ToString()
+  [Method] System.String get_Name()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[change,System.Boolean] Trips
+  [Property] System.String Name
 TYPE FS.GG.Governance.Kernel.FixedPoint
   [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
 TYPE FS.GG.Governance.Kernel.Freshness
@@ -598,6 +605,30 @@ TYPE FS.GG.Governance.Kernel.ReviewRequest
   [Property] FS.GG.Governance.Kernel.RuleId Rule
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Question
   [Property] System.String Key
+TYPE FS.GG.Governance.Kernel.Route
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.Stakes, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry], System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Route)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Route, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.Stakes get_Stakes()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Route)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] get_Advisory()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] get_Blocking()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] FS.GG.Governance.Kernel.Stakes Stakes
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] Advisory
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] Blocking
+  [Property] System.String Reason
+TYPE FS.GG.Governance.Kernel.RouteModule
+  [Method] FS.GG.Governance.Kernel.Route route[change,fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]], FS.GG.Governance.Kernel.RunMode, change)
+  [Method] FS.GG.Governance.Kernel.Stakes stakesOf[change](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]], change)
+  [Method] System.String renderRoute(FS.GG.Governance.Kernel.Route)
 TYPE FS.GG.Governance.Kernel.RuleId
   [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId, System.Collections.IEqualityComparer)
@@ -688,6 +719,36 @@ TYPE FS.GG.Governance.Kernel.Rule`1
   [Property] FS.GG.Governance.Kernel.RuleId Id
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]] Apply
   [Property] System.String Description
+TYPE FS.GG.Governance.Kernel.RunMode
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RunMode)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RunMode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGate()
+  [Method] Boolean get_IsInner()
+  [Method] Boolean get_IsSandbox()
+  [Method] FS.GG.Governance.Kernel.RunMode get_Gate()
+  [Method] FS.GG.Governance.Kernel.RunMode get_Inner()
+  [Method] FS.GG.Governance.Kernel.RunMode get_Sandbox()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.RunMode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.RunMode+Tags
+  [Property] Boolean IsGate
+  [Property] Boolean IsInner
+  [Property] Boolean IsSandbox
+  [Property] FS.GG.Governance.Kernel.RunMode Gate
+  [Property] FS.GG.Governance.Kernel.RunMode Inner
+  [Property] FS.GG.Governance.Kernel.RunMode Sandbox
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.RunMode+Tags
+  [Field] Int32 Gate
+  [Field] Int32 Inner
+  [Field] Int32 Sandbox
 TYPE FS.GG.Governance.Kernel.Severity
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Severity)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Severity, System.Collections.IEqualityComparer)
@@ -729,6 +790,34 @@ TYPE FS.GG.Governance.Kernel.SpecSource
   [Method] System.String get_Section()
   [Property] System.String Document
   [Property] System.String Section
+TYPE FS.GG.Governance.Kernel.Stakes
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Stakes)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Stakes, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFenced()
+  [Method] Boolean get_IsRoutine()
+  [Method] FS.GG.Governance.Kernel.Stakes NewFenced(System.String)
+  [Method] FS.GG.Governance.Kernel.Stakes get_Routine()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Stakes)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Stakes+Fenced
+  [NestedType] FS.GG.Governance.Kernel.Stakes+Tags
+  [Property] Boolean IsFenced
+  [Property] Boolean IsRoutine
+  [Property] FS.GG.Governance.Kernel.Stakes Routine
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Stakes+Fenced
+  [Method] System.String get_name()
+  [Property] System.String name
+TYPE FS.GG.Governance.Kernel.Stakes+Tags
+  [Field] Int32 Fenced
+  [Field] Int32 Routine
 TYPE FS.GG.Governance.Kernel.Verdict
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict, System.Collections.IEqualityComparer)

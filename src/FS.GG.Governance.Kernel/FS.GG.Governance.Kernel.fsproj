@@ -51,6 +51,14 @@
     <Compile Include="Contract.fs" />
     <Compile Include="Json.fsi" />
     <Compile Include="Json.fs" />
+    <!-- Route (F07): the light routing layer — stakes & fences (forbid-trumps-permit,
+         never positional), run modes, and the explainable Route. Compiled AFTER
+         Contract.* (it reuses F06 ContractEntry/Contract.ofRules → F04 CheckRule/
+         Severity → F03 Check.render → F02 Verdict, and F01 RuleId). Route and Json are
+         independent, so Route.* is appended after Json.* (append-only). Starts M2.
+         Standard library only — zero new dependency (FR-017, SC-011). -->
+    <Compile Include="Route.fsi" />
+    <Compile Include="Route.fs" />
   </ItemGroup>
 
 </Project>
