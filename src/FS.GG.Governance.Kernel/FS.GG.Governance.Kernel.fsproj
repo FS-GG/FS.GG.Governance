@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Verdict (F02): a pure value algebra with zero dependency on the F01 fact/rule
+         types, so it compiles BEFORE Kernel.* (dependency-free first). -->
+    <Compile Include="Verdict.fsi" />
+    <Compile Include="Verdict.fs" />
     <Compile Include="Kernel.fsi" />
     <Compile Include="Kernel.fs" />
   </ItemGroup>
