@@ -16,6 +16,9 @@
     <Compile Include="CheckTests.fs" />
     <Compile Include="CheckRuleTests.fs" />
     <Compile Include="EvidenceTests.fs" />
+    <Compile Include="FreshnessTests.fs" />
+    <Compile Include="ContractTests.fs" />
+    <Compile Include="JsonTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

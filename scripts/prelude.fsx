@@ -210,3 +210,41 @@ printfn "inert + synthetic-outranks = %A"
 printfn "domain-neutral research = %A"
     (Evidence.build [ "simulated-data", Synthetic; "finding", Real ] [ "finding", "simulated-data" ]
      |> Result.map Evidence.effective)
+
+// ── F06 design pass (006-explanation-output): JSON explanation, the drift-proof
+//    contract, evidence freshness, and the evidence-state report (Principle I). ──
+open FS.GG.Governance.Kernel.Check // operators .&, .|, ==>
+
+// JSON explanation — mirrors the proof tree, deterministic, round-trips.
+let met name : Check<string> = Check.probe name [] [] (fun _ -> Met)
+let f06chk = (met "has-tests") .& (met "has-docs")
+let f06expl = Check.explain [] f06chk
+let f06json = Json.ofExplanation f06expl
+printfn "\nJson.ofExplanation = %s" f06json
+printfn "explanation round-trips = %b" (Json.toExplanation f06json = f06expl)
+printfn "explanation deterministic = %b" (Json.ofExplanation f06expl = Json.ofExplanation f06expl)
+
+// Drift-proof contract — each Statement IS Check.render (cannot drift).
+let f06spec = { Document = "constitution.md"; Section = "V" }
+
+match CheckRule.rule (RuleId "tests-present") Deterministic f06spec f06chk |> Result.map CheckRule.blocking with
+| Ok rule ->
+    let contract = Contract.ofRules [ rule ]
+    printfn "\ncontract statement = render: %b" ((List.head contract).Statement = Check.render rule.Check)
+    printfn "%s" (Contract.render contract)
+    printfn "contract round-trips = %b" (Json.toContract (Json.ofContract contract) = contract)
+| Error e -> eprintfn "%A" e
+
+// Evidence freshness — pure over supplied instants (no clock).
+printfn "\nfresh [9]      = %A" (Freshness.decide 10 [ 9 ]) // Fresh
+printfn "fresh [10]     = %A" (Freshness.decide 10 [ 10 ]) // Fresh (inclusive tie)
+printfn "fresh [11]     = %A" (Freshness.decide 10 [ 11 ]) // Stale
+printfn "fresh []       = %A" (Freshness.decide 10 []) // Fresh (covers nothing)
+printfn "fresh [3;10;7] = %A" (Freshness.decide 10 [ 3; 10; 7 ]) // Fresh (>= max)
+
+// Evidence states in the same report — AutoSynthetic visibly marked.
+printfn "\nofEvidenceState AutoSynthetic = %s" (Json.ofEvidenceState AutoSynthetic)
+
+match Evidence.build [ "a", Real; "b", Synthetic ] [ "a", "b" ] with
+| Ok g -> printfn "ofEffective = %s" (Json.ofEffective id (Evidence.effective g))
+| Error e -> eprintfn "%A" e

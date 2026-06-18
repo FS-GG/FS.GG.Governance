@@ -148,6 +148,29 @@ TYPE FS.GG.Governance.Kernel.Check`1+Tags
   [Field] Int32 Implies
   [Field] Int32 Not
   [Field] Int32 Opaque
+TYPE FS.GG.Governance.Kernel.ContractEntry
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, FS.GG.Governance.Kernel.Severity, FS.GG.Governance.Kernel.SpecSource, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ContractEntry)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ContractEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Id()
+  [Method] FS.GG.Governance.Kernel.Severity get_Severity()
+  [Method] FS.GG.Governance.Kernel.SpecSource get_Spec()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.ContractEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Statement()
+  [Property] FS.GG.Governance.Kernel.RuleId Id
+  [Property] FS.GG.Governance.Kernel.Severity Severity
+  [Property] FS.GG.Governance.Kernel.SpecSource Spec
+  [Property] System.String Statement
+TYPE FS.GG.Governance.Kernel.ContractModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] ofRules[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]])
+  [Method] System.String render(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry])
 TYPE FS.GG.Governance.Kernel.EvaluationResult`1
   [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], Int32)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.EvaluationResult`1[fact])
@@ -343,6 +366,34 @@ TYPE FS.GG.Governance.Kernel.FactId
   [Property] System.String Item
 TYPE FS.GG.Governance.Kernel.FixedPoint
   [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
+TYPE FS.GG.Governance.Kernel.Freshness
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Freshness)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Freshness, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFresh()
+  [Method] Boolean get_IsStale()
+  [Method] FS.GG.Governance.Kernel.Freshness get_Fresh()
+  [Method] FS.GG.Governance.Kernel.Freshness get_Stale()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Freshness)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Freshness+Tags
+  [Property] Boolean IsFresh
+  [Property] Boolean IsStale
+  [Property] FS.GG.Governance.Kernel.Freshness Fresh
+  [Property] FS.GG.Governance.Kernel.Freshness Stale
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Freshness+Tags
+  [Field] Int32 Fresh
+  [Field] Int32 Stale
+TYPE FS.GG.Governance.Kernel.FreshnessModule
+  [Method] Boolean isFresh[instant](instant, Microsoft.FSharp.Collections.FSharpList`1[instant])
+  [Method] FS.GG.Governance.Kernel.Freshness decide[instant](instant, Microsoft.FSharp.Collections.FSharpList`1[instant])
 TYPE FS.GG.Governance.Kernel.GraphError`1
   [Method] Boolean Equals(FS.GG.Governance.Kernel.GraphError`1[id])
   [Method] Boolean Equals(FS.GG.Governance.Kernel.GraphError`1[id], System.Collections.IEqualityComparer)
@@ -382,6 +433,15 @@ TYPE FS.GG.Governance.Kernel.GraphError`1+Tags
 TYPE FS.GG.Governance.Kernel.GraphError`1+UnknownNode
   [Method] id get_node()
   [Property] id node
+TYPE FS.GG.Governance.Kernel.JsonModule
+  [Method] FS.GG.Governance.Kernel.EvidenceState toEvidenceState(System.String)
+  [Method] FS.GG.Governance.Kernel.Explanation toExplanation(System.String)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry] toContract(System.String)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Kernel.EvidenceState] toEffective(System.String)
+  [Method] System.String ofContract(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ContractEntry])
+  [Method] System.String ofEffective[id](Microsoft.FSharp.Core.FSharpFunc`2[id,System.String], Microsoft.FSharp.Collections.FSharpMap`2[id,FS.GG.Governance.Kernel.EvidenceState])
+  [Method] System.String ofEvidenceState(FS.GG.Governance.Kernel.EvidenceState)
+  [Method] System.String ofExplanation(FS.GG.Governance.Kernel.Explanation)
 TYPE FS.GG.Governance.Kernel.JudgeId
   [Constructor] Void .ctor(System.String, System.String)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.JudgeId)

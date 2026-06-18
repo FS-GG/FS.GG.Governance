@@ -191,7 +191,7 @@ parallel once their dependencies land.
 - **MVU:** N/A. **Depends on:** F01. **Exit:** evidence taint as a kernel
   derivation, not a bespoke engine. **Reinforces #4** (DAG only; no cycles).
 
-#### F06 · `006-explanation-output`
+#### F06 · `006-explanation-output` — ✅ Done (merged to `main`)
 - **Intent:** explanations, the rendered rule contract, and evidence-freshness
   predicates are emitted as JSON-friendly, human/agent-readable output.
 - **Tier:** 1.
@@ -341,9 +341,10 @@ parallel once their dependencies land.
 
 ## 7. Milestones
 
-1. **M1 — First useful product (F01–F06).** Pure kernel + evidence + JSON
-   explanation, packed, zero heavy deps. Satisfies org G2/G3 "narrow tool" and
-   the project-scope "first useful product."
+1. **M1 — First useful product (F01–F06). ✅ Reached.** Pure kernel + evidence +
+   JSON explanation, packed (`FS.GG.Governance.Kernel.1.0.0.nupkg` →
+   `~/.local/share/nuget-local/`), zero heavy deps. Satisfies org G2/G3 "narrow
+   tool" and the project-scope "first useful product."
 2. **M2 — Light routing + effects edge (F07–F08).** Explainable, light-by-default
    routing and the MVU interpreter that dispatches agent reviews as reified
    evidence.
