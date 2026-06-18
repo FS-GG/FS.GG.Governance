@@ -248,3 +248,55 @@ printfn "\nofEvidenceState AutoSynthetic = %s" (Json.ofEvidenceState AutoSynthet
 match Evidence.build [ "a", Real; "b", Synthetic ] [ "a", "b" ] with
 | Ok g -> printfn "ofEffective = %s" (Json.ofEffective id (Evidence.effective g))
 | Error e -> eprintfn "%A" e
+
+// ── Routing sketch (F07) — light by default, deterministic precedence, explainable ──
+// (quickstart.md §"FSI sketch"). Calls `failwith`-stubs against the T002 stub until the
+// Route.fs bodies land — the point of the pass is that the SHAPES typecheck against
+// Route.fsi (Principle I). open Check is already in scope (operators .&, .|, ==>).
+
+// A real, domain-neutral 'change: a set of changed "paths" (any adapter shape works — D1).
+let change = set [ "src/Api.fs"; "README.md" ]
+
+// Two declared fences. forbid-trumps-permit: ANY trip ⇒ Fenced (order-independent).
+let mergeFence  = { Name = "merge-boundary";   Trips = fun (c: Set<string>) -> c |> Set.exists (fun p -> p.StartsWith "src/") }
+let secFence    = { Name = "security-surface"; Trips = fun (c: Set<string>) -> c.Contains "src/Auth.fs" }
+let fences = [ mergeFence; secFence ]
+
+// 1. Light by default: a change tripping no fence is Routine (V40).
+printfn "\nstakesOf [] (no fence)   = %A" (Route.stakesOf [] change)                 // Routine
+printfn "stakesOf docs-only       = %A" (Route.stakesOf fences (set [ "README.md" ]))  // Routine
+
+// 2. A single matching fence ⇒ Fenced; order-independent across permutations (V41/V43).
+printfn "stakesOf fenced          = %A" (Route.stakesOf fences change)             // Fenced "merge-boundary"
+printfn "stakesOf permuted equal? %b" (Route.stakesOf fences change = Route.stakesOf (List.rev fences) change)
+
+// A real blocking rule (reuse an F03 check; F04 authors + promotes it).
+let hasReview = Check.probe "peer-reviewed" [] [] (fun (_: FactSet<string>) -> Met)
+let routeSpec = { Document = "constitution.md"; Section = "I" }
+let blockingRule =
+    CheckRule.rule (RuleId "peer-review") Deterministic routeSpec hasReview
+    |> Result.map CheckRule.blocking
+    |> function Ok r -> r | Error e -> failwithf "%A" e
+
+// 3. Run-mode matrix: same fenced change + blocking rule — advisory in Inner, blocking in Gate;
+//    stakes identical across modes (V44).
+let inGate  = Route.route fences [ blockingRule ] Gate  change
+let inInner = Route.route fences [ blockingRule ] Inner change
+printfn "\nGate  blocking count = %d" (List.length inGate.Blocking)    // 1
+printfn "Inner blocking count = %d" (List.length inInner.Blocking)     // 0 (advisory only)
+printfn "stakes equal across modes? %b" (inGate.Stakes = inInner.Stakes)
+
+// 4. Light change at Gate still blocks nothing (V40).
+let lightAtGate = Route.route fences [ blockingRule ] Gate (set [ "README.md" ])
+printfn "light @ Gate blocking = %d" (List.length lightAtGate.Blocking)  // 0
+
+// 5. Drift-proof gate: the gate's Statement IS Check.render of the rule's check (V46).
+printfn "gate statement = render? %b" ((List.head inGate.Blocking).Statement = Check.render blockingRule.Check)
+
+// 6. Every route carries a non-empty reason — routine and fenced (V45).
+printfn "fenced reason non-empty? %b"  (inGate.Reason <> "")
+printfn "routine reason non-empty? %b" ((Route.route [] [] Inner change).Reason <> "")
+
+// 7. renderRoute is deterministic and execution-free (V47).
+printfn "\n%s" (Route.renderRoute inGate)
+printfn "render deterministic? %b" (Route.renderRoute inGate = Route.renderRoute inGate)
