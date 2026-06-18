@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test-only project for F08. Exercises the Host through its PUBLIC surface (the
+       ProjectReference resolves the built library). Both sides of the MVU boundary are
+       covered: pure transition tests (LoopTests) with ZERO I/O, and real-filesystem
+       interpreter tests (InterpreterTests) with a fake judge (the ONLY synthetic — a real
+       agent is not a reproducible oracle). None of these deps reach the Host assembly. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="InterpreterTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
+  </ItemGroup>
+
+</Project>

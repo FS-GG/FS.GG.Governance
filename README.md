@@ -34,7 +34,7 @@ FS.GG.Governance.Kernel   pure, BCL-only — the inference core (M1, done)
   ├─ JSON explanation + evidence-freshness                  (F06)
   └─ routing: Stakes / Severity / RunMode / Route           (F07)
 
-FS.GG.Governance.Host     effects shell (I/O) — sense → plan → act (F08, in progress)
+FS.GG.Governance.Host     effects shell (I/O) — sense → plan → act (F08, done)
 FS.GG.Governance.Adapters.* · .Cli   SPI, domain adapters, CLI    (F09–F13, planned)
 ```
 
@@ -52,11 +52,12 @@ fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 | Milestone | Scope | State |
 |---|---|---|
 | **M1** | Pure kernel + evidence + explanation (F01–F06) | ✅ Reached |
-| **M2** | Light routing + effects edge (F07–F08) | 🚧 F07 merged; F08 in spec |
+| **M2** | Light routing + effects edge (F07–F08) | ✅ Reached |
 | **M3** | Adapter SPI + two domains (F09–F11) | Planned |
 | **M4** | CLI + external validation (F12–F13) | Planned |
 
-F01–F07 are merged to `main`. The kernel packs to `~/.local/share/nuget-local/`.
+F01–F08 are merged to `main` (91/91 tests green). The kernel packs to
+`~/.local/share/nuget-local/`; the `Host` effects edge depends on it (zero new dependency).
 
 ## Design lineage
 

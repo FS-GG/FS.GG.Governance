@@ -1,0 +1,451 @@
+TYPE FS.GG.Governance.Host.Acceptance
+  [Method] Boolean Equals(FS.GG.Governance.Host.Acceptance)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Acceptance, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFreeze()
+  [Method] Boolean get_IsStayPending()
+  [Method] FS.GG.Governance.Host.Acceptance NewFreeze(FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Host.Acceptance get_StayPending()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Acceptance)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Acceptance+Freeze
+  [NestedType] FS.GG.Governance.Host.Acceptance+Tags
+  [Property] Boolean IsFreeze
+  [Property] Boolean IsStayPending
+  [Property] FS.GG.Governance.Host.Acceptance StayPending
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Acceptance+Freeze
+  [Method] FS.GG.Governance.Kernel.Verdict get_Item()
+  [Property] FS.GG.Governance.Kernel.Verdict Item
+TYPE FS.GG.Governance.Host.Acceptance+Tags
+  [Field] Int32 Freeze
+  [Field] Int32 StayPending
+TYPE FS.GG.Governance.Host.AcceptancePolicy
+  [Method] Boolean Equals(FS.GG.Governance.Host.AcceptancePolicy)
+  [Method] Boolean Equals(FS.GG.Governance.Host.AcceptancePolicy, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAgreement()
+  [Method] Boolean get_IsConfidence()
+  [Method] Boolean get_IsSingleSample()
+  [Method] FS.GG.Governance.Host.AcceptancePolicy NewAgreement(Int32)
+  [Method] FS.GG.Governance.Host.AcceptancePolicy NewConfidence(Double)
+  [Method] FS.GG.Governance.Host.AcceptancePolicy get_SingleSample()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.AcceptancePolicy)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.AcceptancePolicy+Agreement
+  [NestedType] FS.GG.Governance.Host.AcceptancePolicy+Confidence
+  [NestedType] FS.GG.Governance.Host.AcceptancePolicy+Tags
+  [Property] Boolean IsAgreement
+  [Property] Boolean IsConfidence
+  [Property] Boolean IsSingleSample
+  [Property] FS.GG.Governance.Host.AcceptancePolicy SingleSample
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.AcceptancePolicy+Agreement
+  [Method] Int32 get_count()
+  [Property] Int32 count
+TYPE FS.GG.Governance.Host.AcceptancePolicy+Confidence
+  [Method] Double get_threshold()
+  [Property] Double threshold
+TYPE FS.GG.Governance.Host.AcceptancePolicy+Tags
+  [Field] Int32 Agreement
+  [Field] Int32 Confidence
+  [Field] Int32 SingleSample
+TYPE FS.GG.Governance.Host.ArtifactContent
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.ArtifactRef, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Host.ArtifactContent)
+  [Method] Boolean Equals(FS.GG.Governance.Host.ArtifactContent, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_Ref()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.ArtifactContent)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Content()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef Ref
+  [Property] System.String Content
+TYPE FS.GG.Governance.Host.Disclosure
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Disclosure)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Disclosure, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Rule()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Disclosure)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Justification()
+  [Property] FS.GG.Governance.Kernel.RuleId Rule
+  [Property] System.String Justification
+TYPE FS.GG.Governance.Host.Effect
+  [Method] Boolean Equals(FS.GG.Governance.Host.Effect)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Effect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDispatchReview()
+  [Method] Boolean get_IsEmitOutput()
+  [Method] Boolean get_IsLoadReview()
+  [Method] Boolean get_IsReadArtifact()
+  [Method] Boolean get_IsRecordVerdict()
+  [Method] FS.GG.Governance.Host.Effect NewDispatchReview(FS.GG.Governance.Host.ReviewDispatch)
+  [Method] FS.GG.Governance.Host.Effect NewEmitOutput(FS.GG.Governance.Host.Output)
+  [Method] FS.GG.Governance.Host.Effect NewLoadReview(System.String)
+  [Method] FS.GG.Governance.Host.Effect NewReadArtifact(FS.GG.Governance.Kernel.ArtifactRef)
+  [Method] FS.GG.Governance.Host.Effect NewRecordVerdict(FS.GG.Governance.Kernel.RecordedReview)
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Effect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Effect+DispatchReview
+  [NestedType] FS.GG.Governance.Host.Effect+EmitOutput
+  [NestedType] FS.GG.Governance.Host.Effect+LoadReview
+  [NestedType] FS.GG.Governance.Host.Effect+ReadArtifact
+  [NestedType] FS.GG.Governance.Host.Effect+RecordVerdict
+  [NestedType] FS.GG.Governance.Host.Effect+Tags
+  [Property] Boolean IsDispatchReview
+  [Property] Boolean IsEmitOutput
+  [Property] Boolean IsLoadReview
+  [Property] Boolean IsReadArtifact
+  [Property] Boolean IsRecordVerdict
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Effect+DispatchReview
+  [Method] FS.GG.Governance.Host.ReviewDispatch get_Item()
+  [Property] FS.GG.Governance.Host.ReviewDispatch Item
+TYPE FS.GG.Governance.Host.Effect+EmitOutput
+  [Method] FS.GG.Governance.Host.Output get_Item()
+  [Property] FS.GG.Governance.Host.Output Item
+TYPE FS.GG.Governance.Host.Effect+LoadReview
+  [Method] System.String get_key()
+  [Property] System.String key
+TYPE FS.GG.Governance.Host.Effect+ReadArtifact
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_Item()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef Item
+TYPE FS.GG.Governance.Host.Effect+RecordVerdict
+  [Method] FS.GG.Governance.Kernel.RecordedReview get_Item()
+  [Property] FS.GG.Governance.Kernel.RecordedReview Item
+TYPE FS.GG.Governance.Host.Effect+Tags
+  [Field] Int32 DispatchReview
+  [Field] Int32 EmitOutput
+  [Field] Int32 LoadReview
+  [Field] Int32 ReadArtifact
+  [Field] Int32 RecordVerdict
+TYPE FS.GG.Governance.Host.Failure
+  [Method] Boolean Equals(FS.GG.Governance.Host.Failure)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Failure, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactUnavailable()
+  [Method] Boolean get_IsReviewDispatchFailed()
+  [Method] Boolean get_IsReviewStoreUnavailable()
+  [Method] FS.GG.Governance.Host.Failure NewArtifactUnavailable(FS.GG.Governance.Kernel.ArtifactRef, System.String)
+  [Method] FS.GG.Governance.Host.Failure NewReviewDispatchFailed(System.String, System.String)
+  [Method] FS.GG.Governance.Host.Failure NewReviewStoreUnavailable(System.String, System.String)
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Failure)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Failure+ArtifactUnavailable
+  [NestedType] FS.GG.Governance.Host.Failure+ReviewDispatchFailed
+  [NestedType] FS.GG.Governance.Host.Failure+ReviewStoreUnavailable
+  [NestedType] FS.GG.Governance.Host.Failure+Tags
+  [Property] Boolean IsArtifactUnavailable
+  [Property] Boolean IsReviewDispatchFailed
+  [Property] Boolean IsReviewStoreUnavailable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Failure+ArtifactUnavailable
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_artifact()
+  [Method] System.String get_reason()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef artifact
+  [Property] System.String reason
+TYPE FS.GG.Governance.Host.Failure+ReviewDispatchFailed
+  [Method] System.String get_key()
+  [Method] System.String get_reason()
+  [Property] System.String key
+  [Property] System.String reason
+TYPE FS.GG.Governance.Host.Failure+ReviewStoreUnavailable
+  [Method] System.String get_key()
+  [Method] System.String get_reason()
+  [Property] System.String key
+  [Property] System.String reason
+TYPE FS.GG.Governance.Host.Failure+Tags
+  [Field] Int32 ArtifactUnavailable
+  [Field] Int32 ReviewDispatchFailed
+  [Field] Int32 ReviewStoreUnavailable
+TYPE FS.GG.Governance.Host.InterpreterModule
+  [Method] FS.GG.Governance.Host.Model`1[fact] run[change,fact](FS.GG.Governance.Host.Ports, FS.GG.Governance.Host.LoopConfig`2[change,fact], change)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Msg`1[fact]] step[fact](FS.GG.Governance.Host.Ports, FS.GG.Governance.Host.Effect)
+TYPE FS.GG.Governance.Host.JudgeVerdict
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.Verdict, Double)
+  [Method] Boolean Equals(FS.GG.Governance.Host.JudgeVerdict)
+  [Method] Boolean Equals(FS.GG.Governance.Host.JudgeVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Double get_Confidence()
+  [Method] FS.GG.Governance.Kernel.Verdict get_Verdict()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.JudgeVerdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] Double Confidence
+  [Property] FS.GG.Governance.Kernel.Verdict Verdict
+TYPE FS.GG.Governance.Host.LoopConfig`2
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]], FS.GG.Governance.Kernel.Bridge`1[fact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]], FS.GG.Governance.Kernel.RunMode, FS.GG.Governance.Host.AcceptancePolicy, Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpFunc`2[System.String,fact]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpOption`1[System.String]]])
+  [Method] FS.GG.Governance.Host.AcceptancePolicy get_Policy()
+  [Method] FS.GG.Governance.Kernel.Bridge`1[fact] get_Bridge()
+  [Method] FS.GG.Governance.Kernel.RunMode get_Mode()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]] get_Rules()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] get_Fences()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpFunc`2[System.String,fact]] get_SenseArtifact()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpOption`1[System.String]]] get_ReadContent()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId] get_Identify()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Host.AcceptancePolicy Policy
+  [Property] FS.GG.Governance.Kernel.Bridge`1[fact] Bridge
+  [Property] FS.GG.Governance.Kernel.RunMode Mode
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[fact]] Rules
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[change]] Fences
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpFunc`2[System.String,fact]] SenseArtifact
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpOption`1[System.String]]] ReadContent
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId] Identify
+TYPE FS.GG.Governance.Host.LoopModule
+  [Method] FS.GG.Governance.Host.Acceptance accept(FS.GG.Governance.Host.AcceptancePolicy, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.JudgeVerdict])
+  [Method] FS.GG.Governance.Host.AcceptancePolicy get_defaultPolicy()
+  [Method] Int32 samplesFor(FS.GG.Governance.Host.AcceptancePolicy)
+  [Method] System.Tuple`2[FS.GG.Governance.Host.Model`1[fact],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Effect]] init[change,fact](FS.GG.Governance.Host.LoopConfig`2[change,fact], change)
+  [Method] System.Tuple`2[FS.GG.Governance.Host.Model`1[fact],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Effect]] update[change,fact](FS.GG.Governance.Host.LoopConfig`2[change,fact], FS.GG.Governance.Host.Msg`1[fact], FS.GG.Governance.Host.Model`1[fact])
+  [Property] FS.GG.Governance.Host.AcceptancePolicy defaultPolicy
+TYPE FS.GG.Governance.Host.Model`1
+  [Constructor] Void .ctor(FS.GG.Governance.Host.Phase, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], FS.GG.Governance.Kernel.Route, Microsoft.FSharp.Collections.FSharpSet`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure], Int32)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Model`1[fact])
+  [Method] Boolean Equals(FS.GG.Governance.Host.Model`1[fact], System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Host.Phase get_Phase()
+  [Method] FS.GG.Governance.Kernel.Route get_Route()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Model`1[fact])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Rounds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure] get_Disclosures()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure] get_Failures()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] get_Facts()
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[System.String] get_Pending()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Host.Phase Phase
+  [Property] FS.GG.Governance.Kernel.Route Route
+  [Property] Int32 Rounds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure] Disclosures
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure] Failures
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] Facts
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[System.String] Pending
+TYPE FS.GG.Governance.Host.Msg`1
+  [Method] Boolean Equals(FS.GG.Governance.Host.Msg`1[fact])
+  [Method] Boolean Equals(FS.GG.Governance.Host.Msg`1[fact], System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDisclosed()
+  [Method] Boolean get_IsLoaded()
+  [Method] Boolean get_IsRecorded()
+  [Method] Boolean get_IsReviewed()
+  [Method] Boolean get_IsSensed()
+  [Method] FS.GG.Governance.Host.Msg`1[fact] NewDisclosed(FS.GG.Governance.Host.Disclosure)
+  [Method] FS.GG.Governance.Host.Msg`1[fact] NewLoaded(System.String, Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String])
+  [Method] FS.GG.Governance.Host.Msg`1[fact] NewRecorded(System.String, Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] FS.GG.Governance.Host.Msg`1[fact] NewReviewed(System.String, Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.JudgeVerdict],System.String])
+  [Method] FS.GG.Governance.Host.Msg`1[fact] NewSensed(FS.GG.Governance.Kernel.ArtifactRef, Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String])
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Msg`1[fact])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Msg`1+Disclosed[fact]
+  [NestedType] FS.GG.Governance.Host.Msg`1+Loaded[fact]
+  [NestedType] FS.GG.Governance.Host.Msg`1+Recorded[fact]
+  [NestedType] FS.GG.Governance.Host.Msg`1+Reviewed[fact]
+  [NestedType] FS.GG.Governance.Host.Msg`1+Sensed[fact]
+  [NestedType] FS.GG.Governance.Host.Msg`1+Tags[fact]
+  [Property] Boolean IsDisclosed
+  [Property] Boolean IsLoaded
+  [Property] Boolean IsRecorded
+  [Property] Boolean IsReviewed
+  [Property] Boolean IsSensed
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Msg`1+Disclosed
+  [Method] FS.GG.Governance.Host.Disclosure get_Item()
+  [Property] FS.GG.Governance.Host.Disclosure Item
+TYPE FS.GG.Governance.Host.Msg`1+Loaded
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String] get_result()
+  [Method] System.String get_key()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String] result
+  [Property] System.String key
+TYPE FS.GG.Governance.Host.Msg`1+Recorded
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_result()
+  [Method] System.String get_key()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] result
+  [Property] System.String key
+TYPE FS.GG.Governance.Host.Msg`1+Reviewed
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.JudgeVerdict],System.String] get_result()
+  [Method] System.String get_key()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.JudgeVerdict],System.String] result
+  [Property] System.String key
+TYPE FS.GG.Governance.Host.Msg`1+Sensed
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_artifact()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_result()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef artifact
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] result
+TYPE FS.GG.Governance.Host.Msg`1+Tags
+  [Field] Int32 Disclosed
+  [Field] Int32 Loaded
+  [Field] Int32 Recorded
+  [Field] Int32 Reviewed
+  [Field] Int32 Sensed
+TYPE FS.GG.Governance.Host.Output
+  [Method] Boolean Equals(FS.GG.Governance.Host.Output)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Output, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsContractJson()
+  [Method] Boolean get_IsExplanationJson()
+  [Method] Boolean get_IsRouteText()
+  [Method] FS.GG.Governance.Host.Output NewContractJson(System.String)
+  [Method] FS.GG.Governance.Host.Output NewExplanationJson(System.String)
+  [Method] FS.GG.Governance.Host.Output NewRouteText(System.String)
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Output)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Output+ContractJson
+  [NestedType] FS.GG.Governance.Host.Output+ExplanationJson
+  [NestedType] FS.GG.Governance.Host.Output+RouteText
+  [NestedType] FS.GG.Governance.Host.Output+Tags
+  [Property] Boolean IsContractJson
+  [Property] Boolean IsExplanationJson
+  [Property] Boolean IsRouteText
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Output+ContractJson
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.Host.Output+ExplanationJson
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.Host.Output+RouteText
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.Host.Output+Tags
+  [Field] Int32 ContractJson
+  [Field] Int32 ExplanationJson
+  [Field] Int32 RouteText
+TYPE FS.GG.Governance.Host.Phase
+  [Method] Boolean Equals(FS.GG.Governance.Host.Phase)
+  [Method] Boolean Equals(FS.GG.Governance.Host.Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsPlanning()
+  [Method] Boolean get_IsQuiescent()
+  [Method] Boolean get_IsSensing()
+  [Method] FS.GG.Governance.Host.Phase get_Planning()
+  [Method] FS.GG.Governance.Host.Phase get_Quiescent()
+  [Method] FS.GG.Governance.Host.Phase get_Sensing()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Host.Phase+Tags
+  [Property] Boolean IsPlanning
+  [Property] Boolean IsQuiescent
+  [Property] Boolean IsSensing
+  [Property] FS.GG.Governance.Host.Phase Planning
+  [Property] FS.GG.Governance.Host.Phase Quiescent
+  [Property] FS.GG.Governance.Host.Phase Sensing
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Host.Phase+Tags
+  [Field] Int32 Planning
+  [Field] Int32 Quiescent
+  [Field] Int32 Sensing
+TYPE FS.GG.Governance.Host.Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.ReviewTask,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Host.JudgeVerdict,System.String]], FS.GG.Governance.Host.ReviewStore, Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.Output,Microsoft.FSharp.Core.Unit])
+  [Method] FS.GG.Governance.Host.ReviewStore get_Store()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.Output,Microsoft.FSharp.Core.Unit] get_Sink()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.ReviewTask,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Host.JudgeVerdict,System.String]] get_Judge()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_Read()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Host.ReviewStore Store
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.Output,Microsoft.FSharp.Core.Unit] Sink
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Host.ReviewTask,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Host.JudgeVerdict,System.String]] Judge
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] Read
+TYPE FS.GG.Governance.Host.ReviewDispatch
+  [Constructor] Void .ctor(FS.GG.Governance.Host.ReviewTask, Int32)
+  [Method] Boolean Equals(FS.GG.Governance.Host.ReviewDispatch)
+  [Method] Boolean Equals(FS.GG.Governance.Host.ReviewDispatch, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Host.ReviewTask get_Task()
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.ReviewDispatch)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Samples()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Host.ReviewTask Task
+  [Property] Int32 Samples
+TYPE FS.GG.Governance.Host.ReviewStore
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RecordedReview,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RecordedReview,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]] get_Save()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String]] get_Load()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RecordedReview,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]] Save
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RecordedReview],System.String]] Load
+TYPE FS.GG.Governance.Host.ReviewTask
+  [Constructor] Void .ctor(System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.ArtifactContent])
+  [Method] Boolean Equals(FS.GG.Governance.Host.ReviewTask)
+  [Method] Boolean Equals(FS.GG.Governance.Host.ReviewTask, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Host.ReviewTask)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.ArtifactContent] get_Data()
+  [Method] System.String ToString()
+  [Method] System.String get_Instruction()
+  [Method] System.String get_Key()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.ArtifactContent] Data
+  [Property] System.String Instruction
+  [Property] System.String Key

@@ -208,7 +208,7 @@ parallel once their dependencies land.
 
 ### Phase B — Routing & the effects edge · org G3
 
-#### F07 · `007-routing-severity-modes`
+#### F07 · `007-routing-severity-modes` — ✅ Done (merged to `main`)
 - **Intent:** a change gets only the proof its risk warrants, and every routing
   decision explains itself.
 - **Tier:** 1.
@@ -224,7 +224,7 @@ parallel once their dependencies land.
 - **MVU:** N/A (pure). **Depends on:** F04.
 - **Exit:** light, advisory, explainable routing over the kernel.
 
-#### F08 · `008-effects-interpreter`
+#### F08 · `008-effects-interpreter` — ✅ Done (`FS.GG.Governance.Host`; 18/18 tests; completes M2)
 - **Intent:** the impure shell gathers facts, runs the pure kernel, and interprets
   effects (read artifacts, dispatch an agent review, record a verdict) at the
   edge.
@@ -345,9 +345,11 @@ parallel once their dependencies land.
    JSON explanation, packed (`FS.GG.Governance.Kernel.1.0.0.nupkg` →
    `~/.local/share/nuget-local/`), zero heavy deps. Satisfies org G2/G3 "narrow
    tool" and the project-scope "first useful product."
-2. **M2 — Light routing + effects edge (F07–F08).** Explainable, light-by-default
-   routing and the MVU interpreter that dispatches agent reviews as reified
-   evidence.
+2. **M2 — Light routing + effects edge (F07–F08). ✅ Reached.** Explainable,
+   light-by-default routing (F07) and the `FS.GG.Governance.Host` MVU effects edge
+   (F08) that senses artifacts, runs the pure kernel, dispatches agent reviews, and
+   freezes verdicts as cache-keyed evidence — the first Elmish/MVU boundary feature,
+   zero new dependency.
 3. **M3 — Adoption bar (F09–F11).** SPI + composition root + two unrelated
    domains (Spec Kit, design-system). The kernel is now demonstrably a library,
    not a platform.
