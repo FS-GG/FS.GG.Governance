@@ -572,3 +572,29 @@ printfn "[F11] evidence (synthetic upstream) = %A (Fail — contrast-verdict is 
 for r in DsCatalog.catalog do
     let (RuleId id) = r.Id
     printfn "[F11]   %-24s :: %s" id (Check.render r.Check)
+
+// ── CLI sketch (F12) — the optional command surface wraps Host through its own MVU ──
+// Build first:
+//   dotnet build src/FS.GG.Governance.Cli
+#r "../src/FS.GG.Governance.Host/bin/Debug/net10.0/FS.GG.Governance.Host.dll"
+#r "../src/FS.GG.Governance.Cli/bin/Debug/net10.0/FS.GG.Governance.Cli.dll"
+
+open FS.GG.Governance.Cli
+
+let f12Request =
+    match Cli.parse [ "route"; "--root"; "."; "--mode"; "inner"; "--json"; "--review-budget"; "0" ] with
+    | Ok request -> request
+    | Error errors -> failwithf "F12 parse failed: %A" errors
+
+let f12Model, f12Effects = Cli.init [ "route"; "--root"; "."; "--mode"; "inner" ]
+printfn "[F12] parsed command = %A / mode = %A / format = %A" f12Request.Command f12Request.Mode f12Request.Format
+printfn "[F12] init phase = %A / effects = %A" f12Model.Phase f12Effects
+
+let f12Snapshot =
+    { Root = "."
+      Supplied = []
+      Change = { SpecKit = None; DesignSystem = None; Scope = [] }
+      Artifacts = [] }
+
+let f12AfterSnapshot, f12AfterSnapshotEffects = Cli.update (SnapshotLoaded(Ok f12Snapshot)) f12Model
+printfn "[F12] after snapshot phase = %A / effects = %A" f12AfterSnapshot.Phase f12AfterSnapshotEffects

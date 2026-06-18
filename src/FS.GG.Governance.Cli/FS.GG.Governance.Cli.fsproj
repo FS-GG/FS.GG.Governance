@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Cli</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsgg-governance</ToolCommandName>
+    <PackageId>FS.GG.Governance.Cli</PackageId>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Project.fsi" />
+    <Compile Include="Project.fs" />
+    <Compile Include="Cli.fsi" />
+    <Compile Include="Cli.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+  </ItemGroup>
+
+</Project>

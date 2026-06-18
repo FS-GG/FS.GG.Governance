@@ -17,8 +17,8 @@ through `specify → plan → tasks → implement` per the
 [constitution](../.specify/memory/constitution.md).
 
 It is a roadmap (the plan that *generates* the per-feature `plan.md`s), not a
-substitute for them. Status as of 2026-06-18: F01-F11 are implemented and merged
-to `main`; F12-F13 remain.
+substitute for them. Status as of 2026-06-18: F01-F12 are implemented; F13
+external validation remains.
 
 ## 1. How this plan relates to the others
 
@@ -305,6 +305,11 @@ parallel once their dependencies land.
   behave per mode.
 - **MVU:** applicable (IO at the edge). **Depends on:** F08, F10 (+F11). **Exit:**
   the optional CLI tool (org G3); pack as a tool to `~/.local/share/nuget-local/`.
+  Done: `FS.GG.Governance.Cli` is a packable `fsgg-governance` tool with
+  `route`, `explain`, `contract`, and `evidence`; public `Project.fsi`/`Cli.fsi`
+  signatures, CLI MVU transition tests, fixture/repository command smokes, stable
+  JSON evidence, exit-code evidence, package-install smoke, read-only evidence, and
+  a CLI surface baseline are recorded under `specs/012-cli/readiness/`.
 
 #### F13 · `013-run-against-external-repo`
 - **Intent:** point the tool at an external checkout (a rendering repo, or a
@@ -340,7 +345,7 @@ parallel once their dependencies land.
 | [#2](https://github.com/FS-GG/FS.GG.Governance/issues/2) | Aggregate N runs / require a confidence threshold before freezing a verdict. | F04 spec → F08 impl |
 | [#3](https://github.com/FS-GG/FS.GG.Governance/issues/3) | Reviewer prompt-injection: governed artifacts are untrusted data; isolate instruction vs. data. | F08 |
 | [#4](https://github.com/FS-GG/FS.GG.Governance/issues/4) | Kernel preconditions: monotonic; stratify negated facts; forbid/stratify aggregation & recursive negation; commutative-node hash canonicalization. | F01, F03, F05 |
-| [#5](https://github.com/FS-GG/FS.GG.Governance/issues/5) | Cost/latency budget for agent reviews + a judge-vs-human meta-validation loop. | Deferred; revisit at F12 |
+| [#5](https://github.com/FS-GG/FS.GG.Governance/issues/5) | Cost/latency budget for agent reviews + a judge-vs-human meta-validation loop. | Fresh-review budget locked at F12; judge-vs-human meta-validation remains F13+ |
 | [#6](https://github.com/FS-GG/FS.GG.Governance/issues/6) | Narrow the OPA claim; frame the policy-engine analogy as architectural. | Docs task (no code) |
 
 ## 7. Milestones
@@ -357,8 +362,9 @@ parallel once their dependencies land.
 3. **M3 — Adoption bar (F09–F11). ✅ Reached.** SPI + composition root + two
    unrelated domains (Spec Kit, design-system). The kernel is now demonstrably a
    library, not a platform.
-4. **M4 — Tool + external validation (F12–F13).** Optional CLI; run against an
-   external repo from the outside (org G4); begin the org G5 adoption decision.
+4. **M4 — Tool + external validation (F12–F13). In progress.** Optional CLI is
+   implemented (F12); run against an external repo from the outside next (F13,
+   org G4); begin the org G5 adoption decision.
 
 ## 8. Driving it with Spec Kit
 
