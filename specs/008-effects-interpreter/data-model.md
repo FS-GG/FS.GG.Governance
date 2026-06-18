@@ -25,7 +25,7 @@ shape, and the invariants for the effects shell. The authoritative shape lives i
 | `Msg<'fact>` | DU (5 cases) | Every effect result + transitions (FR-001/FR-004). |
 | `Phase` | DU `Sensing \| Planning \| Quiescent` | The loop stage. |
 | `Model<'fact>` | record (7 fields) | The durable loop state (FR-001). |
-| `LoopConfig<'change,'fact>` | record (7 fields) | The caller-supplied pure wiring (FR-017). |
+| `LoopConfig<'change,'fact>` | record (8 fields) | The caller-supplied pure wiring (FR-017). |
 
 ### Edge side — `Interpreter` (`Interpreter.fsi`)
 
@@ -96,8 +96,11 @@ run: while update emits effects, step each via ports, feed result Msgs back
 ```
 
 `isolate(key)` builds the `ReviewTask`: `Instruction` = the rule's `Question`; `Data` = the
-`ArtifactContent` of the artifacts the rule reads (from `Facts`). The two are **separate fields**
-the loop never concatenates (FR-010, decision #3).
+`ArtifactContent` of the artifacts the rule reads, recovered from `Facts` via
+`config.ReadContent` (the inverse of `SenseArtifact`). The two are **separate fields** the loop
+never concatenates (FR-010, decision #3). `ReadContent: FactSet<'fact> -> ArtifactRef -> string
+option` is the 8th `LoopConfig` field, supplied by the adapter alongside `SenseArtifact`; it lets
+the pure `update` populate the untrusted-data channel with no I/O.
 
 ## 4. Precedence & invariant rules
 

@@ -300,3 +300,71 @@ printfn "routine reason non-empty? %b" ((Route.route [] [] Inner change).Reason 
 // 7. renderRoute is deterministic and execution-free (V47).
 printfn "\n%s" (Route.renderRoute inGate)
 printfn "render deterministic? %b" (Route.renderRoute inGate = Route.renderRoute inGate)
+
+// ── Effects-shell sketch (F08) — sense → plan → act, nondeterminism reified as evidence ──
+// Exercises the built Host through its PUBLIC surface, exactly as the F12 CLI would (SC-010).
+#r "../src/FS.GG.Governance.Host/bin/Debug/net10.0/FS.GG.Governance.Host.dll"
+open FS.GG.Governance.Host
+
+// A domain-neutral 'fact: a sensed artifact, or an embedded governance RuleOutcome.
+type HFact =
+    | HArtifact of ArtifactRef * string
+    | HOutcome of RuleOutcome
+
+let apiRef : ArtifactRef = { Kind = "file"; Key = "src/Api.fs" }
+let hIdentify = function
+    | HArtifact (r, _) -> FactId (sprintf "artifact:%s/%s" r.Kind r.Key)
+    | HOutcome o ->
+        FactId (
+            "outcome:" +
+            match o with
+            | Decided (RuleId r, _) -> "decided:" + r
+            | NeedsReview req -> "needs:" + req.Key
+            | RuleOutcome.Reviewed rr -> "reviewed:" + rr.Key
+            | Escalated (RuleId r) -> "escalated:" + r)
+let hReadContent (facts: FactSet<HFact>) (r: ArtifactRef) =
+    facts |> List.tryPick (function { Value = HArtifact (rr, c) } when rr = r -> Some c | _ -> None)
+let hBridge : Bridge<HFact> =
+    { Judge = { ModelId = "sketch-judge"; Version = "1" }
+      ArtifactHash = fun facts r -> match hReadContent facts r with Some c -> "h:" + string (c.GetHashCode()) | None -> ""
+      Embed = HOutcome
+      Project = function HOutcome o -> Some o | HArtifact _ -> None }
+
+let agentRule =
+    Check.probe "reviewApi" [ apiRef ] [] (fun _ -> Met)
+    |> fun chk -> CheckRule.rule (RuleId "R1") AgentReviewed { Document = "doc"; Section = "api" } chk
+    |> function Ok r -> r |> CheckRule.blocking |> CheckRule.asking "Does the API meet the bar?" | Error e -> failwithf "%A" e
+
+let hCfg : LoopConfig<Set<string>, HFact> =
+    { Identify = hIdentify; Rules = [ agentRule ]; Bridge = hBridge
+      Fences = [ { Name = "merge-boundary"; Trips = fun (c: Set<string>) -> c |> Set.exists (fun p -> p.StartsWith "src/") } ]
+      Mode = Gate; Policy = Loop.defaultPolicy
+      SenseArtifact = (fun r c -> HArtifact (r, c))
+      ReadContent = hReadContent }
+
+let hChange = set [ "src/Api.fs" ]
+
+// PURE side: init computes the route + emits one ReadArtifact — NO I/O (V48).
+let (hm0, hStartup) = Loop.init hCfg hChange
+printfn "\n[F08] init phase   = %A" hm0.Phase
+printfn "[F08] startup eff  = %A" hStartup
+printfn "[F08] route stakes = %A" hm0.Route.Stakes
+printfn "[F08] accept single= %A" (Loop.accept SingleSample [ { Verdict = Pass; Confidence = 0.9 } ])
+printfn "[F08] accept agree<= %A" (Loop.accept (Agreement 2) [ { Verdict = Pass; Confidence = 0.9 } ])
+
+// EDGE side: drive run against a REAL temp fixture + a FAKE judge + a real-ish store (V53/V55).
+let hTmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.Guid.NewGuid().ToString("N"))
+System.IO.Directory.CreateDirectory hTmp |> ignore
+System.IO.File.WriteAllText(System.IO.Path.Combine(hTmp, "Api.fs"), "let x = 1")
+let mutable hDispatches = 0
+let hCache = System.Collections.Generic.Dictionary<string, RecordedReview>()
+let hPorts : Ports =
+    { Read = (fun r -> try Ok (System.IO.File.ReadAllText(System.IO.Path.Combine(hTmp, System.IO.Path.GetFileName r.Key |> Option.ofObj |> Option.defaultValue r.Key))) with e -> Error e.Message)
+      Judge = (fun _ -> hDispatches <- hDispatches + 1; Ok { Verdict = Pass; Confidence = 1.0 })  // SYNTHETIC: fake judge — a real agent is not a reproducible oracle (F12)
+      Store = { Load = (fun k -> Ok (match hCache.TryGetValue k with | true, v -> Some v | _ -> None)); Save = (fun rr -> hCache.[rr.Key] <- rr; Ok ()) }
+      Sink = fun out -> printfn "[F08] emit: %s" (match out with ExplanationJson _ -> "explanation" | ContractJson _ -> "contract" | RouteText _ -> "route") }
+let hFirst  = Interpreter.run hPorts hCfg hChange
+printfn "[F08] first  run dispatches = %d" hDispatches   // 1
+let hSecond = Interpreter.run hPorts hCfg hChange
+printfn "[F08] second run dispatches = %d (cache hit)" hDispatches  // 1 — zero new
+printfn "[F08] final phase = %A · failures = %b" hSecond.Phase (List.isEmpty hSecond.Failures)

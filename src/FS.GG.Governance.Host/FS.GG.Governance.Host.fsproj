@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F08 effects shell: the imperative edge that drives the pure kernel (F01–F07).
+       It takes a SINGLE ProjectReference on the kernel and adds ZERO PackageReference
+       (FR-017): sensing/store use BCL System.IO at the edge, and the F06 emit reuses
+       the kernel's System.Text.Json-backed Json.*. Does NOT pack (the kernel packs at
+       F06; the CLI tool packs at F12) — IsPackable=false inherited from
+       Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Host</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile order Loop -> Interpreter: Interpreter references Loop's
+         Effect/Msg/Model/LoopConfig/Output and the kernel (data-model §7). -->
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+  </ItemGroup>
+
+</Project>
