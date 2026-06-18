@@ -1,0 +1,17 @@
+<Project>
+
+  <!-- Shared build settings for every project in the FS.GG.Governance solution.
+       F01 stands this up; every later feature reuses it (plan "Project Structure"). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarnOn>3390;1182</WarnOn>
+    <OtherFlags>$(OtherFlags) --nowarn:57</OtherFlags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- F01 does NOT pack (D7); packing arrives at F06. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F01 kernel: pure, BCL-only reasoner. NO PackageReference of any kind
+       (FR-010, SC-005). FSharp.Core is supplied implicitly by the SDK and pinned
+       centrally. Does NOT pack (D7) — IsPackable=false inherited from
+       Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Kernel</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Kernel.fsi" />
+    <Compile Include="Kernel.fs" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,95 @@
+TYPE FS.GG.Governance.Kernel.EvaluationResult`1
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], Int32)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.EvaluationResult`1[fact])
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.EvaluationResult`1[fact], System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.EvaluationResult`1[fact])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Rounds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] get_Facts()
+  [Method] System.String ToString()
+  [Property] Int32 Rounds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] Facts
+TYPE FS.GG.Governance.Kernel.FactAssertion`1
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.FactId, fact, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProvenanceStep])
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.FactAssertion`1[fact])
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.FactAssertion`1[fact], System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.FactId get_Id()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.FactAssertion`1[fact])
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProvenanceStep] get_Provenance()
+  [Method] System.String ToString()
+  [Method] fact get_Value()
+  [Property] FS.GG.Governance.Kernel.FactId Id
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProvenanceStep] Provenance
+  [Property] fact Value
+TYPE FS.GG.Governance.Kernel.FactId
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.FactId)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.FactId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.FactId NewFactId(System.String)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.FactId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Kernel.FixedPoint
+  [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
+TYPE FS.GG.Governance.Kernel.ProvenanceStep
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactId], System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ProvenanceStep)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ProvenanceStep, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Rule()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.ProvenanceStep)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactId] get_Inputs()
+  [Method] System.String ToString()
+  [Method] System.String get_Note()
+  [Property] FS.GG.Governance.Kernel.RuleId Rule
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactId] Inputs
+  [Property] System.String Note
+TYPE FS.GG.Governance.Kernel.RuleId
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId NewRuleId(System.String)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.RuleId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Kernel.Rule`1
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, System.String, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]])
+  [Method] FS.GG.Governance.Kernel.RuleId get_Id()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]] get_Apply()
+  [Method] System.String ToString()
+  [Method] System.String get_Description()
+  [Property] FS.GG.Governance.Kernel.RuleId Id
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]] Apply
+  [Property] System.String Description

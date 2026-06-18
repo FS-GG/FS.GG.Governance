@@ -1,0 +1,28 @@
+<Project>
+
+  <!-- Central package management. F01 stands this up so every later feature pins
+       its dependency versions in one place. The KERNEL itself takes NO package
+       references (it stays BCL-only — FR-010, SC-005); the only entries here are
+       FSharp.Core (managed centrally because CPM requires the implicit reference to
+       be versioned) and the TEST-ONLY frameworks (D5). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="FSharp.Core" Version="10.1.301" />
+  </ItemGroup>
+
+  <!-- Test-only: Expecto + FsCheck (property-based order-independence) plus the
+       VSTest adapters that let `dotnet test` drive the Expecto runner. None of
+       these reach the kernel assembly. -->
+  <ItemGroup>
+    <PackageVersion Include="Expecto" Version="10.2.3" />
+    <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
+    <PackageVersion Include="FsCheck" Version="2.16.6" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
+  </ItemGroup>
+
+</Project>
