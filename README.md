@@ -48,6 +48,7 @@ The governance design notes now live in this repository under
 `.github` repository). The remaining cross-repo plans still live in `.github`:
 
 - [Governance design notes](docs/governance-design/index.md) — comprehensive kernel/adapter/rule design
+- [Implementation plan (Spec Kit)](docs/implementation-plan.md) — the design decomposed into ordered Spec Kit features (F01–F13)
 - [Governance project scope & adoption bar](https://github.com/FS-GG/.github/blob/main/docs/governance-project.md)
 - [Governance implementation plan (Stages G1–G5)](https://github.com/FS-GG/.github/blob/main/docs/governance-implementation-plan.md)
 - [FS.GG project split index](https://github.com/FS-GG/.github/blob/main/docs/index.md)
