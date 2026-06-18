@@ -17,8 +17,8 @@ through `specify → plan → tasks → implement` per the
 [constitution](../.specify/memory/constitution.md).
 
 It is a roadmap (the plan that *generates* the per-feature `plan.md`s), not a
-substitute for them. Nothing here is built yet; the repo is at the end of Stage
-G1 (fresh Spec Kit repo bootstrapped).
+substitute for them. Status as of 2026-06-18: F01-F11 are implemented and merged
+to `main`; F12-F13 remain.
 
 ## 1. How this plan relates to the others
 
@@ -248,7 +248,7 @@ parallel once their dependencies land.
 
 ### Phase C — Adapters & composition (the adoption bar) · org G5
 
-#### F09 · `009-adapter-spi`
+#### F09 · `009-adapter-spi` — ✅ Done (merged to `main`)
 - **Intent:** a domain plugs in by supplying only facts, an artifact mapping,
   probes, a rule catalog, and fences; everything else is reused.
 - **Tier:** 1.
@@ -261,7 +261,7 @@ parallel once their dependencies land.
 - **MVU:** N/A. **Depends on:** F04 (+F05). **Exit:** the SPI + composition root;
   the "kernel is a library, not a platform" contract made concrete.
 
-#### F10 · `010-adapter-speckit`
+#### F10 · `010-adapter-speckit` — ✅ Done (merged to `main`)
 - **Intent:** the Spec Kit workflow is governed as data — phases and task states
   are facts, phase checks are reified rules, the merge boundary is the one fence.
 - **Tier:** 1.
@@ -275,7 +275,7 @@ parallel once their dependencies land.
 - **MVU:** N/A. **Depends on:** F09. **Exit:** governance dogfoods **this repo's
   own** Spec Kit workflow — domain #1 for the adoption bar.
 
-#### F11 · `011-adapter-designsystem` [P after F09]
+#### F11 · `011-adapter-designsystem` — ✅ Done (merged to `main`; completes M3)
 - **Intent:** a second, unrelated domain governs a design language from fixtures,
   proving generality without copying domain #1's shape.
 - **Tier:** 1.
@@ -286,7 +286,11 @@ parallel once their dependencies land.
   an agent with the rule's `Question`; runs against a **fixture** token tree (no
   rendering dependency, no rendering vocabulary in generic code).
 - **MVU:** N/A. **Depends on:** F09. **Exit:** domain #2 — **adoption bar met**
-  (two unrelated domains adopt the kernel cheaply).
+  (two unrelated domains adopt the kernel cheaply). Done: the new
+  `FS.GG.Governance.Adapters.DesignSystem` library supplies only its SPI
+  components, references Spi but not F10, runs the full catalog over fixture
+  facts, proves the tier split and stable render/hash behavior, and lifts
+  unchanged beside the real Spec Kit adapter.
 
 ### Phase D — CLI & external validation · org G3–G4
 
@@ -350,9 +354,9 @@ parallel once their dependencies land.
    (F08) that senses artifacts, runs the pure kernel, dispatches agent reviews, and
    freezes verdicts as cache-keyed evidence — the first Elmish/MVU boundary feature,
    zero new dependency.
-3. **M3 — Adoption bar (F09–F11).** SPI + composition root + two unrelated
-   domains (Spec Kit, design-system). The kernel is now demonstrably a library,
-   not a platform.
+3. **M3 — Adoption bar (F09–F11). ✅ Reached.** SPI + composition root + two
+   unrelated domains (Spec Kit, design-system). The kernel is now demonstrably a
+   library, not a platform.
 4. **M4 — Tool + external validation (F12–F13).** Optional CLI; run against an
    external repo from the outside (org G4); begin the org G5 adoption decision.
 
