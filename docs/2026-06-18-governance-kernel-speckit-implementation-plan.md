@@ -140,7 +140,7 @@ parallel once their dependencies land.
   added to the kernel, surface baseline re-blessed, 11 new tests (V1–V10b) green,
   zero new dependencies. *(Kept separate from F03, not folded in.)*
 
-#### F03 · `003-check-algebra`
+#### F03 · `003-check-algebra` — ✅ Done (merged to `main`)
 - **Intent:** a rule's check is one reified value that can be evaluated, rendered,
   hashed, and explained from a single source.
 - **Tier:** 1.
@@ -148,14 +148,18 @@ parallel once their dependencies land.
   `Check<'fact> = Atom | All | Any | Not | Implies | Opaque`; smart constructors
   (`probe`, `allOf`, `anyOf`, `not'`, `==>`, `.&`, `.|`); `Check.eval/render/hash/
   explain/reads/isReified`.
-- **FSI focus:** build a small check by hand; fold it four ways; confirm
+- **FSI focus:** build a small check by hand; fold it six ways; confirm
   `render`/`hash` work **without executing** `Eval`.
 - **Tests:** `eval` Kleene semantics; `hash` canonicalizes commutative nodes
   (`All [a;b] == All [b;a]`) but stays positional for `Implies`/`Atom` args
   (**decision #4 / hazard 3**); `explain` proof tree matches `eval`; `isReified`
   is false iff an `Opaque` is present.
 - **MVU:** N/A (applicative, no `bind`). **Depends on:** F02.
-- **Exit:** the inspectable algebra + four interpreters; the keystone of the design.
+- **Exit:** the inspectable algebra + six interpreters; the keystone of the design.
+  Done — `Check.fsi`/`.fs` added to the kernel, surface baseline re-blessed, 14 new
+  tests (V1–V12) green, zero new dependencies (SHA-256 is `System.*`). **Locks
+  decision #4 / hazard 3:** commutative-node hash canonicalization (ordinal-sort child
+  digests for `All`/`Any`; positional for `Implies` and probe `Args`/`Reads`).
 
 #### F04 · `004-checktier-rule-bridge`
 - **Intent:** every rule declares who is competent to decide it, and agent

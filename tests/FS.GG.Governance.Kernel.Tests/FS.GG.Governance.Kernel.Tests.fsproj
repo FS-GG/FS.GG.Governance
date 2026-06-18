@@ -13,6 +13,7 @@
     <Compile Include="FixedPointTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="VerdictTests.fs" />
+    <Compile Include="CheckTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
