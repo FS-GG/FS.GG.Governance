@@ -64,6 +64,10 @@ Read in order:
 - [Lessons and anti-goals](lessons.md) — why the previous attempt became opaque
   and oppressive, the anti-goals that prevent a repeat, and how this design
   honours the project-split decision.
+- [Open questions](open-questions.md) — gaps and risks surfaced by the
+  [2026-06-18 research review](../reports/2026-06-18-governance-design-research.md)
+  (offline synthesis + adversarial online verification of the prior-art and theory
+  claims), tracked as GitHub issues.
 
 ## Status
 
