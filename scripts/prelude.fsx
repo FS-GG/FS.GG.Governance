@@ -75,3 +75,43 @@ printfn "negate Uncertain = %A" (Verdict.negate (Uncertain "y"))
 
 // 7. Identities.
 printfn "all [] = %A ; any [] = %A" (Verdict.all []) (Verdict.any [])
+
+// ── Check sketch (F03) — fold one reified value six ways through the public surface ──
+// (quickstart.md §"FSI sketch"). `open Check` brings the ==>/.&/.| operators into
+// infix scope. Calls `failwith` against the T002 stub until Check.fs bodies land —
+// the point of this pass is that the SHAPES typecheck against the contract.
+
+open Check
+
+// 1. Two probes built by hand from the smart constructors — one reads an artifact and
+//    reports Met, one reports Unknown.
+let contrast = Check.probe "contrastRatio" [ { Kind = "token"; Key = "text" } ] [ NumberArg 4.5 ] (fun (_: FactSet<string>) -> Met)
+let tone = Check.probe "toneIsProfessional" [] [] (fun (_: FactSet<string>) -> Unknown "not reviewed")
+
+// 2. Compose checks that read like their sentences.
+let chk = contrast .& tone        // = All [contrast; tone]
+let imp = contrast ==> tone       // = Implies (contrast, tone)
+
+// 3. Evaluate (the only fold that needs facts): an undecided clause survives a
+//    conjunction of otherwise-passing clauses.
+printfn "\nCheck.eval chk            = %A" (Check.eval [] chk)
+
+// 4. Render without facts — no Eval runs.
+printfn "Check.render chk          = %s" (Check.render chk)
+
+// 5. Hash: commutative canonicalization for All; positional for Implies.
+printfn "hash All reorder equal?   %b" (Check.hash (All [ contrast; tone ]) = Check.hash (All [ tone; contrast ]))
+printfn "hash imp reversed differ? %b" (Check.hash (contrast ==> tone) <> Check.hash (tone ==> contrast))
+
+// 6. Explain agrees with eval.
+printfn "explain verdict = eval?   %b" (Explanation.verdict (Check.explain [] chk) = Check.eval [] chk)
+
+// 7. Reads / reified-ness (structural, no facts).
+printfn "Check.reads chk           = %A" (Check.reads chk)
+printfn "Check.isReified chk       = %b" (Check.isReified chk)
+printfn "isReified with Opaque?    %b" (Check.isReified (chk .& Opaque("judge", fun _ -> Met)))
+
+// 8. Never-executes proof: a probe whose Eval throws still renders and hashes.
+let boom = Check.probe "boom" [] [] (fun (_: FactSet<string>) -> failwith "executed")
+printfn "render boom (no exec)     = %s" (Check.render boom)
+printfn "hash boom (no exec) len   = %d" (Check.hash boom).Length

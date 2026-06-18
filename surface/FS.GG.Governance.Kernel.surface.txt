@@ -1,3 +1,91 @@
+TYPE FS.GG.Governance.Kernel.ArtifactRef
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ArtifactRef)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ArtifactRef, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.ArtifactRef)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Key()
+  [Method] System.String get_Kind()
+  [Property] System.String Key
+  [Property] System.String Kind
+TYPE FS.GG.Governance.Kernel.CheckModule
+  [Method] Boolean isReified[fact](FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] allOf[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] anyOf[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] not'[fact](FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] op_DotAmp[fact](FS.GG.Governance.Kernel.Check`1[fact], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] op_DotBar[fact](FS.GG.Governance.Kernel.Check`1[fact], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] op_EqualsEqualsGreater[fact](FS.GG.Governance.Kernel.Check`1[fact], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] probe[fact](System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProbeArg], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome])
+  [Method] FS.GG.Governance.Kernel.Explanation explain[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Verdict eval[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] reads[fact](FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] System.String hash[fact](FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] System.String render[fact](FS.GG.Governance.Kernel.Check`1[fact])
+TYPE FS.GG.Governance.Kernel.Check`1
+  [Method] Boolean get_IsAll()
+  [Method] Boolean get_IsAny()
+  [Method] Boolean get_IsAtom()
+  [Method] Boolean get_IsImplies()
+  [Method] Boolean get_IsNot()
+  [Method] Boolean get_IsOpaque()
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewAll(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewAny(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewAtom(FS.GG.Governance.Kernel.Probe`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewImplies(FS.GG.Governance.Kernel.Check`1[fact], FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewNot(FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] NewOpaque(System.String, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome])
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Check`1+All[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Any[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Atom[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Implies[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Not[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Opaque[fact]
+  [NestedType] FS.GG.Governance.Kernel.Check`1+Tags[fact]
+  [Property] Boolean IsAll
+  [Property] Boolean IsAny
+  [Property] Boolean IsAtom
+  [Property] Boolean IsImplies
+  [Property] Boolean IsNot
+  [Property] Boolean IsOpaque
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Check`1+All
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]] Item
+TYPE FS.GG.Governance.Kernel.Check`1+Any
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]] Item
+TYPE FS.GG.Governance.Kernel.Check`1+Atom
+  [Method] FS.GG.Governance.Kernel.Probe`1[fact] get_Item()
+  [Property] FS.GG.Governance.Kernel.Probe`1[fact] Item
+TYPE FS.GG.Governance.Kernel.Check`1+Implies
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] get_Item1()
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] get_Item2()
+  [Property] FS.GG.Governance.Kernel.Check`1[fact] Item1
+  [Property] FS.GG.Governance.Kernel.Check`1[fact] Item2
+TYPE FS.GG.Governance.Kernel.Check`1+Not
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] get_Item()
+  [Property] FS.GG.Governance.Kernel.Check`1[fact] Item
+TYPE FS.GG.Governance.Kernel.Check`1+Opaque
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome] get_eval()
+  [Method] System.String get_name()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome] eval
+  [Property] System.String name
+TYPE FS.GG.Governance.Kernel.Check`1+Tags
+  [Field] Int32 All
+  [Field] Int32 Any
+  [Field] Int32 Atom
+  [Field] Int32 Implies
+  [Field] Int32 Not
+  [Field] Int32 Opaque
 TYPE FS.GG.Governance.Kernel.EvaluationResult`1
   [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]], Int32)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.EvaluationResult`1[fact])
@@ -14,6 +102,89 @@ TYPE FS.GG.Governance.Kernel.EvaluationResult`1
   [Method] System.String ToString()
   [Property] Int32 Rounds
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]] Facts
+TYPE FS.GG.Governance.Kernel.Explanation
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Explanation)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Explanation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAllExplained()
+  [Method] Boolean get_IsAnyExplained()
+  [Method] Boolean get_IsAtomExplained()
+  [Method] Boolean get_IsImpliesExplained()
+  [Method] Boolean get_IsNotExplained()
+  [Method] Boolean get_IsOpaqueExplained()
+  [Method] FS.GG.Governance.Kernel.Explanation NewAllExplained(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation], FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.Explanation NewAnyExplained(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation], FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.Explanation NewAtomExplained(System.String, FS.GG.Governance.Kernel.Outcome, FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.Explanation NewImpliesExplained(FS.GG.Governance.Kernel.Explanation, FS.GG.Governance.Kernel.Explanation, FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.Explanation NewNotExplained(FS.GG.Governance.Kernel.Explanation, FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.Explanation NewOpaqueExplained(System.String, FS.GG.Governance.Kernel.Outcome, FS.GG.Governance.Kernel.Verdict)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Explanation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Explanation+AllExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+AnyExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+AtomExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+ImpliesExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+NotExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+OpaqueExplained
+  [NestedType] FS.GG.Governance.Kernel.Explanation+Tags
+  [Property] Boolean IsAllExplained
+  [Property] Boolean IsAnyExplained
+  [Property] Boolean IsAtomExplained
+  [Property] Boolean IsImpliesExplained
+  [Property] Boolean IsNotExplained
+  [Property] Boolean IsOpaqueExplained
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Explanation+AllExplained
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation] get_parts()
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation] parts
+TYPE FS.GG.Governance.Kernel.Explanation+AnyExplained
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation] get_parts()
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Explanation] parts
+TYPE FS.GG.Governance.Kernel.Explanation+AtomExplained
+  [Method] FS.GG.Governance.Kernel.Outcome get_outcome()
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Method] System.String get_name()
+  [Property] FS.GG.Governance.Kernel.Outcome outcome
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+  [Property] System.String name
+TYPE FS.GG.Governance.Kernel.Explanation+ImpliesExplained
+  [Method] FS.GG.Governance.Kernel.Explanation get_antecedent()
+  [Method] FS.GG.Governance.Kernel.Explanation get_consequent()
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Property] FS.GG.Governance.Kernel.Explanation antecedent
+  [Property] FS.GG.Governance.Kernel.Explanation consequent
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+TYPE FS.GG.Governance.Kernel.Explanation+NotExplained
+  [Method] FS.GG.Governance.Kernel.Explanation get_part()
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Property] FS.GG.Governance.Kernel.Explanation part
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+TYPE FS.GG.Governance.Kernel.Explanation+OpaqueExplained
+  [Method] FS.GG.Governance.Kernel.Outcome get_outcome()
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Method] System.String get_name()
+  [Property] FS.GG.Governance.Kernel.Outcome outcome
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+  [Property] System.String name
+TYPE FS.GG.Governance.Kernel.Explanation+Tags
+  [Field] Int32 AllExplained
+  [Field] Int32 AnyExplained
+  [Field] Int32 AtomExplained
+  [Field] Int32 ImpliesExplained
+  [Field] Int32 NotExplained
+  [Field] Int32 OpaqueExplained
+TYPE FS.GG.Governance.Kernel.ExplanationModule
+  [Method] FS.GG.Governance.Kernel.Verdict verdict(FS.GG.Governance.Kernel.Explanation)
 TYPE FS.GG.Governance.Kernel.FactAssertion`1
   [Constructor] Void .ctor(FS.GG.Governance.Kernel.FactId, fact, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProvenanceStep])
   [Method] Boolean Equals(FS.GG.Governance.Kernel.FactAssertion`1[fact])
@@ -50,6 +221,92 @@ TYPE FS.GG.Governance.Kernel.FactId
   [Property] System.String Item
 TYPE FS.GG.Governance.Kernel.FixedPoint
   [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
+TYPE FS.GG.Governance.Kernel.Outcome
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Outcome)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Outcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMet()
+  [Method] Boolean get_IsUnknown()
+  [Method] Boolean get_IsUnmet()
+  [Method] FS.GG.Governance.Kernel.Outcome NewUnknown(System.String)
+  [Method] FS.GG.Governance.Kernel.Outcome NewUnmet(System.String)
+  [Method] FS.GG.Governance.Kernel.Outcome get_Met()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Outcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Outcome+Tags
+  [NestedType] FS.GG.Governance.Kernel.Outcome+Unknown
+  [NestedType] FS.GG.Governance.Kernel.Outcome+Unmet
+  [Property] Boolean IsMet
+  [Property] Boolean IsUnknown
+  [Property] Boolean IsUnmet
+  [Property] FS.GG.Governance.Kernel.Outcome Met
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Outcome+Tags
+  [Field] Int32 Met
+  [Field] Int32 Unknown
+  [Field] Int32 Unmet
+TYPE FS.GG.Governance.Kernel.Outcome+Unknown
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.Kernel.Outcome+Unmet
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.Kernel.ProbeArg
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ProbeArg)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ProbeArg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactArg()
+  [Method] Boolean get_IsLiteralArg()
+  [Method] Boolean get_IsNumberArg()
+  [Method] FS.GG.Governance.Kernel.ProbeArg NewArtifactArg(FS.GG.Governance.Kernel.ArtifactRef)
+  [Method] FS.GG.Governance.Kernel.ProbeArg NewLiteralArg(System.String)
+  [Method] FS.GG.Governance.Kernel.ProbeArg NewNumberArg(Double)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.ProbeArg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.ProbeArg+ArtifactArg
+  [NestedType] FS.GG.Governance.Kernel.ProbeArg+LiteralArg
+  [NestedType] FS.GG.Governance.Kernel.ProbeArg+NumberArg
+  [NestedType] FS.GG.Governance.Kernel.ProbeArg+Tags
+  [Property] Boolean IsArtifactArg
+  [Property] Boolean IsLiteralArg
+  [Property] Boolean IsNumberArg
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.ProbeArg+ArtifactArg
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_Item()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef Item
+TYPE FS.GG.Governance.Kernel.ProbeArg+LiteralArg
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.Kernel.ProbeArg+NumberArg
+  [Method] Double get_Item()
+  [Property] Double Item
+TYPE FS.GG.Governance.Kernel.ProbeArg+Tags
+  [Field] Int32 ArtifactArg
+  [Field] Int32 LiteralArg
+  [Field] Int32 NumberArg
+TYPE FS.GG.Governance.Kernel.Probe`1
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProbeArg], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] get_Reads()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProbeArg] get_Args()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome] get_Eval()
+  [Method] System.String ToString()
+  [Method] System.String get_Name()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] Reads
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ProbeArg] Args
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],FS.GG.Governance.Kernel.Outcome] Eval
+  [Property] System.String Name
 TYPE FS.GG.Governance.Kernel.ProvenanceStep
   [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactId], System.String)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.ProvenanceStep)

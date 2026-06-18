@@ -15,6 +15,11 @@
     <Compile Include="Verdict.fs" />
     <Compile Include="Kernel.fsi" />
     <Compile Include="Kernel.fs" />
+    <!-- Check (F03): the reified Check algebra + six interpreters. Depends on both
+         Verdict (the verdict it folds to) and Kernel.FactSet<'fact> (the facts a
+         probe's Eval consumes), so it compiles AFTER both. -->
+    <Compile Include="Check.fsi" />
+    <Compile Include="Check.fs" />
   </ItemGroup>
 
 </Project>
