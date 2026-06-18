@@ -53,6 +53,11 @@ Read in order:
   la Carte, applicative inspectability, the phase-machine-emits-facts layering,
   explicit deterministic cross-domain combinators, and the policy-engine prior art
   (Cedar, OPA/Rego), with citations.
+- [Scope: planning, optimization, and what the kernel is for](planning-and-optimization.md)
+  — why the kernel is a monotonic deductive *checker* (Cedar's paradigm,
+  generalized in domain), why planning and optimization are deliberately not
+  native, and how the design still governs a planner or optimizer by checking its
+  outputs at the edge.
 - [Test design: governance adapters for Sojourn](testdesign-sojourn.md) — a worked
   second-adopter test on a deterministic Rust 4X game: multiple gameplay-invariant
   and software-development adapters that reify the project's existing ad-hoc rules.
