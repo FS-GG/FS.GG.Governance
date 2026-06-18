@@ -14,6 +14,17 @@ TYPE FS.GG.Governance.Kernel.ArtifactRef
   [Method] System.String get_Kind()
   [Property] System.String Key
   [Property] System.String Kind
+TYPE FS.GG.Governance.Kernel.Bridge`1
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.JudgeId, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RuleOutcome,fact], Microsoft.FSharp.Core.FSharpFunc`2[fact,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RuleOutcome]])
+  [Method] FS.GG.Governance.Kernel.JudgeId get_Judge()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RuleOutcome,fact] get_Embed()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,System.String]] get_ArtifactHash()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[fact,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RuleOutcome]] get_Project()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Kernel.JudgeId Judge
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.RuleOutcome,fact] Embed
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Kernel.ArtifactRef,System.String]] ArtifactHash
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[fact,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.RuleOutcome]] Project
 TYPE FS.GG.Governance.Kernel.CheckModule
   [Method] Boolean isReified[fact](FS.GG.Governance.Kernel.Check`1[fact])
   [Method] FS.GG.Governance.Kernel.Check`1[fact] allOf[fact](Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Check`1[fact]])
@@ -28,6 +39,57 @@ TYPE FS.GG.Governance.Kernel.CheckModule
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] reads[fact](FS.GG.Governance.Kernel.Check`1[fact])
   [Method] System.String hash[fact](FS.GG.Governance.Kernel.Check`1[fact])
   [Method] System.String render[fact](FS.GG.Governance.Kernel.Check`1[fact])
+TYPE FS.GG.Governance.Kernel.CheckRuleModule
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[fact] asking[fact](System.String, FS.GG.Governance.Kernel.CheckRule`1[fact])
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[fact] blocking[fact](FS.GG.Governance.Kernel.CheckRule`1[fact])
+  [Method] FS.GG.Governance.Kernel.Rule`1[fact] toRule[fact](FS.GG.Governance.Kernel.Bridge`1[fact], FS.GG.Governance.Kernel.CheckRule`1[fact])
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Kernel.CheckRule`1[fact],FS.GG.Governance.Kernel.RuleRejection] rule[fact](FS.GG.Governance.Kernel.RuleId, FS.GG.Governance.Kernel.CheckTier, FS.GG.Governance.Kernel.SpecSource, FS.GG.Governance.Kernel.Check`1[fact])
+  [Method] System.String cacheKey(FS.GG.Governance.Kernel.JudgeId, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
+TYPE FS.GG.Governance.Kernel.CheckRule`1
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, FS.GG.Governance.Kernel.CheckTier, FS.GG.Governance.Kernel.SpecSource, FS.GG.Governance.Kernel.Severity, FS.GG.Governance.Kernel.Check`1[fact], Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] FS.GG.Governance.Kernel.CheckTier get_Tier()
+  [Method] FS.GG.Governance.Kernel.Check`1[fact] get_Check()
+  [Method] FS.GG.Governance.Kernel.RuleId get_Id()
+  [Method] FS.GG.Governance.Kernel.Severity get_Severity()
+  [Method] FS.GG.Governance.Kernel.SpecSource get_Spec()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Question()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Kernel.CheckTier Tier
+  [Property] FS.GG.Governance.Kernel.Check`1[fact] Check
+  [Property] FS.GG.Governance.Kernel.RuleId Id
+  [Property] FS.GG.Governance.Kernel.Severity Severity
+  [Property] FS.GG.Governance.Kernel.SpecSource Spec
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Question
+TYPE FS.GG.Governance.Kernel.CheckTier
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.CheckTier)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.CheckTier, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAgentReviewed()
+  [Method] Boolean get_IsDeterministic()
+  [Method] Boolean get_IsHumanOnly()
+  [Method] FS.GG.Governance.Kernel.CheckTier get_AgentReviewed()
+  [Method] FS.GG.Governance.Kernel.CheckTier get_Deterministic()
+  [Method] FS.GG.Governance.Kernel.CheckTier get_HumanOnly()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.CheckTier)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.CheckTier+Tags
+  [Property] Boolean IsAgentReviewed
+  [Property] Boolean IsDeterministic
+  [Property] Boolean IsHumanOnly
+  [Property] FS.GG.Governance.Kernel.CheckTier AgentReviewed
+  [Property] FS.GG.Governance.Kernel.CheckTier Deterministic
+  [Property] FS.GG.Governance.Kernel.CheckTier HumanOnly
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.CheckTier+Tags
+  [Field] Int32 AgentReviewed
+  [Field] Int32 Deterministic
+  [Field] Int32 HumanOnly
 TYPE FS.GG.Governance.Kernel.Check`1
   [Method] Boolean get_IsAll()
   [Method] Boolean get_IsAny()
@@ -221,6 +283,22 @@ TYPE FS.GG.Governance.Kernel.FactId
   [Property] System.String Item
 TYPE FS.GG.Governance.Kernel.FixedPoint
   [Method] FS.GG.Governance.Kernel.EvaluationResult`1[fact] evaluate[fact](Microsoft.FSharp.Core.FSharpFunc`2[fact,FS.GG.Governance.Kernel.FactId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Rule`1[fact]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]])
+TYPE FS.GG.Governance.Kernel.JudgeId
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.JudgeId)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.JudgeId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.JudgeId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_ModelId()
+  [Method] System.String get_Version()
+  [Property] System.String ModelId
+  [Property] System.String Version
 TYPE FS.GG.Governance.Kernel.Outcome
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Outcome)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Outcome, System.Collections.IEqualityComparer)
@@ -325,6 +403,42 @@ TYPE FS.GG.Governance.Kernel.ProvenanceStep
   [Property] FS.GG.Governance.Kernel.RuleId Rule
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactId] Inputs
   [Property] System.String Note
+TYPE FS.GG.Governance.Kernel.RecordedReview
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, System.String, FS.GG.Governance.Kernel.Verdict)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RecordedReview)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RecordedReview, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Rule()
+  [Method] FS.GG.Governance.Kernel.Verdict get_Verdict()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.RecordedReview)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Key()
+  [Property] FS.GG.Governance.Kernel.RuleId Rule
+  [Property] FS.GG.Governance.Kernel.Verdict Verdict
+  [Property] System.String Key
+TYPE FS.GG.Governance.Kernel.ReviewRequest
+  [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, Microsoft.FSharp.Core.FSharpOption`1[System.String], System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ReviewRequest)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.ReviewRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Rule()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.ReviewRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Question()
+  [Method] System.String ToString()
+  [Method] System.String get_Key()
+  [Property] FS.GG.Governance.Kernel.RuleId Rule
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Question
+  [Property] System.String Key
 TYPE FS.GG.Governance.Kernel.RuleId
   [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleId, System.Collections.IEqualityComparer)
@@ -341,6 +455,71 @@ TYPE FS.GG.Governance.Kernel.RuleId
   [Method] System.String get_Item()
   [Property] Int32 Tag
   [Property] System.String Item
+TYPE FS.GG.Governance.Kernel.RuleOutcome
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleOutcome)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDecided()
+  [Method] Boolean get_IsEscalated()
+  [Method] Boolean get_IsNeedsReview()
+  [Method] Boolean get_IsReviewed()
+  [Method] FS.GG.Governance.Kernel.RuleOutcome NewDecided(FS.GG.Governance.Kernel.RuleId, FS.GG.Governance.Kernel.Verdict)
+  [Method] FS.GG.Governance.Kernel.RuleOutcome NewEscalated(FS.GG.Governance.Kernel.RuleId)
+  [Method] FS.GG.Governance.Kernel.RuleOutcome NewNeedsReview(FS.GG.Governance.Kernel.ReviewRequest)
+  [Method] FS.GG.Governance.Kernel.RuleOutcome NewReviewed(FS.GG.Governance.Kernel.RecordedReview)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.RuleOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.RuleOutcome+Decided
+  [NestedType] FS.GG.Governance.Kernel.RuleOutcome+Escalated
+  [NestedType] FS.GG.Governance.Kernel.RuleOutcome+NeedsReview
+  [NestedType] FS.GG.Governance.Kernel.RuleOutcome+Reviewed
+  [NestedType] FS.GG.Governance.Kernel.RuleOutcome+Tags
+  [Property] Boolean IsDecided
+  [Property] Boolean IsEscalated
+  [Property] Boolean IsNeedsReview
+  [Property] Boolean IsReviewed
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.RuleOutcome+Decided
+  [Method] FS.GG.Governance.Kernel.RuleId get_rule()
+  [Method] FS.GG.Governance.Kernel.Verdict get_verdict()
+  [Property] FS.GG.Governance.Kernel.RuleId rule
+  [Property] FS.GG.Governance.Kernel.Verdict verdict
+TYPE FS.GG.Governance.Kernel.RuleOutcome+Escalated
+  [Method] FS.GG.Governance.Kernel.RuleId get_rule()
+  [Property] FS.GG.Governance.Kernel.RuleId rule
+TYPE FS.GG.Governance.Kernel.RuleOutcome+NeedsReview
+  [Method] FS.GG.Governance.Kernel.ReviewRequest get_request()
+  [Property] FS.GG.Governance.Kernel.ReviewRequest request
+TYPE FS.GG.Governance.Kernel.RuleOutcome+Reviewed
+  [Method] FS.GG.Governance.Kernel.RecordedReview get_review()
+  [Property] FS.GG.Governance.Kernel.RecordedReview review
+TYPE FS.GG.Governance.Kernel.RuleOutcome+Tags
+  [Field] Int32 Decided
+  [Field] Int32 Escalated
+  [Field] Int32 NeedsReview
+  [Field] Int32 Reviewed
+TYPE FS.GG.Governance.Kernel.RuleRejection
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleRejection)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.RuleRejection, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Kernel.RuleId get_Item()
+  [Method] FS.GG.Governance.Kernel.RuleRejection NewOpaqueCannotBeDeterministic(FS.GG.Governance.Kernel.RuleId)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.RuleRejection)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Kernel.RuleId Item
+  [Property] Int32 Tag
 TYPE FS.GG.Governance.Kernel.Rule`1
   [Constructor] Void .ctor(FS.GG.Governance.Kernel.RuleId, System.String, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]])
   [Method] FS.GG.Governance.Kernel.RuleId get_Id()
@@ -350,6 +529,47 @@ TYPE FS.GG.Governance.Kernel.Rule`1
   [Property] FS.GG.Governance.Kernel.RuleId Id
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[fact]]] Apply
   [Property] System.String Description
+TYPE FS.GG.Governance.Kernel.Severity
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Severity)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.Severity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAdvisory()
+  [Method] Boolean get_IsBlocking()
+  [Method] FS.GG.Governance.Kernel.Severity get_Advisory()
+  [Method] FS.GG.Governance.Kernel.Severity get_Blocking()
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.Severity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Kernel.Severity+Tags
+  [Property] Boolean IsAdvisory
+  [Property] Boolean IsBlocking
+  [Property] FS.GG.Governance.Kernel.Severity Advisory
+  [Property] FS.GG.Governance.Kernel.Severity Blocking
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Kernel.Severity+Tags
+  [Field] Int32 Advisory
+  [Field] Int32 Blocking
+TYPE FS.GG.Governance.Kernel.SpecSource
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.SpecSource)
+  [Method] Boolean Equals(FS.GG.Governance.Kernel.SpecSource, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Kernel.SpecSource)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Document()
+  [Method] System.String get_Section()
+  [Property] System.String Document
+  [Property] System.String Section
 TYPE FS.GG.Governance.Kernel.Verdict
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict)
   [Method] Boolean Equals(FS.GG.Governance.Kernel.Verdict, System.Collections.IEqualityComparer)
