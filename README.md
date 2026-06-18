@@ -43,11 +43,13 @@ narrow tool slice is not yet implemented. See the cross-repo plan below.
 
 ## Design & plans
 
-Cross-repo design and the staged plan live in the org `.github` repository:
+The governance design notes now live in this repository under
+[`docs/governance-design/`](docs/governance-design/index.md) (moved out of the org
+`.github` repository). The remaining cross-repo plans still live in `.github`:
 
+- [Governance design notes](docs/governance-design/index.md) — comprehensive kernel/adapter/rule design
 - [Governance project scope & adoption bar](https://github.com/FS-GG/.github/blob/main/docs/governance-project.md)
 - [Governance implementation plan (Stages G1–G5)](https://github.com/FS-GG/.github/blob/main/docs/governance-implementation-plan.md)
-- [Governance design notes](https://github.com/FS-GG/.github/tree/main/docs/governance-design)
 - [FS.GG project split index](https://github.com/FS-GG/.github/blob/main/docs/index.md)
 
 ## Workflow
