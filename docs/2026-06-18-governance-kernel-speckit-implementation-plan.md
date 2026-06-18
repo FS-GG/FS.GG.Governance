@@ -17,8 +17,9 @@ through `specify → plan → tasks → implement` per the
 [constitution](../.specify/memory/constitution.md).
 
 It is a roadmap (the plan that *generates* the per-feature `plan.md`s), not a
-substitute for them. Status as of 2026-06-18: F01-F12 are implemented; F13
-external validation remains.
+substitute for them. Status as of 2026-06-18: F01-F12 are implemented and
+verified on `main` (`dotnet build FS.GG.Governance.sln`, `dotnet test
+FS.GG.Governance.sln`); F13 external validation remains.
 
 ## 1. How this plan relates to the others
 
@@ -294,7 +295,7 @@ parallel once their dependencies land.
 
 ### Phase D — CLI & external validation · org G3–G4
 
-#### F12 · `012-cli`
+#### F12 · `012-cli` — ✅ Done (merged to `main`)
 - **Intent:** a person or CI runs `route` / `explain` / `contract` / evidence
   report against a repo snapshot and gets text or JSON out.
 - **Tier:** 1.
@@ -351,7 +352,7 @@ parallel once their dependencies land.
 ## 7. Milestones
 
 1. **M1 — First useful product (F01–F06). ✅ Reached.** Pure kernel + evidence +
-   JSON explanation, packed (`FS.GG.Governance.Kernel.1.0.0.nupkg` →
+   JSON explanation, packed (`FS.GG.Governance.Kernel.0.1.1.nupkg` →
    `~/.local/share/nuget-local/`), zero heavy deps. Satisfies org G2/G3 "narrow
    tool" and the project-scope "first useful product."
 2. **M2 — Light routing + effects edge (F07–F08). ✅ Reached.** Explainable,
@@ -363,8 +364,9 @@ parallel once their dependencies land.
    unrelated domains (Spec Kit, design-system). The kernel is now demonstrably a
    library, not a platform.
 4. **M4 — Tool + external validation (F12–F13). In progress.** Optional CLI is
-   implemented (F12); run against an external repo from the outside next (F13,
-   org G4); begin the org G5 adoption decision.
+   implemented, tested, and packed as `FS.GG.Governance.Cli.0.1.1.nupkg` (F12);
+   run against an external repo from the outside next (F13, org G4); begin the org
+   G5 adoption decision.
 
 ## 8. Driving it with Spec Kit
 
