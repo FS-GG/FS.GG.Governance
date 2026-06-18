@@ -1,0 +1,261 @@
+TYPE FS.GG.Governance.Adapters.SpecKit.CatalogModule
+  [Method] FS.GG.Governance.Adapters.SpecKit.ConstitutionDial get_defaultDial()
+  [Method] FS.GG.Governance.Adapters.Spi.Adapter`3[FS.GG.Governance.Adapters.SpecKit.SpecKitFact,FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact,FS.GG.Governance.Adapters.SpecKit.SpecKitChange] adapter(FS.GG.Governance.Kernel.JudgeId, FS.GG.Governance.Adapters.SpecKit.ConstitutionDial)
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_constitutionComplete()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_contractsCurrent()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_evidenceNotSynthetic()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_featureInScope()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_fencedSurfacesVerified()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_planSatisfiesSpec()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_tasksCompleteOrdered()
+  [Method] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] get_tasksGraphWellFormed()
+  [Method] FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange] get_mergeFence()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact]] get_catalog()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange]] fences(FS.GG.Governance.Adapters.SpecKit.ConstitutionDial)
+  [Property] FS.GG.Governance.Adapters.SpecKit.ConstitutionDial defaultDial
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] constitutionComplete
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] contractsCurrent
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] evidenceNotSynthetic
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] featureInScope
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] fencedSurfacesVerified
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] planSatisfiesSpec
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] tasksCompleteOrdered
+  [Property] FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] tasksGraphWellFormed
+  [Property] FS.GG.Governance.Kernel.Fence`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange] mergeFence
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.CheckRule`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact]] catalog
+TYPE FS.GG.Governance.Adapters.SpecKit.ConstitutionDial
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Kernel.RuleId], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,FS.GG.Governance.Adapters.SpecKit.Phase]])
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.ConstitutionDial)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.ConstitutionDial, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.SpecKit.ConstitutionDial)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,FS.GG.Governance.Adapters.SpecKit.Phase]] get_EarlyFences()
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Kernel.RuleId] get_BlockingAtMerge()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,FS.GG.Governance.Adapters.SpecKit.Phase]] EarlyFences
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Kernel.RuleId] BlockingAtMerge
+TYPE FS.GG.Governance.Adapters.SpecKit.Phase
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.Phase)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAnalyze()
+  [Method] Boolean get_IsClarify()
+  [Method] Boolean get_IsConstitution()
+  [Method] Boolean get_IsImplement()
+  [Method] Boolean get_IsMerge()
+  [Method] Boolean get_IsPlan()
+  [Method] Boolean get_IsSpecify()
+  [Method] Boolean get_IsTasks()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Analyze()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Clarify()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Constitution()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Implement()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Merge()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Plan()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Specify()
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Tasks()
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.SpecKit.Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.Phase+Tags
+  [Property] Boolean IsAnalyze
+  [Property] Boolean IsClarify
+  [Property] Boolean IsConstitution
+  [Property] Boolean IsImplement
+  [Property] Boolean IsMerge
+  [Property] Boolean IsPlan
+  [Property] Boolean IsSpecify
+  [Property] Boolean IsTasks
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Analyze
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Clarify
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Constitution
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Implement
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Merge
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Plan
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Specify
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Tasks
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SpecKit.Phase+Tags
+  [Field] Int32 Analyze
+  [Field] Int32 Clarify
+  [Field] Int32 Constitution
+  [Field] Int32 Implement
+  [Field] Int32 Merge
+  [Field] Int32 Plan
+  [Field] Int32 Specify
+  [Field] Int32 Tasks
+TYPE FS.GG.Governance.Adapters.SpecKit.PhaseModule
+  [Method] Boolean reached(FS.GG.Governance.Adapters.SpecKit.Phase, FS.GG.Governance.Adapters.SpecKit.Phase)
+  [Method] Int32 rank(FS.GG.Governance.Adapters.SpecKit.Phase)
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsConstitution()
+  [Method] Boolean get_IsContracts()
+  [Method] Boolean get_IsDataModel()
+  [Method] Boolean get_IsPlan()
+  [Method] Boolean get_IsQuickstart()
+  [Method] Boolean get_IsResearch()
+  [Method] Boolean get_IsSpec()
+  [Method] Boolean get_IsTaskDeps()
+  [Method] Boolean get_IsTasks()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Constitution()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Contracts()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_DataModel()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Plan()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Quickstart()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Research()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Spec()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_TaskDeps()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Tasks()
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact+Tags
+  [Property] Boolean IsConstitution
+  [Property] Boolean IsContracts
+  [Property] Boolean IsDataModel
+  [Property] Boolean IsPlan
+  [Property] Boolean IsQuickstart
+  [Property] Boolean IsResearch
+  [Property] Boolean IsSpec
+  [Property] Boolean IsTaskDeps
+  [Property] Boolean IsTasks
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Constitution
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Contracts
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact DataModel
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Plan
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Quickstart
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Research
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Spec
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact TaskDeps
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Tasks
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact+Tags
+  [Field] Int32 Constitution
+  [Field] Int32 Contracts
+  [Field] Int32 DataModel
+  [Field] Int32 Plan
+  [Field] Int32 Quickstart
+  [Field] Int32 Research
+  [Field] Int32 Spec
+  [Field] Int32 TaskDeps
+  [Field] Int32 Tasks
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitChange
+  [Constructor] Void .ctor(FS.GG.Governance.Adapters.SpecKit.Phase, Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact])
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitChange)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitChange, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Phase()
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.SpecKit.SpecKitChange)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact] get_Surfaces()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Phase
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact] Surfaces
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitFact)
+  [Method] Boolean Equals(FS.GG.Governance.Adapters.SpecKit.SpecKitFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactPresent()
+  [Method] Boolean get_IsConstitutionArea()
+  [Method] Boolean get_IsPhaseReached()
+  [Method] Boolean get_IsSkillBound()
+  [Method] Boolean get_IsSpecKitGov()
+  [Method] Boolean get_IsTaskDependsOn()
+  [Method] Boolean get_IsTaskState()
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewArtifactPresent(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewConstitutionArea(System.String, Boolean)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewPhaseReached(FS.GG.Governance.Adapters.SpecKit.Phase)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewSkillBound(System.String, System.String)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewSpecKitGov(FS.GG.Governance.Kernel.RuleOutcome)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewTaskDependsOn(System.String, System.String)
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact NewTaskState(System.String, FS.GG.Governance.Kernel.EvidenceState)
+  [Method] Int32 CompareTo(FS.GG.Governance.Adapters.SpecKit.SpecKitFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+ArtifactPresent
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+ConstitutionArea
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+PhaseReached
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+SkillBound
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+SpecKitGov
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+Tags
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+TaskDependsOn
+  [NestedType] FS.GG.Governance.Adapters.SpecKit.SpecKitFact+TaskState
+  [Property] Boolean IsArtifactPresent
+  [Property] Boolean IsConstitutionArea
+  [Property] Boolean IsPhaseReached
+  [Property] Boolean IsSkillBound
+  [Property] Boolean IsSpecKitGov
+  [Property] Boolean IsTaskDependsOn
+  [Property] Boolean IsTaskState
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+ArtifactPresent
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact get_Item()
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact Item
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+ConstitutionArea
+  [Method] Boolean get_filled()
+  [Method] System.String get_area()
+  [Property] Boolean filled
+  [Property] System.String area
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+PhaseReached
+  [Method] FS.GG.Governance.Adapters.SpecKit.Phase get_Item()
+  [Property] FS.GG.Governance.Adapters.SpecKit.Phase Item
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+SkillBound
+  [Method] System.String get_skillId()
+  [Method] System.String get_taskId()
+  [Property] System.String skillId
+  [Property] System.String taskId
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+SpecKitGov
+  [Method] FS.GG.Governance.Kernel.RuleOutcome get_Item()
+  [Property] FS.GG.Governance.Kernel.RuleOutcome Item
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+Tags
+  [Field] Int32 ArtifactPresent
+  [Field] Int32 ConstitutionArea
+  [Field] Int32 PhaseReached
+  [Field] Int32 SkillBound
+  [Field] Int32 SpecKitGov
+  [Field] Int32 TaskDependsOn
+  [Field] Int32 TaskState
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+TaskDependsOn
+  [Method] System.String get_dep()
+  [Method] System.String get_taskId()
+  [Property] System.String dep
+  [Property] System.String taskId
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+TaskState
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_state()
+  [Method] System.String get_taskId()
+  [Property] FS.GG.Governance.Kernel.EvidenceState state
+  [Property] System.String taskId
+TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitModule
+  [Method] FS.GG.Governance.Kernel.ArtifactRef toRef(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact)
+  [Method] FS.GG.Governance.Kernel.Bridge`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] bridge(FS.GG.Governance.Kernel.JudgeId)
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] whenPhase(FS.GG.Governance.Adapters.SpecKit.Phase, FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact])
+  [Method] FS.GG.Governance.Kernel.FactId identify(FS.GG.Governance.Adapters.SpecKit.SpecKitFact)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact]] get_probes()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact]] probes

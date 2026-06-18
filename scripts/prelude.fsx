@@ -470,3 +470,54 @@ let f09NoDocResult =
         [ { Id = FactId "k"; Value = Task(TaskOpen false); Provenance = [] } ]
 let f09Inert = f09NoDocResult.Facts |> List.exists (fun f -> f.Value = Gov(Decided(RuleId "doc-implies-task", Pass)))
 printfn "[F09] after removal = %d rules (kernel + task intact) · cross rule inert = %b" f09NoDoc.Catalog.Length f09Inert
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F10 · the Spec Kit adapter — governance dogfoods this repo's own workflow as data.
+// The FIRST concrete production adapter (domain #1 of M3). It supplies ONLY its own five
+// SPI components + the Bridge and reuses 100% of the kernel. Exercised against the BUILT
+// FS.GG.Governance.Adapters.SpecKit library (Principle I, SC-001/SC-008).
+//   dotnet build src/FS.GG.Governance.Adapters.SpecKit   # before running this script
+// ─────────────────────────────────────────────────────────────────────────────
+#r "../src/FS.GG.Governance.Adapters.SpecKit/bin/Debug/net10.0/FS.GG.Governance.Adapters.SpecKit.dll"
+
+open FS.GG.Governance.Adapters.SpecKit
+
+let f10Judge: JudgeId = { ModelId = "speckit-judge"; Version = "1" }
+let f10Adapter = Catalog.adapter f10Judge Catalog.defaultDial   // the ONE Adapter value (FR-003)
+
+// 1. OBSERVER-ONLY + FIVE-COMPONENT (SC-001): fully specified by the five SPI components.
+printfn "\n[F10] rules = %d / probes = %d / fences = %d"
+    f10Adapter.Rules.Length f10Adapter.Probes.Length f10Adapter.Fences.Length
+
+// 2. PHASE GUARD (SC-002): a whenPhase Plan rule is a definite not-applicable before Plan.
+let f10BeforePlan = [ { Id = FactId "ph"; Value = PhaseReached Phase.Specify; Provenance = [] } ]
+let f10AtPlan = [ { Id = FactId "ph"; Value = PhaseReached Phase.Plan; Provenance = [] } ]
+printfn "[F10] before Plan = %A (vacuous Pass) · at Plan = %A (Opaque contributes)"
+    (Check.eval f10BeforePlan Catalog.planSatisfiesSpec.Check)
+    (Check.eval f10AtPlan Catalog.planSatisfiesSpec.Check)
+
+// 3. INNER-LOOP vs MERGE (SC-003): nothing blocks before merge; merge is the single fence.
+let f10Inner = { Phase = Phase.Tasks; Surfaces = Set.ofList [ SpecKitArtifact.Tasks ] }
+let f10Merge = { Phase = Phase.Merge; Surfaces = Set.ofList [ SpecKitArtifact.Tasks ] }
+let f10InnerRoute = Route.route f10Adapter.Fences f10Adapter.Rules Inner f10Inner
+let f10MergeRoute = Route.route f10Adapter.Fences f10Adapter.Rules Gate f10Merge
+printfn "[F10] inner blocking = %d / merge blocking = %d" f10InnerRoute.Blocking.Length f10MergeRoute.Blocking.Length
+
+// 4. EVIDENCE / TAINT via the KERNEL (SC-004): AutoSynthetic flows down TaskDependsOn.
+let f10Tainted =
+    [ { Id = FactId "t1"; Value = TaskState("T1", Synthetic); Provenance = [] }
+      { Id = FactId "t2"; Value = TaskState("T2", Real); Provenance = [] }
+      { Id = FactId "d"; Value = TaskDependsOn("T2", "T1"); Provenance = [] } ]
+printfn "[F10] evidence (synthetic upstream) = %A (Fail — T2 is AutoSynthetic via T1)"
+    (Check.eval f10Tainted Catalog.evidenceNotSynthetic.Check)
+
+// 5. THE CONSTITUTION DIAL (SC-005): the blocking set is the dial's, not a fixed list.
+let f10Light = { Catalog.defaultDial with BlockingAtMerge = Set.empty }
+let f10LightAdapter = Catalog.adapter f10Judge f10Light
+let f10LightMerge = Route.route f10LightAdapter.Fences f10LightAdapter.Rules Gate f10Merge
+printfn "[F10] light merge blocking = %d (fewer than default %d)" f10LightMerge.Blocking.Length f10MergeRoute.Blocking.Length
+
+// 6. RENDER & EXPLAIN (SC-006): every rule renders to a sentence and explains itself.
+for r in Catalog.catalog do
+    let (RuleId id) = r.Id
+    printfn "[F10]   %-24s :: %s" id (Check.render r.Check)
