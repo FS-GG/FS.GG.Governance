@@ -170,3 +170,43 @@ agentRule
     printfn "Description = render? %b" (kr.Description = Check.render r.Check)
     printfn "Apply (miss) = %A" (kr.Apply govFacts))
 |> ignore
+
+// ── Evidence sketch (F05) — propagate synthetic taint over a dependency DAG ──
+// (quickstart.md §"FSI sketch"). A plain string is the node 'id, so the graph is real
+// and domain-neutral. Exercises the public surface exactly as a downstream consumer would.
+
+// 1. Build a small DAG: one synthetic root with a chain of real nodes resting on it.
+let evG =
+    Evidence.build
+        [ "data", Synthetic        // the root cause: only simulated data
+          "analysis", Real         // rests on data
+          "report", Real ]         // rests on analysis
+        [ "analysis", "data"
+          "report", "analysis" ]
+
+// 2. Compute effective states — taint flows transitively to full depth.
+printfn "\nEvidence.effective chain = %A" (evG |> Result.map Evidence.effective)
+// data stays Synthetic (root cause); analysis & report (both Real) become AutoSynthetic.
+
+// 3. Auto-clear by upgrading the root — re-declare data as Real and recompute.
+printfn "auto-clear on Synthetic→Real = %A"
+    (Evidence.build [ "data", Real; "analysis", Real; "report", Real ]
+                    [ "analysis", "data"; "report", "analysis" ]
+     |> Result.map Evidence.effective)
+
+// 4. The guardrails — build refusals (Cycle / AutoSyntheticDeclared / UnknownNode).
+printfn "refuse self-cycle    = %A" (Evidence.build [ "a", Real ] [ "a", "a" ])
+printfn "refuse AutoSynthetic = %A" (Evidence.build [ "x", AutoSynthetic ] [])
+printfn "refuse UnknownNode   = %A" (Evidence.build [ "a", Real ] [ "a", "ghost" ])
+
+// 5. Non-real states are inert; synthetic outranks inheritance.
+printfn "inert + synthetic-outranks = %A"
+    (Evidence.build [ "root", Synthetic; "f", Failed; "s2", Synthetic ]
+                    [ "f", "root"; "s2", "root" ]
+     |> Result.map Evidence.effective)
+
+// 6. Domain-neutral: the same model over a research scenario — a Real finding resting on
+//    a Synthetic "simulated data" node is AutoSynthetic (exactly steps 1–2, renamed).
+printfn "domain-neutral research = %A"
+    (Evidence.build [ "simulated-data", Synthetic; "finding", Real ] [ "finding", "simulated-data" ]
+     |> Result.map Evidence.effective)

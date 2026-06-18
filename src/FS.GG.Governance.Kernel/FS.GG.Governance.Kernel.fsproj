@@ -15,6 +15,15 @@
     <Compile Include="Verdict.fs" />
     <Compile Include="Kernel.fsi" />
     <Compile Include="Kernel.fs" />
+    <!-- Evidence (F05): the six-case EvidenceState, the abstract cycle-rejecting
+         EvidenceGraph<'id>, and the transitive synthetic-taint closure (effective).
+         A pure derivation over DECLARED states — no I/O, zero new dependency (only
+         Map/Set). Its only real predecessor is the F01 core's least-fixed-point
+         discipline; it references none of Verdict/Check/CheckRule, and Check.*/
+         CheckRule.* do not depend on it — so it compiles right after Kernel.*,
+         documenting that relationship in the build order (plan Structure Decision). -->
+    <Compile Include="Evidence.fsi" />
+    <Compile Include="Evidence.fs" />
     <!-- Check (F03): the reified Check algebra + six interpreters. Depends on both
          Verdict (the verdict it folds to) and Kernel.FactSet<'fact> (the facts a
          probe's Eval consumes), so it compiles AFTER both. -->
