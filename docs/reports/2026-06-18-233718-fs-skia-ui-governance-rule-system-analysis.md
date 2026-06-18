@@ -1,7 +1,7 @@
 # FS.GG.Governance replacement capability analysis for FS-Skia-UI
 
 **Timestamp:** 2026-06-18T23:37:18+02:00
-**Revision:** 2026-06-18T23:54:39+02:00
+**Revision:** 2026-06-19T00:13:40+02:00
 **Author:** Codex
 **Status:** Research update, no implementation changes
 **Scope:** Research the current FS-Skia-UI repository and define what FS.GG.Governance must own so the new FS.GG system replaces FS-Skia-UI's governance/build/product-generation capability envelope, not merely Spec Kit.
@@ -31,9 +31,12 @@ The replacement architecture is:
 - Add concrete rule packs for workflow, package/API surface, generated product/template, skill quality, docs/examples, design/rendering, distribution, provenance, and CI.
 - Replace FS-Skia-UI's FAKE-bound gates with stable CLI/library contracts. FAKE can remain an optional runner, not the architecture.
 - Make generated readiness files machine-readable first, with Markdown only as rendered views.
+- Make governance cost proportional to change risk: cheap local checks, focused PR gates, full ship/release checks only at the right boundary, and evidence freshness instead of needless reruns.
 - Make `fsgg ship --mode gate --json` the branch-protection status check.
 
 The local FS.GG.Governance codebase already has the harder reusable core: 39 non-generated source/interface files under `src/`, 50 non-generated F# test files, 12 feature specs, a reified check algebra, an adapter SPI, SpecKit and design-system adapters, a host loop, and a CLI that can emit route, contract, explain, and evidence output. The missing work is not theory. It is parity engineering against FS-Skia-UI's capability surface.
+
+Equally important: the replacement must not recreate FS-Skia-UI's oppressive development loop. FS-Skia-UI's later governance could turn slight changes into hundreds of tests and broad generated-product checks. That is a design failure even when every individual gate is useful. FS.GG must treat "small safe changes stay cheap" as a first-class requirement.
 
 ## Research snapshot
 
@@ -123,6 +126,7 @@ Therefore the replacement target is not "rename Spec Kit" and not "port `build/G
 |---|---|---|
 | Compiled typed policy | Stronger kernel exists: reified `Check`, `CheckRule`, verdict, contract, explanation, evidence | Add product-level target/gate registry and rule packs. |
 | Diff route selection | Kernel has route model; CLI has `route`; SpecKit adapter is not enough | Add git/CI snapshot sensor, changed-path facts, default-deny, `--paths`, branch/base support, and JSON route trace. |
+| Cost-proportional validation | No explicit cost budget, evidence cache, or rule maturity model yet | Add rule cost metadata, impact scopes, freshness keys, scoped local checks, and advisory-first promotion. |
 | Tiers and modes | FS.GG has `RunMode` and rule severity concepts | Define FS.GG-specific tiers/modes: inner, focused, verify, ship, release. |
 | Target identities | No FS-Skia-style target union for products yet | Add typed `GateId`/`TargetId` registry with metadata, prerequisites, cost, timeout, failure owner. |
 | Evidence graph | Kernel evidence supports authored and effective states | Add workflow/product evidence schemas and import from old `tasks.md`/`tasks.deps.yml`. |
@@ -146,6 +150,7 @@ Keep the ideas, not the coupling:
 | Typed gate identities | Yes | FS-Skia-UI uses a closed F# union. FS.GG should do the same or use an equally typed registry. |
 | Changed-path route selection | Yes | This is essential. Governance must start from repository facts, not from which command an agent remembered. |
 | Default-deny for unknown paths | Yes | Unknown blast radius should route to stronger proof. |
+| Minimal gate selection | Yes, but strengthen | The idea is right, but FS.GG must route by precise capability impact, not coarse directories. |
 | Evidence states and synthetic propagation | Yes | FS.GG already has matching kernel vocabulary; make it workflow/product-visible. |
 | Merge-time audit | Yes | `ship` must be a hard gate with machine-readable reasons. |
 | Single-source generation | Yes | Generated files are views and must be currency-checked. |
@@ -156,8 +161,37 @@ Keep the ideas, not the coupling:
 | NuGet trusted-publishing flow | Yes, if FS.GG publishes templates/packages | Release governance should cover publish credentials, metadata, pack outputs, and idempotency. |
 | Spec Kit as primary workflow | No | Treat `.specify` and `specs/**` as import/migration input, not the future contract. |
 | FAKE as required architecture | No | Use CLI/library contracts; FAKE can call them. |
+| Broad path-glob escalation | No | Avoid rules like `src/Controls/**` selecting every controls/template/generated-product gate for trivial edits. |
+| Full-suite local defaults | No | Exhaustive validation belongs at ship, release, nightly, or explicit verify boundaries. |
 | Plain-text-only route output | No | FS.GG should emit JSON and explain traces from day one. |
 | Presence-only `--enforce` | No | FS.GG should include freshness, source hash, commit/base, and provenance where practical. |
+
+## Anti-oppression requirements
+
+FS.GG should be strict at product boundaries and cheap in the inner loop. A governance system that is technically correct but routinely turns a one-line low-risk edit into hundreds of tests will be bypassed, disabled, or feared. Cost control is therefore part of correctness.
+
+| Requirement | Design rule | FS.GG incorporation |
+|---|---|---|
+| Separate local, PR, ship, and release gates | Do not make the local authoring loop pay release-level cost | Add modes such as `local`, `pr`, `ship`, and `release`, with explicit promotion rules. |
+| Route from precise impact facts | Broad path globs are too crude for mature products | Map changed paths to capabilities, public surfaces, generated views, docs pages, controls, tests, and evidence artifacts. |
+| Support scoped authoring | Whole-worktree routing is right for merge safety but bad while editing | Add `fsgg route --paths ...`, `fsgg check --paths ...`, and `fsgg check --since <rev>`; reserve full base/head routing for `ship`. |
+| Cache fresh evidence | Expensive proof should rerun only when its inputs changed | Store rule hash, artifact hashes, command version, generator version, base/head commit, environment class, and output digest. |
+| Split expensive gates | A generated-product umbrella gate hides cost and cause | Separate structural scans, restore/build, focused product tests, visual checks, full generated-product verify, and release checks. |
+| Explain broad routes | A large gate list must justify itself | `route.json` should name matched rule, changed path, affected capability, required evidence, estimated cost, and cheaper local alternative. |
+| Budget every rule | Runtime and blast radius are governance data | Add cost, timeout, expected-test-count, historical-runtime, and failure-owner metadata to gates/rules. |
+| Promote rules gradually | New heuristic gates are noisy until proven | Support `observe`, `warn`, `block-on-pr`, `block-on-ship`, and `block-on-release` maturity levels. |
+| Run exhaustive checks asynchronously | Full sweeps still matter, but not on every small edit | Use nightly/scheduled full validation, release-only publish checks, and explicit broad `verify` commands. |
+| Prefer contract checks first | Small public API edits need high signal before broad integration | Run `.fsi`, FSI transcript, baseline, docs, and focused semantic tests before generated-product or visual matrices. |
+
+Concrete examples:
+
+- A prose-only docs edit should route to docs/link/generated-docs checks, not package tests or generated-product validation.
+- A private `.fs` implementation edit should normally route to affected project tests, not every template/profile/sample check.
+- A single `.fsi` edit should route to that package's surface baseline, FSI transcript, compatibility note, and focused semantic tests.
+- A token-source edit should route to token generation, contrast checks for affected roles, and selected visual captures, not all samples.
+- Template, package pin, or capability catalog edits can still route broad because they affect generated consumers.
+
+The final rule: if a slight change selects a high-cost path, the route explanation must make the risk obvious. If it cannot, the rule is too broad or belongs in advisory/scheduled validation.
 
 ## Proposed FS.GG replacement model
 
@@ -226,6 +260,7 @@ Migration rule: `.specify/memory/constitution.md`, `specs/<feature>/spec.md`, `p
 |---|---|---|
 | Workflow | Stage, work artifacts, graph nodes, dependencies, evidence declarations, policy dial | `workGraphWellFormed`, `designSatisfiesIntent`, `evidenceNotSynthetic`, `shipFence` |
 | Git/CI | Base/head, changed paths, branch, PR labels, status checks, dirty worktree, unknown paths | `changedPathsRouted`, `unknownPathDefaultsSafe`, `requiredStatusPresent` |
+| Cost/cache | Rule cost, historical runtime, freshness keys, prior evidence digests, rule maturity | `evidenceFresh`, `ruleWithinBudget`, `expensiveGateJustified`, `advisoryRuleNotBlocking` |
 | Package/API | Public `.fsi`, package projects, surface baselines, compatibility notes, FSI transcripts | `publicSurfaceHasSignature`, `surfaceBaselineCurrent`, `breakingChangeHasMigration` |
 | Generated product | Template profile, generated root, generated package pins, product tests, generated guidance | `templateInstantiates`, `generatedProductVerifies`, `generatedGuidanceCurrent` |
 | Skills | Skill ids, paths, references, capability mappings, mirrors, loaded-skill evidence | `skillExists`, `skillContractPathValid`, `declaredSkillLoadedBeforeWork` |
@@ -255,6 +290,9 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 |---|---|
 | No FS.GG workflow adapter | The current main adapter is SpecKit-shaped. Replacement needs FS.GG-owned stages/artifacts. |
 | No git/CI snapshot adapter with path facts | Route parity requires base/head diff, dirty paths, unknown-path handling, and CI context. |
+| No scoped authoring mode | Whole-worktree routing would recreate FS-Skia-UI's heavy local loop. |
+| No evidence freshness cache | Expensive checks would rerun even when their rule inputs and artifacts are unchanged. |
+| No rule cost/maturity model | New or high-cost gates could become blocking before their signal/noise ratio is known. |
 | No typed product gate registry | FS-Skia-UI's target union/metadata is a major capability; FS.GG needs equivalent target identity. |
 | No generated-product/template adapter | FS-Skia-UI validates generated consumers; FS.GG cannot replace the template workflow without this. |
 | No capability catalog schema | Package/tests/skills/docs/evidence need a central catalog analogous to `template/capabilities.yml`. |
@@ -272,13 +310,15 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 - Add typed `GateId`/`TargetId` metadata: name, prerequisites, timeout class, cost, failure owner, product-check flag.
 - Add path-glob route rules as reified checks or a typed route table rendered into `route.json` and `contract.json`.
 - Implement default-deny for unknown paths and a `--paths` authoring mode for scoped local checks.
-- Emit JSON route traces naming matched rules, unmatched paths, selected tier, gates, expected artifacts, and why each gate is present.
+- Emit JSON route traces naming matched rules, unmatched paths, selected tier, gates, expected artifacts, estimated cost, cache eligibility, and why each gate is present.
+- Add rule maturity levels so new checks can run as observe/warn before becoming blocking.
 
 ### Phase 2: Workflow and evidence parity
 
 - Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and `work/<id>/evidence.yml` schemas.
 - Add import from `.specify` and `specs/**` with explicit uncertainty warnings.
 - Port task DAG validation, dependency propagation, synthetic taint, SEH/accepted-deferral concepts, and diff-scan blocking into FS.GG terms.
+- Add evidence freshness records keyed by rule hash, artifact hashes, command version, base/head, environment class, and output digest.
 - Make `fsgg evidence` and `fsgg ship` produce `evidence.json`, `audit.json`, and `summary.md`.
 
 ### Phase 3: Single-source generation parity
@@ -291,7 +331,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 ### Phase 4: Capability catalog and generated-product parity
 
 - Define `.fsgg/capabilities.yml` for FS.GG.Rendering packages, contracts, tests, product skills, template fragments, profiles, evidence tags, and baselines.
-- Add generated-product checks: instantiate template, restore, build, test, verify guidance, verify package pins, and validate generated governance artifacts.
+- Add generated-product checks in cost tiers: structural scan, restore/build, focused product tests, full verify, and release/publish validation.
 - Ensure generated products can run FS.GG governance locally without depending on the monorepo.
 
 ### Phase 5: Package/API, design, docs, and skills parity
@@ -306,6 +346,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 
 - Define `fsgg verify` and `fsgg ship --mode gate --json` exit codes and stable output schema.
 - Add GitHub Actions workflow guidance so `fsgg ship` is the required protected-branch status.
+- Add scheduled/nightly exhaustive validation for broad matrices so the local and PR loops stay focused.
 - Add release rules for version bumps, packable projects, package metadata, template pins, dry-run publish plans, and NuGet trusted publishing.
 - Emit optional SLSA/in-toto-style attestations for readiness artifacts, package outputs, and generated products.
 
@@ -359,6 +400,7 @@ NuGet trusted publishing matters only if FS.GG replaces FS-Skia-UI's distributio
 | Risk | Why it matters | Mitigation |
 |---|---|---|
 | Replacing Spec Kit but not FS-Skia-UI capability | Leaves generated-product, skill, package, surface, docs, and release checks behind | Treat FS-Skia-UI's full capability inventory as parity scope. |
+| Recreating oppressive governance | Developers will stop running checks or route around the system | Make cost proportional to risk, add scoped authoring, freshness caching, rule budgets, and advisory-first promotion. |
 | Copying FS-Skia-UI's FAKE coupling | Recreates the same concurrency and build-runner constraints | Make CLI/library contracts primary; FAKE only calls them. |
 | Recreating Spec Kit with different names | Adds churn without stronger guarantees | Make structured state, typed facts, evidence graph, and generated readiness authoritative. |
 | Losing readable authoring flow | Spec Kit's Markdown was approachable | Keep Markdown authoring/rendered views, but pair them with source-of-truth YAML/JSON. |
@@ -377,8 +419,9 @@ The corrected direction is replacement of FS-Skia-UI's useful capabilities, not 
 2. FS.GG.Rendering owns the UI/runtime packages, templates, samples, product skills, and design/rendering artifacts.
 3. `.fsgg` and `work/<id>` replace `.specify` and `specs/<id>` as the authoritative lifecycle model.
 4. Capability catalogs connect package surfaces, tests, skills, docs, generated products, design captures, and release artifacts to governance facts.
-5. Generated readiness is structured, fresh, and auditable; Markdown is a view.
-6. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
-7. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
+5. Cost controls make the local loop fast: scoped routing, precise impact facts, evidence caching, rule budgets, and advisory-first rules.
+6. Generated readiness is structured, fresh, and auditable; Markdown is a view.
+7. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
+8. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
 
 That gives FS.GG a real replacement for FS-Skia-UI's governance/build/generated-product capability instead of a stricter wrapper around someone else's workflow.
