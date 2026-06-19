@@ -31,6 +31,7 @@ The replacement architecture is:
 - Add concrete rule packs for workflow, package/API surface, generated product/template, skill quality, docs/examples, design/rendering, distribution, provenance, and CI.
 - Replace FS-Skia-UI's FAKE-bound gates with stable CLI/library contracts. FAKE can remain an optional runner, not the architecture.
 - Make generated readiness files machine-readable first, with Markdown only as rendered views.
+- Use Spectre.Console as the approved human terminal UI layer for rich route, evidence, verify, ship, and watch views. Spectre output is presentation only; deterministic JSON remains the CI and automation contract.
 - Make governance cost proportional to change risk: cheap local checks, focused PR gates, full ship/release checks only at the right boundary, and evidence freshness instead of needless reruns.
 - Make `fsgg ship --mode gate --json` the branch-protection status check.
 
@@ -208,7 +209,7 @@ The final rule: if a slight change selects a high-cost path, the route explanati
 | Design/rendering facts: tokens, captures, contrast, interaction states | Existing design-system adapter plus FS.GG.Rendering sensors |
 | Docs/examples/reference generation | New docs/examples adapter |
 | Release/publish/provenance | New distribution adapter |
-| CLI user/CI surface | `FS.GG.Governance.Cli` |
+| CLI user/CI surface | `FS.GG.Governance.Cli`; JSON/text command contract plus Spectre.Console terminal projection |
 | Rendering/UI packages/templates/samples | `FS.GG.Rendering` |
 
 ### Lifecycle
@@ -227,6 +228,57 @@ Replace Spec Kit phases with FS.GG stages. These stages are facts in the workflo
 | `Release` | Pack/publish after ship, with provenance and metadata checks | `fsgg release <id>` | Blocking for package publication |
 
 This preserves the useful intent/design/work separation while removing Spec Kit as the governing artifact model.
+
+### Terminal UI
+
+The CLI should have three output surfaces with one source of truth:
+
+| Surface | Purpose | Stability contract |
+|---|---|---|
+| JSON | CI, branch protection, agents, scripts, cached evidence, generated readiness | Stable schema, deterministic ordering, no ANSI, no terminal-width wrapping, no implicit clock |
+| Plain text | Simple logs, redirected output, low-dependency fallback | Stable enough for humans, not the automation contract |
+| Spectre.Console TUI | Interactive local command center for route, evidence, verify, ship, and watch workflows | Human-facing projection over the same route/evidence/contract/audit data |
+
+Spectre.Console is appropriate for panels, tables, trees, progress/status displays, prompts, and live refresh. It must not be referenced by the kernel, host, or adapters. Those layers produce typed reports; the CLI renders them.
+
+Color and border semantics should be consistent across all Spectre views:
+
+| State | Color | Use |
+|---|---|---|
+| Passed / fresh / real evidence | Green | Successful gates, fresh evidence, completed checks |
+| Advisory / stale / synthetic / needs review | Yellow | Warnings, non-blocking risk, synthetic evidence, pending judgement |
+| Blocking failure | Red | Gate failures, default-deny blockers, ship-stopping stale artifacts |
+| Cached / skipped / inactive | Grey | Reused evidence, unselected gates, background context |
+| Current selection / active run | Bold white or cyan | Focused row, active command, current work id |
+
+Borders should group meaning rather than decorate everything. Use neutral grey/cyan rounded borders for summary panels, red borders for blocking panels, yellow borders for advisory panels, and green only for completed/pass panels. A useful first screen is a route summary table beside a blocking-failures panel, followed by an evidence panel and a compact action bar:
+
+```text
+╭─ FS.GG Governance ───────────────────────────────────────────────────────────╮
+│ /repo/SkiaViewer   branch feature/tokens   mode inner   base origin/main    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─ Route Summary ─────────────────────────────╮ ╭─ Blocking ──────────────────╮
+│ Domain        Gates   State       Cost      │ │ FAIL token-drift             │
+│ Git/CI        3       PASS        cheap     │ │ generated tokens stale       │
+│ Package/API   5       WARN        medium    │ │                              │
+│ Design        4       FAIL        medium    │ │ FAIL unknown-path            │
+│ Docs          2       PASS        cheap     │ │ no capability mapping        │
+╰─────────────────────────────────────────────╯ ╰──────────────────────────────╯
+
+╭─ Evidence ──────────────────────────────────────────────────────────────────╮
+│ PASS  token-source-valid             real           fresh                    │
+│ FAIL  generated-token-current        stale          blocks ship              │
+│ WARN  selected-captures              synthetic      advisory                 │
+│ PASS  package-surface-baseline       real           fresh                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─ Actions ───────────────────────────────────────────────────────────────────╮
+│ [R] route details   [E] evidence graph   [C] contract   [V] verify   [Q] quit│
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
+`fsgg tui`, `fsgg watch`, `fsgg route --interactive`, and `fsgg ship --interactive` are optional human entry points. They may keep a local process alive for responsiveness, but they must remain disposable projections over short-lived governance commands. The canonical merge gate stays `fsgg ship --mode gate --json`.
 
 ### Artifacts
 
@@ -301,6 +353,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 | No single regeneration entry point | FS-Skia-UI's `RefreshSurfaceBaselines` pattern needs an FS.GG equivalent. |
 | No release/publish/provenance adapter | Replacement of distribution capability needs version/pack/publish checks. |
 | No branch-protection recipe | The final interface should be a required `fsgg ship` status check. |
+| No rich terminal presentation spec | Human users need a high-signal local command center without weakening JSON automation contracts. |
 
 ## Implementation roadmap
 
@@ -311,6 +364,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 - Add path-glob route rules as reified checks or a typed route table rendered into `route.json` and `contract.json`.
 - Implement default-deny for unknown paths and a `--paths` authoring mode for scoped local checks.
 - Emit JSON route traces naming matched rules, unmatched paths, selected tier, gates, expected artifacts, estimated cost, cache eligibility, and why each gate is present.
+- Render the same route trace through Spectre.Console as tables/panels for `fsgg route --interactive`, with color used only for state and risk.
 - Add rule maturity levels so new checks can run as observe/warn before becoming blocking.
 
 ### Phase 2: Workflow and evidence parity
@@ -345,6 +399,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 ### Phase 6: Ship, release, and provenance
 
 - Define `fsgg verify` and `fsgg ship --mode gate --json` exit codes and stable output schema.
+- Add Spectre.Console projections for `fsgg verify`, `fsgg ship --interactive`, and `fsgg watch`, all backed by the same JSON/report objects.
 - Add GitHub Actions workflow guidance so `fsgg ship` is the required protected-branch status.
 - Add scheduled/nightly exhaustive validation for broad matrices so the local and PR loops stay focused.
 - Add release rules for version bumps, packable projects, package metadata, template pins, dry-run publish plans, and NuGet trusted publishing.
@@ -405,6 +460,7 @@ NuGet trusted publishing matters only if FS.GG replaces FS-Skia-UI's distributio
 | Recreating Spec Kit with different names | Adds churn without stronger guarantees | Make structured state, typed facts, evidence graph, and generated readiness authoritative. |
 | Losing readable authoring flow | Spec Kit's Markdown was approachable | Keep Markdown authoring/rendered views, but pair them with source-of-truth YAML/JSON. |
 | Route output becomes another opaque oracle | Agents need to know why gates were selected | Emit JSON traces and proof/explain trees. |
+| Rich terminal UI diverges from automation | Humans and CI could see different truth | Spectre views render the same report objects as JSON; never put policy in the presentation layer. |
 | Generated view drift | Hand-synced docs/contracts become stale | Add source/view/currency manifest and `fsgg refresh`. |
 | Stale evidence passes by presence | FS-Skia-UI documents this weakness in `Route --enforce` | Include source hash, command, base/head, generated-at, and artifact digest in readiness. |
 | Migration ambiguity | Old `tasks.md` prose may not encode dependencies/evidence | Import with warnings; require humans/agents to complete `graph.yml` and `evidence.yml`. |
@@ -420,8 +476,9 @@ The corrected direction is replacement of FS-Skia-UI's useful capabilities, not 
 3. `.fsgg` and `work/<id>` replace `.specify` and `specs/<id>` as the authoritative lifecycle model.
 4. Capability catalogs connect package surfaces, tests, skills, docs, generated products, design captures, and release artifacts to governance facts.
 5. Cost controls make the local loop fast: scoped routing, precise impact facts, evidence caching, rule budgets, and advisory-first rules.
-6. Generated readiness is structured, fresh, and auditable; Markdown is a view.
-7. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
-8. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
+6. Spectre.Console provides the rich human terminal UI for route/evidence/verify/ship/watch, while JSON remains the stable automation contract.
+7. Generated readiness is structured, fresh, and auditable; Markdown is a view.
+8. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
+9. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
 
 That gives FS.GG a real replacement for FS-Skia-UI's governance/build/generated-product capability instead of a stricter wrapper around someone else's workflow.
