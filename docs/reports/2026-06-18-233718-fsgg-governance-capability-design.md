@@ -1,7 +1,7 @@
 # FS.GG governance capability design
 
 **Timestamp:** 2026-06-18T23:37:18+02:00
-**Revision:** 2026-06-19T11:44:08+02:00
+**Revision:** 2026-06-19T11:59:57+02:00
 **Author:** Codex
 **Status:** Consolidated design update, no implementation changes
 **Scope:** Define the FS.GG governance capability envelope for generated products, package surfaces, workflow evidence, design artifacts, documentation, and release gates.
@@ -39,6 +39,18 @@ That command becomes the protected-branch gate. It recomputes applicable rules
 from the base/head change, reports deterministic JSON, blocks only on
 profile-adjusted blocking findings, and emits enough evidence to explain every
 selected gate.
+
+This revision incorporates the design review constraints that must shape the
+next implementation slice:
+
+| Constraint | Design decision |
+|---|---|
+| Preserve light-by-default routing | Unknown paths are classified findings only inside governed roots or protected boundaries; there is no global default-deny fallthrough. |
+| Prove the protected-boundary value early | Build a `ship` walking skeleton before the full lifecycle command suite. |
+| Avoid Markdown/schema drift | Gates evaluate a normalized work model with explicit conflict rules. |
+| Treat capability scope as foundational | Define a minimal `.fsgg/capabilities.yml` schema in the first slice. |
+| Keep policy dials testable | Generate enforcement truth-table fixtures for modes, profiles, maturity, and severities. |
+| Do not over-trust agent judgement | Agent-reviewed checks stay advisory until cache, prompt-isolation, confidence, and calibration rules are in place. |
 
 ## Design goals
 
@@ -195,6 +207,52 @@ without hidden repository knowledge:
 | Agent commands or skills | Stage-specific prompts for charter, specify, clarify, checklist, plan, tasks, analyze, implement, verify, and ship. |
 | Initial readiness directory | Generated route/contract/explain/evidence/audit outputs as they become available. |
 
+## Capability catalog MVP
+
+The capability catalog is foundational, not a late product-adapter detail. The
+first implementation slice needs a small, versioned schema that can classify
+paths and name the surfaces a generated product expects to protect.
+
+Minimum viable `.fsgg/capabilities.yml`:
+
+```yaml
+schemaVersion: 1
+project:
+  id: my-product
+  workRoot: work
+
+domains:
+  - id: workflow
+  - id: package-api
+
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+  - glob: "work/**"
+    capability: workflow
+
+surfaces:
+  - id: public-api
+    kind: fsi
+    paths: ["src/**/*.fsi"]
+    maturity: block-on-ship
+
+checks:
+  - id: build
+    command: dotnet build
+    cost: medium
+    environment: local-or-ci
+```
+
+Additional package, docs, skills, generated-product, design, and release fields
+can grow from that base, but the MVP must already answer three questions:
+
+| Question | Required answer |
+|---|---|
+| What changed? | A path-to-capability map with deterministic glob precedence. |
+| Why did this gate run? | A capability, surface, route rule, cost, and owner. |
+| What is unknown? | Paths under governed roots that no catalog entry claims. |
+
 ## Source artifacts
 
 The project-level source files define policy and capability scope:
@@ -213,13 +271,31 @@ The project-level source files define policy and capability scope:
 | `work/<id>/tasks.yml` | Typed work items, dependencies, owners, expected skills, and required evidence. |
 | `work/<id>/evidence.yml` | Authored evidence declarations and artifact URIs. |
 
+### Canonical work model
+
+Gates evaluate a normalized work model, not loose prose. Markdown remains the
+authoring surface for humans and agents, but only typed identifiers and parsed
+sections enter the machine contract. Structured files such as `tasks.yml` and
+`evidence.yml` carry graph-shaped data directly.
+
+The CLI should assemble `WorkModel` from the source artifacts, validate it, and
+emit `readiness/<id>/work-model.json` as a generated view with model version,
+source digests, and parse diagnostics. Conflict rules are explicit:
+
+| Conflict | Gate behavior |
+|---|---|
+| Markdown requirement id is missing from the normalized model | Emit `requirementNotTyped`; advisory before planning, blocking at ship when cited by changed work. |
+| Structured task references an unknown requirement or decision | Emit `workModelInconsistent`; block at verify/ship under standard and stricter profiles. |
+| Markdown and structured data disagree on status, dependency, owner, or required evidence | Prefer the structured graph for execution, keep the prose visible, and emit a consistency finding. |
+| Generated `work-model.json` is stale relative to any source artifact | Emit generated-view drift and handle it through the profile. |
+
 Generated views are outputs and must be currency-checked:
 
 | Artifact | Purpose |
 |---|---|
 | `.fsgg/gates.json` | Generated gate registry with ids, metadata, prerequisites, cost, timeout, and owner. |
 | `.fsgg/rules.md` | Rendered rule catalog from reified checks. |
-| `readiness/<id>/route.json` | Matched rules, changed paths, selected gates, default-deny findings, cost, cache eligibility, and profile-adjusted enforcement. |
+| `readiness/<id>/route.json` | Matched rules, changed paths, selected gates, unknown-path findings, cost, cache eligibility, and profile-adjusted enforcement. |
 | `readiness/<id>/contract.json` | Rule contracts, required inputs, and source reads. |
 | `readiness/<id>/explain.json` | Proof trees and explanation traces for applicable rules. |
 | `readiness/<id>/evidence.json` | Effective evidence states, taint propagation, freshness, and graph failures. |
@@ -267,6 +343,26 @@ entry should include:
 Routes should explain every selected gate in terms of changed path, affected
 capability, matching rule, expected evidence, cost, and cheaper local
 alternative when one exists.
+
+## Routing safety policy
+
+The system keeps light-by-default as a kernel invariant. An unknown path is not a
+global default-deny fallthrough. It is a classified finding emitted only when a
+path is inside a governed root or protected surface declared by
+`.fsgg/capabilities.yml` but no capability rule claims it, or when the protected
+boundary policy explicitly requires all paths in an area to be classified.
+
+| Change class | Route posture |
+|---|---|
+| Unmanaged notes, reports, drafts, scratch, or experiments | Routine unless a declared fence matches. No blocking gate solely because the path is unclassified. |
+| Declared capability path | Route to the matching capability gates. Enforcement depends on mode, profile, severity, and maturity. |
+| Unknown path under a governed root | Emit `unknownGovernedPath`; profiles decide whether it warns, blocks at gate, or blocks always. |
+| Protected release, package, public API, generated view, or provenance surface | Require explicit capability classification before ship or release. |
+
+This preserves the existing routing contract: heavy checks require a positive
+match against declared stakes. At the same time, generated products cannot hide
+new package, API, readiness, or release surfaces by placing them under a governed
+root without adding capability metadata.
 
 ## Modes, profiles, and maturity
 
@@ -339,8 +435,18 @@ profiles:
     maxCost: exhaustive
 ```
 
+`unknownPaths` applies to `unknownGovernedPath` findings from the routing safety
+policy, not to every unclassified file in the repository.
+
 The profile can change effective enforcement. It must never hide the underlying
 verdict, alter rule hashes, or remove findings from JSON.
+
+Every combination that can alter enforcement must have a golden fixture. The
+fixture set should cover at least: routine versus fenced route, advisory versus
+blocking base severity, deterministic versus agent-reviewed versus human-only
+tier, all run modes, all profiles, all maturity levels, and unknown governed
+paths. A profile change is not complete until the truth table and representative
+JSON snapshots change with it.
 
 ## Cost model
 
@@ -439,6 +545,25 @@ Provenance records should include:
 | Environment class | Separate local, CI, release, and generated-product environments. |
 | Builder identity | Support future SLSA/in-toto-shaped attestations without overclaiming compliance. |
 
+## Agent-reviewed constraints
+
+Agent-reviewed rules are useful for judgement-heavy checks, but they are not
+deterministic proof. They remain advisory by default until the review system has
+operational guardrails and calibration evidence.
+
+| Constraint | Required design response |
+|---|---|
+| Judge identity drift | Cache keys include model id, model version, reviewer prompt hash, relevant model configuration, check hash, artifact hashes, and question text. A judge or prompt change invalidates prior cached verdicts for that rule. |
+| Single-sample noise | Blocking promotion requires either deterministic backing evidence, repeated-review confidence thresholds, or explicit human sign-off. |
+| Prompt injection | Governed artifact content is always treated as data, separated from reviewer instructions, and captured through bounded excerpts or digests in the review record. |
+| Calibration debt | Agent-reviewed rule packs need periodic judge-vs-human comparison before they can move beyond advisory maturity. |
+| Auditability | Review requests, response digests, model identity, prompt identity, artifact digests, and final recorded verdict are part of readiness provenance. |
+
+The initial implementation should report agent-reviewed findings and missing
+reviews, but protected-branch blocking should come from deterministic checks,
+human-only escalations, stale evidence, generated-view drift, or explicit policy
+violations until calibration exists.
+
 ## Tooling strategy
 
 Durable governance behavior belongs in compiled F# libraries and CLI commands.
@@ -472,53 +597,73 @@ Recommended dependencies stay at the edge:
 
 ## Implementation roadmap
 
-### Phase 1: native SDD bootstrap
+### Phase 1: ship walking skeleton and catalog MVP
+
+- Define versioned `.fsgg/project.yml`, `.fsgg/policy.yml`,
+  `.fsgg/capabilities.yml`, and `.fsgg/tooling.yml` MVP schemas.
+- Add git/CI snapshot facts for base ref, head ref, changed paths, dirty paths,
+  untracked paths, and CI context.
+- Add path-to-capability routing, unknown governed path findings, typed gate
+  metadata, and route traces for one concrete adapter.
+- Add `fsgg route --paths ...`, `fsgg route --since <rev>`, and
+  `fsgg ship --mode gate --profile standard --json` as the first protected
+  boundary contract.
+- Emit route and audit JSON with deterministic ordering, selected gates, matched
+  rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
+  profile-adjusted enforcement, and exit-code basis.
+- Publish the first GitHub Actions guidance for branch protection.
+
+### Phase 2: native SDD bootstrap
 
 - Add `fsgg new`, `fsgg charter`, `fsgg work specify`, `fsgg work clarify`,
   `fsgg work checklist`, `fsgg work plan`, `fsgg work tasks`, and
   `fsgg analyze` command contracts.
-- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `.fsgg/capabilities.yml`,
-  `.fsgg/tooling.yml`, and `work/<id>` schemas for specs, clarifications,
-  checklists, plans, tasks, contracts, and evidence.
+- Add `work/<id>` schemas for specs, clarifications, checklists, plans,
+  contracts, typed tasks, and evidence.
 - Generate agent commands or skills that drive the same native stages.
+- Assemble and validate the normalized `WorkModel`; emit
+  `readiness/<id>/work-model.json` as a generated view.
 - Make the spec the source of truth for plan, tasks, generated views, route
-  expectations, and acceptance evidence.
+  expectations, and acceptance evidence through explicit typed ids.
 
-### Phase 2: route parity
+### Phase 3: route parity and enforcement fixtures
 
-- Add git/CI snapshot facts for base ref, head ref, changed paths, dirty paths,
-  untracked paths, and CI context.
-- Add typed gate metadata and route traces.
 - Add profile parsing, maturity, and base/effective severity computation.
-- Add default-deny for unknown paths and scoped `--paths` authoring.
-- Emit route JSON with selected gates, matched rules, unmatched paths,
+- Add scoped `--paths` authoring and complete base/head route parity with CI.
+- Generate golden enforcement truth-table fixtures covering modes, profiles,
+  maturity, severity, tier, fenced/routine routing, and unknown governed paths.
+- Emit route JSON with selected gates, matched rules, unmatched governed paths,
   expected artifacts, cost, cache eligibility, and explanation.
 
-### Phase 3: workflow and evidence
+### Phase 4: workflow and evidence
 
 - Implement task graph validation, synthetic taint propagation, accepted
   deferrals, stale evidence, spec-to-plan consistency, plan-to-task
   consistency, and ship audit blockers.
-- Produce `evidence.json`, `audit.json`, and `summary.md`.
+- Produce `contract.json`, `explain.json`, `evidence.json`, `audit.json`, and
+  `summary.md`.
+- Keep agent-reviewed rules advisory until cache, prompt-isolation, confidence,
+  and calibration constraints are implemented.
 
-### Phase 4: generated views
+### Phase 5: generated views
 
 - Add `fsgg refresh` as the single regeneration entry point.
 - Define a generation manifest for source, generated view, renderer, and
   currency gate.
 - Generate gate metadata, rule catalogs, capability docs, skill references,
-  API-surface docs, and baselines.
+  API-surface docs, work-model projections, and baselines.
 - Block stale generated views at the configured boundary.
 
-### Phase 5: product and capability catalog
+### Phase 6: product and capability catalog expansion
 
-- Define `.fsgg/capabilities.yml`.
+- Expand `.fsgg/capabilities.yml` for generated products, package surfaces,
+  docs, skills, samples, design artifacts, release surfaces, and evidence tags.
 - Add generated-product checks in cost tiers: structural scan, restore/build,
   focused tests, full verify, and release validation.
 - Ensure generated products can run governance locally without monorepo access.
 - Replace durable product shell behavior with compiled commands.
 
-### Phase 6: package, design, docs, and skills
+### Phase 7: package, design, docs, and skills
 
 - Add `.fsi` surface baseline generation and drift checks.
 - Add FSI transcript checks for public examples and package contracts.
@@ -529,13 +674,12 @@ Recommended dependencies stay at the edge:
 - Add skill-quality checks for product skills, task skill lists, path contracts,
   and optional mirrors.
 
-### Phase 7: ship, release, and provenance
+### Phase 8: release and provenance hardening
 
-- Define `fsgg verify` and `fsgg ship --mode gate --json` schemas and exit codes.
+- Define `fsgg verify` and `fsgg release` schemas and exit codes.
 - Add Spectre.Console projections backed by the same report objects.
 - Add command-run records for builds, tests, packs, git facts, and package
   inspections.
-- Publish GitHub Actions guidance for required branch protection.
 - Add scheduled exhaustive validation for broad matrices.
 - Add release rules for version bumps, package metadata, template pins,
   publish plans, trusted publishing, and provenance.
@@ -554,6 +698,10 @@ Recommended dependencies stay at the edge:
 | Letting stale readiness pass by presence | Key evidence by source hash, rule hash, command version, artifact digest, base/head, and environment class. |
 | Overclaiming provenance | Emit compatible metadata first; claim formal compliance only after explicit verification. |
 | New-project bootstrap depends on one template provider | Keep `fsgg new` template-provider-neutral and require generated products to declare capabilities through `.fsgg/capabilities.yml`. |
+| Reintroducing oppressive default-deny routing | Treat unknown governed paths as explicit findings under declared roots, not as a global heavy-route fallback. |
+| Policy dials become hard to reason about | Maintain golden enforcement truth tables and JSON snapshots for every mode/profile/maturity/severity combination that can change blocking. |
+| Markdown and structured work artifacts drift | Gate only on the normalized work model, emit parse/conflict diagnostics, and currency-check `work-model.json`. |
+| Agent-reviewed checks become uncalibrated blockers | Keep them advisory until judge identity, prompt isolation, confidence thresholds, and judge-vs-human calibration are implemented. |
 
 ## Acceptance bar
 
@@ -565,14 +713,18 @@ The design is implemented when a generated product can:
 3. Declare project policy, capabilities, work, and evidence in `.fsgg` and
    `work/<id>`.
 4. Route a local scoped change cheaply and explain selected gates.
-5. Refresh generated views from declared sources and detect drift.
-6. Validate public package surfaces, docs, examples, skills, design artifacts,
+5. Distinguish routine unclassified files from unknown governed paths and explain
+   why either does or does not block.
+6. Run `fsgg ship --mode gate --profile standard --json` as a minimal protected
+   boundary before the full lifecycle command suite is complete.
+7. Refresh generated views from declared sources and detect drift.
+8. Validate public package surfaces, docs, examples, skills, design artifacts,
    generated consumers, and release metadata through adapters.
-7. Cache fresh expensive evidence and rerun only when relevant inputs change.
-8. Emit deterministic route, contract, explain, evidence, and audit JSON.
-9. Render useful human CLI output without changing automation truth.
-10. Block merge through `fsgg ship --mode gate --profile standard --json`.
-11. Support release checks with package, publish, and provenance evidence.
+9. Cache fresh expensive evidence and rerun only when relevant inputs change.
+10. Emit deterministic route, contract, explain, evidence, and audit JSON.
+11. Render useful human CLI output without changing automation truth.
+12. Cover enforcement dials with truth-table fixtures and golden JSON snapshots.
+13. Support release checks with package, publish, and provenance evidence.
 
 The central constraint remains simple: strict at protected boundaries, cheap in
 the authoring loop, and explainable everywhere.
