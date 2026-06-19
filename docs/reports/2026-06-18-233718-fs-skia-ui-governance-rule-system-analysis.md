@@ -33,6 +33,7 @@ The replacement architecture is:
 - Make generated readiness files machine-readable first, with Markdown only as rendered views.
 - Use Spectre.Console as the approved human terminal UI layer for rich route, evidence, verify, ship, and watch views. Spectre output is presentation only; deterministic JSON remains the CI and automation contract.
 - Move durable shell-script behavior into .NET/F#: compiled commands and libraries for stable behavior, `.fsx` for FSI design sketches and transient migration/prototype work, and shell only as bootstrap glue.
+- Add governance profiles as an auditable strictness lever: profiles adjust effective enforcement, but never hide or alter the underlying rule verdict.
 - Make governance cost proportional to change risk: cheap local checks, focused PR gates, full ship/release checks only at the right boundary, and evidence freshness instead of needless reruns.
 - Make `fsgg ship --mode gate --json` the branch-protection status check.
 
@@ -142,7 +143,7 @@ Therefore the replacement target is not "rename Spec Kit" and not "port `build/G
 | Compiled typed policy | Stronger kernel exists: reified `Check`, `CheckRule`, verdict, contract, explanation, evidence | Add product-level target/gate registry and rule packs. |
 | Diff route selection | Kernel has route model; CLI has `route`; SpecKit adapter is not enough | Add git/CI snapshot sensor, changed-path facts, default-deny, `--paths`, branch/base support, and JSON route trace. |
 | Cost-proportional validation | No explicit cost budget, evidence cache, or rule maturity model yet | Add rule cost metadata, impact scopes, freshness keys, scoped local checks, and advisory-first promotion. |
-| Tiers and modes | FS.GG has `RunMode` and rule severity concepts | Define FS.GG-specific tiers/modes: inner, focused, verify, ship, release. |
+| Tiers, modes, and strictness profiles | FS.GG has `RunMode` and rule severity concepts | Define FS.GG-specific modes (`inner`, `focused`, `verify`, `ship`, `release`) and profile levers (`light`, `standard`, `strict`, `release`). |
 | Target identities | No FS-Skia-style target union for products yet | Add typed `GateId`/`TargetId` registry with metadata, prerequisites, cost, timeout, failure owner. |
 | Evidence graph | Kernel evidence supports authored and effective states | Add workflow/product evidence schemas and import from old `tasks.md`/`tasks.deps.yml`. |
 | Merge audit | Kernel can report failures; CLI can emit evidence | Add `fsgg ship` audit: synthetic taint, blocking findings, stale generated views, missing product evidence, exit codes. |
@@ -195,6 +196,7 @@ FS.GG should be strict at product boundaries and cheap in the inner loop. A gove
 | Explain broad routes | A large gate list must justify itself | `route.json` should name matched rule, changed path, affected capability, required evidence, estimated cost, and cheaper local alternative. |
 | Budget every rule | Runtime and blast radius are governance data | Add cost, timeout, expected-test-count, historical-runtime, and failure-owner metadata to gates/rules. |
 | Promote rules gradually | New heuristic gates are noisy until proven | Support `observe`, `warn`, `block-on-pr`, `block-on-ship`, and `block-on-release` maturity levels. |
+| Make strictness explicit | Teams need different enforcement levels without changing the truth of rules | Add named governance profiles that change effective enforcement, never rule evaluation. |
 | Run exhaustive checks asynchronously | Full sweeps still matter, but not on every small edit | Use nightly/scheduled full validation, release-only publish checks, and explicit broad `verify` commands. |
 | Prefer contract checks first | Small public API edits need high signal before broad integration | Run `.fsi`, FSI transcript, baseline, docs, and focused semantic tests before generated-product or visual matrices. |
 
@@ -229,20 +231,108 @@ The final rule: if a slight change selects a high-cost path, the route explanati
 
 ### Lifecycle
 
-Replace Spec Kit phases with FS.GG stages. These stages are facts in the workflow adapter, not command folklore.
+Replace Spec Kit phases with FS.GG stages. These stages are facts in the workflow adapter, not command folklore. The lifecycle command chooses a run mode; project policy chooses or defaults the governance profile.
 
 | Stage | Purpose | Primary command | Gate posture |
 |---|---|---|---|
-| `Charter` | Establish project policy, package surfaces, domains, default gates, branch policy | `fsgg init` / `fsgg charter` | Advisory until branch protection is configured |
+| `Charter` | Establish project policy, package surfaces, domains, default gates, branch policy | `fsgg init` / `fsgg charter` | Advisory until branch protection is configured; default profile selected here |
 | `Intent` | Capture user value, scope, non-goals, acceptance criteria | `fsgg work intent <id>` | Advisory |
 | `Design` | Decide architecture, public contracts, dependencies, evidence plan | `fsgg work design <id>` | Advisory with route preview |
 | `WorkGraph` | Produce typed tasks, dependencies, owners, required evidence | `fsgg work graph <id>` | Advisory or early fence |
-| `Implement` | Execute tasks and declare evidence | `fsgg work update <id>` | Advisory local checks |
-| `Verify` | Run product tests, surface checks, docs checks, generated-view currency checks | `fsgg verify <id>` | Blocking in selected CI contexts |
-| `Ship` | Recompute from base/head, enforce blocking rules, publish readiness | `fsgg ship <id> --mode gate` | Blocking |
-| `Release` | Pack/publish after ship, with provenance and metadata checks | `fsgg release <id>` | Blocking for package publication |
+| `Implement` | Execute tasks and declare evidence | `fsgg work update <id>` | Advisory local checks, usually `--profile light` or `standard` |
+| `Verify` | Run product tests, surface checks, docs checks, generated-view currency checks | `fsgg verify <id> --profile standard` | Blocking in selected CI contexts |
+| `Ship` | Recompute from base/head, enforce blocking rules, publish readiness | `fsgg ship <id> --mode gate --profile standard` | Blocking |
+| `Release` | Pack/publish after ship, with provenance and metadata checks | `fsgg release <id> --profile release` | Blocking for package publication |
 
 This preserves the useful intent/design/work separation while removing Spec Kit as the governing artifact model.
+
+### Governance Profiles
+
+Run mode and governance strictness must be separate levers:
+
+| Lever | Answers | Examples |
+|---|---|---|
+| Run mode | Where is this running and what boundary is being protected? | `sandbox`, `inner`, `focused`, `verify`, `gate`, `release` |
+| Governance profile | How strictly should applicable findings be enforced? | `light`, `standard`, `strict`, `release` |
+| Rule maturity | Is this rule trusted enough to block at this boundary? | `observe`, `warn`, `block-on-pr`, `block-on-ship`, `block-on-release` |
+
+The profile lever must never change truth. Rules still evaluate, render, hash, explain, and report the same underlying verdict. The profile changes the effective enforcement category:
+
+- whether uncertain findings block;
+- whether synthetic or auto-synthetic evidence blocks;
+- whether stale evidence blocks;
+- whether unknown paths default-deny;
+- whether expensive gates are required now;
+- whether advisory rules are promoted to blocking;
+- whether generated-view currency and provenance are mandatory.
+
+A project-level profile belongs in `.fsgg/policy.yml`, with command-line override for explicit local or CI runs:
+
+```yaml
+governance:
+  defaultProfile: standard
+
+profiles:
+  light:
+    unknownPaths: warn
+    staleEvidence: warn
+    syntheticEvidence: warn
+    uncertainVerdict: warn
+    generatedViewDrift: warn
+    requireProvenance: false
+    maxCost: cheap
+
+  standard:
+    unknownPaths: block
+    staleEvidence: blockAtGate
+    syntheticEvidence: blockAtGate
+    uncertainVerdict: warn
+    generatedViewDrift: blockAtGate
+    requireProvenance: false
+    maxCost: medium
+
+  strict:
+    unknownPaths: block
+    staleEvidence: block
+    syntheticEvidence: block
+    uncertainVerdict: blockAtGate
+    generatedViewDrift: block
+    requireProvenance: true
+    maxCost: high
+
+  release:
+    unknownPaths: block
+    staleEvidence: block
+    syntheticEvidence: block
+    uncertainVerdict: block
+    generatedViewDrift: block
+    requireProvenance: true
+    requirePackEvidence: true
+    requirePublishPlan: true
+    maxCost: exhaustive
+```
+
+Commands should surface this explicitly:
+
+```text
+fsgg verify --mode inner --profile light
+fsgg ship --mode gate --profile standard --json
+fsgg release --profile release
+```
+
+Every route, explanation, and audit record should include both the base rule severity and the profile-adjusted effective severity:
+
+```text
+rule: generated-token-current
+verdict: fail
+baseSeverity: blocking
+mode: inner
+profile: light
+effectiveSeverity: advisory
+reason: light profile does not block stale generated views outside the ship gate
+```
+
+This gives teams a real lever for experimentation, generated-product hardening, release safety, and local speed without making governance arbitrary or opaque.
 
 ### Terminal UI
 
@@ -368,7 +458,7 @@ Use Markdown where it helps humans author, but make structured files authoritati
 | Artifact | Source/generated | Purpose |
 |---|---|---|
 | `.fsgg/project.yml` | Source | Project id, package surfaces, capability catalog pointer, domains, default modes |
-| `.fsgg/policy.yml` | Source | Enforcement dial, blocking rules, review budgets, generated-view policy |
+| `.fsgg/policy.yml` | Source | Enforcement dial, default governance profile, profile definitions, blocking rules, review budgets, generated-view policy |
 | `.fsgg/capabilities.yml` | Source | FS.GG.Rendering package/template/skill/test/surface/doc/evidence catalog |
 | `.fsgg/tooling.yml` | Source | Optional command allow-list, timeouts, environment classes, external tool versions, process-runner policy |
 | `.fsgg/gates.yml` or generated `gates.json` | Generated view | Human/tool view of typed gate registry |
@@ -378,9 +468,9 @@ Use Markdown where it helps humans author, but make structured files authoritati
 | `work/<id>/contracts/` | Source | `.fsi`, OpenAPI, gRPC, package-surface contracts or links |
 | `work/<id>/graph.yml` | Source | Typed work items, dependencies, owners, skills, required evidence |
 | `work/<id>/evidence.yml` | Source | Declared evidence state per work item and evidence URI |
-| `readiness/<id>/route.json` | Generated | Matched rules, tiers, gates, paths, default-deny, trace |
+| `readiness/<id>/route.json` | Generated | Matched rules, tiers, gates, paths, default-deny, profile-adjusted enforcement, trace |
 | `readiness/<id>/contract.json` | Generated | Rendered rule contract and input reads |
-| `readiness/<id>/explain.json` | Generated | Proof trees for applicable rules |
+| `readiness/<id>/explain.json` | Generated | Proof trees for applicable rules plus base/effective severity explanations |
 | `readiness/<id>/evidence.json` | Generated | Effective evidence states, taint propagation, graph failures |
 | `readiness/<id>/audit.json` | Generated | Ship verdict, blockers, warnings, provenance references |
 | `readiness/<id>/summary.md` | Generated view | PR-friendly human summary rendered from JSON |
@@ -395,6 +485,7 @@ Migration rule: `.specify/memory/constitution.md`, `specs/<feature>/spec.md`, `p
 | Workflow | Stage, work artifacts, graph nodes, dependencies, evidence declarations, policy dial | `workGraphWellFormed`, `designSatisfiesIntent`, `evidenceNotSynthetic`, `shipFence` |
 | Git/CI | Base/head, changed paths, branch, PR labels, status checks, dirty worktree, unknown paths | `changedPathsRouted`, `unknownPathDefaultsSafe`, `requiredStatusPresent` |
 | Tooling/process | Command specs, exit codes, captured output digests, timeouts, environment class, tool versions | `commandAllowed`, `commandCompleted`, `outputDigestRecorded`, `timeoutWithinBudget` |
+| Policy/profile | Default profile, command override, enforcement mapping, base/effective severity, profile trace | `profileKnown`, `profileAllowedForMode`, `effectiveSeverityExplained`, `profileDoesNotHideVerdict` |
 | Cost/cache | Rule cost, historical runtime, freshness keys, prior evidence digests, rule maturity | `evidenceFresh`, `ruleWithinBudget`, `expensiveGateJustified`, `advisoryRuleNotBlocking` |
 | Package/API | Public `.fsi`, package projects, surface baselines, compatibility notes, FSI transcripts | `publicSurfaceHasSignature`, `surfaceBaselineCurrent`, `breakingChangeHasMigration` |
 | Generated product | Template profile, generated root, generated package pins, product tests, generated guidance | `templateInstantiates`, `generatedProductVerifies`, `generatedGuidanceCurrent` |
@@ -429,6 +520,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 | No scoped authoring mode | Whole-worktree routing would recreate FS-Skia-UI's heavy local loop. |
 | No evidence freshness cache | Expensive checks would rerun even when their rule inputs and artifacts are unchanged. |
 | No rule cost/maturity model | New or high-cost gates could become blocking before their signal/noise ratio is known. |
+| No first-class governance profile lever | Teams cannot tune strictness without changing commands, disabling rules, or making policy implicit. |
 | No typed product gate registry | FS-Skia-UI's target union/metadata is a major capability; FS.GG needs equivalent target identity. |
 | No generated-product/template adapter | FS-Skia-UI validates generated consumers; FS.GG cannot replace the template workflow without this. |
 | No capability catalog schema | Package/tests/skills/docs/evidence need a central catalog analogous to `template/capabilities.yml`. |
@@ -447,6 +539,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 - Add a git/CI snapshot sensor that records base ref, head ref, changed paths, uncommitted paths, untracked paths, and path classifications.
 - Add typed `GateId`/`TargetId` metadata: name, prerequisites, timeout class, cost, failure owner, product-check flag.
 - Add path-glob route rules as reified checks or a typed route table rendered into `route.json` and `contract.json`.
+- Add governance profile parsing and effective-severity computation to route traces: mode, profile, base severity, maturity, and adjusted enforcement reason.
 - Implement default-deny for unknown paths and a `--paths` authoring mode for scoped local checks.
 - Emit JSON route traces naming matched rules, unmatched paths, selected tier, gates, expected artifacts, estimated cost, cache eligibility, and why each gate is present.
 - Render the same route trace through Spectre.Console as tables/panels for `fsgg route --interactive`, with color used only for state and risk.
@@ -454,7 +547,7 @@ That means the replacement should not copy FS-Skia-UI's `build/Governance` libra
 
 ### Phase 2: Workflow and evidence parity
 
-- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and `work/<id>/evidence.yml` schemas.
+- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and `work/<id>/evidence.yml` schemas, including default profile and named profile definitions.
 - Add import from `.specify` and `specs/**` with explicit uncertainty warnings.
 - Port task DAG validation, dependency propagation, synthetic taint, SEH/accepted-deferral concepts, and diff-scan blocking into FS.GG terms.
 - Add evidence freshness records keyed by rule hash, artifact hashes, command version, base/head, environment class, and output digest.
@@ -549,6 +642,7 @@ NuGet trusted publishing matters only if FS.GG replaces FS-Skia-UI's distributio
 | Losing readable authoring flow | Spec Kit's Markdown was approachable | Keep Markdown authoring/rendered views, but pair them with source-of-truth YAML/JSON. |
 | Route output becomes another opaque oracle | Agents need to know why gates were selected | Emit JSON traces and proof/explain trees. |
 | Rich terminal UI diverges from automation | Humans and CI could see different truth | Spectre views render the same report objects as JSON; never put policy in the presentation layer. |
+| Strictness profiles hide real failures | A permissive profile could make a failing system look green | Always report underlying verdict, base severity, effective severity, profile, mode, and enforcement reason. |
 | Replacing bash with untyped FSX | Moves the problem without creating stable contracts | Graduate required commands to compiled F#; reserve `.fsx` for sketches, prototypes, migrations, and literate examples. |
 | Over-abstracting external tools | Reimplementing Git/MSBuild/NuGet badly would be worse than shell | Use official CLIs/APIs through typed facades; record command provenance and keep policies in FS.GG facts/rules. |
 | Tooling dependencies leak into kernel/runtime | Kernel reuse and generated products become heavy | Keep dependencies in CLI/tooling/harness assemblies; Kernel stays BCL/FSharp.Core-only. |
@@ -567,10 +661,11 @@ The corrected direction is replacement of FS-Skia-UI's useful capabilities, not 
 3. `.fsgg` and `work/<id>` replace `.specify` and `specs/<id>` as the authoritative lifecycle model.
 4. Capability catalogs connect package surfaces, tests, skills, docs, generated products, design captures, and release artifacts to governance facts.
 5. Cost controls make the local loop fast: scoped routing, precise impact facts, evidence caching, rule budgets, and advisory-first rules.
-6. Spectre.Console provides the rich human terminal UI for route/evidence/verify/ship/watch, while JSON remains the stable automation contract.
-7. Durable bash/FSX orchestration graduates to compiled F# commands and libraries; `.fsx` remains for FSI sketches and transient migration/prototype work.
-8. Generated readiness is structured, fresh, and auditable; Markdown is a view.
-9. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
-10. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
+6. Governance profiles provide an explicit strictness lever (`light`, `standard`, `strict`, `release`) that changes effective enforcement, not rule truth.
+7. Spectre.Console provides the rich human terminal UI for route/evidence/verify/ship/watch, while JSON remains the stable automation contract.
+8. Durable bash/FSX orchestration graduates to compiled F# commands and libraries; `.fsx` remains for FSI sketches and transient migration/prototype work.
+9. Generated readiness is structured, fresh, and auditable; Markdown is a view.
+10. `fsgg ship --mode gate --json` becomes the protected-branch merge gate.
+11. SpecKit and FS-Skia-UI artifacts remain import sources until migrated, then leave the main path.
 
 That gives FS.GG a real replacement for FS-Skia-UI's governance/build/generated-product capability instead of a stricter wrapper around someone else's workflow.
