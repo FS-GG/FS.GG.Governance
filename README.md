@@ -108,7 +108,7 @@ depend on it; Cedar is a reference for the evaluation semantics. See
 - [Design overview](docs/governance-design/index.md) — start here; the comprehensive design
   - [The theory of the rule engine](docs/governance-design/rule-engine-theory.md) — the connected, textbook story
   - [Goals & principles](docs/governance-design/principles.md) · [the kernel](docs/governance-design/kernel.md) · [the rule eDSL](docs/governance-design/rule-edsl.md)
-  - [Routing, severity & run modes](docs/governance-design/routing-and-modes.md) · [domain adapters](docs/governance-design/adapters.md) · [Spec Kit in the system](docs/governance-design/speckit-in-the-system.md)
+  - [Routing, severity & run modes](docs/governance-design/routing-and-modes.md) · [domain adapters](docs/governance-design/adapters.md) · [Spec-driven development in the system](docs/governance-design/speckit-in-the-system.md)
 - [Implementation plan (Spec Kit, F01–F13)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design decomposed into ordered features
 - [Feature specs](specs/) · [decision records](docs/decisions/)
 

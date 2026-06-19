@@ -52,9 +52,9 @@ Read in order:
 - [Domain adapters](adapters.md) — how a domain plugs in: the design-system
   adapter and its rule catalog, plus research, essay, and engineering sketches
   that demonstrate generality.
-- [Spec Kit in the system](speckit-in-the-system.md) — how the Spec Kit workflow
-  is expressed: a spec-kit adapter, phase checks as reified rules, run-modes
-  mapped to phases, and the constitution as the dial.
+- [Spec-driven development in the system](speckit-in-the-system.md) — how the
+  GitHub Spec Kit workflow shape is realized as native FS.GG lifecycle commands,
+  artifacts, rules, evidence, and ship gates.
 - [Theory and composition](theory-and-composition.md) — the footing: Data Types à
   la Carte, applicative inspectability, the phase-machine-emits-facts layering,
   explicit deterministic cross-domain combinators, and the policy-engine prior art
@@ -125,8 +125,8 @@ Source material in the [FS-Skia-UI repository](https://github.com/EHotwagner/FS-
 
 Concepts the design builds on:
 
-- [GitHub Spec Kit](https://github.com/github/spec-kit) — the spec → plan →
-  tasks → implement workflow governance attaches to.
+- [GitHub Spec Kit](https://github.com/github/spec-kit) — the reference prior art
+  for the spec-driven flow FS.GG realizes natively.
 - [F# computation expressions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/computation-expressions)
   — the heavyweight embedding option we deliberately avoid for rule definition.
 - [F# discriminated unions](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/discriminated-unions)

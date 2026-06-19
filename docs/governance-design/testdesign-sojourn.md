@@ -221,7 +221,7 @@ let newThirdPartyMathDep =
 
 ### Spec Kit lifecycle
 
-Reused unchanged from [Spec Kit in the system](speckit-in-the-system.md): Sojourn
+Reused unchanged from [spec-driven development in the system](speckit-in-the-system.md): Sojourn
 already has `.specify` / `specs/FA-*` / `tasks.md`, so the lifecycle adapter
 attaches with no new work.
 
@@ -512,7 +512,7 @@ let factionStaysEconomic =
 
 ## Light by default, for this repo
 
-The dial (the [constitution](speckit-in-the-system.md)) for Sojourn writes itself:
+The dial (the [charter](speckit-in-the-system.md)) for Sojourn writes itself:
 the **pillars P1–P6, the FA-01 float policy, and the FA-04 decoupling are the
 fences**. Everything else is advisory.
 
@@ -571,4 +571,4 @@ fences**. Everything else is advisory.
   <https://github.com/nuklearwanze/Sojourn/tree/master/gameplay>
 - Governance design: [adapters](adapters.md), [rule eDSL](rule-edsl.md),
   [theory and composition](theory-and-composition.md),
-  [Spec Kit in the system](speckit-in-the-system.md).
+  [spec-driven development in the system](speckit-in-the-system.md).

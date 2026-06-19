@@ -1037,7 +1037,7 @@ artifacts it produces. Here is the honest balance sheet.
   applicative inspectability, the confluence hazards, the prior art (Cedar, OPA).
 - [Scope: planning, optimization, and what the kernel is for](planning-and-optimization.md)
   — the adjudication-not-solving boundary in full.
-- [Spec Kit in the system](speckit-in-the-system.md) and
+- [Spec-driven development in the system](speckit-in-the-system.md) and
   [Adapter proposal: Sojourn's research system](adapter-sojourn-research.md) — the
   two real adapters Examples A and B summarize.
 </content>

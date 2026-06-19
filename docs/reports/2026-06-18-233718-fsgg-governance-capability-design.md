@@ -1,7 +1,7 @@
 # FS.GG governance capability design
 
 **Timestamp:** 2026-06-18T23:37:18+02:00
-**Revision:** 2026-06-19T10:42:00+02:00
+**Revision:** 2026-06-19T11:44:08+02:00
 **Author:** Codex
 **Status:** Consolidated design update, no implementation changes
 **Scope:** Define the FS.GG governance capability envelope for generated products, package surfaces, workflow evidence, design artifacts, documentation, and release gates.
@@ -12,6 +12,9 @@ FS.GG needs a product-neutral governance platform, not a workflow wrapper. The
 core system should provide a reusable rule algebra, typed facts, route
 selection, evidence propagation, generated readiness, and CI enforcement. Product
 domains should plug into that core through adapters and capability catalogs.
+It must also provide a native spec-driven development path for new projects:
+project charter, specification, clarification, requirements checklist, technical
+plan, task graph, analysis, implementation, verification, and ship audit.
 
 The design has three owners:
 
@@ -44,13 +47,14 @@ FS.GG governance is successful when it can:
 | Goal | Design consequence |
 |---|---|
 | Govern generated products without coupling to one renderer or template | Put product vocabulary in adapters and `.fsgg/capabilities.yml`, not in the kernel. |
+| Let consumers spec-drive new projects | Make the specification lifecycle a native FS.GG command and artifact model, not a compatibility layer. |
 | Keep small safe changes cheap | Route from precise impact facts, support scoped authoring, cache fresh evidence, and budget rule cost. |
 | Make gates explainable | Emit route traces, rule contracts, proof trees, base severity, effective severity, and profile reasons. |
 | Treat generated files as views | Declare source/view/generator relationships and block stale views at the appropriate boundary. |
 | Separate truth from enforcement | Rules always report the same verdict; mode and profile only adjust whether a finding blocks. |
 | Keep automation stable | Use deterministic JSON for CI, agents, branch protection, and readiness artifacts. |
 | Keep humans oriented | Render the same reports through plain text and optional Spectre.Console views. |
-| Move durable behavior into typed code | Compile stable governance commands and leave shell or `.fsx` for bootstrap, migration, and experiments. |
+| Move durable behavior into typed code | Compile stable governance commands and leave shell or `.fsx` for bootstrap and experiments. |
 
 ## Non-goals
 
@@ -72,7 +76,7 @@ The repository already has the reusable core:
 | Rule bridge | `CheckRule` separates deterministic, agent-reviewed, and human-only checks. |
 | Evidence model | Authored and effective evidence states support synthetic and auto-synthetic propagation. |
 | Adapter SPI | Domain adapters can keep their own fact vocabulary while reusing kernel behavior. |
-| Existing adapters | Spec Kit and design-system adapters prove the model is not tied to one domain. |
+| Existing adapters | Current workflow and design-system adapters prove the model is not tied to one domain. |
 | Host and CLI | Route, contract, explain, and evidence commands already exist with text and JSON output. |
 
 The next work is not another kernel rewrite. It is product capability work:
@@ -119,24 +123,77 @@ Dependency rules:
 | CLI | Command parsing, JSON, plain text, Spectre.Console presentation. |
 | Product runtime packages | No governance dependency unless the package explicitly owns governance behavior. |
 
-## Lifecycle model
+## Spec-driven development model
 
-The future source model is `.fsgg` plus `work/<id>`. Markdown remains useful for
+The consumer-facing workflow is spec-driven development. A new project starts
+from a charter and a specification, not from code. The specification is the
+source of truth for the plan, task graph, implementation evidence, generated
+views, and ship audit.
+
+FS.GG adopts the same core progression used by GitHub Spec Kit: initialize the
+project, define governing principles, specify what and why, clarify ambiguity,
+validate requirements quality, create a technical plan, break that plan into
+tasks, analyze cross-artifact consistency, and then implement. FS.GG extends the
+flow with typed evidence, capability-aware routing, generated-view currency,
+product verification, and protected-branch ship/release gates.
+
+The native source model is `.fsgg` plus `work/<id>`. Markdown remains useful for
 authoring, but structured files are authoritative for gates.
 
 | Stage | Purpose | Primary command | Gate posture |
 |---|---|---|---|
-| `Charter` | Establish project identity, package surfaces, domains, branch policy, and default profile. | `fsgg init` or `fsgg charter` | Advisory until branch protection is configured. |
-| `Intent` | Capture user value, scope, non-goals, and acceptance criteria. | `fsgg work intent <id>` | Advisory. |
-| `Design` | Record architecture, public contracts, dependencies, migration notes, and evidence plan. | `fsgg work design <id>` | Advisory with route preview. |
-| `WorkGraph` | Define typed work items, dependencies, owners, skills, and required evidence. | `fsgg work graph <id>` | Advisory or early fence. |
+| `ProjectInit` | Create the product root, `.fsgg` policy files, initial work root, agent commands, and optional product template output. | `fsgg new <path>` or `fsgg init` | Advisory. |
+| `Charter` | Establish project identity, governing principles, package surfaces, domains, branch policy, and default profile. | `fsgg charter` | Advisory until branch protection is configured. |
+| `Specify` | Capture user value, scope, non-goals, user stories, acceptance criteria, and measurable requirements. | `fsgg work specify <id>` | Advisory. |
+| `Clarify` | Resolve ambiguities before planning and record explicit answers. | `fsgg work clarify <id>` | Advisory. |
+| `Checklist` | Validate requirements quality before technical planning. | `fsgg work checklist <id>` | Advisory or early fence. |
+| `Plan` | Record architecture, public contracts, dependencies, technical choices, and evidence plan. | `fsgg work plan <id>` | Advisory with route preview. |
+| `Tasks` | Define typed work items, dependencies, owners, skills, and required evidence. | `fsgg work tasks <id>` | Advisory or early fence. |
+| `Analyze` | Check spec/plan/task consistency before implementation starts. | `fsgg analyze <id>` | Advisory by default. |
 | `Implement` | Complete work and declare evidence. | `fsgg work update <id>` | Local checks, usually light or standard profile. |
 | `Verify` | Run selected tests, surface checks, docs checks, generated-view checks, and evidence checks. | `fsgg verify <id>` | Blocking in selected CI contexts. |
 | `Ship` | Recompute from base/head and enforce merge policy. | `fsgg ship <id> --mode gate --json` | Blocking. |
 | `Release` | Pack, publish, and attest artifacts. | `fsgg release <id>` | Blocking for publication. |
 
-Spec Kit artifacts are migration inputs. They can be imported, rendered, or
-supported during transition, but they are not the long-term governing schema.
+The CLI and agent-facing skills should expose the same stages. Agent prompts may
+write the Markdown authoring files; the CLI owns schema validation, route
+selection, evidence computation, generated views, and gate verdicts.
+
+## Greenfield project bootstrap
+
+A consumer must be able to start a new project with the FS.GG governance flow:
+
+```text
+fsgg new ./MyProduct --template rendering-app --profile standard
+fsgg charter
+fsgg work specify create-shell "Build the first useful product slice..."
+fsgg work clarify create-shell
+fsgg work checklist create-shell
+fsgg work plan create-shell --stack "F#, FS.GG.Rendering, SQLite"
+fsgg work tasks create-shell
+fsgg analyze create-shell
+fsgg work update create-shell
+fsgg verify create-shell
+fsgg ship create-shell --mode gate --profile standard --json
+```
+
+`fsgg new` creates the governance skeleton and may ask a product template
+provider to generate starter code. Governance owns the project policy, work
+artifacts, agent commands, route contract, evidence schema, and readiness output.
+The product template provider owns the runtime code and generated product assets.
+
+The bootstrap output must be enough for a coding agent to continue the SDD loop
+without hidden repository knowledge:
+
+| Output | Purpose |
+|---|---|
+| `.fsgg/project.yml` | Project identity, domains, default work root, and capability catalog pointer. |
+| `.fsgg/policy.yml` | Governance profile, stage policy, and branch gate expectations. |
+| `.fsgg/capabilities.yml` | Template profile, package surfaces, tests, docs, skills, samples, and release surfaces. |
+| `.fsgg/tooling.yml` | Tool policy, allowed commands, environment classes, and timeouts. |
+| `work/` | Native SDD artifacts for specifications, plans, tasks, and evidence. |
+| Agent commands or skills | Stage-specific prompts for charter, specify, clarify, checklist, plan, tasks, analyze, implement, verify, and ship. |
+| Initial readiness directory | Generated route/contract/explain/evidence/audit outputs as they become available. |
 
 ## Source artifacts
 
@@ -148,10 +205,12 @@ The project-level source files define policy and capability scope:
 | `.fsgg/policy.yml` | Governance profiles, default profile, enforcement mapping, branch policy, review budgets. |
 | `.fsgg/capabilities.yml` | Packages, projects, `.fsi` contracts, tests, skills, docs, samples, baselines, template profiles, evidence tags. |
 | `.fsgg/tooling.yml` | Command allow-list, timeouts, environment classes, external tool policy, tool version expectations. |
-| `work/<id>/intent.md` | Human-authored intent, scope, non-goals, and acceptance criteria. |
-| `work/<id>/design.md` | Architecture decisions, public contract impact, dependencies, migration notes. |
+| `work/<id>/spec.md` | Human-authored value, scope, non-goals, user stories, requirements, and acceptance criteria. |
+| `work/<id>/clarifications.md` | Resolved questions and explicit decisions made before planning. |
+| `work/<id>/checklist.md` | Requirements-quality checks and open issues before planning. |
+| `work/<id>/plan.md` | Architecture decisions, public contract impact, dependencies, technical choices, and evidence plan. |
 | `work/<id>/contracts/` | Source contracts or links to canonical contracts such as `.fsi`, OpenAPI, or gRPC definitions. |
-| `work/<id>/graph.yml` | Typed work items, dependencies, owners, expected skills, and required evidence. |
+| `work/<id>/tasks.yml` | Typed work items, dependencies, owners, expected skills, and required evidence. |
 | `work/<id>/evidence.yml` | Authored evidence declarations and artifact URIs. |
 
 Generated views are outputs and must be currency-checked:
@@ -324,6 +383,14 @@ Initial commands:
 | Command | Purpose |
 |---|---|
 | `fsgg route` | Show selected gates and route trace for paths, since-rev, or base/head. |
+| `fsgg new` | Scaffold a governed greenfield product and optional product template output. |
+| `fsgg charter` | Establish project principles, policy, domains, and branch gate expectations. |
+| `fsgg work specify` | Create or update the spec as the source of truth for a work item. |
+| `fsgg work clarify` | Resolve ambiguities before planning. |
+| `fsgg work checklist` | Validate requirements quality before planning. |
+| `fsgg work plan` | Create the technical plan and evidence plan from the spec. |
+| `fsgg work tasks` | Generate or update the typed task graph from the plan. |
+| `fsgg analyze` | Check consistency across spec, plan, tasks, contracts, and policy. |
 | `fsgg check` | Run selected cheap/focused checks for local authoring. |
 | `fsgg refresh` | Regenerate declared views and baselines. |
 | `fsgg evidence` | Compute effective evidence state and freshness. |
@@ -382,7 +449,7 @@ truth.
 |---|---|
 | Compiled F# libraries | Route sensors, git snapshots, process runner facade, package inspection, generation manifests, freshness keys. |
 | Compiled CLI commands | Stable user/CI contract, exit codes, JSON schemas, Spectre projections. |
-| `.fsx` scripts | FSI sketches, migrations, exploratory reports, literate docs, compatibility wrappers. |
+| `.fsx` scripts | FSI sketches, exploratory reports, and literate docs. |
 | Shell scripts | Bootstrap, tool install, or temporary wrapper around `dotnet fsgg ...`. |
 
 Graduation rule: if a script needs tests, stable JSON, stable exit codes,
@@ -403,28 +470,21 @@ Recommended dependencies stay at the edge:
 | NuGet inspection | `NuGet.Protocol` and `NuGet.Packaging`; actual publishing still uses official tooling. |
 | Git facts | Start with the git CLI through the process runner; consider `LibGit2Sharp` only for read-only cases where the native dependency is acceptable. |
 
-## Migration model
-
-Existing generated products can migrate incrementally:
-
-| Existing artifact | Target |
-|---|---|
-| `.specify/memory/constitution.md` | `.fsgg/project.yml`, `.fsgg/policy.yml`, and optional `charter.md`. |
-| `specs/<id>/spec.md` | `work/<id>/intent.md`. |
-| `specs/<id>/plan.md` | `work/<id>/design.md`. |
-| `specs/<id>/contracts/` | `work/<id>/contracts/` or links to canonical package contracts. |
-| `specs/<id>/tasks.md` | `work/<id>/graph.yml` plus a rendered human view. |
-| Markdown checkbox states | `work/<id>/evidence.yml`. |
-| Surface-area tests and baselines | Package/API adapter facts and `surfaceBaselineCurrent` checks. |
-| Local build/pack scripts | Compiled `fsgg` commands with optional compatibility wrappers. |
-
-The importer should preserve uncertainty. If a legacy task file cannot express a
-dependency, owner, or evidence requirement unambiguously, it should create a
-warning and require the work graph to be completed before ship.
-
 ## Implementation roadmap
 
-### Phase 1: route parity
+### Phase 1: native SDD bootstrap
+
+- Add `fsgg new`, `fsgg charter`, `fsgg work specify`, `fsgg work clarify`,
+  `fsgg work checklist`, `fsgg work plan`, `fsgg work tasks`, and
+  `fsgg analyze` command contracts.
+- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `.fsgg/capabilities.yml`,
+  `.fsgg/tooling.yml`, and `work/<id>` schemas for specs, clarifications,
+  checklists, plans, tasks, contracts, and evidence.
+- Generate agent commands or skills that drive the same native stages.
+- Make the spec the source of truth for plan, tasks, generated views, route
+  expectations, and acceptance evidence.
+
+### Phase 2: route parity
 
 - Add git/CI snapshot facts for base ref, head ref, changed paths, dirty paths,
   untracked paths, and CI context.
@@ -434,16 +494,14 @@ warning and require the work graph to be completed before ship.
 - Emit route JSON with selected gates, matched rules, unmatched paths,
   expected artifacts, cost, cache eligibility, and explanation.
 
-### Phase 2: workflow and evidence
+### Phase 3: workflow and evidence
 
-- Add `.fsgg/project.yml`, `.fsgg/policy.yml`, `work/<id>/graph.yml`, and
-  `work/<id>/evidence.yml` schemas.
-- Add import from legacy spec/task artifacts with uncertainty warnings.
-- Implement work DAG validation, synthetic taint propagation, accepted
-  deferrals, stale evidence, and ship audit blockers.
+- Implement task graph validation, synthetic taint propagation, accepted
+  deferrals, stale evidence, spec-to-plan consistency, plan-to-task
+  consistency, and ship audit blockers.
 - Produce `evidence.json`, `audit.json`, and `summary.md`.
 
-### Phase 3: generated views
+### Phase 4: generated views
 
 - Add `fsgg refresh` as the single regeneration entry point.
 - Define a generation manifest for source, generated view, renderer, and
@@ -452,7 +510,7 @@ warning and require the work graph to be completed before ship.
   API-surface docs, and baselines.
 - Block stale generated views at the configured boundary.
 
-### Phase 4: product and capability catalog
+### Phase 5: product and capability catalog
 
 - Define `.fsgg/capabilities.yml`.
 - Add generated-product checks in cost tiers: structural scan, restore/build,
@@ -460,7 +518,7 @@ warning and require the work graph to be completed before ship.
 - Ensure generated products can run governance locally without monorepo access.
 - Replace durable product shell behavior with compiled commands.
 
-### Phase 5: package, design, docs, and skills
+### Phase 6: package, design, docs, and skills
 
 - Add `.fsi` surface baseline generation and drift checks.
 - Add FSI transcript checks for public examples and package contracts.
@@ -471,7 +529,7 @@ warning and require the work graph to be completed before ship.
 - Add skill-quality checks for product skills, task skill lists, path contracts,
   and optional mirrors.
 
-### Phase 6: ship, release, and provenance
+### Phase 7: ship, release, and provenance
 
 - Define `fsgg verify` and `fsgg ship --mode gate --json` schemas and exit codes.
 - Add Spectre.Console projections backed by the same report objects.
@@ -482,17 +540,12 @@ warning and require the work graph to be completed before ship.
 - Add release rules for version bumps, package metadata, template pins,
   publish plans, trusted publishing, and provenance.
 
-### Phase 7: retirement
-
-- Move active products to `.fsgg` and `work/<id>`.
-- Keep legacy adapters only as import or compatibility tooling.
-- Remove old build/package dependencies from the main path after migration.
-
 ## Risks and mitigations
 
 | Risk | Mitigation |
 |---|---|
 | Rebuilding a workflow wrapper instead of a governance platform | Keep `.fsgg` schemas, adapters, capability catalogs, and CI audits as the primary scope. |
+| SDD becomes document ceremony instead of executable project control | Make spec, plan, tasks, evidence, route, generated views, and ship audit machine-checkable from one native artifact model. |
 | Making local development oppressive | Enforce cost budgets, scoped routing, freshness caching, maturity levels, and advisory-first promotion. |
 | Allowing profiles to hide failures | Always emit underlying verdict, base severity, effective severity, mode, profile, maturity, and reason. |
 | Letting terminal UI diverge from automation | Render Spectre.Console views from the same immutable report objects used for JSON. |
@@ -500,25 +553,26 @@ warning and require the work graph to be completed before ship.
 | Leaking product dependencies into the kernel | Keep product facts in adapters and capability catalogs. |
 | Letting stale readiness pass by presence | Key evidence by source hash, rule hash, command version, artifact digest, base/head, and environment class. |
 | Overclaiming provenance | Emit compatible metadata first; claim formal compliance only after explicit verification. |
-| Ambiguous legacy migration | Import with warnings and require explicit work graph/evidence completion before ship. |
+| New-project bootstrap depends on one template provider | Keep `fsgg new` template-provider-neutral and require generated products to declare capabilities through `.fsgg/capabilities.yml`. |
 
 ## Acceptance bar
 
 The design is implemented when a generated product can:
 
-1. Declare project policy, capabilities, work, and evidence in `.fsgg` and
+1. Start as a greenfield project through `fsgg new`.
+2. Spec-drive work through charter, specify, clarify, checklist, plan, tasks,
+   analyze, implement, verify, and ship.
+3. Declare project policy, capabilities, work, and evidence in `.fsgg` and
    `work/<id>`.
-2. Route a local scoped change cheaply and explain selected gates.
-3. Refresh generated views from declared sources and detect drift.
-4. Validate public package surfaces, docs, examples, skills, design artifacts,
+4. Route a local scoped change cheaply and explain selected gates.
+5. Refresh generated views from declared sources and detect drift.
+6. Validate public package surfaces, docs, examples, skills, design artifacts,
    generated consumers, and release metadata through adapters.
-5. Cache fresh expensive evidence and rerun only when relevant inputs change.
-6. Emit deterministic route, contract, explain, evidence, and audit JSON.
-7. Render useful human CLI output without changing automation truth.
-8. Block merge through `fsgg ship --mode gate --profile standard --json`.
-9. Support release checks with package, publish, and provenance evidence.
-10. Migrate legacy spec/task artifacts without treating them as the future
-    source of truth.
+7. Cache fresh expensive evidence and rerun only when relevant inputs change.
+8. Emit deterministic route, contract, explain, evidence, and audit JSON.
+9. Render useful human CLI output without changing automation truth.
+10. Block merge through `fsgg ship --mode gate --profile standard --json`.
+11. Support release checks with package, publish, and provenance evidence.
 
 The central constraint remains simple: strict at protected boundaries, cheap in
 the authoring loop, and explainable everywhere.

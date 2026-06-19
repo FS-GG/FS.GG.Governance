@@ -82,7 +82,7 @@ phase lifecycle (a small state machine)         stateless check algebra
 The state machine owns transitions and any orthogonality (a feature's
 design-track and surface-track as parallel regions). It **emits `PhaseReached`
 and progress facts**; the check algebra consumes them via `whenPhase` guards (see
-[Spec Kit in the system](speckit-in-the-system.md)). Do not fold state into the
+[spec-driven development in the system](speckit-in-the-system.md)). Do not fold state into the
 check AST, and do not fold checks into the machine. This is the principled split,
 not merely a convenient one: the machine produces facts; the algebra is a pure
 function of facts.

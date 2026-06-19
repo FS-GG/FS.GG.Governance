@@ -1,159 +1,159 @@
 ---
-title: Spec Kit in the system
+title: Spec-driven development in the system
 category: Governance design
 categoryindex: 7
 index: 7
-description: How the Spec Kit workflow is expressed in the governance system — a spec-kit adapter, the phase checks as reified rules, run-modes mapped to phases, and the constitution as the dial.
+description: How FS.GG realizes spec-driven development as a native project lifecycle: charter, specify, clarify, checklist, plan, tasks, analyze, implement, verify, ship.
 ---
 
-# Spec Kit in the system
+# Spec-driven development in the system
 
-Spec Kit is the **harness** — the authored, agent-run work loop
-(`constitution → specify → clarify → plan → tasks → analyze → implement →
-merge`). The governance system is the **observer** attached to it. Governance
-never generates `spec.md`, `plan.md`, or `tasks.md`; it reads them as artifacts,
-asserts facts, and runs rules. That keeps the anti-goal ("do not replace authored
-Spec Kit artifacts") structural, not aspirational.
+GitHub Spec Kit is the reference prior art for the workflow shape: initialize a
+project, establish governing principles, write the specification first, clarify
+ambiguity, validate requirements, create a technical plan, derive tasks, analyze
+consistency, and then implement.
 
-Expressing Spec Kit in the system is therefore four things: a spec-kit
-[adapter](adapters.md), the phase checks as reified [rules](rule-edsl.md),
-[run-modes](routing-and-modes.md) mapped to phases, and the constitution as the
-configuration dial.
+FS.GG realizes that workflow as native governance capability. It is not only an
+observer over externally authored files. A consumer of this project must be able
+to start a new product and drive it through spec-driven development using FS.GG
+commands, artifacts, agent prompts, route explanations, evidence, and ship gates.
 
-## The spec-kit adapter
+## Native lifecycle
 
-Artifacts become `ArtifactRef`s; phases and task states become facts in the
-[kernel](kernel.md).
-
-```fsharp
-type SpecKitArtifact =
-    | Constitution | Spec | Plan | Research | DataModel
-    | Contracts | Quickstart | Tasks | TaskDeps
-// toRef : SpecKitArtifact -> ArtifactRef
-
-type Phase = Constitution | Specify | Clarify | Plan | Tasks | Analyze | Implement | Merge
-
-type SpecKitFact =
-    | PhaseReached     of Phase                       // supplied (e.g. .specify/feature.json)
-    | ArtifactPresent  of SpecKitArtifact
-    | TaskState        of taskId: string * EvidenceState
-    | TaskDependsOn     of taskId: string * dep: string
-    | SkillBound       of taskId: string * skillId: string
-    | ConstitutionArea of area: string * filled: bool
-```
-
-The stateless kernel handles the stateful lifecycle by treating the current phase
-as a *supplied fact*. Rules guard on it — `whenPhase Plan check` contributes only
-once the feature has reached `Plan`. The `tasks.deps.yml` topology becomes
-`TaskDependsOn` facts, and the evidence / synthetic-taint model runs the kernel
-over them: `EvidenceGraph` is a derivation, not a bespoke engine.
-
-## Phase checks as reified rules
-
-The previous design's monolithic `analyze` pass and its pile of always-blocking
-gates become a catalog of reified rules, each declaring *who decides*
-(`CheckTier`) and *whether it blocks* (`Severity`).
-
-| Spec Kit check | CheckTier | Default severity |
-| --- | --- | --- |
-| `tasks.md` ↔ `tasks.deps.yml` consistency, acyclic, ids / skills resolve | Deterministic | Advisory |
-| Constitution areas filled, non-placeholder (Constitution Check) | Deterministic | Advisory → blocking at merge |
-| Surface baselines / contract currency | Deterministic | Advisory → blocking at merge |
-| Evidence not synthetic (the EvidenceAudit verdict) | Deterministic | Blocking, **at merge only** |
-| Does `plan.md` address every requirement in `spec.md`? | AgentReviewed | Advisory |
-| Are the tasks complete and ordered for the plan? | AgentReviewed | Advisory |
-| Is the feature in scope / worth doing? | HumanOnly | — |
-
-```fsharp
-let planSatisfiesSpec =
-    rule "plan-satisfies-spec" AgentReviewed Spec
-        (whenPhase Plan
-            (Opaque ("plan-covers-spec", fun _ -> Unknown "judgement")))
-    |> asking "Does plan.md address every requirement in spec.md? List gaps."
-// advisory: REPORTS gaps during plan; it does not block planning
-
-let tasksGraphWellFormed =
-    rule "tasks-graph" Deterministic Tasks
-        (allOf [ everyTaskHasDeps; depsResolve; acyclic; skillIdsResolve ])
-// advisory while authoring; promoted to blocking only behind the merge fence
-```
-
-This is the fix for the old `analyze`-pass opacity: each check renders to a
-sentence and explains itself, instead of one pass emitting a wall of output.
-
-## Run-modes mapped to phases
-
-The inner-loop phases run in `Inner` mode (advisory only). **Merge is the single
-fence** that flips to `Gate` mode, recomputes from the base branch, and lets
-blocking rules bite.
-
-| Phase | Run mode | What governance does |
-| --- | --- | --- |
-| constitution | Inner | authoring the dial (below); advisory "areas filled?" |
-| specify / clarify | Sandbox → Inner | advisory well-formedness; nothing blocks; sandbox while drafting |
-| plan | Inner | advisory Constitution Check; *anticipate* which fences the change will hit; report surface decisions |
-| tasks | Inner | deterministic-but-advisory graph well-formedness |
-| analyze | Inner | the whole rule catalog runs, all advisory — a report, not a gate |
-| implement | Inner | task states update; taint recomputed; surface diffs reported |
-| **merge** | **Gate** | the fence: recompute from base; blocking rules enforced |
-
-```fsharp
-let mergeFence =
-    fence "feature-merge" (fun c -> c.Phase = Merge)
-        [ constitutionComplete   |> blocking
-          evidenceNotSynthetic   |> blocking     // no [S]/[S*] reaching main
-          contractsCurrent       |> blocking     // generated views not drifted
-          fencedSurfacesVerified |> blocking ]
-```
-
-So everything before merge *informs*; only merge *enforces*. The old pain —
-plan-time and even documentation edits triggering heavy machinery — is gone. The
-escape hatch composes naturally: `Sandbox` during `specify` / `clarify` lets you
-throw a spec around with zero friction, and you still cannot land it un-checked,
-because merge recomputes independently.
-
-## The constitution is the dial
-
-In the previous design the constitution was prose plus a separate guidance check.
-Here the **constitution phase is where the fences and severities are authored** —
-the constitution configures which surfaces are fenced and which rules block at
-merge. The "complete enforcement ↔ light" dial described in
-[Lessons and anti-goals](lessons.md) *lives in `constitution.md`*, as a small,
-reviewable, single place to opt back into hard guarantees for the few things that
-warrant them. The Constitution Check then just verifies the dial was filled in
-honestly.
-
-## Evidence model
-
-The `tasks.md` states are the [kernel's evidence facts](kernel.md): `Real`,
-`Synthetic`, `Failed`, `Skipped`, and the computed `AutoSynthetic` taint that
-flows down the `TaskDependsOn` graph. `EvidenceGraph` validates and computes
-propagation; the merge fence's `evidenceNotSynthetic` rule is the blocking verdict
-that keeps synthetic-only work from reaching the base branch. Disclosure is
-mandatory and no flag changes a verdict — honesty about evidence is enforced
-separately from the freedom to iterate, which the run-mode hatch provides.
-
-## A feature, end to end
+The native lifecycle is:
 
 ```text
-constitution  Inner    author fences + severities; advisory completeness check
-specify       Sandbox  draft spec.md freely; advisory well-formedness
-clarify       Inner    open questions resolved (advisory)
-plan          Inner    plan.md authored; advisory: plan-covers-spec, anticipate fences
-tasks         Inner    tasks.md + tasks.deps.yml; advisory: graph well-formed
-analyze       Inner    full rule catalog runs as a REPORT across all tiers
-implement      Inner    tasks done; states + taint update; surface diffs reported
-merge         Gate     recompute from base; blocking rules enforced or merge refused
+ProjectInit -> Charter -> Specify -> Clarify -> Checklist -> Plan -> Tasks
+  -> Analyze -> Implement -> Verify -> Ship -> Release
 ```
 
-## The one deliberate behavior change
+The source model is `.fsgg` plus `work/<id>`. Markdown remains the authoring
+surface for humans and agents; YAML and JSON schemas provide the machine contract
+for gates.
 
-Nothing blocks before merge. If a phase should hard-stop earlier — say, refuse to
-leave `tasks` with a cyclic graph — that is a one-line `|> blocking` plus a fence
-on that phase: available, opt-in, and visible in the constitution. The default,
-though, is that the inner loop informs and only the boundary enforces.
+| Stage | Purpose | Primary command |
+|---|---|---|
+| `ProjectInit` | Create the product root, `.fsgg` policy files, work root, agent commands, and optional template output. | `fsgg new <path>` or `fsgg init` |
+| `Charter` | Establish project identity, governing principles, domains, package surfaces, and branch policy. | `fsgg charter` |
+| `Specify` | Capture what and why: user value, stories, requirements, scope, non-goals, and acceptance criteria. | `fsgg work specify <id>` |
+| `Clarify` | Resolve ambiguities before planning. | `fsgg work clarify <id>` |
+| `Checklist` | Check requirements quality before technical planning. | `fsgg work checklist <id>` |
+| `Plan` | Decide architecture, dependencies, contracts, stack choices, and evidence plan. | `fsgg work plan <id>` |
+| `Tasks` | Derive typed work items, dependencies, owners, skills, and required evidence. | `fsgg work tasks <id>` |
+| `Analyze` | Check consistency across spec, plan, tasks, contracts, and policy. | `fsgg analyze <id>` |
+| `Implement` | Execute tasks and declare evidence. | `fsgg work update <id>` |
+| `Verify` | Run selected checks and validate generated views/evidence. | `fsgg verify <id>` |
+| `Ship` | Recompute from base/head and enforce merge policy. | `fsgg ship <id> --mode gate --json` |
+| `Release` | Validate package, publish, and provenance requirements. | `fsgg release <id>` |
+
+Everything before `Ship` may be advisory depending on the profile. `Ship` is the
+protected boundary: it recomputes from base/head and applies blocking rules.
+
+## Native artifacts
+
+The specification is the source of truth. Plan, tasks, evidence, route
+expectations, generated views, and acceptance checks must derive from or cite it.
+
+| Artifact | Role |
+|---|---|
+| `.fsgg/project.yml` | Project identity, domains, work root, and capability catalog pointer. |
+| `.fsgg/policy.yml` | Profiles, stage policy, branch gates, and review budgets. |
+| `.fsgg/capabilities.yml` | Packages, tests, docs, skills, samples, generated products, baselines, and release surfaces. |
+| `.fsgg/tooling.yml` | Allowed commands, tool expectations, timeouts, and environment classes. |
+| `work/<id>/spec.md` | Human-authored specification: value, scope, user stories, requirements, and acceptance criteria. |
+| `work/<id>/clarifications.md` | Resolved questions and explicit decisions before planning. |
+| `work/<id>/checklist.md` | Requirements-quality checks and open issues. |
+| `work/<id>/plan.md` | Architecture, contracts, dependencies, technical choices, and evidence plan. |
+| `work/<id>/contracts/` | Public contracts such as `.fsi`, OpenAPI, gRPC, or links to canonical contracts. |
+| `work/<id>/tasks.yml` | Typed task graph with dependencies, owners, skills, and required evidence. |
+| `work/<id>/evidence.yml` | Authored evidence declarations and artifact URIs. |
+| `readiness/<id>/*.json` | Generated route, contract, explanation, evidence, and audit reports. |
+
+The Markdown files are not informal notes. They are governed source artifacts
+with schemas, cross-artifact checks, and generated views.
+
+## Greenfield flow
+
+A consumer starts a new governed product like this:
+
+```text
+fsgg new ./MyProduct --template rendering-app --profile standard
+fsgg charter
+fsgg work specify create-shell "Build the first useful product slice..."
+fsgg work clarify create-shell
+fsgg work checklist create-shell
+fsgg work plan create-shell --stack "F#, FS.GG.Rendering, SQLite"
+fsgg work tasks create-shell
+fsgg analyze create-shell
+fsgg work update create-shell
+fsgg verify create-shell
+fsgg ship create-shell --mode gate --profile standard --json
+```
+
+`fsgg new` owns the governance skeleton. A product template provider may produce
+starter runtime code, but the provider does not own governance truth. The
+generated product declares its capabilities in `.fsgg/capabilities.yml`; FS.GG
+uses that catalog to route checks and evaluate evidence.
+
+## Rule model
+
+The workflow adapter turns stages and artifacts into facts. Rules then check
+quality and consistency.
+
+```fsharp
+type WorkflowStage =
+    | ProjectInit | Charter | Specify | Clarify | Checklist | Plan
+    | Tasks | Analyze | Implement | Verify | Ship | Release
+
+type WorkflowArtifact =
+    | ProjectPolicy | CapabilityCatalog | ToolingPolicy
+    | Spec | Clarifications | Checklist | Plan | Contracts
+    | Tasks | Evidence | Readiness
+
+type WorkflowFact =
+    | StageReached of WorkflowStage
+    | ArtifactPresent of WorkflowArtifact
+    | RequirementDeclared of id: string
+    | AcceptanceCriterionDeclared of id: string
+    | DecisionRecorded of id: string
+    | TaskDeclared of id: string
+    | TaskDependsOn of taskId: string * dependencyId: string
+    | EvidenceDeclared of taskId: string * evidenceId: string
+```
+
+Example rule families:
+
+| Rule family | Examples |
+|---|---|
+| Specification quality | Requirements are testable; acceptance criteria exist; non-goals are explicit; ambiguity is resolved before planning. |
+| Plan consistency | Plan addresses every requirement; architecture decisions cite constraints; public contract impacts are named. |
+| Task graph | Tasks cover the plan; dependencies resolve; graph is acyclic; owners and required skills are declared. |
+| Evidence | Each task has required evidence; synthetic evidence is disclosed; stale evidence blocks at configured boundaries. |
+| Generated views | Route, contract, explain, evidence, summaries, baselines, and docs are current. |
+| Ship | Base/head route is complete; unknown paths are handled; blocking evidence and generated views are fresh. |
+
+Agent-reviewed and human-only checks remain explicit `CheckTier`s. They can help
+evaluate specification quality, plan completeness, and product judgement, but
+the gate still reports who made the decision and what evidence was recorded.
+
+## Run modes
+
+The authoring loop stays cheap:
+
+| Stage group | Default mode | Default enforcement |
+|---|---|---|
+| `ProjectInit`, `Charter`, `Specify`, `Clarify` | `sandbox` or `inner` | Advisory. |
+| `Checklist`, `Plan`, `Tasks`, `Analyze` | `inner` or `focused` | Advisory by default, early fence optional by policy. |
+| `Implement`, `Verify` | `focused` or `verify` | Profile-dependent. |
+| `Ship` | `gate` | Blocking for protected branches. |
+| `Release` | `release` | Blocking for publication. |
+
+This keeps GitHub Spec Kit's useful discipline, but moves the contract into
+FS.GG's own command surface, schemas, rule algebra, evidence graph, route
+explainer, and CI gate.
 
 ## Status
 
-Design only. See [the index](index.md) for overall status and the source material
-this refactors.
+Design update. The existing implementation still has earlier workflow pieces;
+the native SDD capability described here is the target for the next workflow
+adapter and CLI work.
