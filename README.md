@@ -40,6 +40,12 @@ FS.GG.Governance.Adapters.SpecKit  first concrete adapter — Spec Kit as data (
 FS.GG.Governance.Adapters.DesignSystem  second adapter — a design language as data (F11, done)
 FS.GG.Governance.Cli     optional route/explain/contract/evidence tool (F12, done)
 FS.GG.Governance.Adapters.*             external validation          (F13, planned)
+
+Capability platform continuation (F14-F27, planned):
+  .fsgg schemas, capability catalog, git/CI facts, gate registry,
+  ship/verify/release JSON contracts, native SDD bootstrap, normalized work model,
+  generated-view refresh, product/package/docs/skills/design checks,
+  cost/freshness cache, command provenance, and human report projections.
 ```
 
 The kernel is a pure, **zero-dependency** forward-chaining (Datalog-style,
@@ -59,6 +65,12 @@ fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 | **M2** | Light routing + effects edge (F07–F08) | ✅ Reached |
 | **M3** | Adapter SPI + two domains (F09–F11) | ✅ Reached — F09 (SPI) + F10 (Spec Kit) + F11 (design system) done |
 | **M4** | CLI + external validation (F12–F13) | In progress — F12 CLI done |
+| **M5** | Capability catalog + protected ship skeleton (F14–F17) | Planned |
+| **M6** | Policy truth tables + native SDD model (F18–F20) | Planned |
+| **M7** | Readiness + generated-view currency (F21–F22) | Planned |
+| **M8** | Generated-product and surface-domain checks (F23–F24) | Planned |
+| **M9** | Cost/cache/provenance + release gates (F25–F26) | Planned |
+| **M10** | Human projections over stable reports (F27) | Planned |
 
 F01–F12 are implemented (CLI tests included). The kernel and CLI pack to
 `~/.local/share/nuget-local/`; the `Host` effects edge depends on it (zero new dependency).
@@ -73,6 +85,9 @@ F12 adds the optional `fsgg-governance` .NET tool. It exposes `route`, `explain`
 `contract`, and `evidence`, keeps command orchestration behind a CLI MVU boundary,
 and inspects governed roots read-only. Fresh agent reviews are cache-only by default;
 nonzero `--review-budget` records an attempted dispatch but no fake passing verdict.
+The 2026-06-18 capability-design report is now incorporated into the implementation
+plan as F14-F27, with checkbox progress tracking for the protected ship gate,
+native SDD flow, generated views, surface checks, release gates, and provenance work.
 
 ## CLI
 
@@ -109,7 +124,8 @@ depend on it; Cedar is a reference for the evaluation semantics. See
   - [The theory of the rule engine](docs/governance-design/rule-engine-theory.md) — the connected, textbook story
   - [Goals & principles](docs/governance-design/principles.md) · [the kernel](docs/governance-design/kernel.md) · [the rule eDSL](docs/governance-design/rule-edsl.md)
   - [Routing, severity & run modes](docs/governance-design/routing-and-modes.md) · [domain adapters](docs/governance-design/adapters.md) · [Spec-driven development in the system](docs/governance-design/speckit-in-the-system.md)
-- [Implementation plan (Spec Kit, F01–F13)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design decomposed into ordered features
+- [Implementation plan (Spec Kit, F01–F27)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design and capability report decomposed into ordered features with progress checkboxes
+- [Capability design report](docs/reports/2026-06-18-233718-fsgg-governance-capability-design.md) — product-neutral capability envelope and protected-boundary roadmap
 - [Feature specs](specs/) · [decision records](docs/decisions/)
 
 ## Workflow

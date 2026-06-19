@@ -1,9 +1,9 @@
 # FS.GG governance capability design
 
 **Timestamp:** 2026-06-18T23:37:18+02:00
-**Revision:** 2026-06-19T11:59:57+02:00
+**Revision:** 2026-06-19T12:18:24+02:00
 **Author:** Codex
-**Status:** Consolidated design update, no implementation changes
+**Status:** Consolidated design update, implementation plan incorporated
 **Scope:** Define the FS.GG governance capability envelope for generated products, package surfaces, workflow evidence, design artifacts, documentation, and release gates.
 
 ## Executive summary
@@ -596,6 +596,12 @@ Recommended dependencies stay at the edge:
 | Git facts | Start with the git CLI through the process runner; consider `LibGit2Sharp` only for read-only cases where the native dependency is acceptable. |
 
 ## Implementation roadmap
+
+This roadmap is incorporated into the
+[Spec Kit implementation plan](../2026-06-18-governance-kernel-speckit-implementation-plan.md)
+as planned features F14-F27 with progress checkboxes, dependencies, surfaces,
+test focus, and exit criteria. The phase bullets below remain the design-level
+source for that checklist.
 
 ### Phase 1: ship walking skeleton and catalog MVP
 
