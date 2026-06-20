@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F017: the optional, packable unknown-governed-path classifier — the natural consumer of
+       BOTH the F014 typed facts and the F015 routing outcomes. It references ONLY
+       FS.GG.Governance.Config (for the typed-fact model: GovernedPath, SurfaceId, Surface,
+       SurfaceClass, TypedFacts) and FS.GG.Governance.Routing (for RouteReport / PathRouting /
+       RoutingResult) and adds NO new third-party PackageReference: its own code is
+       BCL + FSharp.Core only (research D1). The transitive YamlDotNet dependency arrives only
+       via Config and is unused by Findings' own code. Compile order is Model -> Findings: the
+       finding-domain types, then the pure `findUnknownGovernedPaths` classifier. The whole
+       surface is a pure total function — no MVU ceremony (Principle IV / research D2). The
+       dependency direction stays one-way: Findings -> Routing -> Config; the kernel/host stay
+       untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Findings</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Routing (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Findings</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Findings.fsi" />
+    <Compile Include="Findings.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+  </ItemGroup>
+
+</Project>

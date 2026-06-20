@@ -744,3 +744,66 @@ printfn
     f16Live.Branch
     f16Live.Range.IsSome
     (f16Live.Diagnostics |> List.map (fun d -> Model.sensingDiagnosticIdToken d.Id))
+
+// ── Findings sketch (F017) — turn F015's deferred UnmatchedInRoot into a typed finding ──
+// Build first:
+//   dotnet build src/FS.GG.Governance.Findings
+// Findings is a PURE, TOTAL classifier: it takes the F014 typed facts (only Capabilities.Surfaces
+// is read) and the F015 RouteReport, and returns a deterministic FindingReport. No I/O, no git,
+// no clock. It references only Config + Routing and adds no new dependency. This sketch records
+// the intended route → classify flow: an ordinary in-root unknown, a protected-boundary
+// escalation, a routine suppression, and an out-of-scope silence.
+#r "../src/FS.GG.Governance.Findings/bin/Debug/net10.0/FS.GG.Governance.Findings.dll"
+
+open FS.GG.Governance.Findings
+open FS.GG.Governance.Findings.Model
+
+// Assemble a minimal TypedFacts in memory: governed root "src", a path map covering ONLY
+// src/Kernel/** (so paths elsewhere in-root are misses), a ProtectedSurface over src/Core (NOT
+// covered by the glob, so a path under it is an in-root miss that escalates), and a Routine
+// surface over src/Legacy.
+let f17PathMap =
+    [ { Glob = GovernedPath "src/Kernel/**"; Capability = DomainId "kernel" } ]
+
+let f17Surfaces =
+    [ { Id = SurfaceId "kernel-core"; Class = ProtectedSurface; Paths = [ GovernedPath "src/Core" ]; Owner = Owner "core-team"; Maturity = Observe }
+      { Id = SurfaceId "legacy"; Class = Routine; Paths = [ GovernedPath "src/Legacy" ]; Owner = Owner "nobody"; Maturity = Observe } ]
+
+let f17Facts: TypedFacts =
+    { Project =
+        { SchemaVersion = SchemaVersion 1
+          Id = ProjectId "demo"
+          Domains = [ DomainId "kernel" ]
+          GovernedRoot = GovernedPath "src"
+          PackageSurfaces = []
+          PolicyRef = None
+          CapabilitiesRef = None }
+      Policy = None
+      Capabilities =
+        { SchemaVersion = SchemaVersion 1
+          Domains = [ DomainId "kernel" ]
+          PathMap = f17PathMap
+          Surfaces = f17Surfaces
+          Checks = [] }
+      Tooling = None }
+
+// Route a candidate set, then classify it.
+let f17Report =
+    Routing.route
+        f17Facts
+        [ GovernedPath "src/Kernel/Eval.fs"  // matched by src/Kernel/** → Routed → no finding
+          GovernedPath "src/Core/Secret.fs"  // in-root miss on a ProtectedSurface → escalated finding
+          GovernedPath "src/Legacy/Old.fs"   // in-root miss within a Routine surface → suppressed
+          GovernedPath "src/Loose.fs"        // in-root miss, no surface → ordinary finding
+          GovernedPath "docs/guide.md" ]     // outside the governed root → OutOfScope → no finding
+
+let f17Findings = Findings.findUnknownGovernedPaths f17Facts f17Report
+
+printfn "\n[F17] findings = %d" f17Findings.Findings.Length
+for f in f17Findings.Findings do
+    printfn "[F17] %s · %A · %A" (Model.findingIdToken f.Id) f.Path f.Zone
+    printfn "[F17]   %s" f.Message
+
+// Determinism: identical inputs ⇒ byte-identical report; an empty result is a valid success.
+printfn "[F17] deterministic? %b" (Findings.findUnknownGovernedPaths f17Facts f17Report = f17Findings)
+printfn "[F17] empty-on-clean = %A" (Findings.findUnknownGovernedPaths f17Facts (Routing.route f17Facts [ GovernedPath "src/Kernel/Eval.fs" ]))
