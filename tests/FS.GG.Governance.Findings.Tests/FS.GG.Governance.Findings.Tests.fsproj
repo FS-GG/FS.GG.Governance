@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F017, exercising the PUBLIC surface of FS.GG.Governance.Findings:
+       `Findings.findUnknownGovernedPaths` over real in-memory TypedFacts (assembled via Config)
+       and real RouteReports (built by calling Routing.route) — the actual values a downstream
+       caller passes, never mocks and never private helpers (Principle V, research D7). Expecto +
+       FsCheck give the permutation-invariance + totality properties; the VSTest adapters let
+       `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="FindingDecisionTests.fs" />
+    <Compile Include="PrecedenceTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PlaneUniformityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

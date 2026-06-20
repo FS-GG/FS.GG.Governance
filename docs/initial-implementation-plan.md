@@ -346,8 +346,11 @@ without waiting for the full lifecycle command suite.
 - ✅ Add git/CI snapshot facts for base ref, head ref, changed paths, dirty
   paths, untracked paths, branch, PR labels, status checks, and CI context.
   **(F016 — `FS.GG.Governance.Snapshot`, done 2026-06-20)**
-- ⬜ Add unknown governed path findings only inside governed roots or protected
-  boundaries.
+- ✅ Add unknown governed path findings only inside governed roots or protected
+  boundaries. **(F017 — `FS.GG.Governance.Findings`, done 2026-06-20)** Closes the
+  two exit criteria below: routine unclassified files do not trigger global
+  default-deny, and unknown paths under declared governed roots produce explicit
+  findings.
 - ⬜ Define typed `GateId` metadata with prerequisites, cost, timeout, owner,
   maturity, product-check flag, and freshness key.
 - ⬜ Add `fsgg route --paths ...`, `fsgg route --since <rev>`, and

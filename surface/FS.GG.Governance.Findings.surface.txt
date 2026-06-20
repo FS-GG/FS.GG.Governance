@@ -1,0 +1,95 @@
+TYPE FS.GG.Governance.Findings.FindingsModule
+  [Method] FindingReport findUnknownGovernedPaths(TypedFacts, RouteReport)
+TYPE FS.GG.Governance.Findings.ModelModule
+  [Method] System.String findingIdToken(FindingId)
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingId
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingReport
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingZone
+  [NestedType] FS.GG.Governance.Findings.ModelModule+UnknownGovernedPathFinding
+TYPE FS.GG.Governance.Findings.ModelModule+FindingId
+  [Method] Boolean Equals(FindingId)
+  [Method] Boolean Equals(FindingId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsUnknownGovernedPath()
+  [Method] Boolean get_IsUnknownProtectedBoundaryPath()
+  [Method] FindingId get_UnknownGovernedPath()
+  [Method] FindingId get_UnknownProtectedBoundaryPath()
+  [Method] Int32 CompareTo(FindingId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingId+Tags
+  [Property] Boolean IsUnknownGovernedPath
+  [Property] Boolean IsUnknownProtectedBoundaryPath
+  [Property] FindingId UnknownGovernedPath
+  [Property] FindingId UnknownProtectedBoundaryPath
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Findings.ModelModule+FindingId+Tags
+  [Field] Int32 UnknownGovernedPath
+  [Field] Int32 UnknownProtectedBoundaryPath
+TYPE FS.GG.Governance.Findings.ModelModule+FindingReport
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Findings.ModelModule+UnknownGovernedPathFinding])
+  [Method] Boolean Equals(FindingReport)
+  [Method] Boolean Equals(FindingReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FindingReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Findings.ModelModule+UnknownGovernedPathFinding] get_Findings()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Findings.ModelModule+UnknownGovernedPathFinding] Findings
+TYPE FS.GG.Governance.Findings.ModelModule+FindingZone
+  [Method] Boolean Equals(FindingZone)
+  [Method] Boolean Equals(FindingZone, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGovernedRootUnknown()
+  [Method] Boolean get_IsProtectedBoundaryUnknown()
+  [Method] FindingZone NewProtectedBoundaryUnknown(SurfaceId)
+  [Method] FindingZone get_GovernedRootUnknown()
+  [Method] Int32 CompareTo(FindingZone)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingZone+ProtectedBoundaryUnknown
+  [NestedType] FS.GG.Governance.Findings.ModelModule+FindingZone+Tags
+  [Property] Boolean IsGovernedRootUnknown
+  [Property] Boolean IsProtectedBoundaryUnknown
+  [Property] FindingZone GovernedRootUnknown
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Findings.ModelModule+FindingZone+ProtectedBoundaryUnknown
+  [Method] SurfaceId get_surface()
+  [Property] SurfaceId surface
+TYPE FS.GG.Governance.Findings.ModelModule+FindingZone+Tags
+  [Field] Int32 GovernedRootUnknown
+  [Field] Int32 ProtectedBoundaryUnknown
+TYPE FS.GG.Governance.Findings.ModelModule+UnknownGovernedPathFinding
+  [Constructor] Void .ctor(FindingId, GovernedPath, FindingZone, System.String)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(UnknownGovernedPathFinding)
+  [Method] Boolean Equals(UnknownGovernedPathFinding, System.Collections.IEqualityComparer)
+  [Method] FindingId get_Id()
+  [Method] FindingZone get_Zone()
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(UnknownGovernedPathFinding)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] FindingId Id
+  [Property] FindingZone Zone
+  [Property] GovernedPath Path
+  [Property] System.String Message

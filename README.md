@@ -43,6 +43,7 @@ FS.GG.Governance.Adapters.*             external validation          (F13, plann
 FS.GG.Governance.Config  optional `.fsgg` schema library — strict YAML → typed facts (F14, done)
 FS.GG.Governance.Routing optional routing library — paths → capability domains, deterministic glob precedence (F15, done)
 FS.GG.Governance.Snapshot optional sensing library — read-only git/CI → typed repository snapshot (F16, done)
+FS.GG.Governance.Findings optional classifier — unknown governed/protected-boundary path findings (F17, done)
 
 Capability platform continuation (F16-F27, planned):
   .fsgg schemas, capability catalog, git/CI facts, gate registry,
@@ -126,6 +127,22 @@ check. It references only `FS.GG.Governance.Config`, adds **no** new dependency,
 network** (CI context comes only from the environment, never a hosting-provider API). The
 read-only command set, porcelain-parse rules, and range-resolution contract are
 [`git-sensing.md`](specs/016-git-ci-snapshot-facts/contracts/git-sensing.md).
+
+F17 adds the optional **`FS.GG.Governance.Findings`** library — the **natural consumer of both
+F015 routing and F014 surfaces**. It turns the decision F015 deliberately deferred (its per-path
+`UnmatchedInRoot` outcome, which "carries no domain and asserts no finding/severity") into an
+explicit, typed **unknown-governed-path finding** — *without* global default-deny. A single pure,
+total `Findings.findUnknownGovernedPaths` classifies each candidate path by the documented
+precedence **`Protected > Routine > Ordinary`** ([`precedence.md`](specs/017-unknown-governed-path-findings/contracts/precedence.md)):
+an `UnmatchedInRoot` path on a declared `ProtectedSurface` escalates to a self-identifying
+`UnknownProtectedBoundaryPath` finding; one inside a declared `Routine` surface is suppressed; any
+other in-root miss becomes an ordinary `UnknownGovernedPath` finding; `Routed` and `OutOfScope`
+paths stay silent. Output is deterministic (ordinally sorted, cross-plane deduped, byte-identical
+for identical input) and carries only normalized `GovernedPath`s, declared `SurfaceId`s, a zone,
+and a fix-hint message. It references only `FS.GG.Governance.Config` and
+`FS.GG.Governance.Routing`, adds **no** new dependency, and closes the two Phase-2 exit criteria
+F015 left open ("Routine unclassified files do not trigger global default-deny" and "Unknown paths
+under declared governed roots produce explicit findings").
 
 ## CLI
 
