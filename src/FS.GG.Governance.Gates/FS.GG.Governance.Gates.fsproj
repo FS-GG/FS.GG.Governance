@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F018: the optional, packable typed gate registry — the Phase-2 *Gate identities* row.
+       A single pure, total `Gates.buildRegistry : TypedFacts -> GateRegistry` projects each
+       declared F014 capability `Check` into one `Gate` carrying its stable identity and the
+       *Gate identities* field set (id, domain, description, prerequisites, cost, timeout, owner,
+       maturity, product-check, freshness key). It references ONLY FS.GG.Governance.Config (for
+       the typed-fact model) and adds NO new third-party PackageReference: its own code is
+       BCL + FSharp.Core only (research D1). Unlike Findings it takes NO Routing edge — the
+       registry is a projection of the declared catalog, independent of any change. The
+       transitive YamlDotNet dependency arrives only via Config and is unused here. Compile
+       order is Model -> Gates: the gate-domain types, then the pure assembler. The whole
+       surface is a pure total function — no MVU ceremony (Principle IV / research D2). The
+       dependency direction stays one-way: Gates -> Config; the kernel/host stay untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Gates</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Routing (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Gates</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Gates.fsi" />
+    <Compile Include="Gates.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

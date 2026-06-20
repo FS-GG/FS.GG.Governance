@@ -44,6 +44,7 @@ FS.GG.Governance.Config  optional `.fsgg` schema library — strict YAML → typ
 FS.GG.Governance.Routing optional routing library — paths → capability domains, deterministic glob precedence (F15, done)
 FS.GG.Governance.Snapshot optional sensing library — read-only git/CI → typed repository snapshot (F16, done)
 FS.GG.Governance.Findings optional classifier — unknown governed/protected-boundary path findings (F17, done)
+FS.GG.Governance.Gates    optional typed gate registry — declared checks → stable GateId metadata (F18, done)
 
 Capability platform continuation (F16-F27, planned):
   .fsgg schemas, capability catalog, git/CI facts, gate registry,
@@ -143,6 +144,23 @@ and a fix-hint message. It references only `FS.GG.Governance.Config` and
 `FS.GG.Governance.Routing`, adds **no** new dependency, and closes the two Phase-2 exit criteria
 F015 left open ("Routine unclassified files do not trigger global default-deny" and "Unknown paths
 under declared governed roots produce explicit findings").
+
+F18 adds the optional **`FS.GG.Governance.Gates`** library — the Phase-2 **gate-identities** row. A
+single pure, total `Gates.buildRegistry : TypedFacts -> GateRegistry` projects each already-validated
+F014 capability `Check` into one typed `Gate` carrying a stable, **injective** `GateId`
+(`"<domain>:<checkId>"`) and the *Gate identities* field set: domain, a declared-id-only description,
+declared `RequiresCommand` prerequisites, cost, a bounded command-or-default timeout (`defaultTimeout`
+= five minutes when no command is referenced or `tooling.yml` is absent), owner, maturity (carried
+verbatim — enforcement is Phase 5), a product-check flag (`true` iff `Check.Environment = Release`, the
+MVP heuristic), and a carried `FreshnessKey` (declared inputs only — *carried, never evaluated*: no
+clock, no verdict, no cache). The registry is `GateId`-ordinal sorted and byte-identical for identical
+input, unchanged under input re-ordering. There is **no diagnostics layer** — F014 already proved the
+facts consistent, so the registry *preserves* unique ids / resolvable prerequisites / total assembly by
+construction and *proves* them with FsCheck (research D4). It references **only**
+`FS.GG.Governance.Config` (no Routing edge), adds **no** new dependency, and selects, runs, and enforces
+nothing — it establishes the stable gate identities the remaining Phase-2 rows (`fsgg route`/`fsgg ship`,
+route/audit JSON, `.fsgg/gates.json`) and Phase 5/11 consume. Phase-10 deferrals: gate-to-gate
+prerequisites + topological order, and a richer product-check derivation.
 
 ## CLI
 

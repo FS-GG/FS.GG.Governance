@@ -1,0 +1,111 @@
+TYPE FS.GG.Governance.Gates.GatesModule
+  [Method] GateRegistry buildRegistry(TypedFacts)
+  [Method] TimeoutLimit get_defaultTimeout()
+  [Property] TimeoutLimit defaultTimeout
+TYPE FS.GG.Governance.Gates.ModelModule
+  [Method] System.String gateIdValue(GateId)
+  [NestedType] FS.GG.Governance.Gates.ModelModule+FreshnessKey
+  [NestedType] FS.GG.Governance.Gates.ModelModule+Gate
+  [NestedType] FS.GG.Governance.Gates.ModelModule+GateId
+  [NestedType] FS.GG.Governance.Gates.ModelModule+GatePrerequisite
+  [NestedType] FS.GG.Governance.Gates.ModelModule+GateRegistry
+TYPE FS.GG.Governance.Gates.ModelModule+FreshnessKey
+  [Constructor] Void .ctor(CheckId, DomainId, Cost, EnvironmentClass, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId])
+  [Method] Boolean Equals(FreshnessKey)
+  [Method] Boolean Equals(FreshnessKey, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CheckId get_Check()
+  [Method] Cost get_Cost()
+  [Method] DomainId get_Domain()
+  [Method] EnvironmentClass get_Environment()
+  [Method] Int32 CompareTo(FreshnessKey)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId] get_Command()
+  [Method] System.String ToString()
+  [Property] CheckId Check
+  [Property] Cost Cost
+  [Property] DomainId Domain
+  [Property] EnvironmentClass Environment
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId] Command
+TYPE FS.GG.Governance.Gates.ModelModule+Gate
+  [Constructor] Void .ctor(GateId, DomainId, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+GatePrerequisite], Cost, TimeoutLimit, Owner, Maturity, Boolean, FreshnessKey)
+  [Method] Boolean Equals(Gate)
+  [Method] Boolean Equals(Gate, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ProductCheck()
+  [Method] Cost get_Cost()
+  [Method] DomainId get_Domain()
+  [Method] FreshnessKey get_FreshnessKey()
+  [Method] GateId get_Id()
+  [Method] Int32 CompareTo(Gate)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+GatePrerequisite] get_Prerequisites()
+  [Method] Owner get_Owner()
+  [Method] System.String ToString()
+  [Method] System.String get_Description()
+  [Method] TimeoutLimit get_Timeout()
+  [Property] Boolean ProductCheck
+  [Property] Cost Cost
+  [Property] DomainId Domain
+  [Property] FreshnessKey FreshnessKey
+  [Property] GateId Id
+  [Property] Maturity Maturity
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+GatePrerequisite] Prerequisites
+  [Property] Owner Owner
+  [Property] System.String Description
+  [Property] TimeoutLimit Timeout
+TYPE FS.GG.Governance.Gates.ModelModule+GateId
+  [Method] Boolean Equals(GateId)
+  [Method] Boolean Equals(GateId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GateId NewGateId(System.String)
+  [Method] Int32 CompareTo(GateId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Gates.ModelModule+GatePrerequisite
+  [Method] Boolean Equals(GatePrerequisite)
+  [Method] Boolean Equals(GatePrerequisite, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommandId get_command()
+  [Method] GatePrerequisite NewRequiresCommand(CommandId)
+  [Method] Int32 CompareTo(GatePrerequisite)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] CommandId command
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Gates.ModelModule+GateRegistry
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate])
+  [Method] Boolean Equals(GateRegistry)
+  [Method] Boolean Equals(GateRegistry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(GateRegistry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] get_Gates()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] Gates
