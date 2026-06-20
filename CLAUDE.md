@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/012-cli/plan.md
+at specs/014-fsgg-project-policy-capability-schemas/plan.md
 <!-- SPECKIT END -->

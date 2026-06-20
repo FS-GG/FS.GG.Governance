@@ -1,0 +1,7 @@
+schemaVersion: 1
+id: p
+governedRoot: .
+domains:
+  - workflow
+zzz: 1
+aaa: 2

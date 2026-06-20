@@ -1,0 +1,11 @@
+schemaVersion: 1
+domains:
+  - workflow
+  - package-api
+checks:
+  - id: review
+    domain: workflow
+    owner: platform
+    cost: cheap
+    environment: local
+    maturity: warn

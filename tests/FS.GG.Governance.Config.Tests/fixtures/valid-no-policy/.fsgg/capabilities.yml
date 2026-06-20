@@ -1,0 +1,15 @@
+schemaVersion: 1
+domains:
+  - workflow
+  - package-api
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+checks:
+  - id: build
+    domain: package-api
+    command: dotnet-build
+    owner: platform
+    cost: medium
+    environment: local-or-ci
+    maturity: block-on-ship

@@ -1,0 +1,4 @@
+id: p
+governedRoot: .
+domains:
+  - workflow

@@ -1,0 +1,817 @@
+TYPE FS.GG.Governance.Config.LoaderModule
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] fileSystemReader(System.String)
+  [Method] RawSource readSource(GovernedPath, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]])
+  [Method] Validation loadAndValidate(System.String)
+TYPE FS.GG.Governance.Config.ModelModule
+  [Method] System.String diagnosticIdToken(DiagnosticId)
+  [NestedType] FS.GG.Governance.Config.ModelModule+BranchPolicyDecl
+  [NestedType] FS.GG.Governance.Config.ModelModule+CapabilityFacts
+  [NestedType] FS.GG.Governance.Config.ModelModule+Check
+  [NestedType] FS.GG.Governance.Config.ModelModule+CheckId
+  [NestedType] FS.GG.Governance.Config.ModelModule+CommandId
+  [NestedType] FS.GG.Governance.Config.ModelModule+CommandSpec
+  [NestedType] FS.GG.Governance.Config.ModelModule+Cost
+  [NestedType] FS.GG.Governance.Config.ModelModule+Diagnostic
+  [NestedType] FS.GG.Governance.Config.ModelModule+DiagnosticId
+  [NestedType] FS.GG.Governance.Config.ModelModule+DomainId
+  [NestedType] FS.GG.Governance.Config.ModelModule+EnvironmentClass
+  [NestedType] FS.GG.Governance.Config.ModelModule+ExternalToolReq
+  [NestedType] FS.GG.Governance.Config.ModelModule+FsggFile
+  [NestedType] FS.GG.Governance.Config.ModelModule+GovernedPath
+  [NestedType] FS.GG.Governance.Config.ModelModule+Locator
+  [NestedType] FS.GG.Governance.Config.ModelModule+Maturity
+  [NestedType] FS.GG.Governance.Config.ModelModule+Owner
+  [NestedType] FS.GG.Governance.Config.ModelModule+PathMapEntry
+  [NestedType] FS.GG.Governance.Config.ModelModule+PolicyFacts
+  [NestedType] FS.GG.Governance.Config.ModelModule+ProfileId
+  [NestedType] FS.GG.Governance.Config.ModelModule+ProjectFacts
+  [NestedType] FS.GG.Governance.Config.ModelModule+ProjectId
+  [NestedType] FS.GG.Governance.Config.ModelModule+ReviewBudgetDecl
+  [NestedType] FS.GG.Governance.Config.ModelModule+SchemaVersion
+  [NestedType] FS.GG.Governance.Config.ModelModule+Surface
+  [NestedType] FS.GG.Governance.Config.ModelModule+SurfaceClass
+  [NestedType] FS.GG.Governance.Config.ModelModule+SurfaceId
+  [NestedType] FS.GG.Governance.Config.ModelModule+TimeoutLimit
+  [NestedType] FS.GG.Governance.Config.ModelModule+ToolingFacts
+  [NestedType] FS.GG.Governance.Config.ModelModule+TypedFacts
+  [NestedType] FS.GG.Governance.Config.ModelModule+Validation
+TYPE FS.GG.Governance.Config.ModelModule+BranchPolicyDecl
+  [Constructor] Void .ctor(System.String, Boolean)
+  [Method] Boolean Equals(BranchPolicyDecl)
+  [Method] Boolean Equals(BranchPolicyDecl, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_RequirePr()
+  [Method] Int32 CompareTo(BranchPolicyDecl)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Pattern()
+  [Property] Boolean RequirePr
+  [Property] System.String Pattern
+TYPE FS.GG.Governance.Config.ModelModule+CapabilityFacts
+  [Constructor] Void .ctor(SchemaVersion, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+PathMapEntry], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Surface], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check])
+  [Method] Boolean Equals(CapabilityFacts)
+  [Method] Boolean Equals(CapabilityFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CapabilityFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] get_Checks()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId] get_Domains()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+PathMapEntry] get_PathMap()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Surface] get_Surfaces()
+  [Method] SchemaVersion get_SchemaVersion()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] Checks
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId] Domains
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+PathMapEntry] PathMap
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Surface] Surfaces
+  [Property] SchemaVersion SchemaVersion
+TYPE FS.GG.Governance.Config.ModelModule+Check
+  [Constructor] Void .ctor(CheckId, DomainId, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId], Owner, Cost, EnvironmentClass, Maturity)
+  [Method] Boolean Equals(Check)
+  [Method] Boolean Equals(Check, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CheckId get_Id()
+  [Method] Cost get_Cost()
+  [Method] DomainId get_Domain()
+  [Method] EnvironmentClass get_Environment()
+  [Method] Int32 CompareTo(Check)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId] get_Command()
+  [Method] Owner get_Owner()
+  [Method] System.String ToString()
+  [Property] CheckId Id
+  [Property] Cost Cost
+  [Property] DomainId Domain
+  [Property] EnvironmentClass Environment
+  [Property] Maturity Maturity
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+CommandId] Command
+  [Property] Owner Owner
+TYPE FS.GG.Governance.Config.ModelModule+CheckId
+  [Method] Boolean Equals(CheckId)
+  [Method] Boolean Equals(CheckId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CheckId NewCheckId(System.String)
+  [Method] Int32 CompareTo(CheckId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+CommandId
+  [Method] Boolean Equals(CommandId)
+  [Method] Boolean Equals(CommandId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommandId NewCommandId(System.String)
+  [Method] Int32 CompareTo(CommandId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+CommandSpec
+  [Constructor] Void .ctor(CommandId, System.String, TimeoutLimit, EnvironmentClass)
+  [Method] Boolean Equals(CommandSpec)
+  [Method] Boolean Equals(CommandSpec, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommandId get_Id()
+  [Method] EnvironmentClass get_Environment()
+  [Method] Int32 CompareTo(CommandSpec)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Command()
+  [Method] TimeoutLimit get_Timeout()
+  [Property] CommandId Id
+  [Property] EnvironmentClass Environment
+  [Property] System.String Command
+  [Property] TimeoutLimit Timeout
+TYPE FS.GG.Governance.Config.ModelModule+Cost
+  [Method] Boolean Equals(Cost)
+  [Method] Boolean Equals(Cost, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCheap()
+  [Method] Boolean get_IsExhaustive()
+  [Method] Boolean get_IsHigh()
+  [Method] Boolean get_IsMedium()
+  [Method] Cost get_Cheap()
+  [Method] Cost get_Exhaustive()
+  [Method] Cost get_High()
+  [Method] Cost get_Medium()
+  [Method] Int32 CompareTo(Cost)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+Cost+Tags
+  [Property] Boolean IsCheap
+  [Property] Boolean IsExhaustive
+  [Property] Boolean IsHigh
+  [Property] Boolean IsMedium
+  [Property] Cost Cheap
+  [Property] Cost Exhaustive
+  [Property] Cost High
+  [Property] Cost Medium
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+Cost+Tags
+  [Field] Int32 Cheap
+  [Field] Int32 Exhaustive
+  [Field] Int32 High
+  [Field] Int32 Medium
+TYPE FS.GG.Governance.Config.ModelModule+Diagnostic
+  [Constructor] Void .ctor(DiagnosticId, FsggFile, Locator, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DiagnosticId get_Id()
+  [Method] FsggFile get_File()
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Locator get_Locator()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] DiagnosticId Id
+  [Property] FsggFile File
+  [Property] Locator Locator
+  [Property] System.String Message
+TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId
+  [Method] Boolean Equals(DiagnosticId)
+  [Method] Boolean Equals(DiagnosticId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDanglingReference()
+  [Method] Boolean get_IsDuplicateId()
+  [Method] Boolean get_IsEmptyFile()
+  [Method] Boolean get_IsMalformedSchemaVersion()
+  [Method] Boolean get_IsMalformedValue()
+  [Method] Boolean get_IsMissingRequiredField()
+  [Method] Boolean get_IsMissingRequiredFile()
+  [Method] Boolean get_IsMissingSchemaVersion()
+  [Method] Boolean get_IsPathEscapesRoot()
+  [Method] Boolean get_IsUnknownField()
+  [Method] Boolean get_IsUnsupportedSchemaVersion()
+  [Method] DiagnosticId get_DanglingReference()
+  [Method] DiagnosticId get_DuplicateId()
+  [Method] DiagnosticId get_EmptyFile()
+  [Method] DiagnosticId get_MalformedSchemaVersion()
+  [Method] DiagnosticId get_MalformedValue()
+  [Method] DiagnosticId get_MissingRequiredField()
+  [Method] DiagnosticId get_MissingRequiredFile()
+  [Method] DiagnosticId get_MissingSchemaVersion()
+  [Method] DiagnosticId get_PathEscapesRoot()
+  [Method] DiagnosticId get_UnknownField()
+  [Method] DiagnosticId get_UnsupportedSchemaVersion()
+  [Method] Int32 CompareTo(DiagnosticId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+DiagnosticId+Tags
+  [Property] Boolean IsDanglingReference
+  [Property] Boolean IsDuplicateId
+  [Property] Boolean IsEmptyFile
+  [Property] Boolean IsMalformedSchemaVersion
+  [Property] Boolean IsMalformedValue
+  [Property] Boolean IsMissingRequiredField
+  [Property] Boolean IsMissingRequiredFile
+  [Property] Boolean IsMissingSchemaVersion
+  [Property] Boolean IsPathEscapesRoot
+  [Property] Boolean IsUnknownField
+  [Property] Boolean IsUnsupportedSchemaVersion
+  [Property] DiagnosticId DanglingReference
+  [Property] DiagnosticId DuplicateId
+  [Property] DiagnosticId EmptyFile
+  [Property] DiagnosticId MalformedSchemaVersion
+  [Property] DiagnosticId MalformedValue
+  [Property] DiagnosticId MissingRequiredField
+  [Property] DiagnosticId MissingRequiredFile
+  [Property] DiagnosticId MissingSchemaVersion
+  [Property] DiagnosticId PathEscapesRoot
+  [Property] DiagnosticId UnknownField
+  [Property] DiagnosticId UnsupportedSchemaVersion
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId+Tags
+  [Field] Int32 DanglingReference
+  [Field] Int32 DuplicateId
+  [Field] Int32 EmptyFile
+  [Field] Int32 MalformedSchemaVersion
+  [Field] Int32 MalformedValue
+  [Field] Int32 MissingRequiredField
+  [Field] Int32 MissingRequiredFile
+  [Field] Int32 MissingSchemaVersion
+  [Field] Int32 PathEscapesRoot
+  [Field] Int32 UnknownField
+  [Field] Int32 UnsupportedSchemaVersion
+TYPE FS.GG.Governance.Config.ModelModule+DomainId
+  [Method] Boolean Equals(DomainId)
+  [Method] Boolean Equals(DomainId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DomainId NewDomainId(System.String)
+  [Method] Int32 CompareTo(DomainId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+EnvironmentClass
+  [Method] Boolean Equals(EnvironmentClass)
+  [Method] Boolean Equals(EnvironmentClass, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCi()
+  [Method] Boolean get_IsLocal()
+  [Method] Boolean get_IsLocalOrCi()
+  [Method] Boolean get_IsRelease()
+  [Method] EnvironmentClass get_Ci()
+  [Method] EnvironmentClass get_Local()
+  [Method] EnvironmentClass get_LocalOrCi()
+  [Method] EnvironmentClass get_Release()
+  [Method] Int32 CompareTo(EnvironmentClass)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+EnvironmentClass+Tags
+  [Property] Boolean IsCi
+  [Property] Boolean IsLocal
+  [Property] Boolean IsLocalOrCi
+  [Property] Boolean IsRelease
+  [Property] EnvironmentClass Ci
+  [Property] EnvironmentClass Local
+  [Property] EnvironmentClass LocalOrCi
+  [Property] EnvironmentClass Release
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+EnvironmentClass+Tags
+  [Field] Int32 Ci
+  [Field] Int32 Local
+  [Field] Int32 LocalOrCi
+  [Field] Int32 Release
+TYPE FS.GG.Governance.Config.ModelModule+ExternalToolReq
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(ExternalToolReq)
+  [Method] Boolean Equals(ExternalToolReq, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ExternalToolReq)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_MinVersion()
+  [Method] System.String get_Tool()
+  [Property] System.String MinVersion
+  [Property] System.String Tool
+TYPE FS.GG.Governance.Config.ModelModule+FsggFile
+  [Method] Boolean Equals(FsggFile)
+  [Method] Boolean Equals(FsggFile, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCapabilities()
+  [Method] Boolean get_IsPolicy()
+  [Method] Boolean get_IsProject()
+  [Method] Boolean get_IsTooling()
+  [Method] FsggFile get_Capabilities()
+  [Method] FsggFile get_Policy()
+  [Method] FsggFile get_Project()
+  [Method] FsggFile get_Tooling()
+  [Method] Int32 CompareTo(FsggFile)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+FsggFile+Tags
+  [Property] Boolean IsCapabilities
+  [Property] Boolean IsPolicy
+  [Property] Boolean IsProject
+  [Property] Boolean IsTooling
+  [Property] FsggFile Capabilities
+  [Property] FsggFile Policy
+  [Property] FsggFile Project
+  [Property] FsggFile Tooling
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+FsggFile+Tags
+  [Field] Int32 Capabilities
+  [Field] Int32 Policy
+  [Field] Int32 Project
+  [Field] Int32 Tooling
+TYPE FS.GG.Governance.Config.ModelModule+GovernedPath
+  [Method] Boolean Equals(GovernedPath)
+  [Method] Boolean Equals(GovernedPath, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath NewGovernedPath(System.String)
+  [Method] Int32 CompareTo(GovernedPath)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+Locator
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.Int32])
+  [Method] Boolean Equals(Locator)
+  [Method] Boolean Equals(Locator, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Locator)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_Line()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Field()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Id()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] Line
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Field
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Id
+TYPE FS.GG.Governance.Config.ModelModule+Maturity
+  [Method] Boolean Equals(Maturity)
+  [Method] Boolean Equals(Maturity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBlockOnPr()
+  [Method] Boolean get_IsBlockOnRelease()
+  [Method] Boolean get_IsBlockOnShip()
+  [Method] Boolean get_IsObserve()
+  [Method] Boolean get_IsWarn()
+  [Method] Int32 CompareTo(Maturity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Maturity get_BlockOnPr()
+  [Method] Maturity get_BlockOnRelease()
+  [Method] Maturity get_BlockOnShip()
+  [Method] Maturity get_Observe()
+  [Method] Maturity get_Warn()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+Maturity+Tags
+  [Property] Boolean IsBlockOnPr
+  [Property] Boolean IsBlockOnRelease
+  [Property] Boolean IsBlockOnShip
+  [Property] Boolean IsObserve
+  [Property] Boolean IsWarn
+  [Property] Int32 Tag
+  [Property] Maturity BlockOnPr
+  [Property] Maturity BlockOnRelease
+  [Property] Maturity BlockOnShip
+  [Property] Maturity Observe
+  [Property] Maturity Warn
+TYPE FS.GG.Governance.Config.ModelModule+Maturity+Tags
+  [Field] Int32 BlockOnPr
+  [Field] Int32 BlockOnRelease
+  [Field] Int32 BlockOnShip
+  [Field] Int32 Observe
+  [Field] Int32 Warn
+TYPE FS.GG.Governance.Config.ModelModule+Owner
+  [Method] Boolean Equals(Owner)
+  [Method] Boolean Equals(Owner, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Owner)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Owner NewOwner(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+PathMapEntry
+  [Constructor] Void .ctor(GovernedPath, DomainId)
+  [Method] Boolean Equals(PathMapEntry)
+  [Method] Boolean Equals(PathMapEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DomainId get_Capability()
+  [Method] GovernedPath get_Glob()
+  [Method] Int32 CompareTo(PathMapEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] DomainId Capability
+  [Property] GovernedPath Glob
+TYPE FS.GG.Governance.Config.ModelModule+PolicyFacts
+  [Constructor] Void .ctor(SchemaVersion, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ProfileId], ProfileId, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+BranchPolicyDecl], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ReviewBudgetDecl])
+  [Method] Boolean Equals(PolicyFacts)
+  [Method] Boolean Equals(PolicyFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PolicyFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ProfileId] get_Profiles()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+BranchPolicyDecl] get_BranchPolicy()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ReviewBudgetDecl] get_ReviewBudget()
+  [Method] ProfileId get_DefaultProfile()
+  [Method] SchemaVersion get_SchemaVersion()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ProfileId] Profiles
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+BranchPolicyDecl] BranchPolicy
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ReviewBudgetDecl] ReviewBudget
+  [Property] ProfileId DefaultProfile
+  [Property] SchemaVersion SchemaVersion
+TYPE FS.GG.Governance.Config.ModelModule+ProfileId
+  [Method] Boolean Equals(ProfileId)
+  [Method] Boolean Equals(ProfileId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProfileId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProfileId NewProfileId(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+ProjectFacts
+  [Constructor] Void .ctor(SchemaVersion, ProjectId, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId], GovernedPath, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] Boolean Equals(ProjectFacts)
+  [Method] Boolean Equals(ProjectFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_GovernedRoot()
+  [Method] Int32 CompareTo(ProjectFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId] get_Domains()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_PackageSurfaces()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_CapabilitiesRef()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_PolicyRef()
+  [Method] ProjectId get_Id()
+  [Method] SchemaVersion get_SchemaVersion()
+  [Method] System.String ToString()
+  [Property] GovernedPath GovernedRoot
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+DomainId] Domains
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] PackageSurfaces
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] CapabilitiesRef
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] PolicyRef
+  [Property] ProjectId Id
+  [Property] SchemaVersion SchemaVersion
+TYPE FS.GG.Governance.Config.ModelModule+ProjectId
+  [Method] Boolean Equals(ProjectId)
+  [Method] Boolean Equals(ProjectId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProjectId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProjectId NewProjectId(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+ReviewBudgetDecl
+  [Constructor] Void .ctor(Int32)
+  [Method] Boolean Equals(ReviewBudgetDecl)
+  [Method] Boolean Equals(ReviewBudgetDecl, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReviewBudgetDecl)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_MaxReviews()
+  [Method] System.String ToString()
+  [Property] Int32 MaxReviews
+TYPE FS.GG.Governance.Config.ModelModule+SchemaVersion
+  [Method] Boolean Equals(SchemaVersion)
+  [Method] Boolean Equals(SchemaVersion, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SchemaVersion)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] SchemaVersion NewSchemaVersion(Int32)
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+Surface
+  [Constructor] Void .ctor(SurfaceId, SurfaceClass, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Owner, Maturity)
+  [Method] Boolean Equals(Surface)
+  [Method] Boolean Equals(Surface, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Surface)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Paths()
+  [Method] Owner get_Owner()
+  [Method] SurfaceClass get_Class()
+  [Method] SurfaceId get_Id()
+  [Method] System.String ToString()
+  [Property] Maturity Maturity
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Paths
+  [Property] Owner Owner
+  [Property] SurfaceClass Class
+  [Property] SurfaceId Id
+TYPE FS.GG.Governance.Config.ModelModule+SurfaceClass
+  [Method] Boolean Equals(SurfaceClass)
+  [Method] Boolean Equals(SurfaceClass, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGeneratedView()
+  [Method] Boolean get_IsGovernedRoot()
+  [Method] Boolean get_IsProtectedSurface()
+  [Method] Boolean get_IsReleaseSurface()
+  [Method] Boolean get_IsRoutine()
+  [Method] Int32 CompareTo(SurfaceClass)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SurfaceClass get_GeneratedView()
+  [Method] SurfaceClass get_GovernedRoot()
+  [Method] SurfaceClass get_ProtectedSurface()
+  [Method] SurfaceClass get_ReleaseSurface()
+  [Method] SurfaceClass get_Routine()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.ModelModule+SurfaceClass+Tags
+  [Property] Boolean IsGeneratedView
+  [Property] Boolean IsGovernedRoot
+  [Property] Boolean IsProtectedSurface
+  [Property] Boolean IsReleaseSurface
+  [Property] Boolean IsRoutine
+  [Property] Int32 Tag
+  [Property] SurfaceClass GeneratedView
+  [Property] SurfaceClass GovernedRoot
+  [Property] SurfaceClass ProtectedSurface
+  [Property] SurfaceClass ReleaseSurface
+  [Property] SurfaceClass Routine
+TYPE FS.GG.Governance.Config.ModelModule+SurfaceClass+Tags
+  [Field] Int32 GeneratedView
+  [Field] Int32 GovernedRoot
+  [Field] Int32 ProtectedSurface
+  [Field] Int32 ReleaseSurface
+  [Field] Int32 Routine
+TYPE FS.GG.Governance.Config.ModelModule+SurfaceId
+  [Method] Boolean Equals(SurfaceId)
+  [Method] Boolean Equals(SurfaceId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SurfaceId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SurfaceId NewSurfaceId(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Config.ModelModule+TimeoutLimit
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TimeoutLimit)
+  [Method] Boolean Equals(TimeoutLimit, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TimeoutLimit)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Int32 get_seconds()
+  [Method] System.String ToString()
+  [Method] TimeoutLimit NewTimeoutLimit(Int32)
+  [Property] Int32 Tag
+  [Property] Int32 seconds
+TYPE FS.GG.Governance.Config.ModelModule+ToolingFacts
+  [Constructor] Void .ctor(SchemaVersion, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+CommandSpec], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ExternalToolReq])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(ToolingFacts)
+  [Method] Boolean Equals(ToolingFacts, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(ToolingFacts)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+CommandSpec] get_Commands()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] get_EnvironmentClasses()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ExternalToolReq] get_ExternalTools()
+  [Method] SchemaVersion get_SchemaVersion()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+CommandSpec] Commands
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] EnvironmentClasses
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+ExternalToolReq] ExternalTools
+  [Property] SchemaVersion SchemaVersion
+TYPE FS.GG.Governance.Config.ModelModule+TypedFacts
+  [Constructor] Void .ctor(ProjectFacts, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+PolicyFacts], CapabilityFacts, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TypedFacts)
+  [Method] Boolean Equals(TypedFacts, System.Collections.IEqualityComparer)
+  [Method] CapabilityFacts get_Capabilities()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TypedFacts)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+PolicyFacts] get_Policy()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts] get_Tooling()
+  [Method] ProjectFacts get_Project()
+  [Method] System.String ToString()
+  [Property] CapabilityFacts Capabilities
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+PolicyFacts] Policy
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts] Tooling
+  [Property] ProjectFacts Project
+TYPE FS.GG.Governance.Config.ModelModule+Validation
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(Validation)
+  [Method] Boolean Equals(Validation, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInvalid()
+  [Method] Boolean get_IsValid()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(Validation)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] Validation NewInvalid(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Diagnostic])
+  [Method] Validation NewValid(TypedFacts)
+  [NestedType] FS.GG.Governance.Config.ModelModule+Validation+Invalid
+  [NestedType] FS.GG.Governance.Config.ModelModule+Validation+Tags
+  [NestedType] FS.GG.Governance.Config.ModelModule+Validation+Valid
+  [Property] Boolean IsInvalid
+  [Property] Boolean IsValid
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.ModelModule+Validation+Invalid
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Diagnostic] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Diagnostic] Item
+TYPE FS.GG.Governance.Config.ModelModule+Validation+Tags
+  [Field] Int32 Invalid
+  [Field] Int32 Valid
+TYPE FS.GG.Governance.Config.ModelModule+Validation+Valid
+  [Method] TypedFacts get_Item()
+  [Property] TypedFacts Item
+TYPE FS.GG.Governance.Config.SchemaModule
+  [Method] SchemaVersion get_supportedSchemaVersion()
+  [Method] Validation validate(RawSource)
+  [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot
+  [NestedType] FS.GG.Governance.Config.SchemaModule+RawSource
+  [Property] SchemaVersion supportedSchemaVersion
+TYPE FS.GG.Governance.Config.SchemaModule+FileSlot
+  [Method] Boolean Equals(FileSlot)
+  [Method] Boolean Equals(FileSlot, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAbsent()
+  [Method] Boolean get_IsPresent()
+  [Method] FileSlot NewPresent(System.String)
+  [Method] FileSlot get_Absent()
+  [Method] Int32 CompareTo(FileSlot)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot+Present
+  [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot+Tags
+  [Property] Boolean IsAbsent
+  [Property] Boolean IsPresent
+  [Property] FileSlot Absent
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Present
+  [Method] System.String get_content()
+  [Property] System.String content
+TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Tags
+  [Field] Int32 Absent
+  [Field] Int32 Present
+TYPE FS.GG.Governance.Config.SchemaModule+RawSource
+  [Constructor] Void .ctor(GovernedPath, FileSlot, FileSlot, FileSlot, FileSlot)
+  [Method] Boolean Equals(RawSource)
+  [Method] Boolean Equals(RawSource, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FileSlot get_Capabilities()
+  [Method] FileSlot get_Policy()
+  [Method] FileSlot get_Project()
+  [Method] FileSlot get_Tooling()
+  [Method] GovernedPath get_Root()
+  [Method] Int32 CompareTo(RawSource)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] FileSlot Capabilities
+  [Property] FileSlot Policy
+  [Property] FileSlot Project
+  [Property] FileSlot Tooling
+  [Property] GovernedPath Root

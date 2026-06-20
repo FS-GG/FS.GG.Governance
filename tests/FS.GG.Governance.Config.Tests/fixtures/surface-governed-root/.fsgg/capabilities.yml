@@ -1,0 +1,9 @@
+schemaVersion: 1
+domains:
+  - workflow
+surfaces:
+  - id: s1
+    kind: governedRoot
+    paths: ["src/**"]
+    owner: platform
+    maturity: observe

@@ -1,0 +1,9 @@
+schemaVersion: 1
+domains:
+  - workflow
+surfaces:
+  - id: s1
+    kind: release
+    paths: ["src/**"]
+    owner: platform
+    maturity: observe
