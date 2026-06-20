@@ -944,3 +944,33 @@ printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result = f20Json)
 // never a "select everything" fallback).
 let f20Empty = RouteJson.ofRouteResult f19Empty
 printfn "[F20] empty route → %s" f20Empty
+
+// ── F021: the gates.json projection — GatesJson.ofGateRegistry : GateRegistry -> string ──
+// A pure, total render of the F018 `GateRegistry` into the deterministic, versioned `gates.json`
+// WHOLE-CATALOG document text — the stable machine-readable gate-catalog contract every downstream
+// consumer reads. Where F020's route.json is the PER-CHANGE view (from a RouteResult), this is the
+// WHOLE-CATALOG view (every declared gate, from the GateRegistry). It re-derives/re-sorts/
+// re-classifies NOTHING (the registry already fixed the GateId order), emits no severity/enforcement/
+// cache verdict/selection/raw YAML/host path/clock/environment value, and is byte-identical for
+// identical input. Serialization is the net10.0 shared-framework `System.Text.Json` — NO new
+// dependency. The per-gate field set is exactly F020's selectedGates[*] entry MINUS selectingPaths.
+
+#r "../src/FS.GG.Governance.GatesJson/bin/Debug/net10.0/FS.GG.Governance.GatesJson.dll"
+
+open FS.GG.Governance.GatesJson
+
+// Project the genuine F018 `f18Registry` (built above from the real F014->F018 facts).
+let f21Json = GatesJson.ofGateRegistry f18Registry
+printfn "\n[F21] schemaVersion = %s" GatesJson.schemaVersion
+printfn "[F21] document (%d bytes):\n%s" f21Json.Length f21Json
+
+// Determinism: a second projection of the same registry is byte-identical.
+printfn "[F21] deterministic? %b" (GatesJson.ofGateRegistry f18Registry = f21Json)
+
+// The empty registry projects to a valid document with an empty gates array (never an error, never a
+// placeholder gate). Build a real empty registry from facts with no declared checks.
+let f21EmptyFacts =
+    { f18Facts with
+        Capabilities = { f18Facts.Capabilities with Checks = [] } }
+let f21Empty = GatesJson.ofGateRegistry (Gates.buildRegistry f21EmptyFacts)
+printfn "[F21] empty registry → %s" f21Empty

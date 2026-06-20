@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.GatesJson.GatesJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofGateRegistry(GateRegistry)
+  [Property] System.String schemaVersion
