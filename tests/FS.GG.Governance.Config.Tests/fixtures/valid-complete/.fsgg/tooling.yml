@@ -1,0 +1,12 @@
+schemaVersion: 1
+commands:
+  - id: dotnet-build
+    command: "dotnet build"
+    timeout: 600
+    environment: local-or-ci
+environmentClasses:
+  - local
+  - ci
+externalTools:
+  - tool: dotnet
+    minVersion: "10.0.0"

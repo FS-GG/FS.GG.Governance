@@ -40,8 +40,9 @@ FS.GG.Governance.Adapters.SpecKit  first concrete adapter — Spec Kit as data (
 FS.GG.Governance.Adapters.DesignSystem  second adapter — a design language as data (F11, done)
 FS.GG.Governance.Cli     optional route/explain/contract/evidence tool (F12, done)
 FS.GG.Governance.Adapters.*             external validation          (F13, planned)
+FS.GG.Governance.Config  optional `.fsgg` schema library — strict YAML → typed facts (F14, done)
 
-Capability platform continuation (F14-F27, planned):
+Capability platform continuation (F15-F27, planned):
   .fsgg schemas, capability catalog, git/CI facts, gate registry,
   ship/verify/release JSON contracts, native SDD bootstrap, normalized work model,
   generated-view refresh, product/package/docs/skills/design checks,
@@ -88,6 +89,15 @@ nonzero `--review-budget` records an attempted dispatch but no fake passing verd
 The 2026-06-18 capability-design report is now incorporated into the implementation
 plan as F14-F27, with checkbox progress tracking for the protected ship gate,
 native SDD flow, generated views, surface checks, release gates, and provenance work.
+F14 adds the optional **`FS.GG.Governance.Config`** library: the source-of-truth schemas
+for the four versioned `.fsgg` files (`project.yml`, `policy.yml`, `capabilities.yml`,
+`tooling.yml`). It parses them strictly (unknown fields, duplicate ids, `schemaVersion`
+range, path escapes, and dangling cross-references are all stable, located diagnostics),
+normalizes paths deterministically, classifies surfaces, and emits **typed, YAML-free,
+product-neutral facts** for later Phase-2 features to consume — it never routes, senses
+git/CI, or enforces. YamlDotNet is an isolated internal detail (parse-to-node only); the
+kernel stays BCL-only. The YAML authoring contract is
+[`fsgg-schema.md`](specs/014-fsgg-project-policy-capability-schemas/contracts/fsgg-schema.md).
 
 ## CLI
 

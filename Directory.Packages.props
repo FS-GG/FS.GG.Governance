@@ -14,6 +14,17 @@
     <PackageVersion Include="FSharp.Core" Version="10.1.301" />
   </ItemGroup>
 
+  <!-- Runtime: YAML reader for the optional FS.GG.Governance.Config library (F014).
+       NEED: the four `.fsgg` files are authored in YAML; a correct reader is required
+       and hand-rolling the full YAML spec is out of proportion. SCOPE: parse-to-node
+       only (YamlStream/YamlNode), isolated to FS.GG.Governance.Config — every strictness
+       rule (unknown fields, duplicate ids, schemaVersion range, path escape, dangling
+       references) is our own code over the node tree, NOT YamlDotNet's lenient binding.
+       The kernel/host stay BCL-only. OWNER: FS.GG.Governance.Config maintainer. -->
+  <ItemGroup>
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
   <!-- Test-only: Expecto + FsCheck (property-based order-independence) plus the
        VSTest adapters that let `dotnet test` drive the Expecto runner. None of
        these reach the kernel assembly. -->

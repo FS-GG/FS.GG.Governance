@@ -598,3 +598,42 @@ let f12Snapshot =
 
 let f12AfterSnapshot, f12AfterSnapshotEffects = Cli.update (SnapshotLoaded(Ok f12Snapshot)) f12Model
 printfn "[F12] after snapshot phase = %A / effects = %A" f12AfterSnapshot.Phase f12AfterSnapshotEffects
+
+// ── Config sketch (F014) — the optional `.fsgg` schema library (Principle I design pass) ──
+// Build first:
+//   dotnet build src/FS.GG.Governance.Config
+// The library is YAML-free at its OUTPUT boundary: it takes raw file slots and returns
+// typed, product-neutral facts (FR-010). YamlDotNet is an internal detail; a library does
+// not copy it into its own bin, so resolve the transitive dependency from the test project
+// (an executable) which does.
+#r "../tests/FS.GG.Governance.Config.Tests/bin/Debug/net10.0/YamlDotNet.dll"
+#r "../src/FS.GG.Governance.Config/bin/Debug/net10.0/FS.GG.Governance.Config.dll"
+
+open FS.GG.Governance.Config
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.Config.Schema
+
+// Build a RawSource in memory (the shape the Loader edge assembles from disk) and run the
+// PURE core. `project.yml` + `capabilities.yml` are required; `policy.yml`/`tooling.yml` are
+// optional. This sketch records the intended typed-fact flow before reading any real tree.
+let f14Source: RawSource =
+    { Root = GovernedPath "."
+      Project = Present "schemaVersion: 1\nid: demo\ngovernedRoot: .\ndomains:\n  - workflow"
+      Policy = Absent
+      Capabilities = Present "schemaVersion: 1\ndomains:\n  - workflow"
+      Tooling = Absent }
+
+match Schema.validate f14Source with
+| Valid facts ->
+    printfn "[F14] valid: id=%A domains=%A policy=%b tooling=%b" facts.Project.Id facts.Capabilities.Domains facts.Policy.IsSome facts.Tooling.IsSome
+| Invalid diags ->
+    printfn "[F14] invalid: %A" (diags |> List.map (fun d -> Model.diagnosticIdToken d.Id))
+
+// A malformed slot (unsupported schemaVersion) flows to a stable, located diagnostic —
+// never a thrown exception (validate is total).
+let f14Bad: RawSource =
+    { f14Source with Project = Present "schemaVersion: 99\nid: demo\ngovernedRoot: .\ndomains: []" }
+
+match Schema.validate f14Bad with
+| Invalid diags -> printfn "[F14] rejected: %A" (diags |> List.map (fun d -> Model.diagnosticIdToken d.Id))
+| Valid _ -> printfn "[F14] UNEXPECTED valid"

@@ -1,0 +1,5 @@
+schemaVersion: 1
+defaultProfile: ghost
+profiles:
+  - light
+  - standard

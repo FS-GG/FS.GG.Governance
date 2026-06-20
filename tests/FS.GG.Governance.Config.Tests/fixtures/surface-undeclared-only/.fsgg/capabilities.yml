@@ -1,0 +1,6 @@
+schemaVersion: 1
+domains:
+  - workflow
+pathMap:
+  - glob: "src/**"
+    capability: workflow

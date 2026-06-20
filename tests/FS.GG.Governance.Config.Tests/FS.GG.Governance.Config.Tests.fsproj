@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F014, exercising the PUBLIC surface of
+       FS.GG.Governance.Config (the pure Schema.validate over real fixture YAML and the
+       Loader edge over real fixture directories). Expecto + FsCheck give the
+       order-independence property; the VSTest adapters let `dotnet test` drive the
+       Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="SchemaTests.fs" />
+    <Compile Include="DiagnosticTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceClassTests.fs" />
+    <Compile Include="LoaderTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+schemaVersion: 1
+id: p
+governedRoot: .
+domains:
+  - workflow
+bogus: nope

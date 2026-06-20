@@ -1,0 +1,183 @@
+// Typed-fact model for the `.fsgg` schemas (F014). Visibility lives entirely in
+// Model.fsi (Principle II): no top-level binding here carries an access modifier.
+// These are plain records/DUs (Principle III) — the product-neutral, YAML-free values
+// later Governance features consume (FR-010, SC-005).
+
+namespace FS.GG.Governance.Config
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Model =
+
+    // ── Scalars & closed enumerations ──
+
+    type SchemaVersion = SchemaVersion of int
+
+    type GovernedPath = GovernedPath of string
+
+    type Cost =
+        | Cheap
+        | Medium
+        | High
+        | Exhaustive
+
+    type EnvironmentClass =
+        | Local
+        | Ci
+        | LocalOrCi
+        | Release
+
+    type Maturity =
+        | Observe
+        | Warn
+        | BlockOnPr
+        | BlockOnShip
+        | BlockOnRelease
+
+    type SurfaceClass =
+        | Routine
+        | GovernedRoot
+        | ProtectedSurface
+        | GeneratedView
+        | ReleaseSurface
+
+    // ── Identity newtypes ──
+
+    type ProjectId = ProjectId of string
+    type DomainId = DomainId of string
+    type ProfileId = ProfileId of string
+    type SurfaceId = SurfaceId of string
+    type CheckId = CheckId of string
+    type CommandId = CommandId of string
+    type Owner = Owner of string
+    type TimeoutLimit = TimeoutLimit of seconds: int
+
+    // ── project.yml ──
+
+    type ProjectFacts =
+        { SchemaVersion: SchemaVersion
+          Id: ProjectId
+          Domains: DomainId list
+          GovernedRoot: GovernedPath
+          PackageSurfaces: GovernedPath list
+          PolicyRef: GovernedPath option
+          CapabilitiesRef: GovernedPath option }
+
+    // ── policy.yml (optional) ──
+
+    type BranchPolicyDecl = { Pattern: string; RequirePr: bool }
+
+    type ReviewBudgetDecl = { MaxReviews: int }
+
+    type PolicyFacts =
+        { SchemaVersion: SchemaVersion
+          Profiles: ProfileId list
+          DefaultProfile: ProfileId
+          BranchPolicy: BranchPolicyDecl option
+          ReviewBudget: ReviewBudgetDecl option }
+
+    // ── capabilities.yml ──
+
+    type PathMapEntry =
+        { Glob: GovernedPath
+          Capability: DomainId }
+
+    type Surface =
+        { Id: SurfaceId
+          Class: SurfaceClass
+          Paths: GovernedPath list
+          Owner: Owner
+          Maturity: Maturity }
+
+    type Check =
+        { Id: CheckId
+          Domain: DomainId
+          Command: CommandId option
+          Owner: Owner
+          Cost: Cost
+          Environment: EnvironmentClass
+          Maturity: Maturity }
+
+    type CapabilityFacts =
+        { SchemaVersion: SchemaVersion
+          Domains: DomainId list
+          PathMap: PathMapEntry list
+          Surfaces: Surface list
+          Checks: Check list }
+
+    // ── tooling.yml (optional) ──
+
+    type CommandSpec =
+        { Id: CommandId
+          Command: string
+          Timeout: TimeoutLimit
+          Environment: EnvironmentClass }
+
+    type ExternalToolReq = { Tool: string; MinVersion: string }
+
+    type ToolingFacts =
+        { SchemaVersion: SchemaVersion
+          Commands: CommandSpec list
+          EnvironmentClasses: EnvironmentClass list
+          ExternalTools: ExternalToolReq list }
+
+    // ── The aggregate typed facts ──
+
+    type TypedFacts =
+        { Project: ProjectFacts
+          Policy: PolicyFacts option
+          Capabilities: CapabilityFacts
+          Tooling: ToolingFacts option }
+
+    // ── Diagnostics ──
+
+    type FsggFile =
+        | Project
+        | Policy
+        | Capabilities
+        | Tooling
+
+    type Locator =
+        { Field: string option
+          Id: string option
+          Line: int option }
+
+    type DiagnosticId =
+        | UnknownField
+        | MissingRequiredField
+        | MalformedValue
+        | DuplicateId
+        | MissingSchemaVersion
+        | MalformedSchemaVersion
+        | UnsupportedSchemaVersion
+        | PathEscapesRoot
+        | DanglingReference
+        | EmptyFile
+        | MissingRequiredFile
+
+    type Diagnostic =
+        { Id: DiagnosticId
+          File: FsggFile
+          Locator: Locator
+          Message: string }
+
+    type Validation =
+        | Valid of TypedFacts
+        | Invalid of Diagnostic list
+
+    // ── Stable rendering of a diagnostic id ──
+
+    // Total, deterministic: every case maps to its lowerCamelCase wire token. A new
+    // DiagnosticId case is a compile error here until it gets a token (closed set, D7).
+    let diagnosticIdToken (id: DiagnosticId) : string =
+        match id with
+        | UnknownField -> "unknownField"
+        | MissingRequiredField -> "missingRequiredField"
+        | MalformedValue -> "malformedValue"
+        | DuplicateId -> "duplicateId"
+        | MissingSchemaVersion -> "missingSchemaVersion"
+        | MalformedSchemaVersion -> "malformedSchemaVersion"
+        | UnsupportedSchemaVersion -> "unsupportedSchemaVersion"
+        | PathEscapesRoot -> "pathEscapesRoot"
+        | DanglingReference -> "danglingReference"
+        | EmptyFile -> "emptyFile"
+        | MissingRequiredFile -> "missingRequiredFile"

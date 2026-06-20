@@ -1,0 +1,6 @@
+schemaVersion: 1
+id: my-product
+governedRoot: .
+domains:
+  - workflow
+  - package-api

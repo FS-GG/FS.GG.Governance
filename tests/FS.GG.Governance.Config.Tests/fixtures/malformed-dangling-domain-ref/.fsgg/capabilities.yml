@@ -1,0 +1,10 @@
+schemaVersion: 1
+domains:
+  - workflow
+checks:
+  - id: build
+    domain: nonexistent
+    owner: platform
+    cost: cheap
+    environment: ci
+    maturity: warn

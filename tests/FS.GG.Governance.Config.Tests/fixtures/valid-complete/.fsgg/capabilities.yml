@@ -1,0 +1,23 @@
+schemaVersion: 1
+domains:
+  - workflow
+  - package-api
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+  - glob: "work/**"
+    capability: workflow
+surfaces:
+  - id: public-api
+    kind: protected
+    paths: ["src/**/*.fsi"]
+    owner: platform
+    maturity: block-on-ship
+checks:
+  - id: build
+    domain: package-api
+    command: dotnet-build
+    owner: platform
+    cost: medium
+    environment: local-or-ci
+    maturity: block-on-ship

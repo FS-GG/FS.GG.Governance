@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F014: the optional, packable configuration library that turns the four `.fsgg`
+       YAML files into typed, YAML-free, product-neutral facts. It depends ONLY on
+       YamlDotNet (+ FSharp.Core) and references NO existing project — the kernel never
+       sees YAML or product vocabulary (research D1). Compile order is
+       Model -> Schema -> Loader: the pure validation core (Schema) consumes the typed
+       model; the I/O edge (Loader) composes the real filesystem reader with the pure
+       core (MVU/I-O boundary, Principle IV / research D3). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Config</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Config</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Schema.fsi" />
+    <Compile Include="Schema.fs" />
+    <Compile Include="Loader.fsi" />
+    <Compile Include="Loader.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+</Project>
