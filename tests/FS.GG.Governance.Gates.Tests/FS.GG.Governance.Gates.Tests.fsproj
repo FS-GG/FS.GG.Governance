@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F018, exercising the PUBLIC surface of FS.GG.Governance.Gates:
+       `Gates.buildRegistry` over real in-memory TypedFacts (assembled via the Config newtypes) —
+       the actual values a downstream caller (route/ship, route/audit JSON, the gates.json emitter)
+       passes, never mocks and never private helpers (Principle V, research D10). Expecto + FsCheck
+       give the registry-invariant + permutation-invariance + totality properties; the VSTest
+       adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="GateBuildTests.fs" />
+    <Compile Include="RegistryInvariantTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="MetadataTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

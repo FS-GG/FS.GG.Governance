@@ -807,3 +807,50 @@ for f in f17Findings.Findings do
 // Determinism: identical inputs ⇒ byte-identical report; an empty result is a valid success.
 printfn "[F17] deterministic? %b" (Findings.findUnknownGovernedPaths f17Facts f17Report = f17Findings)
 printfn "[F17] empty-on-clean = %A" (Findings.findUnknownGovernedPaths f17Facts (Routing.route f17Facts [ GovernedPath "src/Kernel/Eval.fs" ]))
+
+// ── F018: the typed gate registry — Gates.buildRegistry : TypedFacts -> GateRegistry ──
+// A pure, total projection of the already-validated F014 facts into a typed gate registry: one
+// Gate per declared capability Check, carrying a stable GateId ("domain:checkId") and the *Gate
+// identities* field set (domain, description, prerequisites, cost, timeout, owner, maturity,
+// product-check, freshness key). No diagnostics, no I/O, no clock — F014's guarantees are
+// preserved by construction and the output is byte-identical for identical input.
+
+#r "../src/FS.GG.Governance.Gates/bin/Debug/net10.0/FS.GG.Governance.Gates.dll"
+
+open FS.GG.Governance.Gates
+open FS.GG.Governance.Gates.Model
+
+// Three checks across two domains: one references a declared tooling command (timeout 600s) and
+// runs in the Release environment (→ product-check); the other two are command-less and Local.
+let f18Checks: Check list =
+    [ { Id = CheckId "tests"; Domain = DomainId "build"; Command = Some(CommandId "dotnet-test")
+        Owner = Owner "team-a"; Cost = Medium; Environment = Release; Maturity = BlockOnShip }
+      { Id = CheckId "format"; Domain = DomainId "build"; Command = None
+        Owner = Owner "team-a"; Cost = Cheap; Environment = Local; Maturity = Observe }
+      { Id = CheckId "lint"; Domain = DomainId "docs"; Command = None
+        Owner = Owner "team-c"; Cost = Cheap; Environment = Local; Maturity = Warn } ]
+
+let f18Facts: TypedFacts =
+    { Project =
+        { SchemaVersion = SchemaVersion 1; Id = ProjectId "demo"; Domains = [ DomainId "build"; DomainId "docs" ]
+          GovernedRoot = GovernedPath "src"; PackageSurfaces = []; PolicyRef = None; CapabilitiesRef = None }
+      Policy = None
+      Capabilities =
+        { SchemaVersion = SchemaVersion 1; Domains = [ DomainId "build"; DomainId "docs" ]
+          PathMap = []; Surfaces = []; Checks = f18Checks }
+      Tooling =
+        Some
+            { SchemaVersion = SchemaVersion 1
+              Commands = [ { Id = CommandId "dotnet-test"; Command = "dotnet test"; Timeout = TimeoutLimit 600; Environment = FS.GG.Governance.Config.Model.Ci } ]
+              EnvironmentClasses = []; ExternalTools = [] } }
+
+let f18Registry = Gates.buildRegistry f18Facts
+
+printfn "\n[F18] gates = %d (in GateId ordinal order)" f18Registry.Gates.Length
+for g in f18Registry.Gates do
+    printfn "[F18] %s · cost=%A · timeout=%A · product=%b · prereqs=%A"
+        (gateIdValue g.Id) g.Cost g.Timeout g.ProductCheck g.Prerequisites
+
+// Determinism: identical inputs ⇒ byte-identical registry; empty facts ⇒ empty (successful) registry.
+printfn "[F18] deterministic? %b" (Gates.buildRegistry f18Facts = f18Registry)
+printfn "[F18] empty-facts → empty-registry = %A" (Gates.buildRegistry { f18Facts with Capabilities = { f18Facts.Capabilities with Checks = [] } })

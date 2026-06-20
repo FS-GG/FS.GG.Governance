@@ -351,8 +351,15 @@ without waiting for the full lifecycle command suite.
   two exit criteria below: routine unclassified files do not trigger global
   default-deny, and unknown paths under declared governed roots produce explicit
   findings.
-- ⬜ Define typed `GateId` metadata with prerequisites, cost, timeout, owner,
-  maturity, product-check flag, and freshness key.
+- ✅ Define typed `GateId` metadata with prerequisites, cost, timeout, owner,
+  maturity, product-check flag, and freshness key. **(F018 —
+  `FS.GG.Governance.Gates`, done 2026-06-20)** A single pure, total
+  `Gates.buildRegistry : TypedFacts -> GateRegistry` projects each declared
+  capability check into one `Gate` with a stable, injective `GateId`
+  (`domain:checkId`); it establishes the stable gate identities the remaining
+  Phase-2 rows (`fsgg route`/`fsgg ship`, route/audit JSON, `.fsgg/gates.json`)
+  and Phase 5/11 consume. Deferred to Phase 10: gate-to-gate prerequisites +
+  topological order, and a richer product-check derivation.
 - ⬜ Add `fsgg route --paths ...`, `fsgg route --since <rev>`, and
   `fsgg ship --mode gate --profile standard --json`.
 - ⬜ Emit deterministic route and audit JSON with selected gates, matched
