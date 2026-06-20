@@ -341,9 +341,11 @@ without waiting for the full lifecycle command suite.
 - ✅ Include the minimum capability catalog fields: domains, path map,
   surfaces, checks, cost, owner, environment, and maturity.
   **(F014 — typed facts, done 2026-06-20)**
-- ⬜ Implement deterministic glob precedence for path-to-capability routing.
-- ⬜ Add git/CI snapshot facts for base ref, head ref, changed paths, dirty
+- ✅ Implement deterministic glob precedence for path-to-capability routing.
+  **(F015 — `FS.GG.Governance.Routing`, done 2026-06-20)**
+- ✅ Add git/CI snapshot facts for base ref, head ref, changed paths, dirty
   paths, untracked paths, branch, PR labels, status checks, and CI context.
+  **(F016 — `FS.GG.Governance.Snapshot`, done 2026-06-20)**
 - ⬜ Add unknown governed path findings only inside governed roots or protected
   boundaries.
 - ⬜ Define typed `GateId` metadata with prerequisites, cost, timeout, owner,

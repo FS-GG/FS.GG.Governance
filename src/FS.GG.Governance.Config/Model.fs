@@ -181,3 +181,27 @@ module Model =
         | DanglingReference -> "danglingReference"
         | EmptyFile -> "emptyFile"
         | MissingRequiredFile -> "missingRequiredFile"
+
+    // ── Path normalization (single-sourced — F016 research D7) ──
+
+    // Pure string logic (never Path.GetFullPath, research D5): unify separators, drop `.`/empty
+    // segments, resolve `..` against the stack. TOTAL — an unpoppable `..` (root escape) is kept
+    // as a literal `..` segment so out-of-root sensed paths are REPRESENTED, never dropped (F016
+    // FR-002); F014's `Schema.validate` rejects escape by testing for a `..` segment in the result.
+    let normalizePath (raw: string) : GovernedPath =
+        let segments = raw.Split([| '/'; '\\' |])
+        // mutable: local accumulator for the normalized segment stack (Principle III disclosure).
+        let stack = System.Collections.Generic.List<string>()
+
+        for seg in segments do
+            if seg = "" || seg = "." then ()
+            elif seg = ".." then
+                if stack.Count > 0 && stack.[stack.Count - 1] <> ".." then
+                    stack.RemoveAt(stack.Count - 1)
+                else
+                    stack.Add ".."
+            else
+                stack.Add seg
+
+        let joined = System.String.Join("/", stack)
+        GovernedPath(if joined = "" then "." else joined)

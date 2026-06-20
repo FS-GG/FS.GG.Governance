@@ -42,6 +42,7 @@ FS.GG.Governance.Cli     optional route/explain/contract/evidence tool (F12, don
 FS.GG.Governance.Adapters.*             external validation          (F13, planned)
 FS.GG.Governance.Config  optional `.fsgg` schema library — strict YAML → typed facts (F14, done)
 FS.GG.Governance.Routing optional routing library — paths → capability domains, deterministic glob precedence (F15, done)
+FS.GG.Governance.Snapshot optional sensing library — read-only git/CI → typed repository snapshot (F16, done)
 
 Capability platform continuation (F16-F27, planned):
   .fsgg schemas, capability catalog, git/CI facts, gate registry,
@@ -111,6 +112,20 @@ co-specific competitors still resolve to one winner but also emit an `AmbiguousR
 diagnostic. It references only `FS.GG.Governance.Config`, adds **no** new dependency, performs
 no I/O, and senses no git/CI. The glob syntax + precedence contract is
 [`glob-precedence.md`](specs/015-path-capability-routing/contracts/glob-precedence.md).
+
+F16 adds the optional **`FS.GG.Governance.Snapshot`** library — the **sensing counterpart to
+F015 routing**. It runs **read-only** `git` against a real repository and returns a typed,
+deterministic **repository snapshot**: the resolved diff range (base, head, merge base), the
+committed changed-path set, the working-tree dirty/untracked sets, the current branch, optional
+runner-supplied CI/PR context, command-run provenance digests, and any sensing diagnostics —
+every path normalized into the **same `GovernedPath` form F015 routing consumes**, so the
+snapshot's changed paths feed straight into `Routing.route` with no re-normalization. Impure git
+sensing is isolated behind injected ports over a pure, total `assemble`; read-only is guaranteed
+by construction (a closed read-only `GitCommand` set) and proven by a before/after byte-identity
+check. It references only `FS.GG.Governance.Config`, adds **no** new dependency, and reaches **no
+network** (CI context comes only from the environment, never a hosting-provider API). The
+read-only command set, porcelain-parse rules, and range-resolution contract are
+[`git-sensing.md`](specs/016-git-ci-snapshot-facts/contracts/git-sensing.md).
 
 ## CLI
 

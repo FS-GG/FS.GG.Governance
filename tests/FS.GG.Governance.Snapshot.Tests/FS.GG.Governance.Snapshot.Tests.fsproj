@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F016, exercising the PUBLIC surface of FS.GG.Governance.Snapshot: the
+       pure porcelain parsers + planResolution/assemble over literal `-z` fixtures, and the edge
+       senseSnapshot over a REAL temporary git repository (Principle V — real evidence, no fake
+       git, no network). It references Snapshot AND Routing: Routing is for the SC-001 feed-through
+       test ONLY (the production library does NOT reference Routing). Expecto + FsCheck give the
+       order-independence property; the VSTest adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ResolutionTests.fs" />
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="AssembleTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SensingTests.fs" />
+    <Compile Include="RoutingFeedTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+  </ItemGroup>
+
+</Project>
