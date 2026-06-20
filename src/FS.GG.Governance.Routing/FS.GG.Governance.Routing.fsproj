@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F015: the optional, packable routing library — the FIRST consumer of the F014 typed
+       facts. It references ONLY FS.GG.Governance.Config (for the typed-fact model:
+       GovernedPath, DomainId, PathMapEntry, CapabilityFacts, ProjectFacts, TypedFacts) and
+       adds NO new third-party PackageReference: its own code is BCL + FSharp.Core only
+       (research D1). The transitive YamlDotNet dependency arrives only via Config and is
+       unused by Routing's own code. Compile order is Model -> Glob -> Routing: the
+       routing-domain types, then the pure glob matcher + precedence primitive, then the
+       `route` entry point that applies them across the path map. The whole surface is a pure
+       total function — no MVU ceremony (Principle IV / research D7). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Routing</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Routing</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Glob.fsi" />
+    <Compile Include="Glob.fs" />
+    <Compile Include="Routing.fsi" />
+    <Compile Include="Routing.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

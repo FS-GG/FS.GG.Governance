@@ -1,0 +1,175 @@
+TYPE FS.GG.Governance.Routing.GlobModule
+  [Method] Boolean isAmbiguousPair(GovernedPath, GovernedPath)
+  [Method] Boolean matches(GovernedPath, GovernedPath)
+  [Method] Int32 compare(GovernedPath, GovernedPath)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit] checkSyntax(GovernedPath)
+  [Method] Specificity specificity(GovernedPath)
+  [NestedType] FS.GG.Governance.Routing.GlobModule+Specificity
+TYPE FS.GG.Governance.Routing.GlobModule+Specificity
+  [Method] Boolean Equals(System.Object)
+  [Method] Int32 GetHashCode()
+  [Method] System.String ToString()
+TYPE FS.GG.Governance.Routing.ModelModule
+  [Method] System.String routingDiagnosticIdToken(RoutingDiagnosticId)
+  [NestedType] FS.GG.Governance.Routing.ModelModule+PathRouting
+  [NestedType] FS.GG.Governance.Routing.ModelModule+PrecedenceReason
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RouteReport
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingDiagnostic
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingDiagnosticId
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingResult
+TYPE FS.GG.Governance.Routing.ModelModule+PathRouting
+  [Constructor] Void .ctor(GovernedPath, RoutingResult)
+  [Method] Boolean Equals(PathRouting)
+  [Method] Boolean Equals(PathRouting, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(PathRouting)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] RoutingResult get_Result()
+  [Method] System.String ToString()
+  [Property] GovernedPath Path
+  [Property] RoutingResult Result
+TYPE FS.GG.Governance.Routing.ModelModule+PrecedenceReason
+  [Method] Boolean Equals(PrecedenceReason)
+  [Method] Boolean Equals(PrecedenceReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsExactLiteral()
+  [Method] Boolean get_IsLexicographicTiebreak()
+  [Method] Boolean get_IsMoreSpecific()
+  [Method] Boolean get_IsOnlyMatch()
+  [Method] Int32 CompareTo(PrecedenceReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PrecedenceReason get_ExactLiteral()
+  [Method] PrecedenceReason get_LexicographicTiebreak()
+  [Method] PrecedenceReason get_MoreSpecific()
+  [Method] PrecedenceReason get_OnlyMatch()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Routing.ModelModule+PrecedenceReason+Tags
+  [Property] Boolean IsExactLiteral
+  [Property] Boolean IsLexicographicTiebreak
+  [Property] Boolean IsMoreSpecific
+  [Property] Boolean IsOnlyMatch
+  [Property] Int32 Tag
+  [Property] PrecedenceReason ExactLiteral
+  [Property] PrecedenceReason LexicographicTiebreak
+  [Property] PrecedenceReason MoreSpecific
+  [Property] PrecedenceReason OnlyMatch
+TYPE FS.GG.Governance.Routing.ModelModule+PrecedenceReason+Tags
+  [Field] Int32 ExactLiteral
+  [Field] Int32 LexicographicTiebreak
+  [Field] Int32 MoreSpecific
+  [Field] Int32 OnlyMatch
+TYPE FS.GG.Governance.Routing.ModelModule+RouteReport
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+PathRouting], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+RoutingDiagnostic])
+  [Method] Boolean Equals(RouteReport)
+  [Method] Boolean Equals(RouteReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RouteReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+PathRouting] get_Routings()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+RoutingDiagnostic] get_Diagnostics()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+PathRouting] Routings
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Routing.ModelModule+RoutingDiagnostic] Diagnostics
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingDiagnostic
+  [Constructor] Void .ctor(RoutingDiagnosticId, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], System.String)
+  [Method] Boolean Equals(RoutingDiagnostic)
+  [Method] Boolean Equals(RoutingDiagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RoutingDiagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Globs()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Path()
+  [Method] RoutingDiagnosticId get_Id()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Globs
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Path
+  [Property] RoutingDiagnosticId Id
+  [Property] System.String Message
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingDiagnosticId
+  [Method] Boolean Equals(RoutingDiagnosticId)
+  [Method] Boolean Equals(RoutingDiagnosticId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAmbiguousRoute()
+  [Method] Boolean get_IsConflictingGlobBinding()
+  [Method] Boolean get_IsUnsupportedGlobSyntax()
+  [Method] Int32 CompareTo(RoutingDiagnosticId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RoutingDiagnosticId get_AmbiguousRoute()
+  [Method] RoutingDiagnosticId get_ConflictingGlobBinding()
+  [Method] RoutingDiagnosticId get_UnsupportedGlobSyntax()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingDiagnosticId+Tags
+  [Property] Boolean IsAmbiguousRoute
+  [Property] Boolean IsConflictingGlobBinding
+  [Property] Boolean IsUnsupportedGlobSyntax
+  [Property] Int32 Tag
+  [Property] RoutingDiagnosticId AmbiguousRoute
+  [Property] RoutingDiagnosticId ConflictingGlobBinding
+  [Property] RoutingDiagnosticId UnsupportedGlobSyntax
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingDiagnosticId+Tags
+  [Field] Int32 AmbiguousRoute
+  [Field] Int32 ConflictingGlobBinding
+  [Field] Int32 UnsupportedGlobSyntax
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingResult
+  [Method] Boolean Equals(RoutingResult)
+  [Method] Boolean Equals(RoutingResult, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsOutOfScope()
+  [Method] Boolean get_IsRouted()
+  [Method] Boolean get_IsUnmatchedInRoot()
+  [Method] Int32 CompareTo(RoutingResult)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RoutingResult NewRouted(DomainId, GovernedPath, PrecedenceReason)
+  [Method] RoutingResult get_OutOfScope()
+  [Method] RoutingResult get_UnmatchedInRoot()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingResult+Routed
+  [NestedType] FS.GG.Governance.Routing.ModelModule+RoutingResult+Tags
+  [Property] Boolean IsOutOfScope
+  [Property] Boolean IsRouted
+  [Property] Boolean IsUnmatchedInRoot
+  [Property] Int32 Tag
+  [Property] RoutingResult OutOfScope
+  [Property] RoutingResult UnmatchedInRoot
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingResult+Routed
+  [Method] DomainId get_domain()
+  [Method] GovernedPath get_matchedGlob()
+  [Method] PrecedenceReason get_reason()
+  [Property] DomainId domain
+  [Property] GovernedPath matchedGlob
+  [Property] PrecedenceReason reason
+TYPE FS.GG.Governance.Routing.ModelModule+RoutingResult+Tags
+  [Field] Int32 OutOfScope
+  [Field] Int32 Routed
+  [Field] Int32 UnmatchedInRoot
+TYPE FS.GG.Governance.Routing.RoutingModule
+  [Method] RouteReport route(TypedFacts, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])

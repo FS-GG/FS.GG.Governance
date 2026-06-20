@@ -41,8 +41,9 @@ FS.GG.Governance.Adapters.DesignSystem  second adapter — a design language as 
 FS.GG.Governance.Cli     optional route/explain/contract/evidence tool (F12, done)
 FS.GG.Governance.Adapters.*             external validation          (F13, planned)
 FS.GG.Governance.Config  optional `.fsgg` schema library — strict YAML → typed facts (F14, done)
+FS.GG.Governance.Routing optional routing library — paths → capability domains, deterministic glob precedence (F15, done)
 
-Capability platform continuation (F15-F27, planned):
+Capability platform continuation (F16-F27, planned):
   .fsgg schemas, capability catalog, git/CI facts, gate registry,
   ship/verify/release JSON contracts, native SDD bootstrap, normalized work model,
   generated-view refresh, product/package/docs/skills/design checks,
@@ -98,6 +99,18 @@ product-neutral facts** for later Phase-2 features to consume — it never route
 git/CI, or enforces. YamlDotNet is an isolated internal detail (parse-to-node only); the
 kernel stays BCL-only. The YAML authoring contract is
 [`fsgg-schema.md`](specs/014-fsgg-project-policy-capability-schemas/contracts/fsgg-schema.md).
+
+F15 adds the optional **`FS.GG.Governance.Routing`** library — the **first consumer of the
+F014 typed facts**. Given the typed facts (governed root, declared domains, and the
+`glob → capability-domain` path map) and a caller-supplied set of normalized paths, its pure
+`Routing.route` answers — deterministically and explainably — which capability domain each
+path belongs to. When several globs match one path, exactly one wins by a **total, reproducible
+precedence order** (exact-literal › greater literal specificity › single-segment `*` over
+cross-segment `**` › ordinal tiebreak), and the result records which glob won and why; genuinely
+co-specific competitors still resolve to one winner but also emit an `AmbiguousRoute`
+diagnostic. It references only `FS.GG.Governance.Config`, adds **no** new dependency, performs
+no I/O, and senses no git/CI. The glob syntax + precedence contract is
+[`glob-precedence.md`](specs/015-path-capability-routing/contracts/glob-precedence.md).
 
 ## CLI
 

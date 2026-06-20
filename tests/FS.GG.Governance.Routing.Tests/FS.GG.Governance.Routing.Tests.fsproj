@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F015, exercising the PUBLIC surface of FS.GG.Governance.Routing:
+       the pure Glob matcher over real fixture path/glob strings, the precedence ladder, and
+       Routing.route over real in-memory TypedFacts (the actual input a downstream caller
+       passes — not a mock). Expecto + FsCheck give the order-independence property; the VSTest
+       adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="GlobMatchTests.fs" />
+    <Compile Include="PrecedenceTests.fs" />
+    <Compile Include="RoutingTests.fs" />
+    <Compile Include="AmbiguityTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+  </ItemGroup>
+
+</Project>
