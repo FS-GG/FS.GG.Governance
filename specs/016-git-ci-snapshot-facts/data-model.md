@@ -36,8 +36,10 @@ text in the deterministic facts (FR-010). Paths are repo-relative `GovernedPath`
   - `Dirty: GovernedPath list` — tracked-but-modified (and staged) paths, normalized, deterministically
     ordered.
   - `Untracked: GovernedPath list` — paths git is not tracking (`??`), normalized, ordered.
-  - Categorization is exclusive: a path appears in `Changed`, `Dirty`, or `Untracked` per the
-    documented rule (committed diff vs working-tree status), never in two (FR-003, SC-003).
+  - Two distinct planes (FR-003, SC-003): the committed `Changed` plane and the working-tree plane.
+    Within the working-tree plane a path is in at most one of `Dirty` / `Untracked`; the committed
+    `Changed` plane is reported separately and MAY also contain a path that was modified again after
+    being committed.
 
 ### CI / PR context (optional, never fabricated)
 
@@ -69,8 +71,7 @@ text in the deterministic facts (FR-010). Paths are repo-relative `GovernedPath`
     `Some` otherwise, even for an empty diff.
   - `Changed: ChangedPath list` — empty-but-present for a genuine empty diff (FR-011); ordered by `Path`.
   - `WorkingTree: WorkingTreeState`
-  - `Branch: GovernedPath option` *(string newtype `BranchName option`)* — the current branch, `None`
-    under detached HEAD (never fabricated).
+  - `Branch: BranchName option` — the current branch, `None` under detached HEAD (never fabricated).
   - `Ci: CiContext option`
   - `Digests: CommandRunDigest list` — ordered by command token.
   - `Diagnostics: SensingDiagnostic list` — ordered by `(id, operation)`; non-empty iff some sensing
@@ -98,7 +99,7 @@ parsing stays pure (research D4).
 | Invariant | Source | Test |
 |---|---|---|
 | Every path is a normalized repo-relative `GovernedPath` (via the Config normalizer) | FR-002, D7 | `AssembleTests`, `RoutingFeedTests` (SC-001) |
-| `Changed`/`Dirty`/`Untracked` are mutually exclusive | FR-003 | `AssembleTests` (SC-003) |
+| `Dirty`/`Untracked` mutually exclusive (working-tree plane); committed `Changed` is a separate plane | FR-003 | `AssembleTests` (SC-003) |
 | All collections deterministically ordered (paths by value; digests/diagnostics by token) | FR-009 | `DeterminismTests` (SC-002) |
 | Re-assembling permuted raw entries yields an identical snapshot | FR-009 | `DeterminismTests` FsCheck (SC-003) |
 | Empty diff ⇒ empty `Changed` + empty `Diagnostics` + `Some Range`; failure ⇒ `Diagnostics` non-empty | FR-011 | `AssembleTests`, `SensingTests` (SC-005) |

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F016: the optional, packable git/CI sensing library — the SENSING counterpart to F015
+       routing. It senses a typed, deterministic repository snapshot (resolved diff range,
+       committed changed paths, working-tree dirty/untracked, branch, optional runner-supplied
+       CI/PR context, provenance digests, diagnostics) and normalizes changed paths into the
+       SAME F014 GovernedPath form F015 routing consumes (SC-001). It references ONLY
+       FS.GG.Governance.Config (for the typed-fact model + the single-sourced normalizePath) and
+       adds NO new third-party PackageReference: read-only git runs through BCL
+       System.Diagnostics.Process and CI context through BCL System.Environment (research D1/D2).
+       The transitive YamlDotNet dependency arrives only via Config and is unused by Snapshot's
+       own code. Compile order is Model -> Snapshot -> Interpreter: the snapshot-domain types,
+       then the PURE parse/assemble core, then the read-only git/CI edge (the MVU/I-O boundary,
+       Principle IV / research D3, as F014's Loader). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Snapshot</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Routing (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Snapshot</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Snapshot.fsi" />
+    <Compile Include="Snapshot.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

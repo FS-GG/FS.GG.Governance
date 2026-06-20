@@ -217,3 +217,16 @@ module Model =
     /// The stable wire token for a `DiagnosticId` (e.g. `DuplicateId` → `"duplicateId"`).
     /// Deterministic and total.
     val diagnosticIdToken: id: DiagnosticId -> string
+
+    // ── Path normalization (single-sourced — F016 research D7) ──
+
+    /// Normalize a raw declared/sensed path into the canonical `GovernedPath` form: separators
+    /// unified (`/` and `\` → `/`), `.` and empty segments dropped, `..` resolved against the
+    /// segment stack, kept relative to the governed root. Pure string logic (never
+    /// `Path.GetFullPath`), so no absolute host path can leak (SC-002/SC-005). TOTAL: a `..` that
+    /// would escape the root is RETAINED as a leading `..` segment rather than failing — callers
+    /// that must reject escape (F014 `Schema.validate`) test for a `..` segment in the result;
+    /// callers that must REPRESENT out-of-root paths (F016 git/CI sensing) keep them. The empty
+    /// path normalizes to `"."`. This is the ONE implementation of the governed-path form, reused
+    /// by F015 routing and F016 sensing so every `GovernedPath` is byte-identical.
+    val normalizePath: raw: string -> GovernedPath

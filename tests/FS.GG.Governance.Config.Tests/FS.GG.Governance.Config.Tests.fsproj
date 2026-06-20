@@ -17,6 +17,7 @@
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="SurfaceClassTests.fs" />
     <Compile Include="LoaderTests.fs" />
+    <Compile Include="NormalizePathTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

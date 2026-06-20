@@ -134,7 +134,13 @@ model I/O as data behind a pure `update`/core with edge interpretation, and *per
 effect/port algebra in place of the Elmish `Program`. F014's Loader took this path for reading four
 files; this feature takes it for running a fixed set of read-only git commands. The justification is
 recorded in research D3 so the reviewer treats the lighter boundary as a deliberate, blessed choice,
-not an omission.
+not an omission. **Accepted interpretation (resolves analysis finding D1):** the merged F014 Loader
+port-algebra — injected ports + a pure core + an edge interpreter, with NO `Msg`/`Effect`/`update` — is
+the established precedent for fixed request/response sensing and is the Principle IV reading adopted
+here; the pure/edge separation the principle protects (pure logic, I/O at the edge, fully testable) is
+preserved. If a future review instead requires the literal `Model`/`Msg`/`Effect`/`init`/`update`
+surface for *all* I/O features, that is a constitution-clarification decision, and this plan would add
+that surface rather than dilute the principle — it would not silently proceed.
 
 **Gate result: PASS — no unjustified violations. Complexity Tracking remains empty.**
 

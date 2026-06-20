@@ -3,6 +3,7 @@ TYPE FS.GG.Governance.Config.LoaderModule
   [Method] RawSource readSource(GovernedPath, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]])
   [Method] Validation loadAndValidate(System.String)
 TYPE FS.GG.Governance.Config.ModelModule
+  [Method] GovernedPath normalizePath(System.String)
   [Method] System.String diagnosticIdToken(DiagnosticId)
   [NestedType] FS.GG.Governance.Config.ModelModule+BranchPolicyDecl
   [NestedType] FS.GG.Governance.Config.ModelModule+CapabilityFacts

@@ -693,3 +693,54 @@ for r in f15Report.Routings do
 
 for d in f15Report.Diagnostics do
     printfn "[F15] diag %s: %s" (Model.routingDiagnosticIdToken d.Id) d.Message
+
+// ── Snapshot sketch (F016) — the SENSING counterpart to F015 routing (Principle I) ──
+// Build first:
+//   dotnet build src/FS.GG.Governance.Snapshot
+// Snapshot has a PURE core (planResolution + assemble over a RawSensing) and an impure EDGE
+// (Interpreter.senseSnapshot, which runs READ-ONLY git via System.Diagnostics.Process). It
+// references only Config and adds no new dependency. This sketch records the intended flow:
+// resolve a loose range to a plan, assemble a hand-built RawSensing (the actual NUL-delimited
+// `-z` wire bytes, written here with \000 escapes), and sense this real repo.
+#r "../src/FS.GG.Governance.Snapshot/bin/Debug/net10.0/FS.GG.Governance.Snapshot.dll"
+
+open FS.GG.Governance.Snapshot
+open FS.GG.Governance.Snapshot.Model
+
+// (1) Pure range planning — no git involved (US3, FR-004).
+let f16Plan =
+    Snapshot.planResolution { Since = None; Base = Some(GitRef "main"); Head = Some(GitRef "HEAD") }
+
+printfn "[F16] plan: form=%A useMergeBase=%b" f16Plan.Form f16Plan.UseMergeBase
+
+// (2) Pure assembly over a hand-built RawSensing — actual `-z` wire bytes, parsed/normalized.
+let f16Raw: Snapshot.RawSensing =
+    { RepoOk = true
+      BaseResolved = Ok(CommitId "aaaa111")
+      HeadResolved = Ok(CommitId "bbbb222")
+      MergeBaseResolved = Ok(CommitId "aaaa111")
+      DiffRaw = Ok "M\000src/Kernel/Eval.fs\000A\000docs/intro.md\000"
+      StatusRaw = Ok "?? scratch.txt\000"
+      BranchRaw = Ok "feature/x"
+      RawCi = None
+      Digests = []
+      Plan = f16Plan }
+
+let f16Snap = Snapshot.assemble f16Raw
+printfn "[F16] changed: %A" (f16Snap.Changed |> List.map (fun c -> Model.changeKindToken c.Kind, c.Path))
+
+printfn
+    "[F16] dirty=%A untracked=%A branch=%A"
+    f16Snap.WorkingTree.Dirty
+    f16Snap.WorkingTree.Untracked
+    f16Snap.Branch
+
+// (3) Impure EDGE — sense THIS repository read-only (resolved against HEAD by default).
+let f16Live =
+    Interpreter.senseSnapshot (Interpreter.realPorts ".") { Since = None; Base = None; Head = None }
+
+printfn
+    "[F16] live branch=%A range=%b diagnostics=%A"
+    f16Live.Branch
+    f16Live.Range.IsSome
+    (f16Live.Diagnostics |> List.map (fun d -> Model.sensingDiagnosticIdToken d.Id))

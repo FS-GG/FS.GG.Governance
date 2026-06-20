@@ -1,0 +1,499 @@
+TYPE FS.GG.Governance.Snapshot.GitCommand
+  [Method] Boolean Equals(FS.GG.Governance.Snapshot.GitCommand)
+  [Method] Boolean Equals(FS.GG.Governance.Snapshot.GitCommand, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCurrentBranch()
+  [Method] Boolean get_IsDiffNameStatus()
+  [Method] Boolean get_IsMergeBase()
+  [Method] Boolean get_IsRepoCheck()
+  [Method] Boolean get_IsRevParse()
+  [Method] Boolean get_IsStatusPorcelain()
+  [Method] FS.GG.Governance.Snapshot.GitCommand NewDiffNameStatus(CommitId, CommitId)
+  [Method] FS.GG.Governance.Snapshot.GitCommand NewMergeBase(CommitId, CommitId)
+  [Method] FS.GG.Governance.Snapshot.GitCommand NewRevParse(GitRef)
+  [Method] FS.GG.Governance.Snapshot.GitCommand get_CurrentBranch()
+  [Method] FS.GG.Governance.Snapshot.GitCommand get_RepoCheck()
+  [Method] FS.GG.Governance.Snapshot.GitCommand get_StatusPorcelain()
+  [Method] Int32 CompareTo(FS.GG.Governance.Snapshot.GitCommand)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Token()
+  [NestedType] FS.GG.Governance.Snapshot.GitCommand+DiffNameStatus
+  [NestedType] FS.GG.Governance.Snapshot.GitCommand+MergeBase
+  [NestedType] FS.GG.Governance.Snapshot.GitCommand+RevParse
+  [NestedType] FS.GG.Governance.Snapshot.GitCommand+Tags
+  [Property] Boolean IsCurrentBranch
+  [Property] Boolean IsDiffNameStatus
+  [Property] Boolean IsMergeBase
+  [Property] Boolean IsRepoCheck
+  [Property] Boolean IsRevParse
+  [Property] Boolean IsStatusPorcelain
+  [Property] FS.GG.Governance.Snapshot.GitCommand CurrentBranch
+  [Property] FS.GG.Governance.Snapshot.GitCommand RepoCheck
+  [Property] FS.GG.Governance.Snapshot.GitCommand StatusPorcelain
+  [Property] Int32 Tag
+  [Property] System.String Token
+TYPE FS.GG.Governance.Snapshot.GitCommand+DiffNameStatus
+  [Method] CommitId get_baseId()
+  [Method] CommitId get_headId()
+  [Property] CommitId baseId
+  [Property] CommitId headId
+TYPE FS.GG.Governance.Snapshot.GitCommand+MergeBase
+  [Method] CommitId get_a()
+  [Method] CommitId get_b()
+  [Property] CommitId a
+  [Property] CommitId b
+TYPE FS.GG.Governance.Snapshot.GitCommand+RevParse
+  [Method] GitRef get_Item()
+  [Property] GitRef Item
+TYPE FS.GG.Governance.Snapshot.GitCommand+Tags
+  [Field] Int32 CurrentBranch
+  [Field] Int32 DiffNameStatus
+  [Field] Int32 MergeBase
+  [Field] Int32 RepoCheck
+  [Field] Int32 RevParse
+  [Field] Int32 StatusPorcelain
+TYPE FS.GG.Governance.Snapshot.InterpreterModule
+  [Method] FS.GG.Governance.Snapshot.Ports realPorts(System.String)
+  [Method] RepoSnapshot senseSnapshot(FS.GG.Governance.Snapshot.Ports, SnapshotOptions)
+TYPE FS.GG.Governance.Snapshot.ModelModule
+  [Method] System.String changeKindToken(ChangeKind)
+  [Method] System.String sensingDiagnosticIdToken(SensingDiagnosticId)
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+BranchName
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+ChangeKind
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+ChangedPath
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+CiContext
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+CiEnvironment
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+CommitId
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+DiffRange
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+GitRef
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+SensingDiagnostic
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+SensingDiagnosticId
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+SnapshotOptions
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+WorkingTreeState
+TYPE FS.GG.Governance.Snapshot.ModelModule+BranchName
+  [Method] Boolean Equals(BranchName)
+  [Method] Boolean Equals(BranchName, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] BranchName NewBranchName(System.String)
+  [Method] Int32 CompareTo(BranchName)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Snapshot.ModelModule+ChangeKind
+  [Method] Boolean Equals(ChangeKind)
+  [Method] Boolean Equals(ChangeKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAdded()
+  [Method] Boolean get_IsCopied()
+  [Method] Boolean get_IsDeleted()
+  [Method] Boolean get_IsModified()
+  [Method] Boolean get_IsRenamed()
+  [Method] Boolean get_IsTypeChanged()
+  [Method] ChangeKind get_Added()
+  [Method] ChangeKind get_Copied()
+  [Method] ChangeKind get_Deleted()
+  [Method] ChangeKind get_Modified()
+  [Method] ChangeKind get_Renamed()
+  [Method] ChangeKind get_TypeChanged()
+  [Method] Int32 CompareTo(ChangeKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+ChangeKind+Tags
+  [Property] Boolean IsAdded
+  [Property] Boolean IsCopied
+  [Property] Boolean IsDeleted
+  [Property] Boolean IsModified
+  [Property] Boolean IsRenamed
+  [Property] Boolean IsTypeChanged
+  [Property] ChangeKind Added
+  [Property] ChangeKind Copied
+  [Property] ChangeKind Deleted
+  [Property] ChangeKind Modified
+  [Property] ChangeKind Renamed
+  [Property] ChangeKind TypeChanged
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Snapshot.ModelModule+ChangeKind+Tags
+  [Field] Int32 Added
+  [Field] Int32 Copied
+  [Field] Int32 Deleted
+  [Field] Int32 Modified
+  [Field] Int32 Renamed
+  [Field] Int32 TypeChanged
+TYPE FS.GG.Governance.Snapshot.ModelModule+ChangedPath
+  [Constructor] Void .ctor(GovernedPath, ChangeKind, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] Boolean Equals(ChangedPath)
+  [Method] Boolean Equals(ChangedPath, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ChangeKind get_Kind()
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(ChangedPath)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_OldPath()
+  [Method] System.String ToString()
+  [Property] ChangeKind Kind
+  [Property] GovernedPath Path
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] OldPath
+TYPE FS.GG.Governance.Snapshot.ModelModule+CiContext
+  [Constructor] Void .ctor(CiEnvironment, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(CiContext)
+  [Method] Boolean Equals(CiContext, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CiEnvironment get_Environment()
+  [Method] Int32 CompareTo(CiContext)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_PrLabels()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_RequiredStatusChecks()
+  [Method] System.String ToString()
+  [Property] CiEnvironment Environment
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] PrLabels
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] RequiredStatusChecks
+TYPE FS.GG.Governance.Snapshot.ModelModule+CiEnvironment
+  [Method] Boolean Equals(CiEnvironment)
+  [Method] Boolean Equals(CiEnvironment, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCi()
+  [Method] Boolean get_IsLocalShell()
+  [Method] Boolean get_IsUnknown()
+  [Method] CiEnvironment get_Ci()
+  [Method] CiEnvironment get_LocalShell()
+  [Method] CiEnvironment get_Unknown()
+  [Method] Int32 CompareTo(CiEnvironment)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+CiEnvironment+Tags
+  [Property] Boolean IsCi
+  [Property] Boolean IsLocalShell
+  [Property] Boolean IsUnknown
+  [Property] CiEnvironment Ci
+  [Property] CiEnvironment LocalShell
+  [Property] CiEnvironment Unknown
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Snapshot.ModelModule+CiEnvironment+Tags
+  [Field] Int32 Ci
+  [Field] Int32 LocalShell
+  [Field] Int32 Unknown
+TYPE FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(CommandRunDigest)
+  [Method] Boolean Equals(CommandRunDigest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CommandRunDigest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Command()
+  [Method] System.String get_Digest()
+  [Property] System.String Command
+  [Property] System.String Digest
+TYPE FS.GG.Governance.Snapshot.ModelModule+CommitId
+  [Method] Boolean Equals(CommitId)
+  [Method] Boolean Equals(CommitId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommitId NewCommitId(System.String)
+  [Method] Int32 CompareTo(CommitId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Snapshot.ModelModule+DiffRange
+  [Constructor] Void .ctor(CommitId, CommitId, CommitId)
+  [Method] Boolean Equals(DiffRange)
+  [Method] Boolean Equals(DiffRange, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommitId get_Base()
+  [Method] CommitId get_Head()
+  [Method] CommitId get_MergeBase()
+  [Method] Int32 CompareTo(DiffRange)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] CommitId Base
+  [Property] CommitId Head
+  [Property] CommitId MergeBase
+TYPE FS.GG.Governance.Snapshot.ModelModule+GitRef
+  [Method] Boolean Equals(GitRef)
+  [Method] Boolean Equals(GitRef, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GitRef NewGitRef(System.String)
+  [Method] Int32 CompareTo(GitRef)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+DiffRange], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+ChangedPath], WorkingTreeState, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+BranchName], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+SensingDiagnostic])
+  [Method] Boolean Equals(RepoSnapshot)
+  [Method] Boolean Equals(RepoSnapshot, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RepoSnapshot)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+ChangedPath] get_Changed()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest] get_Digests()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+SensingDiagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+BranchName] get_Branch()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext] get_Ci()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+DiffRange] get_Range()
+  [Method] System.String ToString()
+  [Method] WorkingTreeState get_WorkingTree()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+ChangedPath] Changed
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest] Digests
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+SensingDiagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+BranchName] Branch
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext] Ci
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+DiffRange] Range
+  [Property] WorkingTreeState WorkingTree
+TYPE FS.GG.Governance.Snapshot.ModelModule+SensingDiagnostic
+  [Constructor] Void .ctor(SensingDiagnosticId, System.String, System.String)
+  [Method] Boolean Equals(SensingDiagnostic)
+  [Method] Boolean Equals(SensingDiagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensingDiagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SensingDiagnosticId get_Id()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Method] System.String get_Operation()
+  [Property] SensingDiagnosticId Id
+  [Property] System.String Message
+  [Property] System.String Operation
+TYPE FS.GG.Governance.Snapshot.ModelModule+SensingDiagnosticId
+  [Method] Boolean Equals(SensingDiagnosticId)
+  [Method] Boolean Equals(SensingDiagnosticId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGitCommandFailed()
+  [Method] Boolean get_IsGitUnavailable()
+  [Method] Boolean get_IsNotARepository()
+  [Method] Boolean get_IsUnknownRef()
+  [Method] Boolean get_IsUnparsableGitOutput()
+  [Method] Boolean get_IsUnreadableWorkingTree()
+  [Method] Int32 CompareTo(SensingDiagnosticId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensingDiagnosticId get_GitCommandFailed()
+  [Method] SensingDiagnosticId get_GitUnavailable()
+  [Method] SensingDiagnosticId get_NotARepository()
+  [Method] SensingDiagnosticId get_UnknownRef()
+  [Method] SensingDiagnosticId get_UnparsableGitOutput()
+  [Method] SensingDiagnosticId get_UnreadableWorkingTree()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Snapshot.ModelModule+SensingDiagnosticId+Tags
+  [Property] Boolean IsGitCommandFailed
+  [Property] Boolean IsGitUnavailable
+  [Property] Boolean IsNotARepository
+  [Property] Boolean IsUnknownRef
+  [Property] Boolean IsUnparsableGitOutput
+  [Property] Boolean IsUnreadableWorkingTree
+  [Property] Int32 Tag
+  [Property] SensingDiagnosticId GitCommandFailed
+  [Property] SensingDiagnosticId GitUnavailable
+  [Property] SensingDiagnosticId NotARepository
+  [Property] SensingDiagnosticId UnknownRef
+  [Property] SensingDiagnosticId UnparsableGitOutput
+  [Property] SensingDiagnosticId UnreadableWorkingTree
+TYPE FS.GG.Governance.Snapshot.ModelModule+SensingDiagnosticId+Tags
+  [Field] Int32 GitCommandFailed
+  [Field] Int32 GitUnavailable
+  [Field] Int32 NotARepository
+  [Field] Int32 UnknownRef
+  [Field] Int32 UnparsableGitOutput
+  [Field] Int32 UnreadableWorkingTree
+TYPE FS.GG.Governance.Snapshot.ModelModule+SnapshotOptions
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef])
+  [Method] Boolean Equals(SnapshotOptions)
+  [Method] Boolean Equals(SnapshotOptions, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SnapshotOptions)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] get_Base()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] get_Head()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] get_Since()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] Base
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] Head
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] Since
+TYPE FS.GG.Governance.Snapshot.ModelModule+WorkingTreeState
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WorkingTreeState)
+  [Method] Boolean Equals(WorkingTreeState, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WorkingTreeState)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Dirty()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Untracked()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Dirty
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Untracked
+TYPE FS.GG.Governance.Snapshot.Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_Git()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext]] get_Ci()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] Git
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext]] Ci
+TYPE FS.GG.Governance.Snapshot.SnapshotModule
+  [Method] RepoSnapshot assemble(RawSensing)
+  [Method] ResolutionPlan planResolution(SnapshotOptions)
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RangeForm
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+ResolutionPlan
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm
+  [Method] Boolean Equals(RangeForm)
+  [Method] Boolean Equals(RangeForm, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBaseHead()
+  [Method] Boolean get_IsDefault()
+  [Method] Boolean get_IsSince()
+  [Method] Int32 CompareTo(RangeForm)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RangeForm NewBaseHead(GitRef, GitRef)
+  [Method] RangeForm NewSince(GitRef)
+  [Method] RangeForm get_Default()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+BaseHead
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+Since
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+Tags
+  [Property] Boolean IsBaseHead
+  [Property] Boolean IsDefault
+  [Property] Boolean IsSince
+  [Property] Int32 Tag
+  [Property] RangeForm Default
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+BaseHead
+  [Method] GitRef get_baseRef()
+  [Method] GitRef get_headRef()
+  [Property] GitRef baseRef
+  [Property] GitRef headRef
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+Since
+  [Method] GitRef get_Item()
+  [Property] GitRef Item
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+Tags
+  [Field] Int32 BaseHead
+  [Field] Int32 Default
+  [Field] Int32 Since
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
+  [Constructor] Void .ctor(Boolean, Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest], ResolutionPlan)
+  [Method] Boolean Equals(RawSensing)
+  [Method] Boolean Equals(RawSensing, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_RepoOk()
+  [Method] Int32 CompareTo(RawSensing)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest] get_Digests()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext] get_RawCi()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] get_BaseResolved()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] get_HeadResolved()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] get_MergeBaseResolved()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_BranchRaw()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_DiffRaw()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_StatusRaw()
+  [Method] ResolutionPlan get_Plan()
+  [Method] System.String ToString()
+  [Property] Boolean RepoOk
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest] Digests
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext] RawCi
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] BaseResolved
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] HeadResolved
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] MergeBaseResolved
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] BranchRaw
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] DiffRaw
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] StatusRaw
+  [Property] ResolutionPlan Plan
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+ResolutionPlan
+  [Constructor] Void .ctor(RangeForm, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Boolean)
+  [Method] Boolean Equals(ResolutionPlan)
+  [Method] Boolean Equals(ResolutionPlan, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_UseMergeBase()
+  [Method] Int32 CompareTo(ResolutionPlan)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] get_BaseRef()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] get_HeadRef()
+  [Method] RangeForm get_Form()
+  [Method] System.String ToString()
+  [Property] Boolean UseMergeBase
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] BaseRef
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef] HeadRef
+  [Property] RangeForm Form

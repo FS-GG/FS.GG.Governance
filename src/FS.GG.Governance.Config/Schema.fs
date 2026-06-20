@@ -107,21 +107,11 @@ module Schema =
     /// (→ `PathEscapesRoot`). Case is preserved. Pure string logic so no absolute host path
     /// can leak (SC-002/SC-005).
     let private normalizePath (raw: string) : Result<GovernedPath, unit> =
-        let segments = raw.Split([| '/'; '\\' |])
-        // mutable: local accumulator for the normalized segment stack (Principle III disclosure).
-        let stack = System.Collections.Generic.List<string>()
-        let mutable escaped = false
-        for seg in segments do
-            if escaped then ()
-            elif seg = "" || seg = "." then ()
-            elif seg = ".." then
-                if stack.Count = 0 then escaped <- true else stack.RemoveAt(stack.Count - 1)
-            else
-                stack.Add seg
-        if escaped then Error()
-        else
-            let joined = String.Join("/", stack)
-            Ok(GovernedPath(if joined = "" then "." else joined))
+        // Single-sourced from Model.normalizePath (research D7): the SAME governed-path form F015
+        // routing and F016 sensing consume. That normalizer is total and RETAINS an unpoppable `..`
+        // as a literal segment; F014 rejects root escape by detecting that segment here.
+        let (GovernedPath p) = Model.normalizePath raw
+        if p.Split('/') |> Array.exists (fun s -> s = "..") then Error() else Ok(GovernedPath p)
 
     // ── schemaVersion handling ──
 
