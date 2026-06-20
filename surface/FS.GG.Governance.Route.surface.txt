@@ -1,0 +1,77 @@
+TYPE FS.GG.Governance.Route.ModelModule
+  [NestedType] FS.GG.Governance.Route.ModelModule+CostRollup
+  [NestedType] FS.GG.Governance.Route.ModelModule+RouteResult
+  [NestedType] FS.GG.Governance.Route.ModelModule+SelectedGate
+  [NestedType] FS.GG.Governance.Route.ModelModule+SelectingPath
+TYPE FS.GG.Governance.Route.ModelModule+CostRollup
+  [Constructor] Void .ctor(Int32, Int32, Int32, Int32)
+  [Method] Boolean Equals(CostRollup)
+  [Method] Boolean Equals(CostRollup, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CostRollup)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Cheap()
+  [Method] Int32 get_Exhaustive()
+  [Method] Int32 get_High()
+  [Method] Int32 get_Medium()
+  [Method] System.String ToString()
+  [Property] Int32 Cheap
+  [Property] Int32 Exhaustive
+  [Property] Int32 High
+  [Property] Int32 Medium
+TYPE FS.GG.Governance.Route.ModelModule+RouteResult
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate], FindingReport, CostRollup)
+  [Method] Boolean Equals(RouteResult)
+  [Method] Boolean Equals(RouteResult, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CostRollup get_Cost()
+  [Method] FindingReport get_Findings()
+  [Method] Int32 CompareTo(RouteResult)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate] get_SelectedGates()
+  [Method] System.String ToString()
+  [Property] CostRollup Cost
+  [Property] FindingReport Findings
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate] SelectedGates
+TYPE FS.GG.Governance.Route.ModelModule+SelectedGate
+  [Constructor] Void .ctor(Gate, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectingPath])
+  [Method] Boolean Equals(SelectedGate)
+  [Method] Boolean Equals(SelectedGate, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Gate get_Gate()
+  [Method] Int32 CompareTo(SelectedGate)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectingPath] get_SelectingPaths()
+  [Method] System.String ToString()
+  [Property] Gate Gate
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectingPath] SelectingPaths
+TYPE FS.GG.Governance.Route.ModelModule+SelectingPath
+  [Constructor] Void .ctor(GovernedPath, GovernedPath)
+  [Method] Boolean Equals(SelectingPath)
+  [Method] Boolean Equals(SelectingPath, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_MatchedGlob()
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(SelectingPath)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] GovernedPath MatchedGlob
+  [Property] GovernedPath Path
+TYPE FS.GG.Governance.Route.RouteModule
+  [Method] RouteResult select(GateRegistry, RouteReport, FindingReport)
