@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F021: the optional, packable gates.json *projection* — the Phase-2 *gates.json document* row.
+       A single pure, total `GatesJson.ofGateRegistry : GateRegistry -> string` (plus a `schemaVersion`
+       constant) renders the F018 `GateRegistry` into the deterministic, versioned `gates.json`
+       WHOLE-CATALOG document text — the stable, machine-readable gate-registry contract every
+       downstream consumer (the later `fsgg` commands, CI, agents, generated readiness views, humans)
+       reads instead of an in-memory value, independent of any particular change.
+
+       Where F020's `route.json` is the PER-CHANGE view (which gates a specific change selected, from a
+       `RouteResult`), this `gates.json` is the WHOLE-CATALOG view (every gate the repository declares,
+       from the `GateRegistry`). The per-gate field set is exactly the F020 `selectedGates[*]` entry
+       MINUS the route-specific `selectingPaths`.
+
+       This row LAYERS serialization on top of the pure `Gates` assembler in a SEPARATE project
+       (constitution: heavier capabilities layer on top, not into the core) — F018's `Gates` surface
+       stays free of any serialization concern. It is emit-only: it re-derives, re-sorts, and
+       re-classifies nothing (the `GateRegistry` already fixed the gate order and each gate's carried
+       order); it computes no severity, profile, enforcement, cache-eligibility verdict, per-change
+       selection, or ship verdict, and emits no raw YAML, host path, clock, or environment value
+       (FR-011/FR-012). PURE and TOTAL (FR-008): no I/O, no git, no clock, never throws.
+
+       It references ONLY FS.GG.Governance.Gates (Config arrives transitively) and adds NO new
+       third-party PackageReference — serialization is the net10.0 shared-framework `System.Text.Json`
+       (`Utf8JsonWriter`) the kernel's `Json.fs` and F020's `RouteJson.fs` already use, so the library
+       stays System.*/FSharp.Core-only (FR-015). Compile order is GatesJson.fsi -> GatesJson.fs: the
+       curated public surface, then the pure projection. The whole surface is a pure total function —
+       no MVU ceremony (Principle IV). The dependency direction stays one-way:
+       GatesJson -> Gates -> Config; the kernel/host stay untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.GatesJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.GatesJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="GatesJson.fsi" />
+    <Compile Include="GatesJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>

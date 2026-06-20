@@ -360,11 +360,32 @@ without waiting for the full lifecycle command suite.
   Phase-2 rows (`fsgg route`/`fsgg ship`, route/audit JSON, `.fsgg/gates.json`)
   and Phase 5/11 consume. Deferred to Phase 10: gate-to-gate prerequisites +
   topological order, and a richer product-check derivation.
+- ✅ Select the gates a specific change reaches from the registry + route +
+  findings. **(F019 — `FS.GG.Governance.Route`, done 2026-06-20)** A single pure,
+  total `Route.select : GateRegistry -> RouteReport -> FindingReport ->
+  RouteResult` joins the typed registry to a routed change, carrying selected
+  gates (with their selecting paths), the unknown-path findings, and the per-tier
+  cost rollup — no severity, profile, enforcement, or ship verdict.
+- ✅ Emit deterministic **route.json** (per-change view). **(F020 —
+  `FS.GG.Governance.RouteJson`, done 2026-06-20)** A pure, total
+  `RouteJson.ofRouteResult : RouteResult -> string` renders the `RouteResult` into
+  a versioned (`fsgg.route/v1`) document — selected gates, findings, and cost — via
+  `System.Text.Json`, byte-identical for identical input, no new dependency.
+- ✅ Emit deterministic **`.fsgg/gates.json`** (whole-catalog view). **(F021 —
+  `FS.GG.Governance.GatesJson`, done 2026-06-20)** A pure, total
+  `GatesJson.ofGateRegistry : GateRegistry -> string` renders the F018
+  `GateRegistry` into a versioned (`fsgg.gates/v1`) document listing every declared
+  gate with its carried metadata, prerequisites, and freshness-key inputs — the
+  per-gate entry is exactly route.json's `selectedGates[*]` minus `selectingPaths`.
+  Byte-identical for identical input; no new dependency.
 - ⬜ Add `fsgg route --paths ...`, `fsgg route --since <rev>`, and
-  `fsgg ship --mode gate --profile standard --json`.
-- ⬜ Emit deterministic route and audit JSON with selected gates, matched
+  `fsgg ship --mode gate --profile standard --json` (the CLI host edge that
+  persists route.json / gates.json to disk).
+- 🟡 Emit deterministic route and **audit** JSON with selected gates, matched
   rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
-  profile-adjusted enforcement, and exit-code basis.
+  profile-adjusted enforcement, and exit-code basis. **(route.json done — F020;
+  gates.json done — F021; audit.json + cache eligibility + profile-adjusted
+  enforcement + exit-code basis remain — Phase 5/11.)**
 - ⬜ Publish the first GitHub Actions guidance for branch protection.
 
 > **Legend:** ✅ done · 🟡 in progress · ⬜ not started. F014 (the `.fsgg`
