@@ -637,3 +637,59 @@ let f14Bad: RawSource =
 match Schema.validate f14Bad with
 | Invalid diags -> printfn "[F14] rejected: %A" (diags |> List.map (fun d -> Model.diagnosticIdToken d.Id))
 | Valid _ -> printfn "[F14] UNEXPECTED valid"
+
+// ── Routing sketch (F015) — the first consumer of the F014 typed facts (Principle I) ──
+// Build first:
+//   dotnet build src/FS.GG.Governance.Routing
+// Routing is a PURE, TOTAL function: it takes the typed facts + a caller-supplied set of
+// already-normalized candidate paths and returns a deterministic RouteReport. No I/O, no git,
+// no clock. It references only Config and adds no new dependency. This sketch records the
+// intended route → report flow: a deterministic precedence winner, an in-root miss, an
+// out-of-scope path, and an ambiguity diagnostic with a still-total winner.
+#r "../src/FS.GG.Governance.Routing/bin/Debug/net10.0/FS.GG.Governance.Routing.dll"
+
+open FS.GG.Governance.Routing
+open FS.GG.Governance.Routing.Model
+
+// Assemble a minimal valid TypedFacts in memory (the shape Config emits) — governed root
+// "src", an overlapping path map (broad default + narrow exceptions, the normal pattern), plus
+// a deliberately co-specific pair to show the ambiguity branch.
+let f15PathMap =
+    [ { Glob = GovernedPath "src/**"; Capability = DomainId "core" }
+      { Glob = GovernedPath "src/Adapters/**"; Capability = DomainId "adapters" }
+      { Glob = GovernedPath "src/*/Eval.fs"; Capability = DomainId "a" }
+      { Glob = GovernedPath "src/Kernel/*.fs"; Capability = DomainId "b" } ]
+
+let f15Domains = f15PathMap |> List.map (fun e -> e.Capability) |> List.distinct
+
+let f15Facts: TypedFacts =
+    { Project =
+        { SchemaVersion = SchemaVersion 1
+          Id = ProjectId "demo"
+          Domains = f15Domains
+          GovernedRoot = GovernedPath "src"
+          PackageSurfaces = []
+          PolicyRef = None
+          CapabilitiesRef = None }
+      Policy = None
+      Capabilities =
+        { SchemaVersion = SchemaVersion 1
+          Domains = f15Domains
+          PathMap = f15PathMap
+          Surfaces = []
+          Checks = [] }
+      Tooling = None }
+
+let f15Report =
+    Routing.route
+        f15Facts
+        [ GovernedPath "src/Adapters/SpecKit.fs" // precedence: more literal segments wins → adapters
+          GovernedPath "src/Kernel/Eval.fs" // co-specific src/*/Eval.fs vs src/Kernel/*.fs → AmbiguousRoute
+          GovernedPath "src/README.md" // in root, no glob → UnmatchedInRoot
+          GovernedPath "docs/guide.md" ] // outside governed root → OutOfScope
+
+for r in f15Report.Routings do
+    printfn "[F15] %A → %A" r.Path r.Result
+
+for d in f15Report.Diagnostics do
+    printfn "[F15] diag %s: %s" (Model.routingDiagnosticIdToken d.Id) d.Message
