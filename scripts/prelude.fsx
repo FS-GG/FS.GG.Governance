@@ -854,3 +854,68 @@ for g in f18Registry.Gates do
 // Determinism: identical inputs ⇒ byte-identical registry; empty facts ⇒ empty (successful) registry.
 printfn "[F18] deterministic? %b" (Gates.buildRegistry f18Facts = f18Registry)
 printfn "[F18] empty-facts → empty-registry = %A" (Gates.buildRegistry { f18Facts with Capabilities = { f18Facts.Capabilities with Checks = [] } })
+
+
+// ── F019: the route-resolution core — Route.select : GateRegistry -> RouteReport -> FindingReport -> RouteResult ──
+// A pure, total JOIN of three already-typed upstream outputs: the F018 gate registry (which gates
+// exist per domain), the F015 route report (which domain each changed path belongs to), and the F017
+// finding report (which governed paths are unclassified). For each `Routed` path it selects every
+// registry gate whose declared `Domain` equals the path's routed `DomainId` (by id equality), unions
+// them deduplicated by `GateId`, annotates each with the selecting path(s) and the winning glob,
+// rolls up the distinct selected gates' costs as a per-tier multiset, and carries the F017 findings
+// through unchanged. No diagnostics, no I/O, no clock — byte-identical for identical input.
+
+#r "../src/FS.GG.Governance.Route/bin/Debug/net10.0/FS.GG.Governance.Route.dll"
+
+open FS.GG.Governance.Route
+open FS.GG.Governance.Route.Model
+
+// Two domains with path-map globs, a protected surface, and one check per domain. `release` is a
+// declared domain whose gate no change reaches in this sketch.
+let f19Facts: TypedFacts =
+    { Project =
+        { SchemaVersion = SchemaVersion 1; Id = ProjectId "demo"
+          Domains = [ DomainId "build"; DomainId "docs" ]
+          GovernedRoot = GovernedPath "src"; PackageSurfaces = []; PolicyRef = None; CapabilitiesRef = None }
+      Policy = None
+      Capabilities =
+        { SchemaVersion = SchemaVersion 1
+          Domains = [ DomainId "build"; DomainId "docs" ]
+          PathMap =
+            [ { Glob = GovernedPath "src/build/**"; Capability = DomainId "build" }
+              { Glob = GovernedPath "src/docs/**"; Capability = DomainId "docs" } ]
+          Surfaces =
+            [ { Id = SurfaceId "kernel"; Class = ProtectedSurface; Paths = [ GovernedPath "src/build" ]
+                Owner = Owner "team-a"; Maturity = BlockOnShip } ]
+          Checks =
+            [ { Id = CheckId "tests"; Domain = DomainId "build"; Command = None
+                Owner = Owner "team-a"; Cost = Medium; Environment = FS.GG.Governance.Config.Model.Local; Maturity = BlockOnShip }
+              { Id = CheckId "format"; Domain = DomainId "build"; Command = None
+                Owner = Owner "team-a"; Cost = Cheap; Environment = FS.GG.Governance.Config.Model.Local; Maturity = Observe }
+              { Id = CheckId "lint"; Domain = DomainId "docs"; Command = None
+                Owner = Owner "team-c"; Cost = Cheap; Environment = FS.GG.Governance.Config.Model.Local; Maturity = Warn } ] }
+      Tooling = None }
+
+// A change touching one build path, one docs path, and one unclassified in-root path.
+let f19Change = [ GovernedPath "src/build/Core.fs"; GovernedPath "src/docs/Guide.md"; GovernedPath "src/loose/x.fs" ]
+
+// The genuine F015 -> F017 -> F018 -> F019 chain.
+let f19Registry = Gates.buildRegistry f19Facts
+let f19Report = Routing.route f19Facts f19Change
+let f19Findings = Findings.findUnknownGovernedPaths f19Facts f19Report
+let f19Result = Route.select f19Registry f19Report f19Findings
+
+printfn "\n[F19] selected gates = %d (in GateId ordinal order)" f19Result.SelectedGates.Length
+for sg in f19Result.SelectedGates do
+    let paths = sg.SelectingPaths |> List.map (fun p -> sprintf "%A via %A" p.Path p.MatchedGlob)
+    printfn "[F19] %s · domain=%A · cost=%A · selectedBy=%A" (gateIdValue sg.Gate.Id) sg.Gate.Domain sg.Gate.Cost paths
+
+printfn "[F19] carried findings = %d" f19Result.Findings.Findings.Length
+for f in f19Result.Findings.Findings do
+    printfn "[F19]   finding %s on %A" (findingIdToken f.Id) f.Path
+printfn "[F19] cost rollup = %A" f19Result.Cost
+
+// Determinism: identical inputs ⇒ byte-identical result; an empty change ⇒ empty (successful) route.
+printfn "[F19] deterministic? %b" (Route.select f19Registry f19Report f19Findings = f19Result)
+let f19Empty = Route.select f19Registry (Routing.route f19Facts []) (Findings.findUnknownGovernedPaths f19Facts (Routing.route f19Facts []))
+printfn "[F19] empty-change → empty route, zero cost = %b" (List.isEmpty f19Empty.SelectedGates && f19Empty.Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 })

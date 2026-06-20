@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F019: the optional, packable route-resolution core — the Phase-2 *route selection* row.
+       A single pure, total `Route.select : GateRegistry -> RouteReport -> FindingReport -> RouteResult`
+       JOINS three already-typed upstream outputs: the F018 gate registry (which gates exist per
+       domain), the F015 route report (which domain each changed path belongs to), and the F017
+       finding report (which governed paths are unclassified). For each `Routed` path it selects
+       every registry gate whose declared `Domain` equals the path's routed `DomainId` (by id
+       equality), unions them deduplicated by `GateId`, annotates each with its selecting path(s)
+       and the winning glob, rolls up the distinct selected gates' declared costs as a per-tier
+       multiset, and carries the F017 findings through unchanged.
+
+       This is the route-*selection* core — distinct from FS.GG.Governance.Routing (domain-per-path):
+       `Routing` answers "which domain owns each path"; `Route` is the resolved route trace
+       ("which gates this change selects, and why") (research D1). It is the FIRST row whose job is
+       to join all three prior rows, so it references Gates + Routing + Findings together
+       (FS.GG.Governance.Config arrives transitively via all three) and adds NO new third-party
+       PackageReference: its own code is BCL + FSharp.Core only. The transitive YamlDotNet edge
+       arrives only via Config and is unused here. Compile order is Model -> Route: the route-domain
+       types, then the pure join. The whole surface is a pure total function — no MVU ceremony
+       (Principle IV / research D2). The dependency direction stays one-way:
+       Route -> {Gates, Routing, Findings} -> Config; the kernel/host stay untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Route</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Routing/Gates (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Route</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Route.fsi" />
+    <Compile Include="Route.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+  </ItemGroup>
+
+</Project>
