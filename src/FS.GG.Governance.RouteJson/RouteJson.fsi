@@ -1,0 +1,61 @@
+// Curated public signature contract for the route.json projection (F020).
+//
+// This .fsi is the SOLE declaration of the module's public surface (Constitution Principle II).
+// The matching RouteJson.fs carries NO `private`/`internal`/`public` modifiers on top-level bindings —
+// visibility is presence/absence here. Every JSON writer and closed-enum token helper lives ONLY in
+// the .fs and is absent here, exactly as `FS.GG.Governance.Kernel.Json` keeps its writer/token
+// plumbing off `Json.fsi`.
+//
+// Design-first artifact: drafted and exercised in FSI (scripts/prelude.fsx) before any RouteJson.fs
+// body exists (Principle I). `ofRouteResult` is the PURE, TOTAL projection (FR-008): it renders one
+// already-typed, already-ordered F019 `RouteResult` into the deterministic, versioned `route.json`
+// document text — the stable machine-readable contract the later `fsgg route`/`fsgg ship`, CI, agents,
+// generated readiness views, and optional Governance consumers read. It performs no I/O, no git, no
+// clock, never throws, and is byte-for-byte identical for identical input (FR-007, SC-002). It
+// re-derives, re-sorts, and re-classifies nothing (the `RouteResult` already fixed every order); it
+// computes no severity, enforcement, cache-eligibility verdict, or ship verdict (FR-011) and emits no
+// raw YAML, host path, timestamp, or environment value (FR-012). Serialization uses the net10.0
+// shared-framework `System.Text.Json` — NO new `PackageReference` (FR-015).
+
+namespace FS.GG.Governance.RouteJson
+
+open FS.GG.Governance.Route.Model
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module RouteJson =
+
+    /// The declared schema-version token stamped into every emitted document and recorded as the
+    /// document's `schemaVersion` field (FR-013), so consumers can branch on the contract version and
+    /// detect changes without string-scraping the output. A fixed, deterministic constant — never
+    /// derived from a clock, environment, or input value.
+    val schemaVersion: string
+
+    /// Project an F019 `RouteResult` into its deterministic, versioned `route.json` document text.
+    ///
+    /// Emits one top-level JSON object with fields in the FIXED order
+    /// `schemaVersion`, `selectedGates`, `findings`, `cost` (the wire contract is fixed in
+    /// contracts/route-json-document.md):
+    ///   • `selectedGates` — one object per `SelectedGate`, in the result's `GateId` ordinal order,
+    ///                       carrying the gate's declared `id` (via `Gates.gateIdValue`, never
+    ///                       re-parsed — FR-010), `domain`, `description`, `cost`, `timeout`, `owner`,
+    ///                       `maturity`, `productCheck`, `prerequisites`, the carried `freshnessKey`
+    ///                       INPUTS (never a cache verdict — FR-014), and `selectingPaths`
+    ///                       (`{ path; matchedGlob }`, in normalized-path order). No gate the result
+    ///                       did not select appears, and no gate/cost/path/finding is invented
+    ///                       (FR-002, FR-003, FR-004).
+    ///   • `findings`      — the carried F017 `FindingReport` rendered UNCHANGED, in its F017 order;
+    ///                       an empty report renders as a present, empty array (FR-005).
+    ///   • `cost`          — the per-tier `CostRollup` `{ cheap; medium; high; exhaustive }`, every
+    ///                       declared tier present with its integer count including zero; never a
+    ///                       summed scalar (FR-006).
+    ///
+    /// PURE and TOTAL (FR-008, FR-009): no file, process, clock, network, or git access; never throws
+    /// for any well-typed `RouteResult`; an EMPTY route (no selected gates, empty findings, all-zero
+    /// cost) projects to a valid document with empty sections and the all-zero cost — a success, never
+    /// an error and never a "select everything" fallback. DETERMINISTIC (FR-007, SC-002): identical
+    /// inputs yield byte-for-byte identical text; the projection adds no ordering decision beyond the
+    /// fixed field sequence, preserving `RouteResult`'s already-fixed collection orders verbatim. The
+    /// document carries NO severity, profile, mode, enforcement, cache-eligibility verdict, ship
+    /// verdict, blocker, warning, exit-code basis, raw YAML, host/absolute path, timestamp, or
+    /// environment value (FR-011, FR-012, SC-007).
+    val ofRouteResult: result: RouteResult -> string

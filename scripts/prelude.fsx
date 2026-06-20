@@ -919,3 +919,28 @@ printfn "[F19] cost rollup = %A" f19Result.Cost
 printfn "[F19] deterministic? %b" (Route.select f19Registry f19Report f19Findings = f19Result)
 let f19Empty = Route.select f19Registry (Routing.route f19Facts []) (Findings.findUnknownGovernedPaths f19Facts (Routing.route f19Facts []))
 printfn "[F19] empty-change → empty route, zero cost = %b" (List.isEmpty f19Empty.SelectedGates && f19Empty.Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 })
+
+// ── F020: the route.json projection — RouteJson.ofRouteResult : RouteResult -> string ──
+// A pure, total render of the F019 `RouteResult` into the deterministic, versioned `route.json`
+// document text — the stable machine-readable contract every downstream consumer reads. It
+// re-derives/re-sorts/re-classifies NOTHING (the result already fixed every order), emits no
+// severity/enforcement/cache verdict/ship verdict/raw YAML/host path/clock/environment value, and
+// is byte-identical for identical input. Serialization is the net10.0 shared-framework
+// `System.Text.Json` (`Utf8JsonWriter`) — NO new dependency.
+
+#r "../src/FS.GG.Governance.RouteJson/bin/Debug/net10.0/FS.GG.Governance.RouteJson.dll"
+
+open FS.GG.Governance.RouteJson
+
+// Project the genuine F019 `f19Result` (built above from the real F015->F017->F018->F019 chain).
+let f20Json = RouteJson.ofRouteResult f19Result
+printfn "\n[F20] schemaVersion = %s" RouteJson.schemaVersion
+printfn "[F20] document (%d bytes):\n%s" f20Json.Length f20Json
+
+// Determinism: a second projection of the same result is byte-identical.
+printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result = f20Json)
+
+// The empty route projects to a valid document with empty sections + all-zero cost (never an error,
+// never a "select everything" fallback).
+let f20Empty = RouteJson.ofRouteResult f19Empty
+printfn "[F20] empty route → %s" f20Empty

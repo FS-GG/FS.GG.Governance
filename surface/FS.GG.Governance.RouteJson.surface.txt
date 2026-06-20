@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.RouteJson.RouteJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofRouteResult(RouteResult)
+  [Property] System.String schemaVersion

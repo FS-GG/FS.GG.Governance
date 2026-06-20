@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F020: the optional, packable route.json *projection* — the Phase-2 *route.json document* row.
+       A single pure, total `RouteJson.ofRouteResult : RouteResult -> string` (plus a `schemaVersion`
+       constant) renders the F019 `RouteResult` into the deterministic, versioned `route.json`
+       document text — the stable, machine-readable contract every downstream consumer
+       (`fsgg route`, CI, agents, generated readiness views, optional Governance consumers) reads
+       instead of an in-memory value.
+
+       This row LAYERS serialization on top of the pure `Route` join in a SEPARATE project
+       (constitution: heavier capabilities layer on top, not into the core) — F019's just-merged
+       pure `Route` surface stays free of any serialization concern. It is emit-only: it re-derives,
+       re-sorts, and re-classifies nothing (the `RouteResult` already fixed every collection's
+       order); it computes no severity, profile, enforcement, cache-eligibility verdict, or ship
+       verdict, and emits no raw YAML, host path, clock, or environment value (FR-011/FR-012). PURE
+       and TOTAL (FR-008): no I/O, no git, no clock, never throws.
+
+       It references ONLY FS.GG.Governance.Route (Gates/Routing/Findings/Config arrive transitively)
+       and adds NO new third-party PackageReference — serialization is the net10.0 shared-framework
+       `System.Text.Json` (`Utf8JsonWriter`) the kernel's `Json.fs` already uses, so the library
+       stays System.*/FSharp.Core-only (FR-015). Compile order is RouteJson.fsi -> RouteJson.fs: the
+       curated public surface, then the pure projection. The whole surface is a pure total function —
+       no MVU ceremony (Principle IV). The dependency direction stays one-way:
+       RouteJson -> Route -> {Gates, Routing, Findings} -> Config; the kernel/host stay untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RouteJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.RouteJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RouteJson.fsi" />
+    <Compile Include="RouteJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+  </ItemGroup>
+
+</Project>
