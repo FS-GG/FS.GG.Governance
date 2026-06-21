@@ -1,0 +1,66 @@
+TYPE FS.GG.Governance.RouteExplain.ModelModule
+  [NestedType] FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome
+  [NestedType] FS.GG.Governance.RouteExplain.ModelModule+HighCostFinding
+  [NestedType] FS.GG.Governance.RouteExplain.ModelModule+RouteExplanation
+TYPE FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome
+  [Method] AlternativeOutcome NewCheaperLocalAlternative(Gate)
+  [Method] AlternativeOutcome get_NoCheaperLocalAlternative()
+  [Method] Boolean Equals(AlternativeOutcome)
+  [Method] Boolean Equals(AlternativeOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCheaperLocalAlternative()
+  [Method] Boolean get_IsNoCheaperLocalAlternative()
+  [Method] Int32 CompareTo(AlternativeOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome+CheaperLocalAlternative
+  [NestedType] FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome+Tags
+  [Property] AlternativeOutcome NoCheaperLocalAlternative
+  [Property] Boolean IsCheaperLocalAlternative
+  [Property] Boolean IsNoCheaperLocalAlternative
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome+CheaperLocalAlternative
+  [Method] Gate get_Item()
+  [Property] Gate Item
+TYPE FS.GG.Governance.RouteExplain.ModelModule+AlternativeOutcome+Tags
+  [Field] Int32 CheaperLocalAlternative
+  [Field] Int32 NoCheaperLocalAlternative
+TYPE FS.GG.Governance.RouteExplain.ModelModule+HighCostFinding
+  [Constructor] Void .ctor(SelectedGate, AlternativeOutcome)
+  [Method] AlternativeOutcome get_Alternative()
+  [Method] Boolean Equals(HighCostFinding)
+  [Method] Boolean Equals(HighCostFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(HighCostFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SelectedGate get_Selected()
+  [Method] System.String ToString()
+  [Property] AlternativeOutcome Alternative
+  [Property] SelectedGate Selected
+TYPE FS.GG.Governance.RouteExplain.ModelModule+RouteExplanation
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteExplain.ModelModule+HighCostFinding])
+  [Method] Boolean Equals(RouteExplanation)
+  [Method] Boolean Equals(RouteExplanation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RouteExplanation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteExplain.ModelModule+HighCostFinding] get_Findings()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteExplain.ModelModule+HighCostFinding] Findings
+TYPE FS.GG.Governance.RouteExplain.RouteExplainModule
+  [Method] Cost get_highCostThreshold()
+  [Method] RouteExplanation explain(RouteResult, GateRegistry)
+  [Property] Cost highCostThreshold
