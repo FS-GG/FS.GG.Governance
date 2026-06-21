@@ -378,9 +378,22 @@ without waiting for the full lifecycle command suite.
   gate with its carried metadata, prerequisites, and freshness-key inputs — the
   per-gate entry is exactly route.json's `selectedGates[*]` minus `selectingPaths`.
   Byte-identical for identical input; no new dependency.
-- ⬜ Add `fsgg route --paths ...`, `fsgg route --since <rev>`, and
-  `fsgg ship --mode gate --profile standard --json` (the CLI host edge that
-  persists route.json / gates.json to disk).
+- ✅ Add `fsgg route [--repo <dir>] [--paths ...] [--since <rev>] [--json]
+  [--gates-out <path>] [--route-out <path>]` (the CLI host edge that persists
+  route.json / gates.json to disk). **(F022 — `FS.GG.Governance.RouteCommand`, done
+  2026-06-21)** The first composition/edge tier: a packable `fsgg` tool modeled
+  through an Elmish/MVU boundary (pure `Loop` + edge `Interpreter` over injected,
+  fakeable ports) that composes F014–F021 verbatim over a real repository —
+  selects the changed-path scope, loads+validates the catalog, routes, builds the
+  registry, computes findings, selects gates, projects `gates.json` (F021) +
+  `route.json` (F020) **byte-for-byte unchanged**, writes both via temp+atomic
+  rename, and prints a deterministic text/JSON summary. No new third-party
+  dependency; computes **no** ship verdict. Every failure (not-a-repo, unresolved
+  rev, missing/invalid catalog, unwritable output) → distinct diagnostic +
+  category-mapped non-zero exit (2/3/4); the interpreter never throws.
+- ⬜ Add `fsgg ship --mode gate --profile standard --json` (the ship/merge verdict
+  host edge — `audit.json`, blockers, profile-adjusted enforcement, exit-code basis;
+  Phase 2/5 remainder, distinct from the `route` slice above).
 - 🟡 Emit deterministic route and **audit** JSON with selected gates, matched
   rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
   profile-adjusted enforcement, and exit-code basis. **(route.json done — F020;

@@ -1,0 +1,75 @@
+module FS.GG.Governance.RouteCommand.Tests.ScopeParseTests
+
+open Expecto
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.RouteCommand
+
+// US2 (the scope selector parse side) + SC-003: `Loop.parse` is pure and TOTAL — it turns argv into a
+// normalized RunRequest or a UsageError value, never an exception. Drives the PUBLIC `Loop.parse`.
+
+let private parse argv = Loop.parse argv
+
+[<Tests>]
+let tests =
+    testList
+        "ScopeParse"
+        [ test "--paths a b ⇒ ExplicitPaths of the normalized paths (bypasses git)" {
+              match parse [ "route"; "--paths"; "a"; "b" ] with
+              | Ok req -> Expect.equal req.Scope (Loop.ExplicitPaths [ normalizePath "a"; normalizePath "b" ]) "explicit path scope"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          }
+
+          test "--since HEAD~3 ⇒ Since scope" {
+              match parse [ "route"; "--since"; "HEAD~3" ] with
+              | Ok req -> Expect.equal req.Scope (Loop.Since "HEAD~3") "since scope"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          }
+
+          test "neither --paths nor --since ⇒ DefaultRange" {
+              match parse [ "route" ] with
+              | Ok req -> Expect.equal req.Scope Loop.DefaultRange "default base/head scope"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          }
+
+          test "--paths a --since X ⇒ PathsAndSinceTogether (mutually exclusive)" {
+              Expect.equal (parse [ "route"; "--paths"; "a"; "--since"; "X" ]) (Error Loop.PathsAndSinceTogether) "exclusive"
+          }
+
+          test "--paths with no value ⇒ EmptyPaths" {
+              Expect.equal (parse [ "route"; "--paths" ]) (Error Loop.EmptyPaths) "empty paths"
+          }
+
+          test "--repo / --gates-out / --route-out set the fields; defaults derive from --repo" {
+              match parse [ "route"; "--repo"; "/tmp/x" ] with
+              | Ok req ->
+                  Expect.equal req.Repo "/tmp/x" "repo"
+                  Expect.equal req.GatesOut "/tmp/x/.fsgg/gates.json" "gates default under repo"
+                  Expect.equal req.RouteOut "/tmp/x/readiness/route.json" "route default under repo"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+
+              match parse [ "route"; "--gates-out"; "g.json"; "--route-out"; "r.json" ] with
+              | Ok req ->
+                  Expect.equal req.GatesOut "g.json" "explicit gates-out"
+                  Expect.equal req.RouteOut "r.json" "explicit route-out"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+
+              // The bare default (repo = ".") yields the clean relative locations (research D5).
+              match parse [ "route" ] with
+              | Ok req ->
+                  Expect.equal req.GatesOut ".fsgg/gates.json" "default gates-out"
+                  Expect.equal req.RouteOut "readiness/route.json" "default route-out"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          }
+
+          test "--json ⇒ Json format; absent ⇒ Text" {
+              match parse [ "route"; "--json" ], parse [ "route" ] with
+              | Ok j, Ok t ->
+                  Expect.equal j.Format Loop.Json "--json ⇒ Json"
+                  Expect.equal t.Format Loop.Text "absent ⇒ Text"
+              | _ -> failtest "expected both Ok"
+          }
+
+          test "an unknown flag ⇒ UnknownFlag; a flag missing its value ⇒ MissingValue" {
+              Expect.equal (parse [ "route"; "--bogus" ]) (Error(Loop.UnknownFlag "--bogus")) "unknown flag"
+              Expect.equal (parse [ "route"; "--repo" ]) (Error(Loop.MissingValue "--repo")) "missing value"
+          } ]

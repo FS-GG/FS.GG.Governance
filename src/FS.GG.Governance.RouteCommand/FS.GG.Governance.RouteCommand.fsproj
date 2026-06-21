@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F022 host edge: the FIRST composition/edge tier that wires the eight Phase-2 pure/edge
+       cores (F014 Config, F015 Routing, F016 Snapshot, F017 Findings, F018 Gates, F019 Route,
+       F020 RouteJson, F021 GatesJson) end-to-end over a real repository and PERSISTS the two
+       deterministic documents (.fsgg/gates.json + readiness/route.json).
+
+       It is a NEW project (research D1) — NOT the kernel-era FS.GG.Governance.Host/Cli (distinct
+       lineage over the kernel MVU). It adds NO new third-party dependency: git sensing is delegated
+       to Snapshot, catalog reads to Config, serialization to RouteJson/GatesJson; the only new
+       impure primitives are a `System.IO` write (the ArtifactWriter port) and `Environment.Exit`
+       at the Program edge — both BCL. It reaches no clock and injects no nondeterministic value
+       into the artifacts (it writes the F020/F021 projection strings verbatim).
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect) + an EDGE `Interpreter`
+       (injected, fakeable Ports; realPorts/step/run) + a thin Program. Compile order
+       Loop -> Interpreter -> Program: Interpreter references Loop's Effect/Msg/Model/RunRequest;
+       Program references both. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RouteCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsgg</ToolCommandName>
+    <PackageId>FS.GG.Governance.RouteCommand</PackageId>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.RouteJson/FS.GG.Governance.RouteJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GatesJson/FS.GG.Governance.GatesJson.fsproj" />
+  </ItemGroup>
+
+</Project>

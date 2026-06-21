@@ -974,3 +974,43 @@ let f21EmptyFacts =
         Capabilities = { f18Facts.Capabilities with Checks = [] } }
 let f21Empty = GatesJson.ofGateRegistry (Gates.buildRegistry f21EmptyFacts)
 printfn "[F21] empty registry → %s" f21Empty
+
+// ── F022: the `fsgg route` host command — the first COMPOSITION/EDGE tier ──
+// The PURE MVU boundary (Loop) wires the eight cores end-to-end and the EDGE (Interpreter) executes
+// the requested I/O through injected ports. Here we walk ONLY the pure side (no I/O): parse → init →
+// feed literal Msgs through update, printing the running Phase/Exit and emitted Effects, then render
+// the summary both ways and print exitCode for each ExitDecision. The artifacts are the F020/F021
+// projections byte-for-byte — this row serializes nothing of its own and computes NO ship verdict.
+
+#r "../src/FS.GG.Governance.RouteCommand/bin/Debug/net10.0/FS.GG.Governance.RouteCommand.dll"
+
+open FS.GG.Governance.RouteCommand
+
+// Parse a real invocation. ExplicitPaths bypasses git diff (research D4), so `init` emits LoadCatalog
+// directly and we never need a sensed snapshot to walk the composition.
+let f22Parsed = Loop.parse [ "route"; "--paths"; "src/Lib/Thing.fs" ]
+printfn "\n[F22] parse → %A" f22Parsed
+
+match f22Parsed with
+| Error e -> printfn "[F22] usage error: %A" e
+| Ok req ->
+    let m0, e0 = Loop.init req
+    printfn "[F22] init  Phase=%A Exit=%A effects=%A" m0.Phase m0.Exit e0
+
+    // Feed the validated F014 facts straight through the single Loaded(Valid) transition — the cores
+    // run in-process and both documents are projected before either write effect is emitted.
+    let m1, e1 = Loop.update (Loop.Loaded(Valid f18Facts)) m0
+    printfn "[F22] loaded Phase=%A effects=%A" m1.Phase (e1 |> List.map (function Loop.WriteArtifact(k, p, _) -> sprintf "Write(%A,%s)" k p | x -> string x))
+
+    let m2, e2 = Loop.update (Loop.Wrote(Loop.GatesArtifact, Ok())) m1
+    let m3, e3 = Loop.update (Loop.Wrote(Loop.RouteArtifact, Ok())) m2
+    printfn "[F22] wrote×2 Phase=%A nextEffects=%A" m3.Phase (e3 |> List.map (function Loop.EmitSummary _ -> "EmitSummary" | x -> string x))
+
+    let m4, _ = Loop.update Loop.Emitted m3
+    printfn "[F22] done  Phase=%A Exit=%A exitCode=%d" m4.Phase m4.Exit (Loop.exitCode m4.Exit)
+    printfn "[F22] render Text:\n%s" (Loop.render m3 Loop.Text)
+    printfn "[F22] render Json: %s" (Loop.render m3 Loop.Json)
+
+// The exit taxonomy (research D6): Success 0, UsageError' 2, InputUnavailable 3, ToolError 4.
+printfn "[F22] exit codes: %A"
+    [ Loop.exitCode Loop.Success; Loop.exitCode Loop.UsageError'; Loop.exitCode Loop.InputUnavailable; Loop.exitCode Loop.ToolError ]
