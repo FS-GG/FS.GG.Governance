@@ -1,0 +1,187 @@
+TYPE FS.GG.Governance.AgentReviewKey.AgentReviewKeyModule
+  [Method] Boolean matches(AgentReviewInputs, AgentReviewInputs)
+  [Method] CacheKey compute(AgentReviewInputs)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.AgentReviewKey.ModelModule+ReviewInput] diff(AgentReviewInputs, AgentReviewInputs)
+  [Method] System.String value(CacheKey)
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule
+  [Method] System.String inputToken(ReviewInput)
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+AgentReviewInputs
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+CacheKey
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ModelConfig
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ModelId
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ModelVersion
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+QuestionText
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ReviewInput
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ReviewerPromptHash
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+AgentReviewInputs
+  [Constructor] Void .ctor(ModelId, ModelVersion, ModelConfig, ReviewerPromptHash, QuestionText, RuleHash, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash])
+  [Method] Boolean Equals(AgentReviewInputs)
+  [Method] Boolean Equals(AgentReviewInputs, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AgentReviewInputs)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] get_ReviewedArtifacts()
+  [Method] ModelConfig get_Config()
+  [Method] ModelId get_Model()
+  [Method] ModelVersion get_ModelVersion()
+  [Method] QuestionText get_Question()
+  [Method] ReviewerPromptHash get_PromptHash()
+  [Method] RuleHash get_Check()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] ReviewedArtifacts
+  [Property] ModelConfig Config
+  [Property] ModelId Model
+  [Property] ModelVersion ModelVersion
+  [Property] QuestionText Question
+  [Property] ReviewerPromptHash PromptHash
+  [Property] RuleHash Check
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+CacheKey
+  [Method] Boolean Equals(CacheKey)
+  [Method] Boolean Equals(CacheKey, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheKey NewCacheKey(System.String)
+  [Method] Int32 CompareTo(CacheKey)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ModelConfig
+  [Method] Boolean Equals(ModelConfig)
+  [Method] Boolean Equals(ModelConfig, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ModelConfig)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ModelConfig NewModelConfig(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ModelId
+  [Method] Boolean Equals(ModelId)
+  [Method] Boolean Equals(ModelId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ModelId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ModelId NewModelId(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ModelVersion
+  [Method] Boolean Equals(ModelVersion)
+  [Method] Boolean Equals(ModelVersion, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ModelVersion)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ModelVersion NewModelVersion(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+QuestionText
+  [Method] Boolean Equals(QuestionText)
+  [Method] Boolean Equals(QuestionText, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(QuestionText)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] QuestionText NewQuestionText(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ReviewInput
+  [Method] Boolean Equals(ReviewInput)
+  [Method] Boolean Equals(ReviewInput, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCheckHashInput()
+  [Method] Boolean get_IsModelConfigInput()
+  [Method] Boolean get_IsModelIdInput()
+  [Method] Boolean get_IsModelVersionInput()
+  [Method] Boolean get_IsPromptHashInput()
+  [Method] Boolean get_IsQuestionTextInput()
+  [Method] Boolean get_IsReviewedArtifactsInput()
+  [Method] Int32 CompareTo(ReviewInput)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReviewInput get_CheckHashInput()
+  [Method] ReviewInput get_ModelConfigInput()
+  [Method] ReviewInput get_ModelIdInput()
+  [Method] ReviewInput get_ModelVersionInput()
+  [Method] ReviewInput get_PromptHashInput()
+  [Method] ReviewInput get_QuestionTextInput()
+  [Method] ReviewInput get_ReviewedArtifactsInput()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.AgentReviewKey.ModelModule+ReviewInput+Tags
+  [Property] Boolean IsCheckHashInput
+  [Property] Boolean IsModelConfigInput
+  [Property] Boolean IsModelIdInput
+  [Property] Boolean IsModelVersionInput
+  [Property] Boolean IsPromptHashInput
+  [Property] Boolean IsQuestionTextInput
+  [Property] Boolean IsReviewedArtifactsInput
+  [Property] Int32 Tag
+  [Property] ReviewInput CheckHashInput
+  [Property] ReviewInput ModelConfigInput
+  [Property] ReviewInput ModelIdInput
+  [Property] ReviewInput ModelVersionInput
+  [Property] ReviewInput PromptHashInput
+  [Property] ReviewInput QuestionTextInput
+  [Property] ReviewInput ReviewedArtifactsInput
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ReviewInput+Tags
+  [Field] Int32 CheckHashInput
+  [Field] Int32 ModelConfigInput
+  [Field] Int32 ModelIdInput
+  [Field] Int32 ModelVersionInput
+  [Field] Int32 PromptHashInput
+  [Field] Int32 QuestionTextInput
+  [Field] Int32 ReviewedArtifactsInput
+TYPE FS.GG.Governance.AgentReviewKey.ModelModule+ReviewerPromptHash
+  [Method] Boolean Equals(ReviewerPromptHash)
+  [Method] Boolean Equals(ReviewerPromptHash, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReviewerPromptHash)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReviewerPromptHash NewReviewerPromptHash(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item

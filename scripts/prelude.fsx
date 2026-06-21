@@ -1554,3 +1554,63 @@ printfn "[F34] empty-label zero-duration ⇒ %s" (SensedMetadata.renderingValue 
 // expect: !sensed!=duration;0:;1:0
 printfn "[F34] label-is-!sensed! spoof ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.render (SensedMetadata.markTimestamp (SensedLabel "!sensed!") (SensedTimestamp "2026-06-21T12:00:00Z"))))
 // expect: !sensed!=timestamp;8:!sensed!;20:2026-06-21T12:00:00Z
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// F035 — Agent-Review Verdict Cache-Key Core (FS.GG.Governance.AgentReviewKey)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Phase-12 opening row: cache agent-reviewed verdicts by the SEVEN identity tokens they depend on (model
+// id, model version, reviewer prompt hash, model configuration, check hash, the SET of reviewed-artifact
+// hashes, and the question text). The direct analogue of F029 `FreshnessKey` specialised to agent-reviewed
+// verdicts: one pure, total `compute : AgentReviewInputs -> CacheKey` in the F029/F032/F033 tagged,
+// length-prefixed, INJECTIVE discipline, plus the total cache-hit predicate `matches` and the no-hide
+// explainer `diff`. The CHECK hash REUSES F029 `RuleHash` and the reviewed-artifact hashes REUSE F029
+// `ArtifactHash` VERBATIM (FR-008); the only genuinely new types are the five opaque newtypes. No model
+// invoked, no bytes hashed, no clock/filesystem/network read, no cached verdict carried, no cache
+// store/lookup/invalidation run (FR-007/FR-009). Design-first FSI proof (Principle I) over literal values.
+#r "../src/FS.GG.Governance.FreshnessKey/bin/Debug/net10.0/FS.GG.Governance.FreshnessKey.dll"
+#r "../src/FS.GG.Governance.AgentReviewKey/bin/Debug/net10.0/FS.GG.Governance.AgentReviewKey.dll"
+
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.AgentReviewKey
+open FS.GG.Governance.AgentReviewKey.Model
+
+// The worked example of contracts/agent-review-key-format.md. The CHECK hash is a verbatim F029 `RuleHash`,
+// the reviewed artifacts are verbatim F029 `ArtifactHash`s — supplied (with a duplicate + out of order) as
+// data; the key dedups to {h1,h2} and ordinally sorts (FR-008).
+let f35Inputs =
+    { Model = ModelId "claude-opus-4"
+      ModelVersion = ModelVersion "20260101"
+      Config = ModelConfig "temp=0"
+      PromptHash = ReviewerPromptHash "p1"
+      Question = QuestionText "explains API?"
+      Check = RuleHash "c1"
+      ReviewedArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ] }
+
+// The canonical worked-example key (seven tagged, length-prefixed segments joined by '\n', no trailing '\n').
+printfn "[F35] compute |> value ⇒\n%s" (AgentReviewKey.value (AgentReviewKey.compute f35Inputs))
+// expect:
+// mid=13:claude-opus-4
+// mver=8:20260101
+// prompt=2:p1
+// cfg=6:temp=0
+// chk=2:c1
+// art=2;2:h1;2:h2
+// q=13:explains API?
+
+// Reviewed artifacts are a SET: reordering ⇒ same key, `matches = true`, `diff = []` (FR-006).
+let f35Reordered = { f35Inputs with ReviewedArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2" ] }
+printfn "[F35] reorder ⇒ matches=%b diff=%A" (AgentReviewKey.matches f35Inputs f35Reordered) (AgentReviewKey.diff f35Inputs f35Reordered)
+// expect: matches=true diff=[]
+
+// A single-input change (the model version) ⇒ not a match; `diff` names exactly that input (FR-004/FR-005).
+let f35Flipped = { f35Inputs with ModelVersion = ModelVersion "20260202" }
+printfn "[F35] modelVersion flip ⇒ matches=%b diff=%A token=%s"
+    (AgentReviewKey.matches f35Inputs f35Flipped)
+    (AgentReviewKey.diff f35Inputs f35Flipped)
+    (AgentReviewKey.diff f35Inputs f35Flipped |> List.map Model.inputToken |> String.concat ",")
+// expect: matches=false diff=[ModelVersionInput] token=modelVersion
+
+// The empty reviewed-artifact set keys to the distinct `art=0;` form — never treated as "absent" (Edge case).
+let f35Empty = { f35Inputs with ReviewedArtifacts = [] }
+printfn "[F35] empty artifact set ⇒\n%s" (AgentReviewKey.value (AgentReviewKey.compute f35Empty))
+// expect: …\nchk=2:c1\nart=0;\nq=13:explains API?
