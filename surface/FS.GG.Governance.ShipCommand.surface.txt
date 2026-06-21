@@ -1,0 +1,423 @@
+TYPE FS.GG.Governance.ShipCommand.InterpreterModule
+  [Method] Model run(Ports, RunRequest)
+  [Method] Msg step(Ports, Effect)
+  [Method] Ports realPorts(System.String)
+  [NestedType] FS.GG.Governance.ShipCommand.InterpreterModule+Ports
+TYPE FS.GG.Governance.ShipCommand.InterpreterModule+Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit])
+  [Method] FS.GG.Governance.Snapshot.Ports get_Git()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] get_Out()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Snapshot.Ports Git
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] Out
+TYPE FS.GG.Governance.ShipCommand.LoopModule
+  [Method] Int32 exitCode(ExitDecision)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ShipCommand.LoopModule+RunRequest,FS.GG.Governance.ShipCommand.LoopModule+UsageError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] System.String render(Model, OutputFormat)
+  [Method] System.Tuple`2[FS.GG.Governance.ShipCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.LoopModule+Effect]] init(RunRequest)
+  [Method] System.Tuple`2[FS.GG.Governance.ShipCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.LoopModule+Effect]] update(Msg, Model)
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ArtifactKind
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Diagnostic
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ExitDecision
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Model
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Msg
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+OutputFormat
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Phase
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+RunRequest
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ArtifactKind
+  [Method] ArtifactKind get_AuditArtifact()
+  [Method] Boolean Equals(ArtifactKind)
+  [Method] Boolean Equals(ArtifactKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ArtifactKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] ArtifactKind AuditArtifact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Diagnostic
+  [Constructor] Void .ctor(ExitDecision, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitDecision get_Category()
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] ExitDecision Category
+  [Property] System.String Message
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect
+  [Method] Boolean Equals(Effect)
+  [Method] Boolean Equals(Effect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEmitSummary()
+  [Method] Boolean get_IsLoadCatalog()
+  [Method] Boolean get_IsSenseScope()
+  [Method] Boolean get_IsWriteArtifact()
+  [Method] Effect NewEmitSummary(System.String)
+  [Method] Effect NewLoadCatalog(System.String)
+  [Method] Effect NewSenseScope(ScopeSelector)
+  [Method] Effect NewWriteArtifact(ArtifactKind, System.String, System.String)
+  [Method] Int32 CompareTo(Effect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect+EmitSummary
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect+LoadCatalog
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect+SenseScope
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect+Tags
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Effect+WriteArtifact
+  [Property] Boolean IsEmitSummary
+  [Property] Boolean IsLoadCatalog
+  [Property] Boolean IsSenseScope
+  [Property] Boolean IsWriteArtifact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect+EmitSummary
+  [Method] System.String get_text()
+  [Property] System.String text
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect+LoadCatalog
+  [Method] System.String get_repo()
+  [Property] System.String repo
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect+SenseScope
+  [Method] ScopeSelector get_Item()
+  [Property] ScopeSelector Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect+Tags
+  [Field] Int32 EmitSummary
+  [Field] Int32 LoadCatalog
+  [Field] Int32 SenseScope
+  [Field] Int32 WriteArtifact
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Effect+WriteArtifact
+  [Method] ArtifactKind get_kind()
+  [Method] System.String get_content()
+  [Method] System.String get_path()
+  [Property] ArtifactKind kind
+  [Property] System.String content
+  [Property] System.String path
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ExitDecision
+  [Method] Boolean Equals(ExitDecision)
+  [Method] Boolean Equals(ExitDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBlocked()
+  [Method] Boolean get_IsInputUnavailable()
+  [Method] Boolean get_IsSuccess()
+  [Method] Boolean get_IsToolError()
+  [Method] Boolean get_IsUsageError'()
+  [Method] ExitDecision get_Blocked()
+  [Method] ExitDecision get_InputUnavailable()
+  [Method] ExitDecision get_Success()
+  [Method] ExitDecision get_ToolError()
+  [Method] ExitDecision get_UsageError'()
+  [Method] Int32 CompareTo(ExitDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ExitDecision+Tags
+  [Property] Boolean IsBlocked
+  [Property] Boolean IsInputUnavailable
+  [Property] Boolean IsSuccess
+  [Property] Boolean IsToolError
+  [Property] Boolean IsUsageError'
+  [Property] ExitDecision Blocked
+  [Property] ExitDecision InputUnavailable
+  [Property] ExitDecision Success
+  [Property] ExitDecision ToolError
+  [Property] ExitDecision UsageError'
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ExitDecision+Tags
+  [Field] Int32 Blocked
+  [Field] Int32 InputUnavailable
+  [Field] Int32 Success
+  [Field] Int32 ToolError
+  [Field] Int32 UsageError'
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Model
+  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Ship.ModelModule+ShipDecision], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.LoopModule+Diagnostic], ExitDecision)
+  [Method] Boolean Equals(Model)
+  [Method] Boolean Equals(Model, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitDecision get_Exit()
+  [Method] Int32 CompareTo(Model)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.LoopModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Ship.ModelModule+ShipDecision] get_Decision()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]] get_Candidates()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_AuditDoc()
+  [Method] Phase get_Phase()
+  [Method] RunRequest get_Request()
+  [Method] System.String ToString()
+  [Property] ExitDecision Exit
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.LoopModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Ship.ModelModule+ShipDecision] Decision
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]] Candidates
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] AuditDoc
+  [Property] Phase Phase
+  [Property] RunRequest Request
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Msg
+  [Method] Boolean Equals(Msg)
+  [Method] Boolean Equals(Msg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBegin()
+  [Method] Boolean get_IsEmitted()
+  [Method] Boolean get_IsLoaded()
+  [Method] Boolean get_IsSensed()
+  [Method] Boolean get_IsWrote()
+  [Method] Int32 CompareTo(Msg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Msg NewLoaded(Validation)
+  [Method] Msg NewSensed(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String])
+  [Method] Msg NewWrote(ArtifactKind, Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] Msg get_Begin()
+  [Method] Msg get_Emitted()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Msg+Loaded
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Msg+Sensed
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Msg+Tags
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Msg+Wrote
+  [Property] Boolean IsBegin
+  [Property] Boolean IsEmitted
+  [Property] Boolean IsLoaded
+  [Property] Boolean IsSensed
+  [Property] Boolean IsWrote
+  [Property] Int32 Tag
+  [Property] Msg Begin
+  [Property] Msg Emitted
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Msg+Loaded
+  [Method] Validation get_Item()
+  [Property] Validation Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Msg+Sensed
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String] Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Msg+Tags
+  [Field] Int32 Begin
+  [Field] Int32 Emitted
+  [Field] Int32 Loaded
+  [Field] Int32 Sensed
+  [Field] Int32 Wrote
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Msg+Wrote
+  [Method] ArtifactKind get_kind()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_result()
+  [Property] ArtifactKind kind
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] result
+TYPE FS.GG.Governance.ShipCommand.LoopModule+OutputFormat
+  [Method] Boolean Equals(OutputFormat)
+  [Method] Boolean Equals(OutputFormat, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsJson()
+  [Method] Boolean get_IsText()
+  [Method] Int32 CompareTo(OutputFormat)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] OutputFormat get_Json()
+  [Method] OutputFormat get_Text()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+OutputFormat+Tags
+  [Property] Boolean IsJson
+  [Property] Boolean IsText
+  [Property] Int32 Tag
+  [Property] OutputFormat Json
+  [Property] OutputFormat Text
+TYPE FS.GG.Governance.ShipCommand.LoopModule+OutputFormat+Tags
+  [Field] Int32 Json
+  [Field] Int32 Text
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Phase
+  [Method] Boolean Equals(Phase)
+  [Method] Boolean Equals(Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDone()
+  [Method] Boolean get_IsLoaded'()
+  [Method] Boolean get_IsParsed()
+  [Method] Boolean get_IsPersisted()
+  [Method] Boolean get_IsRolled()
+  [Method] Boolean get_IsSensed'()
+  [Method] Int32 CompareTo(Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Phase get_Done()
+  [Method] Phase get_Loaded'()
+  [Method] Phase get_Parsed()
+  [Method] Phase get_Persisted()
+  [Method] Phase get_Rolled()
+  [Method] Phase get_Sensed'()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+Phase+Tags
+  [Property] Boolean IsDone
+  [Property] Boolean IsLoaded'
+  [Property] Boolean IsParsed
+  [Property] Boolean IsPersisted
+  [Property] Boolean IsRolled
+  [Property] Boolean IsSensed'
+  [Property] Int32 Tag
+  [Property] Phase Done
+  [Property] Phase Loaded'
+  [Property] Phase Parsed
+  [Property] Phase Persisted
+  [Property] Phase Rolled
+  [Property] Phase Sensed'
+TYPE FS.GG.Governance.ShipCommand.LoopModule+Phase+Tags
+  [Field] Int32 Done
+  [Field] Int32 Loaded'
+  [Field] Int32 Parsed
+  [Field] Int32 Persisted
+  [Field] Int32 Rolled
+  [Field] Int32 Sensed'
+TYPE FS.GG.Governance.ShipCommand.LoopModule+RunRequest
+  [Constructor] Void .ctor(System.String, ScopeSelector, RunMode, Profile, OutputFormat, System.String)
+  [Method] Boolean Equals(RunRequest)
+  [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RunRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] OutputFormat get_Format()
+  [Method] Profile get_Profile()
+  [Method] RunMode get_Mode()
+  [Method] ScopeSelector get_Scope()
+  [Method] System.String ToString()
+  [Method] System.String get_AuditOut()
+  [Method] System.String get_Repo()
+  [Property] OutputFormat Format
+  [Property] Profile Profile
+  [Property] RunMode Mode
+  [Property] ScopeSelector Scope
+  [Property] System.String AuditOut
+  [Property] System.String Repo
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector
+  [Method] Boolean Equals(ScopeSelector)
+  [Method] Boolean Equals(ScopeSelector, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDefaultRange()
+  [Method] Boolean get_IsExplicitPaths()
+  [Method] Boolean get_IsSince()
+  [Method] Int32 CompareTo(ScopeSelector)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ScopeSelector NewExplicitPaths(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] ScopeSelector NewSince(System.String)
+  [Method] ScopeSelector get_DefaultRange()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+ExplicitPaths
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+Since
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+Tags
+  [Property] Boolean IsDefaultRange
+  [Property] Boolean IsExplicitPaths
+  [Property] Boolean IsSince
+  [Property] Int32 Tag
+  [Property] ScopeSelector DefaultRange
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+ExplicitPaths
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+Since
+  [Method] System.String get_rev()
+  [Property] System.String rev
+TYPE FS.GG.Governance.ShipCommand.LoopModule+ScopeSelector+Tags
+  [Field] Int32 DefaultRange
+  [Field] Int32 ExplicitPaths
+  [Field] Int32 Since
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(UsageError)
+  [Method] Boolean Equals(UsageError, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEmptyPaths()
+  [Method] Boolean get_IsMissingValue()
+  [Method] Boolean get_IsPathsAndSinceTogether()
+  [Method] Boolean get_IsUnknownFlag()
+  [Method] Boolean get_IsUnrecognizedMode()
+  [Method] Boolean get_IsUnrecognizedProfile()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(UsageError)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] UsageError NewMissingValue(System.String)
+  [Method] UsageError NewUnknownFlag(System.String)
+  [Method] UsageError NewUnrecognizedMode(System.String)
+  [Method] UsageError NewUnrecognizedProfile(System.String)
+  [Method] UsageError get_EmptyPaths()
+  [Method] UsageError get_PathsAndSinceTogether()
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+MissingValue
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+Tags
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnknownFlag
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedMode
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedProfile
+  [Property] Boolean IsEmptyPaths
+  [Property] Boolean IsMissingValue
+  [Property] Boolean IsPathsAndSinceTogether
+  [Property] Boolean IsUnknownFlag
+  [Property] Boolean IsUnrecognizedMode
+  [Property] Boolean IsUnrecognizedProfile
+  [Property] Int32 Tag
+  [Property] UsageError EmptyPaths
+  [Property] UsageError PathsAndSinceTogether
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+MissingValue
+  [Method] System.String get_flag()
+  [Property] System.String flag
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+Tags
+  [Field] Int32 EmptyPaths
+  [Field] Int32 MissingValue
+  [Field] Int32 PathsAndSinceTogether
+  [Field] Int32 UnknownFlag
+  [Field] Int32 UnrecognizedMode
+  [Field] Int32 UnrecognizedProfile
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnknownFlag
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedMode
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedProfile
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.ShipCommand.Program
+  [Method] Int32 main(System.String[])
+  [Method] System.String categoryToken(ExitDecision)
+  [Method] System.String usageMessage(UsageError)

@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F026 host edge: the SECOND composition/edge tier — the `fsgg ship` protected-branch verdict.
+       It is the host sibling of F022 `RouteCommand`: where `route` SHOWED the selected gates and always
+       exited 0, `ship` rolls the same routed change up into a pass/fail MERGE VERDICT under a chosen
+       mode/profile, writes the `audit.json` a protected branch reads, and exits with a numeric code CI
+       can block on (the new `Blocked` exit category).
+
+       It reuses VERBATIM, via project references, the SIX F022 cores it composes (Config F014,
+       Routing F015, Snapshot F016, Findings F017, Gates F018, Route F019 — NOT RouteJson/GatesJson,
+       which `ship` does not project) PLUS the three Phase-5/projection cores this row newly composes:
+       Enforcement (F023, lever parsers + RunMode/Profile), Ship (F024, rollup + ShipDecision), and
+       AuditJson (F025, ofShipDecision). It adds NO new third-party dependency: git sensing is delegated
+       to Snapshot, catalog reads to Config, enforcement/rollup to Enforcement/Ship, serialization to
+       AuditJson; the only new impure primitives are a `System.IO` write (the ArtifactWriter port) and
+       `Environment.Exit` at the Program edge — both BCL.
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect, including the ExitCodeBasis -> exit
+       mapping) + an EDGE `Interpreter` (injected, fakeable Ports; realPorts/step/run) + a thin Program.
+       Compile order Loop -> Interpreter -> Program.
+
+       IsPackable=false this slice: the single-packed-`fsgg`-tool unification (one tool dispatching the
+       `route` and `ship` verbs) is an explicitly deferred follow-up (research D1), so this row does NOT
+       ship a second NuGet tool that also claims the `fsgg` ToolCommandName F022 already owns. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ShipCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
+  </ItemGroup>
+
+</Project>
