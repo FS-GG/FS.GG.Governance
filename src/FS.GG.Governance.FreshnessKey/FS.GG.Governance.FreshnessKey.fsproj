@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F029: the optional, packable freshness-key computation core — the Phase-11 *Cost, Cache, and
+       Provenance* opening row. A single pure, total `FreshnessKey.compute : FreshnessInputs -> Key`
+       renders the closed freshness-input set (rule hash, covered-artifact set, optional command version,
+       generator version, base/head revisions, environment class, and the carried gate identity) into a
+       deterministic, byte-stable, INJECTIVE canonical key; `matches`/`diff` are the total reuse predicate
+       and the no-hide explainer. It computes NO hashes, reads NO clock/filesystem/git/environment/network,
+       caches nothing, and emits no ship verdict (FR-008, FR-010). It references ONLY
+       FS.GG.Governance.Config (for the F014 typed-fact newtypes `CheckId`/`DomainId`/`CommandId`/
+       `EnvironmentClass` the gate identity is BUILT FROM — research D1) and adds NO new third-party
+       PackageReference: its own code is BCL + FSharp.Core only (FR-013). It deliberately does NOT
+       reference Gates/Snapshot or any host/edge assembly — base/head use a local `Revision` newtype so the
+       pure core stays free of the git-sensing Snapshot assembly (research D3). The transitive YamlDotNet
+       dependency arrives only via Config and is unused here. Compile order is Model -> FreshnessKey: the
+       freshness-input types, then the pure operations. The whole surface is three pure total functions —
+       no MVU ceremony (Principle IV / research D2). The dependency direction stays one-way:
+       FreshnessKey -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.FreshnessKey</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Gates (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.FreshnessKey</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="FreshnessKey.fsi" />
+    <Compile Include="FreshnessKey.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
