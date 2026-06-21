@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F022, exercising the PUBLIC surface of FS.GG.Governance.RouteCommand:
+       the pure `Loop.parse`/`init`/`update`/`render`/`exitCode` driven with literal Model/Msg values
+       (no I/O, no git, no clock), and the edge `Interpreter.run`/`step` driven against FAKED ports
+       (an in-memory Config.Loader.FileReader, an in-memory Snapshot GitPort over canned raw git
+       output, a capturing ArtifactWriter, a capturing OutputSink) — plus ONE real-temp-git +
+       real-catalog end-to-end proof (Principle V). Written bytes are compared against the genuine
+       F020/F021 projections (RouteJson.ofRouteResult / GatesJson.ofGateRegistry) of the same typed
+       inputs, never mocks of the cores and never private helpers. Expecto + the VSTest adapters let
+       `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ScopeParseTests.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="InterpreterTests.fs" />
+    <Compile Include="FailureTests.fs" />
+    <Compile Include="EndToEndTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.RouteCommand/FS.GG.Governance.RouteCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.RouteJson/FS.GG.Governance.RouteJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GatesJson/FS.GG.Governance.GatesJson.fsproj" />
+  </ItemGroup>
+
+</Project>
