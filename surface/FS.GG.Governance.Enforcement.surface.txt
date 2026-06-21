@@ -1,0 +1,193 @@
+TYPE FS.GG.Governance.Enforcement.EnforcementModule
+  [Method] EnforcementDecision deriveEffectiveSeverity(EnforcementInput)
+  [Method] Int32 runModeOrdinal(RunMode)
+  [Method] ProfileId profileToProfileId(Profile)
+  [Method] Recognized`1 profileOfProfileId(ProfileId)
+  [Method] Recognized`1 recognizeMode(System.String)
+  [Method] Recognized`1 recognizeProfile(System.String)
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+EnforcementInput
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Profile
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1[T]
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+RunMode
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Severity
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision
+  [Constructor] Void .ctor(Severity, Maturity, RunMode, Profile, Severity, System.String)
+  [Method] Boolean Equals(EnforcementDecision)
+  [Method] Boolean Equals(EnforcementDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EnforcementDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Profile get_Profile()
+  [Method] RunMode get_Mode()
+  [Method] Severity get_BaseSeverity()
+  [Method] Severity get_EffectiveSeverity()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] Maturity Maturity
+  [Property] Profile Profile
+  [Property] RunMode Mode
+  [Property] Severity BaseSeverity
+  [Property] Severity EffectiveSeverity
+  [Property] System.String Reason
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+EnforcementInput
+  [Constructor] Void .ctor(Severity, Maturity, RunMode, Profile)
+  [Method] Boolean Equals(EnforcementInput)
+  [Method] Boolean Equals(EnforcementInput, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EnforcementInput)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Profile get_Profile()
+  [Method] RunMode get_Mode()
+  [Method] Severity get_BaseSeverity()
+  [Method] System.String ToString()
+  [Property] Maturity Maturity
+  [Property] Profile Profile
+  [Property] RunMode Mode
+  [Property] Severity BaseSeverity
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Profile
+  [Method] Boolean Equals(Profile)
+  [Method] Boolean Equals(Profile, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLight()
+  [Method] Boolean get_IsRelease()
+  [Method] Boolean get_IsStandard()
+  [Method] Boolean get_IsStrict()
+  [Method] Int32 CompareTo(Profile)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Profile get_Light()
+  [Method] Profile get_Release()
+  [Method] Profile get_Standard()
+  [Method] Profile get_Strict()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Profile+Tags
+  [Property] Boolean IsLight
+  [Property] Boolean IsRelease
+  [Property] Boolean IsStandard
+  [Property] Boolean IsStrict
+  [Property] Int32 Tag
+  [Property] Profile Light
+  [Property] Profile Release
+  [Property] Profile Standard
+  [Property] Profile Strict
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Profile+Tags
+  [Field] Int32 Light
+  [Field] Int32 Release
+  [Field] Int32 Standard
+  [Field] Int32 Strict
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1
+  [Method] Boolean Equals(Recognized`1)
+  [Method] Boolean Equals(Recognized`1, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsRecognized()
+  [Method] Boolean get_IsUnrecognized()
+  [Method] Int32 CompareTo(Recognized`1)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Recognized`1 NewRecognized(T)
+  [Method] Recognized`1 NewUnrecognized(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Recognized[T]
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Tags[T]
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Unrecognized[T]
+  [Property] Boolean IsRecognized
+  [Property] Boolean IsUnrecognized
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Recognized
+  [Method] T get_Item()
+  [Property] T Item
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Tags
+  [Field] Int32 Recognized
+  [Field] Int32 Unrecognized
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Recognized`1+Unrecognized
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+RunMode
+  [Method] Boolean Equals(RunMode)
+  [Method] Boolean Equals(RunMode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFocused()
+  [Method] Boolean get_IsGate()
+  [Method] Boolean get_IsInner()
+  [Method] Boolean get_IsRelease()
+  [Method] Boolean get_IsSandbox()
+  [Method] Boolean get_IsVerify()
+  [Method] Int32 CompareTo(RunMode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RunMode get_Focused()
+  [Method] RunMode get_Gate()
+  [Method] RunMode get_Inner()
+  [Method] RunMode get_Release()
+  [Method] RunMode get_Sandbox()
+  [Method] RunMode get_Verify()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+RunMode+Tags
+  [Property] Boolean IsFocused
+  [Property] Boolean IsGate
+  [Property] Boolean IsInner
+  [Property] Boolean IsRelease
+  [Property] Boolean IsSandbox
+  [Property] Boolean IsVerify
+  [Property] Int32 Tag
+  [Property] RunMode Focused
+  [Property] RunMode Gate
+  [Property] RunMode Inner
+  [Property] RunMode Release
+  [Property] RunMode Sandbox
+  [Property] RunMode Verify
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+RunMode+Tags
+  [Field] Int32 Focused
+  [Field] Int32 Gate
+  [Field] Int32 Inner
+  [Field] Int32 Release
+  [Field] Int32 Sandbox
+  [Field] Int32 Verify
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Severity
+  [Method] Boolean Equals(Severity)
+  [Method] Boolean Equals(Severity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAdvisory()
+  [Method] Boolean get_IsBlocking()
+  [Method] Int32 CompareTo(Severity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Severity get_Advisory()
+  [Method] Severity get_Blocking()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Enforcement.EnforcementModule+Severity+Tags
+  [Property] Boolean IsAdvisory
+  [Property] Boolean IsBlocking
+  [Property] Int32 Tag
+  [Property] Severity Advisory
+  [Property] Severity Blocking
+TYPE FS.GG.Governance.Enforcement.EnforcementModule+Severity+Tags
+  [Field] Int32 Advisory
+  [Field] Int32 Blocking

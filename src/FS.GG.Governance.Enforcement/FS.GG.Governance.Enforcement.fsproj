@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F023: the first Phase-5 pure core — the typed enforcement vocabulary and the single pure,
+       total `Enforcement.deriveEffectiveSeverity : EnforcementInput -> EnforcementDecision` that
+       derives a finding's EFFECTIVE severity (and a human-readable REASON) from its BASE severity,
+       rule MATURITY, the active run MODE, and the Governance PROFILE — the design's "Modes, profiles,
+       and maturity" section and the first checkboxes of Phase 5.
+
+       It models three closed levers — the six-value ORDERED run `RunMode`
+       (sandbox/inner/focused/verify/gate/release), the four-value ORDERED `Profile`
+       (light/standard/strict/release), and the base/effective `Severity` (advisory/blocking) — and
+       REUSES F014 `Config.Model.Maturity`/`ProfileId` verbatim (FR-003) rather than redefining them.
+       The `RunMode`/`Severity` here are NEW — NOT the kernel's three-value `RunMode` / two-case
+       `Severity` (research D2); FR-001 needs six modes the kernel ladder cannot express.
+
+       PURE and TOTAL (FR-005): defined over the COMPLETE cross-product of (base severity × maturity ×
+       run mode × profile), never throws, deterministic — byte-identical for identical input (FR-006,
+       SC-004). Echoes base severity unchanged (FR-009), never drops a finding (FR-012), never
+       escalates a base-advisory finding (research D4). It also exposes a total `recognizeMode`/
+       `recognizeProfile` of caller-supplied strings into typed levers with an explicit `Unrecognized`
+       outcome (FR-011).
+
+       Computes NO ship/merge verdict, blockers list, exit code, or cross-finding rollup (FR-013);
+       does NO I/O and parses NO `.fsgg/policy.yml` (FR-014); adds NO CLI; carries NO per-class
+       profile dial map (deferred — FR-015). A pure leaf (`Enforcement -> Config`), reaching no
+       git/filesystem/clock and needing no serialization — so NO new third-party `PackageReference`
+       (`System.*`/FSharp.Core only). The whole surface is a pure total function — no MVU ceremony
+       (Principle IV). Compile order is Enforcement.fsi -> Enforcement.fs: the curated public surface,
+       then the pure derivation. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Enforcement</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson/GatesJson
+         (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Enforcement</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Enforcement.fsi" />
+    <Compile Include="Enforcement.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

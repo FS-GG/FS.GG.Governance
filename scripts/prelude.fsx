@@ -1014,3 +1014,43 @@ match f22Parsed with
 // The exit taxonomy (research D6): Success 0, UsageError' 2, InputUnavailable 3, ToolError 4.
 printfn "[F22] exit codes: %A"
     [ Loop.exitCode Loop.Success; Loop.exitCode Loop.UsageError'; Loop.exitCode Loop.InputUnavailable; Loop.exitCode Loop.ToolError ]
+
+// ── F023: enforcement levers & effective severity — the first Phase-5 pure core ──
+// Design-first sketch (Principle I): exercises the PUBLIC Enforcement surface the way a downstream
+// `fsgg ship` / `audit.json` caller will. PURE and TOTAL — no I/O, no clock, never throws; the
+// derivation maps (base severity, maturity, run mode, profile) -> (effective severity, reason). While
+// Enforcement.fs is the `failwith "F023"` stub this block THROWS at runtime; it runs green only once
+// Foundation + US1 land (T025 re-runs it end-to-end against the real body).
+
+#r "../src/FS.GG.Governance.Enforcement/bin/Debug/net10.0/FS.GG.Governance.Enforcement.dll"
+
+open FS.GG.Governance.Config.Model        // Maturity, ProfileId
+open FS.GG.Governance.Enforcement.Enforcement
+
+// The design's worked example — base blocking, block-on-ship, inner, light ⇒ advisory.
+let f23Input: EnforcementInput =
+    { BaseSeverity = Blocking; Maturity = BlockOnShip; Mode = Inner; Profile = Light }
+let f23Example = deriveEffectiveSeverity f23Input
+printfn "\n[F23] worked example  effective=%A base=%A" f23Example.EffectiveSeverity f23Example.BaseSeverity
+printfn "[F23] reason: %s" f23Example.Reason
+// expect: effective=Advisory base=Blocking; reason names 'light'/'block-on-ship'/'gate'/'inner'
+
+// Same finding at the gate ⇒ blocking.
+let f23AtGate = deriveEffectiveSeverity { f23Input with Mode = Gate }
+printfn "[F23] at gate         effective=%A" f23AtGate.EffectiveSeverity   // expect Blocking
+
+// observe withholds blocking under any mode/profile.
+let f23Observed =
+    deriveEffectiveSeverity
+        { BaseSeverity = Blocking; Maturity = Observe; Mode = RunMode.Release; Profile = Profile.Release }
+printfn "[F23] observe withhold effective=%A" f23Observed.EffectiveSeverity   // expect Advisory
+
+// Determinism — derive twice, assert byte-identical.
+let f23Twice = deriveEffectiveSeverity f23Input
+printfn "[F23] deterministic?  %b"
+    (f23Example.EffectiveSeverity = f23Twice.EffectiveSeverity && f23Example.Reason = f23Twice.Reason)
+
+// Total recognition — canonical maps, unknown carried, never throws.
+printfn "[F23] recognize: %A | %A | %A"
+    (recognizeMode "gate") (recognizeMode "ship") (recognizeProfile "strict")
+// expect: Recognized Gate | Unrecognized "ship" | Recognized Strict
