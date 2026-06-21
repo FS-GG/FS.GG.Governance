@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F031, exercising the PUBLIC surface of FS.GG.Governance.RouteExplain:
+       `RouteExplain.explain` / `highCostThreshold` over REAL, literally-constructible `RouteResult` /
+       `GateRegistry` values (Principle V — every value is a real typed value built through the genuine
+       F014->F015->F017->F018->F019 chain via the Route `Support.fs` shape, never a mock), plus hand-built
+       `RouteResult`/`GateRegistry` values from literal `SelectedGate`/`Gate` lists for the disordered/
+       duplicate inputs the chain won't produce. Expecto + FsCheck give the high-cost-filter /
+       verbatim-trace / alternative-rule / determinism / order-and-duplication-invariance / purity / no-hide
+       properties; the VSTest adapters let `dotnet test` drive the Expecto runner. The reflective
+       SurfaceDrift test pins the Tier-1 public surface + the Route/Gates/Routing/Findings/Config/BCL/
+       FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="HighCostFindingTests.fs" />
+    <Compile Include="AlternativeTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="EmptyRouteTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.RouteExplain/FS.GG.Governance.RouteExplain.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F031: the pure, total, deterministic broad-route cost-explanation core — the Phase-11 *Cost, Cache,
+       and Provenance* row 3 ("explain high-cost routes with matched rule, changed path, affected
+       capability, selected gate, cost, and cheaper local alternative"). One operational question answered
+       deterministically: given a route (F019 `RouteResult`) and the catalog (F018 `GateRegistry`), which
+       selected gates are high-cost, why is each on the route, and is there a cheaper gate in the same
+       capability I could run locally first? `explain : RouteResult -> GateRegistry -> RouteExplanation`
+       emits one `HighCostFinding` per selected gate whose declared `Cost >= High` (the fixed MVP
+       `highCostThreshold`), each embedding F019's `SelectedGate` VERBATIM (identity/domain/cost/trace are
+       carried, never re-derived — research D2) and carrying its resolved `Alternative`: a same-domain,
+       strictly-cheaper, locally-runnable registry gate (cheapest, ties by `GateId` ordinal) as
+       `CheaperLocalAlternative`, else the explicit `NoCheaperLocalAlternative` (the no-hide rule, research
+       D4/D6). `Findings` is sorted by `Selected.Gate.Id` ordinal so re-ordering/duplicating the inputs
+       never changes the result; an empty route yields `{ Findings = [] }`, a valid success. It renders NO
+       JSON/artifact, computes NO numeric cost weight or budget, performs NO severity/enforcement/freshness/
+       ship verdict, runs NO gate, reads NO clock/filesystem/git/environment/network, and adds NO CLI. It
+       references ONLY FS.GG.Governance.Route and FS.GG.Governance.Gates (reusing F019
+       `RouteResult`/`SelectedGate`/`SelectingPath` and F018 `GateRegistry`/`Gate` verbatim — research D1);
+       Config/Routing/Findings arrive transitively, and it deliberately does NOT reference
+       Snapshot/FreshnessKey/EvidenceReuse/RouteJson/GatesJson or any host/edge assembly. It adds NO new
+       third-party PackageReference: its own code is BCL + FSharp.Core only (FR-013). Compile order is
+       Model -> RouteExplain: the explanation types, then the pure projection. The dependency direction
+       stays one-way: RouteExplain -> {Route, Gates} -> ... -> Config; every merged core/host stays
+       untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RouteExplain</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like EvidenceReuse/FreshnessKey/Gates/Config (overrides
+         Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.RouteExplain</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="RouteExplain.fsi" />
+    <Compile Include="RouteExplain.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>

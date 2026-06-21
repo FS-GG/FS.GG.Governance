@@ -1253,3 +1253,89 @@ printfn "[F30] refresh ⇒ %A, entries = %d"
     (EvidenceReuse.decide f29Inputs f30Refreshed)
     (EvidenceReuse.entries f30Refreshed |> List.length)
 // expect: Reuse (EvidenceRef "ev-2"), entries = 1
+
+
+// ── F031: the broad-route cost-explanation core — the Phase-11 *Cost, Cache, Provenance* row 3 ──
+// "Explain high-cost routes with matched rule, changed path, affected capability, selected gate, cost, and
+// cheaper local alternative." A pure, total `explain : RouteResult -> GateRegistry -> RouteExplanation`
+// answers "which selected gates are high-cost, why is each on the route, and is there a cheaper gate in the
+// same capability I could run locally first?": one `HighCostFinding` per selected gate whose declared
+// `Cost >= High` (the fixed `highCostThreshold`), each embedding F019's `SelectedGate` VERBATIM and
+// carrying its resolved `Alternative` — a same-domain, strictly-cheaper, locally-runnable registry gate
+// (cheapest, ties by `GateId`) as `CheaperLocalAlternative`, else the explicit `NoCheaperLocalAlternative`
+// (the no-hide rule). `Findings` is sorted by `GateId`; an empty route ⇒ `{ Findings = [] }`. No
+// JSON/budget/severity/enforcement/freshness/ship verdict; no clock/fs/git/network. Design-first FSI proof
+// (Principle I) over literal F018 `Gate` / F019 `SelectedGate` values.
+#r "../src/FS.GG.Governance.RouteExplain/bin/Debug/net10.0/FS.GG.Governance.RouteExplain.dll"
+
+open FS.GG.Governance.RouteExplain
+open FS.GG.Governance.RouteExplain.Model
+
+// A literal F018 `Gate` of the given domain/check/cost/environment (the worked example,
+// contracts/explanation-semantics.md §2). The declared environment lives inside the gate's `FreshnessKey`.
+let f31Gate (domain: string) (checkId: string) (cost: Cost) (env: EnvironmentClass) : Gate =
+    { Id = GateId(domain + ":" + checkId)
+      Domain = DomainId domain
+      Description = sprintf "%s:%s" domain checkId
+      Prerequisites = []
+      Cost = cost
+      Timeout = TimeoutLimit 60
+      Owner = Owner "demo"
+      Maturity = Observe
+      ProductCheck = (env = Release)
+      FreshnessKey =
+        { Check = CheckId checkId
+          Domain = DomainId domain
+          Cost = cost
+          Environment = env
+          Command = None } }
+
+// The catalog: build:full (Exhaustive Ci) + a cheaper local build:unit (Cheap Local) and
+// build:integration (Medium LocalOrCi).
+let f31Full = f31Gate "build" "full" Exhaustive Ci
+let f31Unit = f31Gate "build" "unit" Cheap Local
+let f31Integration = f31Gate "build" "integration" Medium LocalOrCi
+let f31Registry: GateRegistry = { Gates = [ f31Full; f31Unit; f31Integration ] }
+
+// A route selecting build:full, reached by one changed path.
+let f31Selected: SelectedGate =
+    { Gate = f31Full
+      SelectingPaths = [ { Path = GovernedPath "src/a.fs"; MatchedGlob = GovernedPath "src/**" } ] }
+
+let f31Route: RouteResult =
+    { SelectedGates = [ f31Selected ]
+      Findings = { Findings = [] }
+      Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+
+// The fixed MVP threshold is High.
+printfn "[F31] highCostThreshold ⇒ %A" RouteExplain.highCostThreshold
+// expect: High
+
+// One finding for build:full, carrying its verbatim selecting path, with the cheapest local same-domain
+// alternative (build:unit).
+let f31Explanation = RouteExplain.explain f31Route f31Registry
+
+printfn "[F31] findings ⇒ %A"
+    (f31Explanation.Findings
+     |> List.map (fun f ->
+         let altId =
+             match f.Alternative with
+             | CheaperLocalAlternative g -> gateIdValue g.Id
+             | NoCheaperLocalAlternative -> "<none>"
+
+         gateIdValue f.Selected.Gate.Id, f.Selected.SelectingPaths.Length, altId))
+// expect: [("build:full", 1, "build:unit")]
+
+// Removing the cheaper same-domain gates ⇒ NoCheaperLocalAlternative (the explicit none).
+let f31NoAlt = RouteExplain.explain f31Route { Gates = [ f31Full ] }
+printfn "[F31] no cheaper gate ⇒ %A" ((f31NoAlt.Findings |> List.head).Alternative)
+// expect: NoCheaperLocalAlternative
+
+// A route of only Cheap/Medium gates ⇒ no high-cost route to explain.
+let f31Cheap: RouteResult =
+    { SelectedGates = [ { Gate = f31Unit; SelectingPaths = [] }; { Gate = f31Integration; SelectingPaths = [] } ]
+      Findings = { Findings = [] }
+      Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+
+printfn "[F31] only cheap/medium gates ⇒ %A" (RouteExplain.explain f31Cheap f31Registry)
+// expect: { Findings = [] }
