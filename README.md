@@ -199,6 +199,7 @@ depend on it; Cedar is a reference for the evaluation semantics. See
   - [Routing, severity & run modes](docs/governance-design/routing-and-modes.md) · [domain adapters](docs/governance-design/adapters.md) · [Spec-driven development in the system](docs/governance-design/speckit-in-the-system.md)
 - [Implementation plan (Spec Kit, F01–F27)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design and capability report decomposed into ordered features with progress checkboxes
 - [Capability design report](docs/reports/2026-06-18-233718-fsgg-governance-capability-design.md) — product-neutral capability envelope and protected-boundary roadmap
+- [CI: GitHub Actions branch-protection guidance for `fsgg ship`](docs/ci/github-actions-branch-protection.md) — wire the merge verdict into a required status check
 - [Feature specs](specs/) · [decision records](docs/decisions/)
 
 ## Workflow
