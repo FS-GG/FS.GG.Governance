@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F033: the pure, total, deterministic provenance core — the Phase-11 *Cost, Cache, and Provenance*
+       row 5 ("include source commit, base/head, rule hash, generator version, artifact digests, command
+       records, environment class, and builder identity in provenance"). One question answered
+       deterministically: given the ALREADY-SENSED facts of a build, what is the complete typed provenance
+       value of it, which of its facts are reproducible vs sensed, and what is its stable canonical identity?
+       `build` assembles the nine supplied facts into a flat closed `Provenance` carrying ALL eight declared
+       facts (base and head are the two revisions of one base/head fact). `canonicalId : Provenance ->
+       ProvenanceIdentity` renders ONLY the reproducible facts to a byte-stable identity in the F029/F032
+       tagged, length-prefixed, injective discipline (D5): the artifact digests as a SET (order/dup
+       invariant), the command records in ORDER (order-significant), each command record folded via F032
+       `CommandRecord.canonicalId` so the sensed durations — held STRUCTURALLY apart inside the embedded F032
+       records (D3) — are never read. `identityValue` unwraps it. It performs NO command execution/process
+       spawn/byte capture, computes NO digest from bytes (digests/revisions are supplied opaque tokens),
+       reads NO clock/filesystem/git/environment/network, persists NO artifact, renders NO
+       JSON/audit.json/attestation document, performs NO attestation/signing, and adds NO CLI. It is the FIRST
+       core to reference more than one sibling core (D1): it references ONLY FS.GG.Governance.FreshnessKey
+       (reusing F029 `Revision`/`RuleHash`/`GeneratorVersion`/`ArtifactHash` verbatim), FS.GG.Governance.CommandRecord
+       (reusing F032 `CommandRecord` + public `canonicalId`/`identityValue` verbatim), and FS.GG.Governance.Config
+       (reusing F014 `EnvironmentClass` verbatim) — all three pure vocab cores, so nothing impure is pulled
+       in; the transitive `YamlDotNet` via Config is unused. It deliberately does NOT reference
+       Snapshot/Gates/Route/Routing/Findings/EvidenceReuse/RouteExplain/RouteJson/GatesJson/AuditJson/
+       Enforcement/Ship or any host/edge assembly. It adds NO new third-party PackageReference: its own code
+       is BCL + FSharp.Core only (FR-013). Compile order is Model -> Provenance: the provenance fact types,
+       then the pure assembly + canonical-identity rendering. The dependency direction stays one-way:
+       Provenance -> { FreshnessKey, CommandRecord, Config }; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Provenance</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like CommandRecord/FreshnessKey/Config (overrides
+         Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Provenance</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Provenance.fsi" />
+    <Compile Include="Provenance.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

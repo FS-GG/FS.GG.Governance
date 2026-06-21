@@ -1,0 +1,70 @@
+TYPE FS.GG.Governance.Provenance.ModelModule
+  [NestedType] FS.GG.Governance.Provenance.ModelModule+BuilderIdentity
+  [NestedType] FS.GG.Governance.Provenance.ModelModule+Provenance
+  [NestedType] FS.GG.Governance.Provenance.ModelModule+ProvenanceIdentity
+TYPE FS.GG.Governance.Provenance.ModelModule+BuilderIdentity
+  [Method] Boolean Equals(BuilderIdentity)
+  [Method] Boolean Equals(BuilderIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] BuilderIdentity NewBuilderIdentity(System.String)
+  [Method] Int32 CompareTo(BuilderIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Provenance.ModelModule+Provenance
+  [Constructor] Void .ctor(Revision, Revision, Revision, RuleHash, GeneratorVersion, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+CommandRecord], EnvironmentClass, BuilderIdentity)
+  [Method] Boolean Equals(Provenance)
+  [Method] Boolean Equals(Provenance, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] BuilderIdentity get_Builder()
+  [Method] EnvironmentClass get_Environment()
+  [Method] GeneratorVersion get_GeneratorVersion()
+  [Method] Int32 CompareTo(Provenance)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+CommandRecord] get_CommandRecords()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] get_ArtifactDigests()
+  [Method] Revision get_Base()
+  [Method] Revision get_Head()
+  [Method] Revision get_SourceCommit()
+  [Method] RuleHash get_RuleHash()
+  [Method] System.String ToString()
+  [Property] BuilderIdentity Builder
+  [Property] EnvironmentClass Environment
+  [Property] GeneratorVersion GeneratorVersion
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+CommandRecord] CommandRecords
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] ArtifactDigests
+  [Property] Revision Base
+  [Property] Revision Head
+  [Property] Revision SourceCommit
+  [Property] RuleHash RuleHash
+TYPE FS.GG.Governance.Provenance.ModelModule+ProvenanceIdentity
+  [Method] Boolean Equals(ProvenanceIdentity)
+  [Method] Boolean Equals(ProvenanceIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProvenanceIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProvenanceIdentity NewProvenanceIdentity(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Provenance.ProvenanceModule
+  [Method] Provenance build(Revision, Revision, Revision, RuleHash, GeneratorVersion, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+CommandRecord], EnvironmentClass, BuilderIdentity)
+  [Method] ProvenanceIdentity canonicalId(Provenance)
+  [Method] System.String identityValue(ProvenanceIdentity)

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F033, exercising the PUBLIC surface of FS.GG.Governance.Provenance:
+       `Provenance.build` / `canonicalId` / `identityValue` over REAL, literally-constructible build facts
+       (Principle V — every value is a real typed value built from literals, incl. real F032 `CommandRecord`s
+       assembled via `CommandRecord.build`; never a mock; no process is spawned). The EMITTED identity bytes
+       are inspected by ordinary string comparison and the committed worked-example block. Expecto + FsCheck
+       give the complete-carriage / sensed-split / per-field-sensitivity / artifact-digest-set-invariance /
+       command-record-order-significance / determinism / purity / totality properties; the VSTest adapters
+       let `dotnet test` drive the Expecto runner. The reflective SurfaceDrift test pins the Tier-1 public
+       surface + the FreshnessKey/CommandRecord/Config/BCL/FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ProvenanceTests.fs" />
+    <Compile Include="IdentityTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
