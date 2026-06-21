@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F035: the optional, packable agent-review verdict cache-key core — the Phase-12 *Agent-Reviewed
+       Rule Guardrails* opening row, the direct analogue of F029 FreshnessKey specialised to
+       agent-reviewed verdicts. A single pure, total `AgentReviewKey.compute : AgentReviewInputs ->
+       CacheKey` renders the SEVEN inputs an agent-reviewed verdict depends on (model id, model version,
+       reviewer prompt hash, model configuration, check hash, the SET of reviewed-artifact hashes, and the
+       question text) into a deterministic, byte-stable, INJECTIVE canonical key; `matches`/`diff` are the
+       total cache-hit predicate and the no-hide explainer. It computes NO hashes, reads NO
+       clock/filesystem/git/environment/network, invokes NO model/agent, carries/stores NO cached verdict,
+       and runs NO cache store/lookup/invalidation operation (FR-007, FR-009). It references ONLY
+       FS.GG.Governance.FreshnessKey (F029) to reuse `RuleHash` (check hash) and `ArtifactHash`
+       (reviewed-artifact hashes) VERBATIM — FR-008, plan D1 — and adds NO new third-party
+       PackageReference: its own code is BCL + FSharp.Core only (FR-011). The transitive YamlDotNet
+       dependency arrives only via Config (through FreshnessKey) and is unused here. It deliberately does
+       NOT reference Gates/Snapshot/Route/Adapters or any host/edge assembly. Compile order is
+       Model -> AgentReviewKey: the seven-input types, then the pure operations. The whole surface is four
+       pure total functions — no MVU ceremony (Principle IV / N/A). The dependency direction stays one-way:
+       AgentReviewKey -> FreshnessKey -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.AgentReviewKey</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like FreshnessKey/Gates/Config (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.AgentReviewKey</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="AgentReviewKey.fsi" />
+    <Compile Include="AgentReviewKey.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>
