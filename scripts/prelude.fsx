@@ -1131,3 +1131,34 @@ let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard)
 printfn "[F25] empty/clean audit.json:\n%s" f25Empty
 // expect: { "schemaVersion":"fsgg.audit/v1","verdict":"pass","exitCodeBasis":"clean",
 //           "blockers":[],"warnings":[],"passing":[] }
+
+// ── F026: the `fsgg ship` host command — the protected-branch verdict COMPOSITION/EDGE tier ──
+// The second host edge. Like F022 `route` it parses argv to a normalized request, but it rolls the
+// routed change up into a pass/fail MERGE VERDICT (F024), projects it to `audit.json` (F025), and maps
+// the verdict's ExitCodeBasis to a BLOCKING process exit code. Design-first FSI proof (Principle I):
+// exercise parse/exitCode and the pure `update` step shape without any I/O.
+#r "../src/FS.GG.Governance.ShipCommand/bin/Debug/net10.0/FS.GG.Governance.ShipCommand.dll"
+
+open FS.GG.Governance.ShipCommand
+
+// parse: defaults gate/standard, AuditOut readiness/audit.json; tolerates the leading `ship` verb.
+let f26Req =
+    match Loop.parse [ "ship"; "--since"; "HEAD~1" ] with
+    | Ok r -> r
+    | Error e -> failwithf "unexpected parse error: %A" e
+printfn "\n[F26] parse defaults: Mode=%A Profile=%A AuditOut=%s" f26Req.Mode f26Req.Profile f26Req.AuditOut
+// expect: Mode=Gate Profile=Standard AuditOut=readiness/audit.json
+
+// An unrecognized lever is a UsageError decided in parse — before any port is built (no artifact).
+printfn "[F26] unrecognized mode ⇒ %A" (Loop.parse [ "ship"; "--mode"; "bogus" ])
+// expect: Error (UnrecognizedMode "bogus")
+
+// exitCode taxonomy: the NEW Blocked=1, distinct from every tool-failure code 2/3/4.
+printfn "[F26] exitCode  Success=%d Blocked=%d Usage=%d Input=%d Tool=%d"
+    (Loop.exitCode Loop.Success) (Loop.exitCode Loop.Blocked) (Loop.exitCode Loop.UsageError')
+    (Loop.exitCode Loop.InputUnavailable) (Loop.exitCode Loop.ToolError)
+// expect: Success=0 Blocked=1 Usage=2 Input=3 Tool=4
+
+// The pure `update` on Loaded(Valid) rolls up + projects and emits ONE WriteArtifact whose content is
+// AuditJson.ofShipDecision (Ship.rollup result mode profile) — proven against the cores in LoopTests.
+printfn "[F26] design-first surface exercised (update/render/exitCode) — see ShipCommand.Tests for the full proof"

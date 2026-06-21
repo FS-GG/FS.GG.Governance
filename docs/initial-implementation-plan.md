@@ -391,14 +391,31 @@ without waiting for the full lifecycle command suite.
   dependency; computes **no** ship verdict. Every failure (not-a-repo, unresolved
   rev, missing/invalid catalog, unwritable output) → distinct diagnostic +
   category-mapped non-zero exit (2/3/4); the interpreter never throws.
-- ⬜ Add `fsgg ship --mode gate --profile standard --json` (the ship/merge verdict
+- ✅ Add `fsgg ship --mode gate --profile standard --json` (the ship/merge verdict
   host edge — `audit.json`, blockers, profile-adjusted enforcement, exit-code basis;
-  Phase 2/5 remainder, distinct from the `route` slice above).
+  distinct from the `route` slice above). **(F026 — `FS.GG.Governance.ShipCommand`,
+  done 2026-06-21)** The second composition/edge tier: the host sibling of F022,
+  modeled through the same Elmish/MVU boundary (pure `Loop` + edge `Interpreter` over
+  injected, fakeable ports). It selects the changed-path scope, loads+validates the
+  catalog, routes, builds the registry, computes findings, and selects gates (the F022
+  composition verbatim), then **rolls the selection up into a `ShipDecision`** via
+  `Ship.rollup` (F024) under the chosen `--mode`/`--profile` levers (F023 recognizers,
+  default `gate`/`standard`), **projects it to `audit.json`** via
+  `AuditJson.ofShipDecision` (F025) byte-for-byte unchanged, writes it via temp+atomic
+  rename, prints a deterministic text/JSON summary (the no-hide partition with base +
+  effective severity), and **maps the verdict's `ExitCodeBasis` to a blocking process
+  exit code** — `Clean → 0`, `Blocked → 1` (the single code reserved for a blocked
+  merge). No new third-party dependency; references nine cores (not RouteJson/GatesJson).
+  Every failure (not-a-repo, unresolved rev, missing/invalid catalog, unrecognized
+  lever, unwritable output) → distinct diagnostic + category-mapped non-zero exit
+  (2/3/4), each distinct from the blocked code 1; the interpreter never throws and
+  writes no partial artifact.
 - 🟡 Emit deterministic route and **audit** JSON with selected gates, matched
   rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
   profile-adjusted enforcement, and exit-code basis. **(route.json done — F020;
-  gates.json done — F021; audit.json + cache eligibility + profile-adjusted
-  enforcement + exit-code basis remain — Phase 5/11.)**
+  gates.json done — F021; audit.json done — F025; profile-adjusted enforcement done
+  — F023; ship verdict + exit-code basis done — F024/F026; only cache eligibility +
+  freshness remain — Phase 11.)**
 - ⬜ Publish the first GitHub Actions guidance for branch protection.
 
 > **Legend:** ✅ done · 🟡 in progress · ⬜ not started. F014 (the `.fsgg`
@@ -557,21 +574,29 @@ Owner: `FS.GG.Governance`.
 Purpose: make route selection, profile strictness, and blocking behavior
 explainable and testable.
 
-- [ ] Parse run modes: `sandbox`, `inner`, `focused`, `verify`, `gate`, and
-  `release`.
-- [ ] Parse Governance profiles: `light`, `standard`, `strict`, and `release`.
-- [ ] Parse rule maturity: `observe`, `warn`, `block-on-pr`, `block-on-ship`,
-  and `block-on-release`.
-- [ ] Emit every finding with rule id, verdict, base severity, mode, profile,
-  maturity, effective severity, and reason.
-- [ ] Ensure profiles never hide underlying verdicts, alter rule hashes, or
-  remove findings from JSON.
-- [ ] Add scoped `--paths` authoring and complete base/head route parity with
-  CI.
-- [ ] Generate golden enforcement truth-table fixtures covering routine versus
+- ✅ Parse run modes: `sandbox`, `inner`, `focused`, `verify`, `gate`, and
+  `release`. **(F023 — `Enforcement.recognizeMode`, done 2026-06-21)**
+- ✅ Parse Governance profiles: `light`, `standard`, `strict`, and `release`.
+  **(F023 — `Enforcement.recognizeProfile`, done 2026-06-21)**
+- ✅ Parse rule maturity: `observe`, `warn`, `block-on-pr`, `block-on-ship`,
+  and `block-on-release`. **(F014 `Config` typed facts; surfaced through F023.)**
+- ✅ Emit every finding with rule id, verdict, base severity, mode, profile,
+  maturity, effective severity, and reason. **(F023 `EnforcementDecision`'s six
+  no-hide fields → F024 `ShipDecision` verdict → F025 `audit.json`, done 2026-06-21.)**
+- ✅ Ensure profiles never hide underlying verdicts, alter rule hashes, or
+  remove findings from JSON. **(F024/F025 no-hide rule: a base-blocking item relaxed
+  by mode/profile appears in `warnings` carrying both base and effective severity.)**
+- ✅ Add scoped `--paths` authoring and complete base/head route parity with
+  CI. **(F022 `route` + F026 `ship` share the `--paths`/`--since`/default base-head
+  scope surface.)**
+- 🟡 Generate golden enforcement truth-table fixtures covering routine versus
   fenced routes, base severity, rule tier, all modes, all profiles, all maturity
-  levels, and unknown governed paths.
-- [ ] Add representative JSON snapshots for combinations that alter blocking.
+  levels, and unknown governed paths. **(F023 covers the
+  (severity × maturity × mode × profile) cross-product in tests; broader golden
+  fixtures remain.)**
+- 🟡 Add representative JSON snapshots for combinations that alter blocking.
+  **(F025 `audit.json` snapshot tests exist for blocking/relaxed cases; a fuller
+  matrix remains.)**
 
 Exit criteria:
 
