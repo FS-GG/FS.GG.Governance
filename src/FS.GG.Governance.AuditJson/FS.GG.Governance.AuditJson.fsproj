@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F025: the optional, packable audit.json *projection* — the audit.json document row.
+       A single pure, total `AuditJson.ofShipDecision : ShipDecision -> string` (plus a `schemaVersion`
+       constant) renders the F024 `ShipDecision` into the deterministic, versioned `audit.json`
+       WHOLE-CHANGE verdict document text — the stable, machine-readable whole-change verdict contract
+       the later `fsgg ship` command, CI gates, branch-protection checks, agents, generated readiness
+       views, and humans read instead of an in-memory value. It is the design's
+       `readiness/<id>/audit.json` artifact, restricted to the fields F024's `ShipDecision` has already
+       typed.
+
+       Where F020's `route.json` is the per-change route view and F021's `gates.json` is the
+       whole-catalog gate view, this `audit.json` is the WHOLE-CHANGE ship-verdict view. It carries the
+       decision's `verdict` (pass/fail) and `exitCodeBasis` (clean/blocked) verbatim, plus the three
+       always-present blockers/warnings/passing section arrays in F024 composite order, each item tagged
+       `kind:"gate"`/`"finding"` with its identity (GateId, or FindingId token + governed path) and a
+       nested `enforcement` object carrying all six F023 fields verbatim.
+
+       This row LAYERS serialization on top of the pure `Ship` core in a SEPARATE project (constitution:
+       heavier capabilities layer on top, not into the core) — F024's `Ship` surface stays free of any
+       serialization concern. It is emit-only: it re-derives/re-classifies/re-partitions/re-sorts
+       NOTHING (the `ShipDecision` already fixed the verdict, the exit-code basis, the three-way
+       partition, and each section's composite order); it recomputes no verdict (FR-002), derives no
+       numeric process exit code (FR-003), and emits no provenance/attestation reference,
+       cache-eligibility verdict, gate registry metadata, route trace, raw YAML, host path, timestamp,
+       or environment value (FR-012). PURE and TOTAL (FR-008): no I/O, no git, no clock, never throws.
+
+       It references ONLY FS.GG.Governance.Ship (Enforcement/Route/Config/Gates/Findings/Kernel arrive
+       transitively) and adds NO new third-party PackageReference — serialization is the net10.0
+       shared-framework `System.Text.Json` (`Utf8JsonWriter`) the kernel's `Json.fs` and F020/F021's
+       projections already use, so the library stays System.*/FSharp.Core-only (FR-014). Compile order
+       is AuditJson.fsi -> AuditJson.fs: the curated public surface, then the pure projection. The whole
+       surface is a pure total function — no MVU ceremony (Principle IV). The dependency direction stays
+       one-way: AuditJson -> Ship -> Enforcement/Route/Config/Gates/Findings/Kernel. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.AuditJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson/GatesJson. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.AuditJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AuditJson.fsi" />
+    <Compile Include="AuditJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>
