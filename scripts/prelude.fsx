@@ -1417,3 +1417,92 @@ printfn "[F32] worked-example identity:\n%s" (CommandRecord.identityValue (Comma
 // out=17:sha-out
 // err=17:sha-err
 // cap=0
+
+
+// ── F033: the provenance core — the Phase-11 *Cost, Cache, Provenance* row 5 ──
+// "Include source commit, base/head, rule hash, generator version, artifact digests, command records,
+// environment class, and builder identity in provenance." A pure, total `build : … -> Provenance` assembles
+// the nine ALREADY-SENSED facts into one flat complete `Provenance` carrying ALL eight declared facts (base
+// and head are the two revisions of one base/head fact). `canonicalId : Provenance -> ProvenanceIdentity`
+// renders ONLY the reproducible facts to a byte-stable identity in the F029/F032 tagged/length-prefixed/
+// injective discipline (D5): the artifact digests as a SET (order/dup invariant), the command records in
+// ORDER (order-significant), each command record folded via F032 `CommandRecord.canonicalId` so the sensed
+// durations — held apart inside the embedded F032 records (D3) — are NEVER read. No sensing/timing/hashing/
+// persistence/JSON/attestation/CLI. FIRST core to reference three sibling cores (FreshnessKey + CommandRecord
+// + Config — D1), reusing F029 `Revision`/`RuleHash`/`GeneratorVersion`/`ArtifactHash`, F032 `CommandRecord`,
+// and F014 `EnvironmentClass` verbatim. Design-first FSI proof (Principle I) over literal build facts.
+#r "../src/FS.GG.Governance.FreshnessKey/bin/Debug/net10.0/FS.GG.Governance.FreshnessKey.dll"
+#r "../src/FS.GG.Governance.Provenance/bin/Debug/net10.0/FS.GG.Governance.Provenance.dll"
+
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.Provenance
+open FS.GG.Governance.Provenance.Model
+
+// The worked example of contracts/provenance-identity-format.md: source commit c0ffee; base base1; head
+// head2; rule rule-x; generator gen-1; artifact digests a1,a2; ONE command record (the F032 worked example,
+// reusing f32Env from above); environment Local; builder ci-runner.
+let f33Record = CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f32Env (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") NoCapturedOutput (SensedDuration 123_456L)
+
+let f33Prov =
+    Provenance.build
+        (Revision "c0ffee")
+        (Revision "base1")
+        (Revision "head2")
+        (RuleHash "rule-x")
+        (GeneratorVersion "gen-1")
+        [ ArtifactHash "a1"; ArtifactHash "a2" ]
+        [ f33Record ]
+        Local
+        (BuilderIdentity "ci-runner")
+
+// All nine facts read back verbatim (command records whole, artifact digests as supplied).
+printfn "[F33] src/base/head ⇒ %A" (f33Prov.SourceCommit, f33Prov.Base, f33Prov.Head)
+// expect: (Revision "c0ffee", Revision "base1", Revision "head2")
+printfn "[F33] artifact digests carried ⇒ %A" f33Prov.ArtifactDigests
+// expect: [ArtifactHash "a1"; ArtifactHash "a2"]
+
+// Two provenances differing ONLY in the embedded record's duration ⇒ EQUAL identity, while the durations
+// still differ (sensed, structurally apart — D3/FR-005).
+let f33Faster = { f33Prov with CommandRecords = [ CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f32Env (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") NoCapturedOutput (SensedDuration 1L) ] }
+printfn "[F33] duration-only difference ⇒ equal id? %b (durations differ? %b)" (Provenance.canonicalId f33Prov = Provenance.canonicalId f33Faster) (f33Prov.CommandRecords.Head.Duration <> f33Faster.CommandRecords.Head.Duration)
+// expect: true (durations differ? true)
+
+// Flip one reproducible fact (the head revision) ⇒ DIFFERENT identity (FR-006).
+let f33OtherHead = { f33Prov with Head = Revision "head9" }
+printfn "[F33] flip head revision ⇒ different id? %b" (Provenance.canonicalId f33Prov <> Provenance.canonicalId f33OtherHead)
+// expect: true
+
+// Reorder/duplicate the artifact digests ⇒ UNCHANGED identity (artifact digests are a SET — FR-008).
+let f33DigestsPermuted = { f33Prov with ArtifactDigests = [ ArtifactHash "a2"; ArtifactHash "a1"; ArtifactHash "a2" ] }
+printfn "[F33] reorder/duplicate artifact digests ⇒ unchanged id? %b" (Provenance.canonicalId f33Prov = Provenance.canonicalId f33DigestsPermuted)
+// expect: true
+
+// Reorder the command records ⇒ CHANGED identity (command records are ORDERED — D4).
+let f33SecondRecord = CommandRecord.build (Executable "ld") [] (WorkingDirectory "/work") { Added = []; Changed = []; Removed = [] } (TimeoutLimit 30) (ExitCode 0) (OutputDigest "o2") (OutputDigest "e2") NoCapturedOutput (SensedDuration 7L)
+let f33Forward = { f33Prov with CommandRecords = [ f33Record; f33SecondRecord ] }
+let f33Reversed = { f33Prov with CommandRecords = [ f33SecondRecord; f33Record ] }
+printfn "[F33] reorder command records ⇒ changed id? %b" (Provenance.canonicalId f33Forward <> Provenance.canonicalId f33Reversed)
+// expect: true
+
+// The worked-example identity equals the contract's exact block (the embedded F032 id is 135 bytes).
+printfn "[F33] worked-example identity:\n%s" (Provenance.identityValue (Provenance.canonicalId f33Prov))
+// expect:
+// src=16:c0ffee
+// base=15:base1
+// head=15:head2
+// rule=16:rule-x
+// gen=15:gen-1
+// art=2;2:a1;2:a2
+// cmds=1;135:exe=13:gcc
+// args=2;2:-c;6:main.c
+// cwd=15:/work
+// env+=1;n:2:CI|v:1:1
+// env~=0;
+// env-=0;
+// to=12:30
+// exit=11:0
+// out=17:sha-out
+// err=17:sha-err
+// cap=0
+// env=15:local
+// bld=19:ci-runner

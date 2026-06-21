@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/032-command-records/plan.md
+at specs/033-provenance-record/plan.md
 <!-- SPECKIT END -->

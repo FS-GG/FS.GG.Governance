@@ -763,19 +763,48 @@ its lifecycle artifacts.
 Purpose: keep local authoring cheap while making protected-boundary evidence
 auditable.
 
-- [ ] Define freshness keys over rule hash, artifact hash, command version,
-  generator version, base/head, environment class, and output digest.
-- [ ] Cache reusable evidence only when all freshness inputs match.
-- [ ] Explain high-cost routes with matched rule, changed path, affected
-  capability, selected gate, cost, and cheaper local alternative.
-- [ ] Record command runs with executable, arguments, working directory,
+- ✅ Define freshness keys over rule hash, artifact hash, command version,
+  generator version, base/head, environment class, and output digest. **(F029 —
+  `FS.GG.Governance.FreshnessKey`, done 2026-06-21)** A pure, total
+  `FreshnessKey.compute : FreshnessInputs -> Key` over the closed typed input set,
+  byte-stable in a tagged/length-prefixed/injective encoding; covered artifacts a
+  set; no new dependency.
+- ✅ Cache reusable evidence only when all freshness inputs match. **(F030 —
+  `FS.GG.Governance.EvidenceReuse`, done 2026-06-21)** A pure, total reuse decision
+  that reuses prior evidence iff every freshness input matches (the F029 key),
+  otherwise reports the changed inputs; deterministic, no new dependency.
+- ✅ Explain high-cost routes with matched rule, changed path, affected
+  capability, selected gate, cost, and cheaper local alternative. **(F031 —
+  `FS.GG.Governance.RouteExplain`, done 2026-06-21)** A pure, total broad-route
+  cost-explanation core; deterministic, no new dependency.
+- ✅ Record command runs with executable, arguments, working directory,
   environment delta, timeout, exit code, stdout digest, stderr digest, captured
-  output path, and duration.
-- [ ] Include source commit, base/head, rule hash, generator version, artifact
+  output path, and duration. **(F032 — `FS.GG.Governance.CommandRecord`, done
+  2026-06-21)** A pure, total `CommandRecord.build : … -> CommandRecord` over the
+  ten already-sensed run facts; the sensed duration held structurally apart from
+  the nine reproducible facts; `canonicalId` renders only the reproducible facts to
+  a byte-stable identity (arguments order-significant, each env-delta class a set,
+  duration never read); no execution/hashing, no new dependency.
+- ✅ Include source commit, base/head, rule hash, generator version, artifact
   digests, command records, environment class, and builder identity in
-  provenance.
-- [ ] Mark wall-clock timestamps and durations as sensed or non-deterministic
-  metadata when included in deterministic reports.
+  provenance. **(F033 — `FS.GG.Governance.Provenance`, done 2026-06-21)** A pure,
+  total `Provenance.build : … -> Provenance` assembles the nine already-sensed
+  facts into one flat complete value carrying all eight declared facts (base and
+  head are the two revisions of one base/head fact); `canonicalId : Provenance ->
+  ProvenanceIdentity` renders only the reproducible facts to a byte-stable identity
+  in the F029/F032 tagged/length-prefixed/injective discipline (artifact digests a
+  set; command records ordered, each folded via F032 `CommandRecord.canonicalId` so
+  the sensed durations — held apart inside the embedded records — are never read).
+  The **first core to reference three sibling cores** (FreshnessKey + CommandRecord
+  + Config — D1), reusing F029 `Revision`/`RuleHash`/`GeneratorVersion`/`ArtifactHash`,
+  F032 `CommandRecord`, and F014 `EnvironmentClass` verbatim; no sensing/timing/
+  hashing/persistence/JSON/attestation/CLI, no new dependency.
+- 🟡 Mark wall-clock timestamps and durations as sensed or non-deterministic
+  metadata when included in deterministic reports. **(Structural foundation done —
+  F032 carries the run duration as a distinct `SensedDuration` held apart from the
+  reproducible facts and F033 keeps the embedded durations structurally excluded
+  from the provenance identity; the deterministic-report rendering that surfaces
+  these as flagged sensed metadata is not yet built — Phase 11.)**
 
 Exit criteria:
 
