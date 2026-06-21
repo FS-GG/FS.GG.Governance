@@ -1210,3 +1210,46 @@ printfn "[F29] flipped ruleHash ⇒ matches = %b, diff = %A"
 let f29NoCmd = { f29Inputs with Command = None; CommandVersion = None }
 printfn "[F29] command-less self-match ⇒ %b" (FreshnessKey.matches f29NoCmd f29NoCmd)
 // expect: true
+
+// ── F030: the evidence-reuse decision core — the Phase-11 *Cost, Cache, Provenance* row 2 ──
+// "Cache reusable evidence only when all freshness inputs match." A pure, total `decide : FreshnessInputs
+// -> ReuseStore -> ReuseDecision` answers "may I reuse recorded evidence for this run — and if not, which
+// input changed?": *Reuse* iff some recorded entry F029-`matches` the candidate on EVERY category, else
+// *Recompute* with a located cause (`NoPriorEvidence` or `InputsChanged` of the F029 `diff` categories —
+// the no-hide rule). `record` is the pure, de-duplicating insert (most-recent-wins, no mutation).
+// `EvidenceRef` is an opaque edge-supplied token, never interpreted. No clock/fs/git/network; no
+// persistence, eviction, gate, or verdict. Design-first FSI proof (Principle I), reusing F029's `f29Inputs`.
+#r "../src/FS.GG.Governance.EvidenceReuse/bin/Debug/net10.0/FS.GG.Governance.EvidenceReuse.dll"
+
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.EvidenceReuse.Model
+
+// Record the F029 worked example under an opaque evidence handle.
+let f30Store = EvidenceReuse.record f29Inputs (EvidenceRef "ev-1") EvidenceReuse.empty
+
+// A candidate identical in every freshness input ⇒ Reuse that handle (FR-004).
+printfn "[F30] all inputs match ⇒ %A" (EvidenceReuse.decide f29Inputs f30Store)
+// expect: Reuse (EvidenceRef "ev-1")
+
+// A one-field-changed candidate (same gate) ⇒ Recompute, naming exactly the moved category (FR-006).
+printfn "[F30] ruleHash moved ⇒ %A"
+    (match EvidenceReuse.decide f29NewRule f30Store with
+     | Recompute (InputsChanged cats) -> sprintf "Recompute (InputsChanged %A)" (cats |> List.map Model.categoryToken)
+     | other -> sprintf "%A" other)
+// expect: Recompute (InputsChanged ["ruleHash"])
+
+// A different-gate candidate (no entry shares Check+Domain) ⇒ Recompute NoPriorEvidence.
+let f30OtherGate = { f29Inputs with Domain = DomainId "release" }
+printfn "[F30] different gate ⇒ %A" (EvidenceReuse.decide f30OtherGate f30Store)
+// expect: Recompute NoPriorEvidence
+
+// An empty store ⇒ Recompute NoPriorEvidence for any candidate.
+printfn "[F30] empty store ⇒ %A" (EvidenceReuse.decide f29Inputs EvidenceReuse.empty)
+// expect: Recompute NoPriorEvidence
+
+// Re-recording the same inputs refreshes the handle with NO duplicate (most-recent-wins, FR-008).
+let f30Refreshed = EvidenceReuse.record f29Inputs (EvidenceRef "ev-2") f30Store
+printfn "[F30] refresh ⇒ %A, entries = %d"
+    (EvidenceReuse.decide f29Inputs f30Refreshed)
+    (EvidenceReuse.entries f30Refreshed |> List.length)
+// expect: Reuse (EvidenceRef "ev-2"), entries = 1

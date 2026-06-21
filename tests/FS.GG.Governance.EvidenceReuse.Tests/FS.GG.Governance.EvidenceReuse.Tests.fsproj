@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F030, exercising the PUBLIC surface of FS.GG.Governance.EvidenceReuse:
+       `EvidenceReuse.decide` / `record` / `empty` / `entries` / `referenceValue` over REAL,
+       literally-constructible `FreshnessInputs` / `EvidenceRef` / `ReuseStore` values (Principle V — every
+       value is a real typed value, never a mock; the operations are pure so no upstream chain is needed).
+       Expecto + FsCheck give the reuse-iff-match / determinism / order-and-duplication-invariance /
+       totality / no-hide properties; the VSTest adapters let `dotnet test` drive the Expecto runner. The
+       reflective SurfaceDrift test pins the Tier-1 public surface + the FreshnessKey/Config/BCL/FSharp.Core-
+       only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ReuseDecisionTests.fs" />
+    <Compile Include="EmptyStoreTests.fs" />
+    <Compile Include="ExplanationTests.fs" />
+    <Compile Include="RecordTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>
