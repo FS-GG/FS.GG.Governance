@@ -1162,3 +1162,51 @@ printfn "[F26] exitCode  Success=%d Blocked=%d Usage=%d Input=%d Tool=%d"
 // The pure `update` on Loaded(Valid) rolls up + projects and emits ONE WriteArtifact whose content is
 // AuditJson.ofShipDecision (Ship.rollup result mode profile) — proven against the cores in LoopTests.
 printfn "[F26] design-first surface exercised (update/render/exitCode) — see ShipCommand.Tests for the full proof"
+
+// ── F029: the freshness-key computation core — the Phase-11 *Cost, Cache, Provenance* opening row ──
+// The pure-core-first foundation of evidence reuse: a total `FreshnessKey.compute : FreshnessInputs -> Key`
+// renders the closed freshness-input set into a deterministic, byte-stable, INJECTIVE canonical key, with
+// `matches` (the reuse predicate) and `diff` (the no-hide explainer). No clock/fs/git/network; no cache,
+// no hashing, no verdict. Design-first FSI proof (Principle I): construct a literal FreshnessInputs and
+// exercise compute/matches/diff with the expected canonical key shape, order/dup invariance, a
+// flipped-field non-match, and a command-less match.
+#r "../src/FS.GG.Governance.FreshnessKey/bin/Debug/net10.0/FS.GG.Governance.FreshnessKey.dll"
+
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.FreshnessKey
+open FS.GG.Governance.FreshnessKey.Model
+
+// The worked example from contracts/freshness-key-format.md (covered artifacts deduped {h1,h2} + sorted).
+let f29Inputs =
+    { Check = CheckId "build:tests"
+      Domain = DomainId "build"
+      Command = Some(CommandId "dotnet")
+      Environment = Local
+      RuleHash = RuleHash "r1"
+      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+      CommandVersion = Some(CommandVersion "8.0")
+      GeneratorVersion = GeneratorVersion "g1"
+      Base = Revision "aaa"
+      Head = Revision "bbb" }
+
+printfn "\n[F29] canonical key:\n%s" (FreshnessKey.value (FreshnessKey.compute f29Inputs))
+// expect (joined by \n):
+//   check=111:build:tests / domain=15:build / cmd=16:dotnet / env=15:local / rule=12:r1
+//   art=2;2:h1;2:h2 / cmdv=13:8.0 / genv=12:g1 / base=13:aaa / head=13:bbb
+
+// Order + duplication of covered artifacts never change the key (FR-004).
+let f29Shuffled = { f29Inputs with CoveredArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2"; ArtifactHash "h2" ] }
+printfn "[F29] order/dup invariant ⇒ matches = %b" (FreshnessKey.matches f29Inputs f29Shuffled)
+// expect: true
+
+// A single flipped field forbids reuse and diff names exactly that category (FR-005, FR-007).
+let f29NewRule = { f29Inputs with RuleHash = RuleHash "r2" }
+printfn "[F29] flipped ruleHash ⇒ matches = %b, diff = %A"
+    (FreshnessKey.matches f29Inputs f29NewRule)
+    (FreshnessKey.diff f29Inputs f29NewRule |> List.map Model.categoryToken)
+// expect: matches = false, diff = ["ruleHash"]
+
+// A command-less gate (Command = None, CommandVersion = None) is a total, stable, matchable value (FR-011).
+let f29NoCmd = { f29Inputs with Command = None; CommandVersion = None }
+printfn "[F29] command-less self-match ⇒ %b" (FreshnessKey.matches f29NoCmd f29NoCmd)
+// expect: true
