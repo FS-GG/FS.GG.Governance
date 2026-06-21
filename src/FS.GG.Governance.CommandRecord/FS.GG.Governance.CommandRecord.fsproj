@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F032: the pure, total, deterministic command-record core — the Phase-11 *Cost, Cache, and
+       Provenance* row 4 ("record command runs with executable, arguments, working directory, environment
+       delta, timeout, exit code, stdout digest, stderr digest, captured output path, and duration"). One
+       question answered deterministically: given the ALREADY-SENSED facts of a command run, what is the
+       complete typed record of it, which facts are reproducible vs sensed, and what is its stable canonical
+       identity? `build` assembles the ten supplied facts into a `CommandRecord` =
+       `{ Reproducible: ReproducibleFacts; Duration: SensedDuration }` — the sensed duration held
+       STRUCTURALLY apart from the nine reproducible facts (D2). `canonicalId : CommandRecord ->
+       CommandIdentity` renders ONLY `record.Reproducible` to a byte-stable identity in the F029 tagged,
+       length-prefixed, injective discipline (D6): arguments in order (order-significant), each env-delta
+       class as a SET (order/dup-invariant), the duration never read (D2). `identityValue` unwraps it. It
+       performs NO command execution/process spawn/byte capture, computes NO digest from bytes (digests are
+       supplied opaque `OutputDigest` tokens — D3), reads NO clock/filesystem/git/environment/network,
+       persists NO artifact, renders NO JSON/audit.json, builds NO provenance/attestation, and adds NO CLI.
+       It references ONLY FS.GG.Governance.Config (reusing F014 `TimeoutLimit` verbatim for the *timeout*
+       fact — D1/FR-009); the transitive `YamlDotNet` via Config is unused. It deliberately does NOT
+       reference Snapshot/Gates/Route/Routing/Findings/FreshnessKey/EvidenceReuse/RouteExplain/RouteJson/
+       GatesJson/AuditJson/Enforcement/Ship or any host/edge assembly. It adds NO new third-party
+       PackageReference: its own code is BCL + FSharp.Core only (FR-013). Compile order is Model ->
+       CommandRecord: the run-fact types, then the pure assembly + canonical-identity rendering. The
+       dependency direction stays one-way: CommandRecord -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CommandRecord</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like RouteExplain/EvidenceReuse/FreshnessKey/Config (overrides
+         Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CommandRecord</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="CommandRecord.fsi" />
+    <Compile Include="CommandRecord.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1339,3 +1339,81 @@ let f31Cheap: RouteResult =
 
 printfn "[F31] only cheap/medium gates ⇒ %A" (RouteExplain.explain f31Cheap f31Registry)
 // expect: { Findings = [] }
+
+// ── F032: the command-record core — the Phase-11 *Cost, Cache, Provenance* row 4 ──
+// "Record command runs with executable, arguments, working directory, environment delta, timeout, exit
+// code, stdout digest, stderr digest, captured output path, and duration." A pure, total
+// `build : … -> CommandRecord` assembles the ten ALREADY-SENSED facts into one complete record =
+// `{ Reproducible: ReproducibleFacts; Duration: SensedDuration }` — the sensed duration held STRUCTURALLY
+// apart from the nine reproducible facts (D2). `canonicalId : CommandRecord -> CommandIdentity` renders
+// ONLY `record.Reproducible` to a byte-stable identity in the F029 tagged/length-prefixed/injective
+// discipline (D6): arguments in order (order-significant), each env-delta class as a SET (order/dup
+// invariant), the duration NEVER read. No execution/process spawn, no byte hashing (digests are supplied
+// opaque tokens — D3), no clock/fs/git/network, no JSON/persistence/provenance, no CLI. Reuses F014
+// `TimeoutLimit` verbatim. Design-first FSI proof (Principle I) over literal run facts.
+#r "../src/FS.GG.Governance.CommandRecord/bin/Debug/net10.0/FS.GG.Governance.CommandRecord.dll"
+
+open FS.GG.Governance.CommandRecord
+open FS.GG.Governance.CommandRecord.Model
+
+// The worked example of contracts/command-record-identity-format.md: gcc -c main.c in /work, one added
+// env var CI=1, timeout 30, exit 0, stdout/stderr digests, no captured-output file, some sensed duration.
+let f32Env: EnvironmentDelta =
+    { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]
+      Changed = []
+      Removed = [] }
+
+let f32Record =
+    CommandRecord.build
+        (Executable "gcc")
+        [ Argument "-c"; Argument "main.c" ]
+        (WorkingDirectory "/work")
+        f32Env
+        (TimeoutLimit 30)
+        (ExitCode 0)
+        (OutputDigest "sha-out")
+        (OutputDigest "sha-err")
+        NoCapturedOutput
+        (SensedDuration 123_456L)
+
+// All ten facts read back verbatim (arguments in order; the sensed duration reachable apart).
+printfn "[F32] exe/args/cwd ⇒ %A" (f32Record.Reproducible.Executable, f32Record.Reproducible.Arguments, f32Record.Reproducible.WorkingDirectory)
+// expect: (Executable "gcc", [Argument "-c"; Argument "main.c"], WorkingDirectory "/work")
+printfn "[F32] duration (sensed, apart) ⇒ %A" f32Record.Duration
+// expect: SensedDuration 123456L
+
+// Two records differing ONLY in duration ⇒ EQUAL identity (duration excluded — D2/FR-005).
+let f32Faster = CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f32Env (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") NoCapturedOutput (SensedDuration 1L)
+printfn "[F32] duration-only difference ⇒ equal id? %b" (CommandRecord.canonicalId f32Record = CommandRecord.canonicalId f32Faster)
+// expect: true
+
+// Flip one reproducible fact (an argument) ⇒ DIFFERENT identity (FR-006).
+let f32OtherArg = CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "other.c" ] (WorkingDirectory "/work") f32Env (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") NoCapturedOutput (SensedDuration 123_456L)
+printfn "[F32] flip an argument ⇒ different id? %b" (CommandRecord.canonicalId f32Record <> CommandRecord.canonicalId f32OtherArg)
+// expect: true
+
+// Reorder/duplicate the env-delta entries ⇒ UNCHANGED identity (env class is a SET — FR-007).
+let f32EnvDup: EnvironmentDelta = { f32Env with Added = f32Env.Added @ f32Env.Added }
+let f32EnvReordered = CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f32EnvDup (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") NoCapturedOutput (SensedDuration 123_456L)
+printfn "[F32] duplicate env entry ⇒ unchanged id? %b" (CommandRecord.canonicalId f32Record = CommandRecord.canonicalId f32EnvReordered)
+// expect: true
+
+// NoCapturedOutput vs CapturedAt (CapturedOutputPath "") ⇒ DIFFERENT identity (absence ≠ empty path — D5).
+let f32EmptyCap = CommandRecord.build (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f32Env (TimeoutLimit 30) (ExitCode 0) (OutputDigest "sha-out") (OutputDigest "sha-err") (CapturedAt(CapturedOutputPath "")) (SensedDuration 123_456L)
+printfn "[F32] NoCapturedOutput vs empty path ⇒ different id? %b" (CommandRecord.canonicalId f32Record <> CommandRecord.canonicalId f32EmptyCap)
+// expect: true
+
+// The worked-example identity equals the contract's exact block.
+printfn "[F32] worked-example identity:\n%s" (CommandRecord.identityValue (CommandRecord.canonicalId f32Record))
+// expect:
+// exe=13:gcc
+// args=2;2:-c;6:main.c
+// cwd=15:/work
+// env+=1;n:2:CI|v:1:1
+// env~=0;
+// env-=0;
+// to=12:30
+// exit=11:0
+// out=17:sha-out
+// err=17:sha-err
+// cap=0

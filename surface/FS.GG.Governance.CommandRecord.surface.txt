@@ -1,0 +1,324 @@
+TYPE FS.GG.Governance.CommandRecord.CommandRecordModule
+  [Method] CommandIdentity canonicalId(CommandRecord)
+  [Method] CommandRecord build(Executable, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument], WorkingDirectory, EnvironmentDelta, TimeoutLimit, ExitCode, OutputDigest, OutputDigest, CapturedOutput, SensedDuration)
+  [Method] System.String identityValue(CommandIdentity)
+TYPE FS.GG.Governance.CommandRecord.ModelModule
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+AddedVar
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+Argument
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CapturedOutputPath
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+ChangedVar
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CommandIdentity
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CommandRecord
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+EnvVarName
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+EnvVarValue
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+EnvironmentDelta
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+Executable
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+ExitCode
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+OutputDigest
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+RemovedVar
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+ReproducibleFacts
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+SensedDuration
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+WorkingDirectory
+TYPE FS.GG.Governance.CommandRecord.ModelModule+AddedVar
+  [Constructor] Void .ctor(EnvVarName, EnvVarValue)
+  [Method] Boolean Equals(AddedVar)
+  [Method] Boolean Equals(AddedVar, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvVarName get_Name()
+  [Method] EnvVarValue get_Value()
+  [Method] Int32 CompareTo(AddedVar)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] EnvVarName Name
+  [Property] EnvVarValue Value
+TYPE FS.GG.Governance.CommandRecord.ModelModule+Argument
+  [Method] Argument NewArgument(System.String)
+  [Method] Boolean Equals(Argument)
+  [Method] Boolean Equals(Argument, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Argument)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput
+  [Method] Boolean Equals(CapturedOutput)
+  [Method] Boolean Equals(CapturedOutput, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCapturedAt()
+  [Method] Boolean get_IsNoCapturedOutput()
+  [Method] CapturedOutput NewCapturedAt(CapturedOutputPath)
+  [Method] CapturedOutput get_NoCapturedOutput()
+  [Method] Int32 CompareTo(CapturedOutput)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput+CapturedAt
+  [NestedType] FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput+Tags
+  [Property] Boolean IsCapturedAt
+  [Property] Boolean IsNoCapturedOutput
+  [Property] CapturedOutput NoCapturedOutput
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput+CapturedAt
+  [Method] CapturedOutputPath get_Item()
+  [Property] CapturedOutputPath Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CapturedOutput+Tags
+  [Field] Int32 CapturedAt
+  [Field] Int32 NoCapturedOutput
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CapturedOutputPath
+  [Method] Boolean Equals(CapturedOutputPath)
+  [Method] Boolean Equals(CapturedOutputPath, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CapturedOutputPath NewCapturedOutputPath(System.String)
+  [Method] Int32 CompareTo(CapturedOutputPath)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+ChangedVar
+  [Constructor] Void .ctor(EnvVarName, EnvVarValue, EnvVarValue)
+  [Method] Boolean Equals(ChangedVar)
+  [Method] Boolean Equals(ChangedVar, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvVarName get_Name()
+  [Method] EnvVarValue get_New()
+  [Method] EnvVarValue get_Old()
+  [Method] Int32 CompareTo(ChangedVar)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] EnvVarName Name
+  [Property] EnvVarValue New
+  [Property] EnvVarValue Old
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CommandIdentity
+  [Method] Boolean Equals(CommandIdentity)
+  [Method] Boolean Equals(CommandIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CommandIdentity NewCommandIdentity(System.String)
+  [Method] Int32 CompareTo(CommandIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+CommandRecord
+  [Constructor] Void .ctor(ReproducibleFacts, SensedDuration)
+  [Method] Boolean Equals(CommandRecord)
+  [Method] Boolean Equals(CommandRecord, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CommandRecord)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReproducibleFacts get_Reproducible()
+  [Method] SensedDuration get_Duration()
+  [Method] System.String ToString()
+  [Property] ReproducibleFacts Reproducible
+  [Property] SensedDuration Duration
+TYPE FS.GG.Governance.CommandRecord.ModelModule+EnvVarName
+  [Method] Boolean Equals(EnvVarName)
+  [Method] Boolean Equals(EnvVarName, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvVarName NewEnvVarName(System.String)
+  [Method] Int32 CompareTo(EnvVarName)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+EnvVarValue
+  [Method] Boolean Equals(EnvVarValue)
+  [Method] Boolean Equals(EnvVarValue, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvVarValue NewEnvVarValue(System.String)
+  [Method] Int32 CompareTo(EnvVarValue)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+EnvironmentDelta
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+AddedVar], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+ChangedVar], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+RemovedVar])
+  [Method] Boolean Equals(EnvironmentDelta)
+  [Method] Boolean Equals(EnvironmentDelta, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EnvironmentDelta)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+AddedVar] get_Added()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+ChangedVar] get_Changed()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+RemovedVar] get_Removed()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+AddedVar] Added
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+ChangedVar] Changed
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+RemovedVar] Removed
+TYPE FS.GG.Governance.CommandRecord.ModelModule+Executable
+  [Method] Boolean Equals(Executable)
+  [Method] Boolean Equals(Executable, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Executable NewExecutable(System.String)
+  [Method] Int32 CompareTo(Executable)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+ExitCode
+  [Method] Boolean Equals(ExitCode)
+  [Method] Boolean Equals(ExitCode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitCode NewExitCode(Int32)
+  [Method] Int32 CompareTo(ExitCode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CommandRecord.ModelModule+OutputDigest
+  [Method] Boolean Equals(OutputDigest)
+  [Method] Boolean Equals(OutputDigest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(OutputDigest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] OutputDigest NewOutputDigest(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.CommandRecord.ModelModule+RemovedVar
+  [Constructor] Void .ctor(EnvVarName, EnvVarValue)
+  [Method] Boolean Equals(RemovedVar)
+  [Method] Boolean Equals(RemovedVar, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvVarName get_Name()
+  [Method] EnvVarValue get_Old()
+  [Method] Int32 CompareTo(RemovedVar)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] EnvVarName Name
+  [Property] EnvVarValue Old
+TYPE FS.GG.Governance.CommandRecord.ModelModule+ReproducibleFacts
+  [Constructor] Void .ctor(Executable, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument], WorkingDirectory, EnvironmentDelta, TimeoutLimit, ExitCode, OutputDigest, OutputDigest, CapturedOutput)
+  [Method] Boolean Equals(ReproducibleFacts)
+  [Method] Boolean Equals(ReproducibleFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CapturedOutput get_CapturedOutput()
+  [Method] EnvironmentDelta get_Environment()
+  [Method] Executable get_Executable()
+  [Method] ExitCode get_ExitCode()
+  [Method] Int32 CompareTo(ReproducibleFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument] get_Arguments()
+  [Method] OutputDigest get_StderrDigest()
+  [Method] OutputDigest get_StdoutDigest()
+  [Method] System.String ToString()
+  [Method] TimeoutLimit get_Timeout()
+  [Method] WorkingDirectory get_WorkingDirectory()
+  [Property] CapturedOutput CapturedOutput
+  [Property] EnvironmentDelta Environment
+  [Property] Executable Executable
+  [Property] ExitCode ExitCode
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument] Arguments
+  [Property] OutputDigest StderrDigest
+  [Property] OutputDigest StdoutDigest
+  [Property] TimeoutLimit Timeout
+  [Property] WorkingDirectory WorkingDirectory
+TYPE FS.GG.Governance.CommandRecord.ModelModule+SensedDuration
+  [Method] Boolean Equals(SensedDuration)
+  [Method] Boolean Equals(SensedDuration, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedDuration)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Int64 get_nanoseconds()
+  [Method] SensedDuration NewSensedDuration(Int64)
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Int64 nanoseconds
+TYPE FS.GG.Governance.CommandRecord.ModelModule+WorkingDirectory
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WorkingDirectory)
+  [Method] Boolean Equals(WorkingDirectory, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WorkingDirectory)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Method] WorkingDirectory NewWorkingDirectory(System.String)
+  [Property] Int32 Tag
+  [Property] System.String Item
