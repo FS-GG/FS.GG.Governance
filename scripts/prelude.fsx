@@ -1106,3 +1106,28 @@ let f24Fail = rollup (f24Route [ f24Gate "build:ship" BlockOnShip; f24Gate "buil
 printfn "[F24] gate/light   Verdict=%A Blockers=%d Warnings=%d Exit=%A"
     f24Fail.Verdict f24Fail.Blockers.Length f24Fail.Warnings.Length f24Fail.ExitCodeBasis
 // expect: Verdict=Fail Blockers=1 Warnings=1 Exit=Blocked
+
+// ── F025: the audit.json projection — AuditJson.ofShipDecision : ShipDecision -> string ──
+// The pure, total emit of the F024 `ShipDecision` to the deterministic, versioned `audit.json`
+// WHOLE-CHANGE verdict document. Design-first record (Principle I): this throws while the body is the
+// `failwith` stub and runs green once US1 lands (T028 re-runs it end-to-end).
+#r "../src/FS.GG.Governance.AuditJson/bin/Debug/net10.0/FS.GG.Governance.AuditJson.dll"
+
+open FS.GG.Governance.AuditJson
+
+printfn "\n[F25] schemaVersion = %s" AuditJson.schemaVersion   // expect: fsgg.audit/v1
+
+// A failing decision (BlockOnShip blocker + BlockOnRelease relaxed-to-Advisory warning) at gate/light.
+let f25Json = AuditJson.ofShipDecision f24Fail
+printfn "[F25] failing audit.json (%d bytes):\n%s" f25Json.Length f25Json
+// expect: verdict:"fail", exitCodeBasis:"blocked"; a warning with baseSeverity:"blocking" +
+//         effectiveSeverity:"advisory" (the no-hide case).
+
+// Determinism: a second projection is byte-identical.
+printfn "[F25] deterministic? %b" (AuditJson.ofShipDecision f24Fail = f25Json)   // expect: true
+
+// The empty/clean decision projects to the empty-but-valid document (three present empty arrays).
+let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard)
+printfn "[F25] empty/clean audit.json:\n%s" f25Empty
+// expect: { "schemaVersion":"fsgg.audit/v1","verdict":"pass","exitCodeBasis":"clean",
+//           "blockers":[],"warnings":[],"passing":[] }

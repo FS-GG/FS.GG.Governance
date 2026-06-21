@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.AuditJson.AuditJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofShipDecision(ShipDecision)
+  [Property] System.String schemaVersion
