@@ -1,0 +1,135 @@
+TYPE FS.GG.Governance.SensedMetadata.ModelModule
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedKind
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedLabel
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedRendering
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedTimestamp
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedValue
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedKind
+  [Method] Boolean Equals(SensedKind)
+  [Method] Boolean Equals(SensedKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDurationKind()
+  [Method] Boolean get_IsTimestampKind()
+  [Method] Int32 CompareTo(SensedKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensedKind get_DurationKind()
+  [Method] SensedKind get_TimestampKind()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedKind+Tags
+  [Property] Boolean IsDurationKind
+  [Property] Boolean IsTimestampKind
+  [Property] Int32 Tag
+  [Property] SensedKind DurationKind
+  [Property] SensedKind TimestampKind
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedKind+Tags
+  [Field] Int32 DurationKind
+  [Field] Int32 TimestampKind
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedLabel
+  [Method] Boolean Equals(SensedLabel)
+  [Method] Boolean Equals(SensedLabel, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedLabel)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensedLabel NewSensedLabel(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum
+  [Constructor] Void .ctor(SensedLabel, SensedValue)
+  [Method] Boolean Equals(SensedMetadatum)
+  [Method] Boolean Equals(SensedMetadatum, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedMetadatum)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SensedLabel get_Label()
+  [Method] SensedValue get_Value()
+  [Method] System.String ToString()
+  [Property] SensedLabel Label
+  [Property] SensedValue Value
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedRendering
+  [Method] Boolean Equals(SensedRendering)
+  [Method] Boolean Equals(SensedRendering, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedRendering)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensedRendering NewSensedRendering(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedTimestamp
+  [Method] Boolean Equals(SensedTimestamp)
+  [Method] Boolean Equals(SensedTimestamp, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedTimestamp)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensedTimestamp NewSensedTimestamp(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedValue
+  [Method] Boolean Equals(SensedValue)
+  [Method] Boolean Equals(SensedValue, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDurationValue()
+  [Method] Boolean get_IsTimestampValue()
+  [Method] Int32 CompareTo(SensedValue)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SensedValue NewDurationValue(SensedDuration)
+  [Method] SensedValue NewTimestampValue(SensedTimestamp)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+DurationValue
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+Tags
+  [NestedType] FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+TimestampValue
+  [Property] Boolean IsDurationValue
+  [Property] Boolean IsTimestampValue
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+DurationValue
+  [Method] SensedDuration get_Item()
+  [Property] SensedDuration Item
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+Tags
+  [Field] Int32 DurationValue
+  [Field] Int32 TimestampValue
+TYPE FS.GG.Governance.SensedMetadata.ModelModule+SensedValue+TimestampValue
+  [Method] SensedTimestamp get_Item()
+  [Property] SensedTimestamp Item
+TYPE FS.GG.Governance.SensedMetadata.SensedMetadataModule
+  [Method] SensedKind kindOf(SensedMetadatum)
+  [Method] SensedMetadatum markDuration(SensedLabel, SensedDuration)
+  [Method] SensedMetadatum markTimestamp(SensedLabel, SensedTimestamp)
+  [Method] SensedRendering render(SensedMetadatum)
+  [Method] SensedRendering renderSection(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum])
+  [Method] System.String kindToken(SensedKind)
+  [Method] System.String renderingValue(SensedRendering)

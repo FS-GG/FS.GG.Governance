@@ -1506,3 +1506,51 @@ printfn "[F33] worked-example identity:\n%s" (Provenance.identityValue (Provenan
 // cap=0
 // env=15:local
 // bld=19:ci-runner
+
+// ── F034: the sensed-metadata marking + flagged-rendering core — the Phase-11 *Cost, Cache, Provenance* row 6
+// (its sixth and final line) ──
+// "Mark wall-clock timestamps and durations as sensed or non-deterministic metadata when included in
+// deterministic reports." A pure, total `markDuration` / `markTimestamp` marks an ALREADY-MEASURED duration /
+// timestamp (each with its label) as a `SensedMetadatum` whose `Value` is a closed `SensedValue` DU — THE TYPE
+// IS THE FLAG: there is no representation of a marked timestamp or duration that is reproducible (D3, FR-001).
+// `render : SensedMetadatum -> SensedRendering` renders ONE metadatum behind a RESERVED `!sensed!` marker in
+// the F029/F032/F033 tagged/length-prefixed/INJECTIVE discipline (D4) — a form no reproducible field tag ever
+// produces — so it is unmistakably distinguishable from a reproducible field and unspoofable by its data
+// (FR-003/FR-004). `renderSection` groups a list into one order-preserving `!sensed-section!`. No
+// sensing/timing/hashing/persistence/JSON/attestation/CLI; identity-NEUTRAL (D5, FR-006). References EXACTLY
+// ONE sibling core — CommandRecord — reusing F032 `SensedDuration` VERBATIM for the duration kind (FR-008);
+// the only genuinely new fact is `SensedTimestamp`. Design-first FSI proof (Principle I) over literal values.
+#r "../src/FS.GG.Governance.SensedMetadata/bin/Debug/net10.0/FS.GG.Governance.SensedMetadata.dll"
+
+open FS.GG.Governance.SensedMetadata
+open FS.GG.Governance.SensedMetadata.Model
+
+// The worked example of contracts/sensed-metadata-format.md: a duration labelled `elapsed` (1.83s) and a
+// timestamp labelled `at`. The duration is a VERBATIM F032 `SensedDuration` (FR-008).
+let f34Dur = SensedMetadata.markDuration (SensedLabel "elapsed") (SensedDuration 1_830_000_000L)
+let f34Ts = SensedMetadata.markTimestamp (SensedLabel "at") (SensedTimestamp "2026-06-21T12:00:00Z")
+
+// The kind is intrinsic to the value's case (D3) — sensed by construction, no reproducible variant.
+printfn "[F34] kindOf duration/timestamp ⇒ %A / %A" (SensedMetadata.kindOf f34Dur) (SensedMetadata.kindOf f34Ts)
+// expect: DurationKind / TimestampKind
+
+// One metadatum renders behind the reserved `!sensed!` marker, length-prefixed and injective.
+printfn "[F34] render duration ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.render f34Dur))
+// expect: !sensed!=duration;7:elapsed;10:1830000000
+printfn "[F34] render timestamp ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.render f34Ts))
+// expect: !sensed!=timestamp;2:at;20:2026-06-21T12:00:00Z
+
+// A list renders as one order-preserving, separable `!sensed-section!` (timestamp then duration).
+printfn "[F34] renderSection [ ts; dur ] ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.renderSection [ f34Ts; f34Dur ]))
+// expect: !sensed-section!=2;47:!sensed!=timestamp;2:at;20:2026-06-21T12:00:00Z;41:!sensed!=duration;7:elapsed;10:1830000000
+
+// The empty list is an ordinary value, not an error.
+printfn "[F34] renderSection [] ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.renderSection []))
+// expect: !sensed-section!=0;
+
+// The length prefix neutralizes spoofs: an empty label is a distinct `0:` form; a label whose text is itself
+// `!sensed!` is read as 8 label bytes, never as a marker (FR-004).
+printfn "[F34] empty-label zero-duration ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.render (SensedMetadata.markDuration (SensedLabel "") (SensedDuration 0L))))
+// expect: !sensed!=duration;0:;1:0
+printfn "[F34] label-is-!sensed! spoof ⇒ %s" (SensedMetadata.renderingValue (SensedMetadata.render (SensedMetadata.markTimestamp (SensedLabel "!sensed!") (SensedTimestamp "2026-06-21T12:00:00Z"))))
+// expect: !sensed!=timestamp;8:!sensed!;20:2026-06-21T12:00:00Z
