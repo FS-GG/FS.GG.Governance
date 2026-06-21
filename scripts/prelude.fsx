@@ -1054,3 +1054,55 @@ printfn "[F23] deterministic?  %b"
 printfn "[F23] recognize: %A | %A | %A"
     (recognizeMode "gate") (recognizeMode "ship") (recognizeProfile "strict")
 // expect: Recognized Gate | Unrecognized "ship" | Recognized Strict
+
+// ── F024: ship verdict rollup — the second Phase-5 pure core ──
+// Design-first sketch (Principle I): exercises the PUBLIC Ship surface the way a downstream
+// `audit.json` / `fsgg ship` caller will. PURE and TOTAL — no I/O, no clock, never throws; `rollup`
+// maps (RouteResult, RunMode, Profile) -> ShipDecision. While Ship.fs is the `failwith "F024"` stub
+// this block THROWS at runtime; it runs green only once Foundation + US1 land (T025 re-runs it
+// end-to-end against the real body).
+
+#r "../src/FS.GG.Governance.Ship/bin/Debug/net10.0/FS.GG.Governance.Ship.dll"
+
+open FS.GG.Governance.Gates.Model            // Gate, GateId, Maturity (via Config)
+open FS.GG.Governance.Findings.Model          // findings
+open FS.GG.Governance.Route.Model             // RouteResult, SelectedGate, CostRollup
+open FS.GG.Governance.Ship.Model              // Verdict, ExitCodeBasis, EnforcedItem, ShipDecision
+open FS.GG.Governance.Ship.Ship               // rollup
+
+// Minimal real fixtures (the rollup reads only Id + Maturity from each gate).
+let f24Gate (raw: string) (maturity: Maturity) : SelectedGate =
+    let domain = DomainId "build"
+    { Gate =
+        { Id = GateId raw
+          Domain = domain
+          Description = raw
+          Prerequisites = []
+          Cost = Cheap
+          Timeout = TimeoutLimit 60
+          Owner = Owner "team"
+          Maturity = maturity
+          ProductCheck = false
+          FreshnessKey = { Check = CheckId raw; Domain = domain; Cost = Cheap; Environment = Local; Command = None } }
+      SelectingPaths = [] }
+
+let f24Route (gates: SelectedGate list) : RouteResult =
+    { SelectedGates = gates; Findings = { Findings = [] }; Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+
+// Empty route at gate/standard ⇒ clean pass.
+let f24Empty = rollup (f24Route []) Gate Standard
+printfn "\n[F24] empty route  Verdict=%A Blockers=%d Warnings=%d Passing=%d Exit=%A"
+    f24Empty.Verdict f24Empty.Blockers.Length f24Empty.Warnings.Length f24Empty.Passing.Length f24Empty.ExitCodeBasis
+// expect: Verdict=Pass Blockers=0 Warnings=0 Passing=0 Exit=Clean
+
+// A block-on-ship gate at inner/light ⇒ one warning (relaxed, effective Advisory).
+let f24Warn = rollup (f24Route [ f24Gate "build:ship" BlockOnShip ]) Inner Light
+printfn "[F24] inner/light  Verdict=%A Warnings=%d (effective=%A)"
+    f24Warn.Verdict f24Warn.Warnings.Length (f24Warn.Warnings |> List.tryHead |> Option.map (fun i -> i.Decision.EffectiveSeverity))
+// expect: Verdict=Pass Warnings=1 (effective=Some Advisory)
+
+// A block-on-ship + block-on-release pair at gate/light ⇒ Fail; one blocker, one warning.
+let f24Fail = rollup (f24Route [ f24Gate "build:ship" BlockOnShip; f24Gate "build:rel" BlockOnRelease ]) Gate Light
+printfn "[F24] gate/light   Verdict=%A Blockers=%d Warnings=%d Exit=%A"
+    f24Fail.Verdict f24Fail.Blockers.Length f24Fail.Warnings.Length f24Fail.ExitCodeBasis
+// expect: Verdict=Fail Blockers=1 Warnings=1 Exit=Blocked
