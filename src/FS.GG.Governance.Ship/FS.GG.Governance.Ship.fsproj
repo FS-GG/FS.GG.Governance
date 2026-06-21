@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F024: the SECOND Phase-5 pure core — the typed ship-decision vocabulary and the single pure,
+       total `Ship.rollup : RouteResult -> RunMode -> Profile -> ShipDecision` that rolls an
+       already-routed change (the F019 `RouteResult`) plus a chosen run MODE and PROFILE up into one
+       whole-change SHIP DECISION: a closed `Pass`/`Fail` verdict, the deterministic
+       `Blockers`/`Warnings`/`Passing` partition of every enforced item, each item's full F023
+       enforcement detail, and a typed `ExitCodeBasis` (clean vs blocked) — the design's
+       "Modes, profiles, and maturity" rollup at change scale.
+
+       It REUSES F023 `deriveEffectiveSeverity` for every per-item decision (FR-003) and the F019
+       `RouteResult` / F018 `Gate` / F017 finding values VERBATIM (the "reuse, don't re-derive" rule).
+       It adds only the whole-change rollup: the hidden gate/finding -> `EnforcementInput` mapping
+       (FR-013, research D3/D4), a three-way `Blockers`/`Warnings`/`Passing` partition of every
+       enforced item, and the verdict + exit-code-basis derived from that partition. It honours the
+       design's no-hide rule — a relaxed blocker is always visible as a self-explaining warning,
+       every item carrying base + effective severity, mode, profile, maturity, and reason.
+
+       PURE and TOTAL (FR-008): defined over the COMPLETE cross-product of (selected-gate maturities ×
+       finding zones × run mode × profile) — INCLUDING the empty `RouteResult` (⇒ `Pass`, empty lists,
+       `Clean`) — never throws, deterministic — byte-identical for identical input (FR-009, SC-004).
+       Echoes base severity unchanged (FR-006), drops no item (|B|+|W|+|P| = N+M, FR-010), never
+       escalates a base-advisory item (FR-011).
+
+       Computes NO `audit.json` (or other) serialized document, NO process exit code (only the typed
+       `ExitCodeBasis`), NO cache/freshness verdict, NO `policy.yml` dial (FR-012); does NO I/O; emits
+       NO CLI. The carried `RouteResult.Cost` is NOT evaluated.
+
+       A pure leaf (`Ship -> {Enforcement, Route}`), reaching no git/filesystem/clock and needing no
+       serialization — so NO new third-party `PackageReference` (`System.*`/FSharp.Core only);
+       `Gates`/`Findings`/`Config` flow transitively through `Route`. The whole surface is a pure total
+       function — no MVU ceremony (Principle IV). Compile order is Model.fsi -> Model.fs -> Ship.fsi ->
+       Ship.fs: the result vocabulary, then the pure rollup. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Ship</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson/GatesJson/Enforcement
+         (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Ship</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Ship.fsi" />
+    <Compile Include="Ship.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+  </ItemGroup>
+
+</Project>

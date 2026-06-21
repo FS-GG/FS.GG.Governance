@@ -1,0 +1,129 @@
+TYPE FS.GG.Governance.Ship.ModelModule
+  [NestedType] FS.GG.Governance.Ship.ModelModule+EnforcedItem
+  [NestedType] FS.GG.Governance.Ship.ModelModule+EnforcedItemId
+  [NestedType] FS.GG.Governance.Ship.ModelModule+ExitCodeBasis
+  [NestedType] FS.GG.Governance.Ship.ModelModule+ShipDecision
+  [NestedType] FS.GG.Governance.Ship.ModelModule+Verdict
+TYPE FS.GG.Governance.Ship.ModelModule+EnforcedItem
+  [Constructor] Void .ctor(EnforcedItemId, EnforcementDecision)
+  [Method] Boolean Equals(EnforcedItem)
+  [Method] Boolean Equals(EnforcedItem, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnforcedItemId get_Id()
+  [Method] EnforcementDecision get_Decision()
+  [Method] Int32 CompareTo(EnforcedItem)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] EnforcedItemId Id
+  [Property] EnforcementDecision Decision
+TYPE FS.GG.Governance.Ship.ModelModule+EnforcedItemId
+  [Method] Boolean Equals(EnforcedItemId)
+  [Method] Boolean Equals(EnforcedItemId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFindingItem()
+  [Method] Boolean get_IsGateItem()
+  [Method] EnforcedItemId NewFindingItem(FindingId, GovernedPath)
+  [Method] EnforcedItemId NewGateItem(GateId)
+  [Method] Int32 CompareTo(EnforcedItemId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Ship.ModelModule+EnforcedItemId+FindingItem
+  [NestedType] FS.GG.Governance.Ship.ModelModule+EnforcedItemId+GateItem
+  [NestedType] FS.GG.Governance.Ship.ModelModule+EnforcedItemId+Tags
+  [Property] Boolean IsFindingItem
+  [Property] Boolean IsGateItem
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Ship.ModelModule+EnforcedItemId+FindingItem
+  [Method] FindingId get_Item1()
+  [Method] GovernedPath get_Item2()
+  [Property] FindingId Item1
+  [Property] GovernedPath Item2
+TYPE FS.GG.Governance.Ship.ModelModule+EnforcedItemId+GateItem
+  [Method] GateId get_Item()
+  [Property] GateId Item
+TYPE FS.GG.Governance.Ship.ModelModule+EnforcedItemId+Tags
+  [Field] Int32 FindingItem
+  [Field] Int32 GateItem
+TYPE FS.GG.Governance.Ship.ModelModule+ExitCodeBasis
+  [Method] Boolean Equals(ExitCodeBasis)
+  [Method] Boolean Equals(ExitCodeBasis, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBlocked()
+  [Method] Boolean get_IsClean()
+  [Method] ExitCodeBasis get_Blocked()
+  [Method] ExitCodeBasis get_Clean()
+  [Method] Int32 CompareTo(ExitCodeBasis)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Ship.ModelModule+ExitCodeBasis+Tags
+  [Property] Boolean IsBlocked
+  [Property] Boolean IsClean
+  [Property] ExitCodeBasis Blocked
+  [Property] ExitCodeBasis Clean
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Ship.ModelModule+ExitCodeBasis+Tags
+  [Field] Int32 Blocked
+  [Field] Int32 Clean
+TYPE FS.GG.Governance.Ship.ModelModule+ShipDecision
+  [Constructor] Void .ctor(Verdict, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem], ExitCodeBasis)
+  [Method] Boolean Equals(ShipDecision)
+  [Method] Boolean Equals(ShipDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitCodeBasis get_ExitCodeBasis()
+  [Method] Int32 CompareTo(ShipDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] get_Blockers()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] get_Passing()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] get_Warnings()
+  [Method] System.String ToString()
+  [Method] Verdict get_Verdict()
+  [Property] ExitCodeBasis ExitCodeBasis
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] Blockers
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] Passing
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Ship.ModelModule+EnforcedItem] Warnings
+  [Property] Verdict Verdict
+TYPE FS.GG.Governance.Ship.ModelModule+Verdict
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(Verdict)
+  [Method] Boolean Equals(Verdict, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFail()
+  [Method] Boolean get_IsPass()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(Verdict)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] Verdict get_Fail()
+  [Method] Verdict get_Pass()
+  [NestedType] FS.GG.Governance.Ship.ModelModule+Verdict+Tags
+  [Property] Boolean IsFail
+  [Property] Boolean IsPass
+  [Property] Int32 Tag
+  [Property] Verdict Fail
+  [Property] Verdict Pass
+TYPE FS.GG.Governance.Ship.ModelModule+Verdict+Tags
+  [Field] Int32 Fail
+  [Field] Int32 Pass
+TYPE FS.GG.Governance.Ship.ShipModule
+  [Method] ShipDecision rollup(RouteResult, RunMode, Profile)
