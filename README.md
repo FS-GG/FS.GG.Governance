@@ -200,6 +200,7 @@ depend on it; Cedar is a reference for the evaluation semantics. See
 - [Implementation plan (Spec Kit, F01–F27)](docs/2026-06-18-governance-kernel-speckit-implementation-plan.md) — the design and capability report decomposed into ordered features with progress checkboxes
 - [Capability design report](docs/reports/2026-06-18-233718-fsgg-governance-capability-design.md) — product-neutral capability envelope and protected-boundary roadmap
 - [CI: GitHub Actions branch-protection guidance for `fsgg ship`](docs/ci/github-actions-branch-protection.md) — wire the merge verdict into a required status check
+- [Golden enforcement fixtures](fixtures/enforcement/) — the committed, drift-guarded enforcement [truth table](fixtures/enforcement/truth-table.md) (the full base × maturity × run-mode × profile cross-product) and the blocking-altering [`audit.json` snapshots](fixtures/enforcement/audit-snapshots/). Regenerate after an intended core change with `BLESS_FIXTURES=1 dotnet test tests/FS.GG.Governance.EnforcementFixtures.Tests`.
 - [Feature specs](specs/) · [decision records](docs/decisions/)
 
 ## Workflow
