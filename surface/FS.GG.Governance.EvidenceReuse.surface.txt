@@ -1,0 +1,120 @@
+TYPE FS.GG.Governance.EvidenceReuse.EvidenceReuseModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence] entries(ReuseStore)
+  [Method] ReuseDecision decide(FreshnessInputs, ReuseStore)
+  [Method] ReuseStore get_empty()
+  [Method] ReuseStore record(FreshnessInputs, EvidenceRef, ReuseStore)
+  [Method] System.String referenceValue(EvidenceRef)
+  [Property] ReuseStore empty
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef
+  [Method] Boolean Equals(EvidenceRef)
+  [Method] Boolean Equals(EvidenceRef, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EvidenceRef NewEvidenceRef(System.String)
+  [Method] Int32 CompareTo(EvidenceRef)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause
+  [Method] Boolean Equals(RecomputeCause)
+  [Method] Boolean Equals(RecomputeCause, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputsChanged()
+  [Method] Boolean get_IsNoPriorEvidence()
+  [Method] Int32 CompareTo(RecomputeCause)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RecomputeCause NewInputsChanged(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] RecomputeCause get_NoPriorEvidence()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause+InputsChanged
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause+Tags
+  [Property] Boolean IsInputsChanged
+  [Property] Boolean IsNoPriorEvidence
+  [Property] Int32 Tag
+  [Property] RecomputeCause NoPriorEvidence
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause+InputsChanged
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] Item
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause+Tags
+  [Field] Int32 InputsChanged
+  [Field] Int32 NoPriorEvidence
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence
+  [Constructor] Void .ctor(FreshnessInputs, EvidenceRef)
+  [Method] Boolean Equals(RecordedEvidence)
+  [Method] Boolean Equals(RecordedEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EvidenceRef get_Evidence()
+  [Method] FreshnessInputs get_Inputs()
+  [Method] Int32 CompareTo(RecordedEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] EvidenceRef Evidence
+  [Property] FreshnessInputs Inputs
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision
+  [Method] Boolean Equals(ReuseDecision)
+  [Method] Boolean Equals(ReuseDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsRecompute()
+  [Method] Boolean get_IsReuse()
+  [Method] Int32 CompareTo(ReuseDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReuseDecision NewRecompute(RecomputeCause)
+  [Method] ReuseDecision NewReuse(EvidenceRef)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Recompute
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Reuse
+  [NestedType] FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Tags
+  [Property] Boolean IsRecompute
+  [Property] Boolean IsReuse
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Recompute
+  [Method] RecomputeCause get_Item()
+  [Property] RecomputeCause Item
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Reuse
+  [Method] EvidenceRef get_Item()
+  [Property] EvidenceRef Item
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+ReuseDecision+Tags
+  [Field] Int32 Recompute
+  [Field] Int32 Reuse
+TYPE FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore
+  [Method] Boolean Equals(ReuseStore)
+  [Method] Boolean Equals(ReuseStore, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReuseStore)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence] get_Item()
+  [Method] ReuseStore NewReuseStore(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence])
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceReuse.ModelModule+RecordedEvidence] Item

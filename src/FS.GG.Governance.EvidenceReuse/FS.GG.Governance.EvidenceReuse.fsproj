@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F030: the optional, packable evidence-reuse decision core — the Phase-11 *Cost, Cache, and
+       Provenance* row 2 ("cache reusable evidence only when all freshness inputs match"). A pure, total,
+       deterministic pair of functions answers one operational question: given the evidence already
+       recorded (a `ReuseStore` value handed in), may any of it be reused for this run — and if not, exactly
+       which freshness input changed? `decide : FreshnessInputs -> ReuseStore -> ReuseDecision` is *Reuse*
+       iff some recorded entry F029-`matches` the candidate on EVERY category, else *Recompute* with a
+       located cause (`NoPriorEvidence` or `InputsChanged` of the F029 `diff` categories — the no-hide rule,
+       FR-006). `record : FreshnessInputs -> EvidenceRef -> ReuseStore -> ReuseStore` is the pure, total,
+       de-duplicating insert (most-recent-wins, no mutation). It computes NO persistence, NO eviction/expiry,
+       NO output-digest verification, runs NO gate, emits NO ship verdict, and adds NO CLI. `EvidenceRef`
+       is an OPAQUE edge-supplied token (the F029 `Revision` precedent): never parsed, validated, produced,
+       or dereferenced here. It references ONLY FS.GG.Governance.FreshnessKey (reusing F029's
+       `FreshnessInputs`/`matches`/`diff`/`InputCategory` verbatim — research D1/D2); Config arrives
+       transitively THROUGH F029 and is never named directly, and it deliberately does NOT reference
+       Gates/Snapshot/Route or any host/edge assembly. It adds NO new third-party PackageReference: its own
+       code is BCL + FSharp.Core only (FR-014). Compile order is Model -> EvidenceReuse: the reuse-store
+       types, then the pure operations. The whole surface is two pure total functions plus three accessors —
+       no MVU ceremony (Principle IV / research). The dependency direction stays one-way:
+       EvidenceReuse -> FreshnessKey -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.EvidenceReuse</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like FreshnessKey/Gates/Config (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.EvidenceReuse</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="EvidenceReuse.fsi" />
+    <Compile Include="EvidenceReuse.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>
