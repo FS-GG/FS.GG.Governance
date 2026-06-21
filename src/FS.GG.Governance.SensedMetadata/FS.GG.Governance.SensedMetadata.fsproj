@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F034: the pure, total, deterministic sensed-metadata marking + flagged-rendering core — the Phase-11
+       *Cost, Cache, and Provenance* row 6 (its sixth and final line: "mark wall-clock timestamps and durations
+       as sensed or non-deterministic metadata when included in deterministic reports"). One question answered
+       deterministically: given an ALREADY-MEASURED wall-clock timestamp or duration, what is the typed
+       sensed-metadatum value that marks it sensed BY CONSTRUCTION, and what is its unambiguously-flagged,
+       byte-stable rendering for inclusion in a deterministic report apart from its reproducible bytes?
+       `markDuration` / `markTimestamp` mark an already-measured duration / timestamp (each with its label) as a
+       `SensedMetadatum` whose `Value` is a closed `SensedValue` DU — THE TYPE IS THE FLAG: there is no
+       representation of a marked timestamp or duration that is reproducible (D3, FR-001). `kindOf` / `kindToken`
+       report the closed `SensedKind`. `render : SensedMetadatum -> SensedRendering` renders ONE metadatum in the
+       F029/F032/F033 tagged, length-prefixed, INJECTIVE discipline behind a RESERVED `!sensed!` marker — a form
+       no reproducible field tag ever produces (D4) — so it is unmistakably distinguishable from a reproducible
+       field and unspoofable by its data (FR-003/FR-004). `renderSection` groups a list into one order-preserving
+       `!sensed-section!` cleanly separable from a report's reproducible bytes (FR-005); `renderingValue` unwraps.
+       It reads NO clock, measures NO elapsed time (the timestamp/duration are supplied values), computes NO
+       digest from bytes, reads NO clock/filesystem/git/environment/network, persists NO artifact, renders NO
+       JSON/audit.json/provenance document/route report (only the individual rendering and the section), performs
+       NO attestation/signing, and adds NO CLI. It is identity-NEUTRAL (D5, FR-006): it computes no reproducible
+       identity and references no identity-computing core. It references EXACTLY ONE sibling core (D1) —
+       FS.GG.Governance.CommandRecord — to reuse F032's `SensedDuration` VERBATIM for the duration kind (FR-008);
+       the only genuinely new vocabulary is `SensedTimestamp` plus this row's
+       `SensedLabel`/`SensedKind`/`SensedValue`/`SensedMetadatum`/`SensedRendering`. CommandRecord is a pure vocab
+       core, so nothing impure is pulled in (the transitive `YamlDotNet` via Config is unused). It deliberately
+       does NOT reference FreshnessKey/Provenance/Gates/Route/Routing/Findings/Snapshot/EvidenceReuse/RouteExplain
+       or any host/edge assembly. It adds NO new third-party PackageReference (FR-011): BCL + FSharp.Core only.
+       Compile order is Model -> SensedMetadata: the sensed-metadata vocabulary, then the pure marking +
+       length-prefixed flagged-rendering bodies. The dependency direction stays one-way:
+       SensedMetadata -> CommandRecord -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.SensedMetadata</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like CommandRecord/FreshnessKey/Config/Provenance (overrides
+         Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.SensedMetadata</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="SensedMetadata.fsi" />
+    <Compile Include="SensedMetadata.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>

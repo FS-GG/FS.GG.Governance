@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F034, exercising the PUBLIC surface of FS.GG.Governance.SensedMetadata:
+       `SensedMetadata.markDuration` / `markTimestamp` / `kindOf` / `kindToken` / `render` / `renderSection` /
+       `renderingValue` over REAL, literally-constructible measured values (Principle V — every value is a real
+       typed value built from literals, incl. real F032 `SensedDuration`s; never a mock; no clock is read, no
+       process spawned). The EMITTED rendering bytes are inspected by ordinary string comparison and the
+       committed worked-example blocks. Expecto + FsCheck give the carriage / sensed-by-construction / kind /
+       marker-present-and-distinguishable / unspoofable-injective / order-preserving-section / determinism /
+       purity / identity-neutrality / totality properties; the VSTest adapters let `dotnet test` drive the
+       Expecto runner. The reflective SurfaceDrift test pins the Tier-1 public surface + the
+       CommandRecord/Config/BCL/FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="MarkingTests.fs" />
+    <Compile Include="RenderingTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.SensedMetadata/FS.GG.Governance.SensedMetadata.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>
