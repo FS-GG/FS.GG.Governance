@@ -1,0 +1,65 @@
+# fsgg ship gate — copyable GitHub Actions workflow template.
+#
+# Copy this file into YOUR repository's .github/workflows/ directory, then mark the
+# `ship` job a REQUIRED STATUS CHECK in branch protection. Once required, a red check
+# (exit 1/2/3/4) blocks the merge and a green check (exit 0) allows it.
+#
+# This is a copy-me example, not an active workflow in the FS.GG.Governance repo.
+# See docs/ci/github-actions-branch-protection.md for the full how-to.
+name: fsgg ship gate
+
+on:
+  pull_request:
+    branches: [ main ]            # CHANGE ME: your protected branch name(s)
+    # Do NOT add `paths:`/`paths-ignore:` here — a governed change must never be able
+    # to skip the required check (fail-closed). Keep the gate job filter-free.
+
+permissions:
+  contents: read                  # least privilege: read the code, upload an artifact
+
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # required: base/head sensing needs the base ref;
+                                  # a shallow checkout makes the command fail as a tool error.
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'  # CHANGE ME (later): remove once `fsgg ship` ships as a packed tool
+
+      - name: fsgg ship gate       # this step's exit code IS the gate — do NOT translate it
+        run: |
+          # CHANGE ME (later): the from-source line below is the real current path.
+          # `fsgg ship …` is NOT yet a packed tool; switch to it once it ships.
+          dotnet run --project src/FS.GG.Governance.ShipCommand -- \
+            ship --mode gate --profile standard --json
+          # Future packed tool (NOT YET SHIPPING — do not enable yet):
+          # fsgg ship --mode gate --profile standard --json
+          #
+          # No `|| true`, no `continue-on-error`, no exit-code remap: a non-zero exit
+          # must stay non-zero so the required check goes red and the merge is blocked.
+
+      - name: Surface audit.json   # best-effort; never gates (runs even when the gate failed)
+        if: always()
+        run: |
+          if [ -f readiness/audit.json ]; then
+            {
+              echo '### fsgg ship verdict'
+              echo '```json'
+              cat readiness/audit.json
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No readiness/audit.json produced (the command may have failed before writing one).' \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fsgg-audit
+          path: readiness/audit.json
+          if-no-files-found: ignore   # best-effort: a missing/forbidden upload never fails the job
