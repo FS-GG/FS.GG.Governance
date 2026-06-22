@@ -1,0 +1,94 @@
+TYPE FS.GG.Governance.ReviewRecord.ModelModule
+  [NestedType] FS.GG.Governance.ReviewRecord.ModelModule+RecordIdentity
+  [NestedType] FS.GG.Governance.ReviewRecord.ModelModule+RecordedVerdict
+  [NestedType] FS.GG.Governance.ReviewRecord.ModelModule+ReproducibleFacts
+  [NestedType] FS.GG.Governance.ReviewRecord.ModelModule+ResponseDigest
+  [NestedType] FS.GG.Governance.ReviewRecord.ModelModule+ReviewRecord
+TYPE FS.GG.Governance.ReviewRecord.ModelModule+RecordIdentity
+  [Method] Boolean Equals(RecordIdentity)
+  [Method] Boolean Equals(RecordIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RecordIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RecordIdentity NewRecordIdentity(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.ReviewRecord.ModelModule+RecordedVerdict
+  [Method] Boolean Equals(RecordedVerdict)
+  [Method] Boolean Equals(RecordedVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RecordedVerdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RecordedVerdict NewRecordedVerdict(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.ReviewRecord.ModelModule+ReproducibleFacts
+  [Constructor] Void .ctor(ReviewRequest, ModelId, ModelVersion, ReviewerPromptHash, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash], ResponseDigest, RecordedVerdict)
+  [Method] Boolean Equals(ReproducibleFacts)
+  [Method] Boolean Equals(ReproducibleFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] get_ReviewedArtifacts()
+  [Method] ModelId get_Model()
+  [Method] ModelVersion get_ModelVersion()
+  [Method] RecordedVerdict get_Verdict()
+  [Method] ResponseDigest get_ResponseDigest()
+  [Method] ReviewRequest get_Request()
+  [Method] ReviewerPromptHash get_PromptHash()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] ReviewedArtifacts
+  [Property] ModelId Model
+  [Property] ModelVersion ModelVersion
+  [Property] RecordedVerdict Verdict
+  [Property] ResponseDigest ResponseDigest
+  [Property] ReviewRequest Request
+  [Property] ReviewerPromptHash PromptHash
+TYPE FS.GG.Governance.ReviewRecord.ModelModule+ResponseDigest
+  [Method] Boolean Equals(ResponseDigest)
+  [Method] Boolean Equals(ResponseDigest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ResponseDigest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ResponseDigest NewResponseDigest(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.ReviewRecord.ModelModule+ReviewRecord
+  [Constructor] Void .ctor(ReproducibleFacts, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum])
+  [Method] Boolean Equals(ReviewRecord)
+  [Method] Boolean Equals(ReviewRecord, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum] get_Sensed()
+  [Method] ReproducibleFacts get_Reproducible()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum] Sensed
+  [Property] ReproducibleFacts Reproducible
+TYPE FS.GG.Governance.ReviewRecord.ReviewRecordModule
+  [Method] RecordIdentity canonicalId(ReviewRecord)
+  [Method] ReviewRecord build(ReviewRequest, ModelId, ModelVersion, ReviewerPromptHash, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash], ResponseDigest, RecordedVerdict, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SensedMetadata.ModelModule+SensedMetadatum])
+  [Method] System.String identityValue(RecordIdentity)

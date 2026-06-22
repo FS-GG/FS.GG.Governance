@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F038: the optional, packable auditable review-record core — the Phase-12 *Agent-Reviewed Rule
+       Guardrails* FOURTH row ("record review requests, response digests, model identity, prompt identity,
+       artifact digests, and final verdict"). The agent-review analogue of F032 CommandRecord / F033
+       Provenance: a record-building core that assembles ONE completed agent review as an immutable, auditable
+       value and derives a deterministic, byte-stable, INJECTIVE record identity over its reproducible facts.
+       It answers ONE question deterministically: what was this completed review — request, judge, artifacts,
+       response, verdict — for the audit trail? `build : ReviewRequest -> ModelId -> ModelVersion ->
+       ReviewerPromptHash -> ArtifactHash list -> ResponseDigest -> RecordedVerdict -> SensedMetadatum list ->
+       ReviewRecord` assembles the six audit facts + sensed metadata verbatim (sensed last — the F032
+       convention; no reorder/dedup/capture/I/O), `canonicalId : ReviewRecord -> RecordIdentity` renders the
+       reproducible facts (NEVER the sensed metadata) to the canonical identity in the F029/F032/F035 tagged,
+       length-prefixed, injective discipline (the `req` segment is F037's own injective render of the embedded
+       request), and `identityValue` unwraps. It performs NO model/agent invocation, computes NO hash from raw
+       bytes (every digest is a supplied token), runs NO actual review, produces NO cache key/verdict store/
+       lookup/invalidation (F035/F036, consumed by neighbours, not by this core), makes NO advisory-vs-blocking
+       promotion (the fifth row), defines NO calibration (the sixth row), interprets/compares/thresholds NO
+       verdict, performs NO persistence/JSON projection, reads NO clock/filesystem/git/environment/network, and
+       adds NO CLI (FR-007). It references EXACTLY TWO sibling pure cores (the F033 multi-sibling shape, plan
+       D1): FS.GG.Governance.PromptIsolation (F037) — to reuse `ReviewRequest` + `PromptIsolation.render`
+       VERBATIM and, transitively, F035's `ModelId`/`ModelVersion`/`ReviewerPromptHash` and F029's
+       `ArtifactHash` — and FS.GG.Governance.SensedMetadata (F034) — to reuse `SensedMetadatum` +
+       `markTimestamp`/`markDuration`. It adds NO new third-party PackageReference (FR-009): BCL + FSharp.Core
+       only (the transitive YamlDotNet via Config is unused here). It deliberately does NOT reference
+       Gates/Snapshot/Route/Routing/Findings/EvidenceReuse/VerdictReuse/Adapters or any host/edge/CLI assembly.
+       Compile order is Model -> ReviewRecord: the three new newtypes + the two records, then the pure total
+       assembly + injective identity bodies. The whole surface is pure total functions over supplied values —
+       no MVU ceremony (Principle IV / N/A). The dependency direction stays one-way:
+       ReviewRecord -> {PromptIsolation -> AgentReviewKey -> FreshnessKey -> Config} and
+       ReviewRecord -> {SensedMetadata -> CommandRecord -> Config}; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReviewRecord</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like PromptIsolation/SensedMetadata/AgentReviewKey (overrides
+         Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReviewRecord</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="ReviewRecord.fsi" />
+    <Compile Include="ReviewRecord.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.PromptIsolation/FS.GG.Governance.PromptIsolation.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SensedMetadata/FS.GG.Governance.SensedMetadata.fsproj" />
+  </ItemGroup>
+
+</Project>

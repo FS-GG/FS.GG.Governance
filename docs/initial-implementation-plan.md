@@ -829,13 +829,13 @@ under review.
 Purpose: allow judgement-heavy checks without treating uncalibrated agent output
 as deterministic proof.
 
-Status (2026-06-22): the **first three rows are 🟢 complete** — three pure, total,
+Status (2026-06-22): the **first four rows are 🟢 complete** — four pure, total,
 deterministic cores, each the analogue of a Phase-11 core specialised to
 agent-reviewed verdicts, reusing the F029/F032/F035 length-prefixed, injective
 encoding discipline: F035 `AgentReviewKey` (cache key), F036 `VerdictReuse`
-(invalidation decision), and F037 `PromptIsolation` (prompt isolation). The
-remaining three rows (review records, advisory promotion, calibration) are 🔴 not
-started.
+(invalidation decision), F037 `PromptIsolation` (prompt isolation), and F038
+`ReviewRecord` (auditable review record). The remaining two rows (advisory
+promotion, calibration) are 🔴 not started.
 
 Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
 🔴 not started.
@@ -862,8 +862,17 @@ Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
   channels with an injective, unspoofable length-prefixed data fence so artifact
   content can never masquerade as an instruction; reuses F035 `QuestionText` and F029
   `ArtifactHash` verbatim; no model invoked, no bytes hashed, no new dependency.
-- 🔴 [ ] Record review requests, response digests, model identity, prompt identity,
-  artifact digests, and final verdict.
+- 🟢 [x] Record review requests, response digests, model identity, prompt identity,
+  artifact digests, and final verdict. **(F038 — `FS.GG.Governance.ReviewRecord`, done
+  2026-06-22)** A pure, total `build`/`canonicalId`/`identityValue` (the agent-review
+  analogue of F032 `CommandRecord` / F033 `Provenance`): assembles one completed review
+  as an immutable `ReviewRecord` carrying the six audit facts (F037 `ReviewRequest`, F035
+  `ModelId`/`ModelVersion`/`ReviewerPromptHash`, F029 `ArtifactHash` digests, response
+  digest, final verdict) plus F034 `SensedMetadatum` held structurally apart, and derives
+  a byte-stable, injective `RecordIdentity` over the reproducible facts only (artifacts
+  compared as a set; sensed metadata excluded — the F032/F033 honesty boundary); reuses
+  F037/F035/F029/F034 vocabulary verbatim; no model invoked, no bytes hashed, no verdict
+  interpreted, no new dependency.
 - 🔴 [ ] Keep agent-reviewed findings advisory until deterministic backing
   evidence, repeated-review confidence thresholds, or explicit human sign-off
   exists.
