@@ -1,0 +1,145 @@
+TYPE FS.GG.Governance.FreshnessResolution.FreshnessResolutionModule
+  [Method] Boolean isResolved(ResolutionOutcome)
+  [Method] FreshnessResolutionReport resolve(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], SensedFacts)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry] entries(FreshnessResolutionReport)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact] missingFacts(ResolutionOutcome)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CandidateGate] candidate(FreshnessResolutionEntry)
+  [Method] System.String missingFactToken(MissingFact)
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionReport
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry
+  [Constructor] Void .ctor(GateId, ResolutionOutcome)
+  [Method] Boolean Equals(FreshnessResolutionEntry)
+  [Method] Boolean Equals(FreshnessResolutionEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(FreshnessResolutionEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ResolutionOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Property] GateId Gate
+  [Property] ResolutionOutcome Outcome
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionReport
+  [Method] Boolean Equals(FreshnessResolutionReport)
+  [Method] Boolean Equals(FreshnessResolutionReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FreshnessResolutionReport NewFreshnessResolutionReport(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry])
+  [Method] Int32 CompareTo(FreshnessResolutionReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry] get_Item()
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+FreshnessResolutionEntry] Item
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact
+  [Method] Boolean Equals(MissingFact)
+  [Method] Boolean Equals(MissingFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMissingBaseRevision()
+  [Method] Boolean get_IsMissingCommandVersion()
+  [Method] Boolean get_IsMissingCoveredArtifacts()
+  [Method] Boolean get_IsMissingGeneratorVersion()
+  [Method] Boolean get_IsMissingHeadRevision()
+  [Method] Boolean get_IsMissingRuleHash()
+  [Method] Int32 CompareTo(MissingFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] MissingFact get_MissingBaseRevision()
+  [Method] MissingFact get_MissingCommandVersion()
+  [Method] MissingFact get_MissingCoveredArtifacts()
+  [Method] MissingFact get_MissingGeneratorVersion()
+  [Method] MissingFact get_MissingHeadRevision()
+  [Method] MissingFact get_MissingRuleHash()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact+Tags
+  [Property] Boolean IsMissingBaseRevision
+  [Property] Boolean IsMissingCommandVersion
+  [Property] Boolean IsMissingCoveredArtifacts
+  [Property] Boolean IsMissingGeneratorVersion
+  [Property] Boolean IsMissingHeadRevision
+  [Property] Boolean IsMissingRuleHash
+  [Property] Int32 Tag
+  [Property] MissingFact MissingBaseRevision
+  [Property] MissingFact MissingCommandVersion
+  [Property] MissingFact MissingCoveredArtifacts
+  [Property] MissingFact MissingGeneratorVersion
+  [Property] MissingFact MissingHeadRevision
+  [Property] MissingFact MissingRuleHash
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact+Tags
+  [Field] Int32 MissingBaseRevision
+  [Field] Int32 MissingCommandVersion
+  [Field] Int32 MissingCoveredArtifacts
+  [Field] Int32 MissingGeneratorVersion
+  [Field] Int32 MissingHeadRevision
+  [Field] Int32 MissingRuleHash
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome
+  [Method] Boolean Equals(ResolutionOutcome)
+  [Method] Boolean Equals(ResolutionOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsResolved()
+  [Method] Boolean get_IsUnresolved()
+  [Method] Int32 CompareTo(ResolutionOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ResolutionOutcome NewResolved(FreshnessInputs)
+  [Method] ResolutionOutcome NewUnresolved(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact])
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Resolved
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Tags
+  [NestedType] FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Unresolved
+  [Property] Boolean IsResolved
+  [Property] Boolean IsUnresolved
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Resolved
+  [Method] FreshnessInputs get_Item()
+  [Property] FreshnessInputs Item
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Tags
+  [Field] Int32 Resolved
+  [Field] Int32 Unresolved
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+ResolutionOutcome+Unresolved
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact] Item
+TYPE FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+RuleHash], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision], Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Gates.ModelModule+GateId,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash]], Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+CommandId,FS.GG.Governance.FreshnessKey.ModelModule+CommandVersion])
+  [Method] Boolean Equals(SensedFacts)
+  [Method] Boolean Equals(SensedFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+CommandId,FS.GG.Governance.FreshnessKey.ModelModule+CommandVersion] get_CommandVersions()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Gates.ModelModule+GateId,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash]] get_CoveredArtifacts()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion] get_GeneratorVersion()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision] get_Base()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision] get_Head()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+RuleHash] get_RuleHash()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+CommandId,FS.GG.Governance.FreshnessKey.ModelModule+CommandVersion] CommandVersions
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Gates.ModelModule+GateId,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash]] CoveredArtifacts
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion] GeneratorVersion
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision] Base
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision] Head
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+RuleHash] RuleHash

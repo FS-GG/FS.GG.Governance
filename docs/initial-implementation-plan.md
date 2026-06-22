@@ -339,23 +339,23 @@ Owner: `FS.GG.Governance`; SDD provides optional lifecycle inputs.
 Purpose: prove the protected-boundary value early, as required by the design,
 without waiting for the full lifecycle command suite.
 
-- ✅ Define versioned `.fsgg/project.yml`, `.fsgg/policy.yml`,
+- 🟢 [x] Define versioned `.fsgg/project.yml`, `.fsgg/policy.yml`,
   `.fsgg/capabilities.yml`, and `.fsgg/tooling.yml` MVP schemas in Governance.
   **(F014 — `FS.GG.Governance.Config`, done 2026-06-20)**
-- ✅ Include the minimum capability catalog fields: domains, path map,
+- 🟢 [x] Include the minimum capability catalog fields: domains, path map,
   surfaces, checks, cost, owner, environment, and maturity.
   **(F014 — typed facts, done 2026-06-20)**
-- ✅ Implement deterministic glob precedence for path-to-capability routing.
+- 🟢 [x] Implement deterministic glob precedence for path-to-capability routing.
   **(F015 — `FS.GG.Governance.Routing`, done 2026-06-20)**
-- ✅ Add git/CI snapshot facts for base ref, head ref, changed paths, dirty
+- 🟢 [x] Add git/CI snapshot facts for base ref, head ref, changed paths, dirty
   paths, untracked paths, branch, PR labels, status checks, and CI context.
   **(F016 — `FS.GG.Governance.Snapshot`, done 2026-06-20)**
-- ✅ Add unknown governed path findings only inside governed roots or protected
+- 🟢 [x] Add unknown governed path findings only inside governed roots or protected
   boundaries. **(F017 — `FS.GG.Governance.Findings`, done 2026-06-20)** Closes the
   two exit criteria below: routine unclassified files do not trigger global
   default-deny, and unknown paths under declared governed roots produce explicit
   findings.
-- ✅ Define typed `GateId` metadata with prerequisites, cost, timeout, owner,
+- 🟢 [x] Define typed `GateId` metadata with prerequisites, cost, timeout, owner,
   maturity, product-check flag, and freshness key. **(F018 —
   `FS.GG.Governance.Gates`, done 2026-06-20)** A single pure, total
   `Gates.buildRegistry : TypedFacts -> GateRegistry` projects each declared
@@ -364,25 +364,25 @@ without waiting for the full lifecycle command suite.
   Phase-2 rows (`fsgg route`/`fsgg ship`, route/audit JSON, `.fsgg/gates.json`)
   and Phase 5/11 consume. Deferred to Phase 10: gate-to-gate prerequisites +
   topological order, and a richer product-check derivation.
-- ✅ Select the gates a specific change reaches from the registry + route +
+- 🟢 [x] Select the gates a specific change reaches from the registry + route +
   findings. **(F019 — `FS.GG.Governance.Route`, done 2026-06-20)** A single pure,
   total `Route.select : GateRegistry -> RouteReport -> FindingReport ->
   RouteResult` joins the typed registry to a routed change, carrying selected
   gates (with their selecting paths), the unknown-path findings, and the per-tier
   cost rollup — no severity, profile, enforcement, or ship verdict.
-- ✅ Emit deterministic **route.json** (per-change view). **(F020 —
+- 🟢 [x] Emit deterministic **route.json** (per-change view). **(F020 —
   `FS.GG.Governance.RouteJson`, done 2026-06-20)** A pure, total
   `RouteJson.ofRouteResult : RouteResult -> string` renders the `RouteResult` into
   a versioned (`fsgg.route/v1`) document — selected gates, findings, and cost — via
   `System.Text.Json`, byte-identical for identical input, no new dependency.
-- ✅ Emit deterministic **`.fsgg/gates.json`** (whole-catalog view). **(F021 —
+- 🟢 [x] Emit deterministic **`.fsgg/gates.json`** (whole-catalog view). **(F021 —
   `FS.GG.Governance.GatesJson`, done 2026-06-20)** A pure, total
   `GatesJson.ofGateRegistry : GateRegistry -> string` renders the F018
   `GateRegistry` into a versioned (`fsgg.gates/v1`) document listing every declared
   gate with its carried metadata, prerequisites, and freshness-key inputs — the
   per-gate entry is exactly route.json's `selectedGates[*]` minus `selectingPaths`.
   Byte-identical for identical input; no new dependency.
-- ✅ Add `fsgg route [--repo <dir>] [--paths ...] [--since <rev>] [--json]
+- 🟢 [x] Add `fsgg route [--repo <dir>] [--paths ...] [--since <rev>] [--json]
   [--gates-out <path>] [--route-out <path>]` (the CLI host edge that persists
   route.json / gates.json to disk). **(F022 — `FS.GG.Governance.RouteCommand`, done
   2026-06-21)** The first composition/edge tier: a packable `fsgg` tool modeled
@@ -395,7 +395,7 @@ without waiting for the full lifecycle command suite.
   dependency; computes **no** ship verdict. Every failure (not-a-repo, unresolved
   rev, missing/invalid catalog, unwritable output) → distinct diagnostic +
   category-mapped non-zero exit (2/3/4); the interpreter never throws.
-- ✅ Add `fsgg ship --mode gate --profile standard --json` (the ship/merge verdict
+- 🟢 [x] Add `fsgg ship --mode gate --profile standard --json` (the ship/merge verdict
   host edge — `audit.json`, blockers, profile-adjusted enforcement, exit-code basis;
   distinct from the `route` slice above). **(F026 — `FS.GG.Governance.ShipCommand`,
   done 2026-06-21)** The second composition/edge tier: the host sibling of F022,
@@ -414,7 +414,7 @@ without waiting for the full lifecycle command suite.
   lever, unwritable output) → distinct diagnostic + category-mapped non-zero exit
   (2/3/4), each distinct from the blocked code 1; the interpreter never throws and
   writes no partial artifact.
-- 🟡 Emit deterministic route and **audit** JSON with selected gates, matched
+- 🟡 [ ] Emit deterministic route and **audit** JSON with selected gates, matched
   rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
   profile-adjusted enforcement, and exit-code basis. **(route.json done — F020;
   gates.json done — F021; audit.json done — F025; profile-adjusted enforcement done
@@ -425,16 +425,25 @@ without waiting for the full lifecycle command suite.
   deterministic, versioned **`cache-eligibility.json` projection** done — F042
   (`FS.GG.Governance.CacheEligibilityJson` — pure, total `ofReport :
   CacheEligibilityReport -> string` + `schemaVersion` "fsgg.cache-eligibility/v1",
-  done 2026-06-22). The evaluated cache-eligibility verdict now **exists** as a
-  deterministic projection; the one remaining piece is the **host wiring** — the CLI
-  edge that resolves each gate's `FreshnessInputs` from the real repo, runs F041
-  `evaluate`, and emits/embeds the verdict into the route/audit artifacts.)**
-- ✅ Publish the first GitHub Actions guidance for branch protection. **(F027 —
+  done 2026-06-22); and the per-gate **freshness-inputs resolution (join) core** done
+  — F043 (`FS.GG.Governance.FreshnessResolution` — pure, total `resolve : Gate list ->
+  SensedFacts -> FreshnessResolutionReport` joining each selected gate's carried
+  five-field `FreshnessKey` identity, dropping `Cost`, with a supplied bundle of
+  already-sensed repository facts into a complete F029 `FreshnessInputs` per gate — or
+  a no-hide `Unresolved` naming every missing fact, recompute-safe by construction —
+  whose `candidate` bridge feeds resolved gates straight into F041 `evaluate` without
+  adaptation, done 2026-06-22). The evaluated cache-eligibility verdict now **exists**
+  as a deterministic projection and each gate's `FreshnessInputs` can now be **resolved**
+  from a supplied facts bundle; the one remaining piece is the **host wiring** — the CLI
+  edge that actually *senses* each gate's facts from the real repo (git/filesystem),
+  supplies them as `SensedFacts` to F043 `resolve`, runs F041 `evaluate` over the
+  resolved candidates, and emits/embeds the verdict into the route/audit artifacts.)**
+- 🟢 [x] Publish the first GitHub Actions guidance for branch protection. **(F027 —
   `docs/ci/github-actions-branch-protection.md` + a copyable workflow template wiring
   the F026 `fsgg ship` exit-code taxonomy into a GitHub protected branch, done
   2026-06-21. This closed Phase 2.)**
 
-> **Legend:** ✅ done · 🟡 in progress · ⬜ not started. F014 (the `.fsgg`
+> **Legend:** 🟢 [x] done · 🟡 [ ] in progress · 🔴 [ ] not started · ⬜ optional. F014 (the `.fsgg`
 > schemas → typed facts) is complete; the remaining Phase 2 rows (routing, git/CI
 > facts, gate registry, `ship`) consume those facts and are held out of F014 scope
 > by FR-016.
@@ -590,27 +599,27 @@ Owner: `FS.GG.Governance`.
 Purpose: make route selection, profile strictness, and blocking behavior
 explainable and testable.
 
-- ✅ Parse run modes: `sandbox`, `inner`, `focused`, `verify`, `gate`, and
+- 🟢 [x] Parse run modes: `sandbox`, `inner`, `focused`, `verify`, `gate`, and
   `release`. **(F023 — `Enforcement.recognizeMode`, done 2026-06-21)**
-- ✅ Parse Governance profiles: `light`, `standard`, `strict`, and `release`.
+- 🟢 [x] Parse Governance profiles: `light`, `standard`, `strict`, and `release`.
   **(F023 — `Enforcement.recognizeProfile`, done 2026-06-21)**
-- ✅ Parse rule maturity: `observe`, `warn`, `block-on-pr`, `block-on-ship`,
+- 🟢 [x] Parse rule maturity: `observe`, `warn`, `block-on-pr`, `block-on-ship`,
   and `block-on-release`. **(F014 `Config` typed facts; surfaced through F023.)**
-- ✅ Emit every finding with rule id, verdict, base severity, mode, profile,
+- 🟢 [x] Emit every finding with rule id, verdict, base severity, mode, profile,
   maturity, effective severity, and reason. **(F023 `EnforcementDecision`'s six
   no-hide fields → F024 `ShipDecision` verdict → F025 `audit.json`, done 2026-06-21.)**
-- ✅ Ensure profiles never hide underlying verdicts, alter rule hashes, or
+- 🟢 [x] Ensure profiles never hide underlying verdicts, alter rule hashes, or
   remove findings from JSON. **(F024/F025 no-hide rule: a base-blocking item relaxed
   by mode/profile appears in `warnings` carrying both base and effective severity.)**
-- ✅ Add scoped `--paths` authoring and complete base/head route parity with
+- 🟢 [x] Add scoped `--paths` authoring and complete base/head route parity with
   CI. **(F022 `route` + F026 `ship` share the `--paths`/`--since`/default base-head
   scope surface.)**
-- ✅ Generate golden enforcement truth-table fixtures covering routine versus
+- 🟢 [x] Generate golden enforcement truth-table fixtures covering routine versus
   fenced routes, base severity, rule tier, all modes, all profiles, all maturity
   levels, and unknown governed paths. **(F028 — golden enforcement truth-table
   fixtures over the enforcement dials, done 2026-06-21; builds on the F023
   (severity × maturity × mode × profile) cross-product. This closed Phase 5.)**
-- ✅ Add representative JSON snapshots for combinations that alter blocking.
+- 🟢 [x] Add representative JSON snapshots for combinations that alter blocking.
   **(F028 — golden `audit.json` snapshots over the blocking/relaxing combinations,
   alongside the F025 snapshot tests, done 2026-06-21.)**
 
@@ -779,21 +788,21 @@ its lifecycle artifacts.
 Purpose: keep local authoring cheap while making protected-boundary evidence
 auditable.
 
-- ✅ Define freshness keys over rule hash, artifact hash, command version,
+- 🟢 [x] Define freshness keys over rule hash, artifact hash, command version,
   generator version, base/head, environment class, and output digest. **(F029 —
   `FS.GG.Governance.FreshnessKey`, done 2026-06-21)** A pure, total
   `FreshnessKey.compute : FreshnessInputs -> Key` over the closed typed input set,
   byte-stable in a tagged/length-prefixed/injective encoding; covered artifacts a
   set; no new dependency.
-- ✅ Cache reusable evidence only when all freshness inputs match. **(F030 —
+- 🟢 [x] Cache reusable evidence only when all freshness inputs match. **(F030 —
   `FS.GG.Governance.EvidenceReuse`, done 2026-06-21)** A pure, total reuse decision
   that reuses prior evidence iff every freshness input matches (the F029 key),
   otherwise reports the changed inputs; deterministic, no new dependency.
-- ✅ Explain high-cost routes with matched rule, changed path, affected
+- 🟢 [x] Explain high-cost routes with matched rule, changed path, affected
   capability, selected gate, cost, and cheaper local alternative. **(F031 —
   `FS.GG.Governance.RouteExplain`, done 2026-06-21)** A pure, total broad-route
   cost-explanation core; deterministic, no new dependency.
-- ✅ Record command runs with executable, arguments, working directory,
+- 🟢 [x] Record command runs with executable, arguments, working directory,
   environment delta, timeout, exit code, stdout digest, stderr digest, captured
   output path, and duration. **(F032 — `FS.GG.Governance.CommandRecord`, done
   2026-06-21)** A pure, total `CommandRecord.build : … -> CommandRecord` over the
@@ -801,7 +810,7 @@ auditable.
   the nine reproducible facts; `canonicalId` renders only the reproducible facts to
   a byte-stable identity (arguments order-significant, each env-delta class a set,
   duration never read); no execution/hashing, no new dependency.
-- ✅ Include source commit, base/head, rule hash, generator version, artifact
+- 🟢 [x] Include source commit, base/head, rule hash, generator version, artifact
   digests, command records, environment class, and builder identity in
   provenance. **(F033 — `FS.GG.Governance.Provenance`, done 2026-06-21)** A pure,
   total `Provenance.build : … -> Provenance` assembles the nine already-sensed
@@ -815,7 +824,7 @@ auditable.
   + Config — D1), reusing F029 `Revision`/`RuleHash`/`GeneratorVersion`/`ArtifactHash`,
   F032 `CommandRecord`, and F014 `EnvironmentClass` verbatim; no sensing/timing/
   hashing/persistence/JSON/attestation/CLI, no new dependency.
-- ✅ Mark wall-clock timestamps and durations as sensed or non-deterministic
+- 🟢 [x] Mark wall-clock timestamps and durations as sensed or non-deterministic
   metadata when included in deterministic reports. **(F034 —
   `FS.GG.Governance.SensedMetadata`, done 2026-06-21)** The structural foundation was
   already there — F032 carries the run duration as a distinct `SensedDuration` held

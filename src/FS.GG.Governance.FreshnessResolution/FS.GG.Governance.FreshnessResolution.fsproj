@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F043: the packable, pure per-gate freshness-inputs RESOLUTION (join) core — the missing pure join that
+       unblocks the route/audit cache-eligibility *host wiring* row of docs/initial-implementation-plan.md. F029
+       fixed the ten-field `FreshnessInputs` value, F030 decided reuse from it, and F041 rolled that decision up
+       per selected gate — but none can run against a real routed change, because a routed change's selected gate
+       (F018/F019) carries only its FIVE-field freshness-key identity (check, domain, cost, environment, command),
+       NOT the full `FreshnessInputs`. This row delivers the single new packable core whose `resolve` JOINS each
+       selected gate's carried freshness-key identity (dropping `Cost`) with a supplied bundle of ALREADY-SENSED
+       repository facts (`SensedFacts`), FABRICATING NOTHING: a gate with every required fact resolves to a
+       complete F029 `FreshnessInputs` shaped to feed F041 verbatim; a gate missing any required fact yields a
+       no-hide `Unresolved` outcome naming exactly the missing facts, recompute-safe by construction. The result
+       is a deterministic, gate-attributable `FreshnessResolutionReport` — one outcome per selected gate, ordered
+       by `GateId`, every gate preserved.
+
+       The analogue of F041 `evaluate`: a pure, total, deterministic ROLL-UP — a per-gate `List.map` join + an
+       ordinal `List.sortWith` with a structural tiebreak + a handful of exhaustive closed-DU matches. It SENSES
+       nothing (no git/filesystem/clock/environment/network/command), computes NO hash/freshness-key/digest,
+       evaluates NO cache eligibility (F030/F041), renders NO JSON (F042/the projection rows), persists nothing,
+       maps no exit code, and adds no CLI. The opaque supplied newtypes are consumed without parsing, re-hashing,
+       or fabrication. Its sole output is the typed `FreshnessResolutionReport`.
+
+       It reuses the F018 `Gate`/`GateId`/`FreshnessKey` + `gateIdValue`, the F029 `FreshnessInputs` + its
+       newtypes, the F041 `CandidateGate`, and the F014 `Config` newtypes VERBATIM — all arriving through a
+       SINGLE `ProjectReference` to `FS.GG.Governance.CacheEligibility` (F041), exactly as F042 referenced only
+       F041; the transitive pure cores (`EvidenceReuse`, `Gates`, `FreshnessKey`, `Config`, `Kernel`) flow to the
+       compiler and need no direct reference. It adds NO new third-party PackageReference (FR-013): the join is
+       pure F# over typed values, no serialization, so the library stays `System.*`/`FSharp.Core`-only. One-way
+       dependency: `FreshnessResolution -> CacheEligibility -> …`; NO
+       RouteJson/AuditJson/GatesJson/CacheEligibilityJson/Enforcement/Ship/Snapshot/Routing/Findings/Adapters/
+       host/CLI coupling. Compile order is Model -> FreshnessResolution: the five new vocabulary types, then the
+       pure total join body + the ordinal sort comparator + the token map (private by omission). Pure total
+       roll-up over supplied values — no MVU ceremony (Principle IV / N/A). Every merged core/host stays
+       untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.FreshnessResolution</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Packable like CacheEligibility/CacheEligibilityJson (overrides Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.FreshnessResolution</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="FreshnessResolution.fsi" />
+    <Compile Include="FreshnessResolution.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+  </ItemGroup>
+
+</Project>

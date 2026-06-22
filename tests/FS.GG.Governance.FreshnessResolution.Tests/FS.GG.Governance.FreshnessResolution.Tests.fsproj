@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F043, exercising the PUBLIC surface of FS.GG.Governance.FreshnessResolution:
+       `FreshnessResolution.resolve` / `entries` / `candidate` / `isResolved` / `missingFacts` /
+       `missingFactToken` and the `Model` types over REAL, literally-constructible values (Principle V — every
+       value is a genuine typed token: real F018 `Gate`/`GateId`/`FreshnessKey`, real F029 `FreshnessInputs`
+       newtypes bundled into a real `SensedFacts`; the F041 bridge is proven by feeding `candidate` results into
+       real `CacheEligibility.evaluate`/`evaluateGate` over a real F030 `ReuseStore`; no mock, no clock read, no
+       git, no file read, no bytes hashed, no freshness key/digest computed, no JSON rendered). Expecto + FsCheck
+       give the carry / no-fabricate / no-hide / consistent-command-absence / determinism / completeness /
+       totality / candidate-bridge / sensed-empty-vs-unsensed properties; the VSTest adapters let `dotnet test`
+       drive the Expecto runner. The reflective SurfaceDrift test pins the Tier-1 public surface + the
+       CacheEligibility/(transitive cores)/BCL/FSharp.Core-only scope guard. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ResolveTests.fs" />
+    <Compile Include="CommandAbsenceTests.fs" />
+    <Compile Include="CandidateBridgeTests.fs" />
+    <Compile Include="UnresolvedTests.fs" />
+    <Compile Include="SensedEmptyTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="CompletenessTests.fs" />
+    <Compile Include="TotalityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
