@@ -205,8 +205,12 @@ and stale-view diagnostics.
 Progress markers (status legend): 🟢 / ✅ complete · 🟡 partial (core landed;
 emission/wiring deferred) · 🔴 not started · ⬜ optional/out of scope. As of
 2026-06-22 every `FS.GG.SDD`-owned feature is complete (🟢); the remaining 🟡/🔴
-rows are Governance- or Rendering-owned follow-ons (host wiring, capability-catalog
-expansion, release gates).
+rows are Governance- or Rendering-owned follow-ons. The cache-eligibility **host
+wiring** landed 2026-06-22 (F044 `FS.GG.Governance.CacheEligibilityCommand` — the
+`fsgg cache-eligibility` edge emitting a standalone `cache-eligibility.json` + a
+no-hide unresolved sidecar); the remaining cache-eligibility piece is the **embed**
+into `route.json`/`audit.json`. Other open rows are capability-catalog expansion,
+`refresh`/stale-view blocking, and the `verify`/`release` gates.
 
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.
@@ -432,12 +436,22 @@ without waiting for the full lifecycle command suite.
   already-sensed repository facts into a complete F029 `FreshnessInputs` per gate — or
   a no-hide `Unresolved` naming every missing fact, recompute-safe by construction —
   whose `candidate` bridge feeds resolved gates straight into F041 `evaluate` without
-  adaptation, done 2026-06-22). The evaluated cache-eligibility verdict now **exists**
-  as a deterministic projection and each gate's `FreshnessInputs` can now be **resolved**
-  from a supplied facts bundle; the one remaining piece is the **host wiring** — the CLI
-  edge that actually *senses* each gate's facts from the real repo (git/filesystem),
-  supplies them as `SensedFacts` to F043 `resolve`, runs F041 `evaluate` over the
-  resolved candidates, and emits/embeds the verdict into the route/audit artifacts.)**
+  adaptation, done 2026-06-22). The **host wiring** is now done — F044
+  (`FS.GG.Governance.CacheEligibilityCommand` — the `fsgg cache-eligibility` host edge:
+  a pure `Loop` + edge `Interpreter` mirroring F022, which replicates the F022 selection
+  call-sequence, *senses* each selected gate's freshness facts from the real repo behind
+  an injected `FreshnessSensor`, takes base/head free from `RepoSnapshot.Range`, assembles
+  a `SensedFacts` bundle, calls F043 `resolve`, runs F041 `evaluate` over the resolved
+  candidates against a read-only F030 store loaded from `fsgg.evidence-reuse-store/v1`
+  (absent ⇒ empty), renders the resolved verdicts through F042 `ofReport` verbatim to a
+  deterministic **standalone `cache-eligibility.json`**, and writes the F043-`Unresolved`
+  gates to a no-hide **`cache-eligibility.unresolved.json`** sidecar
+  (`fsgg.cache-eligibility.unresolved/v1`) — information not verdict (exit 0 on
+  sense+load+write), no fabrication, byte-stable; done 2026-06-22). The one remaining
+  piece is the **embed** — wiring the verdict *into* `route.json`/`audit.json` (which would
+  edit the merged F020/F025 cores + baselines); F044 emits the standalone siblings and
+  leaves those untouched, exactly as F042 delivered the projection standalone. The embed is
+  the next row.)**
 - 🟢 [x] Publish the first GitHub Actions guidance for branch protection. **(F027 —
   `docs/ci/github-actions-branch-protection.md` + a copyable workflow template wiring
   the F026 `fsgg ship` exit-code taxonomy into a GitHub protected branch, done
