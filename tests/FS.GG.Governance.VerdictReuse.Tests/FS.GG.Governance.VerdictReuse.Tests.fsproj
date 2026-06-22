@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F036, exercising the PUBLIC surface of FS.GG.Governance.VerdictReuse:
+       `VerdictReuse.lookup` / `record` / `empty` / `entries` / `referenceValue` and `Model.inputGroup` over
+       REAL, literally-constructible `AgentReviewInputs` values + literal `VerdictRef`s (Principle V — every
+       value is a real typed value, including real F035 `AgentReviewInputs` over real F029
+       `RuleHash`/`ArtifactHash`s, never a mock; the operations are pure so no upstream chain is needed, no
+       clock read, no model invoked, no process spawned). Expecto + FsCheck give the validity / no-hide-cause
+       / determinism / set-semantics / refresh / purity / totality properties; the VSTest adapters let
+       `dotnet test` drive the Expecto runner. The reflective SurfaceDrift test pins the Tier-1 public
+       surface + the AgentReviewKey/FreshnessKey/Config/BCL/FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="LookupDecisionTests.fs" />
+    <Compile Include="ExplanationTests.fs" />
+    <Compile Include="EmptyStoreTests.fs" />
+    <Compile Include="RecordTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.VerdictReuse/FS.GG.Governance.VerdictReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>
