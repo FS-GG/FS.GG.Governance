@@ -53,6 +53,8 @@
     <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <!-- F048: the pure write half of the evidence-reuse store (prune/retain/serialise) -->
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
   </ItemGroup>
 
 </Project>

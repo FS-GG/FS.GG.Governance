@@ -26,6 +26,7 @@ open FS.GG.Governance.CacheEligibility      // evaluate, entries
 open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityEntry, CacheEligibilityVerdict, Reusable, MustRecompute
 open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
 open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
+open FS.GG.Governance.EvidenceReuseStore    // F048: prune, retain, serialise, defaultRetentionBound
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -45,7 +46,8 @@ module Loop =
           Format: OutputFormat
           GatesOut: string
           RouteOut: string
-          StorePath: string }
+          StorePath: string
+          PersistStore: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -69,6 +71,7 @@ module Loop =
         | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
         | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
+        | PersistStore of path: string * content: string
         | EmitSummary of text: string
 
     type Msg =
@@ -78,6 +81,7 @@ module Loop =
         | FreshnessSensed of Result<SensedFacts, string>
         | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
+        | StorePersisted of Result<unit, string>
         | Emitted
 
     type Diagnostic =
@@ -105,6 +109,8 @@ module Loop =
           Sensed: SensedFacts option
           Store: ReuseStore option
           CacheNotes: string list
+          StoreDegraded: bool
+          PersistAcked: bool
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -128,7 +134,8 @@ module Loop =
           Json: bool
           GatesOut: string option
           RouteOut: string option
-          Store: string option }
+          Store: string option
+          Persist: bool }
 
     let emptyAcc =
         { Repo = None
@@ -137,7 +144,8 @@ module Loop =
           Json = false
           GatesOut = None
           RouteOut = None
-          Store = None }
+          Store = None
+          Persist = false }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
     // clean relative form (`.fsgg/gates.json`); any other repo is prefixed so the artifact lands
@@ -172,6 +180,7 @@ module Loop =
             | "--store" :: v :: more -> go { acc with Store = Some v } more
             | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
+            | "--persist-store" :: more -> go { acc with Persist = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
@@ -198,7 +207,8 @@ module Loop =
                       Format = (if acc.Json then Json else Text)
                       GatesOut = acc.GatesOut |> Option.defaultValue (under repo ".fsgg/gates.json")
                       RouteOut = acc.RouteOut |> Option.defaultValue (under repo "readiness/route.json")
-                      StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json") }
+                      StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
+                      PersistStore = acc.Persist }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -215,6 +225,8 @@ module Loop =
               Sensed = None
               Store = None
               CacheNotes = []
+              StoreDegraded = false
+              PersistAcked = false
               Diagnostics = []
               Exit = Success }
 
@@ -264,9 +276,29 @@ module Loop =
         | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
         | None -> None, None
 
+    // ── F048 persistence (pure; the decision lives here, not at the write edge — FR-010/D2) ──
+
+    // The persisted document: F047's prune → bound → serialise pipeline over the LOADED store, verbatim
+    // (data-model §2). No reuse policy / bound of our own — `defaultRetentionBound` and the three pure
+    // operations are F047's exactly. Decoupled from the current run's verdicts (FR-005): this feeds only
+    // the NEXT run's file.
+    let persistedContent (loaded: ReuseStore) : string =
+        loaded
+        |> EvidenceReuseStore.prune
+        |> EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound
+        |> EvidenceReuseStore.serialise
+
+    // Whether the summary must wait for a store-write ack: persistence is enabled, the load did NOT degrade
+    // (a degraded load emits no `PersistStore`, so nothing acks), and no ack has arrived yet (D10).
+    let awaitingPersist (model: Model) : bool =
+        model.Request.PersistStore && not model.StoreDegraded && not model.PersistAcked
+
     // The pure sense → resolve → evaluate → embed join (data-model §3). Fires only once BOTH the sensed
     // facts and the store have arrived; builds the REAL `CacheEligibilityReport` and passes it as
     // `Some report` to the F045 embed, then emits the two writes (the existing counter dance is preserved).
+    // F048: when persistence is enabled AND the on-disk store did not degrade on load, it ALSO emits a
+    // `PersistStore` effect carrying `persistedContent (loaded store)` (D2/D4); a degraded load instead
+    // appends a non-fatal don't-clobber note and emits no write (D6).
     let tryProject (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Result, model.GatesDoc with
         | Some sensed, Some store, Some result, Some gatesDoc ->
@@ -275,11 +307,23 @@ module Loop =
             let cacheReport = CacheEligibility.evaluate candidates store
             let routeDoc = RouteJson.ofRouteResult result (Some cacheReport)
 
+            let writes =
+                [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
+                  WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc) ]
+
+            let persistEffects, persistNotes =
+                match model.Request.PersistStore, model.StoreDegraded with
+                | true, false -> [ PersistStore(model.Request.StorePath, persistedContent store) ], []
+                | true, true ->
+                    [],
+                    [ "cache note: store not persisted: on-disk store failed to parse; left untouched" ]
+                | false, _ -> [], []
+
             { model with
                 Phase = Projected
-                RouteDoc = Some routeDoc },
-            [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
-              WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc) ]
+                RouteDoc = Some routeDoc
+                CacheNotes = model.CacheNotes @ persistNotes },
+            writes @ persistEffects
         | _ -> model, []
 
     let rec update (msg: Msg) (model: Model) : Model * Effect list =
@@ -340,9 +384,12 @@ module Loop =
             | StoreLoaded(Ok store) -> tryProject { model with Store = Some store }
 
             | StoreLoaded(Error reason) ->
+                // F048: mark the load degraded so the persist write is suppressed (don't clobber a
+                // malformed file, D6). The F046 degrade-to-empty + note is unchanged.
                 tryProject
                     { model with
                         Store = Some EvidenceReuse.empty
+                        StoreDegraded = true
                         CacheNotes =
                             model.CacheNotes
                             @ [ "cache note: reuse store unreadable (" + reason + "); treated as empty — every gate is recompute-by-default" ] }
@@ -353,9 +400,32 @@ module Loop =
             | Wrote(_, Ok()) ->
                 // Two writes were emitted together; the first ack advances to Persisted, the second
                 // (already Persisted) emits the summary. No counter field needed — the Phase carries it.
+                // F048: when persistence is enabled and not degraded, the summary waits for the store-write
+                // ack (`StorePersisted`) instead of emitting on the second write (D10).
                 match model.Phase with
                 | Projected -> { model with Phase = Persisted }, []
-                | _ -> model, [ EmitSummary(render model model.Request.Format) ]
+                | _ ->
+                    if awaitingPersist model then
+                        model, []
+                    else
+                        model, [ EmitSummary(render model model.Request.Format) ]
+
+            // F048: the NON-FATAL store-write ack (FR-006). An `Error` appends a cache note; NEITHER outcome
+            // changes `Exit` (set later at `Emitted`) nor the already-emitted route.json/gates.json. Once the
+            // writes are done (Phase = Persisted) the summary is emitted; otherwise it waits for them.
+            | StorePersisted result ->
+                let notes =
+                    match result with
+                    | Ok() -> model.CacheNotes
+                    | Error reason ->
+                        model.CacheNotes
+                        @ [ "cache note: store not persisted (" + reason + "); run unaffected" ]
+
+                let model = { model with PersistAcked = true; CacheNotes = notes }
+
+                match model.Phase with
+                | Persisted -> model, [ EmitSummary(render model model.Request.Format) ]
+                | _ -> model, []
 
             | Emitted -> { model with Phase = Done; Exit = Success }, []
 

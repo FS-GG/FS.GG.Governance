@@ -1,0 +1,52 @@
+// Contract delta — FS.GG.Governance.ShipCommand / Loop.fsi
+// This row ADDS the following public cases/fields. Existing declarations are unchanged (additive, Tier 1).
+// The surface baseline surface/FS.GG.Governance.ShipCommand.surface.txt is updated to match.
+// Mirror of the RouteCommand delta; ship's distinguishing invariant is verdict/exit-code preservation.
+
+// --- RunRequest: one new opt-in field (default false; parsed from --persist-store) -------------------
+//
+//   type RunRequest =
+//       { Repo: string
+//         Scope: ScopeSelector
+//         Mode: RunMode            // existing (F023 typed lever) — unchanged
+//         Profile: Profile         // existing (F023 typed lever) — unchanged
+//         Format: OutputFormat
+//         AuditOut: string
+//         StorePath: string
+//         PersistStore: bool }      // NEW — FR-004/FR-007/D9; store path stays StorePath (--store)
+
+// --- Effect: one new case — the atomic store write (content precomputed in `update`, FR-010/D2) -------
+//
+//   type Effect =
+//       | SenseScope of ScopeSelector
+//       | LoadCatalog of repo: string
+//       | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
+//       | LoadStore of path: string
+//       | WriteArtifact of kind: ArtifactKind * path: string * content: string
+//       | PersistStore of path: string * content: string    // NEW — FR-001/D3
+//       | EmitSummary of text: string
+
+// --- Msg: one new case — the NON-FATAL store-write ack (distinct from `Wrote`, FR-006/D3) -------------
+//
+//   type Msg =
+//       | Begin
+//       | Sensed of Result<RepoSnapshot, string>
+//       | Loaded of Validation
+//       | FreshnessSensed of Result<SensedFacts, string>
+//       | StoreLoaded of Result<ReuseStore, string>
+//       | Wrote of kind: ArtifactKind * result: Result<unit, string>
+//       | StorePersisted of Result<unit, string>            // NEW — FR-006/D3
+//       | Emitted
+
+// Contract guarantees enforced by tests against this surface:
+//   * With PersistStore = false: `update` emits NO PersistStore effect; audit.json byte-identical to the
+//     pre-row baseline; ship verdict/partition/enforcement/exit code unchanged (SC-006).
+//   * With PersistStore = true and a non-degraded load: `update` emits exactly one
+//     PersistStore(StorePath, EvidenceReuseStore.serialise (retain defaultRetentionBound (prune loaded)))
+//     (FR-001/FR-002/FR-003/D4).
+//   * With PersistStore = true and StoreDegraded (malformed-on-load): NO PersistStore effect; a non-fatal
+//     note is appended instead (D6).
+//   * StorePersisted(Error _) maps to NO exit-code change — ship's exit stays governed solely by its
+//     ExitCodeBasis (Clean→0 / Blocked→1); it NEVER becomes ToolError (FR-006/SC-005).
+//   * The verdict, blockers/warnings/passing partition, every enforcement field, and the audit.json verdict
+//     content are byte-for-byte identical whether PersistStore is on or off (FR-005/SC-004).

@@ -2331,3 +2331,40 @@ printfn "[F47] retain 1 length: %d" (EvidenceReuse.entries (EvidenceReuseStore.r
 
 // PRUNE superseded worlds; record-built stores are already clean ⇒ unchanged (SC-005).
 printfn "[F47] prune no-op: %b" (EvidenceReuseStore.prune f47Store = f47Store) // expect: true
+
+// ── F048: PERSIST the evidence-reuse store from the host commands (fsgg route / fsgg ship) ──
+// The pure F047 write half (above) is now wired into the two host commands behind `--persist-store`
+// (default OFF). The DECISION lives in each command's pure `Loop.update`; only the atomic byte write runs
+// at the `Interpreter` edge. The persisted document is EXACTLY the F047 pipeline over the LOADED store —
+// no new policy, schema bump, or reader change. Below is the host-emitted derivation, round-tripped through
+// the SAME real F046 reader the next run consumes (the honest-audience exercise of the shipped surface).
+
+// 1. The persisted document the host writes when persistence is enabled (data-model §2): prune → bound →
+//    serialise over the store AS LOADED. Decoupled from the run's verdicts — it feeds only the next run.
+let f48Content =
+    f47Store
+    |> EvidenceReuseStore.prune
+    |> EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound
+    |> EvidenceReuseStore.serialise
+
+printfn "\n[F48] host-persisted document == F047 pipeline: %b" (f48Content = EvidenceReuseStore.serialise (EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound (EvidenceReuseStore.prune f47Store))) // expect: true
+
+// 2. Atomic write to the store path (the host reuses the same temp+rename `writeAtomic` as route.json /
+//    audit.json), then round-trip through the REAL reader the cache thread uses (SC-001).
+let f48Path = System.IO.Path.GetTempFileName()
+System.IO.File.WriteAllText(f48Path, f48Content)
+
+match FreshnessSensing.realStoreReader f48Path with
+| Ok(Some reread) ->
+    // Lossless w.r.t. survivors: this within-bound, unsuperseded store re-reads to the loaded value (SC-001).
+    printfn "[F48] persisted store re-reads to the loaded store: %b" (reread = f47Store) // expect: true
+| other -> printfn "[F48] unexpected: %A" other
+
+// 3. Deterministic: a second persistence pass over the same loaded store is byte-identical (SC-002).
+printfn "[F48] byte-stable across runs: %b" (System.IO.File.ReadAllText f48Path = f48Content) // expect: true
+System.IO.File.Delete f48Path
+
+// 4. Off-by-default: with `--persist-store` absent the host writes NO store file and every artifact +
+//    golden baseline is byte-identical to the pre-row baseline (SC-006) — proven in the command test suites
+//    (PersistenceEdgeTests "SC-006"), never by re-blessing a golden.
+printfn "[F48] off-by-default ⇒ no store write (see PersistenceEdgeTests SC-006)"

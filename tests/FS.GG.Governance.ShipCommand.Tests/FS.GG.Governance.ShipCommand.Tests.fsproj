@@ -24,6 +24,8 @@
     <Compile Include="DegradeTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="FailureTests.fs" />
+    <Compile Include="PersistenceTransitionTests.fs" />
+    <Compile Include="PersistenceEdgeTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
