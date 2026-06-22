@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F047, exercising the PUBLIC surface of FS.GG.Governance.EvidenceReuseStore:
+       `serialise` / `retain` / `prune` / `schemaVersion` / `defaultRetentionBound` over REAL
+       upstream-assembled stores built via the genuine F030 `EvidenceReuse.record` over real F029
+       `FreshnessInputs` (opaque `Synthetic` evidence refs — disclosed; a real `EvidenceRef` needs gate
+       execution, the deferred row). The round-trip drives the REAL `FreshnessSensing.realStoreReader` against
+       a temp file — never a re-implemented parser (research D3), so reader drift is caught. Expecto + FsCheck
+       give the lossless-round-trip, determinism/byte-identity, retention-bound, prune-subset, no-spurious-reuse,
+       and totality properties; the VSTest adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="RoundTripTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="RetentionTests.fs" />
+    <Compile Include="PruningTests.fs" />
+    <Compile Include="SafetyTests.fs" />
+    <Compile Include="TotalityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+  </ItemGroup>
+
+</Project>

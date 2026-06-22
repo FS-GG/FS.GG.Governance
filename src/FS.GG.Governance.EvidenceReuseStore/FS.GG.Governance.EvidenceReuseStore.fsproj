@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F047: the pure, total WRITE HALF of the evidence-reuse store. Three deterministic value
+       transformations over the existing F030 `ReuseStore` — `serialise` (the byte-stable INVERSE of the F046
+       `FreshnessSensing` read-only deserializer, emitting the `fsgg.evidence-reuse-store/v1` document text),
+       `retain` (bounded retention: keep the newest `maxEntries`), and `prune` (superseded-world expiry: keep
+       the newest entry per freshness world) — plus a `schemaVersion` token and a `defaultRetentionBound`
+       constant.
+
+       The cache-eligibility thread (F029-F046) can READ an evidence-reuse store but never WRITE one: F046's
+       shared `FreshnessSensing` edge deserializes the store and maps an absent file to `EvidenceReuse.empty`,
+       and F030 ships the pure insert `record`, but nothing serialises a `ReuseStore` back to disk and nothing
+       bounds its growth or prunes dead entries — so every run reads an empty store and every gate verdict is
+       `mustRecompute noPriorEvidence`. This row delivers the pure half so the cache can warm.
+
+       All three operations are PURE and TOTAL (FR-009): no I/O, no clock, no git, no environment, no network;
+       defined for every store including empty; never throwing. Every one preserves recompute-by-default
+       safety (FR-008): relative to the unmodified store the result yields reuse verdicts identical-or-stricter
+       for every candidate — no operation ever turns a `mustRecompute` into a `reusable` (no spurious reuse).
+       `serialise` round-trips losslessly through the REAL F046 reader; `retain`/`prune` remove only whole
+       entries (never mutate or fabricate). `prune` reuses the F029 `matches` relation VERBATIM (FR-010) — it
+       is exactly `record`'s full-match dedup applied across the whole store; no new reuse policy,
+       freshness-match rule, or evidence representation is introduced.
+
+       This LAYERS the store write half on top of the pure F030 `EvidenceReuse` core in a SEPARATE project
+       (constitution: heavier capabilities layer on top, not into the core; the F042 `CacheEligibilityJson`
+       precedent) so the merged F030 surface stays frozen — additive (FR-012, SC-007): zero edits to merged
+       F029-F046 cores or their golden baselines, no schema bump (`fsgg.evidence-reuse-store/v1` is consumed,
+       never changed). The IMPURE on-disk persistence (atomic temp+rename write wired into `fsgg route`/`fsgg
+       ship`, store-path discovery, the writer port) and the production of REAL evidence references (which needs
+       gate execution) are explicit LATER host rows — exactly how F042 delivered the pure cache-eligibility.json
+       projection before the F044/F046 host wiring.
+
+       It references ONLY FS.GG.Governance.EvidenceReuse (F030
+       `ReuseStore`/`RecordedEvidence`/`EvidenceRef`/`record`/`entries`/`decide`); the F029 `FreshnessKey`
+       (`FreshnessInputs`/`matches`/`RuleHash`/`ArtifactHash`/`CommandVersion`/`GeneratorVersion`/`Revision`)
+       and F014 `Config` (`CheckId`/`DomainId`/`CommandId`/`EnvironmentClass`) types arrive TRANSITIVELY through
+       F030. It adds NO new third-party PackageReference — serialisation is the net10.0 shared-framework
+       `System.Text.Json` (`Utf8JsonWriter`) the F042 projection / F025 `AuditJson` / kernel `Json.fs` already
+       use (FR-011). Compile order is EvidenceReuseStore.fsi -> EvidenceReuseStore.fs: the curated public
+       surface, then the pure bodies. The whole surface is pure total functions — no MVU ceremony (Principle
+       IV). The dependency direction stays one-way: EvidenceReuseStore -> EvidenceReuse -> FreshnessKey ->
+       Config; no FreshnessSensing/CacheEligibility/RouteJson/AuditJson/Enforcement/Ship/Snapshot/Routing/host/
+       CLI coupling. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.EvidenceReuseStore</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- New package identity, packable like Config/Routing/Gates/EvidenceReuse/CacheEligibility/
+         CacheEligibilityJson. "Pack output unaffected" means EXISTING packages are untouched, not that this
+         library is unpackable. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.EvidenceReuseStore</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="EvidenceReuseStore.fsi" />
+    <Compile Include="EvidenceReuseStore.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>

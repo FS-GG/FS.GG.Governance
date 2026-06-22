@@ -2274,3 +2274,60 @@ let f46DegradeReport =
 printfn "[F46] degrade (empty sensed+store) still builds ⇒ %b (candidates dropped ⇒ %d verdicts)"
     true (CacheEligibility.entries f46DegradeReport |> List.length)
 // expect: true, 0 verdicts (every gate unresolved ⇒ notEvaluated ⇒ no candidate ⇒ empty report; no fail)
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+// F047 — the pure WRITE HALF of the evidence-reuse store: serialise / retain / prune. Design-first proof
+// (Principle I), exercising the public surface against the REAL F046 reader. The cache-eligibility thread can
+// READ a store (F046) but never WRITE one — so every run reads an empty store and every verdict is
+// mustRecompute noPriorEvidence. This row makes the store writable, bounded, and self-pruning as a pure core
+// (the impure on-disk write + real evidence references are deferred host rows). Reuses the FreshnessKey /
+// EvidenceReuse / FreshnessSensing assemblies #r'd at the TOP of this script (single identity per shared dep).
+#r "../src/FS.GG.Governance.EvidenceReuseStore/bin/Debug/net10.0/FS.GG.Governance.EvidenceReuseStore.dll"
+
+open FS.GG.Governance.EvidenceReuseStore
+
+// Build a real store via the genuine F030 record (Synthetic evidence refs — real refs need gate execution).
+let f47Inputs check : FreshnessInputs =
+    { Check = CheckId check
+      Domain = DomainId "build"
+      Command = None
+      Environment = EnvironmentClass.Local
+      RuleHash = RuleHash "r1"
+      CoveredArtifacts = [ ArtifactHash "a1"; ArtifactHash "a2" ]
+      CommandVersion = None
+      GeneratorVersion = GeneratorVersion "g1"
+      Base = Revision "b0"
+      Head = Revision "h0" }
+
+let f47Store =
+    EvidenceReuse.empty
+    |> EvidenceReuse.record (f47Inputs "fmt") (EvidenceRef "synthetic://fmt") // SYNTHETIC: disclosed; real refs need gate execution
+    |> EvidenceReuse.record (f47Inputs "lint") (EvidenceRef "synthetic://lint")
+
+// SERIALISE → a single fsgg.evidence-reuse-store/v1 document.
+let f47Text = EvidenceReuseStore.serialise f47Store
+printfn "\n[F47] serialise ⇒\n%s" f47Text
+// expect: {"schemaVersion":"fsgg.evidence-reuse-store/v1","recorded":[{check:lint,...},{check:fmt,...}]}
+
+// ROUND-TRIP through the REAL F046 reader (writes a temp file because realStoreReader reads a path).
+let f47Path = System.IO.Path.GetTempFileName()
+System.IO.File.WriteAllText(f47Path, f47Text)
+
+match FreshnessSensing.realStoreReader f47Path with
+| Ok(Some loaded) -> printfn "[F47] round-trip equal: %b" (loaded = f47Store) // expect: true (SC-001)
+| other -> printfn "[F47] unexpected: %A" other
+
+System.IO.File.Delete f47Path
+
+// DETERMINISM: same value → byte-identical text (SC-002).
+printfn "[F47] byte-stable: %b" (EvidenceReuseStore.serialise f47Store = f47Text) // expect: true
+
+// EMPTY store → well-formed empty document, re-reads as empty (SC-003).
+printfn "[F47] empty document: %s" (EvidenceReuseStore.serialise EvidenceReuse.empty)
+// expect: {"schemaVersion":"fsgg.evidence-reuse-store/v1","recorded":[]}
+
+// RETAIN to a bound (newest-first); idempotent at/under bound (SC-004).
+printfn "[F47] retain 1 length: %d" (EvidenceReuse.entries (EvidenceReuseStore.retain 1 f47Store) |> List.length) // expect: 1
+
+// PRUNE superseded worlds; record-built stores are already clean ⇒ unchanged (SC-005).
+printfn "[F47] prune no-op: %b" (EvidenceReuseStore.prune f47Store = f47Store) // expect: true
