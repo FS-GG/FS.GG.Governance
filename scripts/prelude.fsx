@@ -2030,3 +2030,95 @@ printfn "[F42] inputsChanged [] ≠ noPriorEvidence       ⇒ %s vs %s"
     (CacheEligibilityJson.ofReport (CacheEligibilityReport [ { Gate = GateId "a:a"; Verdict = f42EmptyDiff } ]))
     (CacheEligibilityJson.ofReport (CacheEligibilityReport [ { Gate = GateId "a:a"; Verdict = MustRecompute NoPriorEvidence } ]))
 // expect: …{"kind":"inputsChanged","categories":[]}… vs …{"kind":"noPriorEvidence"}…
+
+// ── F043: the per-gate freshness-inputs RESOLUTION (join) — the route/audit cache-eligibility *host wiring*
+//    row's deferred pure join ──
+//
+// `resolve : Gate list -> SensedFacts -> FreshnessResolutionReport` JOINS each selected gate's carried five-field
+// `FreshnessKey` identity (dropping `Cost`) with a supplied bundle of ALREADY-SENSED repository facts
+// (`SensedFacts`), fabricating NOTHING: a gate with every required fact resolves to a complete F029
+// `FreshnessInputs` shaped to feed F041 verbatim; a gate missing any required fact yields a no-hide `Unresolved`
+// naming exactly the missing facts (recompute-safe — `candidate` of it is `None`). One attributed outcome per
+// gate, ordered by `GateId` ordinal with a structural tiebreak (duplicates preserved). It senses nothing,
+// computes no hash/freshness-key/digest, evaluates no cache eligibility, renders no JSON, persists nothing. The
+// `candidate` bridge feeds resolved gates straight into the GENUINE F041 `CacheEligibility.evaluate`. Design-first
+// FSI proof (Principle I).
+#r "../src/FS.GG.Governance.FreshnessResolution/bin/Debug/net10.0/FS.GG.Governance.FreshnessResolution.dll"
+
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.Gates.Model
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.CacheEligibility
+open FS.GG.Governance.CacheEligibility.Model
+open FS.GG.Governance.FreshnessResolution
+open FS.GG.Governance.FreshnessResolution.Model
+
+/// A real F018 gate from a domain/check id + its carried freshness-key identity (Cost is dropped by the join).
+let f43Gate (domain: string) (check: string) (cost: Cost) (env: EnvironmentClass) (command: CommandId option) : Gate =
+    { Id = GateId(domain + ":" + check)
+      Domain = DomainId domain
+      Description = sprintf "gate %s:%s" domain check
+      Prerequisites = (match command with Some c -> [ RequiresCommand c ] | None -> [])
+      Cost = cost
+      Timeout = TimeoutLimit 60
+      Owner = Owner "team"
+      Maturity = Observe
+      ProductCheck = false
+      FreshnessKey = { Check = CheckId check; Domain = DomainId domain; Cost = cost; Environment = env; Command = command } }
+
+let f43BuildTests = f43Gate "build" "tests" Medium Ci (Some(CommandId "dotnet"))
+let f43LintStyle = f43Gate "lint" "style" Cheap Local (Some(CommandId "eslint"))
+
+/// A bundle that fully senses build:tests (and lint:style for the determinism example).
+let f43FullSensed : SensedFacts =
+    { RuleHash = Some(RuleHash "rule-1")
+      GeneratorVersion = Some(GeneratorVersion "gen-1")
+      Base = Some(Revision "base-1")
+      Head = Some(Revision "head-1")
+      CoveredArtifacts = Map.ofList [ f43BuildTests.Id, [ ArtifactHash "artA"; ArtifactHash "artB" ]; f43LintStyle.Id, [ ArtifactHash "artC" ] ]
+      CommandVersions = Map.ofList [ CommandId "dotnet", CommandVersion "8.0"; CommandId "eslint", CommandVersion "9.3" ] }
+
+// (A) resolve a fully-sensed command-bearing gate, then feed its candidate straight into the real F041 evaluate.
+let f43Report = FreshnessResolution.resolve [ f43BuildTests ] f43FullSensed
+printfn "\n[F43] resolve build:tests (fully sensed)      ⇒ %A" (FreshnessResolution.entries f43Report |> List.map (fun e -> FreshnessResolution.isResolved e.Outcome))
+// expect: [true]
+let f43Cands = FreshnessResolution.entries f43Report |> List.choose FreshnessResolution.candidate
+printfn "[F43]   candidates fed into F041 evaluate     ⇒ %d verdict(s)" (CacheEligibility.entries (CacheEligibility.evaluate f43Cands EvidenceReuse.empty) |> List.length)
+// expect: 1 (accepted by F041 without adaptation)
+
+// (B) unresolved: drop RuleHash, Base, the gate's covered key, and the eslint command version ⇒ every gap named.
+let f43Unsensed : SensedFacts =
+    { f43FullSensed with RuleHash = None; Base = None; CoveredArtifacts = Map.empty; CommandVersions = Map.empty }
+let f43LintOutcome = (FreshnessResolution.entries (FreshnessResolution.resolve [ f43LintStyle ] f43Unsensed) |> List.head).Outcome
+printfn "[F43] lint:style with 4 facts unsensed        ⇒ %A" (FreshnessResolution.missingFacts f43LintOutcome |> List.map FreshnessResolution.missingFactToken)
+// expect: ["ruleHash"; "coveredArtifacts"; "commandVersion"; "baseRevision"]
+printfn "[F43]   candidate of the unresolved gate      ⇒ %A" (FreshnessResolution.candidate { Gate = f43LintStyle.Id; Outcome = f43LintOutcome })
+// expect: None (recompute-safe)
+
+// (C) determinism: resolve the same gates in two orders ⇒ value-equal reports ordered by GateId.
+let f43Order (order: Gate list) = FreshnessResolution.resolve order f43FullSensed
+printfn "[F43] two input orders ⇒ byte-identical report ⇒ %b" (f43Order [ f43BuildTests; f43LintStyle ] = f43Order [ f43LintStyle; f43BuildTests ])
+// expect: true
+printfn "[F43]   entries ordered by GateId ordinal      ⇒ %A" (FreshnessResolution.entries (f43Order [ f43LintStyle; f43BuildTests ]) |> List.map (fun e -> let (GateId g) = e.Gate in g))
+// expect: ["build:tests"; "lint:style"]
+
+// (D) sensed-empty vs unsensed covered artifacts (the docs:check gate, command-less).
+let f43Docs = f43Gate "docs" "check" High Local None
+let f43DocsBase = { f43FullSensed with CommandVersions = Map.empty }
+let f43Empty = { f43DocsBase with CoveredArtifacts = Map.ofList [ f43Docs.Id, [] ] }
+let f43Absent = { f43DocsBase with CoveredArtifacts = Map.empty }
+printfn "[F43] covered SENSED-EMPTY (present []) docs   ⇒ %A" ((FreshnessResolution.entries (FreshnessResolution.resolve [ f43Docs ] f43Empty) |> List.head).Outcome |> FreshnessResolution.isResolved)
+// expect: true (a legitimate resolved empty set)
+printfn "[F43] covered UNSENSED (key absent) docs       ⇒ %A" (FreshnessResolution.missingFacts (FreshnessResolution.entries (FreshnessResolution.resolve [ f43Docs ] f43Absent) |> List.head).Outcome |> List.map FreshnessResolution.missingFactToken)
+// expect: ["coveredArtifacts"]
+
+// (E) duplicate GateId ⇒ TWO entries, neither merged nor dropped.
+let f43Dup = FreshnessResolution.resolve [ f43BuildTests; f43Gate "build" "tests" High Local (Some(CommandId "dotnet")) ] f43FullSensed
+printfn "[F43] duplicate GateId build:tests             ⇒ %d entries" (FreshnessResolution.entries f43Dup |> List.length)
+// expect: 2
+
+// No gates ⇒ empty report (total, not an error).
+printfn "[F43] no gates                                ⇒ %A" (FreshnessResolution.resolve [] f43FullSensed)
+// expect: FreshnessResolutionReport []
