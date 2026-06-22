@@ -29,21 +29,24 @@
 namespace FS.GG.Governance.AuditJson
 
 open FS.GG.Governance.Ship.Model
+open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AuditJson =
 
     /// The declared schema-version token stamped into every emitted document and recorded as the
     /// document's `schemaVersion` field (FR-013), so consumers can branch on the contract version and
-    /// detect changes without string-scraping the output. A fixed, deterministic constant
-    /// (`"fsgg.audit/v1"`) — never derived from a clock, environment, or input value.
+    /// detect changes without string-scraping the output. A fixed, deterministic constant — never
+    /// derived from a clock, environment, or input value. Bumped to `"fsgg.audit/v2"` for the F045
+    /// embedded cache-eligibility contract so consumers detect the new shape.
     val schemaVersion: string
 
-    /// Project an F024 `ShipDecision` into its deterministic, versioned `audit.json` document text.
+    /// Project an F024 `ShipDecision` together with an OPTIONAL F041 `CacheEligibilityReport` into its
+    /// deterministic, versioned `audit.json` document text.
     ///
     /// Emits one top-level JSON object with fields in the FIXED order `schemaVersion`, `verdict`,
-    /// `exitCodeBasis`, `blockers`, `warnings`, `passing` (the wire contract is fixed in
-    /// contracts/audit-json-document.md):
+    /// `exitCodeBasis`, `blockers`, `warnings`, `passing`, `cacheEligibilityEvaluated` (the wire
+    /// contract is fixed in contracts/audit-json-document.md):
     ///   • `verdict`       — the decision's `Verdict` verbatim: `pass` | `fail` (FR-002). NEVER
     ///                       recomputed from the rendered item sections.
     ///   • `exitCodeBasis` — the decision's `ExitCodeBasis` verbatim: `clean` | `blocked` (FR-003).
@@ -61,17 +64,43 @@ module AuditJson =
     ///                       carrying all SIX F023 fields VERBATIM in record order `baseSeverity`,
     ///                       `maturity`, `mode`, `profile`, `effectiveSeverity`, `reason` — so a
     ///                       relaxed base-`blocking` warning shows both its base and effective severity
-    ///                       and the no-hide rule is observable (FR-006, FR-011).
+    ///                       and the no-hide rule is observable (FR-006, FR-011). (F045) every
+    ///                       `kind:"gate"` item carries, as its last field, the per-gate
+    ///                       `cacheEligibility` verdict object matched by `GateId`; every
+    ///                       `kind:"finding"` item carries NONE — cache is gate-scoped (F045 FR-004,
+    ///                       SC-002).
+    ///   • `cacheEligibilityEvaluated` — (F045) the always-present cache-eligibility section flag:
+    ///                       `false` for `cache = None`, `true` for `cache = Some _`. It survives the
+    ///                       empty/clean decision and distinguishes "no cache step ran" from "an
+    ///                       evaluated report with no reusable gate".
     ///
-    /// PURE and TOTAL (FR-008, FR-009): no file, process, clock, network, or git access; never throws
-    /// for any well-typed `ShipDecision`; an EMPTY/CLEAN decision (no items; verdict `Pass`; basis
-    /// `Clean`) projects to a valid document with three present, empty sections and `verdict:"pass"` /
-    /// `exitCodeBasis:"clean"` — a success, never an error and never a "fail by default" fallback.
-    /// DETERMINISTIC (FR-007, SC-002): identical decision inputs yield byte-for-byte identical text;
-    /// the projection adds no ordering decision beyond the fixed field sequence, preserving each
-    /// section's already-fixed composite order verbatim (so two decisions equal as values but
-    /// assembled from differently-ordered route inputs project identically — SC-003). The document
-    /// carries NO numeric process exit code, provenance/attestation reference, cache-eligibility
-    /// verdict, raw YAML, host/absolute path, wall-clock timestamp, or environment value (FR-012,
-    /// SC-007).
-    val ofShipDecision: decision: ShipDecision -> string
+    /// `cache = None` is the NOT-EVALUATED state (today's `fsgg ship`, which resolves no freshness
+    /// inputs): `cacheEligibilityEvaluated: false` and every GATE item's `cacheEligibility` is
+    /// `{ kind:"notEvaluated" }` (FR-012). `cache = Some report` renders `cacheEligibilityEvaluated:
+    /// true` and, per GATE item (in any of blockers/warnings/passing) matched by `GateId`, that gate's
+    /// verdict — `reusable` (+ the opaque evidence reference), `mustRecompute` (+ its no-hide cause), or
+    /// `notEvaluated` for a gate item absent from the report (FR-005). `Some (CacheEligibilityReport
+    /// [])` is an evaluated-but-empty report — distinct from `None`.
+    ///
+    /// ADDITIVE / NO-HIDE (F045 FR-008, FR-011): the `verdict`, `exitCodeBasis`, every item's section,
+    /// and the six-field `enforcement` detail are byte-identical to the F025-only projection of the same
+    /// `ShipDecision` (modulo the new per-gate `cacheEligibility` field, the top-level
+    /// `cacheEligibilityEvaluated` flag, and the bumped `schemaVersion`). A `reusable` verdict on a
+    /// base-`blocking` gate leaves it in the blockers section with full enforcement detail — the cache
+    /// verdict relaxes, hides, or alters NO enforcement, severity, section, or ship outcome.
+    ///
+    /// PURE and TOTAL (FR-008, FR-009, F045 FR-010): no file, process, clock, network, or git access;
+    /// the opaque evidence reference is rendered verbatim and never dereferenced (F045 FR-011); computes
+    /// no freshness key, hash, or cache decision; never throws for any well-typed inputs (including
+    /// `None`, an empty report, and an EMPTY/CLEAN decision — no items; verdict `Pass`; basis `Clean` —
+    /// which projects to a valid document with three present, empty sections, `verdict:"pass"` /
+    /// `exitCodeBasis:"clean"`, and the cache section present, a success, never an error and never a
+    /// "fail by default" fallback). DETERMINISTIC (FR-007, SC-002): identical decision inputs yield
+    /// byte-for-byte identical text; the projection adds no ordering decision beyond the fixed field
+    /// sequence, preserving each section's already-fixed composite order verbatim (so two decisions
+    /// equal as values but assembled from differently-ordered route inputs project identically — SC-003);
+    /// cache entries follow the document's existing composite item order; a duplicate `GateId` in the
+    /// report resolves to the first entry by report order. The document carries NO numeric process exit
+    /// code, provenance/attestation reference, raw YAML, host/absolute path, wall-clock timestamp, or
+    /// environment value (FR-012, SC-007).
+    val ofShipDecision: decision: ShipDecision -> cache: CacheEligibilityReport option -> string

@@ -103,6 +103,9 @@ let tests =
                   || name = "FS.GG.Governance.Enforcement"
                   || name = "FS.GG.Governance.Ship"
                   || name = "FS.GG.Governance.AuditJson"
+                  // F045: AuditJson's `ofShipDecision` now takes a `CacheEligibilityReport option`, so the
+                  // F041 assembly arrives transitively in ShipCommand's IL (the command passes `None`).
+                  || name = "FS.GG.Governance.CacheEligibility"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

@@ -283,7 +283,9 @@ module Loop =
                 let findings = Findings.findUnknownGovernedPaths facts report
                 let result = Route.select registry report findings
                 let decision = Ship.rollup result model.Request.Mode model.Request.Profile
-                let auditDoc = AuditJson.ofShipDecision decision
+                // F045: `fsgg ship` resolves no freshness inputs yet, so the cache-eligibility report is
+                // `None` — the document renders the not-evaluated section (v2) only; behavior preserved.
+                let auditDoc = AuditJson.ofShipDecision decision None
 
                 { model with
                     Phase = Rolled

@@ -256,7 +256,7 @@ let projectExpected (files: Map<string, string>) (candidates: GovernedPath list)
     let registry = Gates.buildRegistry facts
     let findings = Findings.findUnknownGovernedPaths facts report
     let result = Route.select registry report findings
-    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResult result
+    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResult result None
 
 // ── Capturing write/output edges ──
 

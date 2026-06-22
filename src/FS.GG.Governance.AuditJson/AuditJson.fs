@@ -8,6 +8,11 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.CacheEligibility.Model
+open FS.GG.Governance.CacheEligibility
 
 // The F025 audit.json projection (US1–US4). Renders the F024 `ShipDecision` into the deterministic,
 // versioned `audit.json` WHOLE-CHANGE verdict document text via a hand-driven `System.Text.Json`
@@ -23,8 +28,9 @@ open FS.GG.Governance.Ship.Model
 module AuditJson =
 
     /// The declared schema-version token stamped into every emitted document (FR-013). A fixed,
-    /// deterministic string literal — never derived from a clock, environment, or input value.
-    let schemaVersion = "fsgg.audit/v1"
+    /// deterministic string literal — never derived from a clock, environment, or input value. Bumped
+    /// to "fsgg.audit/v2" for the F045 embedded cache-eligibility contract.
+    let schemaVersion = "fsgg.audit/v2"
 
     // ── internal writer plumbing (hidden — absent from AuditJson.fsi) ──
 
@@ -103,15 +109,74 @@ module AuditJson =
         w.WriteString("reason", d.Reason)
         w.WriteEndObject()
 
+    // ── F045: the embedded cache-eligibility verdict (the reused F042 vocabulary + one new case) ──
+    // The IDENTITY/token renderers are REUSED VERBATIM from public upstream — `referenceValue` (F030),
+    // `categoryToken` (F029), `gateIdValue` (F018) — exactly as F042's `CacheEligibilityJson.fs` and the
+    // sibling F045 `RouteJson.fs`. Each `match` is EXHAUSTIVE over the closed DU with NO wildcard, so a
+    // future F041 verdict/cause case is a compile error here, never a silently mis-tokened field. The
+    // render NEVER dereferences the opaque evidence reference, computes no key/hash/decision (FR-010/11).
+
+    /// First-by-report-order-wins lookup from the report (research D4). On a duplicate `GateId` the FIRST
+    /// entry by the report's LIST POSITION wins (the fold keeps the earliest add) — deterministic and
+    /// total, keyed purely on `CacheEligibility.entries` order, never re-derived from the `GateId` value.
+    let verdictByGate (report: CacheEligibilityReport) : Map<string, CacheEligibilityVerdict> =
+        CacheEligibility.entries report
+        |> List.fold
+            (fun m e ->
+                let k = gateIdValue e.Gate
+                if Map.containsKey k m then m else Map.add k e.Verdict m)
+            Map.empty
+
+    /// The tagged `cause` object (no-hide, FR-009) — field order `kind`, then `categories` for
+    /// `inputsChanged`. `NoPriorEvidence` ⇒ `{ kind:"noPriorEvidence" }` (NO `categories` field). The
+    /// categories are named via `categoryToken` in the report's order — none dropped, added, truncated.
+    let writeCause (w: Utf8JsonWriter) (cause: RecomputeCause) =
+        w.WriteStartObject()
+
+        match cause with
+        | NoPriorEvidence -> w.WriteString("kind", "noPriorEvidence")
+        | InputsChanged cats ->
+            w.WriteString("kind", "inputsChanged")
+            w.WritePropertyName "categories"
+            w.WriteStartArray()
+            for c in cats do
+                w.WriteStringValue(categoryToken c)
+            w.WriteEndArray()
+
+        w.WriteEndObject()
+
+    /// The per-gate `cacheEligibility` verdict object — field order `kind`, then payload. `Some (Reusable
+    /// ref)` ⇒ `{ kind:"reusable", evidence:<referenceValue ref> }` (only the opaque reference verbatim,
+    /// never parsed/dereferenced — FR-011). `Some (MustRecompute cause)` ⇒ `{ kind:"mustRecompute",
+    /// cause:<cause-object> }` (always a cause, no `evidence` field — FR-009). `None` (no matching report
+    /// entry, or `cache = None`) ⇒ `{ kind:"notEvaluated" }` — NEVER rendered as `reusable` (FR-005).
+    let writeCacheEligibility (w: Utf8JsonWriter) (verdict: CacheEligibilityVerdict option) =
+        w.WriteStartObject()
+
+        match verdict with
+        | Some(Reusable ref) ->
+            w.WriteString("kind", "reusable")
+            w.WriteString("evidence", EvidenceReuse.referenceValue ref)
+        | Some(MustRecompute cause) ->
+            w.WriteString("kind", "mustRecompute")
+            w.WritePropertyName "cause"
+            writeCause w cause
+        | None -> w.WriteString("kind", "notEvaluated")
+
+        w.WriteEndObject()
+
     /// One enforced item — a TAGGED object discriminated by `kind` (research D5). Matches the closed
     /// `EnforcedItemId` exhaustively (no wildcard):
     ///   • `GateItem g`                       → `kind:"gate"`, `id` (via `gateIdValue`, never re-parsed
-    ///                                          even across a `:` separator — FR-010), `enforcement`.
+    ///                                          even across a `:` separator — FR-010), `enforcement`,
+    ///                                          and (F045) the per-gate `cacheEligibility` verdict matched
+    ///                                          by `GateId` via `lookup`, as the item's LAST field.
     ///   • `FindingItem (fid, GovernedPath p)`→ `kind:"finding"`, `id` (via `findingIdToken`), `path`
     ///                                          (the unwrapped `GovernedPath` verbatim — FR-010),
-    ///                                          `enforcement`.
+    ///                                          `enforcement`. NO `cacheEligibility` — cache is
+    ///                                          gate-scoped (F045 FR-004, SC-002).
     /// A gate item has NO `path` field (absent, not `null`; the `kind` tag disambiguates).
-    let writeItem (w: Utf8JsonWriter) (item: EnforcedItem) =
+    let writeItem (w: Utf8JsonWriter) (lookup: GateId -> CacheEligibilityVerdict option) (item: EnforcedItem) =
         w.WriteStartObject()
 
         match item.Id with
@@ -126,34 +191,54 @@ module AuditJson =
         w.WritePropertyName "enforcement"
         writeEnforcement w item.Decision
 
+        // F045: only GATE items carry the cache verdict (matched by GateId); finding items carry none.
+        match item.Id with
+        | GateItem g ->
+            w.WritePropertyName "cacheEligibility"
+            writeCacheEligibility w (lookup g)
+        | FindingItem _ -> ()
+
         w.WriteEndObject()
 
     /// One section array — walks the carried item list in its existing F024 composite order, emitting
     /// each item via `writeItem`, re-sorting NOTHING (FR-007). An empty list emits a present, empty
     /// array (FR-005, FR-009).
-    let writeSection (w: Utf8JsonWriter) (name: string) (items: EnforcedItem list) =
+    let writeSection (w: Utf8JsonWriter) (lookup: GateId -> CacheEligibilityVerdict option) (name: string) (items: EnforcedItem list) =
         w.WritePropertyName name
         w.WriteStartArray()
         for item in items do
-            writeItem w item
+            writeItem w lookup item
         w.WriteEndArray()
 
     // ── the public entry point ──
 
-    let ofShipDecision (decision: ShipDecision) : string =
+    let ofShipDecision (decision: ShipDecision) (cache: CacheEligibilityReport option) : string =
         // One linear walk of the already-ordered `ShipDecision`, writing the top-level object in the
-        // FIXED order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing. The
-        // verdict/basis are carried VERBATIM from the decision value — never recomputed from the item
-        // sections (FR-002), never mapped to a numeric process exit code (FR-003). Each section is
-        // emitted in its existing composite order, re-sorting NOTHING (FR-007). PURE and TOTAL: the
-        // empty/clean decision yields three present, empty arrays with verdict:"pass" /
-        // exitCodeBasis:"clean" — a valid success (FR-008/FR-009).
+        // FIXED order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing →
+        // cacheEligibilityEvaluated. The verdict/basis are carried VERBATIM from the decision value —
+        // never recomputed from the item sections (FR-002), never mapped to a numeric process exit code
+        // (FR-003). Each section is emitted in its existing composite order, re-sorting NOTHING (FR-007).
+        // PURE and TOTAL: the empty/clean decision yields three present, empty arrays with verdict:"pass"
+        // / exitCodeBasis:"clean" and the cache section present — a valid success (FR-008/FR-009).
+        //
+        // F045: the cache verdict is matched per GATE item by `GateId`. `lookup` is built once — `None`
+        // ⇒ every gate item `notEvaluated`; `Some report` ⇒ the first-by-report-order verdict map. The
+        // top-level `cacheEligibilityEvaluated` flag is `false` for `None`, `true` for `Some _` (the
+        // always-present section that survives the empty/clean decision — FR-012).
+        let lookup: GateId -> CacheEligibilityVerdict option =
+            match cache with
+            | None -> fun _ -> None
+            | Some report ->
+                let byGate = verdictByGate report
+                fun gateId -> Map.tryFind (gateIdValue gateId) byGate
+
         writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("verdict", verdictToken decision.Verdict)
             w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
-            writeSection w "blockers" decision.Blockers
-            writeSection w "warnings" decision.Warnings
-            writeSection w "passing" decision.Passing
+            writeSection w lookup "blockers" decision.Blockers
+            writeSection w lookup "warnings" decision.Warnings
+            writeSection w lookup "passing" decision.Passing
+            w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
             w.WriteEndObject())

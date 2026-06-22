@@ -101,6 +101,9 @@ let tests =
                   || name = "FS.GG.Governance.Route"
                   || name = "FS.GG.Governance.RouteJson"
                   || name = "FS.GG.Governance.GatesJson"
+                  // F045: RouteJson's `ofRouteResult` now takes a `CacheEligibilityReport option`, so the
+                  // F041 assembly arrives transitively in RouteCommand's IL (the command passes `None`).
+                  || name = "FS.GG.Governance.CacheEligibility"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

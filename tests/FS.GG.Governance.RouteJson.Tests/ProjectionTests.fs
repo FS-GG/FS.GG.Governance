@@ -42,7 +42,7 @@ let tests =
     testList
         "Projection (US1)"
         [ test "every selected gate is present exactly once by declared id with carried metadata verbatim (SC-001)" {
-              use doc = parse (RouteJson.ofRouteResult fixtureResult)
+              use doc = parse (RouteJson.ofRouteResult fixtureResult None)
 
               // one emitted gate per real SelectedGate, by declared id, in the same (GateId) order
               let emittedIds = selectedGateIds doc
@@ -65,7 +65,7 @@ let tests =
           }
 
           test "build:tests carries its declared cost/maturity tokens and its command prerequisite" {
-              use doc = parse (RouteJson.ofRouteResult fixtureResult)
+              use doc = parse (RouteJson.ofRouteResult fixtureResult None)
               let g = gateById doc "build:tests"
               Expect.equal (strField g "cost") "medium" "declared cost token"
               Expect.equal (strField g "maturity") "blockOnShip" "declared maturity carried verbatim (not enforcement)"
@@ -82,7 +82,7 @@ let tests =
           }
 
           test "a gate reached by >=2 paths appears once with all selecting paths in normalized-path order (FR-004)" {
-              use doc = parse (RouteJson.ofRouteResult fixtureResult)
+              use doc = parse (RouteJson.ofRouteResult fixtureResult None)
               let g = gateById doc "build:tests"
               let emitted = selectingPaths g
 
@@ -101,7 +101,7 @@ let tests =
           }
 
           test "no gate the result did not select appears; nothing is invented (FR-003)" {
-              use doc = parse (RouteJson.ofRouteResult fixtureResult)
+              use doc = parse (RouteJson.ofRouteResult fixtureResult None)
               let emitted = selectedGateIds doc |> Set.ofList
               // release:publish exists in the registry but no path routes to it → must be absent
               Expect.isFalse (emitted.Contains "release:publish") "an unreached registry gate is absent"
@@ -111,14 +111,14 @@ let tests =
 
           test "an empty selected-gate route projects present-and-empty selectedGates + all-zero cost (FR-009)" {
               let empty = resultOf fixtureFacts []
-              use doc = parse (RouteJson.ofRouteResult empty)
+              use doc = parse (RouteJson.ofRouteResult empty None)
               Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
               for tier in [ "cheap"; "medium"; "high"; "exhaustive" ] do
                   Expect.equal (costTier doc tier) 0 (sprintf "%s tier is zero" tier)
           }
 
           test "cost always carries the four integer tiers incl. zero, never a summed scalar (FR-006, SC-005)" {
-              use doc = parse (RouteJson.ofRouteResult fixtureResult)
+              use doc = parse (RouteJson.ofRouteResult fixtureResult None)
               Expect.equal (fieldOrder (doc.RootElement.GetProperty "cost")) [ "cheap"; "medium"; "high"; "exhaustive" ] "every tier present, in order"
               // distinct gates: build:format (cheap), build:tests (medium), docs:lint (cheap)
               Expect.equal (costTier doc "cheap") 2 "two cheap gates"
@@ -137,7 +137,7 @@ let tests =
                       []
 
               let r = resultOf f [ "src/bu/x.fs" ]
-              use doc = parse (RouteJson.ofRouteResult r)
+              use doc = parse (RouteJson.ofRouteResult r None)
               let sg = r.SelectedGates |> List.exactlyOne
               let g = gateById doc (gateIdValue sg.Gate.Id)
               let (DomainId domain) = sg.Gate.Domain
@@ -157,7 +157,7 @@ let tests =
                         check "a" "c2" None Cheap Local Observe ]
                       []
 
-              use d1 = parse (RouteJson.ofRouteResult (resultOf oneTier [ "src/a/x.fs" ]))
+              use d1 = parse (RouteJson.ofRouteResult (resultOf oneTier [ "src/a/x.fs" ]) None)
               Expect.equal (costTier d1 "cheap") 2 "both gates in the cheap tier"
               Expect.equal (costTier d1 "medium") 0 "no medium"
               Expect.equal (costTier d1 "high") 0 "no high"
@@ -175,7 +175,7 @@ let tests =
                         check "a" "c4" None Exhaustive Local Observe ]
                       []
 
-              use d2 = parse (RouteJson.ofRouteResult (resultOf spread [ "src/a/x.fs" ]))
+              use d2 = parse (RouteJson.ofRouteResult (resultOf spread [ "src/a/x.fs" ]) None)
               for tier in [ "cheap"; "medium"; "high"; "exhaustive" ] do
                   Expect.equal (costTier d2 tier) 1 (sprintf "exactly one gate in the %s tier" tier)
           }
@@ -194,7 +194,7 @@ let tests =
                       []
 
               let r = resultOf f [ "src/q/x.fs" ]
-              use doc = parse (RouteJson.ofRouteResult r)
+              use doc = parse (RouteJson.ofRouteResult r None)
               let sg = r.SelectedGates |> List.exactlyOne
               let g = gateById doc (gateIdValue sg.Gate.Id)
               Expect.equal (strField g "id") (gateIdValue sg.Gate.Id) "id with special chars round-trips exactly"

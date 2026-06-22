@@ -1,4 +1,4 @@
 TYPE FS.GG.Governance.AuditJson.AuditJsonModule
   [Method] System.String get_schemaVersion()
-  [Method] System.String ofShipDecision(ShipDecision)
+  [Method] System.String ofShipDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport])
   [Property] System.String schemaVersion

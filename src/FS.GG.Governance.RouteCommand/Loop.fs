@@ -245,7 +245,9 @@ module Loop =
                 let findings = Findings.findUnknownGovernedPaths facts report
                 let result = Route.select registry report findings
                 let gatesDoc = GatesJson.ofGateRegistry registry
-                let routeDoc = RouteJson.ofRouteResult result
+                // F045: `fsgg route` resolves no freshness inputs yet, so the cache-eligibility report
+                // is `None` — the document renders the not-evaluated section (v2) only; behavior preserved.
+                let routeDoc = RouteJson.ofRouteResult result None
 
                 { model with
                     Phase = Projected

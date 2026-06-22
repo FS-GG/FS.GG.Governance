@@ -31,7 +31,7 @@ let tests =
         [ test "a decision with >=1 blocker projects verdict:fail / exitCodeBasis:blocked with every blocker by identity + enforcement (AS1, SC-001)" {
               let d = blockersDecision
               Expect.equal d.Verdict Fail "fixture must carry a blocker"
-              use doc = parse (AuditJson.ofShipDecision d)
+              use doc = parse (AuditJson.ofShipDecision d None)
 
               Expect.equal (strField doc.RootElement "verdict") "fail" "verdict:fail"
               Expect.equal (strField doc.RootElement "exitCodeBasis") "blocked" "exitCodeBasis:blocked"
@@ -47,7 +47,7 @@ let tests =
 
           test "a Pass decision with empty blockers projects verdict:pass / exitCodeBasis:clean with a present empty blockers array (AS2, FR-009)" {
               let d = emptyCleanDecision
-              use doc = parse (AuditJson.ofShipDecision d)
+              use doc = parse (AuditJson.ofShipDecision d None)
 
               Expect.equal (strField doc.RootElement "verdict") "pass" "verdict:pass"
               Expect.equal (strField doc.RootElement "exitCodeBasis") "clean" "exitCodeBasis:clean"
@@ -57,7 +57,7 @@ let tests =
 
           test "warnings + passing each render in their own section; no item in more than one; union equals the decision's items (AS3, FR-005, SC-001)" {
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d)
+              use doc = parse (AuditJson.ofShipDecision d None)
 
               let blockers = section doc "blockers"
               let warnings = section doc "warnings"
@@ -84,7 +84,7 @@ let tests =
 
           test "verdict and exitCodeBasis are echoed VERBATIM from the value, never recomputed, and no numeric exitCode appears (FR-002/FR-003, SC-004)" {
               for d in [ emptyCleanDecision; blockersDecision; richDecision ] do
-                  use doc = parse (AuditJson.ofShipDecision d)
+                  use doc = parse (AuditJson.ofShipDecision d None)
 
                   let expectedVerdict = match d.Verdict with | Pass -> "pass" | Fail -> "fail"
                   let expectedBasis = match d.ExitCodeBasis with | Clean -> "clean" | Blocked -> "blocked"
@@ -96,7 +96,7 @@ let tests =
 
           test "every real rollup reason round-trips through the writer/parser exactly — faithful carry (FR-012)" {
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d)
+              use doc = parse (AuditJson.ofShipDecision d None)
 
               let sourceReasons =
                   List.concat [ d.Blockers; d.Warnings; d.Passing ]
@@ -134,7 +134,7 @@ let tests =
                               Reason = craftedReason } } ]
                     ExitCodeBasis = Clean }
 
-              use doc = parse (AuditJson.ofShipDecision decision)
+              use doc = parse (AuditJson.ofShipDecision decision None)
               let rendered = enforcement (section doc "passing" |> List.head) "reason"
               Expect.equal rendered craftedReason "JSON-special reason round-trips exactly (writer-escaped)"
           } ]

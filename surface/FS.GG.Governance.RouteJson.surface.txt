@@ -1,4 +1,4 @@
 TYPE FS.GG.Governance.RouteJson.RouteJsonModule
   [Method] System.String get_schemaVersion()
-  [Method] System.String ofRouteResult(RouteResult)
+  [Method] System.String ofRouteResult(RouteResult, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport])
   [Property] System.String schemaVersion

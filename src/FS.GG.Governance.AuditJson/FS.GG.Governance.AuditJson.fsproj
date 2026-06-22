@@ -47,6 +47,12 @@
 
   <ItemGroup>
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- F045: the cache-eligibility embed adds ONE reference — F041 `CacheEligibility` — for the
+         `CacheEligibilityReport`/`CacheEligibilityVerdict`/`RecomputeCause` types and the
+         `CacheEligibility.entries` accessor. The F029/F030/F018 token accessors
+         (`FreshnessKey.categoryToken`, `EvidenceReuse.referenceValue`, `Gates.gateIdValue`) arrive
+         TRANSITIVELY — the F042 `CacheEligibilityJson.fsproj` precedent. No new third-party package. -->
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
   </ItemGroup>
 
 </Project>
