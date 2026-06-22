@@ -414,9 +414,14 @@ without waiting for the full lifecycle command suite.
   rules, unmatched governed paths, expected artifacts, cost, cache eligibility,
   profile-adjusted enforcement, and exit-code basis. **(route.json done — F020;
   gates.json done — F021; audit.json done — F025; profile-adjusted enforcement done
-  — F023; ship verdict + exit-code basis done — F024/F026; only cache eligibility +
-  freshness remain — Phase 11.)**
-- ⬜ Publish the first GitHub Actions guidance for branch protection.
+  — F023; ship verdict + exit-code basis done — F024/F026; the freshness-key and
+  evidence-reuse **cores** done — F029/F030. The projections carry each gate's
+  freshness-key inputs but the JSON does not yet **emit an evaluated cache-eligibility
+  verdict** — that host wiring is the one remaining piece of this row.)**
+- ✅ Publish the first GitHub Actions guidance for branch protection. **(F027 —
+  `docs/ci/github-actions-branch-protection.md` + a copyable workflow template wiring
+  the F026 `fsgg ship` exit-code taxonomy into a GitHub protected branch, done
+  2026-06-21. This closed Phase 2.)**
 
 > **Legend:** ✅ done · 🟡 in progress · ⬜ not started. F014 (the `.fsgg`
 > schemas → typed facts) is complete; the remaining Phase 2 rows (routing, git/CI
@@ -589,14 +594,14 @@ explainable and testable.
 - ✅ Add scoped `--paths` authoring and complete base/head route parity with
   CI. **(F022 `route` + F026 `ship` share the `--paths`/`--since`/default base-head
   scope surface.)**
-- 🟡 Generate golden enforcement truth-table fixtures covering routine versus
+- ✅ Generate golden enforcement truth-table fixtures covering routine versus
   fenced routes, base severity, rule tier, all modes, all profiles, all maturity
-  levels, and unknown governed paths. **(F023 covers the
-  (severity × maturity × mode × profile) cross-product in tests; broader golden
-  fixtures remain.)**
-- 🟡 Add representative JSON snapshots for combinations that alter blocking.
-  **(F025 `audit.json` snapshot tests exist for blocking/relaxed cases; a fuller
-  matrix remains.)**
+  levels, and unknown governed paths. **(F028 — golden enforcement truth-table
+  fixtures over the enforcement dials, done 2026-06-21; builds on the F023
+  (severity × maturity × mode × profile) cross-product. This closed Phase 5.)**
+- ✅ Add representative JSON snapshots for combinations that alter blocking.
+  **(F028 — golden `audit.json` snapshots over the blocking/relaxing combinations,
+  alongside the F025 snapshot tests, done 2026-06-21.)**
 
 Exit criteria:
 
@@ -821,7 +826,7 @@ Exit criteria:
 - Audit records are sufficient to explain builds, tests, packs, template
   instantiation, git diffs, package inspection, and visual capture.
 
-### Phase 12: Agent-Reviewed Rule Guardrails — 🟡 first five rows landed (cache key, invalidation, prompt isolation, review record, advisory promotion)
+### Phase 12: Agent-Reviewed Rule Guardrails — 🟢 complete (cache key, invalidation, prompt isolation, review record, advisory promotion, calibration)
 
 Owner: `FS.GG.Governance`; SDD and generated products may provide artifacts
 under review.
@@ -829,14 +834,14 @@ under review.
 Purpose: allow judgement-heavy checks without treating uncalibrated agent output
 as deterministic proof.
 
-Status (2026-06-22): the **first five rows are 🟢 complete** — five pure, total,
+Status (2026-06-22): **all six rows are 🟢 complete** — six pure, total,
 deterministic cores, each the analogue of a Phase-11 core specialised to
 agent-reviewed verdicts, reusing the F029/F032/F035 length-prefixed, injective
 encoding discipline: F035 `AgentReviewKey` (cache key), F036 `VerdictReuse`
 (invalidation decision), F037 `PromptIsolation` (prompt isolation), F038
-`ReviewRecord` (auditable review record), and F039 `AdvisoryPromotion` (the
-advisory-to-blocking promotion gate). The remaining row (calibration) is
-🔴 not started.
+`ReviewRecord` (auditable review record), F039 `AdvisoryPromotion` (the
+advisory-to-blocking promotion gate), and F040 `Calibration` (the judge-vs-human
+calibration-evidence gate). **Phase 12 is closed.**
 
 Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
 🔴 not started.
@@ -894,8 +899,26 @@ Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
   `specs/039-advisory-promotion-gate/` (33 green tests: advisory-default, all-named,
   the inclusive no-single-sample comparator, totality, determinism/purity,
   necessary-not-sufficient, non-empty eligibility, surface drift).
-- 🔴 [ ] Define judge-vs-human calibration evidence before any agent-reviewed rule
-  can block protected boundaries.
+- 🟢 [x] Define judge-vs-human calibration evidence before any agent-reviewed rule
+  can block protected boundaries. **(F040 — `FS.GG.Governance.Calibration`, done
+  2026-06-22)** A pure, total, deterministic decision core (the agent-review analogue
+  of F023 `deriveEffectiveSeverity` / F030 `decide` / F036 `lookup` / F039 `decide`):
+  `decide : CalibrationThresholds -> CalibrationEvidence -> CalibrationDecision` returns
+  `Calibrated` naming the satisfied `CalibrationMetrics` (the no-hide rule) **iff** the
+  judge-vs-human comparison-sample count clears the **effective** minimum `max(MinimumSamples, 2)`
+  (a lone sample never calibrates) **and** the observed agreement clears the threshold at
+  the inclusive `>=` floor — and otherwise **defaults to uncalibrated** (`Uncalibrated`
+  with a no-hide reason: `NoCalibrationEvidence`, `TooFewSamples`, or
+  `AgreementBelowThreshold`). The model's own self-reported confidence is not an input
+  (calibration is human comparison, never self-assessment); a `Calibrated` decision is
+  necessary-not-sufficient (no blocking action, no severity, no enforcement verdict — it
+  asserts only beyond-advisory maturity). Reuses F035 `ModelId`/`ModelVersion`/`ReviewerPromptHash`
+  and F038 `RecordedVerdict` verbatim (the per-judge scope + opaque sample verdicts, never
+  interpreted); no model invoked, no human consulted, no review run, no bytes hashed, no
+  cache/verdict operation, no new dependency. Evidence: `specs/040-calibration-evidence-gate/`
+  (27 green tests: uncalibrated-default, calibrated-with-named-metrics, the inclusive
+  two-threshold no-single-sample comparator, totality, determinism/purity,
+  necessary-not-sufficient/no-hide, surface drift). **This closes Phase 12.**
 
 Exit criteria:
 

@@ -1,0 +1,237 @@
+TYPE FS.GG.Governance.Calibration.CalibrationModule
+  [Method] Boolean isCalibrated(CalibrationDecision)
+  [Method] CalibrationDecision decide(CalibrationThresholds, CalibrationEvidence)
+  [Method] Int32 agreementValue(AgreementLevel)
+  [Method] Int32 sampleCountValue(SampleCount)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Calibration.ModelModule+CalibrationMetrics] calibrationMetrics(CalibrationDecision)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Calibration.ModelModule+CalibrationReason] calibrationReason(CalibrationDecision)
+  [Method] SampleCount observedSampleCount(CalibrationEvidence)
+TYPE FS.GG.Governance.Calibration.ModelModule
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementClassification
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementLevel
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationDecision
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationEvidence
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationMetrics
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationReason
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationThresholds
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+ComparisonSample
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+JudgeIdentity
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+SampleCount
+TYPE FS.GG.Governance.Calibration.ModelModule+AgreementClassification
+  [Method] AgreementClassification get_Agreeing()
+  [Method] AgreementClassification get_Disagreeing()
+  [Method] Boolean Equals(AgreementClassification)
+  [Method] Boolean Equals(AgreementClassification, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAgreeing()
+  [Method] Boolean get_IsDisagreeing()
+  [Method] Int32 CompareTo(AgreementClassification)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementClassification+Tags
+  [Property] AgreementClassification Agreeing
+  [Property] AgreementClassification Disagreeing
+  [Property] Boolean IsAgreeing
+  [Property] Boolean IsDisagreeing
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Calibration.ModelModule+AgreementClassification+Tags
+  [Field] Int32 Agreeing
+  [Field] Int32 Disagreeing
+TYPE FS.GG.Governance.Calibration.ModelModule+AgreementLevel
+  [Method] AgreementLevel NewAgreementLevel(Int32)
+  [Method] Boolean Equals(AgreementLevel)
+  [Method] Boolean Equals(AgreementLevel, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AgreementLevel)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationDecision
+  [Method] Boolean Equals(CalibrationDecision)
+  [Method] Boolean Equals(CalibrationDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCalibrated()
+  [Method] Boolean get_IsUncalibrated()
+  [Method] CalibrationDecision NewCalibrated(CalibrationMetrics)
+  [Method] CalibrationDecision NewUncalibrated(CalibrationReason)
+  [Method] Int32 CompareTo(CalibrationDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Calibrated
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Tags
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Uncalibrated
+  [Property] Boolean IsCalibrated
+  [Property] Boolean IsUncalibrated
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Calibrated
+  [Method] CalibrationMetrics get_Item()
+  [Property] CalibrationMetrics Item
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Tags
+  [Field] Int32 Calibrated
+  [Field] Int32 Uncalibrated
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationDecision+Uncalibrated
+  [Method] CalibrationReason get_Item()
+  [Property] CalibrationReason Item
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationEvidence
+  [Constructor] Void .ctor(JudgeIdentity, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Calibration.ModelModule+ComparisonSample], AgreementLevel)
+  [Method] AgreementLevel get_ObservedAgreement()
+  [Method] Boolean Equals(CalibrationEvidence)
+  [Method] Boolean Equals(CalibrationEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CalibrationEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] JudgeIdentity get_Scope()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Calibration.ModelModule+ComparisonSample] get_Samples()
+  [Method] System.String ToString()
+  [Property] AgreementLevel ObservedAgreement
+  [Property] JudgeIdentity Scope
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Calibration.ModelModule+ComparisonSample] Samples
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationMetrics
+  [Constructor] Void .ctor(SampleCount, SampleCount, AgreementLevel, AgreementLevel)
+  [Method] AgreementLevel get_ObservedAgreement()
+  [Method] AgreementLevel get_RequiredAgreement()
+  [Method] Boolean Equals(CalibrationMetrics)
+  [Method] Boolean Equals(CalibrationMetrics, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CalibrationMetrics)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SampleCount get_ObservedSamples()
+  [Method] SampleCount get_RequiredSamples()
+  [Method] System.String ToString()
+  [Property] AgreementLevel ObservedAgreement
+  [Property] AgreementLevel RequiredAgreement
+  [Property] SampleCount ObservedSamples
+  [Property] SampleCount RequiredSamples
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationReason
+  [Method] Boolean Equals(CalibrationReason)
+  [Method] Boolean Equals(CalibrationReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAgreementBelowThreshold()
+  [Method] Boolean get_IsNoCalibrationEvidence()
+  [Method] Boolean get_IsTooFewSamples()
+  [Method] CalibrationReason NewAgreementBelowThreshold(AgreementLevel, AgreementLevel)
+  [Method] CalibrationReason NewTooFewSamples(SampleCount, SampleCount)
+  [Method] CalibrationReason get_NoCalibrationEvidence()
+  [Method] Int32 CompareTo(CalibrationReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationReason+AgreementBelowThreshold
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationReason+Tags
+  [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationReason+TooFewSamples
+  [Property] Boolean IsAgreementBelowThreshold
+  [Property] Boolean IsNoCalibrationEvidence
+  [Property] Boolean IsTooFewSamples
+  [Property] CalibrationReason NoCalibrationEvidence
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationReason+AgreementBelowThreshold
+  [Method] AgreementLevel get_observed()
+  [Method] AgreementLevel get_required()
+  [Property] AgreementLevel observed
+  [Property] AgreementLevel required
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationReason+Tags
+  [Field] Int32 AgreementBelowThreshold
+  [Field] Int32 NoCalibrationEvidence
+  [Field] Int32 TooFewSamples
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationReason+TooFewSamples
+  [Method] SampleCount get_observed()
+  [Method] SampleCount get_required()
+  [Property] SampleCount observed
+  [Property] SampleCount required
+TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationThresholds
+  [Constructor] Void .ctor(SampleCount, AgreementLevel)
+  [Method] AgreementLevel get_MinimumAgreement()
+  [Method] Boolean Equals(CalibrationThresholds)
+  [Method] Boolean Equals(CalibrationThresholds, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CalibrationThresholds)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SampleCount get_MinimumSamples()
+  [Method] System.String ToString()
+  [Property] AgreementLevel MinimumAgreement
+  [Property] SampleCount MinimumSamples
+TYPE FS.GG.Governance.Calibration.ModelModule+ComparisonSample
+  [Constructor] Void .ctor(RecordedVerdict, RecordedVerdict, AgreementClassification)
+  [Method] AgreementClassification get_Agreement()
+  [Method] Boolean Equals(ComparisonSample)
+  [Method] Boolean Equals(ComparisonSample, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ComparisonSample)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] RecordedVerdict get_HumanVerdict()
+  [Method] RecordedVerdict get_JudgeVerdict()
+  [Method] System.String ToString()
+  [Property] AgreementClassification Agreement
+  [Property] RecordedVerdict HumanVerdict
+  [Property] RecordedVerdict JudgeVerdict
+TYPE FS.GG.Governance.Calibration.ModelModule+JudgeIdentity
+  [Constructor] Void .ctor(ModelId, ModelVersion, ReviewerPromptHash)
+  [Method] Boolean Equals(JudgeIdentity)
+  [Method] Boolean Equals(JudgeIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(JudgeIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ModelId get_Model()
+  [Method] ModelVersion get_ModelVersion()
+  [Method] ReviewerPromptHash get_PromptHash()
+  [Method] System.String ToString()
+  [Property] ModelId Model
+  [Property] ModelVersion ModelVersion
+  [Property] ReviewerPromptHash PromptHash
+TYPE FS.GG.Governance.Calibration.ModelModule+SampleCount
+  [Method] Boolean Equals(SampleCount)
+  [Method] Boolean Equals(SampleCount, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SampleCount)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] SampleCount NewSampleCount(Int32)
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag

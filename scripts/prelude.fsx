@@ -1839,3 +1839,80 @@ printfn "[F39] all three bases ⇒ %A" (AdvisoryPromotion.decide (f39Facts (Some
 // A lone review never clears the floor, even when the threshold is 1 (the no-single-sample guard).
 printfn "[F39] lone review (1/1) ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 1 1 None))
 // expect: StaysAdvisory (ConfidenceBelowThreshold (ConfirmationCount 1, ConfidenceThreshold 1))
+
+// ── F040: judge-vs-human calibration evidence (the beyond-advisory-maturity gate) ──
+//
+// `decide` is the single total, deterministic decision over supplied thresholds + evidence: Calibrated IFF the
+// comparison-sample count clears the EFFECTIVE minimum `max(MinimumSamples, 2)` (a lone sample never
+// calibrates) AND the observed agreement clears the threshold at the inclusive `>=` floor — naming the
+// satisfied CalibrationMetrics (the no-hide rule); else Uncalibrated with its no-hide reason
+// (NoCalibrationEvidence / TooFewSamples / AgreementBelowThreshold). Uncalibrated by default — the model's own
+// self-confidence is NOT a field. It reuses F035 identity tokens + F038 `RecordedVerdict` VERBATIM. No model
+// invoked, no human consulted, no review run, no bytes hashed, no clock/filesystem/network read, no verdict
+// produced/interpreted, no cache key/store/lookup, no review record built, no persistence/CLI (FR-006/FR-007).
+// Design-first FSI proof (Principle I) over literal values — the worked examples of
+// contracts/calibration-api.md / quickstart.md.
+#r "../src/FS.GG.Governance.AgentReviewKey/bin/Debug/net10.0/FS.GG.Governance.AgentReviewKey.dll"
+#r "../src/FS.GG.Governance.ReviewRecord/bin/Debug/net10.0/FS.GG.Governance.ReviewRecord.dll"
+#r "../src/FS.GG.Governance.Calibration/bin/Debug/net10.0/FS.GG.Governance.Calibration.dll"
+
+open FS.GG.Governance.AgentReviewKey.Model
+open FS.GG.Governance.ReviewRecord.Model
+open FS.GG.Governance.Calibration.Model
+open FS.GG.Governance.Calibration
+
+/// The per-judge calibration scope (literal F035 identity tokens).
+let f40Judge: JudgeIdentity =
+    { Model = ModelId "gpt"
+      ModelVersion = ModelVersion "1"
+      PromptHash = ReviewerPromptHash "h" }
+
+/// One agreeing judge-vs-human comparison sample (literal F038 verdicts; only `Agreement` is consumed).
+let f40Agreeing: ComparisonSample =
+    { JudgeVerdict = RecordedVerdict "v"
+      HumanVerdict = RecordedVerdict "v"
+      Agreement = Agreeing }
+
+/// Assemble evidence from a sample count + a supplied observed agreement level.
+let f40Evidence n agreement : CalibrationEvidence =
+    { Scope = f40Judge
+      Samples = List.replicate n f40Agreeing
+      ObservedAgreement = AgreementLevel agreement }
+
+// Thresholds T = at least 3 samples, at least 80 agreement.
+let f40T: CalibrationThresholds =
+    { MinimumSamples = SampleCount 3
+      MinimumAgreement = AgreementLevel 80 }
+
+// No samples ⇒ uncalibrated, no evidence.
+printfn "[F40] no evidence ⇒ %A" (Calibration.decide f40T (f40Evidence 0 95))
+// expect: Uncalibrated NoCalibrationEvidence
+
+// One sample (100% agreement) ⇒ too few; the lone sample never calibrates.
+printfn "[F40] 1 sample / 100 ⇒ %A" (Calibration.decide f40T (f40Evidence 1 100))
+// expect: Uncalibrated (TooFewSamples (SampleCount 1, SampleCount 3))
+
+// Two samples (100% agreement) ⇒ still below the 3-sample minimum.
+printfn "[F40] 2 samples / 100 ⇒ %A" (Calibration.decide f40T (f40Evidence 2 100))
+// expect: Uncalibrated (TooFewSamples (SampleCount 2, SampleCount 3))
+
+// Enough samples but agreement below the threshold ⇒ uncalibrated, agreement below.
+printfn "[F40] 3 samples / 79 ⇒ %A" (Calibration.decide f40T (f40Evidence 3 79))
+// expect: Uncalibrated (AgreementBelowThreshold (AgreementLevel 79, AgreementLevel 80))
+
+// Enough samples and agreement exactly at the threshold ⇒ calibrated (inclusive >=), metrics named.
+printfn "[F40] 3 samples / 80 ⇒ %A" (Calibration.decide f40T (f40Evidence 3 80))
+// expect: Calibrated { ObservedSamples = SampleCount 3; RequiredSamples = SampleCount 3; ObservedAgreement = AgreementLevel 80; RequiredAgreement = AgreementLevel 80 }
+
+// Comfortably over both thresholds ⇒ calibrated, metrics named.
+printfn "[F40] 5 samples / 95 ⇒ %A" (Calibration.decide f40T (f40Evidence 5 95))
+// expect: Calibrated { ObservedSamples = SampleCount 5; RequiredSamples = SampleCount 3; ObservedAgreement = AgreementLevel 95; RequiredAgreement = AgreementLevel 80 }
+
+// A degenerate minimum of 1 sample still applies the no-single-sample floor max(1, 2) = 2.
+printfn
+    "[F40] degenerate min=1, 1 sample ⇒ %A"
+    (Calibration.decide
+        { MinimumSamples = SampleCount 1
+          MinimumAgreement = AgreementLevel 80 }
+        (f40Evidence 1 100))
+// expect: Uncalibrated (TooFewSamples (SampleCount 1, SampleCount 2))
