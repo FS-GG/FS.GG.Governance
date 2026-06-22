@@ -107,6 +107,10 @@ module Interpreter =
 
         | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, guard (fun () -> ports.Write path content))
 
+        // F048: reuse the existing atomic `writeAtomic` (temp + rename) for the store write — a failed write
+        // leaves no partial file and is reified to the NON-FATAL `StorePersisted` (research D8/FR-001).
+        | Loop.PersistStore(path, content) -> Loop.StorePersisted(guard (fun () -> ports.Write path content))
+
         | Loop.EmitSummary text ->
             ports.Out text
             Loop.Emitted

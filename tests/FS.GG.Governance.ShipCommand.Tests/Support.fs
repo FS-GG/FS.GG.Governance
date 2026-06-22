@@ -405,7 +405,8 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       Profile = Standard
       Format = format
       AuditOut = "readiness/audit.json"
-      StorePath = "readiness/evidence-reuse.json" }
+      StorePath = "readiness/evidence-reuse.json"
+      PersistStore = false }
 
 /// A request under an explicit mode/profile lever set (for the two-lever-set / no-hide proofs).
 let requestForLevers (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) (mode: RunMode) (profile: Profile) : Loop.RunRequest =
@@ -436,6 +437,36 @@ let writeFile (dir: string) (relPath: string) (content: string) : unit =
     | null -> ()
     | parent -> Directory.CreateDirectory parent |> ignore
     File.WriteAllText(full, content)
+
+// ── F048 persistence fixtures: a REAL F030 store + the REAL F046 reader round-trip (Principle V) ──
+
+/// An opaque, DISCLOSED-SYNTHETIC evidence reference. SYNTHETIC: a real `EvidenceRef` is the output of gate
+/// execution (a deferred row); these literal pointers keep the store shape real.
+let syntheticRef (label: string) : EvidenceRef = EvidenceRef("synthetic://" + label) // SYNTHETIC: real refs need gate execution
+
+/// A complete, literal `FreshnessInputs` varying only `Check`/`Head`. Every category present so any loss on
+/// round-trip is observable.
+let persistInputs (check: string) (head: string) : FreshnessInputs =
+    { Check = CheckId check
+      Domain = DomainId "package-api"
+      Command = Some(CommandId "dotnet")
+      Environment = Local
+      RuleHash = RuleHash "r1"
+      CoveredArtifacts = [ ArtifactHash "h1" ]
+      CommandVersion = Some(CommandVersion "8.0")
+      GeneratorVersion = GeneratorVersion "g1"
+      Base = Revision "aaa"
+      Head = Revision head }
+
+/// Build a `ReuseStore` by folding the REAL `EvidenceReuse.record` (oldest-first input ⇒ newest-first store).
+let storeOf (entries: (FreshnessInputs * EvidenceRef) list) : ReuseStore =
+    entries |> List.fold (fun s (i, e) -> EvidenceReuse.record i e s) EvidenceReuse.empty
+
+/// Load a store file through the REAL `FreshnessSensing.realStoreReader`; raise on a malformed file.
+let readStore (path: string) : ReuseStore option =
+    match FreshnessSensing.realStoreReader path with
+    | Ok loaded -> loaded
+    | Error r -> failwithf "realStoreReader rejected %s: %s" path r
 
 /// Create a disposable temp git repo with a real `.fsgg` catalog and a real two-commit edit under
 /// `src/`, run `body` against its path, then delete it.

@@ -48,7 +48,11 @@ module Loop =
           Format: OutputFormat
           GatesOut: string
           RouteOut: string
-          StorePath: string }
+          StorePath: string
+          /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
+          /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts
+          /// (FR-004/FR-007).
+          PersistStore: bool }
 
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
@@ -80,6 +84,10 @@ module Loop =
         | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
         | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
+        /// F048: atomically write the pruned/bounded/serialised store back to `path`. `content` is the
+        /// precomputed `EvidenceReuseStore.serialise (retain defaultRetentionBound (prune loaded))` string —
+        /// the decision (whether/what to write) lives in `update` (FR-001/FR-010).
+        | PersistStore of path: string * content: string
         | EmitSummary of text: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
@@ -92,6 +100,9 @@ module Loop =
         | FreshnessSensed of Result<SensedFacts, string>
         | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
+        /// F048: the NON-FATAL store-write ack — distinct from `Wrote`. An `Error` appends a cache note and
+        /// NEVER changes `Exit` or the emitted artifacts (FR-006).
+        | StorePersisted of Result<unit, string>
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
@@ -127,6 +138,12 @@ module Loop =
           Sensed: SensedFacts option
           Store: ReuseStore option
           CacheNotes: string list
+          /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
+          /// malformed file is never clobbered (D6).
+          StoreDegraded: bool
+          /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
+          /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
+          PersistAcked: bool
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

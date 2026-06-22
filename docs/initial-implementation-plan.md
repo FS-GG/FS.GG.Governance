@@ -217,12 +217,14 @@ the verdict **embed** into `route.json`/`audit.json` landed 2026-06-22 (F045
 flow from `fsgg route`/`fsgg ship` themselves (F046 `FS.GG.Governance.FreshnessSensing`/
 `RouteCommand`/`ShipCommand`) — so the cache-eligibility thread is end-to-end. The
 evidence-reuse store **write half** (serialise + bounded retention + superseded-world
-pruning, as a pure core) landed 2026-06-22 (F047 `FS.GG.Governance.EvidenceReuseStore`);
-the one remaining cache-eligibility piece is the **impure on-disk store write** (atomic
-temp+rename persistence wired into `fsgg route`/`fsgg ship`, so the cache actually warms
-between runs) plus real evidence-reference capture from gate execution. Other open rows
-are capability-catalog expansion, `refresh`/stale-view blocking, and the `verify`/`release`
-gates.
+pruning, as a pure core) landed 2026-06-22 (F047 `FS.GG.Governance.EvidenceReuseStore`),
+and the **impure on-disk store write** — atomic temp+rename persistence wired into
+`fsgg route`/`fsgg ship` behind an opt-in `--persist-store` flag, so the cache actually
+warms between runs — landed 2026-06-22 (F048 `FS.GG.Governance.RouteCommand`/`ShipCommand`).
+**The cache-eligibility/freshness thread is now complete end-to-end** (sense → resolve →
+evaluate → embed → persist); the only remaining evidence-reuse work is real
+evidence-reference capture from gate execution. Other open rows are capability-catalog
+expansion, `refresh`/stale-view blocking, and the `verify`/`release` gates.
 
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.
@@ -461,8 +463,12 @@ Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
   cache can warm across runs) landed as the pure core **F047**
   (`FS.GG.Governance.EvidenceReuseStore` — `serialise` the byte-stable inverse of the F046
   reader + bounded `retain` + superseded-world `prune`, all pure/total/recompute-safe,
-  merged 2026-06-22); the impure on-disk store **write wiring** into `fsgg route`/`fsgg
-  ship` and real evidence-reference capture are the remaining deferred host rows.)
+  merged 2026-06-22), and the impure on-disk store **write wiring** into `fsgg route`/`fsgg
+  ship` landed as **F048** (an opt-in `--persist-store` flag whose pure `update` derives the
+  document via F047 `prune |> retain |> serialise` and emits a `PersistStore` effect the edge
+  writes atomically (temp+rename); default-off ⇒ byte-identical artifacts, decoupled from the
+  run's verdicts, non-fatal on write failure, never clobbering a malformed store; merged
+  2026-06-22). Only real evidence-reference capture from gate execution remains deferred.)
 - 🟢 [x] Publish the first GitHub Actions guidance for branch protection.
   (Governance **F027** `027-branch-protection-guidance` — a docs+template deliverable, no
   new F# code: the guidance `docs/ci/github-actions-branch-protection.md` + copyable
@@ -670,8 +676,10 @@ cache-eligibility/freshness verdict's **host emission** into the route/audit JSO
 `fsgg cache-eligibility` host F044, the verdict **embed** into route/audit JSON F045, and
 **real** verdicts from `fsgg route`/`fsgg ship` F046 have all now landed — so route/audit
 JSON carry a real, embedded, recompute-safe cache-eligibility verdict end-to-end. The
-evidence-reuse store **write half** landed as F047; only the impure on-disk store-write
-wiring that warms the cache between runs remains).
+evidence-reuse store **write half** landed as F047, and the impure on-disk store-write
+wiring that warms the cache between runs landed as **F048** (the opt-in `--persist-store`
+flag on `fsgg route`/`fsgg ship`) — so the cache-eligibility/freshness thread is now
+complete end-to-end; only real evidence-reference capture from gate execution remains).
 
 Legend: 🟢 complete · 🟡 partial (pure core landed; emission/wiring deferred) ·
 ⬜ not started.
@@ -955,8 +963,9 @@ sensed-metadata marking + flagged-rendering core (**F034**
   _(F030 — `FS.GG.Governance.EvidenceReuse` reuse-decision core, merged; the store
   **write half** — `serialise`/`retain`/`prune`, the byte-stable inverse of the F046
   reader plus bounded retention + superseded-world pruning, all pure/total/recompute-safe
-  — landed as F047 `FS.GG.Governance.EvidenceReuseStore`, merged 2026-06-22. The impure
-  on-disk write wiring that warms the cache between runs is the remaining deferred host row.)_
+  — landed as F047 `FS.GG.Governance.EvidenceReuseStore`, merged 2026-06-22; the impure
+  on-disk write wiring that warms the cache between runs landed as F048 — the opt-in
+  `--persist-store` flag on `fsgg route`/`fsgg ship`, merged 2026-06-22.)_
 - ✅ Explain high-cost routes with matched rule, changed path, affected
   capability, selected gate, cost, and cheaper local alternative.
   _(F031 — `FS.GG.Governance.RouteExplain`, merged.)_

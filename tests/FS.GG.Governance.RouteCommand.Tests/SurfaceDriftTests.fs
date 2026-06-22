@@ -108,6 +108,8 @@ let tests =
                   || name = "FS.GG.Governance.FreshnessResolution"
                   || name = "FS.GG.Governance.EvidenceReuse"
                   || name = "FS.GG.Governance.FreshnessKey"
+                  // F048: the pure write half of the evidence-reuse store (prune/retain/serialise).
+                  || name = "FS.GG.Governance.EvidenceReuseStore"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"
