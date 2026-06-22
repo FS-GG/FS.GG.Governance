@@ -1,0 +1,129 @@
+TYPE FS.GG.Governance.PromptIsolation.ModelModule
+  [Method] BoundedExcerpt excerpt(SizeBound, System.String)
+  [Method] SizeBound excerptBound(BoundedExcerpt)
+  [Method] System.String excerptContent(BoundedExcerpt)
+  [Method] Truncation excerptTruncation(BoundedExcerpt)
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+BoundedExcerpt
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+RenderedPrompt
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+ReviewRequest
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+SizeBound
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+Truncation
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload
+  [Method] ArtifactPayload NewDigestOnly(ArtifactHash)
+  [Method] ArtifactPayload NewExcerpt(BoundedExcerpt)
+  [Method] Boolean Equals(ArtifactPayload)
+  [Method] Boolean Equals(ArtifactPayload, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDigestOnly()
+  [Method] Boolean get_IsExcerpt()
+  [Method] Int32 CompareTo(ArtifactPayload)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+DigestOnly
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+Excerpt
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+Tags
+  [Property] Boolean IsDigestOnly
+  [Property] Boolean IsExcerpt
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+DigestOnly
+  [Method] ArtifactHash get_Item()
+  [Property] ArtifactHash Item
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+Excerpt
+  [Method] BoundedExcerpt get_Item()
+  [Property] BoundedExcerpt Item
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload+Tags
+  [Field] Int32 DigestOnly
+  [Field] Int32 Excerpt
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+BoundedExcerpt
+  [Method] Boolean Equals(BoundedExcerpt)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(BoundedExcerpt)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+RenderedPrompt
+  [Method] Boolean Equals(RenderedPrompt)
+  [Method] Boolean Equals(RenderedPrompt, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RenderedPrompt)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RenderedPrompt NewRenderedPrompt(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+ReviewRequest
+  [Constructor] Void .ctor(QuestionText, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload])
+  [Method] Boolean Equals(ReviewRequest)
+  [Method] Boolean Equals(ReviewRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReviewRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload] get_Artifacts()
+  [Method] QuestionText get_Instructions()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload] Artifacts
+  [Property] QuestionText Instructions
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+SizeBound
+  [Method] Boolean Equals(SizeBound)
+  [Method] Boolean Equals(SizeBound, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SizeBound)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] SizeBound NewSizeBound(Int32)
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+Truncation
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(Truncation)
+  [Method] Boolean Equals(Truncation, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsTruncated()
+  [Method] Boolean get_IsWhole()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(Truncation)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] Truncation get_Truncated()
+  [Method] Truncation get_Whole()
+  [NestedType] FS.GG.Governance.PromptIsolation.ModelModule+Truncation+Tags
+  [Property] Boolean IsTruncated
+  [Property] Boolean IsWhole
+  [Property] Int32 Tag
+  [Property] Truncation Truncated
+  [Property] Truncation Whole
+TYPE FS.GG.Governance.PromptIsolation.ModelModule+Truncation+Tags
+  [Field] Int32 Truncated
+  [Field] Int32 Whole
+TYPE FS.GG.Governance.PromptIsolation.PromptIsolationModule
+  [Method] RenderedPrompt render(ReviewRequest)
+  [Method] ReviewRequest assemble(QuestionText, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PromptIsolation.ModelModule+ArtifactPayload])
+  [Method] System.String renderedValue(RenderedPrompt)
