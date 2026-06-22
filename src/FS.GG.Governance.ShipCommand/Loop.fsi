@@ -21,6 +21,10 @@ open FS.GG.Governance.Config.Model            // GovernedPath, Validation
 open FS.GG.Governance.Snapshot.Model           // RepoSnapshot
 open FS.GG.Governance.Enforcement.Enforcement  // RunMode, Profile
 open FS.GG.Governance.Ship.Model               // ShipDecision
+open FS.GG.Governance.Gates.Model              // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.FreshnessKey.Model        // Revision (F046 — base/head from RepoSnapshot.Range)
+open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
+open FS.GG.Governance.EvidenceReuse.Model       // ReuseStore (F046 — the read-only reuse store join input)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -48,7 +52,8 @@ module Loop =
           Mode: RunMode
           Profile: Profile
           Format: OutputFormat
-          AuditOut: string }
+          AuditOut: string
+          StorePath: string }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2 (research D9). `UnrecognizedMode`/
     /// `UnrecognizedProfile` carry the offending string from F023 `recognizeMode`/`recognizeProfile`
@@ -79,14 +84,20 @@ module Loop =
     type Effect =
         | SenseScope of ScopeSelector
         | LoadCatalog of repo: string
+        | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
+        | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | EmitSummary of text: string
 
-    /// External results the interpreter feeds back into `update`.
+    /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
+    /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal cache
+    /// note) and NEVER perturbs the ship verdict or the exit code (research D2, FR-009/FR-011).
     type Msg =
         | Begin
         | Sensed of Result<RepoSnapshot, string>
         | Loaded of Validation
+        | FreshnessSensed of Result<SensedFacts, string>
+        | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | Emitted
 
@@ -102,19 +113,27 @@ module Loop =
         | Parsed
         | Sensed'
         | Loaded'
+        | Selected
         | Rolled
         | Persisted
         | Done
 
     /// The durable state the workflow owns. `Decision` is the F024 `ShipDecision` (carried so `render`
     /// and the terminal exit mapping read it); `AuditDoc` is the F025 projection string, computed BEFORE
-    /// the write effect is emitted (research D10).
+    /// the write effect is emitted (research D10). The F046 fields carry the cache-eligibility pipeline
+    /// state: `Snapshot` (base/head — D5), `SelectedGates`, `Sensed`/`Store` (join inputs), `CacheNotes`
+    /// (non-fatal degrade notes — D7). None of these participate in the verdict or the exit decision.
     type Model =
         { Request: RunRequest
           Phase: Phase
           Candidates: GovernedPath list option
           Decision: ShipDecision option
           AuditDoc: string option
+          Snapshot: RepoSnapshot option
+          SelectedGates: Gate list
+          Sensed: SensedFacts option
+          Store: ReuseStore option
+          CacheNotes: string list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

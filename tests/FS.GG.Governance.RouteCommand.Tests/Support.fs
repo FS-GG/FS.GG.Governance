@@ -16,10 +16,20 @@ open FS.GG.Governance.Snapshot.Model
 open FS.GG.Governance.Routing
 open FS.GG.Governance.Findings
 open FS.GG.Governance.Gates
+open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Route
 open FS.GG.Governance.RouteJson
 open FS.GG.Governance.GatesJson
 open FS.GG.Governance.RouteCommand
+// F046 cache-eligibility pipeline (faked sensing ports + the genuine-core expected-report computer)
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.FreshnessResolution
+open FS.GG.Governance.FreshnessResolution.Model
+open FS.GG.Governance.CacheEligibility
+open FS.GG.Governance.CacheEligibility.Model
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.FreshnessSensing
 
 // `Snapshot` has its own `Interpreter` module; alias it so `Interpreter` stays unambiguously the
 // RouteCommand edge while `FS.GG.Governance.Snapshot.Interpreter.senseSnapshot` / `GitPort` / `Ports` /
@@ -248,15 +258,76 @@ let candidatesOf (g: GitPort) (opts: SnapshotOptions) : GovernedPath list =
 let candidatesOfRepo (dir: string) (opts: SnapshotOptions) : GovernedPath list =
     (FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (FS.GG.Governance.Snapshot.Interpreter.realPorts dir) opts).Changed |> List.map (fun c -> c.Path)
 
+// ── F046 faked sensing ports (fixed literal hashes — Synthetic, disclosed) + expected-report computer ──
+
+/// A faked freshness sensor with fixed literal digests. SYNTHETIC: no real bytes hashed (the real sensor is
+/// proven over real temp-dir bytes in FS.GG.Governance.FreshnessSensing.Tests). Senses every gate fully.
+let fakeSensor: FreshnessSensing.FreshnessSensor =
+    { SenseRuleHash = fun () -> Some(RuleHash "rule-synthetic") // SYNTHETIC: fixed literal hash
+      SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-synthetic")
+      SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-synthetic" ]
+      SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-synthetic") }
+
+/// A faked sensor that fails to sense ONE accessor (covered artifacts) ⇒ those gates resolve unresolved on
+/// covered artifacts (the US3 unsensed-fact degrade probe). SYNTHETIC.
+let fakeSensorMissingCovered: FreshnessSensing.FreshnessSensor =
+    { fakeSensor with SenseCoveredArtifacts = fun _ -> None }
+
+/// A faked sensor whose `senseFreshness` would surface an `Error` (a throwing accessor) — the US3 sense-Error
+/// degrade probe. SYNTHETIC.
+let throwingSensor: FreshnessSensing.FreshnessSensor =
+    { fakeSensor with SenseRuleHash = fun () -> failwith "synthetic sense failure" }
+
+/// An ABSENT store reader (no file on disk ⇒ Ok None ⇒ loadStore maps to EvidenceReuse.empty).
+let absentStoreReader: FreshnessSensing.StoreReader = fun _ -> Ok None
+
+/// A MALFORMED store reader (present-but-unreadable ⇒ Error) — the US3 store-Error degrade probe.
+let malformedStoreReader: FreshnessSensing.StoreReader = fun _ -> Error "synthetic malformed store"
+
+let private revOfCommit (CommitId c) = Revision c
+
+/// The base/head the command derives from a snapshot's range (mirrors `Loop.baseHeadOf`); `None` snapshot
+/// (e.g. ExplicitPaths) ⇒ both `None`.
+let baseHeadOfSnap (snap: RepoSnapshot option) : Revision option * Revision option =
+    match snap |> Option.bind (fun s -> s.Range) with
+    | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
+    | None -> None, None
+
+/// The genuine cache-eligibility report for the selected gates, recomputed LIVE through the public
+/// `senseFreshness`→`resolve`→`candidate`→`evaluate` chain over the given sensor/store/baseHead — the bytes
+/// the embed must carry. An empty store ⇒ every resolved gate `mustRecompute noPriorEvidence`.
+let expectedCacheReportWith
+    (sensor: FreshnessSensing.FreshnessSensor)
+    (store: ReuseStore)
+    (selectedGates: Gate list)
+    (baseHead: Revision option * Revision option)
+    : CacheEligibilityReport =
+    match FreshnessSensing.senseFreshness sensor selectedGates baseHead with
+    | Ok sensed ->
+        let report = FreshnessResolution.resolve selectedGates sensed
+        let cands = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+        CacheEligibility.evaluate cands store
+    | Error _ ->
+        // a sense Error degrades to empty SensedFacts ⇒ every gate unresolved ⇒ no candidate ⇒ empty report
+        CacheEligibility.evaluate [] store
+
+/// The standard (fully-sensing fake sensor + absent/empty store) expected report.
+let expectedCacheReport (selectedGates: Gate list) (baseHead: Revision option * Revision option) : CacheEligibilityReport =
+    expectedCacheReportWith fakeSensor EvidenceReuse.empty selectedGates baseHead
+
 /// The genuine F021/F020 projection strings for a catalog + candidate set, via the real
-/// F015→F017→F018→F019→F020/F021 chain — the bytes the command must persist verbatim (SC-001).
-let projectExpected (files: Map<string, string>) (candidates: GovernedPath list) : string * string =
+/// F015→F017→F018→F019→F020/F021 chain. The route document now carries the LIVE-recomputed cache report
+/// (`Some report`) over the faked sensor + absent (empty) store — the bytes the command must persist (SC-001).
+/// `snap` is the snapshot the command sees (`None` for ExplicitPaths) so base/head match exactly.
+let projectExpected (files: Map<string, string>) (candidates: GovernedPath list) (snap: RepoSnapshot option) : string * string =
     let facts = factsOf files
     let report = Routing.route facts candidates
     let registry = Gates.buildRegistry facts
     let findings = Findings.findUnknownGovernedPaths facts report
     let result = Route.select registry report findings
-    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResult result None
+    let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
+    let cacheReport = expectedCacheReport selectedGates (baseHeadOfSnap snap)
+    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResult result (Some cacheReport)
 
 // ── Capturing write/output edges ──
 
@@ -282,9 +353,21 @@ let capturingSink (cap: Capture) : Interpreter.OutputSink =
     fun text -> cap.Emits <- cap.Emits @ [ text ]
 
 /// Assemble faked Interpreter.Ports from a catalog map, a git port, and a capture (no failing writes).
+/// The F046 sensing ports default to the fully-sensing fake sensor + an absent (⇒ empty) store.
 let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
     { Files = readerOf files
       Git = portsGit g
+      Freshness = fakeSensor
+      Store = absentStoreReader
+      Write = capturingWriter cap Set.empty req.GatesOut req.RouteOut
+      Out = capturingSink cap }
+
+/// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
+let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
+    { Files = readerOf files
+      Git = portsGit g
+      Freshness = sensor
+      Store = store
       Write = capturingWriter cap Set.empty req.GatesOut req.RouteOut
       Out = capturingSink cap }
 
@@ -292,12 +375,18 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
     { Files = readerOf files
       Git = portsGit g
+      Freshness = fakeSensor
+      Store = absentStoreReader
       Write = capturingWriter cap failPaths req.GatesOut req.RouteOut
       Out = capturingSink cap }
 
 /// A real RepoSnapshot the F016 core derives from a faked git port (for the pure `update` tests).
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts
+
+/// The real RepoSnapshot the F016 core derives from a REAL git repo on disk (for the e2e expected report).
+let snapshotOfRepo (dir: string) (opts: SnapshotOptions) : RepoSnapshot =
+    FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (FS.GG.Governance.Snapshot.Interpreter.realPorts dir) opts
 
 /// Find a captured write by artifact kind.
 let writtenOf (cap: Capture) (kind: Loop.ArtifactKind) : (string * string) option =
@@ -311,7 +400,8 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       Scope = scope
       Format = format
       GatesOut = ".fsgg/gates.json"
-      RouteOut = "readiness/route.json" }
+      RouteOut = "readiness/route.json"
+      StorePath = "readiness/evidence-reuse.json" }
 
 // ── Real git temp-repo helper (the ONE end-to-end proof) ──
 

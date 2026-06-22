@@ -5,94 +5,139 @@ open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Routing
 open FS.GG.Governance.Findings
 open FS.GG.Governance.Gates
+open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Route
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.AuditJson
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.FreshnessSensing
 open FS.GG.Governance.ShipCommand
 open FS.GG.Governance.ShipCommand.Tests.Support
 
-// US1 (the pure composition) + US3 (render purity): drive `Loop.update` with literal Msg values over
-// real upstream-assembled inputs (a real RepoSnapshot from the F016 core, real TypedFacts from the
-// F014 core) and assert the next Model + emitted Effects. No I/O, no git, no clock (Principle IV).
+// US2 (the pure composition) + the F046 cache wiring: drive `Loop.update` with literal Msg values over
+// real upstream-assembled inputs (a real RepoSnapshot from the F016 core, real TypedFacts from the F014
+// core, real SensedFacts from the shared FreshnessSensing edge over the faked sensor). No I/O, no git, no
+// clock (Principle IV).
+
+// Drive init → Sensed → Loaded to the Selected phase, returning the snapshot + the post-select model + effects.
+let private toSelected (git) (req: Loop.RunRequest) =
+    let snap = snapshotOf git defaultOpts
+    let m0, _ = Loop.init req
+    let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
+    let m2, e2 = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
+    snap, m2, e2
+
+// Feed the two cache senses (fake sensor + empty store) and return the post-join model.
+let private toJoined (snap) (m2: Loop.Model) =
+    let baseHead = baseHeadOfSnap (Some snap)
+    let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
+    let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
+    let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+    m4, e4
 
 [<Tests>]
 let tests =
     testList
         "Loop"
-        [ test "Sensed Ok sets Candidates from the snapshot and emits LoadCatalog (US1)" {
+        [ test "Sensed Ok sets Candidates + Snapshot and emits LoadCatalog (US2)" {
               let snap = snapshotOf (gitWithChanges [ 'M', "src/Lib/Thing.fs" ]) defaultOpts
               let req = requestFor Loop.DefaultRange Loop.Text
               let m0, _ = Loop.init req
               let m1, e1 = Loop.update (Loop.Sensed(Ok snap)) m0
 
               Expect.equal m1.Candidates (Some(snap.Changed |> List.map (fun c -> c.Path))) "candidates = snapshot changed paths"
+              Expect.equal m1.Snapshot (Some snap) "snapshot kept to derive base/head"
               Expect.equal m1.Phase Loop.Sensed' "advanced to Sensed'"
               Expect.equal e1 [ Loop.LoadCatalog req.Repo ] "emits LoadCatalog for the repo"
           }
 
-          test "Loaded Valid rolls up + projects, emits exactly one WriteArtifact = F025(F024 rollup) (US1, SC-001)" {
-              let snap = snapshotOf (gitWithChanges [ 'M', "src/Lib/Thing.fs" ]) defaultOpts
+          test "Loaded Valid rolls up the verdict and emits SenseFreshness + LoadStore (no write yet) (US2)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req = requestFor Loop.DefaultRange Loop.Text
-              let m0, _ = Loop.init req
-              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-              let facts = factsOf validCatalog
-              let m2, e2 = Loop.update (Loop.Loaded(Valid facts)) m1
+              let snap, m2, e2 = toSelected git req
 
-              // Re-derive directly from the real cores and assert the composition carried them verbatim (FR-004).
-              let candidates = m1.Candidates |> Option.defaultValue []
-              let report = Routing.route facts candidates
-              let registry = Gates.buildRegistry facts
-              let findings = Findings.findUnknownGovernedPaths facts report
-              let result = Route.select registry report findings
+              let result =
+                  let facts = factsOf validCatalog
+                  let report = Routing.route facts (candidatesOf git defaultOpts)
+                  let registry = Gates.buildRegistry facts
+                  let findings = Findings.findUnknownGovernedPaths facts report
+                  Route.select registry report findings
+
               let expectedDecision = Ship.rollup result req.Mode req.Profile
-              let expectedDoc = AuditJson.ofShipDecision expectedDecision None
+              Expect.equal m2.Decision (Some expectedDecision) "Decision = Ship.rollup of the same inputs/levers (verdict decided here)"
+              Expect.equal m2.Phase Loop.Selected "advanced to Selected (not Rolled — the join waits)"
 
-              Expect.equal m2.Decision (Some expectedDecision) "Decision = Ship.rollup of the same inputs/levers"
-              Expect.equal m2.AuditDoc (Some expectedDoc) "AuditDoc = AuditJson.ofShipDecision of the decision"
-              Expect.equal m2.Phase Loop.Rolled "advanced to Rolled"
-
+              let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
               Expect.equal
                   e2
-                  [ Loop.WriteArtifact(Loop.AuditArtifact, req.AuditOut, expectedDoc) ]
-                  "exactly one WriteArtifact effect with the request path and projected audit doc"
+                  [ Loop.SenseFreshness(selectedGates, baseHeadOfSnap (Some snap))
+                    Loop.LoadStore req.StorePath ]
+                  "emits SenseFreshness + LoadStore — and NO write"
           }
 
-          test "Wrote Ok then Emitted reach Done; ExitCodeBasis Blocked ⇒ Blocked exit (US1 AS1)" {
-              // src change under gate/standard ⇒ block-on-ship gates effective-Blocking ⇒ Fail/Blocked.
-              let snap = snapshotOf (gitWithChanges [ 'M', "src/Lib/Thing.fs" ]) defaultOpts
+          test "the join fires once both senses arrive ⇒ auditDoc = ofShipDecision decision (Some report), one write (SC-002)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req = requestFor Loop.DefaultRange Loop.Text
-              let m0, _ = Loop.init req
-              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-              let m2, _ = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
+              let snap, m2, _ = toSelected git req
+              let baseHead = baseHeadOfSnap (Some snap)
+              let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
+
+              // FreshnessSensed first ⇒ the join waits (Store None) — no write.
+              let m3, e3 = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
+              Expect.equal e3 [] "join waits — only one input present"
+
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              Expect.equal m4.Phase Loop.Rolled "join fired ⇒ Rolled"
+
+              let decision = Option.get m2.Decision
+              let expectedReport = expectedCacheReport m2.SelectedGates baseHead
+              let auditDoc = AuditJson.ofShipDecision decision (Some expectedReport)
+              Expect.equal m4.AuditDoc (Some auditDoc) "AuditDoc = ofShipDecision decision (Some expectedReport)"
+              Expect.equal e4 [ Loop.WriteArtifact(Loop.AuditArtifact, req.AuditOut, auditDoc) ] "exactly one WriteArtifact (cache-bearing audit doc)"
+
+              // SC-002: each kind:"gate" item carries a GateId-matched verdict.
+              Expect.stringContains auditDoc "\"cacheEligibilityEvaluated\":true" "the cache section is evaluated"
+              for g in m2.SelectedGates do
+                  Expect.stringContains auditDoc (gateIdValue g.Id) "each selected gate id appears in audit.json"
+          }
+
+          test "Wrote Ok then Emitted reach Done; ExitCodeBasis Blocked ⇒ Blocked exit, UNCHANGED by cache (US2 AS1, SC-003)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+              let req = requestFor Loop.DefaultRange Loop.Text
+              let snap, m2, _ = toSelected git req
               Expect.equal (Option.get m2.Decision).Verdict Fail "src change under gate/standard fails"
+              let m4, _ = toJoined snap m2
 
-              let m3, e3 = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m2
-              Expect.equal m3.Phase Loop.Persisted "write ack ⇒ Persisted"
-              Expect.equal e3 [ Loop.EmitSummary(Loop.render m2 req.Format) ] "write ack ⇒ EmitSummary"
+              let m5, e5 = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
+              Expect.equal m5.Phase Loop.Persisted "write ack ⇒ Persisted"
+              Expect.equal e5 [ Loop.EmitSummary(Loop.render m4 req.Format) ] "write ack ⇒ EmitSummary"
 
-              let m4, e4 = Loop.update Loop.Emitted m3
-              Expect.equal m4.Phase Loop.Done "Emitted ⇒ Done"
-              Expect.equal m4.Exit Loop.Blocked "Blocked basis ⇒ Blocked exit"
-              Expect.equal e4 [] "terminal: no further effects"
+              let m6, e6 = Loop.update Loop.Emitted m5
+              Expect.equal m6.Phase Loop.Done "Emitted ⇒ Done"
+              Expect.equal m6.Exit Loop.Blocked "Blocked basis ⇒ Blocked exit (cache never participates)"
+              Expect.equal e6 [] "terminal: no further effects"
           }
 
-          test "ExitCodeBasis Clean ⇒ Success exit (US1 AS2)" {
-              // a routine path selects no gates and yields only an advisory finding ⇒ Pass/Clean.
-              let snap = snapshotOf (gitWithChanges [ 'M', "notes.txt" ]) defaultOpts
+          test "ExitCodeBasis Clean ⇒ Success exit; finding-only audit carries no cache verdict on any item (US2 AS2, E1)" {
+              // A routine path selects no gates ⇒ only an advisory finding ⇒ Pass/Clean.
+              let git = gitWithChanges [ 'M', "notes.txt" ]
               let req = requestFor Loop.DefaultRange Loop.Text
-              let m0, _ = Loop.init req
-              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-              let m2, _ = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
+              let snap, m2, _ = toSelected git req
               Expect.equal (Option.get m2.Decision).Verdict Pass "routine-only change passes"
+              Expect.equal m2.SelectedGates [] "no gates selected"
+              let m4, _ = toJoined snap m2
 
-              let m3, _ = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m2
-              let m4, _ = Loop.update Loop.Emitted m3
-              Expect.equal m4.Exit Loop.Success "Clean basis ⇒ Success exit"
+              let auditDoc = Option.get m4.AuditDoc
+              Expect.stringContains auditDoc "\"cacheEligibilityEvaluated\":true" "evaluated even with no gate items"
+
+              let m5, _ = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
+              let m6, _ = Loop.update Loop.Emitted m5
+              Expect.equal m6.Exit Loop.Success "Clean basis ⇒ Success exit"
           }
 
-          test "exitCode total mapping 0/1/2/3/4 (US1)" {
+          test "exitCode total mapping 0/1/2/3/4 (US2)" {
               Expect.equal (Loop.exitCode Loop.Success) 0 "Success ⇒ 0"
               Expect.equal (Loop.exitCode Loop.Blocked) 1 "Blocked ⇒ 1"
               Expect.equal (Loop.exitCode Loop.UsageError') 2 "UsageError' ⇒ 2"
@@ -100,31 +145,29 @@ let tests =
               Expect.equal (Loop.exitCode Loop.ToolError) 4 "ToolError ⇒ 4"
           }
 
-          test "render Text states verdict + basis, partitions with base/effective severity + findings + path (US1 AS3)" {
-              let snap = snapshotOf (gitWithChanges [ 'M', "src/Lib/Thing.fs" ]) defaultOpts
+          test "render Text states verdict + basis + the cache summary (US2 AS3, FR-015 C2)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req = requestFor Loop.DefaultRange Loop.Text
-              let m0, _ = Loop.init req
-              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-              let m2, _ = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
-              let text = Loop.render m2 Loop.Text
+              let snap, m2, _ = toSelected git req
+              let m4, _ = toJoined snap m2
+              let text = Loop.render m4 Loop.Text
 
               Expect.stringContains text "verdict fail" "states the verdict"
               Expect.stringContains text "exit-code basis: blocked" "states the exit-code basis"
               Expect.stringContains text "blockers:" "lists the blockers section"
-              Expect.stringContains text "base blocking" "shows base severity"
-              Expect.stringContains text "effective blocking" "shows effective severity"
-              Expect.stringContains text req.AuditOut "reports the written path"
-              // Deterministic for a fixed Model.
-              Expect.equal text (Loop.render m2 Loop.Text) "Text render is pure"
+              Expect.stringContains text "cache-eligibility:" "lists the cache outcome"
+              for g in m2.SelectedGates do
+                  Expect.stringContains text (gateIdValue g.Id) "summary names each selected gate's cache outcome"
+              Expect.equal text (Loop.render m4 Loop.Text) "Text render is pure"
           }
 
-          test "render Json equals the audit document text verbatim and is pure (US3)" {
-              let snap = snapshotOf (gitWithChanges [ 'M', "src/Lib/Thing.fs" ]) defaultOpts
+          test "render Json equals the (cache-bearing) audit document verbatim and is pure (US2)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req = requestFor Loop.DefaultRange Loop.Json
-              let m0, _ = Loop.init req
-              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-              let m2, _ = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
+              let snap, m2, _ = toSelected git req
+              let m4, _ = toJoined snap m2
 
-              Expect.equal (Loop.render m2 Loop.Json) (Option.get m2.AuditDoc) "Json render = the F025 audit doc verbatim"
-              Expect.equal (Loop.render m2 Loop.Json) (Loop.render m2 Loop.Json) "Json render is pure"
+              Expect.equal (Loop.render m4 Loop.Json) (Option.get m4.AuditDoc) "Json render = the F025 audit doc verbatim"
+              Expect.stringContains (Loop.render m4 Loop.Json) "\"cacheEligibilityEvaluated\":true" "the persisted doc carries the evaluated cache section"
+              Expect.equal (Loop.render m4 Loop.Json) (Loop.render m4 Loop.Json) "Json render is pure"
           } ]

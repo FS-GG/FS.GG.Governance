@@ -35,7 +35,9 @@ let tests =
                   // Recompute the expected bytes from the SAME real git sensing + real catalog + levers.
                   let candidates = candidatesOfRepo dir (sinceOpts "HEAD~1")
                   Expect.isNonEmpty candidates "the committed src edit is sensed as a changed path"
-                  let expected = auditExpected validCatalog candidates Gate Standard
+                  // No store on disk ⇒ every resolved gate mustRecompute/noPriorEvidence (independent of the
+                  // real hash values), so the fake-sensor expected report over the SAME real snapshot matches.
+                  let expected = auditExpected validCatalog candidates Gate Standard (Some(snapshotOfRepo dir (sinceOpts "HEAD~1")))
 
                   Expect.isTrue (File.Exists req.AuditOut) "audit.json exists on disk"
                   Expect.equal (File.ReadAllText req.AuditOut) expected "audit.json bytes = AuditJson.ofShipDecision (Ship.rollup …) (SC-001)"

@@ -103,9 +103,13 @@ let tests =
                   || name = "FS.GG.Governance.Enforcement"
                   || name = "FS.GG.Governance.Ship"
                   || name = "FS.GG.Governance.AuditJson"
-                  // F045: AuditJson's `ofShipDecision` now takes a `CacheEligibilityReport option`, so the
-                  // F041 assembly arrives transitively in ShipCommand's IL (the command passes `None`).
+                  // F045: AuditJson's `ofShipDecision` takes a `CacheEligibilityReport option` ⇒ F041 arrives.
                   || name = "FS.GG.Governance.CacheEligibility"
+                  // F046: the cache-eligibility pipeline — the shared sensing edge + the resolution/store cores.
+                  || name = "FS.GG.Governance.FreshnessSensing"
+                  || name = "FS.GG.Governance.FreshnessResolution"
+                  || name = "FS.GG.Governance.EvidenceReuse"
+                  || name = "FS.GG.Governance.FreshnessKey"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

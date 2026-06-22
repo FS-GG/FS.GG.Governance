@@ -15,6 +15,7 @@ namespace FS.GG.Governance.RouteCommand
 
 open FS.GG.Governance.Config              // Loader.FileReader
 open FS.GG.Governance.Snapshot            // Interpreter.Ports
+open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -31,11 +32,15 @@ module Interpreter =
 
     /// The bundle of injected edge ports — everything impure the command touches. `Files`/`Git` are the
     /// REUSED F014/F016 ports (so catalog reads and git sensing are already fakeable); `Write`/`Out` are
-    /// new. Wholly faked in tests (in-memory reader, an in-memory git `Ports`, a capturing writer/sink)
-    /// so no real `git` process or real filesystem is reached (FR-012, SC-007).
+    /// the F022 persistence/stdout ports; `Freshness`/`Store` are the F046 shared-edge cache-eligibility
+    /// ports (a real SHA-256 sensor / a read-only store reader). Wholly faked in tests (in-memory reader,
+    /// an in-memory git `Ports`, a fixed-hash sensor, an absent store, a capturing writer/sink) so no real
+    /// `git` process or real filesystem is reached (FR-012, SC-007).
     type Ports =
         { Files: Loader.FileReader
           Git: FS.GG.Governance.Snapshot.Ports
+          Freshness: FreshnessSensing.FreshnessSensor
+          Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
           Out: OutputSink }
 

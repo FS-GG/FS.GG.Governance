@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F046 shared edge: the IMPURE freshness-sensing edge extracted from F044's interpreter (research D1)
+       so the `fsgg route` (F022) and `fsgg ship` (F026) host commands can run the cache-eligibility
+       pipeline WITHOUT triplicating ~80 lines of real SHA-256 / store-deserializer code. It owns the
+       `FreshnessSensor` / `StoreReader` ports, the real SHA-256 catalog/source sensing, the read-only
+       evidence-reuse-store deserializer, and the `SensedFacts` assembly. It NEVER fabricates an unsensed
+       fact (a `None` accessor result is unsensed, not an empty value), reaches NO network, and the
+       degrade-on-error POLICY is NOT here — `senseFreshness`/`loadStore` return faithful `Result`s and the
+       calling command's pure `update` decides how to degrade (research D2).
+
+       It adds NO new third-party PackageReference (FR-013): the only impure primitives are
+       System.Security.Cryptography (SHA-256), System.IO reads, and System.Text.Json (the store
+       deserializer) — all from the net10.0 shared framework. It references the merged cores
+       (Config/Gates/FreshnessKey/FreshnessResolution/EvidenceReuse) VERBATIM, redefining none.
+       `IsPackable=false`: this is a referenced edge library, not a packed tool. Compile order
+       FreshnessSensing.fsi -> FreshnessSensing.fs. F044 is left UNTOUCHED this row (FR-014); converging it
+       onto this library is a bounded deferred follow-up. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.FreshnessSensing</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="FreshnessSensing.fsi" />
+    <Compile Include="FreshnessSensing.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>

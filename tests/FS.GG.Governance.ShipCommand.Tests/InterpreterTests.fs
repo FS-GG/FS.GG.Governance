@@ -29,7 +29,7 @@ let tests =
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text Gate Standard
               let candidates = candidatesOf git defaultOpts
-              let expected = auditExpected validCatalog candidates Gate Standard
+              let expected = auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
 
               Expect.equal (writtenAudit cap) (Some(req.AuditOut, expected)) "audit.json = AuditJson.ofShipDecision (Ship.rollup …)"
               Expect.equal model.Exit Loop.Blocked "exit decision Blocked"
@@ -41,7 +41,7 @@ let tests =
               let git = gitWithChanges [ 'M', "notes.txt" ]
               let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text Gate Standard
               let candidates = candidatesOf git defaultOpts
-              let expected = auditExpected validCatalog candidates Gate Standard
+              let expected = auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
 
               Expect.equal (Option.get model.Decision).Verdict Pass "verdict pass"
               Expect.equal model.Exit Loop.Success "exit Success"
@@ -88,13 +88,13 @@ let tests =
 
               let _, capA, _ = runWith validCatalog git Loop.DefaultRange Loop.Json Gate Standard
               let docA = writtenAudit capA |> Option.map snd |> Option.defaultValue ""
-              Expect.equal docA (auditExpected validCatalog candidates Gate Standard) "gate/standard bytes match the rollup"
+              Expect.equal docA (auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))) "gate/standard bytes match the rollup"
               Expect.stringContains docA "\"mode\":\"gate\"" "audit records mode gate per item"
               Expect.stringContains docA "\"profile\":\"standard\"" "audit records profile standard per item"
 
               let _, capB, _ = runWith validCatalog git Loop.DefaultRange Loop.Json Inner Strict
               let docB = writtenAudit capB |> Option.map snd |> Option.defaultValue ""
-              Expect.equal docB (auditExpected validCatalog candidates Inner Strict) "inner/strict bytes match the rollup"
+              Expect.equal docB (auditExpected validCatalog candidates Inner Strict (Some(snapshotOf git defaultOpts))) "inner/strict bytes match the rollup"
               Expect.stringContains docB "\"mode\":\"inner\"" "audit records mode inner per item"
               Expect.stringContains docB "\"profile\":\"strict\"" "audit records profile strict per item"
 
@@ -154,7 +154,7 @@ let tests =
           test "a valid empty catalog ⇒ empty partition, verdict pass, exit 0 (SC-006)" {
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let candidates = candidatesOf git defaultOpts
-              let expected = auditExpected emptyCatalog candidates Gate Standard
+              let expected = auditExpected emptyCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
               let req, cap, model = runWith emptyCatalog git Loop.DefaultRange Loop.Json Gate Standard
 
               Expect.equal (writtenAudit cap) (Some(req.AuditOut, expected)) "audit.json = projection of the empty registry rollup"
@@ -174,6 +174,6 @@ let tests =
               Expect.equal (Option.get model.Decision).Verdict Pass "routine path ⇒ pass (no default-deny)"
               Expect.equal model.Exit Loop.Success "routine path ⇒ exit 0"
               // The host edge re-decides nothing: the persisted bytes equal the cores' own projection.
-              let expected = auditExpected validCatalog candidates Gate Standard
+              let expected = auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
               Expect.equal (writtenAudit cap |> Option.map snd) (Some expected) "host edge never decides blocking — bytes = cores' output"
           } ]

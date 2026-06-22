@@ -9,7 +9,7 @@
 namespace FS.GG.Governance.RouteCommand
 
 open FS.GG.Governance.Config.Model       // GovernedPath, Validation, Valid/Invalid, Cost, normalizePath, diagnosticIdToken
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot, ChangedPath
+open FS.GG.Governance.Snapshot.Model      // RepoSnapshot, ChangedPath, DiffRange, CommitId
 open FS.GG.Governance.Routing             // Routing.route
 open FS.GG.Governance.Findings            // Findings.findUnknownGovernedPaths
 open FS.GG.Governance.Gates               // Gates.buildRegistry, gateIdValue
@@ -18,6 +18,14 @@ open FS.GG.Governance.Route               // Route.select
 open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate, SelectingPath, CostRollup
 open FS.GG.Governance.RouteJson           // RouteJson.ofRouteResult, schemaVersion
 open FS.GG.Governance.GatesJson           // GatesJson.ofGateRegistry, schemaVersion
+// F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
+open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
+open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
+open FS.GG.Governance.FreshnessResolution.Model // SensedFacts, FreshnessResolutionEntry
+open FS.GG.Governance.CacheEligibility      // evaluate, entries
+open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityEntry, CacheEligibilityVerdict, Reusable, MustRecompute
+open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
+open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -36,7 +44,8 @@ module Loop =
           Scope: ScopeSelector
           Format: OutputFormat
           GatesOut: string
-          RouteOut: string }
+          RouteOut: string
+          StorePath: string }
 
     type UsageError =
         | UnknownFlag of string
@@ -57,6 +66,8 @@ module Loop =
     type Effect =
         | SenseScope of ScopeSelector
         | LoadCatalog of repo: string
+        | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
+        | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | EmitSummary of text: string
 
@@ -64,6 +75,8 @@ module Loop =
         | Begin
         | Sensed of Result<RepoSnapshot, string>
         | Loaded of Validation
+        | FreshnessSensed of Result<SensedFacts, string>
+        | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | Emitted
 
@@ -87,6 +100,11 @@ module Loop =
           Result: RouteResult option
           GatesDoc: string option
           RouteDoc: string option
+          Snapshot: RepoSnapshot option
+          SelectedGates: Gate list
+          Sensed: SensedFacts option
+          Store: ReuseStore option
+          CacheNotes: string list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -109,7 +127,8 @@ module Loop =
           Since: string option
           Json: bool
           GatesOut: string option
-          RouteOut: string option }
+          RouteOut: string option
+          Store: string option }
 
     let emptyAcc =
         { Repo = None
@@ -117,7 +136,8 @@ module Loop =
           Since = None
           Json = false
           GatesOut = None
-          RouteOut = None }
+          RouteOut = None
+          Store = None }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
     // clean relative form (`.fsgg/gates.json`); any other repo is prefixed so the artifact lands
@@ -149,6 +169,8 @@ module Loop =
             | "--gates-out" :: [] -> Error(MissingValue "--gates-out")
             | "--route-out" :: v :: more -> go { acc with RouteOut = Some v } more
             | "--route-out" :: [] -> Error(MissingValue "--route-out")
+            | "--store" :: v :: more -> go { acc with Store = Some v } more
+            | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
@@ -175,7 +197,8 @@ module Loop =
                       Scope = scope
                       Format = (if acc.Json then Json else Text)
                       GatesOut = acc.GatesOut |> Option.defaultValue (under repo ".fsgg/gates.json")
-                      RouteOut = acc.RouteOut |> Option.defaultValue (under repo "readiness/route.json") }
+                      RouteOut = acc.RouteOut |> Option.defaultValue (under repo "readiness/route.json")
+                      StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json") }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -187,6 +210,11 @@ module Loop =
               Result = None
               GatesDoc = None
               RouteDoc = None
+              Snapshot = None
+              SelectedGates = []
+              Sensed = None
+              Store = None
+              CacheNotes = []
               Diagnostics = []
               Exit = Success }
 
@@ -215,6 +243,45 @@ module Loop =
         | [] -> "catalog invalid"
         | _ -> "catalog invalid: " + (diags |> List.map one |> String.concat "; ")
 
+    // ── F046 cache-eligibility helpers (pure; the degrade policy lives here, not in the sensing edge — D2) ──
+
+    /// The all-`None`/empty `SensedFacts` substituted when freshness sensing fails (every gate resolves
+    /// unresolved ⇒ `notEvaluated`). NEVER fabricates a sensed value (D2/L3).
+    let emptySensedFacts: SensedFacts =
+        { RuleHash = None
+          GeneratorVersion = None
+          Base = None
+          Head = None
+          CoveredArtifacts = Map.empty
+          CommandVersions = Map.empty }
+
+    // Base/head taken FROM the snapshot range (D5) — never re-sensed, never fabricated. `Range = None`
+    // (e.g. ExplicitPaths) ⇒ both `None` ⇒ every gate unresolved on base/head (L2).
+    let revOfCommit (CommitId c) = Revision c
+
+    let baseHeadOf (model: Model) : Revision option * Revision option =
+        match model.Snapshot |> Option.bind (fun s -> s.Range) with
+        | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
+        | None -> None, None
+
+    // The pure sense → resolve → evaluate → embed join (data-model §3). Fires only once BOTH the sensed
+    // facts and the store have arrived; builds the REAL `CacheEligibilityReport` and passes it as
+    // `Some report` to the F045 embed, then emits the two writes (the existing counter dance is preserved).
+    let tryProject (model: Model) : Model * Effect list =
+        match model.Sensed, model.Store, model.Result, model.GatesDoc with
+        | Some sensed, Some store, Some result, Some gatesDoc ->
+            let report = FreshnessResolution.resolve model.SelectedGates sensed
+            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+            let cacheReport = CacheEligibility.evaluate candidates store
+            let routeDoc = RouteJson.ofRouteResult result (Some cacheReport)
+
+            { model with
+                Phase = Projected
+                RouteDoc = Some routeDoc },
+            [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
+              WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc) ]
+        | _ -> model, []
+
     let rec update (msg: Msg) (model: Model) : Model * Effect list =
         // Once the pipeline has decided (Done), every further reified Msg is inert (FR-013): a
         // batch of write acks after a short-circuit must not resurrect work or re-diagnose.
@@ -229,7 +296,8 @@ module Loop =
 
                 { model with
                     Phase = Sensed'
-                    Candidates = Some candidates },
+                    Candidates = Some candidates
+                    Snapshot = Some snapshot },
                 [ LoadCatalog model.Request.Repo ]
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
@@ -238,24 +306,46 @@ module Loop =
 
             | Loaded(Valid facts) ->
                 // The composition (FR-004): re-derive/re-sort/re-classify nothing — carry the cores'
-                // values verbatim. Both document strings are computed BEFORE either write (research D9).
+                // values verbatim. The gates document is computed here; the route document waits for the
+                // cache-eligibility join (F046). Select the gates to sense, then request the two cache
+                // senses (NO write is emitted here anymore — it waits for `tryProject`).
                 let candidates = model.Candidates |> Option.defaultValue []
                 let report = Routing.route facts candidates
                 let registry = Gates.buildRegistry facts
                 let findings = Findings.findUnknownGovernedPaths facts report
                 let result = Route.select registry report findings
                 let gatesDoc = GatesJson.ofGateRegistry registry
-                // F045: `fsgg route` resolves no freshness inputs yet, so the cache-eligibility report
-                // is `None` — the document renders the not-evaluated section (v2) only; behavior preserved.
-                let routeDoc = RouteJson.ofRouteResult result None
+                let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
                 { model with
-                    Phase = Projected
+                    Phase = Selected
                     Result = Some result
                     GatesDoc = Some gatesDoc
-                    RouteDoc = Some routeDoc },
-                [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
-                  WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc) ]
+                    SelectedGates = selectedGates },
+                [ SenseFreshness(selectedGates, baseHeadOf model)
+                  LoadStore model.Request.StorePath ]
+
+            // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
+            // non-fatal cache note (D2) — it NEVER fails the command or changes the exit code (FR-010/FR-011).
+            | FreshnessSensed(Ok facts) -> tryProject { model with Sensed = Some facts }
+
+            | FreshnessSensed(Error reason) ->
+                tryProject
+                    { model with
+                        Sensed = Some emptySensedFacts
+                        CacheNotes =
+                            model.CacheNotes
+                            @ [ "cache note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
+
+            | StoreLoaded(Ok store) -> tryProject { model with Store = Some store }
+
+            | StoreLoaded(Error reason) ->
+                tryProject
+                    { model with
+                        Store = Some EvidenceReuse.empty
+                        CacheNotes =
+                            model.CacheNotes
+                            @ [ "cache note: reuse store unreadable (" + reason + "); treated as empty — every gate is recompute-by-default" ] }
 
             | Wrote(_, Error reason) ->
                 fail ToolError ("failed to write artifact: " + reason) model
@@ -281,6 +371,68 @@ module Loop =
     and pathValue (GovernedPath p) = p
 
     and jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
+
+    // ── F046 cache summary (the F044 pattern; recomputed purely from the model's sensed/store/gates) ──
+
+    and cacheEntriesOf (model: Model) : CacheEligibilityEntry list =
+        match model.Sensed, model.Store with
+        | Some sensed, Some store ->
+            let report = FreshnessResolution.resolve model.SelectedGates sensed
+            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+            CacheEligibility.evaluate candidates store |> CacheEligibility.entries
+        | _ -> []
+
+    and unresolvedEntriesOf (model: Model) : (string * string list) list =
+        match model.Sensed with
+        | Some sensed ->
+            FreshnessResolution.resolve model.SelectedGates sensed
+            |> FreshnessResolution.entries
+            |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
+            |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
+        | None -> []
+
+    and causeHuman (cause: RecomputeCause) : string =
+        match cause with
+        | NoPriorEvidence -> "noPriorEvidence"
+        | InputsChanged cats -> "inputsChanged: " + (cats |> List.map categoryToken |> String.concat ",")
+
+    and cacheLinesOf (model: Model) : string list =
+        let entries = cacheEntriesOf model
+        let unresolved = unresolvedEntriesOf model
+
+        let reusable =
+            entries
+            |> List.choose (fun e ->
+                match e.Verdict with
+                | Reusable ref -> Some(gateIdValue e.Gate, EvidenceReuse.referenceValue ref)
+                | MustRecompute _ -> None)
+
+        let recompute =
+            entries
+            |> List.choose (fun e ->
+                match e.Verdict with
+                | MustRecompute cause -> Some(gateIdValue e.Gate, causeHuman cause)
+                | Reusable _ -> None)
+
+        let header =
+            sprintf "cache-eligibility: %d reusable, %d must-recompute, %d unresolved" reusable.Length recompute.Length unresolved.Length
+
+        let block (title: string) (lines: string list) =
+            match lines with
+            | [] -> [ title + " none" ]
+            | _ -> title :: lines
+
+        let reusableLines = reusable |> List.map (fun (g, r) -> sprintf "  %s <- %s" g r)
+        let recomputeLines = recompute |> List.map (fun (g, c) -> sprintf "  %s   (%s)" g c)
+
+        let unresolvedLines =
+            unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts))
+
+        [ header
+          yield! block "reusable:" reusableLines
+          yield! block "must recompute:" recomputeLines
+          yield! block "recompute by default (unresolved):" unresolvedLines
+          yield! model.CacheNotes ]
 
     and renderText (model: Model) : string =
         match model.Result with
@@ -324,6 +476,8 @@ module Loop =
               gateLines
               [ ""; costLine ]
               findingLines
+              [ "" ]
+              cacheLinesOf model
               [ "" ]
               wroteLines ]
             |> List.concat
