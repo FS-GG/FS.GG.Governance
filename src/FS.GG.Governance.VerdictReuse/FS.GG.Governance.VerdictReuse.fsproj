@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F036: the optional, packable agent-reviewed verdict store + invalidation-decision core — the
+       Phase-12 *Agent-Reviewed Rule Guardrails* SECOND row ("Invalidate cached verdicts when judge identity
+       or prompt identity changes"), the direct analogue of F030 EvidenceReuse specialised to agent-reviewed
+       verdicts (F035 AgentReviewKey is the analogue of F029 FreshnessKey). It answers ONE operational
+       question deterministically: given a new agent-review request's `AgentReviewInputs` and a store of
+       previously cached verdicts, is a cached verdict still VALID for reuse — and when it is not, WHY was it
+       invalidated (which judge / prompt / check / artifact identity changed, or no cached verdict for this
+       work)? Two pure, total operations carry the contract: `lookup : AgentReviewInputs -> VerdictStore ->
+       LookupDecision` (Valid iff some entry F035-`matches` the request on every input; else Invalidated with
+       a located cause) and `record : AgentReviewInputs -> VerdictRef -> VerdictStore -> VerdictStore` (pure,
+       de-duplicating, most-recent-wins insert). It performs NO persistence (no filesystem/database read or
+       write), NO eviction/expiry/size limit, computes NO key bytes (F035 owns the key), invokes NO
+       model/agent, reads NO clock/filesystem/git/environment/network, carries NO verdict content (the
+       `VerdictRef` is an opaque edge-minted token, never parsed/dereferenced), runs NO actual review, makes
+       NO advisory-vs-blocking promotion decision, and adds NO CLI (FR-009/FR-011). It references ONLY
+       FS.GG.Governance.AgentReviewKey (F035) to reuse `AgentReviewInputs`, `ReviewInput`, `matches`, and
+       `diff` VERBATIM — FR-010, plan D1; F029 `RuleHash`/`ArtifactHash` and F014 facts arrive TRANSITIVELY
+       through it — and adds NO new third-party PackageReference: its own code is BCL + FSharp.Core only
+       (FR-014). It deliberately does NOT reference Gates/Snapshot/Route/Findings/EvidenceReuse/Adapters or
+       any host/edge assembly. Compile order is Model -> VerdictReuse: the store/cause/decision types +
+       `inputGroup`, then the pure operations. The whole surface is pure total functions — no MVU ceremony
+       (Principle IV / N/A). The dependency direction stays one-way: VerdictReuse -> AgentReviewKey ->
+       FreshnessKey -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.VerdictReuse</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like AgentReviewKey/FreshnessKey/Config (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.VerdictReuse</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="VerdictReuse.fsi" />
+    <Compile Include="VerdictReuse.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>

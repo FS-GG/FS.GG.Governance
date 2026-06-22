@@ -1614,3 +1614,60 @@ printfn "[F35] modelVersion flip ⇒ matches=%b diff=%A token=%s"
 let f35Empty = { f35Inputs with ReviewedArtifacts = [] }
 printfn "[F35] empty artifact set ⇒\n%s" (AgentReviewKey.value (AgentReviewKey.compute f35Empty))
 // expect: …\nchk=2:c1\nart=0;\nq=13:explains API?
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// F036 — Agent-Reviewed Verdict Store & Invalidation Decision Core (FS.GG.Governance.VerdictReuse)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Phase-12 SECOND row: "invalidate cached verdicts when judge identity or prompt identity changes." The
+// direct analogue of F030 EvidenceReuse specialised to agent-reviewed verdicts — it consumes F035
+// `matches`/`diff` VERBATIM. Two pure, total operations: `lookup : AgentReviewInputs -> VerdictStore ->
+// LookupDecision` (Valid iff some entry matches the request on every one of the seven inputs; else
+// Invalidated with a LOCATED cause — NoCachedVerdict for different work, or InputsChanged naming exactly the
+// moved inputs) and `record : AgentReviewInputs -> VerdictRef -> VerdictStore -> VerdictStore` (pure,
+// de-duplicating, most-recent-wins insert). No persistence, no eviction, no key bytes computed, no model
+// invoked, no clock/filesystem/network read; the `VerdictRef` is an opaque edge-minted token, never
+// dereferenced (FR-009/FR-011). Design-first FSI proof (Principle I) over literal values — reuses F035's
+// worked example `f35Inputs` as the cached identity.
+#r "../src/FS.GG.Governance.VerdictReuse/bin/Debug/net10.0/FS.GG.Governance.VerdictReuse.dll"
+
+open FS.GG.Governance.VerdictReuse
+open FS.GG.Governance.VerdictReuse.Model
+
+// Record the F035 worked-example identity under an opaque verdict reference, then probe the decisions.
+let f36Store = VerdictReuse.record f35Inputs (VerdictRef "verdict:v1") VerdictReuse.empty
+
+// A request equal on all seven inputs (artifacts compared as a SET) ⇒ Valid, reusing the cached reference.
+printfn "[F36] exact match ⇒ %A" (VerdictReuse.lookup f35Inputs f36Store)
+// expect: Valid (VerdictRef "verdict:v1")
+
+// A model-version bump (judge identity) ⇒ Invalidated (InputsChanged [ModelVersionInput]); inputGroup ⇒ JudgeIdentity.
+let f36JudgeBump = { f35Inputs with ModelVersion = ModelVersion "20260202" }
+let f36JudgeDecision = VerdictReuse.lookup f36JudgeBump f36Store
+printfn "[F36] model-version bump ⇒ %A groups=%A"
+    f36JudgeDecision
+    (match f36JudgeDecision with
+     | Invalidated (InputsChanged inputs) -> inputs |> List.map Model.inputGroup
+     | _ -> [])
+// expect: Invalidated (InputsChanged [ModelVersionInput]) groups=[JudgeIdentity]
+
+// A question change (prompt identity) ⇒ Invalidated (InputsChanged [QuestionTextInput]) — NOT NoCachedVerdict.
+let f36PromptChange = { f35Inputs with Question = QuestionText "covers errors?" }
+let f36PromptDecision = VerdictReuse.lookup f36PromptChange f36Store
+printfn "[F36] question change ⇒ %A groups=%A"
+    f36PromptDecision
+    (match f36PromptDecision with
+     | Invalidated (InputsChanged inputs) -> inputs |> List.map Model.inputGroup
+     | _ -> [])
+// expect: Invalidated (InputsChanged [QuestionTextInput]) groups=[PromptIdentity]
+
+// A different check (different work) ⇒ Invalidated NoCachedVerdict (never a spurious input diff).
+let f36OtherWork = { f35Inputs with Check = RuleHash "c-other" }
+printfn "[F36] different work ⇒ %A" (VerdictReuse.lookup f36OtherWork f36Store)
+// expect: Invalidated NoCachedVerdict
+
+// Re-recording the SAME inputs refreshes (most-recent-wins) without accumulating a duplicate entry.
+let f36Refreshed = VerdictReuse.record f35Inputs (VerdictRef "verdict:v2") f36Store
+printfn "[F36] re-record same inputs ⇒ %A entries=%d"
+    (VerdictReuse.lookup f35Inputs f36Refreshed)
+    (VerdictReuse.entries f36Refreshed |> List.length)
+// expect: Valid (VerdictRef "verdict:v2") entries=1
