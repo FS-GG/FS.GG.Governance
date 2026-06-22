@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F044 host edge: the FIRST end-to-end composition of the cache-eligibility thread — senses each
+       selected gate's freshness facts from a real repository, resolves them (F043), evaluates cache
+       eligibility against a read-only evidence-reuse store (F041 over F030), and PERSISTS two
+       deterministic documents: cache-eligibility.json (F042, verbatim) + cache-eligibility.unresolved.json
+       (the new no-hide sidecar).
+
+       It REPLICATES the F022 RouteCommand selection call-sequence (Snapshot scope -> Config load ->
+       Routing.route -> Gates.buildRegistry -> Findings.findUnknownGovernedPaths -> Route.select) rather
+       than taking a ProjectReference on RouteCommand (RouteCommand exposes no reusable selection
+       function). It adds NO new third-party dependency: git sensing via Snapshot, catalog reads via
+       Config, projection via CacheEligibilityJson; the only new impure primitives are System.IO reads/
+       writes, System.Security.Cryptography hashing at the FreshnessSensor boundary, and Environment.Exit
+       at the Program edge — all BCL. It computes NO freshness key/hash/cache decision of its own outside
+       the injected boundary or the merged cores (FR-012/FR-013).
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect) + an EDGE `Interpreter` (injected,
+       fakeable Ports; realPorts/step/run) + a thin Program. Compile order Loop -> Interpreter ->
+       Program. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CacheEligibilityCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsgg</ToolCommandName>
+    <PackageId>FS.GG.Governance.CacheEligibilityCommand</PackageId>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The F022 selection cores (replicated call-sequence) -->
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <!-- The cache-eligibility cores -->
+    <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibilityJson/FS.GG.Governance.CacheEligibilityJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>

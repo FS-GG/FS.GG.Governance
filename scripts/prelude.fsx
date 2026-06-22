@@ -2122,3 +2122,37 @@ printfn "[F43] duplicate GateId build:tests             ⇒ %d entries" (Freshne
 // No gates ⇒ empty report (total, not an error).
 printfn "[F43] no gates                                ⇒ %A" (FreshnessResolution.resolve [] f43FullSensed)
 // expect: FreshnessResolutionReport []
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+// F044 — cache-eligibility host command: the pure MVU Loop driven design-first (Principle I). Senses are
+// SUPPLIED here (the pure Loop never senses); the edge Interpreter does the real git/hash/store I/O. Reuses
+// the F043 gates + SensedFacts helpers above.
+#r "../src/FS.GG.Governance.CacheEligibilityCommand/bin/Debug/net10.0/FS.GG.Governance.CacheEligibilityCommand.dll"
+
+open FS.GG.Governance.CacheEligibilityCommand
+
+// (A) parse: defaults + every usage error is a value.
+printfn "\n[F44] parse [] defaults                        ⇒ %A" (Loop.parse [] |> Result.map (fun r -> r.CacheOut, r.StorePath, r.Format))
+// expect: Ok ("readiness/cache-eligibility.json", "readiness/evidence-reuse.json", Human)
+printfn "[F44] parse --format yaml (bad)                ⇒ %A" (Loop.parse [ "--format"; "yaml" ])
+// expect: Error (BadFormat "yaml")
+
+// (B) drive the pure pipeline tail over fixed selected gates + fixed SensedFacts + an empty store.
+let f44Req = match Loop.parse [] with Ok r -> r | Error e -> failwithf "parse: %A" e
+let f44Model0 = { fst (Loop.init f44Req) with Phase = Loop.Selected; SelectedGates = [ f43BuildTests; f43LintStyle ] }
+let f44M1, _ = Loop.update (Loop.FreshnessSensed(Ok f43FullSensed)) f44Model0
+let f44M2, f44Effs = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) f44M1
+printfn "[F44] both sensed+store ⇒ write effects         ⇒ %A" (f44Effs |> List.map (function Loop.WriteArtifact(k, _, _) -> sprintf "%A" k | e -> sprintf "%A" e))
+// expect: ["CacheArtifact"; "UnresolvedArtifact"]
+printfn "[F44] cache-eligibility.json = F042 ofReport    ⇒ %b" (f44M2.CacheDoc = Some(CacheEligibilityJson.ofReport (CacheEligibility.evaluate (FreshnessResolution.entries (FreshnessResolution.resolve [ f43BuildTests; f43LintStyle ] f43FullSensed) |> List.choose FreshnessResolution.candidate) EvidenceReuse.empty)))
+// expect: true (the projection is the verbatim F042 core)
+
+// (C) no-hide unresolved sidecar: a gate missing a sensed fact is named, never reusable.
+let f44M1u, _ = Loop.update (Loop.FreshnessSensed(Ok f43Unsensed)) { f44Model0 with SelectedGates = [ f43LintStyle ] }
+let f44M2u, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) f44M1u
+printfn "[F44] unresolved sidecar (lint:style)          ⇒ %A" f44M2u.UnresolvedDoc
+// expect: a {schemaVersion fsgg.cache-eligibility.unresolved/v1, unresolved:[{gate lint:style, missingFacts [...]}]}
+
+// (D) exit-as-information: must-recompute / unresolved are exit 0; the decided model is Done/Success.
+printfn "[F44] decided exit (all must-recompute)        ⇒ %A (code %d)" f44M2.Exit (Loop.exitCode f44M2.Exit)
+// expect: the pipeline reaches a write plan; the summary/exit is Success once writes ack (information, not a verdict)
