@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F039: the optional, packable advisory-to-blocking promotion-gate core — the Phase-12 *Agent-Reviewed
+       Rule Guardrails* FIFTH row ("keep agent-reviewed findings advisory until deterministic backing
+       evidence, repeated-review confidence thresholds, or explicit human sign-off exists"). The agent-review
+       analogue of F023 `deriveEffectiveSeverity` / F030 `decide` / F036 `lookup`: a pure, total, deterministic
+       DECISION core (not a record core) that maps supplied facts to a named outcome and derives NO byte-stable
+       identity. It answers ONE question deterministically: may this agent-reviewed finding be promoted from
+       advisory to block-eligible — and on which permitted basis? `decide : PromotionFacts -> PromotionDecision`
+       is `EligibleToBlock` IFF at least one of the THREE permitted bases holds (deterministic backing evidence,
+       repeated-review confidence at the inclusive `c >= t && c >= 2` floor, or an explicit human sign-off),
+       naming EVERY satisfied basis in the fixed order; else `StaysAdvisory` with its no-hide reason
+       (`NoPermittedBasis` or `ConfidenceBelowThreshold`). Advisory by default: the model's own self-confidence
+       is NOT a basis. It invokes NO model/agent/network, reads NO clock/filesystem/git/environment, computes NO
+       hash from raw bytes, runs NO actual review, makes NO cache lookup / verdict invalidation (F035/F036),
+       builds NO review record (F038), produces/interprets/re-scores NO verdict (FR-007), defines NO calibration
+       (the sixth row), derives NO effective severity / enforcement verdict (F023/F024), performs NO
+       persistence/JSON projection, and adds NO CLI. An `EligibleToBlock` decision is necessary-not-sufficient:
+       it carries NO blocking action and asserts NO calibration claim (FR-008). It references EXACTLY ONE sibling
+       pure core (the F036 single-sibling shape, plan D1/D3): FS.GG.Governance.EvidenceReuse (F030) — to reuse
+       `EvidenceRef` VERBATIM for the deterministic-backing-evidence basis; F029 `FreshnessKey` / F014 `Config`
+       arrive transitively THROUGH it but are unused here. It adds NO new third-party PackageReference (FR-011):
+       BCL + FSharp.Core + the one reused token only. It deliberately does NOT reference
+       Gates/Snapshot/Route/Routing/Findings/Enforcement/VerdictReuse/ReviewRecord/PromptIsolation/AgentReviewKey
+       /Adapters or any host/edge/CLI assembly. Compile order is Model -> AdvisoryPromotion: the closed bases
+       union + three newtypes + advisory-reason union + facts/decision types, then the pure total decision body
+       + the `confidenceMet` helper (private by omission). The whole surface is a pure total decision over
+       supplied values — no MVU ceremony (Principle IV / N/A). The dependency direction stays one-way:
+       AdvisoryPromotion -> EvidenceReuse -> FreshnessKey -> Config; every merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.AdvisoryPromotion</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like ReviewRecord/PromptIsolation/AgentReviewKey (overrides
+         Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.AdvisoryPromotion</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="AdvisoryPromotion.fsi" />
+    <Compile Include="AdvisoryPromotion.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>
