@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F037: the optional, packable reviewer-prompt isolation core — the Phase-12 *Agent-Reviewed Rule
+       Guardrails* THIRD row ("separate governed artifact content from reviewer instructions and pass it as
+       bounded data or digests"). The structural sibling of F035 AgentReviewKey (both reuse F029's
+       `ArtifactHash` and the F029/F032/F035 tagged, length-prefixed, INJECTIVE encoding discipline),
+       specialised to *prompt shape* rather than *cache identity*. It answers ONE question deterministically:
+       given trusted reviewer instructions and a sequence of governed artifacts (each captured as a bounded
+       excerpt or supplied as a digest), how is the review request shaped and rendered so the artifact is
+       always DATA and can never masquerade as an instruction? Two pure, total operations carry the contract:
+       `assemble : QuestionText -> ArtifactPayload list -> ReviewRequest` (pairs the trusted instruction
+       channel with the ordered data channel — no reorder/dedup/capture/I/O) and `render : ReviewRequest ->
+       RenderedPrompt` (the deterministic, byte-stable, injective serialization with an unspoofable fence);
+       plus the `excerpt` bounded-capture constructor + accessors on the abstract `BoundedExcerpt`. It
+       performs NO model/agent invocation, computes NO hash from raw bytes (digests are supplied tokens),
+       runs NO actual review, produces NO verdict/cache key/verdict store (F035/F036, consumed by neighbours,
+       not by this core), writes NO review record/provenance, makes NO advisory-vs-blocking promotion,
+       defines NO calibration, performs NO persistence, reads NO clock/filesystem/git/environment/network,
+       and adds NO CLI (FR-008). It references ONLY FS.GG.Governance.AgentReviewKey (F035) to reuse
+       `QuestionText` VERBATIM (the reviewer-instruction channel) and, transitively through it,
+       FS.GG.Governance.FreshnessKey's `ArtifactHash` (the digest-only form) — FR-007, plan D1 — and adds NO
+       new third-party PackageReference: its own code is BCL + FSharp.Core only (FR-010). The transitive
+       YamlDotNet dependency arrives only via Config (through FreshnessKey) and is unused here. It
+       deliberately does NOT reference Gates/Snapshot/Route/Findings/EvidenceReuse/VerdictReuse/Adapters or
+       any host/edge assembly. Compile order is Model -> PromptIsolation: the bounded-excerpt / payload /
+       request / rendered-prompt types + `excerpt`/accessors, then the pure assembly + injective render. The
+       whole surface is pure total functions over supplied values — no MVU ceremony (Principle IV / N/A). The
+       dependency direction stays one-way: PromptIsolation -> AgentReviewKey -> FreshnessKey -> Config; every
+       merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.PromptIsolation</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like AgentReviewKey/FreshnessKey/Config (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.PromptIsolation</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="PromptIsolation.fsi" />
+    <Compile Include="PromptIsolation.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F037, exercising the PUBLIC surface of FS.GG.Governance.PromptIsolation:
+       `PromptIsolation.assemble` / `render` / `renderedValue` and `Model.excerpt` / `excerptContent` /
+       `excerptBound` / `excerptTruncation` over REAL, literally-constructible values (Principle V — every
+       value is a genuine typed token built from literals: real F035 `QuestionText`, real F029 `ArtifactHash`,
+       and literal content strings; no mock, no clock read, no model invoked, no file read, no bytes hashed).
+       Expecto + FsCheck give the channel-separation / bounded-capture / injective-fence / determinism /
+       purity / totality properties; the VSTest adapters let `dotnet test` drive the Expecto runner. The
+       reflective SurfaceDrift test pins the Tier-1 public surface + the
+       AgentReviewKey/FreshnessKey/Config/BCL/FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ChannelSeparationTests.fs" />
+    <Compile Include="BoundedCaptureTests.fs" />
+    <Compile Include="RenderFenceTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PurityTests.fs" />
+    <Compile Include="EdgeCaseTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.PromptIsolation/FS.GG.Governance.PromptIsolation.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>

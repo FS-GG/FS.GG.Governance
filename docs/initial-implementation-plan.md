@@ -799,12 +799,20 @@ auditable.
   + Config — D1), reusing F029 `Revision`/`RuleHash`/`GeneratorVersion`/`ArtifactHash`,
   F032 `CommandRecord`, and F014 `EnvironmentClass` verbatim; no sensing/timing/
   hashing/persistence/JSON/attestation/CLI, no new dependency.
-- 🟡 Mark wall-clock timestamps and durations as sensed or non-deterministic
-  metadata when included in deterministic reports. **(Structural foundation done —
-  F032 carries the run duration as a distinct `SensedDuration` held apart from the
-  reproducible facts and F033 keeps the embedded durations structurally excluded
-  from the provenance identity; the deterministic-report rendering that surfaces
-  these as flagged sensed metadata is not yet built — Phase 11.)**
+- ✅ Mark wall-clock timestamps and durations as sensed or non-deterministic
+  metadata when included in deterministic reports. **(F034 —
+  `FS.GG.Governance.SensedMetadata`, done 2026-06-21)** The structural foundation was
+  already there — F032 carries the run duration as a distinct `SensedDuration` held
+  apart from the reproducible facts and F033 keeps the embedded durations
+  structurally excluded from the provenance identity — and F034 adds the missing
+  **presentation half**: pure, total `SensedMetadata.markDuration` / `markTimestamp`
+  mark an already-measured duration / timestamp (each with its label) as a
+  `SensedMetadatum` whose `Value` is a closed `SensedValue` DU, so the type is the
+  flag; `render` surfaces one metadatum behind a reserved `!sensed!` marker (a form
+  no reproducible field tag ever produces) and `renderSection` groups a list into one
+  separable `!sensed-section!`. Identity-neutral; reuses F032's `SensedDuration`
+  verbatim (only new fact `SensedTimestamp`); no new dependency. **This closes
+  Phase 11.**
 
 Exit criteria:
 
@@ -821,17 +829,45 @@ under review.
 Purpose: allow judgement-heavy checks without treating uncalibrated agent output
 as deterministic proof.
 
-- [ ] Cache agent-reviewed verdicts by model id, model version, reviewer prompt
-  hash, model configuration, check hash, artifact hashes, and question text.
-- [ ] Invalidate cached verdicts when judge identity or prompt identity changes.
-- [ ] Separate governed artifact content from reviewer instructions and pass it
-  as bounded data or digests.
-- [ ] Record review requests, response digests, model identity, prompt identity,
+Status (2026-06-22): the **first three rows are 🟢 complete** — three pure, total,
+deterministic cores, each the analogue of a Phase-11 core specialised to
+agent-reviewed verdicts, reusing the F029/F032/F035 length-prefixed, injective
+encoding discipline: F035 `AgentReviewKey` (cache key), F036 `VerdictReuse`
+(invalidation decision), and F037 `PromptIsolation` (prompt isolation). The
+remaining three rows (review records, advisory promotion, calibration) are 🔴 not
+started.
+
+Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
+🔴 not started.
+
+- 🟢 [x] Cache agent-reviewed verdicts by model id, model version, reviewer prompt
+  hash, model configuration, check hash, artifact hashes, and question text. **(F035
+  — `FS.GG.Governance.AgentReviewKey`, done 2026-06-21)** A pure, total
+  `compute`/`matches`/`diff`/`value` over the seven judge / prompt / check / artifact
+  inputs (reviewed artifacts a set), byte-stable in the injective encoding, reusing
+  F029 `RuleHash`/`ArtifactHash` verbatim; no new dependency.
+- 🟢 [x] Invalidate cached verdicts when judge identity or prompt identity changes.
+  **(F036 — `FS.GG.Governance.VerdictReuse`, done 2026-06-22)** A pure, total
+  `lookup`/`record` over a cached-verdict store (the analogue of F030 `EvidenceReuse`):
+  Valid iff an entry F035-`matches` the request on every input, else `Invalidated`
+  with a located cause (`NoCachedVerdict` for different work, or `InputsChanged`
+  naming the moved inputs); pure de-duplicating most-recent-wins insert; reuses F035
+  `AgentReviewInputs`/`matches`/`diff` verbatim; no persistence, no new dependency.
+- 🟢 [x] Separate governed artifact content from reviewer instructions and pass it
+  as bounded data or digests. **(F037 — `FS.GG.Governance.PromptIsolation`, done
+  2026-06-22)** A pure, total `assemble`/`render` (structural sibling of F035): keeps
+  trusted reviewer instructions and untrusted governed-artifact content in separate
+  typed channels, carries each artifact as a bounded excerpt (abstract `BoundedExcerpt`
+  — no over-bound/unbounded form by construction) or a digest, and renders the two
+  channels with an injective, unspoofable length-prefixed data fence so artifact
+  content can never masquerade as an instruction; reuses F035 `QuestionText` and F029
+  `ArtifactHash` verbatim; no model invoked, no bytes hashed, no new dependency.
+- 🔴 [ ] Record review requests, response digests, model identity, prompt identity,
   artifact digests, and final verdict.
-- [ ] Keep agent-reviewed findings advisory until deterministic backing
+- 🔴 [ ] Keep agent-reviewed findings advisory until deterministic backing
   evidence, repeated-review confidence thresholds, or explicit human sign-off
   exists.
-- [ ] Define judge-vs-human calibration evidence before any agent-reviewed rule
+- 🔴 [ ] Define judge-vs-human calibration evidence before any agent-reviewed rule
   can block protected boundaries.
 
 Exit criteria:
