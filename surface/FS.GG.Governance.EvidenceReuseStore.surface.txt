@@ -1,0 +1,8 @@
+TYPE FS.GG.Governance.EvidenceReuseStore.EvidenceReuseStoreModule
+  [Method] Int32 get_defaultRetentionBound()
+  [Method] ReuseStore prune(ReuseStore)
+  [Method] ReuseStore retain(Int32, ReuseStore)
+  [Method] System.String get_schemaVersion()
+  [Method] System.String serialise(ReuseStore)
+  [Property] Int32 defaultRetentionBound
+  [Property] System.String schemaVersion
