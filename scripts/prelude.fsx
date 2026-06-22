@@ -928,21 +928,26 @@ printfn "[F19] empty-change → empty route, zero cost = %b" (List.isEmpty f19Em
 // is byte-identical for identical input. Serialization is the net10.0 shared-framework
 // `System.Text.Json` (`Utf8JsonWriter`) — NO new dependency.
 
+// F045: `ofRouteResult` / `ofShipDecision` now mention `CacheEligibilityReport` in their signatures, so
+// the F041 assembly must be referenced before the F020/F025 callsites below (it is #r'd again in the
+// F041 section further down — a duplicate #r is harmless in FSI).
+#r "../src/FS.GG.Governance.CacheEligibility/bin/Debug/net10.0/FS.GG.Governance.CacheEligibility.dll"
 #r "../src/FS.GG.Governance.RouteJson/bin/Debug/net10.0/FS.GG.Governance.RouteJson.dll"
 
 open FS.GG.Governance.RouteJson
 
 // Project the genuine F019 `f19Result` (built above from the real F015->F017->F018->F019 chain).
-let f20Json = RouteJson.ofRouteResult f19Result
+// F045: `ofRouteResult` now takes a `CacheEligibilityReport option`; `None` is the not-evaluated state.
+let f20Json = RouteJson.ofRouteResult f19Result None
 printfn "\n[F20] schemaVersion = %s" RouteJson.schemaVersion
 printfn "[F20] document (%d bytes):\n%s" f20Json.Length f20Json
 
 // Determinism: a second projection of the same result is byte-identical.
-printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result = f20Json)
+printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result None = f20Json)
 
 // The empty route projects to a valid document with empty sections + all-zero cost (never an error,
 // never a "select everything" fallback).
-let f20Empty = RouteJson.ofRouteResult f19Empty
+let f20Empty = RouteJson.ofRouteResult f19Empty None
 printfn "[F20] empty route → %s" f20Empty
 
 // ── F021: the gates.json projection — GatesJson.ofGateRegistry : GateRegistry -> string ──
@@ -1115,22 +1120,23 @@ printfn "[F24] gate/light   Verdict=%A Blockers=%d Warnings=%d Exit=%A"
 
 open FS.GG.Governance.AuditJson
 
-printfn "\n[F25] schemaVersion = %s" AuditJson.schemaVersion   // expect: fsgg.audit/v1
+printfn "\n[F25] schemaVersion = %s" AuditJson.schemaVersion   // expect: fsgg.audit/v2
 
 // A failing decision (BlockOnShip blocker + BlockOnRelease relaxed-to-Advisory warning) at gate/light.
-let f25Json = AuditJson.ofShipDecision f24Fail
+// F045: `ofShipDecision` now takes a `CacheEligibilityReport option`; `None` is the not-evaluated state.
+let f25Json = AuditJson.ofShipDecision f24Fail None
 printfn "[F25] failing audit.json (%d bytes):\n%s" f25Json.Length f25Json
 // expect: verdict:"fail", exitCodeBasis:"blocked"; a warning with baseSeverity:"blocking" +
 //         effectiveSeverity:"advisory" (the no-hide case).
 
 // Determinism: a second projection is byte-identical.
-printfn "[F25] deterministic? %b" (AuditJson.ofShipDecision f24Fail = f25Json)   // expect: true
+printfn "[F25] deterministic? %b" (AuditJson.ofShipDecision f24Fail None = f25Json)   // expect: true
 
 // The empty/clean decision projects to the empty-but-valid document (three present empty arrays).
-let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard)
+let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard) None
 printfn "[F25] empty/clean audit.json:\n%s" f25Empty
-// expect: { "schemaVersion":"fsgg.audit/v1","verdict":"pass","exitCodeBasis":"clean",
-//           "blockers":[],"warnings":[],"passing":[] }
+// expect: { "schemaVersion":"fsgg.audit/v2","verdict":"pass","exitCodeBasis":"clean",
+//           "blockers":[],"warnings":[],"passing":[],"cacheEligibilityEvaluated":false }
 
 // ── F026: the `fsgg ship` host command — the protected-branch verdict COMPOSITION/EDGE tier ──
 // The second host edge. Like F022 `route` it parses argv to a normalized request, but it rolls the
@@ -2156,3 +2162,48 @@ printfn "[F44] unresolved sidecar (lint:style)          ⇒ %A" f44M2u.Unresolve
 // (D) exit-as-information: must-recompute / unresolved are exit 0; the decided model is Done/Success.
 printfn "[F44] decided exit (all must-recompute)        ⇒ %A (code %d)" f44M2.Exit (Loop.exitCode f44M2.Exit)
 // expect: the pipeline reaches a write plan; the summary/exit is Success once writes ack (information, not a verdict)
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+// F045 — embed the F041 cache-eligibility verdict in route.json (F020) and audit.json (F025). Design-first
+// proof (Principle I): project BOTH documents twice — once `Some report`, once `None` — over the genuine
+// f19Result (route) and f24Fail (ship decision) built above, with a real `CacheEligibility.evaluate` report.
+// The projections (RouteJson, AuditJson) and the F041 helpers (f41Candidate, f29Inputs, f41Store, f41NewRule,
+// f41NewRuleHead) are all loaded above; this section adds NO new #r. Confirm by eye:
+//   • Some ⇒ each selected gate / gate item carries reusable / mustRecompute / notEvaluated; evaluated:true.
+//   • None ⇒ every gate notEvaluated; evaluated:false; every other field matches the pre-embed bytes.
+//   • schemaVersion reads fsgg.route/v2 / fsgg.audit/v2; audit finding items carry NO cacheEligibility.
+
+// A report attributing verdicts to f19Result's selected gates (build:format, build:tests, docs:lint):
+//   build:tests → reusable ev-A (exact f29Inputs match in f41Store); docs:lint → mustRecompute
+//   (InputsChanged [ruleHash]); build:format is ABSENT ⇒ renders notEvaluated (listed, not in the report).
+let f45RouteReport =
+    CacheEligibility.evaluate
+        [ f41Candidate "build:tests" f29Inputs
+          f41Candidate "docs:lint" f41NewRule ]
+        f41Store
+
+printfn "\n[F45] route.json — Some report (each selected gate carries its verdict):\n%s"
+    (RouteJson.ofRouteResult f19Result (Some f45RouteReport))
+// expect: cacheEligibilityEvaluated:true; build:tests {kind:reusable,evidence:ev-A};
+//         docs:lint {kind:mustRecompute,cause:{kind:inputsChanged,categories:[ruleHash]}};
+//         build:format {kind:notEvaluated}; schemaVersion fsgg.route/v2.
+
+printfn "[F45] route.json — None (not-evaluated; every gate notEvaluated, evaluated:false):\n%s"
+    (RouteJson.ofRouteResult f19Result None)
+
+// A report attributing verdicts to f24Fail's gate items (build:ship blocker, build:rel warning):
+//   build:ship → reusable ev-A; build:rel → mustRecompute (InputsChanged [ruleHash; headRevision]).
+let f45ShipReport =
+    CacheEligibility.evaluate
+        [ f41Candidate "build:ship" f29Inputs
+          f41Candidate "build:rel" f41NewRuleHead ]
+        f41Store
+
+printfn "[F45] audit.json — Some report (gate items carry verdict; a reusable blocker stays a blocker):\n%s"
+    (AuditJson.ofShipDecision f24Fail (Some f45ShipReport))
+// expect: cacheEligibilityEvaluated:true; the build:ship blocker carries {kind:reusable,evidence:ev-A} AND
+//         remains in blockers with full enforcement; build:rel warning carries mustRecompute; finding items
+//         (none here) would carry NO cacheEligibility; schemaVersion fsgg.audit/v2.
+
+printfn "[F45] audit.json — None (not-evaluated; every gate item notEvaluated, evaluated:false):\n%s"
+    (AuditJson.ofShipDecision f24Fail None)

@@ -47,7 +47,7 @@ let tests =
               let findings = Findings.findUnknownGovernedPaths facts report
               let expected = Route.select registry report findings
               let gatesDoc = GatesJson.ofGateRegistry registry
-              let routeDoc = RouteJson.ofRouteResult expected
+              let routeDoc = RouteJson.ofRouteResult expected None
 
               Expect.equal m2.Result (Some expected) "Result = Route.select of the same inputs"
               Expect.equal m2.GatesDoc (Some gatesDoc) "GatesDoc = GatesJson projection"

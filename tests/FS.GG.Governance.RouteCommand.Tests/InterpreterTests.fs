@@ -144,6 +144,10 @@ let tests =
               let summary = String.concat "\n" cap.Emits
               let blob = (gates + "\n" + route + "\n" + summary).ToLowerInvariant()
 
-              for token in [ "verdict"; "severity"; "profile"; "mode"; "enforcement"; "cacheeligib"; "blockers"; "warnings"; "exitcode" ] do
+              // F045: `cacheeligib` is NO LONGER excluded — the route.json the command writes now carries
+              // the additive cache-eligibility section (`cacheEligibilityEvaluated:false` + per-gate
+              // `notEvaluated`, since `fsgg route` passes `None`). The verdict/enforcement/clock leak
+              // guard is otherwise unchanged.
+              for token in [ "verdict"; "severity"; "profile"; "mode"; "enforcement"; "blockers"; "warnings"; "exitcode" ] do
                   Expect.isFalse (blob.Contains token) (sprintf "excluded token %s must not appear" token)
           } ]

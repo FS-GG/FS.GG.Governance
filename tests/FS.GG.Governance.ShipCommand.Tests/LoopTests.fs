@@ -47,7 +47,7 @@ let tests =
               let findings = Findings.findUnknownGovernedPaths facts report
               let result = Route.select registry report findings
               let expectedDecision = Ship.rollup result req.Mode req.Profile
-              let expectedDoc = AuditJson.ofShipDecision expectedDecision
+              let expectedDoc = AuditJson.ofShipDecision expectedDecision None
 
               Expect.equal m2.Decision (Some expectedDecision) "Decision = Ship.rollup of the same inputs/levers"
               Expect.equal m2.AuditDoc (Some expectedDoc) "AuditDoc = AuditJson.ofShipDecision of the decision"

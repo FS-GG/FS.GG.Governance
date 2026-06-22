@@ -262,7 +262,7 @@ let decisionOf (files: Map<string, string>) (candidates: GovernedPath list) (mod
 /// The genuine F025 `audit.json` bytes for a catalog + candidate set + levers — the document the
 /// command must persist verbatim (SC-001).
 let auditExpected (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) : string =
-    AuditJson.ofShipDecision (decisionOf files candidates mode profile)
+    AuditJson.ofShipDecision (decisionOf files candidates mode profile) None
 
 // ── Capturing write/output edges ──
 

@@ -94,6 +94,10 @@ let tests =
                   || name = "FS.GG.Governance.Routing"
                   || name = "FS.GG.Governance.Findings"
                   || name = "FS.GG.Governance.Config"
+                  // F045: F041 CacheEligibility (the embed) + its transitive F030/F029 token graph.
+                  || name = "FS.GG.Governance.CacheEligibility"
+                  || name = "FS.GG.Governance.EvidenceReuse"
+                  || name = "FS.GG.Governance.FreshnessKey"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

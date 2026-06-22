@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/044-cache-eligibility-command/plan.md
+at specs/045-cache-eligibility-embed/plan.md
 <!-- SPECKIT END -->

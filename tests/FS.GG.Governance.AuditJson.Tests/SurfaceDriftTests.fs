@@ -79,11 +79,13 @@ let tests =
                   "AuditJson module is public"
           }
 
-          test "AuditJson references only the Ship transitive graph + BCL + FSharp.Core (FR-014 scope guard)" {
+          test "AuditJson references only the Ship + CacheEligibility transitive graph + BCL + FSharp.Core (FR-014 scope guard)" {
               // One-way dependency: AuditJson -> Ship -> Enforcement/Route/Config/Gates/Findings/Kernel.
               // No host/adapter/CLI edge and no new third-party package — the absence confirms
               // serialization is the shared-framework System.Text.Json and no later-phase capability
-              // leaked in.
+              // leaked in. F045 adds ONE project reference — F041 CacheEligibility — for the embedded
+              // cache-eligibility verdict; EvidenceReuse/FreshnessKey arrive transitively through it (the
+              // F042 CacheEligibilityJson precedent). Still no third-party package, host, or CLI.
               let allowed (name: string) =
                   name = "FSharp.Core"
                   || name = "FS.GG.Governance.Ship"
@@ -93,6 +95,10 @@ let tests =
                   || name = "FS.GG.Governance.Gates"
                   || name = "FS.GG.Governance.Findings"
                   || name = "FS.GG.Governance.Kernel"
+                  // F045: F041 CacheEligibility (the embed) + its transitive F030/F029 token graph.
+                  || name = "FS.GG.Governance.CacheEligibility"
+                  || name = "FS.GG.Governance.EvidenceReuse"
+                  || name = "FS.GG.Governance.FreshnessKey"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

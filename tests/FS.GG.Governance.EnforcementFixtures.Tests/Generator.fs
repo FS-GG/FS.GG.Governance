@@ -178,7 +178,7 @@ type Scenario =
 /// The verbatim merged projection for a scenario — `ofShipDecision (rollup route mode profile)`. No new
 /// schema, no post-processing (FR-008).
 let snapshotFor (s: Scenario) : string =
-    ofShipDecision (rollup s.Route s.Mode s.Profile)
+    ofShipDecision (rollup s.Route s.Mode s.Profile) None
 
 // Convenience real items for the scenarios (all driven through the genuine rollup).
 let private gateRoute (id: string) (maturity: Maturity) : RouteResult =

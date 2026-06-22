@@ -59,17 +59,17 @@ let tests =
         [ testPropertyWithConfig config "twice-identical: ofRouteResult is byte-identical for identical input (AS1, SC-002)"
           <| Prop.forAll (Arb.fromGen genPaths) (fun paths ->
               let r = resultOf fixtureFacts paths
-              RouteJson.ofRouteResult r = RouteJson.ofRouteResult r)
+              RouteJson.ofRouteResult r None = RouteJson.ofRouteResult r None)
 
           test "fixed-fixture twice-identical equality (SC-002)" {
-              Expect.equal (RouteJson.ofRouteResult populated) (RouteJson.ofRouteResult populated) "same result → same bytes"
+              Expect.equal (RouteJson.ofRouteResult populated None) (RouteJson.ofRouteResult populated None) "same result → same bytes"
           }
 
           testPropertyWithConfig config "permutation-invariant in the candidate paths (AS2, SC-003)"
           <| Prop.forAll (Arb.fromGen genPaths) (fun paths ->
               // sortDescending is a permutation of the same multiset of candidate paths.
-              let a = RouteJson.ofRouteResult (resultOf fixtureFacts paths)
-              let b = RouteJson.ofRouteResult (resultOf fixtureFacts (List.sortDescending paths))
+              let a = RouteJson.ofRouteResult (resultOf fixtureFacts paths) None
+              let b = RouteJson.ofRouteResult (resultOf fixtureFacts (List.sortDescending paths)) None
               a = b)
 
           testPropertyWithConfig config "permutation-invariant in the registry's gate order (AS2, SC-003)"
@@ -80,22 +80,25 @@ let tests =
               let findings = findingsOf fixtureFacts report
               let real = registryOf fixtureFacts
               let reversed = { Gates = List.rev real.Gates }
-              let a = RouteJson.ofRouteResult (FS.GG.Governance.Route.Route.select real report findings)
-              let b = RouteJson.ofRouteResult (FS.GG.Governance.Route.Route.select reversed report findings)
+              let a = RouteJson.ofRouteResult (FS.GG.Governance.Route.Route.select real report findings) None
+              let b = RouteJson.ofRouteResult (FS.GG.Governance.Route.Route.select reversed report findings) None
               a = b)
 
           test "the document carries the declared schemaVersion and the fixed top-level field order (AS3, FR-013)" {
-              use doc = parse (RouteJson.ofRouteResult populated)
+              use doc = parse (RouteJson.ofRouteResult populated None)
               Expect.equal (strField doc.RootElement "schemaVersion") RouteJson.schemaVersion "schemaVersion field equals the constant"
-              Expect.equal (topLevelFieldOrder doc) [ "schemaVersion"; "selectedGates"; "findings"; "cost" ] "fixed top-level field order"
+              Expect.equal (topLevelFieldOrder doc) [ "schemaVersion"; "selectedGates"; "findings"; "cost"; "cacheEligibilityEvaluated" ] "fixed top-level field order"
           }
 
           test "exclusion sweep: the emitted text contains no enforcement/verdict/raw-YAML/clock token (AS4, SC-007, FR-011/FR-012)" {
-              let json = RouteJson.ofRouteResult populated
+              let json = RouteJson.ofRouteResult populated None
               let lower = json.ToLowerInvariant()
 
+              // F045: `cacheeligib` is NO LONGER denied — the embed legitimately adds the
+              // `cacheEligibility` verdict and the top-level `cacheEligibilityEvaluated` flag. The
+              // enforcement/verdict/clock leak guard is otherwise unchanged.
               let denied =
-                  [ "severity"; "profile"; "\"mode\""; "enforcement"; "cacheeligib"; "verdict"
+                  [ "severity"; "profile"; "\"mode\""; "enforcement"; "verdict"
                     "blockers"; "warnings"; "exitcode"; "expectedartifacts"; "timestamp" ]
 
               for token in denied do
@@ -106,7 +109,7 @@ let tests =
           }
 
           test "positive path-allowlist: every emitted path/matchedGlob is a declared GovernedPath (FR-012)" {
-              use doc = parse (RouteJson.ofRouteResult populated)
+              use doc = parse (RouteJson.ofRouteResult populated None)
 
               // the universe of declared path strings the input route can legitimately carry
               let declared =
