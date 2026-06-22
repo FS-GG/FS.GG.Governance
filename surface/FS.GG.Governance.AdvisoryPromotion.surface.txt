@@ -1,0 +1,175 @@
+TYPE FS.GG.Governance.AdvisoryPromotion.AdvisoryPromotionModule
+  [Method] Int32 confirmationValue(ConfirmationCount)
+  [Method] Int32 thresholdValue(ConfidenceThreshold)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis] satisfiedBases(PromotionDecision)
+  [Method] PromotionDecision decide(PromotionFacts)
+  [Method] System.String signOffValue(SignOff)
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+ConfidenceThreshold
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+ConfirmationCount
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionFacts
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+SignOff
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason
+  [Method] AdvisoryReason NewConfidenceBelowThreshold(ConfirmationCount, ConfidenceThreshold)
+  [Method] AdvisoryReason get_NoPermittedBasis()
+  [Method] Boolean Equals(AdvisoryReason)
+  [Method] Boolean Equals(AdvisoryReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsConfidenceBelowThreshold()
+  [Method] Boolean get_IsNoPermittedBasis()
+  [Method] Int32 CompareTo(AdvisoryReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason+ConfidenceBelowThreshold
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason+Tags
+  [Property] AdvisoryReason NoPermittedBasis
+  [Property] Boolean IsConfidenceBelowThreshold
+  [Property] Boolean IsNoPermittedBasis
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason+ConfidenceBelowThreshold
+  [Method] ConfidenceThreshold get_Item2()
+  [Method] ConfirmationCount get_Item1()
+  [Property] ConfidenceThreshold Item2
+  [Property] ConfirmationCount Item1
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+AdvisoryReason+Tags
+  [Field] Int32 ConfidenceBelowThreshold
+  [Field] Int32 NoPermittedBasis
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+ConfidenceThreshold
+  [Method] Boolean Equals(ConfidenceThreshold)
+  [Method] Boolean Equals(ConfidenceThreshold, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ConfidenceThreshold NewConfidenceThreshold(Int32)
+  [Method] Int32 CompareTo(ConfidenceThreshold)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+ConfirmationCount
+  [Method] Boolean Equals(ConfirmationCount)
+  [Method] Boolean Equals(ConfirmationCount, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ConfirmationCount NewConfirmationCount(Int32)
+  [Method] Int32 CompareTo(ConfirmationCount)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Item()
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] Int32 Item
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis
+  [Method] Boolean Equals(PromotionBasis)
+  [Method] Boolean Equals(PromotionBasis, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDeterministicBackingEvidence()
+  [Method] Boolean get_IsHumanSignOff()
+  [Method] Boolean get_IsRepeatedReviewConfidence()
+  [Method] Int32 CompareTo(PromotionBasis)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PromotionBasis get_DeterministicBackingEvidence()
+  [Method] PromotionBasis get_HumanSignOff()
+  [Method] PromotionBasis get_RepeatedReviewConfidence()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis+Tags
+  [Property] Boolean IsDeterministicBackingEvidence
+  [Property] Boolean IsHumanSignOff
+  [Property] Boolean IsRepeatedReviewConfidence
+  [Property] Int32 Tag
+  [Property] PromotionBasis DeterministicBackingEvidence
+  [Property] PromotionBasis HumanSignOff
+  [Property] PromotionBasis RepeatedReviewConfidence
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis+Tags
+  [Field] Int32 DeterministicBackingEvidence
+  [Field] Int32 HumanSignOff
+  [Field] Int32 RepeatedReviewConfidence
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision
+  [Method] Boolean Equals(PromotionDecision)
+  [Method] Boolean Equals(PromotionDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEligibleToBlock()
+  [Method] Boolean get_IsStaysAdvisory()
+  [Method] Int32 CompareTo(PromotionDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PromotionDecision NewEligibleToBlock(PromotionBasis, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis])
+  [Method] PromotionDecision NewStaysAdvisory(AdvisoryReason)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+EligibleToBlock
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+StaysAdvisory
+  [NestedType] FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+Tags
+  [Property] Boolean IsEligibleToBlock
+  [Property] Boolean IsStaysAdvisory
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+EligibleToBlock
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis] get_Item2()
+  [Method] PromotionBasis get_Item1()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionBasis] Item2
+  [Property] PromotionBasis Item1
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+StaysAdvisory
+  [Method] AdvisoryReason get_Item()
+  [Property] AdvisoryReason Item
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionDecision+Tags
+  [Field] Int32 EligibleToBlock
+  [Field] Int32 StaysAdvisory
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+PromotionFacts
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef], ConfirmationCount, ConfidenceThreshold, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+SignOff])
+  [Method] Boolean Equals(PromotionFacts)
+  [Method] Boolean Equals(PromotionFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ConfidenceThreshold get_ConfidenceThreshold()
+  [Method] ConfirmationCount get_Confirmations()
+  [Method] Int32 CompareTo(PromotionFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+SignOff] get_SignOff()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef] get_BackingEvidence()
+  [Method] System.String ToString()
+  [Property] ConfidenceThreshold ConfidenceThreshold
+  [Property] ConfirmationCount Confirmations
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.AdvisoryPromotion.ModelModule+SignOff] SignOff
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef] BackingEvidence
+TYPE FS.GG.Governance.AdvisoryPromotion.ModelModule+SignOff
+  [Method] Boolean Equals(SignOff)
+  [Method] Boolean Equals(SignOff, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SignOff)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SignOff NewSignOff(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item

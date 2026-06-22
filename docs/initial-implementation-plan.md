@@ -821,7 +821,7 @@ Exit criteria:
 - Audit records are sufficient to explain builds, tests, packs, template
   instantiation, git diffs, package inspection, and visual capture.
 
-### Phase 12: Agent-Reviewed Rule Guardrails
+### Phase 12: Agent-Reviewed Rule Guardrails — 🟡 first five rows landed (cache key, invalidation, prompt isolation, review record, advisory promotion)
 
 Owner: `FS.GG.Governance`; SDD and generated products may provide artifacts
 under review.
@@ -829,13 +829,14 @@ under review.
 Purpose: allow judgement-heavy checks without treating uncalibrated agent output
 as deterministic proof.
 
-Status (2026-06-22): the **first four rows are 🟢 complete** — four pure, total,
+Status (2026-06-22): the **first five rows are 🟢 complete** — five pure, total,
 deterministic cores, each the analogue of a Phase-11 core specialised to
 agent-reviewed verdicts, reusing the F029/F032/F035 length-prefixed, injective
 encoding discipline: F035 `AgentReviewKey` (cache key), F036 `VerdictReuse`
-(invalidation decision), F037 `PromptIsolation` (prompt isolation), and F038
-`ReviewRecord` (auditable review record). The remaining two rows (advisory
-promotion, calibration) are 🔴 not started.
+(invalidation decision), F037 `PromptIsolation` (prompt isolation), F038
+`ReviewRecord` (auditable review record), and F039 `AdvisoryPromotion` (the
+advisory-to-blocking promotion gate). The remaining row (calibration) is
+🔴 not started.
 
 Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
 🔴 not started.
@@ -873,9 +874,26 @@ Legend: 🟢 complete · 🟡 partial (core landed; emission/wiring deferred) ·
   compared as a set; sensed metadata excluded — the F032/F033 honesty boundary); reuses
   F037/F035/F029/F034 vocabulary verbatim; no model invoked, no bytes hashed, no verdict
   interpreted, no new dependency.
-- 🔴 [ ] Keep agent-reviewed findings advisory until deterministic backing
+- 🟢 [x] Keep agent-reviewed findings advisory until deterministic backing
   evidence, repeated-review confidence thresholds, or explicit human sign-off
-  exists.
+  exists. **(F039 — `FS.GG.Governance.AdvisoryPromotion`, done 2026-06-22)** A pure,
+  total, deterministic decision core (the agent-review analogue of F023
+  `deriveEffectiveSeverity` / F030 `decide` / F036 `lookup`): `decide : PromotionFacts
+  -> PromotionDecision` returns `EligibleToBlock` naming **every** satisfied basis (in
+  the fixed order *DeterministicBackingEvidence, RepeatedReviewConfidence,
+  HumanSignOff*) **iff** at least one of the only three permitted bases holds —
+  deterministic backing evidence, a repeated-review confidence count clearing the
+  threshold at the inclusive `c >= t && c >= 2` floor (a lone review never clears it),
+  or an explicit human sign-off — and otherwise **defaults to advisory**
+  (`StaysAdvisory` with a no-hide reason: `NoPermittedBasis`, or
+  `ConfidenceBelowThreshold` carrying the count and threshold). The model's own
+  self-confidence is not a basis; `EligibleToBlock` is necessary-not-sufficient (no
+  blocking action, no calibration claim) and is non-empty by construction. Reuses F030
+  `EvidenceRef` verbatim for the backing-evidence basis; no model invoked, no bytes
+  hashed, no verdict produced/interpreted, no new dependency. Evidence:
+  `specs/039-advisory-promotion-gate/` (33 green tests: advisory-default, all-named,
+  the inclusive no-single-sample comparator, totality, determinism/purity,
+  necessary-not-sufficient, non-empty eligibility, surface drift).
 - 🔴 [ ] Define judge-vs-human calibration evidence before any agent-reviewed rule
   can block protected boundaries.
 

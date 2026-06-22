@@ -1788,3 +1788,54 @@ let f38Fail = { rec038 with Reproducible = { rec038.Reproducible with Verdict = 
 printfn "[F38] verdict changes identity ⇒ %b"
     (ReviewRecord.canonicalId rec038 <> ReviewRecord.canonicalId f38Fail)
 // expect: true
+
+// ── F039: advisory-to-blocking promotion gate (the single-sample-noise guardrail) ──
+//
+// `decide` is the single total, deterministic decision over supplied `PromotionFacts`: EligibleToBlock IFF at
+// least one of the THREE permitted bases holds (deterministic backing evidence, repeated-review confidence at
+// the inclusive `c >= t && c >= 2` floor, or an explicit human sign-off), naming EVERY satisfied basis in the
+// fixed order; else StaysAdvisory with its no-hide reason. Advisory by default — the model's own self-
+// confidence is NOT a basis. It reuses F030 `EvidenceRef` VERBATIM for the backing-evidence basis. No model
+// invoked, no bytes hashed, no clock/filesystem/network read, no verdict produced/interpreted, no cache
+// key/store/lookup, no review record built, no persistence/CLI (FR-006/FR-007). Design-first FSI proof
+// (Principle I) over literal values — the worked examples of contracts/advisory-promotion-api.md / quickstart.md.
+#r "../src/FS.GG.Governance.AdvisoryPromotion/bin/Debug/net10.0/FS.GG.Governance.AdvisoryPromotion.dll"
+
+open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.AdvisoryPromotion.Model
+open FS.GG.Governance.AdvisoryPromotion
+
+/// Assemble facts from the supplied levers (the sole input to `decide`).
+let f39Facts evidence confirmations threshold signOff : PromotionFacts =
+    { BackingEvidence = evidence
+      Confirmations = ConfirmationCount confirmations
+      ConfidenceThreshold = ConfidenceThreshold threshold
+      SignOff = signOff }
+
+// Bare finding ⇒ advisory by default, NoPermittedBasis (nothing attempted).
+printfn "[F39] bare finding ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 0 3 None))
+// expect: StaysAdvisory NoPermittedBasis
+
+// A repeated review attempted but short of the threshold ⇒ advisory, attribution carried.
+printfn "[F39] 2-of-3 confirmations ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 2 3 None))
+// expect: StaysAdvisory (ConfidenceBelowThreshold (ConfirmationCount 2, ConfidenceThreshold 3))
+
+// Deterministic backing evidence alone ⇒ eligible, naming just that basis.
+printfn "[F39] backing evidence ⇒ %A" (AdvisoryPromotion.decide (f39Facts (Some(EvidenceRef "e")) 0 3 None))
+// expect: EligibleToBlock (DeterministicBackingEvidence, [])
+
+// Repeated-review confidence at the inclusive floor ⇒ eligible, naming just that basis.
+printfn "[F39] 3-of-3 confirmations ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 3 3 None))
+// expect: EligibleToBlock (RepeatedReviewConfidence, [])
+
+// Human sign-off alone ⇒ eligible, naming just that basis.
+printfn "[F39] human sign-off ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 0 3 (Some(SignOff "u"))))
+// expect: EligibleToBlock (HumanSignOff, [])
+
+// All three bases satisfied ⇒ eligible, naming all in the fixed order (the no-hide rule).
+printfn "[F39] all three bases ⇒ %A" (AdvisoryPromotion.decide (f39Facts (Some(EvidenceRef "e")) 5 3 (Some(SignOff "u"))))
+// expect: EligibleToBlock (DeterministicBackingEvidence, [RepeatedReviewConfidence; HumanSignOff])
+
+// A lone review never clears the floor, even when the threshold is 1 (the no-single-sample guard).
+printfn "[F39] lone review (1/1) ⇒ %A" (AdvisoryPromotion.decide (f39Facts None 1 1 None))
+// expect: StaysAdvisory (ConfidenceBelowThreshold (ConfirmationCount 1, ConfidenceThreshold 1))
