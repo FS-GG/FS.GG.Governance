@@ -30,7 +30,10 @@ let tests =
                   // Recompute the expected bytes from the SAME real git sensing + real catalog.
                   let candidates = candidatesOfRepo dir (sinceOpts "HEAD~1")
                   Expect.isNonEmpty candidates "the committed src edit is sensed as a changed path"
-                  let expectedGates, expectedRoute = projectExpected validCatalog candidates
+                  // The real run senses real hashes, but with no store on disk every resolved gate is
+                  // mustRecompute/noPriorEvidence — independent of the hash VALUES — so the fake-sensor
+                  // expected report (over the SAME real snapshot's base/head) is byte-identical (SC-001).
+                  let expectedGates, expectedRoute = projectExpected validCatalog candidates (Some(snapshotOfRepo dir (sinceOpts "HEAD~1")))
 
                   Expect.isTrue (File.Exists req.GatesOut) "gates.json exists on disk"
                   Expect.isTrue (File.Exists req.RouteOut) "route.json exists on disk"

@@ -20,6 +20,9 @@
     <Compile Include="ParseTests.fs" />
     <Compile Include="LoopTests.fs" />
     <Compile Include="InterpreterTests.fs" />
+    <Compile Include="ShipInvariantTests.fs" />
+    <Compile Include="DegradeTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
     <Compile Include="FailureTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
@@ -45,6 +48,12 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
+    <!-- F046: the cache-eligibility pipeline (faked sensing ports + the genuine-core expected-report computer) -->
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
   </ItemGroup>
 
 </Project>

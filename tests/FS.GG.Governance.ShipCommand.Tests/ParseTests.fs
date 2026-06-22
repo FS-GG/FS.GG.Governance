@@ -92,4 +92,24 @@ let tests =
               Expect.equal (parse [ "ship"; "--bogus" ]) (Error(Loop.UnknownFlag "--bogus")) "unknown flag"
               Expect.equal (parse [ "ship"; "--repo" ]) (Error(Loop.MissingValue "--repo")) "missing value"
               Expect.equal (parse [ "ship"; "--mode" ]) (Error(Loop.MissingValue "--mode")) "missing mode value"
+          }
+
+          // ── F046 (U1): --store parse + default + missing-value-is-a-value ──
+
+          test "--store sets StorePath; omitted ⇒ default <repo>/readiness/evidence-reuse.json" {
+              match parse [ "ship"; "--store"; "s.json" ] with
+              | Ok req -> Expect.equal req.StorePath "s.json" "explicit --store"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+
+              match parse [ "ship" ] with
+              | Ok req -> Expect.equal req.StorePath "readiness/evidence-reuse.json" "default store (repo = .)"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+
+              match parse [ "ship"; "--repo"; "/tmp/x" ] with
+              | Ok req -> Expect.equal req.StorePath "/tmp/x/readiness/evidence-reuse.json" "default store under --repo"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          }
+
+          test "--store with no value ⇒ a UsageError VALUE, never a throw" {
+              Expect.equal (parse [ "ship"; "--store" ]) (Error(Loop.MissingValue "--store")) "missing --store value is a value"
           } ]

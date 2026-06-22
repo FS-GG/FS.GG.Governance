@@ -18,6 +18,10 @@ open FS.GG.Governance.Config.Model       // GovernedPath
 open FS.GG.Governance.Snapshot.Model      // RepoSnapshot
 open FS.GG.Governance.Route.Model          // RouteResult
 open FS.GG.Governance.Config              // Validation (Config.Model)
+open FS.GG.Governance.Gates.Model          // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.FreshnessKey.Model    // Revision (F046 — base/head, passed through from RepoSnapshot.Range)
+open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
+open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore (F046 — the read-only reuse store join input)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -36,12 +40,15 @@ module Loop =
 
     /// The normalized invocation (data-model §2). Defaults: `Repo = "."`,
     /// `GatesOut = <repo>/.fsgg/gates.json`, `RouteOut = <repo>/readiness/route.json` (research D5).
+    /// `StorePath` is the read-only evidence-reuse store path (F046): `--store`, default
+    /// `<repo>/readiness/evidence-reuse.json` (research D6); absent on disk ⇒ `EvidenceReuse.empty`.
     type RunRequest =
         { Repo: string
           Scope: ScopeSelector
           Format: OutputFormat
           GatesOut: string
-          RouteOut: string }
+          RouteOut: string
+          StorePath: string }
 
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
@@ -64,18 +71,26 @@ module Loop =
         | RouteArtifact
 
     /// The I/O the pure `update` REQUESTS but never performs (Principle IV). The edge `Interpreter`
-    /// executes each and feeds the result back as a `Msg`.
+    /// executes each and feeds the result back as a `Msg`. `SenseFreshness`/`LoadStore` are the F046
+    /// cache-eligibility senses: the freshness facts of the selected gates (with the change's base/head)
+    /// and the read-only reuse store; neither writes anything.
     type Effect =
         | SenseScope of ScopeSelector
         | LoadCatalog of repo: string
+        | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
+        | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | EmitSummary of text: string
 
-    /// External results the interpreter feeds back into `update`.
+    /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
+    /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal cache
+    /// note), never fails the command (research D2).
     type Msg =
         | Begin
         | Sensed of Result<RepoSnapshot, string>
         | Loaded of Validation
+        | FreshnessSensed of Result<SensedFacts, string>
+        | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | Emitted
 
@@ -96,7 +111,10 @@ module Loop =
         | Done
 
     /// The durable state the workflow owns. `GatesDoc`/`RouteDoc` are the F021/F020 projection strings,
-    /// both computed before any write effect is emitted (research D9).
+    /// both computed before any write effect is emitted (research D9). The F046 fields carry the
+    /// cache-eligibility pipeline state: `Snapshot` (kept to derive base/head — D5), `SelectedGates` (the
+    /// gates to sense, set at `Loaded(Valid)`), `Sensed`/`Store` (the join inputs), and `CacheNotes`
+    /// (non-fatal degrade notes surfaced in the summary — D7).
     type Model =
         { Request: RunRequest
           Phase: Phase
@@ -104,6 +122,11 @@ module Loop =
           Result: RouteResult option
           GatesDoc: string option
           RouteDoc: string option
+          Snapshot: RepoSnapshot option
+          SelectedGates: Gate list
+          Sensed: SensedFacts option
+          Store: ReuseStore option
+          CacheNotes: string list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

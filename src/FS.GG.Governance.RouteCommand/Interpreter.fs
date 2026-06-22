@@ -14,6 +14,7 @@ open System.IO
 open FS.GG.Governance.Config              // Loader, Schema
 open FS.GG.Governance.Config.Model         // GovernedPath, Validation, Invalid, Diagnostic, FsggFile, Locator, DiagnosticId
 open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken
+open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness, loadStore, realSensor, realStoreReader (F046)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -25,6 +26,8 @@ module Interpreter =
     type Ports =
         { Files: Loader.FileReader
           Git: FS.GG.Governance.Snapshot.Ports
+          Freshness: FreshnessSensing.FreshnessSensor
+          Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
           Out: OutputSink }
 
@@ -94,6 +97,14 @@ module Interpreter =
 
             Loop.Loaded validation
 
+        | Loop.SenseFreshness(gates, baseHead) ->
+            // F046: assemble SensedFacts at the shared sensing edge; an Error here DEGRADES in `update`.
+            Loop.FreshnessSensed(FreshnessSensing.senseFreshness ports.Freshness gates baseHead)
+
+        | Loop.LoadStore path ->
+            // F046: read-only store load (absent ⇒ empty); a malformed store DEGRADES in `update`.
+            Loop.StoreLoaded(FreshnessSensing.loadStore ports.Store path)
+
         | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, guard (fun () -> ports.Write path content))
 
         | Loop.EmitSummary text ->
@@ -103,6 +114,8 @@ module Interpreter =
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo
           Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
+          Freshness = FreshnessSensing.realSensor repo
+          Store = FreshnessSensing.realStoreReader
           Write = writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 

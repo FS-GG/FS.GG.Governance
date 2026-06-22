@@ -987,6 +987,15 @@ printfn "[F21] empty registry → %s" f21Empty
 // the summary both ways and print exitCode for each ExitDecision. The artifacts are the F020/F021
 // projections byte-for-byte — this row serializes nothing of its own and computes NO ship verdict.
 
+// F046: load the cache-eligibility cores + the shared FreshnessSensing edge from their CANONICAL bins HERE,
+// before RouteCommand/ShipCommand (which now reference them transitively). FSI binds a single assembly
+// identity per shared dep (matching the explicit `#r`s in the later F29/F30/F43 sections), avoiding a
+// multi-copy `SensedFacts`/`ReuseStore` type conflict when the F046 proof section runs.
+#r "../src/FS.GG.Governance.FreshnessKey/bin/Debug/net10.0/FS.GG.Governance.FreshnessKey.dll"
+#r "../src/FS.GG.Governance.EvidenceReuse/bin/Debug/net10.0/FS.GG.Governance.EvidenceReuse.dll"
+#r "../src/FS.GG.Governance.FreshnessResolution/bin/Debug/net10.0/FS.GG.Governance.FreshnessResolution.dll"
+#r "../src/FS.GG.Governance.FreshnessSensing/bin/Debug/net10.0/FS.GG.Governance.FreshnessSensing.dll"
+
 #r "../src/FS.GG.Governance.RouteCommand/bin/Debug/net10.0/FS.GG.Governance.RouteCommand.dll"
 
 open FS.GG.Governance.RouteCommand
@@ -2207,3 +2216,61 @@ printfn "[F45] audit.json — Some report (gate items carry verdict; a reusable 
 
 printfn "[F45] audit.json — None (not-evaluated; every gate item notEvaluated, evaluated:false):\n%s"
     (AuditJson.ofShipDecision f24Fail None)
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+// F046 — emit REAL cache-eligibility verdicts from `fsgg route`/`fsgg ship`. Design-first proof (Principle I),
+// BEFORE either command body changes: load the shared FreshnessSensing edge, build a FAKED fixed-hash sensor
+// (Synthetic — disclosed) + an ABSENT store reader, and run the verbatim sense→resolve→evaluate→`Some report`
+// join from data-model §3 over the genuine cores. Then run one DEGRADE shape (empty SensedFacts for a sense
+// Error, EvidenceReuse.empty for a store Error) showing the report still builds with no fail. Reuses the F043
+// gates (f43BuildTests, f43LintStyle) above. The FreshnessSensing edge is #r'd at the TOP of this script
+// (with the other shared cores) so its single assembly identity is loaded BEFORE the host-command dlls that
+// now also reference it — avoiding an FSI multi-copy `SensedFacts`/`ReuseStore` type conflict.
+
+open FS.GG.Governance.FreshnessSensing
+
+// A FAKED freshness sensor with fixed literal digests (Synthetic: no real bytes hashed; the real sensor is
+// proven over real temp-dir bytes in FreshnessSensing.Tests). Senses every gate fully.
+let f46FakeSensor : FreshnessSensing.FreshnessSensor =
+    { SenseRuleHash = fun () -> Some(RuleHash "rule-synthetic")          // SYNTHETIC: fixed literal hash
+      SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-synthetic")
+      SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-synthetic" ]
+      SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-synthetic") }
+
+// An ABSENT store reader (no file on disk ⇒ Ok None ⇒ loadStore maps to EvidenceReuse.empty).
+let f46AbsentReader : FreshnessSensing.StoreReader = fun _ -> Ok None
+
+let f46Gates = [ f43BuildTests; f43LintStyle ]
+let f46BaseHead = Some(Revision "base-1"), Some(Revision "head-1")
+
+// The verbatim join: senseFreshness → resolve → candidate → evaluate over the (empty) store ⇒ Some report.
+let f46Report =
+    match FreshnessSensing.senseFreshness f46FakeSensor f46Gates f46BaseHead, FreshnessSensing.loadStore f46AbsentReader "no-such-store.json" with
+    | Ok sensed, Ok store ->
+        let report = FreshnessResolution.resolve f46Gates sensed
+        let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+        Some(CacheEligibility.evaluate candidates store)
+    | _ -> None
+
+printfn "\n[F46] sense→resolve→evaluate ⇒ Some report?    ⇒ %b" (Option.isSome f46Report)
+// expect: true (the wire shape over the cores produces a Some-wrappable CacheEligibilityReport)
+match f46Report with
+| Some r ->
+    let verdicts = CacheEligibility.entries r |> List.map (fun e -> let (GateId g) = e.Gate in g, e.Verdict)
+    printfn "[F46] every gate mustRecompute/noPriorEvidence ⇒ %b"
+        (verdicts |> List.forall (fun (_, v) -> match v with MustRecompute NoPriorEvidence -> true | _ -> false))
+    // expect: true (an absent store ⇒ recompute-by-default for every resolved gate)
+    for (g, v) in verdicts do printfn "[F46]   %s ⇒ %A" g v
+| None -> printfn "[F46] join did not fire (unexpected)"
+
+// DEGRADE: a sense Error substitutes the empty SensedFacts (every gate unresolved ⇒ notEvaluated); a store
+// Error substitutes EvidenceReuse.empty — the report STILL builds, no fail (the route/ship divergence, D2).
+let f46EmptySensed : SensedFacts =
+    { RuleHash = None; GeneratorVersion = None; Base = None; Head = None; CoveredArtifacts = Map.empty; CommandVersions = Map.empty }
+let f46DegradeReport =
+    let report = FreshnessResolution.resolve f46Gates f46EmptySensed
+    let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+    CacheEligibility.evaluate candidates EvidenceReuse.empty
+printfn "[F46] degrade (empty sensed+store) still builds ⇒ %b (candidates dropped ⇒ %d verdicts)"
+    true (CacheEligibility.entries f46DegradeReport |> List.length)
+// expect: true, 0 verdicts (every gate unresolved ⇒ notEvaluated ⇒ no candidate ⇒ empty report; no fail)

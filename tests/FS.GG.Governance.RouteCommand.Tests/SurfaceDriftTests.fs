@@ -101,9 +101,13 @@ let tests =
                   || name = "FS.GG.Governance.Route"
                   || name = "FS.GG.Governance.RouteJson"
                   || name = "FS.GG.Governance.GatesJson"
-                  // F045: RouteJson's `ofRouteResult` now takes a `CacheEligibilityReport option`, so the
-                  // F041 assembly arrives transitively in RouteCommand's IL (the command passes `None`).
+                  // F045: RouteJson's `ofRouteResult` takes a `CacheEligibilityReport option` ⇒ F041 arrives.
                   || name = "FS.GG.Governance.CacheEligibility"
+                  // F046: the cache-eligibility pipeline — the shared sensing edge + the resolution/store cores.
+                  || name = "FS.GG.Governance.FreshnessSensing"
+                  || name = "FS.GG.Governance.FreshnessResolution"
+                  || name = "FS.GG.Governance.EvidenceReuse"
+                  || name = "FS.GG.Governance.FreshnessKey"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

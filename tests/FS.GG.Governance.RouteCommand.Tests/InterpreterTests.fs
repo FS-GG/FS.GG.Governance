@@ -28,10 +28,10 @@ let tests =
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text
               let candidates = candidatesOf git defaultOpts
-              let expectedGates, expectedRoute = projectExpected validCatalog candidates
+              let expectedGates, expectedRoute = projectExpected validCatalog candidates (Some(snapshotOf git defaultOpts))
 
               Expect.equal (writtenOf cap Loop.GatesArtifact) (Some(req.GatesOut, expectedGates)) "gates.json = GatesJson.ofGateRegistry"
-              Expect.equal (writtenOf cap Loop.RouteArtifact) (Some(req.RouteOut, expectedRoute)) "route.json = RouteJson.ofRouteResult"
+              Expect.equal (writtenOf cap Loop.RouteArtifact) (Some(req.RouteOut, expectedRoute)) "route.json = RouteJson.ofRouteResult (Some report)"
               Expect.equal model.Exit Loop.Success "exit decision Success"
               Expect.equal (Loop.exitCode model.Exit) 0 "exit code 0"
           }
@@ -73,7 +73,7 @@ let tests =
           test "a valid empty catalog yields an empty gate list and exits 0 (SC-006, empty catalog)" {
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let candidates = candidatesOf git defaultOpts
-              let expectedGates, _ = projectExpected emptyCatalog candidates
+              let expectedGates, _ = projectExpected emptyCatalog candidates (Some(snapshotOf git defaultOpts))
               let req, cap, model = runWith emptyCatalog git Loop.DefaultRange Loop.Text
 
               Expect.equal (writtenOf cap Loop.GatesArtifact) (Some(req.GatesOut, expectedGates)) "gates.json = projection of the empty registry"
@@ -86,7 +86,8 @@ let tests =
           test "ExplicitPaths routes exactly those paths WITHOUT consulting git (US2 AS1)" {
               // The git port reports not-a-repo: if `init` consulted it the run would fail. It must not.
               let req, cap, model = runWith validCatalog gitNotRepo (Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]) Loop.Text
-              let expectedGates, expectedRoute = projectExpected validCatalog [ gp "src/Lib/Thing.fs" ]
+              // ExplicitPaths ⇒ no snapshot ⇒ base/head None ⇒ every gate notEvaluated (still evaluated:true).
+              let expectedGates, expectedRoute = projectExpected validCatalog [ gp "src/Lib/Thing.fs" ] None
 
               Expect.equal model.Exit Loop.Success "explicit paths bypass git entirely ⇒ success despite not-a-repo git"
               Expect.equal (writtenOf cap Loop.RouteArtifact) (Some(req.RouteOut, expectedRoute)) "route.json = projection of the explicit paths"

@@ -17,6 +17,7 @@ namespace FS.GG.Governance.ShipCommand
 
 open FS.GG.Governance.Config              // Loader.FileReader
 open FS.GG.Governance.Snapshot            // Ports
+open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -39,6 +40,8 @@ module Interpreter =
     type Ports =
         { Files: Loader.FileReader
           Git: FS.GG.Governance.Snapshot.Ports
+          Freshness: FreshnessSensing.FreshnessSensor
+          Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
           Out: OutputSink }
 
