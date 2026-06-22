@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.CacheEligibilityJson.CacheEligibilityJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofReport(CacheEligibilityReport)
+  [Property] System.String schemaVersion

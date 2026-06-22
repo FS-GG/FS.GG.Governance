@@ -1978,3 +1978,55 @@ printfn "[F41] duplicate GateId, different inputs      ⇒ %d entries under buil
 // No candidates ⇒ empty report (total, not an error).
 printfn "[F41] no candidates                           ⇒ %A" (CacheEligibility.evaluate [] f41Store)
 // expect: CacheEligibilityReport []
+
+// ── F042: the deterministic cache-eligibility.json projection — the route/audit *emission* row's projection half ──
+//
+// `ofReport : CacheEligibilityReport -> string` renders F041's already-typed, already-ordered report into the
+// deterministic, versioned `cache-eligibility.json` document text. It is the exact sibling of F025
+// `AuditJson.ofShipDecision`, applied to the `CacheEligibilityReport`: a single linear `Utf8JsonWriter` walk,
+// EMIT-ONLY (re-derives/re-classifies/re-runs/re-orders nothing), PURE and TOTAL (no I/O, no clock, no cache
+// lookup, no freshness key/hash, no input resolved, the opaque evidence reference never dereferenced, never
+// throws). It reuses F018 `gateIdValue`, F030 `referenceValue`, F029 `categoryToken` verbatim and matches each
+// closed verdict/cause case exhaustively. Design-first FSI proof (Principle I), reusing the F041 worked-example
+// values above (`f29Inputs`, `f41Store`, `f41NewRule`, `f41NewRuleHead`, `f41Candidate`, `f41Three`).
+#r "../src/FS.GG.Governance.CacheEligibilityJson/bin/Debug/net10.0/FS.GG.Governance.CacheEligibilityJson.dll"
+
+open FS.GG.Governance.CacheEligibilityJson
+
+// The declared schema version stamped into every document — a fixed constant, never from a clock/env/input.
+printfn "\n[F42] schemaVersion                           ⇒ %s" CacheEligibilityJson.schemaVersion
+// expect: fsgg.cache-eligibility/v1
+
+// Empty report ⇒ a valid document with a present, empty entries array (total, not an error).
+printfn "[F42] empty report                            ⇒ %s" (CacheEligibilityJson.ofReport (CacheEligibility.evaluate [] EvidenceReuse.empty))
+// expect: {"schemaVersion":"fsgg.cache-eligibility/v1","entries":[]}
+
+// Exact-match candidate (docs:lint) ⇒ reusable verdict naming the opaque evidence reference verbatim.
+let f42DocsStore = EvidenceReuse.record f29Inputs (EvidenceRef "ev-A") EvidenceReuse.empty
+printfn "[F42] exact-match docs:lint                   ⇒ %s" (CacheEligibilityJson.ofReport (CacheEligibility.evaluate [ f41Candidate "docs:lint" f29Inputs ] f42DocsStore))
+// expect: {"schemaVersion":"fsgg.cache-eligibility/v1","entries":[{"gate":"docs:lint","verdict":{"kind":"reusable","evidence":"ev-A"}}]}
+
+// No prior evidence (security:scan) ⇒ must-recompute / noPriorEvidence (no categories field).
+printfn "[F42] no prior security:scan                  ⇒ %s" (CacheEligibilityJson.ofReport (CacheEligibility.evaluate [ f41Candidate "security:scan" f29Inputs ] EvidenceReuse.empty))
+// expect: {"schemaVersion":"fsgg.cache-eligibility/v1","entries":[{"gate":"security:scan","verdict":{"kind":"mustRecompute","cause":{"kind":"noPriorEvidence"}}}]}
+
+// RuleHash + Head moved (build:tests) ⇒ inputsChanged naming exactly those category tokens, in report order.
+printfn "[F42] ruleHash+head moved build:tests         ⇒ %s" (CacheEligibilityJson.ofReport (CacheEligibility.evaluate [ f41Candidate "build:tests" f41NewRuleHead ] f41Store))
+// expect: {"schemaVersion":"fsgg.cache-eligibility/v1","entries":[{"gate":"build:tests","verdict":{"kind":"mustRecompute","cause":{"kind":"inputsChanged","categories":["ruleHash","headRevision"]}}}]}
+
+// Candidates z:a, a:b, a:a ⇒ entries ordered a:a, a:b, z:a; byte-identical for any permutation (order preserved verbatim).
+let f42Doc (order: string list) = CacheEligibilityJson.ofReport (f41Three order)
+printfn "[F42] candidates z:a,a:b,a:a ordered a:a,a:b,z:a ⇒ %s" (f42Doc [ "z:a"; "a:b"; "a:a" ])
+printfn "[F42]   byte-identical for any permutation?    ⇒ %b" (f42Doc [ "a:a"; "z:a"; "a:b" ] = f42Doc [ "z:a"; "a:b"; "a:a" ] && f42Doc [ "a:b"; "a:a"; "z:a" ] = f42Doc [ "z:a"; "a:b"; "a:a" ])
+// expect: true
+
+// Duplicate GateId, different inputs ⇒ TWO entries under build:tests, neither merged nor deduplicated.
+printfn "[F42] duplicate GateId build:tests            ⇒ %s" (CacheEligibilityJson.ofReport f41Dup)
+// expect: two build:tests entries
+
+// inputsChanged [] is DISTINCT from noPriorEvidence — the former carries an empty categories array, the latter none.
+let f42EmptyDiff = CacheEligibilityVerdict.MustRecompute(InputsChanged [])
+printfn "[F42] inputsChanged [] ≠ noPriorEvidence       ⇒ %s vs %s"
+    (CacheEligibilityJson.ofReport (CacheEligibilityReport [ { Gate = GateId "a:a"; Verdict = f42EmptyDiff } ]))
+    (CacheEligibilityJson.ofReport (CacheEligibilityReport [ { Gate = GateId "a:a"; Verdict = MustRecompute NoPriorEvidence } ]))
+// expect: …{"kind":"inputsChanged","categories":[]}… vs …{"kind":"noPriorEvidence"}…

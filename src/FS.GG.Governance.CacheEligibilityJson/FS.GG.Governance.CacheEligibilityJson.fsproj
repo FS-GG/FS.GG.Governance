@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F042: the optional, packable cache-eligibility.json *projection* — the cache-eligibility.json
+       document row. A single pure, total `CacheEligibilityJson.ofReport : CacheEligibilityReport -> string`
+       (plus a `schemaVersion` constant) renders F041's `CacheEligibilityReport` into the deterministic,
+       versioned `cache-eligibility.json` PER-CHANGE cache-eligibility document text — the stable,
+       machine-readable per-change cache-eligibility contract the later route/audit emission rows, CI cost
+       dashboards, agents, and generated readiness views read instead of an in-memory value. It is the design's
+       per-change cache-eligibility artifact, restricted to the fields F041's `CacheEligibilityReport` has
+       already typed.
+
+       Where F020's `route.json` is the per-change route view, F021's `gates.json` is the whole-catalog gate
+       view, and F025's `audit.json` is the whole-change ship-verdict view, this `cache-eligibility.json` is the
+       per-change CACHE-ELIGIBILITY view. For each selected gate it carries the gate id and a tagged `verdict`
+       object — `reusable` (naming the opaque evidence reference) or `mustRecompute` (naming its cause:
+       `noPriorEvidence`, or `inputsChanged` with the changed freshness-input category tokens) — in the report's
+       already-fixed `GateId`-ordinal order, preserved verbatim.
+
+       This row LAYERS serialization on top of the pure F041 `CacheEligibility` core in a SEPARATE project
+       (constitution: heavier capabilities layer on top, not into the core) — F041's `CacheEligibility` surface
+       stays free of any serialization concern. It is emit-only: it re-derives/re-classifies/re-runs/re-orders
+       NOTHING (the `CacheEligibilityReport` already fixed each per-gate verdict and the entry order); it re-runs
+       no reuse decision (FR-002), makes no cache lookup against a real store, computes no freshness key/hash,
+       resolves none of the freshness inputs, never dereferences the opaque evidence reference (FR-008), maps no
+       numeric exit code, and emits no severity, ship verdict, host path, timestamp, environment value, or
+       product vocabulary (FR-012). PURE and TOTAL (FR-007/FR-008): no I/O, no git, no clock, never throws.
+
+       It reuses the public upstream accessors VERBATIM for token rendering — F018 `Gates.gateIdValue`,
+       F030 `EvidenceReuse.referenceValue`, F029 `FreshnessKey.Model.categoryToken` — and matches each closed
+       verdict/cause case exhaustively with NO wildcard, so a future F041 verdict/cause case is a compile error
+       here, never a silently mis-tokened field.
+
+       It references ONLY FS.GG.Governance.CacheEligibility (F041); EvidenceReuse/Gates/FreshnessKey/Config
+       arrive transitively. It adds NO new third-party PackageReference — serialization is the net10.0
+       shared-framework `System.Text.Json` (`Utf8JsonWriter`) the kernel's `Json.fs` and F020/F021/F025's
+       projections already use, so the library stays System.*/FSharp.Core-only (FR-014). Compile order is
+       CacheEligibilityJson.fsi -> CacheEligibilityJson.fs: the curated public surface, then the pure
+       projection. The whole surface is a pure total function — no MVU ceremony (Principle IV). The dependency
+       direction stays one-way: CacheEligibilityJson -> CacheEligibility -> EvidenceReuse/Gates/FreshnessKey/
+       Config/Kernel; no RouteJson/AuditJson/GatesJson/Enforcement/Ship/Snapshot/Routing/host/CLI coupling. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CacheEligibilityJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson/GatesJson/AuditJson. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CacheEligibilityJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CacheEligibilityJson.fsi" />
+    <Compile Include="CacheEligibilityJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+  </ItemGroup>
+
+</Project>
