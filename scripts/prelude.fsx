@@ -1916,3 +1916,65 @@ printfn
           MinimumAgreement = AgreementLevel 80 }
         (f40Evidence 1 100))
 // expect: Uncalibrated (TooFewSamples (SampleCount 1, SampleCount 2))
+
+// ── F041: the per-gate cache-eligibility roll-up — the route/audit *emission* row's deferred line ──
+//
+// `evaluate : CandidateGate list -> ReuseStore -> CacheEligibilityReport` is the per-change roll-up: it
+// composes F030 `EvidenceReuse.decide` VERBATIM once per selected gate (`evaluateGate`, no new reuse policy)
+// and attributes/orders the results by `GateId`. A candidate pairs an F018 `GateId` with its ALREADY-resolved
+// F029 `FreshnessInputs` (both supplied facts). The per-gate verdict is `Reusable` (naming the F030 evidence
+// reference) or `MustRecompute` (naming the F030 cause) — recompute by default, necessary-not-sufficient. No
+// cache lookup against a real store, no persistence, no freshness key/hash computed, no input resolved, no
+// gate run, no clock/fs/git/network, no JSON, no exit code, no CLI. Design-first FSI proof (Principle I),
+// reusing F029's `f29Inputs` + F030's `f30Store` worked-example values.
+#r "../src/FS.GG.Governance.Gates/bin/Debug/net10.0/FS.GG.Governance.Gates.dll"
+#r "../src/FS.GG.Governance.EvidenceReuse/bin/Debug/net10.0/FS.GG.Governance.EvidenceReuse.dll"
+#r "../src/FS.GG.Governance.CacheEligibility/bin/Debug/net10.0/FS.GG.Governance.CacheEligibility.dll"
+
+open FS.GG.Governance.Gates.Model
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.EvidenceReuse
+open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.CacheEligibility.Model
+open FS.GG.Governance.CacheEligibility
+
+/// A candidate gate: an F018 GateId paired with its already-resolved F029 freshness inputs.
+let f41Candidate (gate: string) (inputs: FreshnessInputs) : CandidateGate = { Gate = GateId gate; Inputs = inputs }
+
+// Empty store, one candidate ⇒ recompute by default, no prior evidence.
+printfn "\n[F41] empty store, one candidate             ⇒ %A" (CacheEligibility.evaluateGate (f41Candidate "build:tests" f29Inputs) EvidenceReuse.empty)
+// expect: MustRecompute NoPriorEvidence
+
+// Record the worked example under an opaque handle, then an EXACT-match candidate ⇒ reusable, naming it.
+let f41Store = EvidenceReuse.record f29Inputs (EvidenceRef "ev-A") EvidenceReuse.empty
+printfn "[F41] recorded, exact-match candidate         ⇒ %A" (CacheEligibility.evaluateGate (f41Candidate "build:tests" f29Inputs) f41Store)
+// expect: Reusable (EvidenceRef "ev-A")
+
+// Same store, candidate with RuleHash differing ⇒ must-recompute naming exactly that category (no-hide).
+let f41NewRule = { f29Inputs with RuleHash = RuleHash "r2" }
+printfn "[F41] recorded, RuleHash differs              ⇒ %A" (CacheEligibility.evaluateGate (f41Candidate "build:tests" f41NewRule) f41Store)
+// expect: MustRecompute (InputsChanged [RuleHashCat])
+
+// Candidate with RuleHash AND Head differing ⇒ both categories named, never truncated to the first.
+let f41NewRuleHead = { f41NewRule with Head = Revision "zzz" }
+printfn "[F41] recorded, RuleHash + Head differ        ⇒ %A" (CacheEligibility.evaluateGate (f41Candidate "build:tests" f41NewRuleHead) f41Store)
+// expect: MustRecompute (InputsChanged [RuleHashCat; HeadRevisionCat])
+
+// Three candidates supplied z:a, a:b, a:a ⇒ report ordered a:a, a:b, z:a (ordinal), byte-identical for any permutation.
+let f41Three (order: string list) =
+    CacheEligibility.evaluate (order |> List.map (fun g -> f41Candidate g f29Inputs)) EvidenceReuse.empty
+let f41Ordered = f41Three [ "z:a"; "a:b"; "a:a" ]
+printfn "[F41] 3 candidates supplied z:a, a:b, a:a     ⇒ %A"
+    (CacheEligibility.entries f41Ordered |> List.map (fun e -> let (GateId g) = e.Gate in g))
+// expect: ["a:a"; "a:b"; "z:a"]
+printfn "[F41]   same report for any permutation?      ⇒ %b" (f41Three [ "a:a"; "z:a"; "a:b" ] = f41Ordered && f41Three [ "a:b"; "a:a"; "z:a" ] = f41Ordered)
+// expect: true
+
+// Two candidates with the same GateId but different Inputs ⇒ TWO entries under that gate (duplicates kept).
+let f41Dup = CacheEligibility.evaluate [ f41Candidate "build:tests" f29Inputs; f41Candidate "build:tests" f41NewRule ] f41Store
+printfn "[F41] duplicate GateId, different inputs      ⇒ %d entries under build:tests" (CacheEligibility.entries f41Dup |> List.length)
+// expect: 2
+
+// No candidates ⇒ empty report (total, not an error).
+printfn "[F41] no candidates                           ⇒ %A" (CacheEligibility.evaluate [] f41Store)
+// expect: CacheEligibilityReport []

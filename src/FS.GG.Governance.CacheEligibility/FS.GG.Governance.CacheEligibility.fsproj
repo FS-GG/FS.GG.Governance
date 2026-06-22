@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F041: the packable, pure per-gate cache-eligibility roll-up core — the one genuinely-deferred
+       Governance-owned line of the route/audit *emission* row (Phase 2 / Phase 11 of
+       docs/initial-implementation-plan.md): "Emit deterministic route and audit JSON with selected gates …
+       and cache eligibility …". F029 `compute` + F030 `decide` landed the *evaluation* logic for a SINGLE
+       candidate; route.json (F020) / audit.json (F025) already carry each gate's freshness-key INPUTS but no
+       evaluated cache-eligibility verdict. This row delivers the missing per-change ROLL-UP as its decision
+       value: for ALL the gates a routed change selected, one evaluated, attributable cache-eligibility
+       verdict PER GATE — `Reusable` (naming the reusable F030 evidence) or `MustRecompute` (naming the F030
+       cause) — in a deterministic, gate-attributable `CacheEligibilityReport`, so a later projection row can
+       emit the verdict and a later host row can resolve and supply its inputs.
+
+       The analogue of F023 `deriveEffectiveSeverity` / F030 `decide` / F040 `decide`: a pure, total,
+       deterministic ROLL-UP that composes F030 `EvidenceReuse.decide` VERBATIM once per selected gate (FR-004,
+       introducing no new reuse policy) and attributes/orders the results by `GateId`. It makes NO cache
+       lookup against a real store, performs NO persistence (no filesystem/database/network), computes NO
+       freshness key or hash itself (it consumes F029/F030 results), RESOLVES none of the freshness inputs it
+       is given, reads NO clock/filesystem/git/environment, runs NO gate and produces NO evidence, renders NO
+       JSON (the projection row does that), maps NO exit code, and adds NO CLI. Its sole output is the typed
+       cache-eligibility report value. A `Reusable` verdict is necessary-not-sufficient: it carries no skip
+       action and no enforcement meaning (FR-010).
+
+       It reuses F018 `GateId` / `gateIdValue` (the per-gate attribution key) and F030 `decide` / `ReuseStore`
+       / `ReuseDecision` / `RecomputeCause` / `EvidenceRef` (the composed decision and its payloads) VERBATIM;
+       F029 `FreshnessInputs` / `InputCategory` and F014 `CheckId` / `DomainId` arrive TRANSITIVELY through
+       F030 / F018 and need no direct reference (the F030 "Config transitive through F029" precedent). It adds
+       NO new third-party PackageReference (FR-013): the roll-up is `List.map` of a verbatim F030 `decide` + an
+       ordinal sort + FSharp.Core. It deliberately does NOT reference
+       RouteJson/AuditJson/Enforcement/Ship/Snapshot/Routing/Findings/Adapters or any host/edge/CLI assembly.
+       Compile order is Model -> CacheEligibility: the one new union + two records + single-case report
+       wrapper, then the pure total roll-up body + the ordinal sort comparator (private by omission). The whole
+       surface is a pure total roll-up over supplied values — no MVU ceremony (Principle IV / N/A). Every
+       merged core/host stays untouched. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CacheEligibility</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Packable like Calibration/AdvisoryPromotion (overrides Directory.Build.props IsPackable=false). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CacheEligibility</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="CacheEligibility.fsi" />
+    <Compile Include="CacheEligibility.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>

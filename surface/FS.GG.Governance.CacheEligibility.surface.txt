@@ -1,0 +1,91 @@
+TYPE FS.GG.Governance.CacheEligibility.CacheEligibilityModule
+  [Method] Boolean isReusable(CacheEligibilityVerdict)
+  [Method] CacheEligibilityReport evaluate(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CacheEligibility.ModelModule+CandidateGate], ReuseStore)
+  [Method] CacheEligibilityVerdict evaluateGate(CandidateGate, ReuseStore)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry] entries(CacheEligibilityReport)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef] reusableEvidence(CacheEligibilityVerdict)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+RecomputeCause] recomputeCause(CacheEligibilityVerdict)
+TYPE FS.GG.Governance.CacheEligibility.ModelModule
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CandidateGate
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry
+  [Constructor] Void .ctor(GateId, CacheEligibilityVerdict)
+  [Method] Boolean Equals(CacheEligibilityEntry)
+  [Method] Boolean Equals(CacheEligibilityEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheEligibilityVerdict get_Verdict()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(CacheEligibilityEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] CacheEligibilityVerdict Verdict
+  [Property] GateId Gate
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport
+  [Method] Boolean Equals(CacheEligibilityReport)
+  [Method] Boolean Equals(CacheEligibilityReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheEligibilityReport NewCacheEligibilityReport(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry])
+  [Method] Int32 CompareTo(CacheEligibilityReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry] get_Item()
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityEntry] Item
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict
+  [Method] Boolean Equals(CacheEligibilityVerdict)
+  [Method] Boolean Equals(CacheEligibilityVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMustRecompute()
+  [Method] Boolean get_IsReusable()
+  [Method] CacheEligibilityVerdict NewMustRecompute(RecomputeCause)
+  [Method] CacheEligibilityVerdict NewReusable(EvidenceRef)
+  [Method] Int32 CompareTo(CacheEligibilityVerdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+MustRecompute
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+Reusable
+  [NestedType] FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+Tags
+  [Property] Boolean IsMustRecompute
+  [Property] Boolean IsReusable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+MustRecompute
+  [Method] RecomputeCause get_Item()
+  [Property] RecomputeCause Item
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+Reusable
+  [Method] EvidenceRef get_Item()
+  [Property] EvidenceRef Item
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict+Tags
+  [Field] Int32 MustRecompute
+  [Field] Int32 Reusable
+TYPE FS.GG.Governance.CacheEligibility.ModelModule+CandidateGate
+  [Constructor] Void .ctor(GateId, FreshnessInputs)
+  [Method] Boolean Equals(CandidateGate)
+  [Method] Boolean Equals(CandidateGate, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FreshnessInputs get_Inputs()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(CandidateGate)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] FreshnessInputs Inputs
+  [Property] GateId Gate

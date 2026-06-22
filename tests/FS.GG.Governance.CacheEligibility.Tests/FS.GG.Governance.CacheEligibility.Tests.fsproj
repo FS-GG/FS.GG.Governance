@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F041, exercising the PUBLIC surface of FS.GG.Governance.CacheEligibility:
+       `CacheEligibility.evaluate` / `evaluateGate` / `entries` / `isReusable` / `reusableEvidence` /
+       `recomputeCause` and the `Model` types over REAL, literally-constructible values (Principle V — every
+       value is a genuine typed token: real F018 `GateId`, real F029 `FreshnessInputs`, real F030 `ReuseStore`
+       built via `EvidenceReuse.record`, real F030 `EvidenceRef`; no mock, no clock read, no gate run, no file
+       read, no bytes hashed, no freshness key computed, no JSON rendered, no cache lookup against a real
+       store). Expecto + FsCheck give the recompute-by-default / reusable-on-exact-match / one-attributed-
+       verdict-per-gate / deterministic-ordinal-order / totality / determinism / necessary-not-sufficient
+       properties; the VSTest adapters let `dotnet test` drive the Expecto runner. The reflective SurfaceDrift
+       test pins the Tier-1 public surface + the EvidenceReuse/Gates(+transitive cores)/BCL/FSharp.Core-only
+       scope guard (SC-008). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="RecomputeByDefaultTests.fs" />
+    <Compile Include="ReusableTests.fs" />
+    <Compile Include="AttributionAndOrderTests.fs" />
+    <Compile Include="TotalityTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="NecessaryNotSufficientTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>
