@@ -1729,3 +1729,62 @@ printfn "[F37] rendered ⇒\n%s" f37Rendered
 let f37Again = PromptIsolation.render f37Request |> PromptIsolation.renderedValue
 printfn "[F37] render is byte-stable ⇒ %b" (f37Rendered = f37Again)
 // expect: true
+
+
+// F038 — Agent-Review Record: Auditable Review-Record Core (FS.GG.Governance.ReviewRecord)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Phase-12 FOURTH row: "record review requests, response digests, model identity, prompt identity, artifact
+// digests, and final verdict." The agent-review analogue of F032 CommandRecord / F033 Provenance: a
+// record-building core that assembles ONE completed agent review as an immutable, auditable value and derives
+// a deterministic, byte-stable, INJECTIVE record identity over its reproducible facts. `build` pairs the six
+// audit facts + sensed metadata verbatim (sensed last — the F032 convention; no reorder/dedup/capture/I/O);
+// `canonicalId` renders the reproducible facts (NEVER the sensed metadata) in the F029/F032/F035 tagged,
+// length-prefixed discipline, the `req` segment being F037's own injective render of the embedded request;
+// `identityValue` unwraps. It reuses F037 `ReviewRequest`, F035 `ModelId`/`ModelVersion`/`ReviewerPromptHash`,
+// F029 `ArtifactHash`, and F034 `SensedMetadatum` VERBATIM (research D2). No model invoked, no bytes hashed,
+// no clock/filesystem/network read, no verdict interpreted/promoted, no cache key/store/lookup, no
+// persistence/JSON/CLI (FR-007). Design-first FSI proof (Principle I) over literal values — the worked example
+// of contracts/review-record-identity-format.md / quickstart.md.
+#r "../src/FS.GG.Governance.ReviewRecord/bin/Debug/net10.0/FS.GG.Governance.ReviewRecord.dll"
+
+open FS.GG.Governance.SensedMetadata.Model
+open FS.GG.Governance.SensedMetadata
+open FS.GG.Governance.ReviewRecord.Model
+open FS.GG.Governance.ReviewRecord
+
+// A completed review's facts, all already-formed values (reuses F037's request, F035's identities, F029's
+// hashes, F034's marking):
+let f38Request =
+    PromptIsolation.assemble
+        (QuestionText "Does this doc explain the public API?")
+        [ Excerpt(Model.excerpt (SizeBound 200) "module Foo = ...")
+          DigestOnly(ArtifactHash "sha256:abc") ]
+
+let rec038 =
+    ReviewRecord.build
+        f38Request
+        (ModelId "claude-opus")
+        (ModelVersion "4.8")
+        (ReviewerPromptHash "ph-7f3")
+        [ ArtifactHash "sha256:abc" ]
+        (ResponseDigest "sha256:resp")
+        (RecordedVerdict "pass")
+        [ SensedMetadata.markTimestamp (SensedLabel "at") (SensedTimestamp "2026-06-22T10:00:00Z") ]
+
+// All six audit facts read back exactly as supplied.
+printfn "[F38] all six facts read back ⇒ %A" rec038.Reproducible
+
+// The canonical, injective identity over the reproducible facts (the sensed timestamp does NOT appear).
+printfn "[F38] identity ⇒\n%s" (ReviewRecord.identityValue (ReviewRecord.canonicalId rec038))
+
+// Honesty boundary: drop the sensed timestamp ⇒ identity byte-identical.
+let f38NoSensed = { rec038 with Sensed = [] }
+printfn "[F38] sensed excluded from identity ⇒ %b"
+    (ReviewRecord.canonicalId rec038 = ReviewRecord.canonicalId f38NoSensed)
+// expect: true
+
+// Injectivity: flip the verdict ⇒ identity changes.
+let f38Fail = { rec038 with Reproducible = { rec038.Reproducible with Verdict = RecordedVerdict "fail" } }
+printfn "[F38] verdict changes identity ⇒ %b"
+    (ReviewRecord.canonicalId rec038 <> ReviewRecord.canonicalId f38Fail)
+// expect: true

@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F038, exercising the PUBLIC surface of FS.GG.Governance.ReviewRecord:
+       `ReviewRecord.build` / `canonicalId` / `identityValue` and the `Model` types over REAL,
+       literally-constructible values (Principle V — every value is a genuine typed token: a real F037
+       `ReviewRequest` built via `PromptIsolation.assemble`, real F035 `ModelId`/`ModelVersion`/
+       `ReviewerPromptHash`, real F029 `ArtifactHash`, real F034 `SensedMetadatum` via `markTimestamp`, and
+       literal digest/verdict strings; no mock, no clock read, no model invoked, no file read, no bytes
+       hashed). Expecto + FsCheck give the faithful-capture / injective-identity / sensed-exclusion /
+       artifact-set / no-bytes / determinism / purity / totality properties; the VSTest adapters let
+       `dotnet test` drive the Expecto runner. The reflective SurfaceDrift test pins the Tier-1 public surface
+       + the PromptIsolation/SensedMetadata(+transitive)/BCL/FSharp.Core-only scope guard (plan D1). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="CaptureTests.fs" />
+    <Compile Include="IdentityTests.fs" />
+    <Compile Include="SensedBoundaryTests.fs" />
+    <Compile Include="IdentityFormatTests.fs" />
+    <Compile Include="ArtifactSetTests.fs" />
+    <Compile Include="NoBytesTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ReviewRecord/FS.GG.Governance.ReviewRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.PromptIsolation/FS.GG.Governance.PromptIsolation.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.SensedMetadata/FS.GG.Governance.SensedMetadata.fsproj" />
+  </ItemGroup>
+
+</Project>
