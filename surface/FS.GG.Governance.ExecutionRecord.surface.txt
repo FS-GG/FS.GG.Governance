@@ -1,0 +1,3 @@
+TYPE FS.GG.Governance.ExecutionRecord.ExecutionRecordModule
+  [Method] CommandRecord recordOf(Executable, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument], WorkingDirectory, EnvironmentDelta, TimeoutLimit, ExitCode, Byte[], Byte[], CapturedOutput, SensedDuration)
+  [Method] OutputDigest digestOf(Byte[])

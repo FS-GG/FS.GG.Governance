@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F050: the pure, value-only CONTENT-ADDRESSING BRIDGE. Two deterministic, total value transformations
+       over the already-merged F032 vocabulary — `digestOf` (hash a gate's CAPTURED OUTPUT BYTES into the
+       byte-stable `OutputDigest` F032 requires: SHA-256 over the raw bytes, lowercase hex, wrapped in the
+       F032 `OutputDigest` newtype reused verbatim) and `recordOf` (assemble a complete F032 `CommandRecord`
+       from a captured execution outcome by composing `digestOf` on the two output positions and DELEGATING
+       the rest to `CommandRecord.build` VERBATIM).
+
+       This is the FIRST and ONLY place in the codebase that hashes output bytes — precisely the gap F032 left
+       open at D3 ("a supplied, already-computed digest … no hashing happens here"). The cache/evidence-reuse
+       thread (F029-F049) can already sense freshness, evaluate reuse, embed verdicts, persist/bound/prune the
+       store, derive an `EvidenceRef` from a `CommandRecord`, and fold it in — so the pure write path is
+       complete FROM A `CommandRecord` ONWARD. But nothing produced a `CommandRecord` from a real execution:
+       this row closes that last pure gap, mirroring how F047/F049 delivered the pure halves before their
+       impure edges were wired.
+
+       Both operations are PURE and TOTAL (FR-008): no I/O, no clock, no git, no environment, no network, no
+       process; defined for every input — empty output bytes, binary/non-textual bytes, arbitrarily large
+       bytes, a non-zero exit code, an applied timeout, an empty environment delta, and every captured-output
+       outcome — never throwing. Hashing the supplied bytes is PURE computation, not I/O. `digestOf` is a
+       function of byte CONTENT ONLY (FR-001/FR-002); `recordOf` is `build` composed with `digestOf` on the
+       two output fields, NOTHING more (FR-004/FR-005) — no new record shape, no normalization, no
+       reuse/success policy; the sensed duration is carried only in `record.Duration` and never read by the
+       digest or the identity (FR-006). The digest scheme is FIXED and INTERNAL (FR-011) — not a policy knob.
+
+       This row runs NO gate, senses NO fact, times NOTHING, persists NOTHING, bumps NO schema version, adds NO
+       CLI, and introduces NO new type (it reuses F032 `OutputDigest`/`CommandRecord`/reproducible-fact
+       vocabulary, `SensedDuration`, `CapturedOutput`, and the F014 `TimeoutLimit` verbatim) — so it carries
+       only `ExecutionRecord.fsi` + `ExecutionRecord.fs`, no `Model` file. The IMPURE gate-execution port
+       (spawning the process, reading real stdout/stderr, timing the run, sensing the facts) and the host
+       wiring are the explicit FOLLOWING rows and are out of scope here; referenced by nothing on landing.
+
+       It references ONLY FS.GG.Governance.CommandRecord (F032 `build`, `OutputDigest`, the reproducible-fact
+       types, `SensedDuration`, `CapturedOutput`); FS.GG.Governance.Config (F014 `TimeoutLimit`) arrives
+       TRANSITIVELY through F032. It adds NO new third-party PackageReference — the single new computation is a
+       SHA-256 hash via `System.Security.Cryptography.SHA256.HashData` rendered with `System.Convert.ToHexString`,
+       both BCL, both already used in the codebase (the F040 `Snapshot` interpreter). Compile order is
+       ExecutionRecord.fsi -> ExecutionRecord.fs. The dependency direction stays one-way:
+       ExecutionRecord -> CommandRecord -> Config. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ExecutionRecord</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- New package identity, packable like EvidenceCapture/CommandRecord/EvidenceReuseStore. "Pack output
+         unaffected" means EXISTING packages are untouched, not that this library is unpackable. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ExecutionRecord</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ExecutionRecord.fsi" />
+    <Compile Include="ExecutionRecord.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>
