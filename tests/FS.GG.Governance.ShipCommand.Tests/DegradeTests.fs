@@ -39,7 +39,8 @@ let tests =
               Expect.equal decision.Verdict Fail "the base-blocking change fails (decided BEFORE the cache senses)"
 
               let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
 
               let auditDoc = Option.get m4.AuditDoc
@@ -63,7 +64,8 @@ let tests =
               let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
 
               let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
 
               let auditDoc = Option.get m4.AuditDoc
