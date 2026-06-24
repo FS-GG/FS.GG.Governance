@@ -59,6 +59,11 @@
     <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
     <!-- F048: the pure write half of the evidence-reuse store (prune/retain/serialise) -->
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <!-- F052: run each selected must-recompute command-gate (GateExecution port), derive its evidence
+         (EvidenceCapture), and compose the shared pure helpers + GateOutcome vocabulary (GateRun). -->
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
   </ItemGroup>
 
 </Project>

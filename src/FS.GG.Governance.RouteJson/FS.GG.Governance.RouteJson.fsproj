@@ -43,6 +43,8 @@
          (`FreshnessKey.categoryToken`, `EvidenceReuse.referenceValue`, `Gates.gateIdValue`) arrive
          TRANSITIVELY — the F042 `CacheEligibilityJson.fsproj` precedent. No new third-party package. -->
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <!-- F052: the optional per-gate `execution` embed carries the `GateOutcome` vocabulary (GateRun). -->
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
   </ItemGroup>
 
 </Project>

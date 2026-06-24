@@ -51,7 +51,7 @@ let tests =
         "Totality (US4)"
         [ test "the empty route projects to a valid document with empty sections + all-zero cost (AS1, SC-006, FR-009)" {
               let empty = resultOf fixtureFacts []
-              let json = RouteJson.ofRouteResult empty None
+              let json = RouteJson.ofRouteResult empty None []
               use doc = parse json
               Expect.equal doc.RootElement.ValueKind JsonValueKind.Object "a JSON object"
               Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
@@ -64,7 +64,7 @@ let tests =
               let r = resultOf fixtureFacts [ "src/loose/x.fs" ]
               Expect.isEmpty r.SelectedGates "no gates selected"
               Expect.isNonEmpty r.Findings.Findings "a finding is present"
-              use doc = parse (RouteJson.ofRouteResult r None)
+              use doc = parse (RouteJson.ofRouteResult r None [])
               Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
               Expect.isNonEmpty (findings doc) "findings present and non-empty"
           }
@@ -74,7 +74,7 @@ let tests =
               // drive the real chain, project, and parse — reaching here without an exception proves
               // totality; the parse proves the output is always well-formed JSON.
               let r = resultOf fixtureFacts paths
-              let json = RouteJson.ofRouteResult r None
+              let json = RouteJson.ofRouteResult r None []
               use doc = JsonDocument.Parse json
               doc.RootElement.ValueKind = JsonValueKind.Object
               && (topLevelFieldOrder doc) = [ "schemaVersion"; "selectedGates"; "findings"; "cost"; "cacheEligibilityEvaluated" ]) ]

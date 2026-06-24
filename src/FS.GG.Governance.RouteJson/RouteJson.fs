@@ -12,6 +12,8 @@ open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
+open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
+open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
 
 // The F020 route.json projection (US1–US4). Renders the F019 `RouteResult` into the deterministic,
 // versioned `route.json` document text via a hand-driven `System.Text.Json` `Utf8JsonWriter` walk —
@@ -182,13 +184,52 @@ module RouteJson =
 
         w.WriteEndObject()
 
+    // ── F052: the embedded per-gate execution outcome (additive, default-empty ⇒ output unchanged) ──
+
+    let dispositionToken (disposition: GateDisposition) : string =
+        match disposition with
+        | Executed -> "executed"
+        | Reused -> "reused"
+        | NotExecuted -> "notExecuted"
+
+    /// First-by-list-order-wins lookup of the per-gate execution outcome, keyed on the gate-id string (the
+    /// F045 `verdictByGate` precedent). Empty list ⇒ empty map ⇒ no `execution` object emitted anywhere.
+    let outcomeByGate (execution: (GateId * GateOutcome) list) : Map<string, GateOutcome> =
+        execution
+        |> List.fold
+            (fun m (gid, outcome) ->
+                let k = gateIdValue gid
+                if Map.containsKey k m then m else Map.add k outcome m)
+            Map.empty
+
+    /// The per-gate `execution` object — field order `disposition`, then (when present) `exitCode`, `passed`.
+    /// `exitCode`/`passed` are OMITTED for `notExecuted` (no run, no exit — D6).
+    let writeExecution (w: Utf8JsonWriter) (outcome: GateOutcome) =
+        w.WriteStartObject()
+        w.WriteString("disposition", dispositionToken outcome.Disposition)
+
+        match outcome.ExitCode with
+        | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
+        | None -> ()
+
+        match outcome.Passed with
+        | Some passed -> w.WriteBoolean("passed", passed)
+        | None -> ()
+
+        w.WriteEndObject()
+
     /// One selected gate — the documented field order (contracts/route-json-document.md). Carries the
     /// embedded F018 `Gate` VERBATIM (FR-002); `id` via `Gates.gateIdValue`, never re-parsed (FR-010);
     /// `maturity` declared verbatim — NOT translated to enforcement (FR-011). Free-text `description`
     /// is written through the writer's string API so escaping is the writer's job (no manual escape).
     /// (F045) `lookup` resolves the gate's cache verdict by `GateId` (`None` ⇒ `notEvaluated`), emitted
     /// as the entry's LAST field — additive, changing no existing field.
-    let writeSelectedGate (w: Utf8JsonWriter) (lookup: GateId -> CacheEligibilityVerdict option) (sg: SelectedGate) =
+    let writeSelectedGate
+        (w: Utf8JsonWriter)
+        (lookup: GateId -> CacheEligibilityVerdict option)
+        (execLookup: GateId -> GateOutcome option)
+        (sg: SelectedGate)
+        =
         let gate = sg.Gate
         w.WriteStartObject()
         w.WriteString("id", gateIdValue gate.Id)
@@ -222,6 +263,14 @@ module RouteJson =
         w.WritePropertyName "cacheEligibility"
         writeCacheEligibility w (lookup gate.Id)
 
+        // F052: the per-gate execution outcome, matched by GateId, beside cacheEligibility. Written ONLY
+        // when an outcome is supplied for this gate; absent (default-empty) ⇒ byte-identical to F045 (D6).
+        match execLookup gate.Id with
+        | Some outcome ->
+            w.WritePropertyName "execution"
+            writeExecution w outcome
+        | None -> ()
+
         w.WriteEndObject()
 
     /// The per-tier `cost` object — field order `cheap`, `medium`, `high`, `exhaustive`. Every
@@ -236,7 +285,11 @@ module RouteJson =
 
     // ── the public entry point ──
 
-    let ofRouteResult (result: RouteResult) (cache: CacheEligibilityReport option) : string =
+    let ofRouteResult
+        (result: RouteResult)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        : string =
         // One linear walk of the already-ordered `RouteResult`, writing the top-level object in the
         // FIXED order schemaVersion → selectedGates → findings → cost → cacheEligibilityEvaluated. Every
         // collection is emitted in its existing order (gates by GateId, selecting paths by normalized
@@ -255,6 +308,10 @@ module RouteJson =
                 let byGate = verdictByGate report
                 fun gateId -> Map.tryFind (gateIdValue gateId) byGate
 
+        // F052: the per-gate execution lookup, built once from the supplied outcomes (empty ⇒ always None).
+        let execByGate = outcomeByGate execution
+        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
+
         writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
@@ -262,7 +319,7 @@ module RouteJson =
             w.WritePropertyName "selectedGates"
             w.WriteStartArray()
             for sg in result.SelectedGates do
-                writeSelectedGate w lookup sg
+                writeSelectedGate w lookup execLookup sg
             w.WriteEndArray()
 
             w.WritePropertyName "findings"

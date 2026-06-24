@@ -52,7 +52,7 @@ let tests =
         [ test "a non-empty F017 report is carried one-to-one, unchanged, in F017 order (AS1, SC-004)" {
               // sanity: the fixture really produced findings (both zones)
               Expect.isNonEmpty carryResult.Findings.Findings "fixture has findings"
-              use doc = parse (RouteJson.ofRouteResult carryResult None)
+              use doc = parse (RouteJson.ofRouteResult carryResult None [])
               let emitted = findings doc
               Expect.equal (List.length emitted) (List.length carryResult.Findings.Findings) "one emitted finding per F017 finding"
 
@@ -66,7 +66,7 @@ let tests =
           }
 
           test "both finding zones round-trip: governedRootUnknown (string) and protectedBoundary (object)" {
-              use doc = parse (RouteJson.ofRouteResult carryResult None)
+              use doc = parse (RouteJson.ofRouteResult carryResult None [])
               let zones = findings doc |> List.map (fun f -> (f.GetProperty "zone").ValueKind)
               Expect.contains zones JsonValueKind.String "a string zone is present (governed-root)"
               Expect.contains zones JsonValueKind.Object "an object zone is present (protected boundary)"
@@ -76,13 +76,13 @@ let tests =
               // a change touching only a routed path → selected gates but no findings
               let r = resultOf carryFacts [ "src/build/a.fs" ]
               Expect.isEmpty r.Findings.Findings "fixture has no findings"
-              use doc = parse (RouteJson.ofRouteResult r None)
+              use doc = parse (RouteJson.ofRouteResult r None [])
               Expect.isTrue (hasField doc.RootElement "findings") "findings field present"
               Expect.isEmpty (findings doc) "findings array present and empty"
           }
 
           test "each gate's freshnessKey carries the five declared inputs, command as string or null (AS3, FR-014)" {
-              use doc = parse (RouteJson.ofRouteResult carryResult None)
+              use doc = parse (RouteJson.ofRouteResult carryResult None [])
 
               for sg in carryResult.SelectedGates do
                   let g = selectedGates doc |> List.find (fun e -> strField e "id" = gateIdValue sg.Gate.Id)
@@ -106,7 +106,7 @@ let tests =
               // top-level `cacheEligibilityEvaluated` flag, so those are NO LONGER forbidden. The
               // enforcement-leak guard (no severity/profile/mode/enforcement derived from the cache
               // verdict) is preserved; findings remain verdict-free (gate-scoped, FR-004).
-              use doc = parse (RouteJson.ofRouteResult carryResult None)
+              use doc = parse (RouteJson.ofRouteResult carryResult None [])
               let forbidden = [ "severity"; "profile"; "mode"; "enforcement" ]
 
               // top level — no enforcement leak, and the top-level cache field is the EVALUATED flag,

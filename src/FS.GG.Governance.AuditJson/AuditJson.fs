@@ -13,6 +13,8 @@ open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
+open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
+open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
 
 // The F025 audit.json projection (US1–US4). Renders the F024 `ShipDecision` into the deterministic,
 // versioned `audit.json` WHOLE-CHANGE verdict document text via a hand-driven `System.Text.Json`
@@ -165,6 +167,40 @@ module AuditJson =
 
         w.WriteEndObject()
 
+    // ── F052: the embedded per-gate execution outcome (additive, default-empty ⇒ output unchanged) ──
+
+    let dispositionToken (disposition: GateDisposition) : string =
+        match disposition with
+        | Executed -> "executed"
+        | Reused -> "reused"
+        | NotExecuted -> "notExecuted"
+
+    /// First-by-list-order-wins lookup of the per-gate execution outcome, keyed on the gate-id string (the
+    /// F045 `verdictByGate` precedent). Empty list ⇒ empty map ⇒ no `execution` object emitted anywhere.
+    let outcomeByGate (execution: (GateId * GateOutcome) list) : Map<string, GateOutcome> =
+        execution
+        |> List.fold
+            (fun m (gid, outcome) ->
+                let k = gateIdValue gid
+                if Map.containsKey k m then m else Map.add k outcome m)
+            Map.empty
+
+    /// The per-gate `execution` object — field order `disposition`, then (when present) `exitCode`, `passed`.
+    /// `exitCode`/`passed` are OMITTED for `notExecuted` (no run, no exit — D6).
+    let writeExecution (w: Utf8JsonWriter) (outcome: GateOutcome) =
+        w.WriteStartObject()
+        w.WriteString("disposition", dispositionToken outcome.Disposition)
+
+        match outcome.ExitCode with
+        | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
+        | None -> ()
+
+        match outcome.Passed with
+        | Some passed -> w.WriteBoolean("passed", passed)
+        | None -> ()
+
+        w.WriteEndObject()
+
     /// One enforced item — a TAGGED object discriminated by `kind` (research D5). Matches the closed
     /// `EnforcedItemId` exhaustively (no wildcard):
     ///   • `GateItem g`                       → `kind:"gate"`, `id` (via `gateIdValue`, never re-parsed
@@ -176,7 +212,12 @@ module AuditJson =
     ///                                          `enforcement`. NO `cacheEligibility` — cache is
     ///                                          gate-scoped (F045 FR-004, SC-002).
     /// A gate item has NO `path` field (absent, not `null`; the `kind` tag disambiguates).
-    let writeItem (w: Utf8JsonWriter) (lookup: GateId -> CacheEligibilityVerdict option) (item: EnforcedItem) =
+    let writeItem
+        (w: Utf8JsonWriter)
+        (lookup: GateId -> CacheEligibilityVerdict option)
+        (execLookup: GateId -> GateOutcome option)
+        (item: EnforcedItem)
+        =
         w.WriteStartObject()
 
         match item.Id with
@@ -198,21 +239,42 @@ module AuditJson =
             writeCacheEligibility w (lookup g)
         | FindingItem _ -> ()
 
+        // F052: only GATE items carry the execution outcome (matched by GateId), beside cacheEligibility.
+        // Written ONLY when an outcome is supplied; absent (default-empty) ⇒ byte-identical to F045 (D6).
+        match item.Id with
+        | GateItem g ->
+            match execLookup g with
+            | Some outcome ->
+                w.WritePropertyName "execution"
+                writeExecution w outcome
+            | None -> ()
+        | FindingItem _ -> ()
+
         w.WriteEndObject()
 
     /// One section array — walks the carried item list in its existing F024 composite order, emitting
     /// each item via `writeItem`, re-sorting NOTHING (FR-007). An empty list emits a present, empty
     /// array (FR-005, FR-009).
-    let writeSection (w: Utf8JsonWriter) (lookup: GateId -> CacheEligibilityVerdict option) (name: string) (items: EnforcedItem list) =
+    let writeSection
+        (w: Utf8JsonWriter)
+        (lookup: GateId -> CacheEligibilityVerdict option)
+        (execLookup: GateId -> GateOutcome option)
+        (name: string)
+        (items: EnforcedItem list)
+        =
         w.WritePropertyName name
         w.WriteStartArray()
         for item in items do
-            writeItem w lookup item
+            writeItem w lookup execLookup item
         w.WriteEndArray()
 
     // ── the public entry point ──
 
-    let ofShipDecision (decision: ShipDecision) (cache: CacheEligibilityReport option) : string =
+    let ofShipDecision
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        : string =
         // One linear walk of the already-ordered `ShipDecision`, writing the top-level object in the
         // FIXED order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing →
         // cacheEligibilityEvaluated. The verdict/basis are carried VERBATIM from the decision value —
@@ -232,13 +294,17 @@ module AuditJson =
                 let byGate = verdictByGate report
                 fun gateId -> Map.tryFind (gateIdValue gateId) byGate
 
+        // F052: the per-gate execution lookup, built once from the supplied outcomes (empty ⇒ always None).
+        let execByGate = outcomeByGate execution
+        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
+
         writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("verdict", verdictToken decision.Verdict)
             w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
-            writeSection w lookup "blockers" decision.Blockers
-            writeSection w lookup "warnings" decision.Warnings
-            writeSection w lookup "passing" decision.Passing
+            writeSection w lookup execLookup "blockers" decision.Blockers
+            writeSection w lookup execLookup "warnings" decision.Warnings
+            writeSection w lookup execLookup "passing" decision.Passing
             w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
             w.WriteEndObject())
