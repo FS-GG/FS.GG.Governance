@@ -2427,3 +2427,60 @@ printfn "[F49] different world ⇒ %A" (EvidenceReuse.decide (f47Inputs "other-c
 
 // FR-008: byte-stable — identical input yields the byte-identical reference on every run.
 printfn "[F49] byte-stable reference? %b" (EvidenceCapture.referenceOf f49Record = EvidenceCapture.referenceOf f49Record) // expect: true
+
+// ── F050: DIGEST captured output and ASSEMBLE a command record from an execution outcome (pure core) ──
+// Design-first proof (Principle I), exercising the public surface BEFORE the operation bodies land (its
+// assertions FAIL against the stubs — expected). The thread can now derive an `EvidenceRef` from a
+// `CommandRecord` (F049) and fold it into the store — but nothing produced a `CommandRecord` from a real
+// execution: F032 `build` takes its two `OutputDigest`s already-computed ("no hashing happens here", D3) and
+// NOTHING hashed a gate's captured output bytes. This row delivers that missing content-addressing bridge —
+// two pure total functions: `digestOf` (the FIRST and ONLY place that hashes output bytes) and `recordOf`
+// (`build` composed with `digestOf` on the two output positions). The impure gate-execution port (spawning the
+// process, reading real stdout/stderr, timing, sensing) is the deferred FOLLOWING row. Reuses the CommandRecord
+// / EvidenceReuse / EvidenceCapture / FreshnessKey assemblies #r'd above; loads the new core here.
+#r "../src/FS.GG.Governance.ExecutionRecord/bin/Debug/net10.0/FS.GG.Governance.ExecutionRecord.dll"
+
+open System.Text
+open FS.GG.Governance.ExecutionRecord
+
+// US2 / SC-002 (content agreement) and SC-003 (content sensitivity).
+let f50OutA = Encoding.UTF8.GetBytes "build succeeded\n"
+let f50OutB = Encoding.UTF8.GetBytes "build succeeded\n" // same bytes
+let f50OutC = Encoding.UTF8.GetBytes "build succeeded!\n" // one byte different
+printfn "\n[F50] equal content ⇒ equal digest? %b" (ExecutionRecord.digestOf f50OutA = ExecutionRecord.digestOf f50OutB) // expect: true
+printfn "[F50] one byte differs ⇒ digest differs? %b" (ExecutionRecord.digestOf f50OutA <> ExecutionRecord.digestOf f50OutC) // expect: true
+
+// FR-003: totality over empty input, distinct from non-empty (never throws).
+printfn "[F50] empty digest defined & distinct? %b" (ExecutionRecord.digestOf [||] <> ExecutionRecord.digestOf f50OutA) // expect: true
+
+// A captured execution outcome: the nine reproducible facts + duration + RAW output bytes.
+let f50Env: EnvironmentDelta = { Added = []; Changed = []; Removed = [] }
+
+let f50Mk dur stdout =
+    ExecutionRecord.recordOf
+        (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f50Env (TimeoutLimit 30)
+        (ExitCode 0) stdout (Encoding.UTF8.GetBytes "") NoCapturedOutput (SensedDuration dur)
+
+let f50Record = f50Mk 123_456L f50OutA
+
+// US3 / SC-007: recordOf is build composed with digestOf on the two output positions.
+let f50ViaBuild =
+    CommandRecord.build
+        (Executable "gcc") [ Argument "-c"; Argument "main.c" ] (WorkingDirectory "/work") f50Env (TimeoutLimit 30)
+        (ExitCode 0) (ExecutionRecord.digestOf f50OutA) (ExecutionRecord.digestOf (Encoding.UTF8.GetBytes ""))
+        NoCapturedOutput (SensedDuration 123_456L)
+printfn "[F50] recordOf = build ∘ digestOf? %b" (f50Record = f50ViaBuild) // expect: true
+
+// US2 / SC-004: duration-invariance of the identity (and the F049 reference).
+let f50Slower = f50Mk 999_999L f50OutA // identical bytes & facts, only slower
+printfn "[F50] duration-only diff ⇒ equal canonicalId? %b" (CommandRecord.canonicalId f50Record = CommandRecord.canonicalId f50Slower) // expect: true
+printfn "[F50] duration-only diff ⇒ equal F049 reference? %b" (EvidenceCapture.referenceOf f50Record = EvidenceCapture.referenceOf f50Slower) // expect: true
+
+// SC-003: one output byte flips the identity and the reference.
+let f50Changed = f50Mk 123_456L f50OutC
+printfn "[F50] one output byte ⇒ different reference? %b" (EvidenceCapture.referenceOf f50Record <> EvidenceCapture.referenceOf f50Changed) // expect: true
+
+// US1 / SC-001: close the loop — capture the assembled record, the world is reusable for the derived ref.
+let f50Inputs = f47Inputs "execution-record"
+let f50Grown = EvidenceCapture.capture f50Inputs f50Record EvidenceReuse.empty
+printfn "[F50] captured world reusable with derived ref? %b" (EvidenceReuse.decide f50Inputs f50Grown = Reuse(EvidenceCapture.referenceOf f50Record)) // expect: true
