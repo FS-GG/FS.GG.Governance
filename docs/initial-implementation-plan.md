@@ -1141,12 +1141,26 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   golden baselines + `ReleaseContract.evaluate` conformance.)
 - 🟢 [x] Add migration notes for breaking schema or command changes. (Feature 018:
   `docs/release/migrations/` + additive-only posture.)
-- 🟡 [ ] Define Governance `fsgg verify` and `fsgg release` schemas and exit
+- 🟢 [x] Define Governance `fsgg verify` and `fsgg release` schemas and exit
   codes. (Governance: ship verdict rollup landed as **F024**; the `release` gate
   schema + five-way exit codes landed as **F055** — `fsgg release` exits
   `0` Success / `1` Blocked / `2` UsageError / `3` InputUnavailable / `4` ToolError
-  and emits the versioned `release.json` (`fsgg.release/v1`). `fsgg verify` remains
-  pending.)
+  and emits the versioned `release.json` (`fsgg.release/v1`). The pending `fsgg verify`
+  host landed as **F056** (`FS.GG.Governance.VerifyCommand` +
+  `FS.GG.Governance.VerifyJson`): the pre-PR verification host wired end to end as an
+  MVU `Loop`/`Interpreter`/`Program`, reusing the **exact ShipCommand pipeline** at a
+  **fixed `RunMode.Verify`** (no `--mode` flag — verify cannot escalate to the `Gate`
+  merge verdict, FR-017). It senses scope (F016), loads the frozen F014 catalog,
+  selects profile-appropriate checks (F015→F018→F017→F019), rolls them up
+  (`Ship.rollup` at `RunMode.Verify` + F052 `applyExecution`), runs the stale checks /
+  reuses the fresh ones (F046/F041/F051/F052), surfaces first-class **currency
+  findings** (fresh/reused, stale/recomputed + categories, recompute-by-default +
+  missing tokens, each carrying its enforcement-assigned severity), and emits the
+  deterministic `verify.json` (`fsgg.verify/v1`) with the same five-way exit codes.
+  There is **no declaration surface and no new sensing** (currency IS the existing
+  F043/F041 evaluation surfaced); **F014–F052 are untouched** (no frozen-core edit, no
+  schema bump). 63 tests green (19 VerifyJson + 44 VerifyCommand); surface baselines +
+  golden committed; CLI smoke proves the verdict/exit/currency/`verify.json` path.)
 - 🟢 [x] Add release rules for version bumps, package metadata, template pins,
   publish plans, trusted publishing, and provenance. (Governance-owned; Phase 11.)
   Landed across **F053 + F054 + F055**. **F053** (`FS.GG.Governance.ReleaseRules`)

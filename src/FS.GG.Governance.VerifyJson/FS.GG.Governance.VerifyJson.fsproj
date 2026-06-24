@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F056: the optional, packable verify.json *projection* — the verify.json document row. A single pure,
+       total `VerifyJson.ofVerifyDecision : ShipDecision -> CacheEligibilityReport option ->
+       (GateId * GateOutcome) list -> string` (plus a `schemaVersion` constant) renders the F024
+       `ShipDecision` (rolled at `RunMode.Verify`) plus the F041 `CacheEligibilityReport` and the F052 per-gate
+       execution outcomes into the deterministic, versioned `verify.json` WHOLE-CHANGE pre-PR verification
+       document text — the stable, machine-readable per-change verification contract a pre-PR CI step,
+       dashboards, agents, and generated readiness views read instead of an in-memory value.
+
+       Sibling of F025 `AuditJson` (the whole-change ship verdict) and F042 `CacheEligibilityJson` (the
+       per-change cache verdict): this projects the WHOLE-CHANGE verify verdict plus a first-class `currency`
+       section (fresh/reused, recomputed, unresolved). It is emit-only: it re-derives/re-classifies/re-sorts
+       NOTHING (the `ShipDecision` fixed the verdict/basis/partition, the `CacheEligibilityReport` fixed each
+       per-gate verdict, the execution list fixed each per-gate disposition). It never dereferences the opaque
+       evidence reference, maps no numeric exit code, and emits no host path/timestamp/username/environment
+       value (FR-007/FR-008). PURE and TOTAL: no I/O, no git, no clock, never throws.
+
+       It references the cores whose public types appear in `ofVerifyDecision`'s signature — Ship (F024,
+       ShipDecision), Enforcement (F023, the enforcement vocabulary), CacheEligibility (F041,
+       CacheEligibilityReport), GateRun (F052, GateOutcome), EvidenceReuse (F030, EvidenceRef) — plus the
+       transitive Config/Gates/Findings/FreshnessKey identity renderers. It adds NO new third-party
+       PackageReference — serialization is the net10.0 shared-framework `System.Text.Json` (`Utf8JsonWriter`)
+       the kernel's `Json.fs` and F020/F021/F025/F042/F055's projections already use, so the library stays
+       System.*/FSharp.Core-only (FR-014). No YamlDotNet, no AuditJson ref. Compile order is VerifyJson.fsi ->
+       VerifyJson.fs: the curated public surface, then the pure projection. The whole surface is a pure total
+       function — no MVU ceremony (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.VerifyJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.VerifyJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="VerifyJson.fsi" />
+    <Compile Include="VerifyJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>

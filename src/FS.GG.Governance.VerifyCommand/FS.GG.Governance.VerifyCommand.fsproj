@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F056 host edge: the pre-PR `fsgg verify` verification host. It is the CLOSEST SIBLING of F026
+       `ShipCommand` — the SAME pipeline, the SAME edge `Ports` bundle, the SAME reused reference set —
+       differing only in (a) the FIXED `RunMode.Verify` (no mode flag; verify cannot be escalated into the
+       `Gate`-mode merge verdict — FR-017), (b) the first-class `currency`-findings projection, (c) the
+       `verify.json` schema id, and (d) pre-PR framing + the "nothing to verify" empty-selection report.
+
+       It reuses VERBATIM, via project references, the EXACT ShipCommand reference set: the six F015–F019
+       routing/selection cores (Config F014, Snapshot F016, Routing F015, Findings F017, Gates F018,
+       Route F019), Enforcement (F023) + Ship (F024) for the rollup, and the F041/F043/F046/F047/F048/F051/
+       F052 freshness/reuse/execution cores — PLUS the new VerifyJson (NOT AuditJson; verify projects its own
+       document). There is NO `Declaration` adapter and NO new sensing (the F055 release declaration surface
+       was release-specific); "validate generated views/evidence currency" IS the existing F043/F041
+       evaluation surfaced and acted on. It adds NO new third-party dependency: git sensing is delegated to
+       Snapshot, catalog reads to Config, enforcement/rollup to Enforcement/Ship, serialization to VerifyJson;
+       the only new impure primitives are a `System.IO` write (the ArtifactWriter port) and `Environment.Exit`
+       at the Program edge — both BCL. No YamlDotNet.
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect, including the ExitCodeBasis -> exit mapping)
+       + an EDGE `Interpreter` (injected, fakeable Ports; realPorts/step/run) + a thin Program. Compile order
+       Loop -> Interpreter -> Program. IsPackable=false this slice (the single-packed-`fsgg`-tool unification
+       is a deferred follow-up). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.VerifyCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- F056: verify projects its OWN deterministic document (NOT AuditJson). -->
+    <ProjectReference Include="../FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <!-- F046: the cache-eligibility pipeline (sense → resolve → evaluate → embed Some report) -->
+    <ProjectReference Include="../FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <!-- F048: the pure write half of the evidence-reuse store (prune/retain/serialise) -->
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <!-- F052: run each selected must-recompute command-gate (GateExecution port), derive its evidence
+         (EvidenceCapture), and compose the shared pure helpers + GateOutcome vocabulary (GateRun). -->
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
+  </ItemGroup>
+
+</Project>

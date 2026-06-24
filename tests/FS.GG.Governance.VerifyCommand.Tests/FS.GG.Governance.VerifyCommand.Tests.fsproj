@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F056, exercising the PUBLIC surface of FS.GG.Governance.VerifyCommand: the pure
+       `Loop.parse`/`init`/`update`/`render`/`exitCode` driven with literal Model/Msg values (no I/O, no git,
+       no clock), and the edge `Interpreter.run`/`step` driven against FAKED ports (an in-memory
+       Config.Loader.FileReader, an in-memory Snapshot GitPort over canned raw git output, faked F046 sensing
+       ports, a deterministic F051 execution fake, a capturing ArtifactWriter, a capturing OutputSink) — plus
+       real-temp-git + real-catalog end-to-end proofs (Principle V). Written bytes are compared against the
+       genuine F056 projection (VerifyJson.ofVerifyDecision) of the F024 rollup (Ship.rollup at RunMode.Verify)
+       of the same typed inputs, never mocks of the cores. References the cores the VerifyCommand project
+       references so tests can construct typed values. Expecto + the VSTest adapters drive `dotnet test`. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="EndToEndTests.fs" />
+    <Compile Include="CurrencyTests.fs" />
+    <Compile Include="ReuseTests.fs" />
+    <Compile Include="DegradeTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PersistenceEdgeTests.fs" />
+    <Compile Include="FailureTests.fs" />
+    <Compile Include="ScopeGuardTests.fs" />
+    <Compile Include="NoMutationTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.VerifyCommand/FS.GG.Governance.VerifyCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- F046: the cache-eligibility pipeline (faked sensing ports + the genuine-core expected-report computer) -->
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <!-- F052: the gate-execution port + capture + outcome vocabulary for the execution scenarios -->
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
+  </ItemGroup>
+
+</Project>
