@@ -42,7 +42,11 @@ module Interpreter =
           Freshness: FreshnessSensing.FreshnessSensor
           Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
-          Out: OutputSink }
+          Out: OutputSink
+          /// F052: the injected GATE-EXECUTION port (D4) — the only seam through which the command touches a
+          /// gate process. `realPorts` wires the merged F051 `GateExecution.Interpreter.realPort`; tests
+          /// inject a deterministic fake. The `ExecuteGates` effect runs `senseExecution Execute` per gate.
+          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

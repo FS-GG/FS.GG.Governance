@@ -95,14 +95,14 @@ let tests =
           // ── US2: each gate item carries its verdict matched by GateId, across sections ──
 
           test "a reusable gate item carries { kind:reusable, evidence:<ref> } verbatim (US2.1, SC-001)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               let v = cacheOf (gateItemById doc "build:ship")
               Expect.equal (kindOf v) "reusable" "build:ship reusable"
               Expect.equal (strField v "evidence") "ev-A" "evidence verbatim"
           }
 
           test "an inputsChanged gate item names its changed categories in report order (US2.1, SC-005)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               let v = cacheOf (gateItemById doc "build:rel")
               Expect.equal (kindOf v) "mustRecompute" "build:rel must recompute"
               Expect.equal (causeKind v) "inputsChanged" "cause inputsChanged"
@@ -114,7 +114,7 @@ let tests =
           }
 
           test "a must-recompute (noPriorEvidence) gate item carries its cause, no evidence (US2.1)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some noPriorReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some noPriorReport) [])
               let v = cacheOf (gateItemById doc "build:ship")
               Expect.equal (kindOf v) "mustRecompute" "build:ship must recompute"
               Expect.equal (causeKind v) "noPriorEvidence" "noPriorEvidence"
@@ -122,14 +122,14 @@ let tests =
           }
 
           test "a gate item absent from the report renders notEvaluated, never reusable (US2.3, L2)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               let v = cacheOf (gateItemById doc "docs:lint")
               Expect.equal (kindOf v) "notEvaluated" "docs:lint (absent) is notEvaluated"
               Expect.equal (fieldOrder v) [ "kind" ] "notEvaluated carries only kind"
           }
 
           test "every finding item carries NO cacheEligibility field (gate-scoped, US2.2, SC-002, L4)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               let findingItems = allItems doc |> List.filter (fun it -> itemKind it = "finding")
               Expect.isNonEmpty findingItems "richDecision has finding items"
 
@@ -140,7 +140,7 @@ let tests =
           // ── US2.4 / L7: the cache verdict alters no verdict, severity, section, or ship outcome ──
 
           test "a reusable verdict on a base-blocking gate leaves it a blocker with full six-field enforcement (US2.4, L7, SC-004)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
 
               // build:ship (BlockOnShip ⇒ blocking) is reusable, yet stays in blockers with full detail.
               Expect.contains (sectionIds doc "blockers") "build:ship" "reusable blocker stays in blockers"
@@ -154,8 +154,8 @@ let tests =
           }
 
           test "additive: verdict / exitCodeBasis / sections / enforcement are byte-identical to the None projection (L7, FR-008)" {
-              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
-              use docNone = parse (AuditJson.ofShipDecision richDecision None)
+              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
+              use docNone = parse (AuditJson.ofShipDecision richDecision None [])
 
               Expect.equal (strField docSome.RootElement "verdict") (strField docNone.RootElement "verdict") "verdict unchanged"
               Expect.equal (strField docSome.RootElement "exitCodeBasis") (strField docNone.RootElement "exitCodeBasis") "exitCodeBasis unchanged"
@@ -173,8 +173,8 @@ let tests =
 
           test "an orphan report entry (GateId matching no item) adds nothing (L5, FR-006)" {
               let orphan = reportOf [ candidate "ghost:gate" shipInputs ] recordedStore
-              use docOrphan = parse (AuditJson.ofShipDecision richDecision (Some orphan))
-              use docNone = parse (AuditJson.ofShipDecision richDecision None)
+              use docOrphan = parse (AuditJson.ofShipDecision richDecision (Some orphan) [])
+              use docNone = parse (AuditJson.ofShipDecision richDecision None [])
 
               for name in [ "blockers"; "warnings"; "passing" ] do
                   Expect.equal (sectionIds docOrphan name) (sectionIds docNone name) (sprintf "%s unchanged by orphan" name)
@@ -183,7 +183,7 @@ let tests =
           }
 
           test "no raw freshness input value / extra cache-derived field leaks; evidence verbatim (L8, SC-007)" {
-              let json = AuditJson.ofShipDecision richDecision (Some mixedReport)
+              let json = AuditJson.ofShipDecision richDecision (Some mixedReport) []
               let lower = json.ToLowerInvariant()
               // Category tokens (ruleHash) are the no-hide vocabulary, not raw inputs. The raw input
               // VALUES (RuleHash "r1"/"r2", ArtifactHash "h1", Revision "aaa"/"bbb", GeneratorVersion
@@ -198,21 +198,21 @@ let tests =
           // ── US4: deterministic, versioned, ordered contract ──
 
           test "schemaVersion is fsgg.audit/v2 (US4.3, FR-013)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               Expect.equal (strField doc.RootElement "schemaVersion") "fsgg.audit/v2" "v2 contract"
               Expect.equal AuditJson.schemaVersion "fsgg.audit/v2" "constant is v2"
           }
 
           test "byte-identical for identical inputs (L10, SC-003)" {
               Expect.equal
-                  (AuditJson.ofShipDecision richDecision (Some mixedReport))
-                  (AuditJson.ofShipDecision richDecision (Some mixedReport))
+                  (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
+                  (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
                   "repeated projection byte-identical"
           }
 
           test "cache entries follow the document's existing composite item order (L10)" {
-              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
-              use docNone = parse (AuditJson.ofShipDecision richDecision None)
+              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
+              use docNone = parse (AuditJson.ofShipDecision richDecision None [])
               // the item order (and section placement) is the ShipDecision's, untouched by the embed.
               for name in [ "blockers"; "warnings"; "passing" ] do
                   Expect.equal (sectionIds docSome name) (sectionIds docNone name) (sprintf "%s order unchanged" name)
@@ -235,29 +235,29 @@ let tests =
                   | Reusable _ -> "reusable"
                   | MustRecompute _ -> "mustRecompute"
 
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some dup))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some dup) [])
               Expect.equal (kindOf (cacheOf (gateItemById doc "build:ship"))) expectedKind "first-by-report-order verdict wins"
-              Expect.equal (AuditJson.ofShipDecision richDecision (Some dup)) (AuditJson.ofShipDecision richDecision (Some dup)) "deterministic"
+              Expect.equal (AuditJson.ofShipDecision richDecision (Some dup) []) (AuditJson.ofShipDecision richDecision (Some dup) []) "deterministic"
           }
 
           test "the None case is evaluated:false with every gate item notEvaluated; Some _ is evaluated:true (L2, L9)" {
-              use docNone = parse (AuditJson.ofShipDecision richDecision None)
+              use docNone = parse (AuditJson.ofShipDecision richDecision None [])
               Expect.isFalse (docNone.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "evaluated false under None"
 
               for it in allItems docNone do
                   if itemKind it = "gate" then
                       Expect.equal (kindOf (cacheOf it)) "notEvaluated" "gate notEvaluated under None"
 
-              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport))
+              use docSome = parse (AuditJson.ofShipDecision richDecision (Some mixedReport) [])
               Expect.isTrue (docSome.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "evaluated true under Some"
           }
 
           test "totality: None / empty report / clean empty decision each yield a document with the section (L11, SC-006)" {
               let cases =
-                  [ "None", AuditJson.ofShipDecision richDecision None
-                    "empty report", AuditJson.ofShipDecision richDecision (Some(CacheEligibilityReport []))
-                    "clean empty decision", AuditJson.ofShipDecision emptyCleanDecision (Some mixedReport)
-                    "empty report + clean decision", AuditJson.ofShipDecision emptyCleanDecision None ]
+                  [ "None", AuditJson.ofShipDecision richDecision None []
+                    "empty report", AuditJson.ofShipDecision richDecision (Some(CacheEligibilityReport [])) []
+                    "clean empty decision", AuditJson.ofShipDecision emptyCleanDecision (Some mixedReport) []
+                    "empty report + clean decision", AuditJson.ofShipDecision emptyCleanDecision None [] ]
 
               for (label, json) in cases do
                   use doc = parse json
@@ -266,7 +266,7 @@ let tests =
           }
 
           test "an evaluated-but-empty report is evaluated:true with every gate item notEvaluated (L9)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision (Some(CacheEligibilityReport [])))
+              use doc = parse (AuditJson.ofShipDecision richDecision (Some(CacheEligibilityReport [])) [])
               Expect.isTrue (doc.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "empty report is evaluated:true"
 
               for it in allItems doc do

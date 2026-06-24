@@ -62,8 +62,8 @@ let tests =
         "CacheInvariant"
         [ test "Some report vs None: every NON-cache field of route.json is byte-identical (L1, SC-004)" {
               let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport)
-              let withNone = RouteJson.ofRouteResult result None
+              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
+              let withNone = RouteJson.ofRouteResult result None []
 
               Expect.notEqual withSome withNone "the cache section IS a real delta (Some ≠ None)"
               Expect.equal (withoutCache withSome) (withoutCache withNone) "all NON-cache fields are identical — the cache section is the only delta"
@@ -71,8 +71,8 @@ let tests =
 
           test "the cache section flips evaluated false→true; schemaVersion stays fsgg.route/v2 (L1)" {
               let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport)
-              let withNone = RouteJson.ofRouteResult result None
+              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
+              let withNone = RouteJson.ofRouteResult result None []
 
               Expect.stringContains withNone "\"cacheEligibilityEvaluated\":false" "None ⇒ not evaluated"
               Expect.stringContains withSome "\"cacheEligibilityEvaluated\":true" "Some ⇒ evaluated"
@@ -81,7 +81,7 @@ let tests =
 
           test "FR-013: no raw freshness input / hash / freshness key leaks into route.json (C1, L6)" {
               let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport)
+              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
 
               // The faked sensor's literal digests must NEVER appear — the commands render no raw freshness input.
               for tok in [ "rule-synthetic"; "gen-synthetic"; "art-synthetic"; "cmd-synthetic" ] do

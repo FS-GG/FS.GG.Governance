@@ -99,6 +99,11 @@ let tests =
                   || name = "FS.GG.Governance.CacheEligibility"
                   || name = "FS.GG.Governance.EvidenceReuse"
                   || name = "FS.GG.Governance.FreshnessKey"
+                  // F052: GateRun (the per-gate execution embed) + its transitive F051/F032 graph.
+                  || name = "FS.GG.Governance.GateRun"
+                  || name = "FS.GG.Governance.GateExecution"
+                  || name = "FS.GG.Governance.ExecutionRecord"
+                  || name = "FS.GG.Governance.CommandRecord"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

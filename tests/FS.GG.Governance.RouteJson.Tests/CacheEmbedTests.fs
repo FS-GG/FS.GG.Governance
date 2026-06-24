@@ -109,7 +109,7 @@ let tests =
           // ── US1: verdict shapes matched by GateId ──
 
           test "a reusable gate carries { kind:reusable, evidence:<ref> } verbatim (US1.1, SC-001)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               let v = cacheOf (gateById doc "build:tests")
               Expect.equal (kindOf v) "reusable" "build:tests is reusable"
               Expect.equal (strField v "evidence") "ev-A" "the opaque evidence reference verbatim"
@@ -117,7 +117,7 @@ let tests =
           }
 
           test "a must-recompute (noPriorEvidence) gate carries its cause, no evidence (US1.2)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some noPriorReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some noPriorReport) [])
               let v = cacheOf (gateById doc "build:tests")
               Expect.equal (kindOf v) "mustRecompute" "build:tests must recompute"
               Expect.equal (causeKind v) "noPriorEvidence" "cause is noPriorEvidence"
@@ -126,7 +126,7 @@ let tests =
           }
 
           test "an inputsChanged gate names exactly the report's changed categories in report order (US1.3, SC-005)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               let v = cacheOf (gateById doc "docs:lint")
               Expect.equal (kindOf v) "mustRecompute" "docs:lint must recompute"
               Expect.equal (causeKind v) "inputsChanged" "cause is inputsChanged"
@@ -140,7 +140,7 @@ let tests =
           }
 
           test "a selected gate absent from the report renders notEvaluated, never reusable (US1.4, L2)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               let v = cacheOf (gateById doc "build:format")
               Expect.equal (kindOf v) "notEvaluated" "build:format (absent from report) is notEvaluated"
               Expect.equal (fieldOrder v) [ "kind" ] "notEvaluated carries only kind"
@@ -149,7 +149,7 @@ let tests =
           // ── US3: no-hide, additive, no-fabricate ──
 
           test "the None case renders cacheEligibilityEvaluated:false and every gate notEvaluated (L2, L9)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult None)
+              use doc = parse (RouteJson.ofRouteResult embedResult None [])
               Expect.isFalse (doc.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "evaluated flag false under None"
 
               for g in selectedGates doc do
@@ -157,13 +157,13 @@ let tests =
           }
 
           test "Some _ renders cacheEligibilityEvaluated:true (L9)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               Expect.isTrue (doc.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "evaluated flag true under Some"
           }
 
           test "additive: every non-cache field is byte-identical to the None projection (L7, SC-004)" {
-              use docSome = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
-              use docNone = parse (RouteJson.ofRouteResult embedResult None)
+              use docSome = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
+              use docNone = parse (RouteJson.ofRouteResult embedResult None [])
 
               // schemaVersion, findings, cost untouched by the embedded verdict content.
               Expect.equal (strField docSome.RootElement "schemaVersion") (strField docNone.RootElement "schemaVersion") "schemaVersion unchanged"
@@ -186,7 +186,7 @@ let tests =
           }
 
           test "findings carry no cacheEligibility verdict (gate-scoped, L4, FR-004)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               Expect.isNonEmpty (findings doc) "fixture has at least one finding"
 
               for f in findings doc do
@@ -195,8 +195,8 @@ let tests =
 
           test "an orphan report entry (GateId matching no selected gate) adds nothing (L5, FR-006)" {
               let orphan = reportOf [ candidate "ghost:gate" buildInputs ] recordedStore
-              use docOrphan = parse (RouteJson.ofRouteResult embedResult (Some orphan))
-              use docNone = parse (RouteJson.ofRouteResult embedResult None)
+              use docOrphan = parse (RouteJson.ofRouteResult embedResult (Some orphan) [])
+              use docNone = parse (RouteJson.ofRouteResult embedResult None [])
 
               // no extra gate is invented, and the orphan id appears nowhere.
               Expect.equal (selectedGateIds docOrphan) (selectedGateIds docNone) "orphan adds no gate"
@@ -204,7 +204,7 @@ let tests =
           }
 
           test "no raw freshness input value / cache-derived severity leaks; evidence is verbatim (L8, SC-007)" {
-              let json = RouteJson.ofRouteResult embedResult (Some mixedReport)
+              let json = RouteJson.ofRouteResult embedResult (Some mixedReport) []
               let lower = json.ToLowerInvariant()
               // The category TOKENS (e.g. ruleHash) are the legitimate no-hide cause vocabulary, NOT raw
               // inputs. What must never leak are the raw freshness-input VALUES (RuleHash "r1"/"r2",
@@ -220,20 +220,20 @@ let tests =
           // ── US4: deterministic, versioned, ordered contract ──
 
           test "schemaVersion is fsgg.route/v2 (US4.3, FR-013)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               Expect.equal (strField doc.RootElement "schemaVersion") "fsgg.route/v2" "v2 contract"
               Expect.equal RouteJson.schemaVersion "fsgg.route/v2" "constant is v2"
           }
 
           test "byte-identical for identical inputs (L10, SC-003)" {
               Expect.equal
-                  (RouteJson.ofRouteResult embedResult (Some mixedReport))
-                  (RouteJson.ofRouteResult embedResult (Some mixedReport))
+                  (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
+                  (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
                   "repeated projection is byte-identical"
           }
 
           test "cache entries follow the document's existing GateId-ordinal gate order (L10)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some mixedReport) [])
               // the gate order is the RouteResult's existing ordinal order; the verdict rides each gate.
               Expect.equal (selectedGateIds doc) [ "build:format"; "build:tests"; "docs:lint" ] "existing gate order preserved"
           }
@@ -252,7 +252,7 @@ let tests =
                   |> List.find (fun e -> gateIdValue e.Gate = "build:tests")
                   |> fun e -> e.Verdict
 
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some dup))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some dup) [])
               let v = cacheOf (gateById doc "build:tests")
 
               let expectedKind =
@@ -262,7 +262,7 @@ let tests =
 
               Expect.equal (kindOf v) expectedKind "first-by-report-order verdict wins"
               // and it is deterministic across repeats.
-              Expect.equal (RouteJson.ofRouteResult embedResult (Some dup)) (RouteJson.ofRouteResult embedResult (Some dup)) "duplicate resolution is deterministic"
+              Expect.equal (RouteJson.ofRouteResult embedResult (Some dup) []) (RouteJson.ofRouteResult embedResult (Some dup) []) "duplicate resolution is deterministic"
           }
 
           // ── US4 totality: every edge returns a document with the section present, never throws ──
@@ -272,10 +272,10 @@ let tests =
               let findingOnly = resultOf embedFacts [ "src/loose/x.fs" ]
 
               let cases =
-                  [ "None", RouteJson.ofRouteResult embedResult None
-                    "empty report", RouteJson.ofRouteResult embedResult (Some(CacheEligibilityReport []))
-                    "empty route", RouteJson.ofRouteResult emptyRoute (Some mixedReport)
-                    "finding-only", RouteJson.ofRouteResult findingOnly None ]
+                  [ "None", RouteJson.ofRouteResult embedResult None []
+                    "empty report", RouteJson.ofRouteResult embedResult (Some(CacheEligibilityReport [])) []
+                    "empty route", RouteJson.ofRouteResult emptyRoute (Some mixedReport) []
+                    "finding-only", RouteJson.ofRouteResult findingOnly None [] ]
 
               for (label, json) in cases do
                   use doc = parse json
@@ -284,7 +284,7 @@ let tests =
           }
 
           test "an evaluated-but-empty report still reports evaluated:true with every gate notEvaluated (L9)" {
-              use doc = parse (RouteJson.ofRouteResult embedResult (Some(CacheEligibilityReport [])))
+              use doc = parse (RouteJson.ofRouteResult embedResult (Some(CacheEligibilityReport [])) [])
               Expect.isTrue (doc.RootElement.GetProperty("cacheEligibilityEvaluated").GetBoolean()) "empty report is evaluated:true (distinct from None)"
 
               for g in selectedGates doc do

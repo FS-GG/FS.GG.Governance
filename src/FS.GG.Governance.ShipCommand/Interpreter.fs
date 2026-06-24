@@ -29,7 +29,8 @@ module Interpreter =
           Freshness: FreshnessSensing.FreshnessSensor
           Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
-          Out: OutputSink }
+          Out: OutputSink
+          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (FR-010/FR-013).
@@ -111,6 +112,16 @@ module Interpreter =
         // leaves no partial file and is reified to the NON-FATAL `StorePersisted` (research D8/FR-001).
         | Loop.PersistStore(path, content) -> Loop.StorePersisted(guard (fun () -> ports.Write path content))
 
+        // F052: run each requested must-recompute command-gate ONCE through the injected F051 port (FR-001),
+        // assembling its F032 `CommandRecord` via the merged `senseExecution`. Records come back in request
+        // order, tagged by GateId. The port is TOTAL & SAFE; `senseExecution` is pure given the port.
+        | Loop.ExecuteGates requests ->
+            Loop.GatesExecuted(
+                requests
+                |> List.map (fun (gateId, command) ->
+                    gateId, FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command)
+            )
+
         | Loop.EmitSummary text ->
             ports.Out text
             Loop.Emitted
@@ -121,7 +132,8 @@ module Interpreter =
           Freshness = FreshnessSensing.realSensor repo
           Store = FreshnessSensing.realStoreReader
           Write = writeAtomic
-          Out = fun text -> Console.Out.WriteLine text }
+          Out = fun text -> Console.Out.WriteLine text
+          Execute = FS.GG.Governance.GateExecution.Interpreter.realPort }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

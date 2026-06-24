@@ -22,6 +22,10 @@ open FS.GG.Governance.Gates.Model          // Gate (F046 — the selected gates 
 open FS.GG.Governance.FreshnessKey.Model    // Revision (F046 — base/head, passed through from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
 open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore (F046 — the read-only reuse store join input)
+open FS.GG.Governance.Config.Model          // ToolingFacts (F052 — declared command specs)
+open FS.GG.Governance.CommandRecord.Model    // CommandRecord (F052 — the assembled run record)
+open FS.GG.Governance.GateExecution.Model     // GateCommand (F052 — the command-to-run)
+open FS.GG.Governance.GateRun.Model           // GateOutcome (F052 — the per-gate execution outcome)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -88,6 +92,9 @@ module Loop =
         /// precomputed `EvidenceReuseStore.serialise (retain defaultRetentionBound (prune loaded))` string —
         /// the decision (whether/what to write) lives in `update` (FR-001/FR-010).
         | PersistStore of path: string * content: string
+        /// F052: run the selected must-recompute command-gates ONCE each through the injected F051 port (D4).
+        /// `update` requests this after cache eligibility; the interpreter runs `senseExecution` per gate.
+        | ExecuteGates of (GateId * GateCommand) list
         | EmitSummary of text: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
@@ -103,6 +110,10 @@ module Loop =
         /// F048: the NON-FATAL store-write ack — distinct from `Wrote`. An `Error` appends a cache note and
         /// NEVER changes `Exit` or the emitted artifacts (FR-006).
         | StorePersisted of Result<unit, string>
+        /// F052: the assembled records of the executed gates, in request order, each tagged by GateId (D4).
+        /// `update` folds F049 `capture` per record, builds the per-gate `GateOutcome`s, projects the
+        /// document with the execution embed, and emits the persist-grown-store effect.
+        | GatesExecuted of (GateId * CommandRecord) list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
@@ -137,6 +148,12 @@ module Loop =
           SelectedGates: Gate list
           Sensed: SensedFacts option
           Store: ReuseStore option
+          /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
+          /// classify/execute step can derive each gate's command-to-run (`commandFor`).
+          Tooling: ToolingFacts option
+          /// F052: the per-gate execution outcomes built on `GatesExecuted` (executed/reused/not-executed),
+          /// embedded in `route.json` and surfaced in the summary. Empty until execution completes.
+          Outcomes: (GateId * GateOutcome) list
           CacheNotes: string list
           /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
           /// malformed file is never clobbered (D6).

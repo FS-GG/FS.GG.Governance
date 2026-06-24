@@ -60,8 +60,8 @@ let tests =
         [ test "SC-003: Some report vs None — every NON-cache byte of audit.json is identical (verdict/partition/enforcement/basis)" {
               let decision, selectedGates, baseHead = fixture ()
               let report = expectedCacheReport selectedGates baseHead
-              let withSome = AuditJson.ofShipDecision decision (Some report)
-              let withNone = AuditJson.ofShipDecision decision None
+              let withSome = AuditJson.ofShipDecision decision (Some report) []
+              let withNone = AuditJson.ofShipDecision decision None []
 
               Expect.equal decision.Verdict Fail "the fixture decision is a fail (base-blocking gates)"
               Expect.isNonEmpty decision.Blockers "the base-blocking gates are blockers"
@@ -83,8 +83,8 @@ let tests =
               let store = EvidenceReuse.record (List.head candidates).Inputs (EvidenceRef "ev-reuse-1") EvidenceReuse.empty
               let report = expectedCacheReportWith fakeSensor store selectedGates baseHead
 
-              let withReusable = AuditJson.ofShipDecision decision (Some report)
-              let withNone = AuditJson.ofShipDecision decision None
+              let withReusable = AuditJson.ofShipDecision decision (Some report) []
+              let withNone = AuditJson.ofShipDecision decision None []
 
               Expect.stringContains withReusable "reusable" "the matched gate renders a reusable verdict"
               Expect.stringContains withReusable "ev-reuse-1" "carrying its opaque evidence reference"
@@ -106,7 +106,7 @@ let tests =
           test "FR-013: no raw freshness input / hash / freshness key leaks into audit.json (C1, L6)" {
               let decision, selectedGates, baseHead = fixture ()
               let report = expectedCacheReport selectedGates baseHead
-              let withSome = AuditJson.ofShipDecision decision (Some report)
+              let withSome = AuditJson.ofShipDecision decision (Some report) []
 
               for tok in [ "rule-synthetic"; "gen-synthetic"; "art-synthetic"; "cmd-synthetic" ] do
                   Expect.isFalse (withSome.Contains tok) (sprintf "raw freshness input %s must not appear in audit.json" tok)

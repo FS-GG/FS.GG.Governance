@@ -19,7 +19,7 @@ let tests =
     testList
         "Determinism (US2)"
         [ testPropertyWithConfig fsCheckConfig "ofShipDecision d = ofShipDecision d byte-for-byte (AS1, SC-002)" (fun d ->
-              AuditJson.ofShipDecision d None = AuditJson.ofShipDecision d None)
+              AuditJson.ofShipDecision d None [] = AuditJson.ofShipDecision d None [])
 
           test "value-equal decisions assembled from differently-ordered route inputs project identically (AS2, SC-003)" {
               // Two routes with the SAME gates + findings supplied in DIFFERENT order. The real
@@ -33,14 +33,14 @@ let tests =
               let route1 = mkRoute [ gA; gB; gC ] [ fA; fB ]
               let route2 = mkRoute [ gC; gA; gB ] [ fB; fA ]
 
-              let json1 = AuditJson.ofShipDecision (decisionOf route1 Gate Standard) None
-              let json2 = AuditJson.ofShipDecision (decisionOf route2 Gate Standard) None
+              let json1 = AuditJson.ofShipDecision (decisionOf route1 Gate Standard) None []
+              let json2 = AuditJson.ofShipDecision (decisionOf route2 Gate Standard) None []
 
               Expect.equal json1 json2 "permutation-invariant: input order does not change the document"
           }
 
           test "schemaVersion field equals AuditJson.schemaVersion and every object's field order is fixed (AS3, FR-013)" {
-              use doc = parse (AuditJson.ofShipDecision richDecision None)
+              use doc = parse (AuditJson.ofShipDecision richDecision None [])
 
               Expect.equal (strField doc.RootElement "schemaVersion") AuditJson.schemaVersion "schemaVersion stamped"
               Expect.equal AuditJson.schemaVersion "fsgg.audit/v2" "declared contract version"
@@ -64,7 +64,7 @@ let tests =
           }
 
           test "exclusion sweep: only the contracted fields exist, and only the declared vocabulary is emitted (AS4, SC-007, FR-011/FR-012)" {
-              let json = AuditJson.ofShipDecision richDecision None
+              let json = AuditJson.ofShipDecision richDecision None []
               use doc = parse json
 
               // (a) field-name check — the ONLY fields anywhere in the document are the contracted ones,

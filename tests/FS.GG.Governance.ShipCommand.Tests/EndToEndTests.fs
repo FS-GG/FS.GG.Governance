@@ -24,7 +24,7 @@ let tests =
                       | Ok r -> r
                       | Error e -> failtestf "parse failed: %A" e
 
-                  let ports = Interpreter.realPorts req.Repo
+                  let ports = { Interpreter.realPorts req.Repo with Execute = fakeExecPort }
                   let model = Interpreter.run ports req
 
                   // The committed src/ edit selects block-on-ship gates ⇒ under gate/standard, blocked.
@@ -55,7 +55,7 @@ let tests =
                       | Ok r -> r
                       | Error e -> failtestf "parse failed: %A" e
 
-                  let model = Interpreter.run (Interpreter.realPorts req.Repo) req
+                  let model = Interpreter.run ({ Interpreter.realPorts req.Repo with Execute = fakeExecPort }) req
                   Expect.equal model.Exit Loop.Success "relaxed run mode ⇒ clean pass (exit 0)"
                   Expect.isNonEmpty (Option.get model.Decision).Warnings "the base-blocking gates relax to warnings (no-hide)"
                   Expect.isTrue (File.Exists req.AuditOut) "audit.json still written")

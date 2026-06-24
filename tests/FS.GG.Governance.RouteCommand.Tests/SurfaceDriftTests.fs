@@ -110,6 +110,13 @@ let tests =
                   || name = "FS.GG.Governance.FreshnessKey"
                   // F048: the pure write half of the evidence-reuse store (prune/retain/serialise).
                   || name = "FS.GG.Governance.EvidenceReuseStore"
+                  // F052: run the selected gates (GateExecution port), capture their evidence (EvidenceCapture),
+                  // and the shared pure helpers + GateOutcome vocabulary (GateRun) + transitive F050/F032.
+                  || name = "FS.GG.Governance.GateRun"
+                  || name = "FS.GG.Governance.GateExecution"
+                  || name = "FS.GG.Governance.EvidenceCapture"
+                  || name = "FS.GG.Governance.ExecutionRecord"
+                  || name = "FS.GG.Governance.CommandRecord"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

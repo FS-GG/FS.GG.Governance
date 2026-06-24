@@ -27,6 +27,7 @@
     <Compile Include="PersistenceTransitionTests.fs" />
     <Compile Include="PersistenceEdgeTests.fs" />
     <Compile Include="EndToEndTests.fs" />
+    <Compile Include="ExecutionTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

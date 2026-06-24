@@ -31,7 +31,15 @@ open FS.GG.Governance.CacheEligibility
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
+open FS.GG.Governance.EvidenceReuseStore
 open FS.GG.Governance.FreshnessSensing
+// F052 gate-execution test support (deterministic fake port over real byte[], outcome/grown-store helpers)
+open FS.GG.Governance.CommandRecord.Model
+open FS.GG.Governance.GateExecution
+open FS.GG.Governance.GateExecution.Model
+open FS.GG.Governance.GateRun
+open FS.GG.Governance.GateRun.Model
+open FS.GG.Governance.EvidenceCapture
 
 // `Snapshot` has its own `Interpreter` module; alias it so `Interpreter` stays unambiguously the
 // ShipCommand edge while `FS.GG.Governance.Snapshot.Interpreter.senseSnapshot` / `GitPort` / `Ports` /
@@ -293,6 +301,49 @@ let absentStoreReader: FreshnessSensing.StoreReader = fun _ -> Ok None
 /// A MALFORMED store reader (present-but-unreadable ⇒ Error) — the US3 store-Error degrade probe.
 let malformedStoreReader: FreshnessSensing.StoreReader = fun _ -> Error "synthetic malformed store"
 
+// ── F052 deterministic fake ExecutionPort (real byte[] + chosen exit; NEVER a Synthetic outcome literal) ──
+
+let fakeExecPortExiting (code: int) : ExecutionPort =
+    fun _command ->
+        { Stdout = System.Text.Encoding.UTF8.GetBytes "out"
+          Stderr = System.Text.Encoding.UTF8.GetBytes "err"
+          ExitCode = ExitCode code
+          Duration = SensedDuration 7L }
+
+/// The DEFAULT ship fake execution port exits NON-ZERO (gates FAIL): a failing command-gate is NOT relocated,
+/// so it stays exactly where `Ship.rollup` placed it and the pre-F052 verdict/exit expectations hold — the
+/// only document delta is the additive execution embed (executed/exit/passed=false).
+let fakeExecPort: ExecutionPort = fakeExecPortExiting 1
+
+/// A passing fake port (exit 0): a passing command-gate is RELOCATED to `Passing` and the verdict recomputed.
+let fakeExecPortPass: ExecutionPort = fakeExecPortExiting 0
+
+/// A call-counting fake port (proves reuse SKIPS execution on a second run — the spawn-count assertion).
+type ExecCounter = { mutable Calls: int }
+
+let countingExecPort (counter: ExecCounter) (code: int) : ExecutionPort =
+    fun command ->
+        counter.Calls <- counter.Calls + 1
+        fakeExecPortExiting code command
+
+/// Given a model + the effects it just emitted, run any `ExecuteGates` effect through the port (mirroring the
+/// interpreter edge) and feed the `GatesExecuted` records back into `update`. Returns the next (model, effects).
+let runExecuteEffect (port: ExecutionPort) (model: Loop.Model) (effects: Loop.Effect list) : Loop.Model * Loop.Effect list =
+    match
+        effects
+        |> List.tryPick (fun e ->
+            match e with
+            | Loop.ExecuteGates rs -> Some rs
+            | _ -> None)
+    with
+    | Some requests ->
+        let records =
+            requests
+            |> List.map (fun (gid, cmd) -> gid, FS.GG.Governance.GateExecution.Interpreter.senseExecution port cmd)
+
+        Loop.update (Loop.GatesExecuted records) model
+    | None -> model, effects
+
 let private revOfCommit (CommitId c) = Revision c
 
 /// The base/head the command derives from a snapshot's range (mirrors `Loop.baseHeadOf`); `None` snapshot ⇒
@@ -325,11 +376,60 @@ let expectedCacheReport (selectedGates: Gate list) (baseHead: Revision option * 
 /// persist verbatim (SC-001). The document now carries the LIVE-recomputed cache report (`Some report`) over
 /// the faked sensor + absent (empty) store; `snap` is the snapshot the command sees (`None` for ExplicitPaths)
 /// so base/head match exactly.
-let auditExpected (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) (snap: RepoSnapshot option) : string =
+/// The per-gate execution outcomes the command produces over a given execution port + the empty store (the
+/// exit is port-driven, so repoRoot-independent; `commandFor` only decides WHETHER a command exists).
+let expectedOutcomesWith (port: ExecutionPort) (files: Map<string, string>) (selectedGates: Gate list) : (GateId * GateOutcome) list =
+    let tooling = (factsOf files).Tooling
+
+    selectedGates
+    |> List.map (fun g ->
+        let outcome =
+            match tooling |> Option.bind (fun t -> Plan.commandFor "." t g) with
+            | Some cmd ->
+                let record = FS.GG.Governance.GateExecution.Interpreter.senseExecution port cmd
+                let code = record.Reproducible.ExitCode
+
+                { GateId = g.Id
+                  Disposition = Executed
+                  ExitCode = Some code
+                  Passed = Some(Plan.passed code) }
+            | None ->
+                { GateId = g.Id
+                  Disposition = NotExecuted
+                  ExitCode = None
+                  Passed = None }
+
+        g.Id, outcome)
+
+let expectedOutcomes (files: Map<string, string>) (selectedGates: Gate list) : (GateId * GateOutcome) list =
+    expectedOutcomesWith fakeExecPort files selectedGates
+
+/// The relocated `ShipDecision` the command carries: `Ship.rollup` (verbatim) then F052 `applyExecution` over
+/// the gates that PASSED on the given execution port (data-model §verdict relocation).
+let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) : ShipDecision * (GateId * GateOutcome) list =
     let result, decision = resultAndDecisionOf files candidates mode profile
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
+    let outcomes = expectedOutcomesWith port files selectedGates
+
+    let passedIds =
+        outcomes
+        |> List.choose (fun (gid, o) -> if o.Passed = Some true then Some gid else None)
+        |> Set.ofList
+
+    Loop.applyExecution passedIds decision, outcomes
+
+/// The genuine F025 `audit.json` bytes the command persists over a given execution port: the F052-relocated
+/// decision + the LIVE cache report + the per-gate execution embed (D3/D6).
+let auditExpectedWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) (snap: RepoSnapshot option) : string =
+    let result, _ = resultAndDecisionOf files candidates mode profile
+    let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
     let cacheReport = expectedCacheReport selectedGates (baseHeadOfSnap snap)
-    AuditJson.ofShipDecision decision (Some cacheReport)
+    let relocated, outcomes = relocatedDecisionWith port files candidates mode profile
+    AuditJson.ofShipDecision relocated (Some cacheReport) outcomes
+
+/// The standard (default fail fake port) expected audit document.
+let auditExpected (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) (snap: RepoSnapshot option) : string =
+    auditExpectedWith fakeExecPort files candidates mode profile snap
 
 // ── Capturing write/output edges ──
 
@@ -362,7 +462,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       Freshness = fakeSensor
       Store = absentStoreReader
       Write = capturingWriter cap Set.empty req.AuditOut
-      Out = capturingSink cap }
+      Out = capturingSink cap
+      Execute = fakeExecPort }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -371,7 +472,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Freshness = sensor
       Store = store
       Write = capturingWriter cap Set.empty req.AuditOut
-      Out = capturingSink cap }
+      Out = capturingSink cap
+      Execute = fakeExecPort }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -380,7 +482,18 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       Freshness = fakeSensor
       Store = absentStoreReader
       Write = capturingWriter cap failPaths req.AuditOut
-      Out = capturingSink cap }
+      Out = capturingSink cap
+      Execute = fakeExecPort }
+
+/// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
+let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
+    { Files = readerOf files
+      Git = portsGit g
+      Freshness = sensor
+      Store = store
+      Write = capturingWriter cap Set.empty req.AuditOut
+      Out = capturingSink cap
+      Execute = exec }
 
 /// A real RepoSnapshot the F016 core derives from a faked git port (for the pure `update` tests).
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
@@ -491,3 +604,67 @@ let withTempRepo (body: string -> 'a) : 'a =
         body dir
     finally
         try Directory.Delete(dir, true) with _ -> ()
+
+// ── F052 grown-store helpers (the store now GROWS as the command captures each executed gate's evidence) ──
+
+/// The GROWN store the command persists: fold F049 `capture` over the loaded store for each selected gate
+/// that declares a command and is NOT reused (mirrors the command's classify+capture at repoRoot `repoRoot`).
+let expectedGrownStoreAt (repoRoot: string) (port: ExecutionPort) (sensor: FreshnessSensing.FreshnessSensor) (files: Map<string, string>) (loaded: ReuseStore) (selectedGates: Gate list) (baseHead: Revision option * Revision option) : ReuseStore =
+    let tooling = (factsOf files).Tooling
+
+    match FreshnessSensing.senseFreshness sensor selectedGates baseHead with
+    | Error _ -> loaded
+    | Ok sensed ->
+        let resReport = FreshnessResolution.resolve selectedGates sensed
+        let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+
+        let verdictMap =
+            CacheEligibility.evaluate candidates loaded
+            |> CacheEligibility.entries
+            |> List.fold (fun m e -> Map.add (gateIdValue e.Gate) e.Verdict m) Map.empty
+
+        let inputsMap =
+            candidates |> List.fold (fun m c -> Map.add (gateIdValue c.Gate) c.Inputs m) Map.empty
+
+        selectedGates
+        |> List.fold
+            (fun s g ->
+                match tooling |> Option.bind (fun t -> Plan.commandFor repoRoot t g) with
+                | None -> s
+                | Some cmd ->
+                    let reused =
+                        match Map.tryFind (gateIdValue g.Id) verdictMap with
+                        | Some(Reusable r) -> (Plan.priorExitOf r).IsSome
+                        | _ -> false
+
+                    if reused then
+                        s
+                    else
+                        match Map.tryFind (gateIdValue g.Id) inputsMap with
+                        | Some inputs ->
+                            EvidenceCapture.capture inputs (FS.GG.Governance.GateExecution.Interpreter.senseExecution port cmd) s
+                        | None -> s)
+            loaded
+
+/// The store VALUE the command persists (F047 prune → retain over the grown store), as it re-reads.
+let persistedValue (grown: ReuseStore) : ReuseStore =
+    grown
+    |> EvidenceReuseStore.prune
+    |> EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound
+
+/// The selected gates for a catalog over a candidate set (the real F018→F019 chain).
+let selectedGatesFor (files: Map<string, string>) (candidates: GovernedPath list) : Gate list =
+    let facts = factsOf files
+    let report = Routing.route facts candidates
+    let registry = Gates.buildRegistry facts
+    let findings = Findings.findUnknownGovernedPaths facts report
+    (Route.select registry report findings).SelectedGates |> List.map (fun sg -> sg.Gate)
+
+/// The store value `fsgg ship --since HEAD~1` over a REAL temp repo persists from a given loaded store (the
+/// F047 pipeline over the grown store; the edge uses the REAL freshness sensor + the deterministic fake exec).
+let expectedPersistedRepo (dir: string) (loaded: ReuseStore) : ReuseStore =
+    let opts = sinceOpts "HEAD~1"
+    let candidates = candidatesOfRepo dir opts
+    let selectedGates = selectedGatesFor validCatalog candidates
+    let baseHead = baseHeadOfSnap (Some(snapshotOfRepo dir opts))
+    persistedValue (expectedGrownStoreAt dir fakeExecPort (FreshnessSensing.realSensor dir) validCatalog loaded selectedGates baseHead)

@@ -36,7 +36,7 @@ let tests =
               // effective Advisory (the release boundary is above Gate). The non-empty reason is
               // guaranteed by the real F024 rollup, not by the string type alone.
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d None)
+              use doc = parse (AuditJson.ofShipDecision d None [])
 
               let relaxed =
                   section doc "warnings"
@@ -57,7 +57,7 @@ let tests =
 
           test "every blocker/warning/passing item carries all six enforcement fields verbatim from its F023 decision (AS2, FR-006, SC-005)" {
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d None)
+              use doc = parse (AuditJson.ofShipDecision d None [])
 
               // Build the expected six-field map keyed by item identity from the SOURCE decision.
               let identityOf (item: EnforcedItem) =
@@ -91,7 +91,7 @@ let tests =
 
           test "a finding item's identity carries both findingIdToken and governed path; a gate item's its gateIdValue, neither re-derived (AS3, FR-004/FR-010)" {
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d None)
+              use doc = parse (AuditJson.ofShipDecision d None [])
 
               for it in List.concat [ section doc "blockers"; section doc "warnings"; section doc "passing" ] do
                   match itemKind it with
@@ -106,7 +106,7 @@ let tests =
 
           test "the same finding id on two different governed paths renders as two distinct entries (FR-004)" {
               let d = sameFindingIdTwoPathsDecision
-              use doc = parse (AuditJson.ofShipDecision d None)
+              use doc = parse (AuditJson.ofShipDecision d None [])
 
               let findings =
                   List.concat [ section doc "blockers"; section doc "warnings"; section doc "passing" ]
@@ -122,7 +122,7 @@ let tests =
               // build:ship and src/boundary/Api.fs carry separators; the emitted id/path equal the
               // declared values exactly (no domain re-derivation across `:` or `/`).
               let d = richDecision
-              use doc = parse (AuditJson.ofShipDecision d None)
+              use doc = parse (AuditJson.ofShipDecision d None [])
 
               let gateIds =
                   List.concat [ section doc "blockers"; section doc "warnings"; section doc "passing" ]

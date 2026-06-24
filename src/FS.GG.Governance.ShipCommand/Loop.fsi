@@ -25,6 +25,9 @@ open FS.GG.Governance.Gates.Model              // Gate (F046 — the selected ga
 open FS.GG.Governance.FreshnessKey.Model        // Revision (F046 — base/head from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
 open FS.GG.Governance.EvidenceReuse.Model       // ReuseStore (F046 — the read-only reuse store join input)
+open FS.GG.Governance.CommandRecord.Model        // CommandRecord (F052 — the assembled run record)
+open FS.GG.Governance.GateExecution.Model         // GateCommand (F052 — the command-to-run)
+open FS.GG.Governance.GateRun.Model               // GateOutcome (F052 — the per-gate execution outcome)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -95,6 +98,8 @@ module Loop =
         /// precomputed `EvidenceReuseStore.serialise (retain defaultRetentionBound (prune loaded))` string —
         /// the decision (whether/what to write) lives in `update` (FR-001/FR-010).
         | PersistStore of path: string * content: string
+        /// F052: run the selected must-recompute command-gates ONCE each through the injected F051 port (D4).
+        | ExecuteGates of (GateId * GateCommand) list
         | EmitSummary of text: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
@@ -110,6 +115,10 @@ module Loop =
         /// F048: the NON-FATAL store-write ack — distinct from `Wrote`. An `Error` appends a cache note and
         /// NEVER changes `Exit` (never becomes `ToolError`/`Blocked`) or the emitted audit doc (FR-006).
         | StorePersisted of Result<unit, string>
+        /// F052: the assembled records of the executed gates, in request order, each tagged by GateId (D4).
+        /// `update` folds F049 `capture`, builds the per-gate `GateOutcome`s, projects audit.json with the
+        /// execution embed, relocates PASSING command-gates (the verdict change), and persists the grown store.
+        | GatesExecuted of (GateId * CommandRecord) list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
@@ -144,6 +153,12 @@ module Loop =
           SelectedGates: Gate list
           Sensed: SensedFacts option
           Store: ReuseStore option
+          /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
+          /// classify/execute step can derive each gate's command-to-run (`commandFor`).
+          Tooling: ToolingFacts option
+          /// F052: the per-gate execution outcomes built on `GatesExecuted`; embedded in `audit.json`, fed to
+          /// the verdict relocation (`applyExecution`), and surfaced in the summary. Empty until execution.
+          Outcomes: (GateId * GateOutcome) list
           CacheNotes: string list
           /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
           /// malformed file is never clobbered (D6).
@@ -185,3 +200,13 @@ module Loop =
     /// `InputUnavailable` 3, `ToolError` 4 (research D6). `Blocked` (1) is reserved for a blocked merge
     /// verdict and is distinct from every tool-failure code (FR-008, FR-009, SC-004).
     val exitCode: decision: ExitDecision -> int
+
+    /// F052 (D3, D7): the ONE verdict change this row introduces. After a VERBATIM `Ship.rollup`, relocate
+    /// every PASSING command-gate (its `GateId` in `passedGateIds`) out of `Blockers`/`Warnings` into
+    /// `Passing`, then recompute `Verdict` / `ExitCodeBasis` from the remaining blockers — Ship's OWN
+    /// one-line rule re-applied (`Fail` iff a blocker remains). A failing or no-command gate is left exactly
+    /// where `Ship.rollup` placed it; findings are never moved. It can only CLEAR blockers a passing gate
+    /// would otherwise raise — never create one (FR-006, FR-009). It lives here, NOT in `GateRun`, because it
+    /// depends on `Ship.Model`/`Enforcement`; it constructs only the already-public `ShipDecision` values and
+    /// edits no frozen core (FR-017).
+    val applyExecution: passedGateIds: Set<GateId> -> decision: ShipDecision -> ShipDecision

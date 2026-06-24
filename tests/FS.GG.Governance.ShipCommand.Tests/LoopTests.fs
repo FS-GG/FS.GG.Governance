@@ -29,13 +29,15 @@ let private toSelected (git) (req: Loop.RunRequest) =
     let m2, e2 = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
     snap, m2, e2
 
-// Feed the two cache senses (fake sensor + empty store) and return the post-join model.
+// Feed the two cache senses (fake sensor + empty store), run the F052 execute step, and return the post-
+// GatesExecuted model (Rolled phase, AuditDoc projected). The default fail exec port leaves the verdict as
+// `Ship.rollup` decided (failing gates are not relocated).
 let private toJoined (snap) (m2: Loop.Model) =
     let baseHead = baseHeadOfSnap (Some snap)
     let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
     let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-    let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-    m4, e4
+    let m4raw, e4raw = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+    runExecuteEffect fakeExecPort m4raw e4raw
 
 [<Tests>]
 let tests =
@@ -88,14 +90,24 @@ let tests =
               let m3, e3 = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
               Expect.equal e3 [] "join waits — only one input present"
 
-              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-              Expect.equal m4.Phase Loop.Rolled "join fired ⇒ Rolled"
+              // StoreLoaded ⇒ F052 requests ExecuteGates (NOT the write yet).
+              let m4raw, e4raw = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+
+              match e4raw with
+              | [ Loop.ExecuteGates _ ] -> ()
+              | other -> failtestf "expected a single ExecuteGates effect, got %A" other
+
+              // GatesExecuted ⇒ project the (relocated) audit doc + one write.
+              let m4, e4 = runExecuteEffect fakeExecPort m4raw e4raw
+              Expect.equal m4.Phase Loop.Rolled "GatesExecuted ⇒ Rolled"
 
               let decision = Option.get m2.Decision
               let expectedReport = expectedCacheReport m2.SelectedGates baseHead
-              let auditDoc = AuditJson.ofShipDecision decision (Some expectedReport)
-              Expect.equal m4.AuditDoc (Some auditDoc) "AuditDoc = ofShipDecision decision (Some expectedReport)"
-              Expect.equal e4 [ Loop.WriteArtifact(Loop.AuditArtifact, req.AuditOut, auditDoc) ] "exactly one WriteArtifact (cache-bearing audit doc)"
+              let outcomes = expectedOutcomes validCatalog m2.SelectedGates
+              // Default fail exec ⇒ no passing gate ⇒ the relocation is identity ⇒ the decision is unchanged.
+              let auditDoc = AuditJson.ofShipDecision decision (Some expectedReport) outcomes
+              Expect.equal m4.AuditDoc (Some auditDoc) "AuditDoc = ofShipDecision decision (Some report) outcomes"
+              Expect.equal e4 [ Loop.WriteArtifact(Loop.AuditArtifact, req.AuditOut, auditDoc) ] "exactly one WriteArtifact (cache+execution-bearing audit doc)"
 
               // SC-002: each kind:"gate" item carries a GateId-matched verdict.
               Expect.stringContains auditDoc "\"cacheEligibilityEvaluated\":true" "the cache section is evaluated"

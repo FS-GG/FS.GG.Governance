@@ -146,9 +146,10 @@ let tests =
               let blob = (gates + "\n" + route + "\n" + summary).ToLowerInvariant()
 
               // F045: `cacheeligib` is NO LONGER excluded — the route.json the command writes now carries
-              // the additive cache-eligibility section (`cacheEligibilityEvaluated:false` + per-gate
-              // `notEvaluated`, since `fsgg route` passes `None`). The verdict/enforcement/clock leak
-              // guard is otherwise unchanged.
-              for token in [ "verdict"; "severity"; "profile"; "mode"; "enforcement"; "blockers"; "warnings"; "exitcode" ] do
+              // the additive cache-eligibility section. F052: `exitcode` is NO LONGER excluded either — the
+              // per-gate `execution` embed legitimately carries each executed gate's `exitCode` (route stays
+              // advisory; this is an execution outcome, not a ship verdict's exit-code basis). The
+              // verdict/enforcement/clock leak guard is otherwise unchanged.
+              for token in [ "verdict"; "severity"; "profile"; "mode"; "enforcement"; "blockers"; "warnings" ] do
                   Expect.isFalse (blob.Contains token) (sprintf "excluded token %s must not appear" token)
           } ]

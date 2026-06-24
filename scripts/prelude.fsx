@@ -931,23 +931,28 @@ printfn "[F19] empty-change → empty route, zero cost = %b" (List.isEmpty f19Em
 // F045: `ofRouteResult` / `ofShipDecision` now mention `CacheEligibilityReport` in their signatures, so
 // the F041 assembly must be referenced before the F020/F025 callsites below (it is #r'd again in the
 // F041 section further down — a duplicate #r is harmless in FSI).
+// F052: those signatures now ALSO mention `GateOutcome`, so the GateRun assembly must be referenced too.
 #r "../src/FS.GG.Governance.CacheEligibility/bin/Debug/net10.0/FS.GG.Governance.CacheEligibility.dll"
+#r "../src/FS.GG.Governance.CommandRecord/bin/Debug/net10.0/FS.GG.Governance.CommandRecord.dll"
+#r "../src/FS.GG.Governance.ExecutionRecord/bin/Debug/net10.0/FS.GG.Governance.ExecutionRecord.dll"
+#r "../src/FS.GG.Governance.GateExecution/bin/Debug/net10.0/FS.GG.Governance.GateExecution.dll"
+#r "../src/FS.GG.Governance.GateRun/bin/Debug/net10.0/FS.GG.Governance.GateRun.dll"
 #r "../src/FS.GG.Governance.RouteJson/bin/Debug/net10.0/FS.GG.Governance.RouteJson.dll"
 
 open FS.GG.Governance.RouteJson
 
 // Project the genuine F019 `f19Result` (built above from the real F015->F017->F018->F019 chain).
 // F045: `ofRouteResult` now takes a `CacheEligibilityReport option`; `None` is the not-evaluated state.
-let f20Json = RouteJson.ofRouteResult f19Result None
+let f20Json = RouteJson.ofRouteResult f19Result None []
 printfn "\n[F20] schemaVersion = %s" RouteJson.schemaVersion
 printfn "[F20] document (%d bytes):\n%s" f20Json.Length f20Json
 
 // Determinism: a second projection of the same result is byte-identical.
-printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result None = f20Json)
+printfn "[F20] deterministic? %b" (RouteJson.ofRouteResult f19Result None [] = f20Json)
 
 // The empty route projects to a valid document with empty sections + all-zero cost (never an error,
 // never a "select everything" fallback).
-let f20Empty = RouteJson.ofRouteResult f19Empty None
+let f20Empty = RouteJson.ofRouteResult f19Empty None []
 printfn "[F20] empty route → %s" f20Empty
 
 // ── F021: the gates.json projection — GatesJson.ofGateRegistry : GateRegistry -> string ──
@@ -1133,16 +1138,16 @@ printfn "\n[F25] schemaVersion = %s" AuditJson.schemaVersion   // expect: fsgg.a
 
 // A failing decision (BlockOnShip blocker + BlockOnRelease relaxed-to-Advisory warning) at gate/light.
 // F045: `ofShipDecision` now takes a `CacheEligibilityReport option`; `None` is the not-evaluated state.
-let f25Json = AuditJson.ofShipDecision f24Fail None
+let f25Json = AuditJson.ofShipDecision f24Fail None []
 printfn "[F25] failing audit.json (%d bytes):\n%s" f25Json.Length f25Json
 // expect: verdict:"fail", exitCodeBasis:"blocked"; a warning with baseSeverity:"blocking" +
 //         effectiveSeverity:"advisory" (the no-hide case).
 
 // Determinism: a second projection is byte-identical.
-printfn "[F25] deterministic? %b" (AuditJson.ofShipDecision f24Fail None = f25Json)   // expect: true
+printfn "[F25] deterministic? %b" (AuditJson.ofShipDecision f24Fail None [] = f25Json)   // expect: true
 
 // The empty/clean decision projects to the empty-but-valid document (three present empty arrays).
-let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard) None
+let f25Empty = AuditJson.ofShipDecision (rollup (f24Route []) Gate Standard) None []
 printfn "[F25] empty/clean audit.json:\n%s" f25Empty
 // expect: { "schemaVersion":"fsgg.audit/v2","verdict":"pass","exitCodeBasis":"clean",
 //           "blockers":[],"warnings":[],"passing":[],"cacheEligibilityEvaluated":false }
@@ -2192,13 +2197,13 @@ let f45RouteReport =
         f41Store
 
 printfn "\n[F45] route.json — Some report (each selected gate carries its verdict):\n%s"
-    (RouteJson.ofRouteResult f19Result (Some f45RouteReport))
+    (RouteJson.ofRouteResult f19Result (Some f45RouteReport) [])
 // expect: cacheEligibilityEvaluated:true; build:tests {kind:reusable,evidence:ev-A};
 //         docs:lint {kind:mustRecompute,cause:{kind:inputsChanged,categories:[ruleHash]}};
 //         build:format {kind:notEvaluated}; schemaVersion fsgg.route/v2.
 
 printfn "[F45] route.json — None (not-evaluated; every gate notEvaluated, evaluated:false):\n%s"
-    (RouteJson.ofRouteResult f19Result None)
+    (RouteJson.ofRouteResult f19Result None [])
 
 // A report attributing verdicts to f24Fail's gate items (build:ship blocker, build:rel warning):
 //   build:ship → reusable ev-A; build:rel → mustRecompute (InputsChanged [ruleHash; headRevision]).
@@ -2209,13 +2214,13 @@ let f45ShipReport =
         f41Store
 
 printfn "[F45] audit.json — Some report (gate items carry verdict; a reusable blocker stays a blocker):\n%s"
-    (AuditJson.ofShipDecision f24Fail (Some f45ShipReport))
+    (AuditJson.ofShipDecision f24Fail (Some f45ShipReport) [])
 // expect: cacheEligibilityEvaluated:true; the build:ship blocker carries {kind:reusable,evidence:ev-A} AND
 //         remains in blockers with full enforcement; build:rel warning carries mustRecompute; finding items
 //         (none here) would carry NO cacheEligibility; schemaVersion fsgg.audit/v2.
 
 printfn "[F45] audit.json — None (not-evaluated; every gate item notEvaluated, evaluated:false):\n%s"
-    (AuditJson.ofShipDecision f24Fail None)
+    (AuditJson.ofShipDecision f24Fail None [])
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 // F046 — emit REAL cache-eligibility verdicts from `fsgg route`/`fsgg ship`. Design-first proof (Principle I),
@@ -2555,3 +2560,61 @@ try System.IO.Directory.Delete(f51Dir, true) with _ -> ()
 let f51Inputs = f47Inputs "gate-execution"
 let f51Grown = EvidenceCapture.capture f51Inputs f51Record EvidenceReuse.empty
 printfn "[F51] captured world reusable with derived ref? %b" (EvidenceReuse.decide f51Inputs f51Grown = Reuse(EvidenceCapture.referenceOf f51Record)) // expect: true
+
+// ── F052: GateRun — the pure host helpers the `fsgg route` / `fsgg ship` gate-execution wiring needs ──
+// argv lex, commandFor (declared spec → GateCommand), priorExitOf (recover prior exit from a stored ref), and
+// passed (exit→pass/fail). Pure given the injected F051 port. Reuses the GateExecution/EvidenceCapture/
+// CommandRecord/EvidenceReuse assemblies #r'd above; loads the new helper library here.
+#r "../src/FS.GG.Governance.GateRun/bin/Debug/net10.0/FS.GG.Governance.GateRun.dll"
+
+open FS.GG.Governance.GateRun
+
+// (1) argv lex — a literal split; quotes/escapes honored; NO shell features (glob/pipe/var are literal).
+printfn "\n[F52] lex 'dotnet test --no-build' ⇒ %A" (Plan.lexCommandLine "dotnet test --no-build") // Some (Executable "dotnet", [Argument "test"; Argument "--no-build"])
+printfn "[F52] lex \"echo 'hello world'\" groups the quote? %b"
+    (Plan.lexCommandLine "echo 'hello world'" = Some(Executable "echo", [ Argument "hello world" ])) // expect: true
+printfn "[F52] lex '   ' ⇒ None (degenerate)? %b" (Plan.lexCommandLine "   " = None) // expect: true
+
+// (2) commandFor — declared spec → GateCommand (empty env delta, declared timeout, repoRoot cwd); None when
+// the gate declares no command.
+let f52Tooling: ToolingFacts =
+    { SchemaVersion = SchemaVersion 1
+      Commands =
+        [ { Id = CommandId "dotnet-test"
+            Command = "dotnet test --no-build"
+            Timeout = TimeoutLimit 600
+            Environment = LocalOrCi } ]
+      EnvironmentClasses = [ Local ]
+      ExternalTools = [] }
+
+let f52FreshKey: FreshnessKey =
+    { Check = CheckId "tests"
+      Domain = DomainId "package-api"
+      Cost = Cheap
+      Environment = LocalOrCi
+      Command = Some(CommandId "dotnet-test") }
+
+let f52GateWith: Gate =
+    { Id = GateId "package-api:tests"
+      Domain = DomainId "package-api"
+      Description = "tests"
+      Prerequisites = [ RequiresCommand(CommandId "dotnet-test") ]
+      Cost = Cheap
+      Timeout = TimeoutLimit 600
+      Owner = Owner "platform"
+      Maturity = BlockOnShip
+      ProductCheck = false
+      FreshnessKey = f52FreshKey }
+
+let f52GateWithout = { f52GateWith with Prerequisites = [] }
+printfn "[F52] commandFor gateWithCommand ⇒ Some? %b" ((Plan.commandFor "/repo" f52Tooling f52GateWith).IsSome) // expect: true
+printfn "[F52] commandFor gateWithoutCommand ⇒ None? %b" (Plan.commandFor "/repo" f52Tooling f52GateWithout = None) // expect: true
+
+// (3) priorExitOf — recover the prior exit from a REAL reference (round-trips senseExecution → referenceOf).
+let f52Ref = EvidenceCapture.referenceOf f51Record // f51Record exited 0 above
+printfn "[F52] priorExitOf (real ref of an exit-0 record) ⇒ Some (ExitCode 0)? %b" (Plan.priorExitOf f52Ref = Some(ExitCode 0)) // expect: true
+printfn "[F52] priorExitOf non-canonical ⇒ None (⇒ recompute)? %b" (Plan.priorExitOf (EvidenceRef "not-canonical") = None) // expect: true
+
+// (4) passed — exit 0 is a pass; any non-zero (incl. the F051 sentinels) is a fail.
+printfn "[F52] passed 0 / 1 / 124 / 127 ⇒ %b / %b / %b / %b"
+    (Plan.passed (ExitCode 0)) (Plan.passed (ExitCode 1)) (Plan.passed (ExitCode 124)) (Plan.passed (ExitCode 127)) // expect: true / false / false / false

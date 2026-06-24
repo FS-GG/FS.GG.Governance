@@ -77,21 +77,30 @@ let tests =
               Expect.equal e3 [] "join waits — only one input present"
               Expect.notEqual m3.Phase Loop.Projected "still pre-projection"
 
-              // StoreLoaded second: both inputs present ⇒ the join builds the route doc + emits two writes.
+              // StoreLoaded second: both inputs present ⇒ F052 classifies + requests ExecuteGates (NOT writes yet).
               let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-              Expect.equal m4.Phase Loop.Projected "join fired ⇒ Projected"
+              Expect.notEqual m4.Phase Loop.Projected "execution comes first — not yet projected"
+
+              match e4 with
+              | [ Loop.ExecuteGates _ ] -> ()
+              | other -> failtestf "expected a single ExecuteGates effect, got %A" other
+
+              // GatesExecuted: capture + build outcomes + project route doc WITH the execution embed + two writes.
+              let m5, e5 = runExecuteEffect fakeExecPort m4 e4
+              Expect.equal m5.Phase Loop.Projected "GatesExecuted ⇒ Projected"
 
               let result = Option.get m2.Result
               let expectedReport = expectedCacheReport selectedGates baseHead
               let gatesDoc = Option.get m2.GatesDoc
-              let routeDoc = RouteJson.ofRouteResult result (Some expectedReport)
+              let outcomes = expectedOutcomes validCatalog selectedGates
+              let routeDoc = RouteJson.ofRouteResult result (Some expectedReport) outcomes
 
-              Expect.equal m4.RouteDoc (Some routeDoc) "RouteDoc = ofRouteResult result (Some expectedReport)"
+              Expect.equal m5.RouteDoc (Some routeDoc) "RouteDoc = ofRouteResult result (Some report) outcomes"
               Expect.equal
-                  e4
+                  e5
                   [ Loop.WriteArtifact(Loop.GatesArtifact, req.GatesOut, gatesDoc)
                     Loop.WriteArtifact(Loop.RouteArtifact, req.RouteOut, routeDoc) ]
-                  "two WriteArtifact effects with the gates + (cache-bearing) route doc"
+                  "two WriteArtifact effects with the gates + (cache+execution-bearing) route doc"
 
               // SC-001: cacheEligibilityEvaluated:true and every selected gate's id appears in the cache section.
               Expect.stringContains routeDoc "\"cacheEligibilityEvaluated\":true" "the cache section is evaluated"
@@ -115,12 +124,14 @@ let tests =
                   | Error e -> failtestf "%s" e
 
               let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-              let routeDoc = Option.get m4.RouteDoc
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              // No gates selected ⇒ ExecuteGates [] ⇒ projection over an empty execution embed.
+              let m4b, _ = runExecuteEffect fakeExecPort m4 e4
+              let routeDoc = Option.get m4b.RouteDoc
               Expect.stringContains routeDoc "\"cacheEligibilityEvaluated\":true" "evaluated even with no gates"
 
               // Drive to Done and confirm exit 0.
-              let m5, _ = Loop.update (Loop.Wrote(Loop.GatesArtifact, Ok())) m4
+              let m5, _ = Loop.update (Loop.Wrote(Loop.GatesArtifact, Ok())) m4b
               let m6, _ = Loop.update (Loop.Wrote(Loop.RouteArtifact, Ok())) m5
               let m7, _ = Loop.update Loop.Emitted m6
               Expect.equal m7.Exit Loop.Success "route always exits 0"
@@ -133,9 +144,10 @@ let tests =
               let baseHead = baseHeadOfSnap (Some snap)
               let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
               let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4b, _ = runExecuteEffect fakeExecPort m4 e4
 
-              let m5, e5 = Loop.update (Loop.Wrote(Loop.GatesArtifact, Ok())) m4
+              let m5, e5 = Loop.update (Loop.Wrote(Loop.GatesArtifact, Ok())) m4b
               Expect.equal m5.Phase Loop.Persisted "first write ack ⇒ Persisted"
               Expect.equal e5 [] "no effect on the first write ack"
 

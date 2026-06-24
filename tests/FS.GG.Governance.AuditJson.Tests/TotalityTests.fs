@@ -17,7 +17,7 @@ let tests =
     testList
         "Totality (US4)"
         [ test "the empty/clean decision projects to a valid three-empty-arrays document, never throwing (AS1, FR-009, SC-006)" {
-              use doc = parse (AuditJson.ofShipDecision emptyCleanDecision None)
+              use doc = parse (AuditJson.ofShipDecision emptyCleanDecision None [])
 
               Expect.equal (strField doc.RootElement "verdict") "pass" "verdict:pass"
               Expect.equal (strField doc.RootElement "exitCodeBasis") "clean" "exitCodeBasis:clean"
@@ -30,7 +30,7 @@ let tests =
               // A blockers-only decision: one BlockOnShip gate at Gate/Standard.
               let blockersOnly =
                   decisionOf (mkRoute [ mkSelectedGate (mkGate (GateId "build:only") BlockOnShip) ] []) Gate Standard
-              use d1 = parse (AuditJson.ofShipDecision blockersOnly None)
+              use d1 = parse (AuditJson.ofShipDecision blockersOnly None [])
               Expect.isNonEmpty (section d1 "blockers") "blockers populated"
               Expect.isEmpty (section d1 "warnings") "warnings empty"
               Expect.isEmpty (section d1 "passing") "passing empty"
@@ -38,7 +38,7 @@ let tests =
               // A passing-only decision: one Observe gate (base Advisory) — never escalates.
               let passingOnly =
                   decisionOf (mkRoute [ mkSelectedGate (mkGate (GateId "docs:only") Observe) ] []) Gate Standard
-              use d2 = parse (AuditJson.ofShipDecision passingOnly None)
+              use d2 = parse (AuditJson.ofShipDecision passingOnly None [])
               Expect.isEmpty (section d2 "blockers") "blockers empty"
               Expect.isEmpty (section d2 "warnings") "warnings empty"
               Expect.isNonEmpty (section d2 "passing") "passing populated"
@@ -46,7 +46,7 @@ let tests =
               // A warnings-only decision: one BlockOnRelease gate at Gate/Standard — relaxed to Advisory.
               let warningsOnly =
                   decisionOf (mkRoute [ mkSelectedGate (mkGate (GateId "build:rel") BlockOnRelease) ] []) Gate Standard
-              use d3 = parse (AuditJson.ofShipDecision warningsOnly None)
+              use d3 = parse (AuditJson.ofShipDecision warningsOnly None [])
               Expect.isEmpty (section d3 "blockers") "blockers empty"
               Expect.isNonEmpty (section d3 "warnings") "warnings populated"
               Expect.isEmpty (section d3 "passing") "passing empty"
@@ -55,7 +55,7 @@ let tests =
           testPropertyWithConfig fsCheckConfig "ofShipDecision always returns a parseable string and never throws (AS3, SC-006)" (fun d ->
               // Generator provenance: each ShipDecision is produced by the REAL Ship.rollup over a
               // generated RouteResult × RunMode × Profile (Support.genDecision) — no synthetic value.
-              let json = AuditJson.ofShipDecision d None
+              let json = AuditJson.ofShipDecision d None []
               use doc = parse json
               // A well-formed top-level object with the three always-present sections.
               hasField doc.RootElement "blockers"

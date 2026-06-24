@@ -20,7 +20,9 @@
 namespace FS.GG.Governance.RouteJson
 
 open FS.GG.Governance.Route.Model
+open FS.GG.Governance.Gates.Model              // GateId (F052 execution embed matched by gate)
 open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
+open FS.GG.Governance.GateRun.Model            // F052: GateOutcome (the per-gate execution embed)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RouteJson =
@@ -84,4 +86,15 @@ module RouteJson =
     /// document carries NO severity, profile, mode, enforcement, ship verdict, blocker, warning,
     /// exit-code basis, raw YAML, host/absolute path, timestamp, or environment value (FR-011, FR-012,
     /// SC-007).
-    val ofRouteResult: result: RouteResult -> cache: CacheEligibilityReport option -> string
+    ///
+    /// F052: an additive trailing `execution` parameter carries the per-gate `GateOutcome`s matched by
+    /// `GateId`. When NON-EMPTY, each selected-gate entry gains an `execution` object beside its F045
+    /// `cacheEligibility` — `{ disposition: "executed"|"reused"|"notExecuted", exitCode: <int>, passed:
+    /// <bool> }` (`exitCode`/`passed` omitted for `notExecuted`). When EMPTY (the default the emitter's own
+    /// goldens use), NO `execution` object is written and the output is BYTE-IDENTICAL to the F045-era
+    /// projection (FR-009, D6). The embed is gate-scoped: findings never carry it.
+    val ofRouteResult:
+        result: RouteResult ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+            string

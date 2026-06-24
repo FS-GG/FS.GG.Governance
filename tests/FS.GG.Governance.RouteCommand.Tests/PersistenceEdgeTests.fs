@@ -18,8 +18,10 @@ let private parseOrFail argv =
     | Ok r -> r
     | Error e -> failtestf "parse failed: %A" e
 
+// F052: the gates now RUN. Override the real execution port with the deterministic all-pass fake so the
+// store grows reproducibly (no real `dotnet` process) while git + filesystem stay real (the F048 edge proof).
 let private runRoute (req: Loop.RunRequest) : Loop.Model =
-    Interpreter.run (Interpreter.realPorts req.Repo) req
+    Interpreter.run { Interpreter.realPorts req.Repo with Execute = fakeExecPort } req
 
 let private tmpFiles (dir: string) =
     Directory.GetFiles(dir, "*.tmp-*", SearchOption.AllDirectories)
@@ -37,8 +39,9 @@ let tests =
                   let model = runRoute req
                   Expect.equal model.Exit Loop.Success "run exits Success"
 
-                  // Within bound + no superseded ⇒ prune/retain are identity ⇒ the re-read store EQUALS the seed.
-                  Expect.equal (readStore req.StorePath) (Some store) "persisted store re-reads to the loaded store")
+                  // F052: route now executes the selected command-gates and GROWS the store; the persisted
+                  // store is the F047 pipeline over the seed + the captured evidence (still re-reads losslessly).
+                  Expect.equal (readStore req.StorePath) (Some(expectedPersistedRepo dir store)) "persisted store = pipeline over the grown store")
           }
 
           test "AC-2: an absent store ⇒ a well-formed empty v1 is written, re-read as the empty store" {
@@ -48,8 +51,9 @@ let tests =
 
                   let model = runRoute req
                   Expect.equal model.Exit Loop.Success "run exits Success"
-                  Expect.isTrue (File.Exists req.StorePath) "an empty v1 store file is written (parent dir created)"
-                  Expect.equal (readStore req.StorePath) (Some EvidenceReuse.empty) "re-reads as EvidenceReuse.empty")
+                  Expect.isTrue (File.Exists req.StorePath) "a v1 store file is written (parent dir created)"
+                  // F052: from an absent store, the run captures the executed gates ⇒ a populated grown store.
+                  Expect.equal (readStore req.StorePath) (Some(expectedPersistedRepo dir EvidenceReuse.empty)) "re-reads as the grown store")
           }
 
           test "SC-002: two identical persistence runs write byte-identical store files" {
@@ -87,11 +91,9 @@ let tests =
 
                   let persisted = readStore req.StorePath |> Option.defaultValue EvidenceReuse.empty
                   let persistedEntries = EvidenceReuse.entries persisted
-                  let loadedEntries = EvidenceReuse.entries loaded
+                  // F052: the grown store (seed + captured) is pruned/retained to the bound, newest-first.
                   Expect.isLessThanOrEqual (List.length persistedEntries) EvidenceReuseStore.defaultRetentionBound "within bound"
-                  Expect.equal persistedEntries (List.truncate EvidenceReuseStore.defaultRetentionBound loadedEntries) "newest-first head of the loaded store"
-                  for e in persistedEntries do
-                      Expect.contains loadedEntries e "every survivor is byte-for-byte a loaded entry")
+                  Expect.equal persisted (expectedPersistedRepo dir loaded) "persisted = F047 pipeline over the grown store")
           }
 
           test "SC-003: a strictly-superseded entry is pruned; an already-clean store persists value-equal" {
@@ -106,7 +108,9 @@ let tests =
                   runRoute req |> ignore
 
                   let persisted = readStore req.StorePath |> Option.defaultValue EvidenceReuse.empty
-                  Expect.equal (EvidenceReuse.entries persisted) [ newer ] "the superseded (older) entry is pruned")
+                  // The superseded (older) duplicate is pruned; the grown store is the F047 pipeline result.
+                  Expect.isFalse (EvidenceReuse.entries persisted |> List.contains older) "the superseded (older) entry is pruned"
+                  Expect.equal persisted (expectedPersistedRepo dir raw) "persisted = F047 pipeline over the grown store")
           }
 
           test "SC-004: route.json per-gate cache verdicts are byte-identical with vs without --persist-store" {

@@ -28,7 +28,7 @@ let private toBeforeStore (req: Loop.RunRequest) =
     let baseHead = baseHeadOfSnap (Some snap)
     let sensed = FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead |> okOrFail
     let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-    m3
+    m3, baseHead
 
 let private expectedContent (store: ReuseStore) : string =
     store
@@ -45,8 +45,9 @@ let private persistEffectsOf (effects: Loop.Effect list) =
 // Drive a full flow to Done, returning the terminal exit, for a given persistence flag + store ack.
 let private exitFor (persist: bool) (storeAck: Result<unit, string> option) =
     let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = persist }
-    let m3 = toBeforeStore req
-    let m4, _ = Loop.update (Loop.StoreLoaded(Ok(storeOf [ persistInputs "format" "h1", syntheticRef "fmt" ]))) m3
+    let m3, _ = toBeforeStore req
+    let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok(storeOf [ persistInputs "format" "h1", syntheticRef "fmt" ]))) m3
+    let m4, _ = runExecuteEffect fakeExecPort m4raw e4
     let m5, _ = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
 
     let m6 =
@@ -66,12 +67,14 @@ let tests =
         [ test "PersistStore=true + non-degraded ⇒ exactly one PersistStore(StorePath, pipeline) + the audit write (T014/T021)" {
               let store = storeOf [ persistInputs "format" "h1", syntheticRef "fmt"; persistInputs "build" "h2", syntheticRef "bld" ]
               let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = true }
-              let m3 = toBeforeStore req
-              let _, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m3, baseHead = toBeforeStore req
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let _, e5 = runExecuteEffect fakeExecPort m4 e4
+              let grown = expectedGrownStoreAt "." fakeExecPort fakeSensor validCatalog store m4.SelectedGates baseHead
 
-              Expect.equal (persistEffectsOf e4) [ req.StorePath, expectedContent store ] "PersistStore(StorePath, F047 pipeline)"
+              Expect.equal (persistEffectsOf e5) [ req.StorePath, expectedContent grown ] "PersistStore(StorePath, F047 pipeline over the grown store)"
               Expect.equal
-                  (e4 |> List.filter (function Loop.WriteArtifact _ -> true | _ -> false) |> List.length)
+                  (e5 |> List.filter (function Loop.WriteArtifact _ -> true | _ -> false) |> List.length)
                   1
                   "the single audit write is unchanged"
           }
@@ -79,9 +82,10 @@ let tests =
           test "PersistStore=false ⇒ NO PersistStore effect; only the audit write (T014, SC-006)" {
               let store = storeOf [ persistInputs "format" "h1", syntheticRef "fmt" ]
               let req = requestFor Loop.DefaultRange Loop.Text
-              let m3 = toBeforeStore req
-              let _, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
-              Expect.isEmpty (persistEffectsOf e4) "no PersistStore effect when the flag is off"
+              let m3, _ = toBeforeStore req
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let _, e5 = runExecuteEffect fakeExecPort m4 e4
+              Expect.isEmpty (persistEffectsOf e5) "no PersistStore effect when the flag is off"
           }
 
           test "content uses the FULL prune|>retain|>serialise pipeline, not bare serialise (T021/US2)" {
@@ -89,23 +93,26 @@ let tests =
                   [ for n in 1..(EvidenceReuseStore.defaultRetentionBound + 5) -> persistInputs "format" (sprintf "h%d" n), syntheticRef (sprintf "e%d" n) ]
               let store = storeOf many
               let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = true }
-              let m3 = toBeforeStore req
-              let _, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m3, baseHead = toBeforeStore req
+              let m4, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let _, e5 = runExecuteEffect fakeExecPort m4 e4
+              let grown = expectedGrownStoreAt "." fakeExecPort fakeSensor validCatalog store m4.SelectedGates baseHead
 
-              match persistEffectsOf e4 with
+              match persistEffectsOf e5 with
               | [ _, content ] ->
-                  Expect.equal content (expectedContent store) "content = prune|>retain|>serialise"
-                  Expect.notEqual content (EvidenceReuseStore.serialise store) "and NOT the un-bounded serialise"
+                  Expect.equal content (expectedContent grown) "content = prune|>retain|>serialise over the grown store"
+                  Expect.notEqual content (EvidenceReuseStore.serialise grown) "and NOT the un-bounded serialise"
               | other -> failtestf "expected one PersistStore, got %A" other
           }
 
           test "degraded store ⇒ NO PersistStore, non-fatal don't-clobber note (T026/D6)" {
               let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = true }
-              let m3 = toBeforeStore req
+              let m3, _ = toBeforeStore req
               let m4, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
-              Expect.isEmpty (persistEffectsOf e4) "a degraded load is never persisted"
+              let m5, e5 = runExecuteEffect fakeExecPort m4 e4
+              Expect.isEmpty (persistEffectsOf e5) "a degraded load is never persisted"
               Expect.isTrue m4.StoreDegraded "StoreDegraded is set"
-              Expect.isTrue (m4.CacheNotes |> List.exists (fun n -> n.Contains "left untouched")) "don't-clobber note present"
+              Expect.isTrue (m5.CacheNotes |> List.exists (fun n -> n.Contains "left untouched")) "don't-clobber note present"
           }
 
           test "ship exit is governed SOLELY by ExitCodeBasis — a StorePersisted(Error) never makes it ToolError (T026)" {
@@ -123,8 +130,9 @@ let tests =
           test "StorePersisted(Error _) leaves the audit doc unchanged and appends a non-fatal note (T026/FR-006)" {
               let store = storeOf [ persistInputs "format" "h1", syntheticRef "fmt" ]
               let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = true }
-              let m3 = toBeforeStore req
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m3, _ = toBeforeStore req
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               let m5, _ = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
               let m6, e6 = Loop.update (Loop.StorePersisted(Error "no space left on device")) m5
 
@@ -138,8 +146,9 @@ let tests =
           test "with persistence on, the summary waits for the store ack, not the audit write (D10)" {
               let store = storeOf [ persistInputs "format" "h1", syntheticRef "fmt" ]
               let req = { requestFor Loop.DefaultRange Loop.Text with PersistStore = true }
-              let m3 = toBeforeStore req
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m3, _ = toBeforeStore req
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok store)) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               let m5, e5 = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
               Expect.equal e5 [] "audit write ack: no summary yet (awaiting the store ack)"
               let _, e6 = Loop.update (Loop.StorePersisted(Ok())) m5

@@ -27,6 +27,12 @@ open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityE
 open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
 open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
 open FS.GG.Governance.EvidenceReuseStore    // F048: prune, retain, serialise, defaultRetentionBound
+// F052 gate-execution wiring (classify → run → capture → persist-grown-store; advisory, always exit 0)
+open FS.GG.Governance.CommandRecord.Model    // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
+open FS.GG.Governance.GateExecution.Model     // GateCommand
+open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
+open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
+open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -72,6 +78,7 @@ module Loop =
         | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | PersistStore of path: string * content: string
+        | ExecuteGates of (GateId * GateCommand) list
         | EmitSummary of text: string
 
     type Msg =
@@ -82,6 +89,7 @@ module Loop =
         | StoreLoaded of Result<ReuseStore, string>
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | StorePersisted of Result<unit, string>
+        | GatesExecuted of (GateId * CommandRecord) list
         | Emitted
 
     type Diagnostic =
@@ -108,6 +116,8 @@ module Loop =
           SelectedGates: Gate list
           Sensed: SensedFacts option
           Store: ReuseStore option
+          Tooling: ToolingFacts option
+          Outcomes: (GateId * GateOutcome) list
           CacheNotes: string list
           StoreDegraded: bool
           PersistAcked: bool
@@ -224,6 +234,8 @@ module Loop =
               SelectedGates = []
               Sensed = None
               Store = None
+              Tooling = None
+              Outcomes = []
               CacheNotes = []
               StoreDegraded = false
               PersistAcked = false
@@ -293,19 +305,142 @@ module Loop =
     let awaitingPersist (model: Model) : bool =
         model.Request.PersistStore && not model.StoreDegraded && not model.PersistAcked
 
-    // The pure sense → resolve → evaluate → embed join (data-model §3). Fires only once BOTH the sensed
-    // facts and the store have arrived; builds the REAL `CacheEligibilityReport` and passes it as
-    // `Some report` to the F045 embed, then emits the two writes (the existing counter dance is preserved).
-    // F048: when persistence is enabled AND the on-disk store did not degrade on load, it ALSO emits a
-    // `PersistStore` effect carrying `persistedContent (loaded store)` (D2/D4); a degraded load instead
-    // appends a non-fatal don't-clobber note and emits no write (D6).
-    let tryProject (model: Model) : Model * Effect list =
+    // ── F052 per-gate classification (pure; recomputable from the model — data-model §classification) ──
+
+    // How one selected gate is handled this run (hidden — absent from Loop.fsi). `ToExecute` carries the
+    // command-to-run (spawned once); `ToReuse` carries the recovered prior exit (NOT spawned); `NoCommand`
+    // declares no command (NotExecuted).
+    type GateClassification =
+        | ToExecute of GateCommand
+        | ToReuse of ExitCode
+        | NoCommand
+
+    // Classify every selected gate and surface the per-gate freshness inputs (the F049 capture key). A gate
+    // with no declared command ⇒ `NoCommand`; with a command and an `isReusable` verdict whose prior exit is
+    // recoverable ⇒ `ToReuse` (the cache payoff — FR-003); otherwise (must-recompute, OR reusable-but-
+    // unrecoverable — D2/FR-004) ⇒ `ToExecute`. PURE: no process, derived entirely from the model.
+    let executionPlan (model: Model) : (Gate * GateClassification) list * Map<string, FreshnessInputs> =
+        match model.Sensed, model.Store with
+        | Some sensed, Some store ->
+            let resReport = FreshnessResolution.resolve model.SelectedGates sensed
+            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+            let cacheReport = CacheEligibility.evaluate candidates store
+
+            let verdictMap =
+                CacheEligibility.entries cacheReport
+                |> List.fold
+                    (fun m e ->
+                        let k = gateIdValue e.Gate
+                        if Map.containsKey k m then m else Map.add k e.Verdict m)
+                    Map.empty
+
+            let inputsMap =
+                candidates
+                |> List.fold
+                    (fun m c ->
+                        let k = gateIdValue c.Gate
+                        if Map.containsKey k m then m else Map.add k c.Inputs m)
+                    Map.empty
+
+            let classify (gate: Gate) : GateClassification =
+                let cmdOpt =
+                    match model.Tooling with
+                    | Some tooling -> Plan.commandFor model.Request.Repo tooling gate
+                    | None -> None
+
+                match cmdOpt with
+                | None -> NoCommand
+                | Some cmd ->
+                    match Map.tryFind (gateIdValue gate.Id) verdictMap with
+                    | Some(Reusable ref) ->
+                        match Plan.priorExitOf ref with
+                        | Some priorExit -> ToReuse priorExit
+                        | None -> ToExecute cmd
+                    | _ -> ToExecute cmd
+
+            (model.SelectedGates |> List.map (fun g -> g, classify g)), inputsMap
+        | _ -> [], Map.empty
+
+    // Fires once BOTH the sensed facts and the store have arrived (the existing join point): classify the
+    // selected gates and request the run of the must-recompute command-gates through the injected F051 port
+    // (D5). Reused/no-command gates spawn nothing. Capture, projection, and the persist-grown-store effect
+    // all wait for `GatesExecuted`.
+    let tryExecute (model: Model) : Model * Effect list =
+        match model.Sensed, model.Store, model.Result, model.GatesDoc with
+        | Some _, Some _, Some _, Some _ ->
+            let plan, _ = executionPlan model
+
+            let toExecute =
+                plan
+                |> List.choose (fun (g, c) ->
+                    match c with
+                    | ToExecute cmd -> Some(g.Id, cmd)
+                    | ToReuse _
+                    | NoCommand -> None)
+
+            model, [ ExecuteGates toExecute ]
+        | _ -> model, []
+
+    // On `GatesExecuted`: fold F049 `capture` per executed gate into the store (grows it), build the per-gate
+    // `GateOutcome`s, project `route.json` WITH the execution embed (cache report over the LOADED pre-run
+    // store, unchanged), emit the two writes, and persist the GROWN store (F047/F048 verbatim — FR-010).
+    let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Result, model.GatesDoc with
         | Some sensed, Some store, Some result, Some gatesDoc ->
-            let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+            let plan, inputsMap = executionPlan model
+
+            let recordMap =
+                records |> List.fold (fun m (gid, r) -> Map.add (gateIdValue gid) r m) Map.empty
+
+            let grownStore =
+                plan
+                |> List.fold
+                    (fun s (g, c) ->
+                        match c with
+                        | ToExecute _ ->
+                            match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
+                            | Some record, Some inputs -> EvidenceCapture.capture inputs record s
+                            | _ -> s
+                        | ToReuse _
+                        | NoCommand -> s)
+                    store
+
+            let outcomes =
+                plan
+                |> List.map (fun (g, c) ->
+                    let outcome =
+                        match c with
+                        | ToExecute _ ->
+                            match Map.tryFind (gateIdValue g.Id) recordMap with
+                            | Some record ->
+                                let code = record.Reproducible.ExitCode
+
+                                { GateId = g.Id
+                                  Disposition = Executed
+                                  ExitCode = Some code
+                                  Passed = Some(Plan.passed code) }
+                            | None ->
+                                { GateId = g.Id
+                                  Disposition = NotExecuted
+                                  ExitCode = None
+                                  Passed = None }
+                        | ToReuse code ->
+                            { GateId = g.Id
+                              Disposition = Reused
+                              ExitCode = Some code
+                              Passed = Some(Plan.passed code) }
+                        | NoCommand ->
+                            { GateId = g.Id
+                              Disposition = NotExecuted
+                              ExitCode = None
+                              Passed = None }
+
+                    g.Id, outcome)
+
+            let resReport = FreshnessResolution.resolve model.SelectedGates sensed
+            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
-            let routeDoc = RouteJson.ofRouteResult result (Some cacheReport)
+            let routeDoc = RouteJson.ofRouteResult result (Some cacheReport) outcomes
 
             let writes =
                 [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
@@ -313,7 +448,7 @@ module Loop =
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, persistedContent store) ], []
+                | true, false -> [ PersistStore(model.Request.StorePath, persistedContent grownStore) ], []
                 | true, true ->
                     [],
                     [ "cache note: store not persisted: on-disk store failed to parse; left untouched" ]
@@ -322,6 +457,7 @@ module Loop =
             { model with
                 Phase = Projected
                 RouteDoc = Some routeDoc
+                Outcomes = outcomes
                 CacheNotes = model.CacheNotes @ persistNotes },
             writes @ persistEffects
         | _ -> model, []
@@ -365,28 +501,29 @@ module Loop =
                     Phase = Selected
                     Result = Some result
                     GatesDoc = Some gatesDoc
-                    SelectedGates = selectedGates },
+                    SelectedGates = selectedGates
+                    Tooling = facts.Tooling },
                 [ SenseFreshness(selectedGates, baseHeadOf model)
                   LoadStore model.Request.StorePath ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
             // non-fatal cache note (D2) — it NEVER fails the command or changes the exit code (FR-010/FR-011).
-            | FreshnessSensed(Ok facts) -> tryProject { model with Sensed = Some facts }
+            | FreshnessSensed(Ok facts) -> tryExecute { model with Sensed = Some facts }
 
             | FreshnessSensed(Error reason) ->
-                tryProject
+                tryExecute
                     { model with
                         Sensed = Some emptySensedFacts
                         CacheNotes =
                             model.CacheNotes
                             @ [ "cache note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
 
-            | StoreLoaded(Ok store) -> tryProject { model with Store = Some store }
+            | StoreLoaded(Ok store) -> tryExecute { model with Store = Some store }
 
             | StoreLoaded(Error reason) ->
                 // F048: mark the load degraded so the persist write is suppressed (don't clobber a
                 // malformed file, D6). The F046 degrade-to-empty + note is unchanged.
-                tryProject
+                tryExecute
                     { model with
                         Store = Some EvidenceReuse.empty
                         StoreDegraded = true
@@ -426,6 +563,11 @@ module Loop =
                 match model.Phase with
                 | Persisted -> model, [ EmitSummary(render model model.Request.Format) ]
                 | _ -> model, []
+
+            // F052: the executed gates' records arrive — capture each into the store, build the per-gate
+            // outcomes, project route.json WITH the execution embed, and persist the GROWN store. Route stays
+            // advisory: `exitCode` is unaffected (always 0 — FR-008).
+            | GatesExecuted records -> projectExecuted records model
 
             | Emitted -> { model with Phase = Done; Exit = Success }, []
 
@@ -504,6 +646,34 @@ module Loop =
           yield! block "recompute by default (unresolved):" unresolvedLines
           yield! model.CacheNotes ]
 
+    // ── F052 execution summary (FR-016) — which gates were executed / reused / not-executed, pass/fail ──
+
+    and dispositionWord (d: GateDisposition) : string =
+        match d with
+        | Executed -> "executed"
+        | Reused -> "reused"
+        | NotExecuted -> "not-executed"
+
+    and executionLinesOf (model: Model) : string list =
+        match model.Outcomes with
+        | [] -> [ "execution: none" ]
+        | outcomes ->
+            let line (gid, (o: GateOutcome)) =
+                let verdict =
+                    match o.Passed with
+                    | Some true -> "pass"
+                    | Some false ->
+                        match o.ExitCode with
+                        | Some(ExitCode code) when code = 124 -> "fail (timeout)"
+                        | Some(ExitCode code) when code = 127 -> "fail (start-failure)"
+                        | Some(ExitCode code) -> sprintf "fail (exit %d)" code
+                        | None -> "fail"
+                    | None -> "—"
+
+                sprintf "  %s   (%s, %s)" (gateIdValue gid) (dispositionWord o.Disposition) verdict
+
+            (sprintf "execution: %d gate(s)" (List.length outcomes)) :: (outcomes |> List.map line)
+
     and renderText (model: Model) : string =
         match model.Result with
         | None ->
@@ -548,6 +718,8 @@ module Loop =
               findingLines
               [ "" ]
               cacheLinesOf model
+              [ "" ]
+              executionLinesOf model
               [ "" ]
               wroteLines ]
             |> List.concat

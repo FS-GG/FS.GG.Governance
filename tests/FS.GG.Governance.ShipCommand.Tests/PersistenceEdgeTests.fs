@@ -19,8 +19,10 @@ let private parseOrFail argv =
     | Ok r -> r
     | Error e -> failtestf "parse failed: %A" e
 
+// F052: the gates now RUN. Override the real execution port with the deterministic fake (default fail) so the
+// store grows reproducibly (no real `dotnet`) while git + filesystem stay real (the F048 edge proof).
 let private runShip (req: Loop.RunRequest) : Loop.Model =
-    Interpreter.run (Interpreter.realPorts req.Repo) req
+    Interpreter.run { Interpreter.realPorts req.Repo with Execute = fakeExecPort } req
 
 let private tmpFiles (dir: string) =
     Directory.GetFiles(dir, "*.tmp-*", SearchOption.AllDirectories)
@@ -35,7 +37,9 @@ let tests =
                   writeFile dir "readiness/evidence-reuse.json" (EvidenceReuseStore.serialise store)
                   let req = parseOrFail [ "ship"; "--repo"; dir; "--since"; "HEAD~1"; "--persist-store" ]
                   runShip req |> ignore
-                  Expect.equal (readStore req.StorePath) (Some store) "persisted store re-reads to the loaded store")
+                  // F052: ship executes the selected command-gates and GROWS the store; the persisted store is
+                  // the F047 pipeline over the seed + the captured evidence.
+                  Expect.equal (readStore req.StorePath) (Some(expectedPersistedRepo dir store)) "persisted store = pipeline over the grown store")
           }
 
           test "AC-2: an absent store ⇒ a well-formed empty v1 is written, re-read as the empty store" {
@@ -43,8 +47,9 @@ let tests =
                   let req = parseOrFail [ "ship"; "--repo"; dir; "--since"; "HEAD~1"; "--persist-store" ]
                   Expect.isFalse (File.Exists req.StorePath) "no store on disk before the run"
                   runShip req |> ignore
-                  Expect.isTrue (File.Exists req.StorePath) "an empty v1 store file is written"
-                  Expect.equal (readStore req.StorePath) (Some EvidenceReuse.empty) "re-reads as EvidenceReuse.empty")
+                  Expect.isTrue (File.Exists req.StorePath) "a v1 store file is written"
+                  // F052: from an absent store, the run captures the executed gates ⇒ a populated grown store.
+                  Expect.equal (readStore req.StorePath) (Some(expectedPersistedRepo dir EvidenceReuse.empty)) "re-reads as the grown store")
           }
 
           test "SC-002: two identical persistence runs write byte-identical store files" {
@@ -76,12 +81,10 @@ let tests =
                   let req = parseOrFail [ "ship"; "--repo"; dir; "--since"; "HEAD~1"; "--persist-store" ]
                   runShip req |> ignore
 
-                  let persistedEntries = readStore req.StorePath |> Option.defaultValue EvidenceReuse.empty |> EvidenceReuse.entries
-                  let loadedEntries = EvidenceReuse.entries loaded
+                  let persisted = readStore req.StorePath |> Option.defaultValue EvidenceReuse.empty
+                  let persistedEntries = EvidenceReuse.entries persisted
                   Expect.isLessThanOrEqual (List.length persistedEntries) EvidenceReuseStore.defaultRetentionBound "within bound"
-                  Expect.equal persistedEntries (List.truncate EvidenceReuseStore.defaultRetentionBound loadedEntries) "newest-first head of the loaded store"
-                  for e in persistedEntries do
-                      Expect.contains loadedEntries e "every survivor is byte-for-byte a loaded entry")
+                  Expect.equal persisted (expectedPersistedRepo dir loaded) "persisted = F047 pipeline over the grown store")
           }
 
           test "SC-003: a strictly-superseded entry is pruned" {
@@ -92,7 +95,8 @@ let tests =
                   let req = parseOrFail [ "ship"; "--repo"; dir; "--since"; "HEAD~1"; "--persist-store" ]
                   runShip req |> ignore
                   let persisted = readStore req.StorePath |> Option.defaultValue EvidenceReuse.empty
-                  Expect.equal (EvidenceReuse.entries persisted) [ newer ] "the superseded (older) entry is pruned")
+                  Expect.isFalse (EvidenceReuse.entries persisted |> List.contains older) "the superseded (older) entry is pruned"
+                  Expect.equal persisted (expectedPersistedRepo dir (ReuseStore [ newer; older ])) "persisted = F047 pipeline over the grown store")
           }
 
           test "SC-004: verdict, exit, and audit.json are byte-for-byte identical with vs without --persist-store" {

@@ -29,7 +29,9 @@
 namespace FS.GG.Governance.AuditJson
 
 open FS.GG.Governance.Ship.Model
+open FS.GG.Governance.Gates.Model              // GateId (F052 execution embed matched by gate)
 open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
+open FS.GG.Governance.GateRun.Model            // F052: GateOutcome (the per-gate execution embed)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AuditJson =
@@ -103,4 +105,15 @@ module AuditJson =
     /// report resolves to the first entry by report order. The document carries NO numeric process exit
     /// code, provenance/attestation reference, raw YAML, host/absolute path, wall-clock timestamp, or
     /// environment value (FR-012, SC-007).
-    val ofShipDecision: decision: ShipDecision -> cache: CacheEligibilityReport option -> string
+    ///
+    /// F052: an additive trailing `execution` parameter carries the per-gate `GateOutcome`s matched by
+    /// `GateId`. When NON-EMPTY, each `kind:"gate"` item (in any section) gains an `execution` object beside
+    /// its F045 `cacheEligibility` — `{ disposition: "executed"|"reused"|"notExecuted", exitCode: <int>,
+    /// passed: <bool> }` (`exitCode`/`passed` omitted for `notExecuted`). When EMPTY (the default the
+    /// emitter's own goldens use), NO `execution` object is written and the output is BYTE-IDENTICAL to the
+    /// F045-era projection (FR-009, D6). Finding items never carry it — execution is gate-scoped.
+    val ofShipDecision:
+        decision: ShipDecision ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+            string
