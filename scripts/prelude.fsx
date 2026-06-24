@@ -2679,3 +2679,65 @@ printfn "[F53] no drops/fabrications? %b"
 // (edge) Empty rule set ⇒ no findings, Pass, Clean.
 let f53Empty = Release.evaluateRelease [] { States = Map.empty }
 printfn "[F53] empty ⇒ Pass/Clean? %b" (f53Empty.Verdict = Pass && f53Empty.ExitCodeBasis = Clean) // expect: true
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── F054: ReleaseFactsSensing — sense the six release families from a governed repo (Principle I) ──
+// ─────────────────────────────────────────────────────────────────────────────
+// Behind a single injected `RepositoryPort`, `Interpreter.senseRelease` recovers the six governing sources,
+// the PURE `Sensing.deriveFacts` classifies each family into exactly the F053 `FactState`, and the resulting
+// `sensed.Facts` IS the F053 `ReleaseFacts` value — handed straight to `Release.evaluate` (SC-001). Fail-safe
+// (absent/unreadable ⇒ Unrecoverable, never a fabricated Met), deterministic, network-free.
+#r "../src/FS.GG.Governance.ReleaseFactsSensing/bin/Debug/net10.0/FS.GG.Governance.ReleaseFactsSensing.dll"
+open FS.GG.Governance.ReleaseFactsSensing
+open FS.GG.Governance.ReleaseFactsSensing.Model
+
+// Caller-supplied, product-neutral expectations (no hardcoded id/path — FR-011).
+let f54Exp =
+    { Surface = SurfaceId "pkg"
+      VersionBaseline = Some "1.2.0"
+      RequiredMetadataFields = Some [ "authors"; "license" ]
+      ExpectedPins = Some(Map [ "base", "9.0.0" ])
+      RequiredPublishPosture = Some [ "plan-present" ]
+      RequiredTrustedPublishing = Some [ "oidc" ]
+      RequiredProvenance = Some [ "attestation" ] }
+
+// A fake port whose six families all SATISFY the expectations (US1.1).
+let f54MetPort: Interpreter.RepositoryPort =
+    { ReadVersion = fun () -> Ok { Declared = "1.3.0" }
+      ReadMetadata = fun () -> Ok { PresentFields = [ "authors"; "license" ] }
+      ReadPins = fun () -> Ok { Resolved = Map [ "base", "9.0.0" ] }
+      ReadPublishPlan = fun () -> Ok { Observed = [ "plan-present" ] }
+      ReadTrustedPublishing = fun () -> Ok { Observed = [ "oidc" ] }
+      ReadProvenance = fun () -> Ok { Observed = [ "attestation" ] } }
+
+let f54Sensed = Interpreter.senseRelease f54MetPort f54Exp
+printfn "[F54] exactly six families? %b" (f54Sensed.Facts.States.Count = 6) // expect: true
+printfn "[F54] all Met? %b" (f54Sensed.Facts.States |> Map.forall (fun _ s -> s = Met)) // expect: true
+
+// (US1.3 / SC-001) The sensed Facts feed the F053 core with NO adaptation.
+let f54Rules =
+    Sensing.releaseFamilies
+    |> List.map (fun k ->
+        { Kind = k; Surface = SurfaceId "pkg"; BaseSeverity = Blocking; Maturity = BlockOnRelease })
+let f54Findings = Release.evaluate f54Rules f54Sensed.Facts // type-checks: Facts IS ReleaseFacts
+printfn "[F54] one finding per family? %b" (f54Findings.Length = 6) // expect: true
+
+// (US1.2) Version NOT bumped past baseline ⇒ Unmet, others Met.
+let f54StalePort = { f54MetPort with ReadVersion = fun () -> Ok { Declared = "1.2.0" } } // equals baseline
+let f54Stale = Interpreter.senseRelease f54StalePort f54Exp
+printfn "[F54] stale version Unmet? %b" (f54Stale.Facts.States.[VersionBump] = Unmet) // expect: true
+
+// (US2.1) Missing metadata field ⇒ Unmet + snapshot names present/missing.
+let f54MissPort = { f54MetPort with ReadMetadata = fun () -> Ok { PresentFields = [ "authors" ] } }
+let f54Miss = Interpreter.senseRelease f54MissPort f54Exp
+printfn "[F54] metadata Unmet? %b" (f54Miss.Facts.States.[PackageMetadata] = Unmet) // expect: true
+printfn "[F54] snapshot names missing field? %b"
+    (match f54Miss.Snapshot.Metadata with Some m -> m.Missing = [ "license" ] | None -> false) // expect: true
+
+// (US3.1 / SC-002) Absent source ⇒ Unrecoverable (never Met, never a throw).
+let f54GonePort = { f54MetPort with ReadProvenance = fun () -> Error "absent: provenance record not found" }
+let f54Gone = Interpreter.senseRelease f54GonePort f54Exp
+printfn "[F54] absent ⇒ Unrecoverable? %b" (f54Gone.Facts.States.[Provenance] = Unrecoverable) // expect: true
+
+// (US3.2 / SC-003) Determinism — two senses are structurally identical (compare equal).
+printfn "[F54] deterministic? %b" (Interpreter.senseRelease f54MetPort f54Exp = f54Sensed) // expect: true

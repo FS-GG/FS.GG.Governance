@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F054: the release-facts sensing library — a single injected `RepositoryPort` edge plus a pure
+       per-family derivation — layered on top of the merged thread (the constitution's "heavier
+       capabilities layer on top, not into the core"). It senses, from a real governed repository
+       behind one effects boundary, the current state of each of the six F053 release rule families
+       and produces EXACTLY the F053 `ReleaseFacts` value (the `Map<ReleaseRuleKind, FactState>`) the
+       core consumes — handed straight to `Release.evaluate` with no adaptation — plus a typed
+       `ReleaseSnapshot` of the observed evidence behind each fact.
+
+       It references ONLY the two cores whose vocabulary it reuses: FS.GG.Governance.ReleaseRules
+       (F053 — ReleaseRuleKind, FactState, ReleaseFacts, releaseRuleKindOrdinal/releaseRuleKindToken)
+       and FS.GG.Governance.Config (F014 — SurfaceId). It does NOT reference Snapshot/Route/Gates or
+       any hosting/registry/publishing SDK, and adds NO new third-party PackageReference (FR-007). It
+       reaches NO network — proven by the surface-test dependency scope guard (SC-004). Compile order
+       is Model -> Sensing -> Interpreter: the sensing-domain types, then the PURE per-family
+       derivation, then the read-only local-file edge (the MVU/I-O boundary, Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseFactsSensing</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the merged cores (ReleaseRules/Snapshot/Config). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReleaseFactsSensing</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Sensing.fsi" />
+    <Compile Include="Sensing.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
