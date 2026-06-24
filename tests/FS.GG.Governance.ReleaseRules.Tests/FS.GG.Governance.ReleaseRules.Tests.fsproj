@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F053, exercising the PUBLIC surface of FS.GG.Governance.ReleaseRules:
+       `Release.evaluate`/`Release.rollup`/`Release.evaluateRelease` and the `ReleaseRules.Model`
+       vocabulary over REAL typed values — real F014 `SurfaceId`/`Maturity`, F023 `Severity`, and the
+       F024 `Verdict`/`ExitCodeBasis` result types — never private helpers (the per-rule classifier,
+       the `EnforcementInput` builder, and the partition helper are tested ONLY through `evaluate`/
+       `rollup`) and never mocks (Principle V). The input domain is the finite cross-product of rule
+       kind × fact state × severity × maturity, all literally constructible, so NO synthetic evidence
+       is anticipated. Expecto + FsCheck give the one-in-one-out / no-drop / determinism properties;
+       the VSTest adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="EvaluateTests.fs" />
+    <Compile Include="FailSafeTests.fs" />
+    <Compile Include="RollupTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="EdgeCaseTests.fs" />
+    <Compile Include="PropertyTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>
