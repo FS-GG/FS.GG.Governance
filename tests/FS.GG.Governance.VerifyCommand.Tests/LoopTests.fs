@@ -1,0 +1,80 @@
+module FS.GG.Governance.VerifyCommand.Tests.LoopTests
+
+open Expecto
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.Enforcement.Enforcement
+open FS.GG.Governance.VerifyCommand
+open FS.GG.Governance.VerifyCommand.Tests.Support
+
+// T013/T014/T015 (US1) — the pure MVU transitions, the exit-code mapping, and the empty-selection
+// "nothing to verify" short-circuit. No I/O: literal Model/Msg values, asserting both next state AND emitted
+// effects (Principle IV). The verdict is the GENUINE `Ship.rollup` at `RunMode.Verify`.
+
+let private hasEffect pred effs = effs |> List.exists pred
+
+let private initFor scope = Loop.init (requestFor scope Loop.Text)
+
+[<Tests>]
+let tests =
+    testList
+        "Loop (US1)"
+        [ test "init: DefaultRange emits SenseScope; ExplicitPaths goes straight to LoadCatalog" {
+              let _, effDefault = initFor Loop.DefaultRange
+              Expect.isTrue (hasEffect (function Loop.SenseScope _ -> true | _ -> false) effDefault) "DefaultRange senses scope"
+
+              let m, effExplicit = initFor (Loop.ExplicitPaths [ gp "src/a.fs" ])
+              Expect.equal effExplicit [ Loop.LoadCatalog "." ] "ExplicitPaths loads catalog directly"
+              Expect.equal m.Candidates (Some [ gp "src/a.fs" ]) "candidates set from explicit paths"
+          }
+
+          test "Sensed(Ok) records candidates and emits LoadCatalog" {
+              let m0, _ = initFor Loop.DefaultRange
+              let snap = snapshotOf gitSrcChange defaultOpts
+              let m1, eff = Loop.update (Loop.Sensed(Ok snap)) m0
+              Expect.equal eff [ Loop.LoadCatalog "." ] "loads catalog after sensing"
+              Expect.equal m1.Phase Loop.Sensed' "phase advanced"
+              Expect.isSome m1.Candidates "candidates recorded"
+          }
+
+          test "Loaded(Valid) runs the F015→F019 selection at RunMode.Verify and senses freshness + store" {
+              let m0, _ = initFor Loop.DefaultRange
+              let snap = snapshotOf gitSrcChange defaultOpts
+              let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
+              let candidates = m1.Candidates |> Option.defaultValue []
+              let m2, eff = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m1
+
+              Expect.isTrue (hasEffect (function Loop.SenseFreshness _ -> true | _ -> false) eff) "senses freshness"
+              Expect.isTrue (hasEffect (function Loop.LoadStore _ -> true | _ -> false) eff) "loads store"
+              Expect.isFalse (hasEffect (function Loop.ExecuteGates _ -> true | _ -> false) eff) "no execute before sensing"
+              Expect.isNonEmpty m2.SelectedGates "src change selects gates"
+
+              // The decision threads Verify (NOT Gate): byte-equal to the genuine rollup at Verify/Standard.
+              Expect.equal m2.Decision (Some(decisionOf validCatalog candidates Verify Standard)) "decision rolled at Verify"
+          }
+
+          test "exitCode maps the five categories" {
+              Expect.equal (Loop.exitCode Loop.Success) 0 "success 0"
+              Expect.equal (Loop.exitCode Loop.Blocked) 1 "blocked 1"
+              Expect.equal (Loop.exitCode Loop.UsageError') 2 "usage 2"
+              Expect.equal (Loop.exitCode Loop.InputUnavailable) 3 "input 3"
+              Expect.equal (Loop.exitCode Loop.ToolError) 4 "tool 4"
+          }
+
+          test "empty selection short-circuits to a passing 'nothing to verify' verdict with no freshness/execute work" {
+              // ExplicitPaths [] ⇒ no candidates ⇒ empty selection, no findings.
+              let m0, _ = Loop.init (requestFor (Loop.ExplicitPaths []) Loop.Text)
+              let m1, eff = Loop.update (Loop.Loaded(Valid(factsOf validCatalog))) m0
+
+              Expect.isEmpty m1.SelectedGates "no gates selected"
+              Expect.isFalse (hasEffect (function Loop.SenseFreshness _ -> true | _ -> false) eff) "no freshness sense"
+              Expect.isFalse (hasEffect (function Loop.ExecuteGates _ -> true | _ -> false) eff) "no execute"
+              Expect.isTrue (hasEffect (function Loop.WriteArtifact _ -> true | _ -> false) eff) "writes verify.json"
+              Expect.equal m1.Phase Loop.Rolled "rolled"
+
+              // The render says nothing to verify; the verdict is a pass.
+              Expect.stringContains (Loop.render m1 Loop.Text) "nothing to verify" "nothing-to-verify text"
+
+              // On the write ack the summary is emitted and the terminal exit is Success.
+              let m2, _ = Loop.update (Loop.Wrote(Loop.VerifyArtifact, Ok())) m1
+              let m3, _ = Loop.update Loop.Emitted m2
+              Expect.equal m3.Exit Loop.Success "nothing to verify ⇒ exit Success" } ]
