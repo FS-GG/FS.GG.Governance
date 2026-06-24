@@ -1144,8 +1144,20 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
 - 🟡 [ ] Define Governance `fsgg verify` and `fsgg release` schemas and exit
   codes. (Governance: ship verdict rollup landed as **F024**; the `release` gate
   schema is pending.)
-- 🔴 [ ] Add release rules for version bumps, package metadata, template pins,
+- 🟡 [ ] Add release rules for version bumps, package metadata, template pins,
   publish plans, trusted publishing, and provenance. (Governance-owned; Phase 11.)
+  Progress: **F053** (`FS.GG.Governance.ReleaseRules`) landed the pure release-gate
+  core — `evaluate`/`rollup`/`evaluateRelease` turning declared release rules + the
+  six-family `ReleaseFacts` into one finding per rule and a verdict, reusing F023/F024
+  verbatim (facts supplied as typed input). **F054**
+  (`FS.GG.Governance.ReleaseFactsSensing`) landed the **sensing** of those six families
+  from a real governed repository behind a single injected `RepositoryPort` edge: a pure
+  `deriveFacts` classifying each family `Met`/`Unmet`/`Unrecoverable` (fail-safe, never a
+  fabricated `Met`) into **exactly the F053 `ReleaseFacts`** value (handed straight to
+  `Release.evaluate`), plus a typed `ReleaseSnapshot` of the observed evidence;
+  network-free, deterministic, additive (no frozen-core edit, no schema bump). Pending:
+  the `fsgg release` host command wiring (sense → evaluate → exit code) and the
+  `release.json` projection.
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the
