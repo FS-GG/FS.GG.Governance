@@ -62,7 +62,7 @@ Never mark a failing task `[X]`; never weaken an assertion to green a build — 
 **Purpose**: Create the new pure helper library + its focused test project so everything compiles and the solution
 restores. No semantics yet. Nothing existing is edited beyond the solution file and the `CLAUDE.md` plan pointer.
 
-- [ ] T001 Create `src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj` — SDK-style, `net10.0`,
+- [X] T001 Create `src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj` — SDK-style, `net10.0`,
   `RootNamespace`/`PackageId` `FS.GG.Governance.GateRun`, `Version` `0.1.0`, `IsPackable=true` (the new-package
   precedent of `GateExecution`/`ExecutionRecord`; "existing packages' pack output unaffected" means the *existing*
   packages are untouched). `<Compile>` order **`Model.fsi`, `Model.fs`, `Plan.fsi`, `Plan.fs`**. `<ProjectReference>`s
@@ -73,7 +73,7 @@ restores. No semantics yet. Nothing existing is edited beyond the solution file 
   `Gate`/`GatePrerequisite`/`CommandId`). **No** third-party `PackageReference` (FR-017). Header comment: the small
   pure helper library the host wiring needs — argv lex, `commandFor`, `priorExitOf`, `passed` — layered on top of the
   merged thread (heavier capabilities layer on top, not into the core); referenced by `RouteCommand`/`ShipCommand`.
-- [ ] T002 [P] Create `tests/FS.GG.Governance.GateRun.Tests/FS.GG.Governance.GateRun.Tests.fsproj` —
+- [X] T002 [P] Create `tests/FS.GG.Governance.GateRun.Tests/FS.GG.Governance.GateRun.Tests.fsproj` —
   `IsPackable=false`, `GenerateProgramFile=false`; `<PackageReference>`s `Expecto`, `Expecto.FsCheck`, `FsCheck`,
   `Microsoft.NET.Test.Sdk`, `YoloDev.Expecto.TestSdk` (versions from `Directory.Packages.props`, no new package).
   `<ProjectReference>`s to the new `FS.GG.Governance.GateRun` **and** — for the `priorExitOf` round-trip and
@@ -85,9 +85,9 @@ restores. No semantics yet. Nothing existing is edited beyond the solution file 
   Final `<Compile>` order is `Support.fs`, `PlanTests.fs`, `SurfaceDriftTests.fs`, `Main.fs` — but each entry is
   added by the task that **creates** its file so the project always compiles; at this step wire **only** `Support.fs`
   (T016) and `Main.fs` (T017). Mirror `tests/FS.GG.Governance.GateExecution.Tests/...Tests.fsproj`.
-- [ ] T003 Add both new projects to `FS.GG.Governance.sln` (the `src` and `tests` solution folders) with fresh GUIDs
+- [X] T003 Add both new projects to `FS.GG.Governance.sln` (the `src` and `tests` solution folders) with fresh GUIDs
   and the standard Debug/Release `GlobalSection` configuration rows, matching existing entries.
-- [ ] T004 [P] Ensure the SPECKIT plan reference in `CLAUDE.md` points at `specs/052-route-ship-gate-execution/plan.md`
+- [X] T004 [P] Ensure the SPECKIT plan reference in `CLAUDE.md` points at `specs/052-route-ship-gate-execution/plan.md`
   (already updated this session — verify; no other doc changes).
 
 **Checkpoint**: `dotnet restore FS.GG.Governance.sln` succeeds; `dotnet sln list` shows both new projects.
@@ -102,26 +102,26 @@ solution compile against them with the new behavior **stubbed** and the document
 and stand up the test scaffolding so tests can FAIL before implementation. **⚠️ No story work begins until this
 phase is complete.**
 
-- [ ] T005 Author `src/FS.GG.Governance.GateRun/Model.fsi` — drop `contracts/Model.fsi` **verbatim**:
+- [X] T005 Author `src/FS.GG.Governance.GateRun/Model.fsi` — drop `contracts/Model.fsi` **verbatim**:
   `namespace FS.GG.Governance.GateRun`; the two `open`s (`FS.GG.Governance.Gates.Model` for `GateId`,
   `FS.GG.Governance.CommandRecord.Model` for `ExitCode`); the `[<CompilationRepresentation(...ModuleSuffix)>] module
   Model` with `GateDisposition` (`Executed`/`Reused`/`NotExecuted`) and `GateOutcome` (`GateId`/`Disposition`/
   `ExitCode option`/`Passed: bool option`), each carrying its curated doc-comment verbatim. Reuses F018/F032 types
   verbatim; introduces **no new** F018/F032 type. **No** access modifiers (Principle II).
-- [ ] T006 Add `src/FS.GG.Governance.GateRun/Model.fs` — the `module Model` with `GateDisposition` and `GateOutcome`
+- [X] T006 Add `src/FS.GG.Governance.GateRun/Model.fs` — the `module Model` with `GateDisposition` and `GateOutcome`
   **fully defined** (these are data, not behavior, so no stub). Same two `open`s as the `.fsi`. No access modifiers.
-- [ ] T007 Author `src/FS.GG.Governance.GateRun/Plan.fsi` — drop `contracts/Plan.fsi` **verbatim**:
+- [X] T007 Author `src/FS.GG.Governance.GateRun/Plan.fsi` — drop `contracts/Plan.fsi` **verbatim**:
   `namespace FS.GG.Governance.GateRun`; the five `open`s (`CommandRecord.Model`, `EvidenceReuse.Model`,
   `Config.Model`, `Gates.Model`, `GateExecution.Model`); the `module Plan` with the four members —
   `lexCommandLine: string -> (Executable * Argument list) option`, `commandFor: repoRoot:string -> tooling:ToolingFacts
   -> gate:Gate -> GateCommand option`, `priorExitOf: EvidenceRef -> ExitCode option`, `passed: ExitCode -> bool` —
   each with its curated doc-comment verbatim. No access modifiers (Principle II — the argv scanner stays unexported
   by absence here).
-- [ ] T008 Add `src/FS.GG.Governance.GateRun/Plan.fs` — the `module Plan` satisfying `Plan.fsi` with the four members
+- [X] T008 Add `src/FS.GG.Governance.GateRun/Plan.fs` — the `module Plan` satisfying `Plan.fsi` with the four members
   as `failwith "not implemented"` stubs that type-check the full signatures (real bodies land in Phase 3). No access
   modifiers (Principle II). Confirm `dotnet build src/FS.GG.Governance.GateRun/...` is clean under
   `TreatWarningsAsErrors`.
-- [ ] T009 Add the new `ProjectReference`s the host seams require (plan §Scale/Scope "Edited (host seams)") — without
+- [X] T009 Add the new `ProjectReference`s the host seams require (plan §Scale/Scope "Edited (host seams)") — without
   them the Phase-2 `.fsi`/`.fs` edits cannot resolve `ExecutionPort`/`GateOutcome`/`realPort`. To **both**
   `src/FS.GG.Governance.RouteCommand/FS.GG.Governance.RouteCommand.fsproj` and
   `src/FS.GG.Governance.ShipCommand/FS.GG.Governance.ShipCommand.fsproj` add `../FS.GG.Governance.GateRun/...` (the
@@ -133,24 +133,24 @@ phase is complete.**
   **command** references are genuinely new; `GateRun` (Phase 1) and every merged core are already on graph. **No**
   third-party package added (FR-017); `dotnet restore FS.GG.Governance.sln` stays clean. These four `.fsproj` edits are
   inspected by the Phase-9 scope-hygiene check (T040). Precedes the `.fsi` deltas (T010–T013).
-- [ ] T010 [P] Apply the `Interpreter.fsi` host-seam delta (contracts/host-wiring.md §Interpreter.fsi) to **both**
+- [X] T010 [P] Apply the `Interpreter.fsi` host-seam delta (contracts/host-wiring.md §Interpreter.fsi) to **both**
   `src/FS.GG.Governance.RouteCommand/Interpreter.fsi` and `src/FS.GG.Governance.ShipCommand/Interpreter.fsi`: add the
   `Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort` field to the `Ports` record (D4). `run`/`step`/
   `realPorts` signatures are unchanged. No other symbol changes.
-- [ ] T011 [P] Apply the `Loop.fsi` host-seam delta (contracts/host-wiring.md §Loop.fsi) to **both**
+- [X] T011 [P] Apply the `Loop.fsi` host-seam delta (contracts/host-wiring.md §Loop.fsi) to **both**
   `src/FS.GG.Governance.RouteCommand/Loop.fsi` and `src/FS.GG.Governance.ShipCommand/Loop.fsi`: add `ExecuteGates of
   (GateId * GateCommand) list` to `Effect` and `GatesExecuted of (GateId * CommandRecord) list` to `Msg` (D4,
   mirroring the existing `SenseFreshness`/`FreshnessSensed` and `LoadStore`/`StoreLoaded` pairs). `init`/`update`/
   `render`/`parse`/`exitCode` signatures are unchanged.
-- [ ] T012 [P] Apply the document-emitter `.fsi` deltas (contracts/host-wiring.md §RouteJson.fsi / §AuditJson.fsi):
+- [X] T012 [P] Apply the document-emitter `.fsi` deltas (contracts/host-wiring.md §RouteJson.fsi / §AuditJson.fsi):
   add the trailing optional `execution: (GateId * GateOutcome) list` parameter to
   `src/FS.GG.Governance.RouteJson/RouteJson.fsi` `ofRouteResult` and `src/FS.GG.Governance.AuditJson/AuditJson.fsi`
   `ofShipDecision` (D6 — empty list ⇒ no `execution` embed ⇒ byte-identical output, FR-009).
-- [ ] T013 [P] Apply the `ShipCommand` verdict-relocation `.fsi` delta (contracts/host-wiring.md §verdict relocation):
+- [X] T013 [P] Apply the `ShipCommand` verdict-relocation `.fsi` delta (contracts/host-wiring.md §verdict relocation):
   declare `val applyExecution: passedGateIds: Set<GateId> -> decision: ShipDecision -> ShipDecision` in
   `src/FS.GG.Governance.ShipCommand/Loop.fsi` (it depends on `Ship.Model`/`Enforcement`, so it lives here, NOT in
   `GateRun` — D7), with its curated doc-comment verbatim.
-- [ ] T014 Make every edited `.fs` compile against the new signatures (the T009 references now in place) with behavior
+- [X] T014 Make every edited `.fs` compile against the new signatures (the T009 references now in place) with behavior
   **stubbed and embeds default-empty**: in both commands' `Interpreter.fs` wire `Execute =
   FS.GG.Governance.GateExecution.Interpreter.realPort` in `realPorts` and add a placeholder `ExecuteGates` interpreter
   arm (returns an empty `GatesExecuted []` for now); in both `Loop.fs` add no-op `ExecuteGates`/`GatesExecuted`
@@ -159,7 +159,7 @@ phase is complete.**
   `ShipCommand/Loop.fs` as the identity (`fun _ d -> d`) stub. Confirm `dotnet build FS.GG.Governance.sln` is clean and
   the **existing** `RouteCommand`/`ShipCommand`/`RouteJson`/`AuditJson` test suites still pass byte-for-byte (the embed
   is empty, the verdict path unchanged).
-- [ ] T015 [P] Append an F052 design-first section to `scripts/prelude.fsx` (after the F051 section) — the
+- [X] T015 [P] Append an F052 design-first section to `scripts/prelude.fsx` (after the F051 section) — the
   Principle-I FSI proof **before** any operation body lands (the `quickstart.md` "Exercise the pure helpers in FSI"
   sketch verbatim): `#r` the new `GateRun` Debug DLL plus `GateExecution`/`EvidenceCapture`/`CommandRecord`/
   `EvidenceReuse` DLLs; exercise `Plan.lexCommandLine "dotnet test --no-build"`, `"echo 'hello world'"`, and `"   "`;
@@ -167,7 +167,7 @@ phase is complete.**
   — `let record = GateExecution.Interpreter.senseExecution fakePort someCommand`,
   `let ref' = EvidenceCapture.EvidenceCapture.referenceOf record`, `Plan.priorExitOf ref'` (`Some …`) and
   `Plan.priorExitOf (EvidenceRef "not-canonical")` (`None`). Its assertions fail against the stubs — expected.
-- [ ] T016 [P] Write `tests/FS.GG.Governance.GateRun.Tests/Support.fs` — real, literally-constructible builders
+- [X] T016 [P] Write `tests/FS.GG.Governance.GateRun.Tests/Support.fs` — real, literally-constructible builders
   (Principle V; **no mocks**): (1) a `ToolingFacts`/`CommandSpec` builder so a `CommandId` resolves to a declared
   command line, declared `TimeoutLimit`, and `EnvironmentClass`; (2) a `Gate` builder with and without a
   `RequiresCommand` prerequisite (for `commandFor` ⇒ `Some`/`None`); (3) a deterministic **fake `ExecutionPort`** (a
@@ -177,7 +177,7 @@ phase is complete.**
   non-canonical `EvidenceRef` fixture; (5) a `repoRoot` finder for the surface-baseline path; (6) FsCheck generators
   for arbitrary command lines (incl. quotes/escapes/empty) and `ExitCode`s. No network, no governed repository
   (SC-007).
-- [ ] T017 [P] Write `tests/FS.GG.Governance.GateRun.Tests/Main.fs` — the Expecto entry point
+- [X] T017 [P] Write `tests/FS.GG.Governance.GateRun.Tests/Main.fs` — the Expecto entry point
   (`[<EntryPoint>] runTestsInAssemblyWithCLIArgs`), matching the existing test projects.
 
 **Checkpoint**: `dotnet build FS.GG.Governance.sln` is clean; the `GateRun` test project compiles with only
@@ -200,7 +200,7 @@ non-canonical reference; `passed` exit-0-is-pass. No process, no I/O.
 
 ### Tests for the pure helpers (write first; must FAIL against the Phase-2 stubs) ⚠️
 
-- [ ] T018 [P] `tests/FS.GG.Governance.GateRun.Tests/PlanTests.fs` — (1) **`lexCommandLine`** (data-model §lex, D1):
+- [X] T018 [P] `tests/FS.GG.Governance.GateRun.Tests/PlanTests.fs` — (1) **`lexCommandLine`** (data-model §lex, D1):
   `"dotnet test --no-build"` ⇒ `Some (Executable "dotnet", [Argument "test"; Argument "--no-build"])`; single quotes,
   double quotes, and backslash escapes group/quote (`"echo 'hello world'"` ⇒ one `Argument "hello world"`); argument
   **order** is preserved (identity-significant); an empty / all-whitespace line ⇒ `None`; **no** shell features
@@ -218,19 +218,19 @@ non-canonical reference; `passed` exit-0-is-pass. No process, no I/O.
 
 ### Implementation for the pure helpers
 
-- [ ] T019 Implement `lexCommandLine` in `src/FS.GG.Governance.GateRun/Plan.fs` — a small explicit single-pass
+- [X] T019 Implement `lexCommandLine` in `src/FS.GG.Governance.GateRun/Plan.fs` — a small explicit single-pass
   character scanner (whitespace separates tokens; `'`/`"`/`\` group/quote; no globbing/expansion/pipes/redirection),
   the first token the `Executable`, the rest the ordered `Argument list`; `None` for an empty/all-whitespace line.
   The scanner's `mutable` index/accumulator are **disclosed and confined** to it (`// mutable: single-pass argv
   scan` — the constitution's sanctioned hot-loop use) and live **unexported** (absent from `Plan.fsi`). No custom
   operators/SRTP/reflection/recursion-for-state (Principle III).
-- [ ] T020 Implement `commandFor` and `passed` in `src/FS.GG.Governance.GateRun/Plan.fs` — `commandFor` is a `match`
+- [X] T020 Implement `commandFor` and `passed` in `src/FS.GG.Governance.GateRun/Plan.fs` — `commandFor` is a `match`
   on the gate's `RequiresCommand` prerequisite + a `tooling.Commands` lookup + `lexCommandLine`, assembling the
   `GateCommand` per the data-model table (repoRoot cwd, **empty** env delta, declared timeout, `NoCapturedOutput`),
   returning `None` on no-command / unresolved / empty-lex; `passed` is `exitCode = ExitCode 0`. No fabricated
   command, no ambient-env diff, no altered timeout (FR-002). After T019+T020 the lex/commandFor/passed groups of
   T018 go green.
-- [ ] T021 Implement `priorExitOf` in `src/FS.GG.Governance.GateRun/Plan.fs` — a `String.split`-and-find over the
+- [X] T021 Implement `priorExitOf` in `src/FS.GG.Governance.GateRun/Plan.fs` — a `String.split`-and-find over the
   documented F032 canonical-identity format (`exit=1<len>:<value>`, per
   `specs/032-command-records/contracts/command-record-identity-format.md`), returning `Some (ExitCode value)` on a
   canonical reference and `None` on any non-canonical one (the single declared-format read of the otherwise-opaque
@@ -259,7 +259,7 @@ into the persisted grown store.
 
 ### Tests for User Story 1 (write first; must FAIL against the Phase-2/3 stubs) ⚠️
 
-- [ ] T022 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/LoopTests.fs` — pure `update` transitions
+- [X] T022 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/LoopTests.fs` — pure `update` transitions
   (Principle IV's pure side): given the post-cache-eligibility model and a `GatesExecuted` carrying records for a
   blocking gate that exited non-zero and a blocking gate that exited 0, assert `update` (a) folds F049 `capture` for
   each executed gate into the store, (b) builds a `GateOutcome` per selected gate (`Executed`/`NotExecuted`,
@@ -267,7 +267,7 @@ into the persisted grown store.
   relocates the passing gate to `Passing` and recomputes `Verdict`/`ExitCodeBasis` (the failing gate stays a
   `Blocker` ⇒ `Fail`/`Blocked`; the passing gate cleared ⇒ if no blockers remain, `Pass`/`Clean`). FAIL against the
   T014 stubs.
-- [ ] T023 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/EndToEndTests.fs` (and `Support.fs` fixtures) —
+- [X] T023 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/EndToEndTests.fs` (and `Support.fs` fixtures) —
   drive `Interpreter.run` end-to-end through a **fake `ExecutionPort`** over **real `/bin/sh` temp-script fixtures**
   (one exits 0, one exits non-zero) with a **writable temp store** (US1 acceptance 1–3, SC-001/SC-002): (a) the
   selected blocking gate whose command exits non-zero with no prior evidence is executed once, recorded failed,
@@ -276,7 +276,7 @@ into the persisted grown store.
   each executed gate's evidence reference is folded into the reuse store and the grown store is persisted (pruned +
   retained) at the conventional store path (`<repo>/readiness/evidence-reuse.json`). Output digests derive from
   **real captured bytes**, never `Synthetic` literals. FAIL against the stubs.
-- [ ] T024 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/ShipInvariantTests.fs` — `applyExecution`
+- [X] T024 [P] [US1] Extend `tests/FS.GG.Governance.ShipCommand.Tests/ShipInvariantTests.fs` — `applyExecution`
   invariants (data-model §verdict relocation, D3): relocation can only **clear** blockers a passing gate would raise,
   never create one; a **failing** command-gate stays exactly where `Ship.rollup` placed it; a **no-command** gate
   (never in `passedGateIds`) keeps its current treatment (FR-005); findings are never relocated; the recomputed
@@ -285,11 +285,11 @@ into the persisted grown store.
 
 ### Implementation for User Story 1
 
-- [ ] T025 [US1] Implement the `ExecuteGates` interpreter arm in `src/FS.GG.Governance.ShipCommand/Interpreter.fs` —
+- [X] T025 [US1] Implement the `ExecuteGates` interpreter arm in `src/FS.GG.Governance.ShipCommand/Interpreter.fs` —
   for each `(GateId, GateCommand)` request, call `GateExecution.Interpreter.senseExecution ports.Execute command`
   **once** (FR-001) and return `GatesExecuted [(gateId, record); …]` in request order. The port is injected (real in
   `realPorts`, fake in tests); the interpreter spawns nothing itself beyond this delegation (Principle IV edge).
-- [ ] T026 [US1] Implement the execute/capture/persist wiring in `src/FS.GG.Governance.ShipCommand/Loop.fs` `update`
+- [X] T026 [US1] Implement the execute/capture/persist wiring in `src/FS.GG.Governance.ShipCommand/Loop.fs` `update`
   (data-model §Host-command flow): after F046 cache eligibility, **classify** each selected gate — `Plan.commandFor
   repoRoot tooling gate = None` ⇒ `NotExecuted`; `Some cmd` with `mustRecompute` ⇒ `Executed` (sent to
   `ExecuteGates`); (the `Reusable` arm is added in US2). On `GatesExecuted`: fold `EvidenceCapture.capture <freshness
@@ -298,7 +298,7 @@ into the persisted grown store.
   effect over the **grown** store (prune → retain `defaultRetentionBound` → serialise → write — F047/F048 verbatim,
   FR-010). Compose F049/F050/F051 verbatim — dereference no opaque reference, recompute no key/digest, invent no
   record/outcome shape (FR-015).
-- [ ] T027 [US1] Implement `applyExecution` in `src/FS.GG.Governance.ShipCommand/Loop.fs` (data-model §verdict
+- [X] T027 [US1] Implement `applyExecution` in `src/FS.GG.Governance.ShipCommand/Loop.fs` (data-model §verdict
   relocation, D3): `passedGateIds = { o.GateId | o.Passed = Some true }`; `List.partition`/reject those ids out of
   `decision.Blockers`/`decision.Warnings` into `decision.Passing` (relocated, not rebuilt); recompute `Verdict =
   if blockers' empty then Pass else Fail` and `ExitCodeBasis` from `Verdict` — `Ship`'s own rule re-applied. Uses
@@ -306,7 +306,7 @@ into the persisted grown store.
   already-public `ShipDecision`/`EnforcedItem`/`Verdict`/`ExitCodeBasis`. Call it after `Ship.rollup` in `update`,
   feed the relocated decision to `AuditJson.ofShipDecision … execution` and to `exitCode`. After T025–T027 + T028 the
   US1 tests go green.
-- [ ] T028 [US1] Implement the `execution` embed in `src/FS.GG.Governance.AuditJson/AuditJson.fs` — for each
+- [X] T028 [US1] Implement the `execution` embed in `src/FS.GG.Governance.AuditJson/AuditJson.fs` — for each
   selected-gate entry, beside the F045 `cacheEligibility` object and matched by `GateId`, render
   `"execution": { "disposition": "executed"|"reused"|"notExecuted", "exitCode": <int>, "passed": <bool> }` from the
   `execution` parameter; **omit** `exitCode`/`passed` for `notExecuted`; write **no** `execution` object when the
@@ -334,7 +334,7 @@ reused outcome contributes to the verdict on the same terms an executed outcome 
 
 ### Tests for User Story 2 (write first; must FAIL against the US1 Executed-only classification) ⚠️
 
-- [ ] T029 [P] [US2] Extend `tests/FS.GG.Governance.ShipCommand.Tests/EndToEndTests.fs` with the **two-run reuse
+- [X] T029 [P] [US2] Extend `tests/FS.GG.Governance.ShipCommand.Tests/EndToEndTests.fs` with the **two-run reuse
   demo** (US2 acceptance 1–3, SC-003) over a **call-counting fake `ExecutionPort`** and a writable temp store: run 1
   (empty store) executes the gate (port call count 1), captures evidence, persists the grown store; run 2 (same
   freshness world, store from run 1) marks the gate `reusable`, the port call count **stays 1** (no second spawn), and
@@ -343,7 +343,7 @@ reused outcome contributes to the verdict on the same terms an executed outcome 
   (the `OutputSink` human/JSON output) reports the gate as **executed** on run 1 and **reused** on run 2, consistent
   with the document (FR-016). Also: a gate whose freshness world **changed** since capture is marked `mustRecompute`
   and **is** re-executed (the stale reference is not reused). FAIL against US1's Executed-only path.
-- [ ] T030 [P] [US2] Extend `tests/FS.GG.Governance.ShipCommand.Tests/LoopTests.fs` — pure classification transitions:
+- [X] T030 [P] [US2] Extend `tests/FS.GG.Governance.ShipCommand.Tests/LoopTests.fs` — pure classification transitions:
   given a `Reusable` F046 verdict whose `EvidenceRef` `priorExitOf` recovers `Some exit`, `update` classifies the gate
   `Reused` (NOT in the `ExecuteGates` request) with `GateOutcome.ExitCode = Some exit`, `Passed = Some (passed exit)`;
   given a `Reusable` verdict whose reference `priorExitOf`s to `None`, `update` classifies it `Executed` (recompute —
@@ -351,7 +351,7 @@ reused outcome contributes to the verdict on the same terms an executed outcome 
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Extend the classification in `src/FS.GG.Governance.ShipCommand/Loop.fs` `update` (data-model §Per-gate
+- [X] T031 [US2] Extend the classification in `src/FS.GG.Governance.ShipCommand/Loop.fs` `update` (data-model §Per-gate
   classification): for a gate with `Some cmd` and an `isReusable` F046 verdict, read `Plan.priorExitOf ref` from the
   `Reusable` arm's `EvidenceRef` — `Some exit` ⇒ `Reused` (build its `GateOutcome` from the recovered exit; **not**
   sent to `ExecuteGates`, no spawn — FR-003); `None` ⇒ fall through to `Executed` (recompute-when-unrecoverable —
@@ -379,26 +379,26 @@ the command exits 0 even when a gate exits non-zero.
 
 ### Tests for User Story 3 (write first; must FAIL against the Phase-2 stubs) ⚠️
 
-- [ ] T032 [P] [US3] Extend `tests/FS.GG.Governance.RouteCommand.Tests/EndToEndTests.fs` (and `Support.fs`) — drive
+- [X] T032 [P] [US3] Extend `tests/FS.GG.Governance.RouteCommand.Tests/EndToEndTests.fs` (and `Support.fs`) — drive
   `Interpreter.run` through a fake `ExecutionPort` over real temp-script fixtures with a writable temp store (US3
   acceptance 1–2, SC-004): each selected-gate entry in `route.json` carries `"execution"` (disposition + exit code +
   output-digest-derived `passed`) and executed-vs-reused; a gate whose command exits non-zero is **reported** but the
   command still **exits 0**; the grown store is persisted (pruned + retained). Reuse the call-counting two-run demo
   (run 1 executes, run 2 reuses, no second spawn). FAIL against the stubs.
-- [ ] T033 [P] [US3] Extend `tests/FS.GG.Governance.RouteCommand.Tests/DeterminismTests.fs` (or `CacheInvariantTests.fs`)
+- [X] T033 [P] [US3] Extend `tests/FS.GG.Governance.RouteCommand.Tests/DeterminismTests.fs` (or `CacheInvariantTests.fs`)
   to **recompute** the expected `route.json` live and assert every non-execution field (selected gates, route trace,
   findings, cost rollup, cache section, schema version) is exactly what `fsgg route` produced before this wiring,
   except the new per-gate `execution` embed (US3 acceptance 3, FR-009). FAIL until T034–T035 land.
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Implement the `ExecuteGates` interpreter arm in `src/FS.GG.Governance.RouteCommand/Interpreter.fs`
+- [X] T034 [US3] Implement the `ExecuteGates` interpreter arm in `src/FS.GG.Governance.RouteCommand/Interpreter.fs`
   (mirror T025: `senseExecution ports.Execute` once per request → `GatesExecuted` in order) and the
   execute/classify/capture/persist wiring in `src/FS.GG.Governance.RouteCommand/Loop.fs` `update` (mirror T026 + T031:
   classify Executed/Reused/NotExecuted, fold F049 capture, build `GateOutcome`s, persist the grown store). Route's
   `exitCode` stays **always 0** (FR-008) — no verdict relocation (that is ship-only, D7). Feed the `GateOutcome`s to
   `RouteJson.ofRouteResult … execution`.
-- [ ] T035 [US3] Implement the `execution` embed in `src/FS.GG.Governance.RouteJson/RouteJson.fs` — identical shape and
+- [X] T035 [US3] Implement the `execution` embed in `src/FS.GG.Governance.RouteJson/RouteJson.fs` — identical shape and
   default-empty rule as `AuditJson` (T028): render `"execution"` beside the F045 `cacheEligibility` per selected-gate
   entry matched by `GateId`, omit `exitCode`/`passed` for `notExecuted`, write nothing when the parameter is empty
   (byte-identical to today — FR-009, D6). After T034 + T035 the US3 tests go green.
@@ -424,7 +424,7 @@ within a bounded time, a no-command gate is skipped, and store failures are surf
 
 ### Tests for User Story 4 (write first) ⚠️
 
-- [ ] T036 [P] [US4] Extend `tests/FS.GG.Governance.ShipCommand.Tests/FailureTests.fs` — over real fixtures through the
+- [X] T036 [P] [US4] Extend `tests/FS.GG.Governance.ShipCommand.Tests/FailureTests.fs` — over real fixtures through the
   port (US4 acceptance 1–3, SC-005/SC-006): a **missing executable** ⇒ recorded `startFailureExitCode` + captured
   diagnostic, no throw, treated as a **failed** (blocking/warning) gate per effective severity; a gate that **overruns**
   its declared timeout ⇒ terminated and recorded (`timeoutExitCode` + partial output + elapsed duration) within a
@@ -434,7 +434,7 @@ within a bounded time, a no-command gate is skipped, and store failures are surf
   large output (FR-012) is inherited verbatim from the F051 port (the F050 digest it applies) — exercise it here only
   where an edge fixture is cheap to add; it needs no new F052 logic. Reach the **real** F051 `realPort` only where an
   edge test needs it (mirroring F051's discipline), the rest through the fake port.
-- [ ] T037 [P] [US4] Extend `tests/FS.GG.Governance.ShipCommand.Tests/DegradeTests.fs` and
+- [X] T037 [P] [US4] Extend `tests/FS.GG.Governance.ShipCommand.Tests/DegradeTests.fs` and
   `tests/FS.GG.Governance.RouteCommand.Tests/DegradeTests.fs` (and `PersistenceEdgeTests.fs`) — store degradation
   (US4 acceptance 4, SC-007, FR-013): an **absent** store ⇒ empty ⇒ every gate `mustRecompute` (executed), and the
   store ends present-and-populated; an **unreadable** store ⇒ degrades to empty (all executed), read failure surfaced
@@ -443,7 +443,7 @@ within a bounded time, a no-command gate is skipped, and store failures are surf
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Surface the execution outcome in each command's human/JSON summary (FR-016) — in
+- [X] T038 [US4] Surface the execution outcome in each command's human/JSON summary (FR-016) — in
   `src/FS.GG.Governance.ShipCommand/Loop.fs` and `src/FS.GG.Governance.RouteCommand/Loop.fs` `render` (and the
   `OutputSink` path), report which gates were executed vs reused, which passed/failed and how (including a named
   sentinel outcome — `startFailureExitCode`/`timeoutExitCode`), and any store read/persist failure — **consistent with
@@ -470,7 +470,7 @@ duration-only difference does not, and that the persisted store is pruned and re
 
 ### Tests for User Story 5 (write first; assert the property the wiring already satisfies) ⚠️
 
-- [ ] T039 [P] [US5] Extend `tests/FS.GG.Governance.ShipCommand.Tests/DeterminismTests.fs` and
+- [X] T039 [P] [US5] Extend `tests/FS.GG.Governance.ShipCommand.Tests/DeterminismTests.fs` and
   `tests/FS.GG.Governance.RouteCommand.Tests/DeterminismTests.fs` (US5 acceptance 1–3, SC-008): two runs of the same
   deterministic gate over the same world produce a byte-identical `canonicalId` (and `referenceOf`) despite differing
   measured durations, and the second run **reuses** the first's evidence; the persisted store is deterministic and
@@ -490,7 +490,7 @@ reproducible identity and bounded store are pinned; the cache loop closes determ
 Classification), prove the change is additive and edits no frozen core (FR-017, SC-009), and run the quickstart
 end-to-end. Bless baselines only after the surfaces are final.
 
-- [ ] T040 [P] `tests/FS.GG.Governance.GateRun.Tests/SurfaceDriftTests.fs` — a reflective `SurfaceDrift` test (the
+- [X] T040 [P] `tests/FS.GG.Governance.GateRun.Tests/SurfaceDriftTests.fs` — a reflective `SurfaceDrift` test (the
   `GateExecution`/`Snapshot` precedent) comparing the public surface of the production `FS.GG.Governance.GateRun`
   assembly byte-for-byte to `surface/FS.GG.Governance.GateRun.surface.txt` with the `BLESS_SURFACE=1` re-bless path
   (reflection lives ONLY in this test); plus a **scope-hygiene** assertion that the **production** `GateRun` assembly
@@ -499,16 +499,16 @@ end-to-end. Bless baselines only after the surfaces are final.
   `ShipCommand`, or any third-party package (the test project's `EvidenceCapture` ref is deliberately excluded — it
   inspects the production assembly). This is the check that catches a stray T009 reference. Add `SurfaceDriftTests.fs`
   to the test `.fsproj` `<Compile>` immediately after `PlanTests.fs` and before `Main.fs`.
-- [ ] T041 Generate and commit `surface/FS.GG.Governance.GateRun.surface.txt` via `BLESS_SURFACE=1 dotnet test
+- [X] T041 Generate and commit `surface/FS.GG.Governance.GateRun.surface.txt` via `BLESS_SURFACE=1 dotnet test
   tests/FS.GG.Governance.GateRun.Tests/...`; review the diff (exactly `Model` — `GateDisposition`, `GateOutcome` — and
   `Plan` — `lexCommandLine`, `commandFor`, `priorExitOf`, `passed`; **no** argv-scanner leak). After this T040 runs
   green without `BLESS_SURFACE`.
-- [ ] T042 Re-bless the **additive** baseline deltas for the edited surfaces via `BLESS_SURFACE=1`:
+- [X] T042 Re-bless the **additive** baseline deltas for the edited surfaces via `BLESS_SURFACE=1`:
   `surface/FS.GG.Governance.RouteCommand.surface.txt` and `surface/FS.GG.Governance.ShipCommand.surface.txt` (the new
   `Ports.Execute` field, the `ExecuteGates`/`GatesExecuted` cases, and — ship — `applyExecution`), and
   `surface/FS.GG.Governance.RouteJson.surface.txt` / `surface/FS.GG.Governance.AuditJson.surface.txt` (the new optional
   `execution` parameter). Review each diff to confirm it is **only** the additive delta — no removed/renamed symbol.
-- [ ] T043 [P] Verify FR-009 / SC-009 (additive documents, no frozen-core edit) by inspection: `git diff` shows **no**
+- [X] T043 [P] Verify FR-009 / SC-009 (additive documents, no frozen-core edit) by inspection: `git diff` shows **no**
   edit to any merged pure core (`FS.GG.Governance.Enforcement`, `Ship`, `GateExecution`, `ExecutionRecord`,
   `EvidenceCapture`, `EvidenceReuseStore`, `FreshnessSensing`, `CacheEligibility`, `CommandRecord`, `EvidenceReuse`),
   the F045 cache embed, or the `fsgg.evidence-reuse-store/v1` / `route.json` / `audit.json` schema (no `schemaVersion`
@@ -516,7 +516,7 @@ end-to-end. Bless baselines only after the surfaces are final.
   to empty); the only document changes are the new per-gate `execution` embed and the ship verdict changes that follow
   from real pass/fail. The route/ship command tests legitimately recompute their expected documents (do **not** run
   `BLESS_FIXTURES=1` for any frozen golden).
-- [ ] T044 Run `quickstart.md` validation end-to-end: `dotnet build FS.GG.Governance.sln`; `dotnet fsi
+- [X] T044 Run `quickstart.md` validation end-to-end: `dotnet build FS.GG.Governance.sln`; `dotnet fsi
   scripts/prelude.fsx` (the F052 section: argv lex, `commandFor` `Some`/`None`, `priorExitOf` round-trip `Some` and
   non-canonical `None`); `dotnet test FS.GG.Governance.sln` — all projects green under `TreatWarningsAsErrors`,
   including the `GateRun` pure-helper tests, the ship two-run reuse + verdict tests, the route advisory + embed tests,
