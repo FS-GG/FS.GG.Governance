@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F052: the small PURE helper library the `fsgg route` / `fsgg ship` gate-execution wiring needs and
+       no merged core supplies — argv lex (`lexCommandLine`), command derivation (`commandFor`), prior-exit
+       recovery (`priorExitOf`), and the exit→pass/fail map (`passed`), plus the shared `GateDisposition` /
+       `GateOutcome` vocabulary. It is layered ON TOP of the merged evidence-reuse thread (the constitution's
+       "heavier capabilities layer on top, not into the core"), referenced by `RouteCommand` / `ShipCommand`.
+
+       Everything here is PURE — no process, no clock, no I/O. The impure run itself is the already-merged
+       F051 `GateExecution.realPort`, injected at each command's interpreter edge; this library is pure given
+       that port, exactly like the merged `senseExecution`.
+
+       ProjectReferences (and ONLY these — plan Primary Dependencies): GateExecution (F051 `GateCommand`),
+       CommandRecord (F032 `Executable`/`Argument`/`ExitCode`/identity format), EvidenceReuse (F030
+       `EvidenceRef`), Config (F014 `CommandSpec`/`ToolingFacts`/`TimeoutLimit`/`EnvironmentClass`), Gates
+       (F018 `Gate`/`GatePrerequisite`/`CommandId`). NO third-party PackageReference (FR-017). Compile order
+       Model.fsi → Model.fs → Plan.fsi → Plan.fs. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.GateRun</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- New package identity, packable like the GateExecution/ExecutionRecord thread siblings. "Pack output
+         unaffected" means EXISTING packages are untouched, not that this library is unpackable. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.GateRun</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Plan.fsi" />
+    <Compile Include="Plan.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+  </ItemGroup>
+
+</Project>

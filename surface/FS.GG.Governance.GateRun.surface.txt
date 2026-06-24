@@ -1,0 +1,58 @@
+TYPE FS.GG.Governance.GateRun.ModelModule
+  [NestedType] FS.GG.Governance.GateRun.ModelModule+GateDisposition
+  [NestedType] FS.GG.Governance.GateRun.ModelModule+GateOutcome
+TYPE FS.GG.Governance.GateRun.ModelModule+GateDisposition
+  [Method] Boolean Equals(GateDisposition)
+  [Method] Boolean Equals(GateDisposition, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsExecuted()
+  [Method] Boolean get_IsNotExecuted()
+  [Method] Boolean get_IsReused()
+  [Method] GateDisposition get_Executed()
+  [Method] GateDisposition get_NotExecuted()
+  [Method] GateDisposition get_Reused()
+  [Method] Int32 CompareTo(GateDisposition)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateRun.ModelModule+GateDisposition+Tags
+  [Property] Boolean IsExecuted
+  [Property] Boolean IsNotExecuted
+  [Property] Boolean IsReused
+  [Property] GateDisposition Executed
+  [Property] GateDisposition NotExecuted
+  [Property] GateDisposition Reused
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateRun.ModelModule+GateDisposition+Tags
+  [Field] Int32 Executed
+  [Field] Int32 NotExecuted
+  [Field] Int32 Reused
+TYPE FS.GG.Governance.GateRun.ModelModule+GateOutcome
+  [Constructor] Void .ctor(GateId, GateDisposition, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode], Microsoft.FSharp.Core.FSharpOption`1[System.Boolean])
+  [Method] Boolean Equals(GateOutcome)
+  [Method] Boolean Equals(GateOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GateDisposition get_Disposition()
+  [Method] GateId get_GateId()
+  [Method] Int32 CompareTo(GateOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] get_ExitCode()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Boolean] get_Passed()
+  [Method] System.String ToString()
+  [Property] GateDisposition Disposition
+  [Property] GateId GateId
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] ExitCode
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Boolean] Passed
+TYPE FS.GG.Governance.GateRun.PlanModule
+  [Method] Boolean passed(ExitCode)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] priorExitOf(EvidenceRef)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+GateCommand] commandFor(System.String, ToolingFacts, Gate)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.CommandRecord.ModelModule+Executable,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument]]] lexCommandLine(System.String)
