@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F051, exercising the PUBLIC surface of FS.GG.Governance.GateExecution: the
+       PURE-GIVEN-THE-PORT side (drive `senseExecution` through a deterministic FAKE port — no process at
+       all) and the EDGE side (drive `realPort` against REAL `/bin/sh` temp-script fixtures, mirroring the
+       `Snapshot` tests' real `git` — Principle V, no mocks, no network, no governed repository). The output
+       digests under test are DERIVED from real captured bytes (`ExecutionRecord.digestOf <captured>`), never
+       `Synthetic`/`OutputDigest` literals — that is the whole point of this row.
+
+       EvidenceCapture (F049), EvidenceReuse (F030), and FreshnessKey (F029) appear here as TEST-ONLY
+       ProjectReferences (for the close-the-loop round-trip only); the production library has NO such
+       dependency (asserted by the SurfaceDriftTests scope-hygiene check). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="SenseTests.fs" />
+    <Compile Include="FailureTests.fs" />
+    <Compile Include="IdentityTests.fs" />
+    <Compile Include="CloseLoopTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ExecutionRecord/FS.GG.Governance.ExecutionRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>

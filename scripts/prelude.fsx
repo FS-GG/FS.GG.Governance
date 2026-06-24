@@ -2484,3 +2484,74 @@ printfn "[F50] one output byte ⇒ different reference? %b" (EvidenceCapture.ref
 let f50Inputs = f47Inputs "execution-record"
 let f50Grown = EvidenceCapture.capture f50Inputs f50Record EvidenceReuse.empty
 printfn "[F50] captured world reusable with derived ref? %b" (EvidenceReuse.decide f50Inputs f50Grown = Reuse(EvidenceCapture.referenceOf f50Record)) // expect: true
+
+// ── F051: RUN a gate's process behind an injected execution port and ASSEMBLE its command record (IMPURE edge) ──
+// Design-first proof (Principle I), exercising the public surface BEFORE the operation bodies land (its
+// assertions FAIL against the stubs — expected). F050 could only assemble a `CommandRecord` from
+// ALREADY-CAPTURED bytes + already-sensed facts; NOTHING in the codebase ever ran a gate's process. This row
+// delivers that first-and-only impure edge: an injected `ExecutionPort` isolates ALL process I/O, and
+// `senseExecution` = edge I/O + the pure F050 `recordOf` (mirroring `Snapshot.senseSnapshot` = edge I/O + pure
+// `assemble`). `realPort` is the SOLE place a process starts; it is TOTAL & SAFE (records, never throws/hangs).
+// Reuses the ExecutionRecord / CommandRecord / EvidenceReuse / EvidenceCapture / FreshnessKey assemblies #r'd
+// above; loads the new edge here.
+#r "../src/FS.GG.Governance.GateExecution/bin/Debug/net10.0/FS.GG.Governance.GateExecution.dll"
+
+open FS.GG.Governance.GateExecution
+open FS.GG.Governance.GateExecution.Model
+
+// (1) PURE GIVEN THE PORT — drive senseExecution with a deterministic FAKE port (no process at all).
+let f51StdoutBytes = Encoding.UTF8.GetBytes "hello\n"
+let f51StderrBytes: byte[] = [||]
+
+let f51FakePort: ExecutionPort =
+    fun _command ->
+        { Stdout = f51StdoutBytes
+          Stderr = f51StderrBytes
+          ExitCode = ExitCode 0
+          Duration = SensedDuration 1_000_000L }
+
+let f51Cmd: GateCommand =
+    { Executable = Executable "echo"
+      Arguments = [ Argument "hello" ]
+      WorkingDirectory = WorkingDirectory "/tmp"
+      Environment = { Added = []; Changed = []; Removed = [] }
+      Timeout = TimeoutLimit 30
+      CapturedOutput = NoCapturedOutput }
+
+let f51Record = Interpreter.senseExecution f51FakePort f51Cmd
+// FR-002/FR-004: the two captured buffers digest into the two output positions (never swapped).
+printfn "\n[F51] StdoutDigest = digestOf captured stdout? %b" (f51Record.Reproducible.StdoutDigest = ExecutionRecord.digestOf f51StdoutBytes) // expect: true
+printfn "[F51] StderrDigest = digestOf captured stderr? %b" (f51Record.Reproducible.StderrDigest = ExecutionRecord.digestOf f51StderrBytes) // expect: true
+// Every reproducible fact is carried verbatim from the command.
+printfn "[F51] reproducible facts carried verbatim? %b"
+    (f51Record.Reproducible.Executable = f51Cmd.Executable
+     && f51Record.Reproducible.Arguments = f51Cmd.Arguments
+     && f51Record.Reproducible.WorkingDirectory = f51Cmd.WorkingDirectory
+     && f51Record.Reproducible.Environment = f51Cmd.Environment
+     && f51Record.Reproducible.Timeout = f51Cmd.Timeout
+     && f51Record.Reproducible.CapturedOutput = f51Cmd.CapturedOutput) // expect: true
+printfn "[F51] canonicalId defined? %b" ((CommandRecord.identityValue (CommandRecord.canonicalId f51Record)).Length > 0) // expect: true
+
+// (2) THE REAL EDGE — run an actual process through realPort (a temp `/bin/sh` script printing known bytes).
+let f51Dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "fsgg-prelude-" + System.Guid.NewGuid().ToString("N"))
+System.IO.Directory.CreateDirectory f51Dir |> ignore
+let f51Script = System.IO.Path.Combine(f51Dir, "gate.sh")
+System.IO.File.WriteAllText(f51Script, "printf '%s' 'real-output'\nexit 0\n")
+
+let f51RealCmd: GateCommand =
+    { Executable = Executable "/bin/sh"
+      Arguments = [ Argument f51Script ]
+      WorkingDirectory = WorkingDirectory f51Dir
+      Environment = { Added = []; Changed = []; Removed = [] }
+      Timeout = TimeoutLimit 30
+      CapturedOutput = NoCapturedOutput }
+
+let f51RealRecord = Interpreter.senseExecution Interpreter.realPort f51RealCmd
+printfn "[F51] real edge: clean gate records ExitCode 0? %b" (f51RealRecord.Reproducible.ExitCode = ExitCode 0) // expect: true
+printfn "[F51] real edge: StdoutDigest = digestOf real captured bytes? %b" (f51RealRecord.Reproducible.StdoutDigest = ExecutionRecord.digestOf (Encoding.UTF8.GetBytes "real-output")) // expect: true
+try System.IO.Directory.Delete(f51Dir, true) with _ -> ()
+
+// (3) close-the-loop — the assembled record derives a reproducible F049 reference and a reusable F030 world.
+let f51Inputs = f47Inputs "gate-execution"
+let f51Grown = EvidenceCapture.capture f51Inputs f51Record EvidenceReuse.empty
+printfn "[F51] captured world reusable with derived ref? %b" (EvidenceReuse.decide f51Inputs f51Grown = Reuse(EvidenceCapture.referenceOf f51Record)) // expect: true
