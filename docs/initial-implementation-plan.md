@@ -1143,21 +1143,30 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   `docs/release/migrations/` + additive-only posture.)
 - 🟡 [ ] Define Governance `fsgg verify` and `fsgg release` schemas and exit
   codes. (Governance: ship verdict rollup landed as **F024**; the `release` gate
-  schema is pending.)
-- 🟡 [ ] Add release rules for version bumps, package metadata, template pins,
+  schema + five-way exit codes landed as **F055** — `fsgg release` exits
+  `0` Success / `1` Blocked / `2` UsageError / `3` InputUnavailable / `4` ToolError
+  and emits the versioned `release.json` (`fsgg.release/v1`). `fsgg verify` remains
+  pending.)
+- 🟢 [x] Add release rules for version bumps, package metadata, template pins,
   publish plans, trusted publishing, and provenance. (Governance-owned; Phase 11.)
-  Progress: **F053** (`FS.GG.Governance.ReleaseRules`) landed the pure release-gate
-  core — `evaluate`/`rollup`/`evaluateRelease` turning declared release rules + the
-  six-family `ReleaseFacts` into one finding per rule and a verdict, reusing F023/F024
-  verbatim (facts supplied as typed input). **F054**
+  Landed across **F053 + F054 + F055**. **F053** (`FS.GG.Governance.ReleaseRules`)
+  landed the pure release-gate core — `evaluate`/`rollup`/`evaluateRelease` turning
+  declared release rules + the six-family `ReleaseFacts` into one finding per rule and a
+  verdict, reusing F023/F024 verbatim (facts supplied as typed input). **F054**
   (`FS.GG.Governance.ReleaseFactsSensing`) landed the **sensing** of those six families
   from a real governed repository behind a single injected `RepositoryPort` edge: a pure
   `deriveFacts` classifying each family `Met`/`Unmet`/`Unrecoverable` (fail-safe, never a
   fabricated `Met`) into **exactly the F053 `ReleaseFacts`** value (handed straight to
   `Release.evaluate`), plus a typed `ReleaseSnapshot` of the observed evidence;
-  network-free, deterministic, additive (no frozen-core edit, no schema bump). Pending:
-  the `fsgg release` host command wiring (sense → evaluate → exit code) and the
-  `release.json` projection.
+  network-free, deterministic, additive. **F055** (`FS.GG.Governance.ReleaseCommand` +
+  `FS.GG.Governance.ReleaseJson`) landed the **`fsgg release` host** wiring it end to
+  end (read `.fsgg/release.yml` → sense F054 → evaluate F053 → render + optional
+  `release.json` → five-way exit code) as an MVU `Loop`/`Interpreter`/`Program`, plus the
+  pure deterministic `release.json` projection (`fsgg.release/v1`). The release
+  declaration is a **row-local `.fsgg/release.yml` adapter** read through the established
+  F014 `Loader.FileReader`; **F014/F053/F054 are untouched** (no frozen-core edit, no
+  schema bump). 56 tests green (11 ReleaseJson + 45 ReleaseCommand); surface baselines +
+  golden committed; CLI smoke proves exit 0/1/2/3 distinct and byte-identical `release.json`.
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the

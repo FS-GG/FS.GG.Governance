@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F055 host edge: the `fsgg release` host command — the missing host that runs the release gate end
+       to end. It is the host sibling of F026 `ShipCommand`: it reads a governed repository's declared
+       release configuration (`.fsgg/release.yml`), SENSES the six release-rule families from the real
+       repository (reusing F054 `senseRelease`/`realPort`), EVALUATES the declared rules against the
+       sensed facts (reusing F053 `evaluateRelease` verbatim), RENDERS the verdict as human text and an
+       optional deterministic `release.json` audit artifact (F055 `ReleaseJson`), and EXITS with one of
+       five distinguishable codes so CI can block a non-compliant release.
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect, including the ExitCodeBasis -> exit
+       mapping) + an EDGE `Interpreter` (injected, fakeable Ports; realPorts/step/run) + a thin Program.
+       The row-local `Declaration` adapter parses `.fsgg/release.yml` into the exact F053/F054 inputs;
+       F014 `Config`'s frozen four-file schema is NOT edited. Compile order
+       Declaration -> Loop -> Interpreter -> Program.
+
+       It reuses VERBATIM, via project references: F053 `ReleaseRules` (`evaluateRelease`), F054
+       `ReleaseFactsSensing` (`senseRelease`/`realPort`), F014 `Config` (`Loader.FileReader`/
+       `fileSystemReader`, `SurfaceId`/`Severity`/`Maturity`), and the new `ReleaseJson` projection. It
+       adds YamlDotNet (already pinned, already used by F014 `Config`) for the row-local release.yml
+       parse — NO new package. The only new impure primitives are a `System.IO` write (the
+       ArtifactWriter port) and `Environment.Exit` at the Program edge — both BCL. Reaches NO network.
+
+       IsPackable=false this slice: no central `fsgg` dispatcher exists or is introduced (research D1),
+       so this row does NOT ship a NuGet tool that claims a `fsgg` ToolCommandName. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Declaration.fsi" />
+    <Compile Include="Declaration.fs" />
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
+  </ItemGroup>
+
+</Project>

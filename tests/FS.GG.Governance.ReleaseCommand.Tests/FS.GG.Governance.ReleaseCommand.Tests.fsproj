@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F055 `FS.GG.Governance.ReleaseCommand`, exercising the PUBLIC surface: the
+       pure `Loop.parse`/`init`/`update`/`render`/`exitCode` driven with literal Model/Msg values (no
+       I/O, no clock), the row-local `Declaration.parse` over real release.yml text, and the edge
+       `Interpreter.run`/`step` driven against a REAL temp-repo fixture (the F054/ShipCommand
+       `withTempRepo` precedent) over the REAL F053/F054/ReleaseJson cores — never mocks of the cores.
+       Faked `Write`/`Out` ports for unit coverage of persistence/degrade; one real-filesystem
+       end-to-end proof (Principle V). References the same cores the ReleaseCommand project references
+       so tests can construct typed values. Expecto + the VSTest adapters drive `dotnet test`. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="DeclarationTests.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="EndToEndTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="PersistenceEdgeTests.fs" />
+    <Compile Include="FailureTests.fs" />
+    <Compile Include="DegradeTests.fs" />
+    <Compile Include="NoMutationTests.fs" />
+    <Compile Include="ScopeGuardTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseCommand/FS.GG.Governance.ReleaseCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>
