@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F055: the optional, packable release.json *projection* — the release.json document row. A single
+       pure, total `ReleaseJson.ofRelease : ReleaseDecision -> SensedRelease -> string` (plus a
+       `schemaVersion` constant) renders the F053 `ReleaseDecision` + the F054 `SensedRelease` snapshot
+       into the deterministic, versioned `release.json` WHOLE-RELEASE audit document text — the stable,
+       machine-readable release-gate contract CI, dashboards, agents, and humans read instead of an
+       in-memory value.
+
+       Where F020's `route.json` is the per-change route view, F021's `gates.json` is the whole-catalog
+       gate view, F025's `audit.json` is the whole-change ship-verdict view, and F042's
+       `cache-eligibility.json` is the per-change cache view, this `release.json` is the WHOLE-RELEASE
+       gate view: the verdict + exit-code basis, one finding per declared rule (kind, surface, fact
+       state, outcome, base + effective severity, reason), and the per-family observed-evidence snapshot.
+
+       This row LAYERS serialization on top of the pure F053/F054 cores in a SEPARATE project
+       (constitution: heavier capabilities layer on top, not into the core). It is emit-only: it
+       re-derives/re-classifies/re-sorts NOTHING — the `ReleaseDecision` already fixed the verdict,
+       basis, and partition, and the `SensedRelease` already fixed evidence ordering. PURE and TOTAL
+       (FR-008): no I/O, no git, no clock, never throws, byte-identical for identical input (SC-003).
+
+       It reuses the public upstream accessors VERBATIM for token rendering — F053
+       `Release.releaseRuleKindToken`/`releaseRuleKindOrdinal` — and matches each closed enum case
+       exhaustively with NO wildcard, so a future case is a compile error here, never a silently
+       mis-tokened field. It adds NO new third-party PackageReference — serialization is the net10.0
+       shared-framework `System.Text.Json` (`Utf8JsonWriter`) the kernel's `Json.fs` and
+       F020/F021/F025/F042's projections already use (FR-014). Compile order is ReleaseJson.fsi ->
+       ReleaseJson.fs. The whole surface is a pure total function — no MVU ceremony (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Routing/Gates/Route/RouteJson/AuditJson/CacheEligibilityJson. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReleaseJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ReleaseJson.fsi" />
+    <Compile Include="ReleaseJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
