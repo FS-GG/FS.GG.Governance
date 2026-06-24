@@ -4,6 +4,46 @@
 
 **Input**: Feature specification from `/specs/054-release-facts-sensing/spec.md`
 
+## Implementation Status
+
+**Status: ✅ COMPLETE** — implemented, tested, surface blessed, and merged to `main`
+(merge `1cd78a9`, feature commit `1af6864`).
+
+All 25 tasks (T001–T025) across all six phases are `[X]` in [tasks.md](./tasks.md):
+
+| Phase | Scope | Outcome |
+|-------|-------|---------|
+| 1 — Setup | new `src` + `tests` projects, `.sln` entries, `CLAUDE.md` pointer | ✅ restores + lists |
+| 2 — Foundational | three curated `.fsi`, the data model + `releaseFamilies`, the FSI proof, test scaffolding | ✅ compiles clean under `TreatWarningsAsErrors` |
+| 3 — US1 (MVP) | pure `Sensing.deriveFacts`; the F053 hand-off | ✅ `DeriveFactsTests` + `HandoffTests` green |
+| 4 — US2 | the observed-evidence `ReleaseSnapshot` detail | ✅ `SnapshotTests` green |
+| 5 — US3 | the impure `realPort`/`gather`/`senseRelease` edge; fail-safe/determinism | ✅ `InterpreterTests` + `DeterminismTests` green |
+| 6 — Polish | surface baseline + scope guard, FsCheck property, additivity, quickstart | ✅ blessed + scope-clean |
+
+**Evidence (real, per Principle V):**
+- **26** new tests green; full solution **44 test projects, 0 failures** under `TreatWarningsAsErrors`.
+- The edge is exercised against a **real temp fixture repository** through `realPort`; the pure
+  `deriveFacts` over hand-built `RecoveredEvidence`. No mocks, no network (SC-004).
+- `scripts/prelude.fsx` F054 section — every `[F54]` line prints `true` (Principle I FSI proof).
+- `SurfaceDrift` dependency scope guard bans `System.Net.Http`/`Octokit`/`LibGit2Sharp` (SC-004);
+  an FsCheck property pins `|Facts.States| = 6` and the no-fabrication invariant (FR-009/SC-002/SC-006).
+- New surface baseline `surface/FS.GG.Governance.ReleaseFactsSensing.surface.txt` blessed (no leak
+  of the per-family classifiers, snapshot builders, or per-source readers/parsers).
+
+**Additivity confirmed:** no edit to any frozen core (`ReleaseRules`/`Snapshot`/`Config`/…), no
+schema or schema-version change, no new third-party `PackageReference`. The library hardcodes no
+product id, path, field, pin, posture, or layout (FR-011) — all caller-supplied.
+
+**Deviations / notes:**
+- The `.fs` bodies were authored directly as real implementations (not the intermediate `failwith`
+  stubs the phase plan sketches); the end state is the same and is what the green suite exercises.
+- The **test** project adds a test-only `ProjectReference` to `FS.GG.Governance.Enforcement` (beyond
+  the three the tasks enumerated) so the F053 hand-off fixtures can construct `ReleaseRule.BaseSeverity`
+  (`Severity`). The **production** library does not reference it — the scope guard proves it.
+
+**Out of scope (following rows, FR-012):** evaluating rules into findings / a verdict (F053), the
+`fsgg release` host command, and the `release.json` projection — those consume this sensing.
+
 ## Summary
 
 F053 landed the pure release-gate core (`evaluate`/`rollup`/`evaluateRelease`) but took the release facts
