@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F051: the FIRST and ONLY process-spawning capability in the codebase — the impure
+       GATE-EXECUTION PORT behind an injected `ExecutionPort`. The cache/evidence-reuse thread
+       (F029-F050) is pure all the way FROM A `CommandRecord` ONWARD; this row delivers the missing
+       impure edge that produces one from a gate the system actually ran: it spawns the process,
+       reads its real stdout/stderr bytes verbatim, times the run, senses the integer exit code,
+       enforces the timeout, and catches a start failure — then assembles a complete F032
+       `CommandRecord`.
+
+       It follows the established edge pattern (the `Snapshot` `senseSnapshot`/`realPorts` and F046
+       `FreshnessSensing` `realSensor` precedents): an injected `ExecutionPort` isolates ALL process
+       I/O behind a function value, and `senseExecution` = edge I/O + the pure F050 `recordOf`
+       (mirroring `senseSnapshot` = edge I/O + pure `Snapshot.assemble`). `realPort` is the SOLE
+       place a process starts. The port is TOTAL & SAFE: it records, never throws or hangs — a
+       non-zero exit is recorded; a missing executable becomes a `startFailureExitCode` + captured
+       diagnostic; an overrunning gate is killed and recorded as `timeoutExitCode`.
+
+       It reuses the F050/F032/F014 vocabulary VERBATIM, introduces NO schema/CLI/persisted
+       artifact, and is referenced by nothing on landing (exactly as F047/F049/F050 were). Its own
+       edge code is BCL + FSharp.Core only: the process runs through `System.Diagnostics.Process` /
+       `ProcessStartInfo` and is timed with `System.Diagnostics.Stopwatch` — both BCL, both the
+       established `Snapshot` interpreter precedent. NO new third-party PackageReference.
+
+       Exactly ONE ProjectReference — to FS.GG.Governance.ExecutionRecord (F050 `recordOf`, and
+       `digestOf` transitively). FS.GG.Governance.CommandRecord (F032 `CommandRecord`, the
+       reproducible-fact types, `ExitCode`, `CapturedOutput`, `SensedDuration`) and
+       FS.GG.Governance.Config (F014 `TimeoutLimit`) arrive TRANSITIVELY through F050. Compile order
+       is Model.fsi -> Model.fs -> Interpreter.fsi -> Interpreter.fs (the `Snapshot` edge
+       precedent). The dependency direction stays one-way:
+       GateExecution -> ExecutionRecord -> CommandRecord -> Config. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.GateExecution</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- New package identity, packable like ExecutionRecord/EvidenceCapture/Snapshot. "Pack output
+         unaffected" means EXISTING packages are untouched, not that this library is unpackable. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.GateExecution</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ExecutionRecord/FS.GG.Governance.ExecutionRecord.fsproj" />
+  </ItemGroup>
+
+</Project>

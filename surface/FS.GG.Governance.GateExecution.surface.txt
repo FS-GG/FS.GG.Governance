@@ -1,0 +1,55 @@
+TYPE FS.GG.Governance.GateExecution.InterpreterModule
+  [Method] CommandRecord senseExecution(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], GateCommand)
+  [Method] ExitCode get_startFailureExitCode()
+  [Method] ExitCode get_timeoutExitCode()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_realPort()
+  [Property] ExitCode startFailureExitCode
+  [Property] ExitCode timeoutExitCode
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] realPort
+TYPE FS.GG.Governance.GateExecution.ModelModule
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+GateCommand
+TYPE FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome
+  [Constructor] Void .ctor(Byte[], Byte[], ExitCode, SensedDuration)
+  [Method] Boolean Equals(ExecutionOutcome)
+  [Method] Boolean Equals(ExecutionOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Byte[] get_Stderr()
+  [Method] Byte[] get_Stdout()
+  [Method] ExitCode get_ExitCode()
+  [Method] Int32 CompareTo(ExecutionOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SensedDuration get_Duration()
+  [Method] System.String ToString()
+  [Property] Byte[] Stderr
+  [Property] Byte[] Stdout
+  [Property] ExitCode ExitCode
+  [Property] SensedDuration Duration
+TYPE FS.GG.Governance.GateExecution.ModelModule+GateCommand
+  [Constructor] Void .ctor(Executable, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument], WorkingDirectory, EnvironmentDelta, TimeoutLimit, CapturedOutput)
+  [Method] Boolean Equals(GateCommand)
+  [Method] Boolean Equals(GateCommand, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CapturedOutput get_CapturedOutput()
+  [Method] EnvironmentDelta get_Environment()
+  [Method] Executable get_Executable()
+  [Method] Int32 CompareTo(GateCommand)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument] get_Arguments()
+  [Method] System.String ToString()
+  [Method] TimeoutLimit get_Timeout()
+  [Method] WorkingDirectory get_WorkingDirectory()
+  [Property] CapturedOutput CapturedOutput
+  [Property] EnvironmentDelta Environment
+  [Property] Executable Executable
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument] Arguments
+  [Property] TimeoutLimit Timeout
+  [Property] WorkingDirectory WorkingDirectory
