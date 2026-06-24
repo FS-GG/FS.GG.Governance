@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F054, exercising the PUBLIC surface of FS.GG.Governance.ReleaseFactsSensing:
+       the pure `Sensing.deriveFacts` over hand-built `RecoveredEvidence` (no disk), and the edge
+       `Interpreter.senseRelease` over a REAL temporary fixture repository read through `realPort`
+       (Principle V — real files, no fake filesystem, no network). It additionally references
+       FS.GG.Governance.ReleaseRules (to build the reused primitives and prove the F053 hand-off:
+       `sensed.Facts` feeds `Release.evaluate` unchanged) and FS.GG.Governance.Config (SurfaceId).
+       Expecto + FsCheck give the six-families property; the VSTest adapters let `dotnet test` drive
+       the Expecto runner. No network, no registry, no publishing provider (SC-004). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="DeriveFactsTests.fs" />
+    <Compile Include="HandoffTests.fs" />
+    <Compile Include="SnapshotTests.fs" />
+    <Compile Include="InterpreterTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="PropertyTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <!-- Test-only: build the F053 `ReleaseRule.BaseSeverity` (Severity) for the hand-off fixtures. The
+         production library does NOT reference Enforcement (the SC-004 scope guard proves it). -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+  </ItemGroup>
+
+</Project>

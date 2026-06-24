@@ -1,0 +1,297 @@
+TYPE FS.GG.Governance.ReleaseFactsSensing.InterpreterModule
+  [Method] RecoveredEvidence gather(RepositoryPort)
+  [Method] RepositoryPort realPort(System.String, SourceLayout)
+  [Method] SensedRelease senseRelease(RepositoryPort, ReleaseExpectations)
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.InterpreterModule+RepositoryPort
+TYPE FS.GG.Governance.ReleaseFactsSensing.InterpreterModule+RepositoryPort
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String]] get_ReadMetadata()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String]] get_ReadPins()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] get_ReadProvenance()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] get_ReadPublishPlan()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] get_ReadTrustedPublishing()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String]] get_ReadVersion()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String]] ReadMetadata
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String]] ReadPins
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] ReadProvenance
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] ReadPublishPlan
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String]] ReadTrustedPublishing
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String]] ReadVersion
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataFact
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsFact
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+RecoveredEvidence
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseExpectations
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseSnapshot
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensingDiagnostic
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+SourceLayout
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence
+  [NestedType] FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(MetadataEvidence)
+  [Method] Boolean Equals(MetadataEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(MetadataEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_PresentFields()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] PresentFields
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataFact
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(MetadataFact)
+  [Method] Boolean Equals(MetadataFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(MetadataFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Missing()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Present()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Missing
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Present
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String])
+  [Method] Boolean Equals(PinsEvidence)
+  [Method] Boolean Equals(PinsEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PinsEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] get_Resolved()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] Resolved
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsFact
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(PinsFact)
+  [Method] Boolean Equals(PinsFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PinsFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Drifted()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_Expected()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_Resolved()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Drifted
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Expected
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Resolved
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(PostureEvidence)
+  [Method] Boolean Equals(PostureEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PostureEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Observed()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Observed
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(PostureFact)
+  [Method] Boolean Equals(PostureFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PostureFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Missing()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Observed()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Required()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Missing
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Observed
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Required
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+RecoveredEvidence
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String])
+  [Method] Boolean Equals(RecoveredEvidence)
+  [Method] Boolean Equals(RecoveredEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(RecoveredEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String] get_Metadata()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String] get_Pins()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] get_Provenance()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] get_PublishPlan()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] get_TrustedPublishing()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String] get_Version()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataEvidence,System.String] Metadata
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsEvidence,System.String] Pins
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] Provenance
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] PublishPlan
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureEvidence,System.String] TrustedPublishing
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence,System.String] Version
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseExpectations
+  [Constructor] Void .ctor(SurfaceId, Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]], Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]], Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]], Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]])
+  [Method] Boolean Equals(ReleaseExpectations)
+  [Method] Boolean Equals(ReleaseExpectations, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseExpectations)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] get_RequiredMetadataFields()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] get_RequiredProvenance()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] get_RequiredPublishPosture()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] get_RequiredTrustedPublishing()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String]] get_ExpectedPins()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_VersionBaseline()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] RequiredMetadataFields
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] RequiredProvenance
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] RequiredPublishPosture
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[System.String]] RequiredTrustedPublishing
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String]] ExpectedPins
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] VersionBaseline
+  [Property] SurfaceId Surface
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseSnapshot
+  [Constructor] Void .ctor(SurfaceId, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataFact], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsFact], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensingDiagnostic])
+  [Method] Boolean Equals(ReleaseSnapshot)
+  [Method] Boolean Equals(ReleaseSnapshot, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseSnapshot)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensingDiagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataFact] get_Metadata()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsFact] get_Pins()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] get_Provenance()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] get_PublishPlan()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] get_TrustedPublishing()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact] get_Version()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensingDiagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+MetadataFact] Metadata
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PinsFact] Pins
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] Provenance
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] PublishPlan
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+PostureFact] TrustedPublishing
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact] Version
+  [Property] SurfaceId Surface
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease
+  [Constructor] Void .ctor(ReleaseFacts, ReleaseSnapshot)
+  [Method] Boolean Equals(SensedRelease)
+  [Method] Boolean Equals(SensedRelease, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensedRelease)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReleaseFacts get_Facts()
+  [Method] ReleaseSnapshot get_Snapshot()
+  [Method] System.String ToString()
+  [Property] ReleaseFacts Facts
+  [Property] ReleaseSnapshot Snapshot
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensingDiagnostic
+  [Constructor] Void .ctor(ReleaseRuleKind, System.String)
+  [Method] Boolean Equals(SensingDiagnostic)
+  [Method] Boolean Equals(SensingDiagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SensingDiagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReleaseRuleKind get_Family()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] ReleaseRuleKind Family
+  [Property] System.String Reason
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+SourceLayout
+  [Constructor] Void .ctor(System.String, System.String, System.String, System.String, System.String, System.String)
+  [Method] Boolean Equals(SourceLayout)
+  [Method] Boolean Equals(SourceLayout, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SourceLayout)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_MetadataPath()
+  [Method] System.String get_PinsPath()
+  [Method] System.String get_ProvenancePath()
+  [Method] System.String get_PublishPlanPath()
+  [Method] System.String get_TrustedPublishingPath()
+  [Method] System.String get_VersionPath()
+  [Property] System.String MetadataPath
+  [Property] System.String PinsPath
+  [Property] System.String ProvenancePath
+  [Property] System.String PublishPlanPath
+  [Property] System.String TrustedPublishingPath
+  [Property] System.String VersionPath
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionEvidence
+  [Constructor] Void .ctor(System.String)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(VersionEvidence)
+  [Method] Boolean Equals(VersionEvidence, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(VersionEvidence)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Declared()
+  [Property] System.String Declared
+TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(VersionFact)
+  [Method] Boolean Equals(VersionFact, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(VersionFact)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Baseline()
+  [Method] System.String get_Observed()
+  [Property] System.String Baseline
+  [Property] System.String Observed
+TYPE FS.GG.Governance.ReleaseFactsSensing.SensingModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind] get_releaseFamilies()
+  [Method] SensedRelease deriveFacts(ReleaseExpectations, RecoveredEvidence)
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind] releaseFamilies
