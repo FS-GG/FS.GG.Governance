@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F053: the pure release-gate core — the closed release rule-kind vocabulary, the typed facts
+       input, the per-rule evaluation, and the verdict rollup — layered on top of the merged thread
+       (the constitution's "heavier capabilities layer on top, not into the core"). Given a set of
+       declared release rules and the typed facts they govern (facts SUPPLIED as input, not sensed
+       here), `Release.evaluate` produces exactly one deterministic finding per rule and
+       `Release.rollup` rolls those findings up into a whole-release verdict + exit-code basis.
+
+       It REUSES F023 `deriveEffectiveSeverity` for every per-finding severity decision (FR-003) and
+       the F024 `Ship.Model` `Verdict`/`ExitCodeBasis` result types VERBATIM, re-applying the F024
+       partition rule — it does NOT call `Ship.rollup` (a release rule is not an F019 `RouteResult`
+       gate/finding — research D1) and edits NO frozen core (FR-009).
+
+       PURE and TOTAL (FR-007): facts in, findings + verdict out; no I/O, no clock, no process, no
+       document; byte-identical for identical input. An absent/unrecoverable fact fails safe to a
+       `Violated` finding (FR-005), never a silent "satisfied". The whole surface is pure total
+       functions — no MVU ceremony (Principle IV). Compile order is Model.fsi -> Model.fs ->
+       Release.fsi -> Release.fs: the result vocabulary, then the pure evaluation.
+
+       References ONLY the three cores whose primitives it reuses — Config (F014), Enforcement (F023),
+       Ship (F024); NOT Route/Gates/Findings (a release rule is neither an F018 gate nor an F017
+       finding — research D1/D5). NO third-party `PackageReference` (FR-008). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseRules</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Enforcement/Ship (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReleaseRules</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Release.fsi" />
+    <Compile Include="Release.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>

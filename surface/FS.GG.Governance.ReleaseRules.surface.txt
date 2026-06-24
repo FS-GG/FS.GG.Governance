@@ -1,0 +1,212 @@
+TYPE FS.GG.Governance.ReleaseRules.ModelModule
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+FactState
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseDecision
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFacts
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFinding
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+RuleOutcome
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding
+  [Constructor] Void .ctor(ReleaseFinding, EnforcementDecision)
+  [Method] Boolean Equals(EnforcedReleaseFinding)
+  [Method] Boolean Equals(EnforcedReleaseFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnforcementDecision get_Decision()
+  [Method] Int32 CompareTo(EnforcedReleaseFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReleaseFinding get_Finding()
+  [Method] System.String ToString()
+  [Property] EnforcementDecision Decision
+  [Property] ReleaseFinding Finding
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+FactState
+  [Method] Boolean Equals(FactState)
+  [Method] Boolean Equals(FactState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMet()
+  [Method] Boolean get_IsUnmet()
+  [Method] Boolean get_IsUnrecoverable()
+  [Method] FactState get_Met()
+  [Method] FactState get_Unmet()
+  [Method] FactState get_Unrecoverable()
+  [Method] Int32 CompareTo(FactState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+FactState+Tags
+  [Property] Boolean IsMet
+  [Property] Boolean IsUnmet
+  [Property] Boolean IsUnrecoverable
+  [Property] FactState Met
+  [Property] FactState Unmet
+  [Property] FactState Unrecoverable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+FactState+Tags
+  [Field] Int32 Met
+  [Field] Int32 Unmet
+  [Field] Int32 Unrecoverable
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseDecision
+  [Constructor] Void .ctor(Verdict, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding], ExitCodeBasis)
+  [Method] Boolean Equals(ReleaseDecision)
+  [Method] Boolean Equals(ReleaseDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitCodeBasis get_ExitCodeBasis()
+  [Method] Int32 CompareTo(ReleaseDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] get_Blockers()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] get_Passing()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] get_Warnings()
+  [Method] System.String ToString()
+  [Method] Verdict get_Verdict()
+  [Property] ExitCodeBasis ExitCodeBasis
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] Blockers
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] Passing
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+EnforcedReleaseFinding] Warnings
+  [Property] Verdict Verdict
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFacts
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind,FS.GG.Governance.ReleaseRules.ModelModule+FactState])
+  [Method] Boolean Equals(ReleaseFacts)
+  [Method] Boolean Equals(ReleaseFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind,FS.GG.Governance.ReleaseRules.ModelModule+FactState] get_States()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind,FS.GG.Governance.ReleaseRules.ModelModule+FactState] States
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFinding
+  [Constructor] Void .ctor(ReleaseRuleKind, SurfaceId, RuleOutcome, Severity, Maturity, System.String)
+  [Method] Boolean Equals(ReleaseFinding)
+  [Method] Boolean Equals(ReleaseFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] ReleaseRuleKind get_Kind()
+  [Method] RuleOutcome get_Outcome()
+  [Method] Severity get_BaseSeverity()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] Maturity Maturity
+  [Property] ReleaseRuleKind Kind
+  [Property] RuleOutcome Outcome
+  [Property] Severity BaseSeverity
+  [Property] SurfaceId Surface
+  [Property] System.String Reason
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule
+  [Constructor] Void .ctor(ReleaseRuleKind, SurfaceId, Severity, Maturity)
+  [Method] Boolean Equals(ReleaseRule)
+  [Method] Boolean Equals(ReleaseRule, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseRule)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] ReleaseRuleKind get_Kind()
+  [Method] Severity get_BaseSeverity()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Property] Maturity Maturity
+  [Property] ReleaseRuleKind Kind
+  [Property] Severity BaseSeverity
+  [Property] SurfaceId Surface
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
+  [Method] Boolean Equals(ReleaseRuleKind)
+  [Method] Boolean Equals(ReleaseRuleKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsPackageMetadata()
+  [Method] Boolean get_IsProvenance()
+  [Method] Boolean get_IsPublishPlan()
+  [Method] Boolean get_IsTemplatePins()
+  [Method] Boolean get_IsTrustedPublishing()
+  [Method] Boolean get_IsVersionBump()
+  [Method] Int32 CompareTo(ReleaseRuleKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReleaseRuleKind get_PackageMetadata()
+  [Method] ReleaseRuleKind get_Provenance()
+  [Method] ReleaseRuleKind get_PublishPlan()
+  [Method] ReleaseRuleKind get_TemplatePins()
+  [Method] ReleaseRuleKind get_TrustedPublishing()
+  [Method] ReleaseRuleKind get_VersionBump()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind+Tags
+  [Property] Boolean IsPackageMetadata
+  [Property] Boolean IsProvenance
+  [Property] Boolean IsPublishPlan
+  [Property] Boolean IsTemplatePins
+  [Property] Boolean IsTrustedPublishing
+  [Property] Boolean IsVersionBump
+  [Property] Int32 Tag
+  [Property] ReleaseRuleKind PackageMetadata
+  [Property] ReleaseRuleKind Provenance
+  [Property] ReleaseRuleKind PublishPlan
+  [Property] ReleaseRuleKind TemplatePins
+  [Property] ReleaseRuleKind TrustedPublishing
+  [Property] ReleaseRuleKind VersionBump
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind+Tags
+  [Field] Int32 PackageMetadata
+  [Field] Int32 Provenance
+  [Field] Int32 PublishPlan
+  [Field] Int32 TemplatePins
+  [Field] Int32 TrustedPublishing
+  [Field] Int32 VersionBump
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+RuleOutcome
+  [Method] Boolean Equals(RuleOutcome)
+  [Method] Boolean Equals(RuleOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsSatisfied()
+  [Method] Boolean get_IsViolated()
+  [Method] Int32 CompareTo(RuleOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RuleOutcome get_Satisfied()
+  [Method] RuleOutcome get_Violated()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+RuleOutcome+Tags
+  [Property] Boolean IsSatisfied
+  [Property] Boolean IsViolated
+  [Property] Int32 Tag
+  [Property] RuleOutcome Satisfied
+  [Property] RuleOutcome Violated
+TYPE FS.GG.Governance.ReleaseRules.ModelModule+RuleOutcome+Tags
+  [Field] Int32 Satisfied
+  [Field] Int32 Violated
+TYPE FS.GG.Governance.ReleaseRules.ReleaseModule
+  [Method] FactState factFor(ReleaseFacts, ReleaseRuleKind)
+  [Method] Int32 releaseRuleKindOrdinal(ReleaseRuleKind)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFinding] evaluate(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule], ReleaseFacts)
+  [Method] ReleaseDecision evaluateRelease(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule], ReleaseFacts)
+  [Method] ReleaseDecision rollup(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFinding])
+  [Method] System.String releaseRuleKindToken(ReleaseRuleKind)

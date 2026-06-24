@@ -2618,3 +2618,64 @@ printfn "[F52] priorExitOf non-canonical ⇒ None (⇒ recompute)? %b" (Plan.pri
 // (4) passed — exit 0 is a pass; any non-zero (incl. the F051 sentinels) is a fail.
 printfn "[F52] passed 0 / 1 / 124 / 127 ⇒ %b / %b / %b / %b"
     (Plan.passed (ExitCode 0)) (Plan.passed (ExitCode 1)) (Plan.passed (ExitCode 124)) (Plan.passed (ExitCode 127)) // expect: true / false / false / false
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── F053: ReleaseRules (pure release-gate core) — design-first FSI proof (Principle I) ──
+// ─────────────────────────────────────────────────────────────────────────────
+// Given declared release rules and the typed facts they govern (facts SUPPLIED, not sensed),
+// `Release.evaluate` produces one finding per rule and `Release.rollup` rolls them into a verdict —
+// reusing F023 `deriveEffectiveSeverity` and the F024 `Verdict`/`ExitCodeBasis` types verbatim. No I/O.
+#r "../src/FS.GG.Governance.ReleaseRules/bin/Debug/net10.0/FS.GG.Governance.ReleaseRules.dll"
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.Enforcement.Enforcement
+open FS.GG.Governance.Ship.Model
+open FS.GG.Governance.ReleaseRules
+open FS.GG.Governance.ReleaseRules.Model
+
+// One declared rule per kind, each blocking-at-release.
+let f53Blocking kind surface : ReleaseRule =
+    { Kind = kind; Surface = SurfaceId surface; BaseSeverity = Blocking; Maturity = BlockOnRelease }
+let f53Rules =
+    [ f53Blocking VersionBump "pkg"; f53Blocking PackageMetadata "pkg"; f53Blocking TemplatePins "pkg"
+      f53Blocking PublishPlan "pkg"; f53Blocking TrustedPublishing "pkg"; f53Blocking Provenance "pkg" ]
+
+// (US1) All facts met ⇒ one Satisfied finding per rule, count = rule count.
+let f53AllMet = { States = f53Rules |> List.map (fun r -> r.Kind, Met) |> Map.ofList }
+let f53Met = Release.evaluate f53Rules f53AllMet
+printfn "[F53] one finding per rule? %b" (f53Met.Length = f53Rules.Length) // expect: true
+printfn "[F53] all satisfied? %b" (f53Met |> List.forall (fun f -> f.Outcome = Satisfied)) // expect: true
+
+// (US1, FR-005) An ABSENT fact ⇒ Violated (fail-safe), never silently satisfied.
+let f53Missing = { States = f53AllMet.States |> Map.remove Provenance }
+let f53MissEval = Release.evaluate f53Rules f53Missing
+printfn "[F53] absent fact ⇒ violated? %b"
+    (f53MissEval |> List.exists (fun f -> f.Kind = Provenance && f.Outcome = Violated)) // expect: true
+
+// (US2) A blocking violation ⇒ Fail / Blocked, the violation in Blockers.
+let f53Blocked = Release.rollup f53MissEval
+printfn "[F53] blocking violation ⇒ Fail? %b" (f53Blocked.Verdict = Fail) // expect: true
+printfn "[F53] exit basis Blocked? %b" (f53Blocked.ExitCodeBasis = Blocked) // expect: true
+
+// (US2.3 / FR-010) Relax that rule to advisory via its maturity ⇒ Pass, but VISIBLE as a Warning.
+let f53Relaxed =
+    f53Rules |> List.map (fun r -> if r.Kind = Provenance then { r with Maturity = Warn } else r)
+let f53Warned = Release.rollup (Release.evaluate f53Relaxed f53Missing)
+printfn "[F53] relaxed ⇒ Pass? %b" (f53Warned.Verdict = Pass) // expect: true
+printfn "[F53] relaxed violation visible as Warning? %b"
+    (f53Warned.Warnings |> List.exists (fun w -> w.Finding.Kind = Provenance)) // expect: true
+
+// (US2.2) All satisfied ⇒ Pass / Clean, no blockers.
+let f53Clean = Release.evaluateRelease f53Rules f53AllMet
+printfn "[F53] all-met ⇒ Pass/Clean/no-blockers? %b"
+    (f53Clean.Verdict = Pass && f53Clean.ExitCodeBasis = Clean && f53Clean.Blockers.IsEmpty) // expect: true
+
+// (US3) Determinism — two evaluations are byte-identical.
+printfn "[F53] deterministic? %b" (Release.evaluate f53Rules f53Missing = f53MissEval) // expect: true
+
+// (US3 / FR-006) No-hide — output rule-kind multiset = declared rule-kind multiset.
+printfn "[F53] no drops/fabrications? %b"
+    ((f53MissEval |> List.map (fun f -> f.Kind) |> List.sort) = (f53Rules |> List.map (fun r -> r.Kind) |> List.sort)) // expect: true
+
+// (edge) Empty rule set ⇒ no findings, Pass, Clean.
+let f53Empty = Release.evaluateRelease [] { States = Map.empty }
+printfn "[F53] empty ⇒ Pass/Clean? %b" (f53Empty.Verdict = Pass && f53Empty.ExitCodeBasis = Clean) // expect: true
