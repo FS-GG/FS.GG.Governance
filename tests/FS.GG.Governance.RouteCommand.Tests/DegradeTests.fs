@@ -38,9 +38,10 @@ let tests =
               let _, m2 = toSelected git req
               Expect.isNonEmpty m2.SelectedGates "the src change selects gates"
 
-              // Degrade: the sense fails; the store arrives Ok.
+              // Degrade: the sense fails; the store arrives Ok. The execute step then projects.
               let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
 
               let routeDoc = Option.get m4.RouteDoc
@@ -66,9 +67,10 @@ let tests =
               let baseHead = baseHeadOfSnap (Some snap)
               let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
 
-              // Degrade: facts sense Ok; the store is malformed.
+              // Degrade: facts sense Ok; the store is malformed. The execute step then projects.
               let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4, _ = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
               Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
 
               let routeDoc = Option.get m4.RouteDoc

@@ -23,7 +23,7 @@ let tests =
                       | Ok r -> r
                       | Error e -> failtestf "parse failed: %A" e
 
-                  let ports = Interpreter.realPorts req.Repo
+                  let ports = { Interpreter.realPorts req.Repo with Execute = fakeExecPort }
                   let model = Interpreter.run ports req
                   Expect.equal model.Exit Loop.Success "real run exits Success"
 
@@ -55,7 +55,7 @@ let tests =
                       | Ok r -> r
                       | Error e -> failtestf "parse failed: %A" e
 
-                  let model = Interpreter.run (Interpreter.realPorts req.Repo) req
+                  let model = Interpreter.run ({ Interpreter.realPorts req.Repo with Execute = fakeExecPort }) req
                   Expect.equal model.Exit Loop.Success "clean default range is a success"
                   Expect.isTrue (File.Exists req.RouteOut) "route.json still written")
           } ]
