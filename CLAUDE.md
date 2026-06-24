@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/048-evidence-reuse-store-persist/plan.md
+at specs/049-evidence-reference-capture/plan.md
 <!-- SPECKIT END -->

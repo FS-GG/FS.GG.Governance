@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F049: the pure, total CAPTURE BRIDGE for the evidence-reuse store. Two deterministic value
+       transformations over the existing F032 `CommandRecord` and F030 `ReuseStore` — `referenceOf` (derive the
+       reproducible evidence reference from an ALREADY-EXECUTED gate's `CommandRecord`, EXACTLY the F032
+       canonical identity wrapped: `EvidenceRef (CommandRecord.identityValue (CommandRecord.canonicalId
+       record))`) and `capture` (fold that reference into a supplied store against the gate's resolved
+       `FreshnessInputs`, EXACTLY `EvidenceReuse.record inputs (referenceOf record) store`).
+
+       The cache/evidence-reuse thread (F029-F048) can now load, evaluate, bound, prune, serialise, and persist
+       the evidence-reuse store across runs — but the store never gains a NEW entry: `EvidenceReuse.record`
+       (F030) is called by nobody in the host path, and every `EvidenceRef` that exists today is a disclosed
+       `Synthetic` literal. Nothing turns an ACTUALLY-EXECUTED gate into a real, reproducible evidence
+       reference, so the persisted store can only ever shrink (prune/retain) and a future run's reuse decision
+       can only match a hand-written test world. This row delivers the pure capture core so a real run can grow
+       the store — mirroring how F047 delivered the pure write half before F048 wired it.
+
+       Both operations are PURE and TOTAL (FR-007): no I/O, no clock, no git, no environment, no network, no
+       process; defined for every input including the empty store, empty output digests, a non-zero exit code,
+       and every captured-output outcome; never throwing; hashing NO bytes (it reuses F032's already-byte-stable
+       canonical rendering rather than computing a second identity scheme). `referenceOf` is DURATION-INVARIANT
+       (FR-002): `canonicalId` projects only `record.Reproducible` and structurally cannot read
+       `record.Duration`, so two records differing only in `SensedDuration` yield the byte-identical reference;
+       it is INJECTIVE over the reproducible facts (FR-003), inherited verbatim from F032. `capture` reuses the
+       F030 `record` convention VERBATIM (newest-first, store in / store out, immutable, full-match dedup) and
+       introduces NO new reuse policy, store representation, or evidence representation (FR-004); it is
+       RECOMPUTE-SAFE (FR-006) — only the just-captured world becomes reusable, every other world's `decide`
+       verdict is unchanged.
+
+       This LAYERS the capture bridge on top of the pure F030 `EvidenceReuse` + F032 `CommandRecord` cores in a
+       SEPARATE project (constitution: heavier capabilities layer on top, not into the core; the F042/F047
+       precedent) so the merged F030/F032 surfaces stay frozen — additive (FR-009): zero edits to merged
+       F029-F048 cores, host commands, or their golden baselines; no schema bump; NO new type. The IMPURE edge
+       (actually running gates inside `fsgg route`/`fsgg ship`, sensing each output digest, building the
+       `CommandRecord`, and recording during a run) is the explicit FOLLOWING row (the F048 analogue);
+       referenced by nothing on landing.
+
+       It references ONLY FS.GG.Governance.EvidenceReuse (F030 `EvidenceRef`/`ReuseStore`/`record`/`decide`/
+       `empty`) and FS.GG.Governance.CommandRecord (F032 `CommandRecord`/`canonicalId`/`identityValue`); the
+       F029 `FreshnessKey` (`FreshnessInputs`) and F014 `Config` types arrive TRANSITIVELY through F030/F032. It
+       adds NO new third-party PackageReference — the bodies are BCL + FSharp.Core only (they build no string,
+       hash no bytes, parse nothing; F032's `canonicalId` already did the rendering). Compile order is
+       EvidenceCapture.fsi -> EvidenceCapture.fs: the curated public surface, then the two pure bodies. No
+       `Model` file — this row introduces no new type. The whole surface is pure total functions — no MVU
+       ceremony (Principle IV). The dependency direction stays one-way:
+       EvidenceCapture -> EvidenceReuse + CommandRecord -> FreshnessKey -> Config; no FreshnessSensing/
+       EvidenceReuseStore/CacheEligibility/RouteJson/AuditJson/host/CLI coupling. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.EvidenceCapture</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- New package identity, packable like EvidenceReuse/CommandRecord/EvidenceReuseStore. "Pack output
+         unaffected" means EXISTING packages are untouched, not that this library is unpackable. -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.EvidenceCapture</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="EvidenceCapture.fsi" />
+    <Compile Include="EvidenceCapture.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>
