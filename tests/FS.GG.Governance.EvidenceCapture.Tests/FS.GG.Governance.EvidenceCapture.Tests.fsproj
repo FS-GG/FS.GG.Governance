@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F049, exercising the PUBLIC surface of FS.GG.Governance.EvidenceCapture:
+       `referenceOf` / `capture` over REAL `CommandRecord`s built via the genuine F032 `CommandRecord.build`
+       and REAL stores folded from the genuine F030 `EvidenceReuse.record` over real F029 `FreshnessInputs`.
+       The evidence references on the capture path are DERIVED (`referenceOf record`), never `Synthetic`
+       literals — that is the whole point of this row; the only `Synthetic` refs are PRIOR store entries the
+       recompute-safety tests fold in, which this row does not derive. The persistence round-trip drives the
+       REAL F047 `EvidenceReuseStore.serialise` and the REAL F046 `FreshnessSensing.realStoreReader` against a
+       temp file — never a re-implemented parser. Expecto + FsCheck give the duration-invariance, injectivity,
+       close-the-loop, recompute-safety, determinism/byte-identity, and lossless-round-trip properties; the
+       VSTest adapters let `dotnet test` drive the Expecto runner.
+
+       EvidenceReuseStore + FreshnessSensing appear here as TEST-ONLY ProjectReferences (for the round-trip);
+       the production library has NO such dependency (data-model.md "Dependency direction"). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ReferenceTests.fs" />
+    <Compile Include="CaptureTests.fs" />
+    <Compile Include="PersistenceRoundTripTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+  </ItemGroup>
+
+</Project>

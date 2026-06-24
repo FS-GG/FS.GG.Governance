@@ -2368,3 +2368,62 @@ System.IO.File.Delete f48Path
 //    golden baseline is byte-identical to the pre-row baseline (SC-006) — proven in the command test suites
 //    (PersistenceEdgeTests "SC-006"), never by re-blessing a golden.
 printfn "[F48] off-by-default ⇒ no store write (see PersistenceEdgeTests SC-006)"
+
+// ── F049: CAPTURE a real evidence reference from an executed gate (pure core) ──
+// Design-first proof (Principle I), exercising the public surface BEFORE the operation bodies land (its
+// assertions FAIL against the stubs — expected). The thread can now load/evaluate/bound/prune/serialise/persist
+// the store, but the store never gains a NEW entry: nothing turns an ACTUALLY-EXECUTED gate into a real,
+// reproducible `EvidenceRef`. This row delivers the pure capture bridge — two pure total functions over the
+// already-merged F032 `CommandRecord` and F030 `ReuseStore` — so a real run can finally grow the store
+// (the impure gate-execution edge is the deferred FOLLOWING row). Reuses the EvidenceReuse / FreshnessKey
+// assemblies #r'd above (single identity per shared dep); loads the F032 CommandRecord + the new core here.
+#r "../src/FS.GG.Governance.CommandRecord/bin/Debug/net10.0/FS.GG.Governance.CommandRecord.dll"
+#r "../src/FS.GG.Governance.EvidenceCapture/bin/Debug/net10.0/FS.GG.Governance.EvidenceCapture.dll"
+
+open FS.GG.Governance.CommandRecord
+open FS.GG.Governance.CommandRecord.Model
+open FS.GG.Governance.EvidenceCapture
+
+// An already-executed gate, as its reproducible facts + the one sensed duration (F032).
+let f49Env: EnvironmentDelta = { Added = []; Changed = []; Removed = [] }
+
+let f49Record =
+    CommandRecord.build
+        (Executable "gcc")
+        [ Argument "-c"; Argument "main.c" ]
+        (WorkingDirectory "/work")
+        f49Env
+        (TimeoutLimit 30)
+        (ExitCode 0)
+        (OutputDigest "sha-out")
+        (OutputDigest "sha-err")
+        NoCapturedOutput
+        (SensedDuration 123_456L)
+
+// The SAME gate, identical in every reproducible fact, only SLOWER.
+let f49Slower =
+    CommandRecord.build
+        (Executable "gcc")
+        [ Argument "-c"; Argument "main.c" ]
+        (WorkingDirectory "/work")
+        f49Env
+        (TimeoutLimit 30)
+        (ExitCode 0)
+        (OutputDigest "sha-out")
+        (OutputDigest "sha-err")
+        NoCapturedOutput
+        (SensedDuration 999_999L)
+
+// US2 / SC-002: the sensed duration NEVER leaks into the reference (duration-invariance).
+printfn "\n[F49] duration-only difference ⇒ equal reference? %b" (EvidenceCapture.referenceOf f49Record = EvidenceCapture.referenceOf f49Slower) // expect: true
+
+// US1 / SC-001: capture into the empty store, then the captured world is reusable and serves the derived ref.
+let f49Inputs = f47Inputs "capture"
+let f49Grown = EvidenceCapture.capture f49Inputs f49Record EvidenceReuse.empty
+printfn "[F49] captured world reusable with derived ref? %b" (EvidenceReuse.decide f49Inputs f49Grown = Reuse(EvidenceCapture.referenceOf f49Record)) // expect: true
+
+// US3 / SC-004: a DIFFERENT world is still Recompute — capture added no match for it (recompute-safety).
+printfn "[F49] different world ⇒ %A" (EvidenceReuse.decide (f47Inputs "other-check") f49Grown) // expect: Recompute NoPriorEvidence
+
+// FR-008: byte-stable — identical input yields the byte-identical reference on every run.
+printfn "[F49] byte-stable reference? %b" (EvidenceCapture.referenceOf f49Record = EvidenceCapture.referenceOf f49Record) // expect: true
