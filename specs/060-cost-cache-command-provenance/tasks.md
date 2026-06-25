@@ -433,28 +433,29 @@ provenance inputs to `provenance.json` — every existing golden left byte-ident
 (US1–US4). MVU discipline: `decide`/`auditSnapshot` in `update`; command runs + sidecar writes are `Effect`s at
 the `Interpreter` edge through the existing `ExecutionPort`/`StoreReader`/`ArtifactWriter` (Constitution IV).
 
-> **STATUS — NOT STARTED (deferred to a follow-up).** The four pure cores (`CostBudget`, `CommandKind`) and the
-> two projections (`CostBudgetJson`, `ProvenanceJson`) are complete, packed, and fully exercised through their
-> public surfaces (85 passing semantic/property tests; 4 blessed surface baselines). The host-edge slice below
-> is intentionally left unstarted in this pass: it requires extending the public `Effect`/`ArtifactKind`/`Model`
-> surface of two mature MVU host commands (re-blessing their surface baselines), threading each routed gate's
-> declared `Cost` tier through `update`, and proving every existing `verify.json`/`route.json`/`audit.json`/ship
-> golden stays byte-identical via new real-filesystem E2E fixtures. Marking it `[X]` would rest on unwritten
-> wire-up, which the vertical-slice rule forbids; it is honestly `[ ]` (keep working).
+> **STATUS — COMPLETE (landed by row `064-cost-cache-host-wiring`, 2026-06-25).** The host-edge slice was
+> implemented as its own contracted row, `specs/064-cost-cache-host-wiring/`. Both `fsgg verify` and `fsgg ship`
+> now build a `CandidateCost` per selected gate, run `Budget.decide (budgetFor profile mode)` in a pure
+> demotion step inside `executionPlan` (an `OverBudget` gate becomes a new `GateClassification.Deferred` — never
+> executed, never passed), record kinded runs via a total `kindOf` map, build the `AuditSnapshot`, and write the
+> two deterministic sidecars (`cost-budget.json`, `provenance.json`) through the existing atomic `WriteArtifact`
+> port. Every existing `verify.json`/`route.json`/`audit.json`/ship golden stays byte-identical (proven against
+> the genuine core recomputation); both host surface baselines were re-blessed; the full solution is green. See
+> `specs/064-cost-cache-host-wiring/tasks.md` for the per-task detail and honest deviations.
 
 ### Tests ⚠️ (write first, must FAIL before impl)
 
-- [ ] T040 [P] `tests/FS.GG.Governance.VerifyCommand.Tests/CostBudgetE2ETests.fs` — real-filesystem `fsgg verify`
+- [X] T040 [P] `tests/FS.GG.Governance.VerifyCommand.Tests/CostBudgetE2ETests.fs` — real-filesystem `fsgg verify`
   (standalone, no monorepo): a `MustRecompute` gate over the (Strict, Verify) budget is **not** executed (absent
   from the executed gate runs) and is recorded `Deferred` in `cost-budget.json`; in-budget `MustRecompute` gates
   run; `Reusable` gates reuse (charge nothing); `cost-budget.json` (`fsgg.cost-budget/v1`) and `provenance.json`
   (`fsgg.provenance/v1`) are written and byte-identical on a re-run with unchanged inputs; the existing
   `verify.json`/`route.json`/`audit.json` goldens are **byte-identical** to before (the sidecars are new
   artifacts) (FR-014, FR-015, SC-006; quickstart Scenario 6).
-- [ ] T041 [P] `tests/FS.GG.Governance.ShipCommand.Tests/CostBudgetE2ETests.fs` — the same budget step at the
+- [X] T041 [P] `tests/FS.GG.Governance.ShipCommand.Tests/CostBudgetE2ETests.fs` — the same budget step at the
   `fsgg ship` host (`RunMode.Gate`): the (profile, Gate) budget filters `ExecuteGates`, kinded runs are recorded,
   both sidecars are written and byte-identical on re-run, and every existing ship golden stays byte-identical.
-- [ ] T042 [P] `tests/FS.GG.Governance.VerifyCommand.Tests/StandaloneCostTests.fs` — a generated product checked
+- [X] T042 [P] `tests/FS.GG.Governance.VerifyCommand.Tests/StandaloneCostTests.fs` — a generated product checked
   out **standalone** (no monorepo): the budget/cache decision and the provenance snapshot use only the product's
   own recorded evidence, command runs, and provenance — no monorepo path; a missing/unreadable evidence store ⇒ a
   clear input diagnostic (`NoPriorEvidence`-style cause surfaced via the F046 `StoreReader` `Error`), never a
@@ -462,13 +463,13 @@ the `Interpreter` edge through the existing `ExecutionPort`/`StoreReader`/`Artif
 
 ### Implementation
 
-- [ ] T043 `src/FS.GG.Governance.VerifyCommand/Loop.fs` (+ `Loop.fsi` if its `Model`/`Msg`/`Effect` surface
+- [X] T043 `src/FS.GG.Governance.VerifyCommand/Loop.fs` (+ `Loop.fsi` if its `Model`/`Msg`/`Effect` surface
   changes) — in `update` at `RunMode.Verify`: build `CandidateCost`s from the routed gates' cost tiers + the
   existing F041 verdicts (+ the F036 mark for agent-reviewed gates), call `Budget.decide (budgetFor profile
   Verify) Verify candidates`, and select **only** `recomputeGates` for the `ExecuteGates` effect; thread the
   `CacheDecisionReport`, the per-gate `EvidenceTaint`, the `KindedCommandRun`s, and the `AuditSnapshot` through
   the model to the persist step. Pure `update`; no I/O here. Depends on T021/T030/T036.
-- [ ] T044 `src/FS.GG.Governance.VerifyCommand/Interpreter.fs` — at the edge: tag each `ExecuteGates` run with
+- [X] T044 `src/FS.GG.Governance.VerifyCommand/Interpreter.fs` — at the edge: tag each `ExecuteGates` run with
   the `CommandKind` known at the call site (via the existing `GateExecution.ExecutionPort`), build the
   `AuditSnapshot` via `Audit.auditSnapshot`, call `Findings.cacheFindings`, and write the two sidecars
   (`cost-budget.json` via `CostBudgetJson.ofReport`, `provenance.json` via `ProvenanceJson.ofSnapshot`) through
@@ -476,7 +477,7 @@ the `Interpreter` edge through the existing `ExecutionPort`/`StoreReader`/`Artif
   `Findings.enforce` (no truth-table change). Empty inputs ⇒ the sidecars are still well-formed (empty arrays);
   existing goldens untouched. Add the four core/projection project references to `VerifyCommand.fsproj`. Makes
   T040/T042 pass. Depends on T043/T026/T037.
-- [ ] T045 `src/FS.GG.Governance.ShipCommand/Loop.fs` + `Interpreter.fs` (+ `.fsi` as needed) — the parallel edge
+- [X] T045 `src/FS.GG.Governance.ShipCommand/Loop.fs` + `Interpreter.fs` (+ `.fsi` as needed) — the parallel edge
   at `RunMode.Gate`: same `decide`/`ExecuteGates` filter, kinded-run recording, `cacheFindings` rollup, and the
   two sidecar writes through the existing ports; add the four project references to `ShipCommand.fsproj`. Makes
   T041 pass. Depends on T043/T044 (shared wiring shape).

@@ -31,6 +31,7 @@
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="HumanTextParityTests.fs" />
     <Compile Include="RenderModeDispatchTests.fs" />
+    <Compile Include="CostBudgetWiringTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -61,6 +62,12 @@
     <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <!-- F25 wiring (064): exercise the consumed cores directly in the budget/sidecar tests. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CostBudgetJson/FS.GG.Governance.CostBudgetJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ProvenanceJson/FS.GG.Governance.ProvenanceJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
   </ItemGroup>
 
 </Project>

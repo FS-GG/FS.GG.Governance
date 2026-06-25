@@ -125,6 +125,14 @@ let tests =
                   || name = "FS.GG.Governance.EvidenceCapture"
                   || name = "FS.GG.Governance.ExecutionRecord"
                   || name = "FS.GG.Governance.CommandRecord"
+                  // F25 wiring (064): the four consumed cost-cache/provenance cores + F033 Provenance, wired at
+                  // the MVU edge for the budget filter, kinded-run recording, and the two deterministic sidecars.
+                  || name = "FS.GG.Governance.CostBudget"
+                  || name = "FS.GG.Governance.CommandKind"
+                  || name = "FS.GG.Governance.CostBudgetJson"
+                  || name = "FS.GG.Governance.ProvenanceJson"
+                  || name = "FS.GG.Governance.Provenance"
+                  || name = "FS.GG.Governance.AgentReviewKey"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

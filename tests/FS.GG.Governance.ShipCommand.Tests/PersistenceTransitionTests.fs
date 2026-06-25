@@ -73,10 +73,14 @@ let tests =
               let grown = expectedGrownStoreAt "." fakeExecPort fakeSensor validCatalog store m4.SelectedGates baseHead
 
               Expect.equal (persistEffectsOf e5) [ req.StorePath, expectedContent grown ] "PersistStore(StorePath, F047 pipeline over the grown store)"
+              // F25 wiring (064): three WriteArtifacts now — the unchanged audit write plus the two sidecars.
               Expect.equal
                   (e5 |> List.filter (function Loop.WriteArtifact _ -> true | _ -> false) |> List.length)
-                  1
-                  "the single audit write is unchanged"
+                  3
+                  "the audit write plus the two new sidecar writes"
+              Expect.isTrue
+                  (e5 |> List.exists (function Loop.WriteArtifact(Loop.AuditArtifact, _, _) -> true | _ -> false))
+                  "the audit write is unchanged and present"
           }
 
           test "PersistStore=false ⇒ NO PersistStore effect; only the audit write (T014, SC-006)" {

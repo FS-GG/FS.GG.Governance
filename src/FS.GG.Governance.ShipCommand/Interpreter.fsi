@@ -16,8 +16,10 @@
 namespace FS.GG.Governance.ShipCommand
 
 open FS.GG.Governance.Config              // Loader.FileReader
+open FS.GG.Governance.Config.Model        // EnvironmentClass (F25 wiring 064 — normalized env sense)
 open FS.GG.Governance.Snapshot            // Ports
 open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
+open FS.GG.Governance.Provenance.Model     // BuilderIdentity (F25 wiring 064 — normalized builder sense)
 open FS.GG.Governance.HumanText           // RenderMode, ReportView (F27 wiring 063)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -56,7 +58,14 @@ module Interpreter =
           /// F27 wiring (063): render the report view richly to the terminal (the `Rich` path). `realPorts`
           /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
           /// inject a capturing renderer over a Spectre `TestConsole`. Plain/Json still go via `Out`.
-          RenderReport: ReportView.ReportView -> unit }
+          RenderReport: ReportView.ReportView -> unit
+          /// F25 wiring (064): the two NEW normalized provenance senses. `SenseEnvironment` classifies the run
+          /// environment (`Local|Ci|LocalOrCi|Release`); `SenseBuilder` yields a username/host/clock-free
+          /// `BuilderIdentity`. Both MUST be normalized so `provenance.json` is byte-identical across machines
+          /// and re-runs (FR-006, SC-003). `realPorts` wires constant/CI-derived senses; tests inject synthetic
+          /// (`Synthetic`-named, disclosed) values.
+          SenseEnvironment: unit -> EnvironmentClass
+          SenseBuilder: unit -> BuilderIdentity }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

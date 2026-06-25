@@ -1002,11 +1002,12 @@ sensed-metadata marking + flagged-rendering core (**F034**
   F032's `SensedDuration` verbatim (the only genuinely new fact is `SensedTimestamp`);
   no new dependency. **This closes Phase 11** — its sixth and final row.
 
-- 🟡 Bound expensive recompute by a (profile, mode) budget and reuse expensive evidence only when its
+- 🟢 Bound expensive recompute by a (profile, mode) budget and reuse expensive evidence only when its
   freshness key proves it applies, with a deterministic provenance audit snapshot.
-  _(F25 — `025-cost-cache-command-provenance` / spec dir `060-cost-cache-command-provenance`.)_ **Cores +
-  projections complete; host-edge wiring deferred.** Landed and packed in this pass, fully exercised through
-  their public surfaces (85 passing semantic/property tests; four blessed surface baselines):
+  _(F25 — `025-cost-cache-command-provenance` / spec dir `060-cost-cache-command-provenance`; host wiring
+  landed by `064-cost-cache-host-wiring`.)_ **Cores + projections + host-edge wiring complete.** Landed and
+  packed, fully exercised through their public surfaces (85 passing semantic/property tests; four blessed
+  surface baselines):
     - **`FS.GG.Governance.CostBudget`** — the ordered-`Cost`-ceiling `CostBudget` (`budgetFor` = `min` of two
       monotone D1 projections, `Cheap` floor), the single budgeted `CacheDecision` per gate
       (`decide` folds the F041 verdict VERBATIM into `Reuse` (free) / `Recompute` (charged) /
@@ -1025,10 +1026,16 @@ sensed-metadata marking + flagged-rendering core (**F034**
 
   Reuse-only: no new freshness dimension, no new reuse verdict, no `FreshnessKey`/`EvidenceReuse`/
   `CacheEligibility`/`CommandRecord`/`Provenance` identity change, no enforcement-truth-table change, no new
-  dependency; `Cost` stays excluded from the freshness key. **Remaining (deferred follow-up):** the additive
-  host-edge wiring of `fsgg verify`/`fsgg ship` (budget filters `ExecuteGates`, kinded runs recorded, the two
-  sidecars written) plus its real-filesystem E2E coverage and the every-existing-golden-byte-identical anchor
-  — Phase 8 of `specs/060-cost-cache-command-provenance/tasks.md`.
+  dependency; `Cost` stays excluded from the freshness key. **Host wiring (landed — `064-cost-cache-host-wiring`,
+  2026-06-25):** both `fsgg verify` and `fsgg ship` now build a `CandidateCost` per selected gate and run
+  `Budget.decide (budgetFor profile mode)` in a pure demotion step inside `executionPlan` (an `OverBudget` gate
+  becomes a new `GateClassification.Deferred` — never executed, never passed), record kinded runs via a total
+  `kindOf` map, build the `AuditSnapshot` (two normalized edge senses: `SenseEnvironment`/`SenseBuilder`), and
+  write the two deterministic sidecars (`cost-budget.json`, `provenance.json`) through the existing atomic
+  `WriteArtifact` port. Every existing `verify.json`/`route.json`/`audit.json`/ship golden stays byte-identical
+  (the default Standard ceiling is `Medium`, which admits the frozen fixtures' cheap/medium must-recompute gates);
+  both host surface baselines re-blessed; full solution green. The one remaining deferred host-wiring pass is the
+  F26 release host.
 
 Exit criteria:
 

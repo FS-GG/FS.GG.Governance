@@ -61,6 +61,13 @@ let plainCapability: bool -> RenderMode.ColorCapability =
 // A no-op rich renderer for the faked ports (the Plain path never calls it).
 let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
 
+// F25 wiring (064): synthetic, normalized provenance senses for the faked ports. SYNTHETIC: fixed literal
+// values, not read from the real OS environment — the real CI-derived/constant senses are wired in
+// Program/Interpreter.realPorts. Normalized (no username/host/clock) so provenance.json stays deterministic.
+let fakeSenseEnvironment: unit -> EnvironmentClass = fun () -> Local // SYNTHETIC: fixed env class
+let fakeSenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity =
+    fun () -> FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg-test" // SYNTHETIC: fixed builder id
+
 // ── repo-root locator (for the surface baseline) ──
 
 let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
@@ -238,6 +245,12 @@ let gitWithChanges (changes: (char * string) list) : GitPort =
 
 /// A git port over a repo with no committed changes (the empty-diff / no-changes-in-scope case).
 let gitEmpty: GitPort = gitWithChanges []
+
+/// A package-api change under src/** (selects format(cheap) + build(medium)).
+let gitSrcChange: GitPort = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+
+/// A workflow change under work/** (selects the High-cost `audit` gate — the over-budget probe for F25 wiring).
+let gitWorkChange: GitPort = gitWithChanges [ 'M', "work/flow/Step.fs" ]
 
 /// A git port reporting the target is not a git repository (RepoCheck ⇒ "false").
 let gitNotRepo: GitPort =
@@ -419,12 +432,47 @@ let expectedOutcomesWith (port: ExecutionPort) (files: Map<string, string>) (sel
 let expectedOutcomes (files: Map<string, string>) (selectedGates: Gate list) : (GateId * GateOutcome) list =
     expectedOutcomesWith fakeExecPort files selectedGates
 
+// F25 wiring (064): the gates the host's budget filter DEFERS (over-budget must-recompute) for a given
+// (mode, profile). Computed with the REAL `CostBudget.Budget.decide` core (never a reimplementation): over the
+// empty/absent store these helpers use, every gate is `MustRecompute NoPriorEvidence`, so a gate is deferred
+// iff its `Cost` exceeds `budgetFor profile mode`. Under the DEFAULT Gate/Standard (Medium) ceiling this set is
+// empty, so every default golden stays byte-identical; only a tight lever set (e.g. Inner ⇒ Cheap) defers.
+let budgetDeferredIds (selectedGates: Gate list) (mode: RunMode) (profile: Profile) : Set<string> =
+    let budget = FS.GG.Governance.CostBudget.Budget.budgetFor profile mode
+
+    let candidates: FS.GG.Governance.CostBudget.Model.CandidateCost list =
+        selectedGates
+        |> List.map (fun g ->
+            { Gate = g.Id
+              Cost = g.Cost
+              Verdict = MustRecompute NoPriorEvidence
+              Review = FS.GG.Governance.CostBudget.Model.Deterministic })
+
+    FS.GG.Governance.CostBudget.Budget.decide budget mode candidates
+    |> FS.GG.Governance.CostBudget.Budget.overBudget
+    |> List.map (fst >> gateIdValue)
+    |> Set.ofList
+
+let private applyDeferrals (deferred: Set<string>) (outcomes: (GateId * GateOutcome) list) : (GateId * GateOutcome) list =
+    outcomes
+    |> List.map (fun (gid, o) ->
+        if Set.contains (gateIdValue gid) deferred then
+            gid,
+            { GateId = gid
+              Disposition = NotExecuted
+              ExitCode = None
+              Passed = None }
+        else
+            gid, o)
+
 /// The relocated `ShipDecision` the command carries: `Ship.rollup` (verbatim) then F052 `applyExecution` over
-/// the gates that PASSED on the given execution port (data-model §verdict relocation).
+/// the gates that PASSED on the given execution port (data-model §verdict relocation). F25 wiring (064): an
+/// over-budget gate is deferred (NotExecuted) before relocation, matching the host's budget filter.
 let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) : ShipDecision * (GateId * GateOutcome) list =
     let result, decision = resultAndDecisionOf files candidates mode profile
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
-    let outcomes = expectedOutcomesWith port files selectedGates
+    let deferred = budgetDeferredIds selectedGates mode profile
+    let outcomes = expectedOutcomesWith port files selectedGates |> applyDeferrals deferred
 
     let passedIds =
         outcomes
@@ -480,7 +528,9 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      SenseEnvironment = fakeSenseEnvironment
+      SenseBuilder = fakeSenseBuilder }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -492,7 +542,9 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      SenseEnvironment = fakeSenseEnvironment
+      SenseBuilder = fakeSenseBuilder }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -504,7 +556,9 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      SenseEnvironment = fakeSenseEnvironment
+      SenseBuilder = fakeSenseBuilder }
 
 /// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -516,7 +570,9 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Out = capturingSink cap
       Execute = exec
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      SenseEnvironment = fakeSenseEnvironment
+      SenseBuilder = fakeSenseBuilder }
 
 /// A real RepoSnapshot the F016 core derives from a faked git port (for the pure `update` tests).
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
@@ -528,7 +584,15 @@ let snapshotOfRepo (dir: string) (opts: SnapshotOptions) : RepoSnapshot =
 
 /// The single captured audit write (path, content), if any.
 let writtenAudit (cap: Capture) : (string * string) option =
-    cap.Writes |> List.tryPick (fun (k, p, c) -> if k = Loop.AuditArtifact then Some(p, c) else None)
+    cap.Writes |> List.tryPick (fun (_, p, c) -> if p = "readiness/audit.json" then Some(p, c) else None)
+
+// F25 wiring (064): the capturing writer is a path→content port (it cannot see the ArtifactKind), so sidecar
+// writes are located by their default path.
+let writtenAt (path: string) (cap: Capture) : string option =
+    cap.Writes |> List.tryPick (fun (_, p, c) -> if p = path then Some c else None)
+
+let writtenCostBudget (cap: Capture) : string option = writtenAt "readiness/cost-budget.json" cap
+let writtenProvenance (cap: Capture) : string option = writtenAt "readiness/provenance.json" cap
 
 // ── Request builders ──
 
@@ -543,7 +607,9 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       AuditOut = "readiness/audit.json"
       StorePath = "readiness/evidence-reuse.json"
       PersistStore = false
-      ExplicitPlain = false }
+      ExplicitPlain = false
+      CostBudgetOut = "readiness/cost-budget.json"
+      ProvenanceOut = "readiness/provenance.json" }
 
 /// A request under an explicit mode/profile lever set (for the two-lever-set / no-hide proofs).
 let requestForLevers (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) (mode: RunMode) (profile: Profile) : Loop.RunRequest =

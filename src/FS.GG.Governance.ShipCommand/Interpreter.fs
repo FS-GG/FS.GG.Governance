@@ -34,7 +34,9 @@ module Interpreter =
           Out: OutputSink
           Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
           SenseCapability: bool -> RenderMode.ColorCapability
-          RenderReport: ReportView.ReportView -> unit }
+          RenderReport: ReportView.ReportView -> unit
+          SenseEnvironment: unit -> FS.GG.Governance.Config.Model.EnvironmentClass
+          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (FR-010/FR-013).
@@ -126,6 +128,10 @@ module Interpreter =
                     gateId, FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command)
             )
 
+        // F25 wiring (064): the two NEW normalized provenance senses. Both are normalized (no username, host,
+        // absolute path, or wall-clock) so `provenance.json` is byte-identical across machines/re-runs.
+        | Loop.SenseProvenance -> Loop.ProvenanceSensed(ports.SenseEnvironment(), ports.SenseBuilder())
+
         // F27 wiring (063): the render-mode dispatch lives HERE at the edge (FR-004). Json (human = None)
         // and the ANSI-free Plain path go via the existing `Out` sink (byte-stable, captured in tests); only
         // the interactive `Rich` path goes through `RenderReport` (Spectre, confined to HumanRender) followed
@@ -143,6 +149,18 @@ module Interpreter =
 
             Loop.Emitted
 
+    // F25 wiring (064): the real, NORMALIZED provenance senses. Environment is classified from the presence of
+    // a generic `CI` marker only (`Ci` vs `Local`) — never a hostname, username, or path. Builder is a fixed,
+    // machine-independent tool identity so `provenance.json` is byte-identical across machines and re-runs.
+    let senseEnvironmentReal () : FS.GG.Governance.Config.Model.EnvironmentClass =
+        match Environment.GetEnvironmentVariable "CI" with
+        | null
+        | "" -> FS.GG.Governance.Config.Model.Local
+        | _ -> FS.GG.Governance.Config.Model.Ci
+
+    let senseBuilderReal () : FS.GG.Governance.Provenance.Model.BuilderIdentity =
+        FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg"
+
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo
           Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
@@ -152,7 +170,9 @@ module Interpreter =
           Out = fun text -> Console.Out.WriteLine text
           Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
           SenseCapability = Capability.senseCapability
-          RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view "" }
+          RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
+          SenseEnvironment = senseEnvironmentReal
+          SenseBuilder = senseBuilderReal }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

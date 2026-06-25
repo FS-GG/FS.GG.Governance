@@ -84,7 +84,8 @@ let tests =
               // a blocked verdict — the FR-009 distinction.
               let req = requestFor (Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]) Loop.Text
               let cap = newCapture ()
-              let failing = Set.ofList [ req.AuditOut ]
+              // F25 wiring (064): three artifacts are written; an unwritable output location fails all of them.
+              let failing = Set.ofList [ req.AuditOut; req.CostBudgetOut; req.ProvenanceOut ]
               let model = Interpreter.run (fakePortsFailingWrites validCatalog gitEmpty cap failing req) req
 
               Expect.equal model.Exit Loop.ToolError "unwritable output ⇒ ToolError"

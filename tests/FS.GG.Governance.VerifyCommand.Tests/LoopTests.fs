@@ -23,7 +23,8 @@ let tests =
               Expect.isTrue (hasEffect (function Loop.SenseScope _ -> true | _ -> false) effDefault) "DefaultRange senses scope"
 
               let m, effExplicit = initFor (Loop.ExplicitPaths [ gp "src/a.fs" ])
-              Expect.equal effExplicit [ Loop.LoadCatalog "." ] "ExplicitPaths loads catalog directly"
+              // F25 wiring (064): init also senses provenance (env/builder) first, before loading the catalog.
+              Expect.equal effExplicit [ Loop.SenseProvenance; Loop.LoadCatalog "." ] "ExplicitPaths loads catalog directly"
               Expect.equal m.Candidates (Some [ gp "src/a.fs" ]) "candidates set from explicit paths"
           }
 

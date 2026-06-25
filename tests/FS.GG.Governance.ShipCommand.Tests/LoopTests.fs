@@ -107,7 +107,14 @@ let tests =
               // Default fail exec ⇒ no passing gate ⇒ the relocation is identity ⇒ the decision is unchanged.
               let auditDoc = AuditJson.ofShipDecision decision (Some expectedReport) outcomes
               Expect.equal m4.AuditDoc (Some auditDoc) "AuditDoc = ofShipDecision decision (Some report) outcomes"
-              Expect.equal e4 [ Loop.WriteArtifact(Loop.AuditArtifact, req.AuditOut, auditDoc) ] "exactly one WriteArtifact (cache+execution-bearing audit doc)"
+              // F25 wiring (064): the audit write is FIRST and byte-identical; the two new sidecars follow it.
+              match e4 with
+              | Loop.WriteArtifact(Loop.AuditArtifact, p, doc)
+                :: Loop.WriteArtifact(Loop.CostBudgetArtifact, _, _)
+                :: [ Loop.WriteArtifact(Loop.ProvenanceArtifact, _, _) ] ->
+                  Expect.equal p req.AuditOut "audit written to AuditOut"
+                  Expect.equal doc auditDoc "audit doc byte-identical (sidecars never fold into it)"
+              | other -> failtestf "expected audit write + the two sidecar writes, got %A" other
 
               // SC-002: each kind:"gate" item carries a GateId-matched verdict.
               Expect.stringContains auditDoc "\"cacheEligibilityEvaluated\":true" "the cache section is evaluated"

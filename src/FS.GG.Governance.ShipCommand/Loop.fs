@@ -38,6 +38,11 @@ open FS.GG.Governance.GateExecution.Model     // GateCommand
 open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
 open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
 open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
+// F25 host wiring (064): the four consumed cores + F033 Provenance (budget filter, kinded runs, two sidecars).
+open FS.GG.Governance.CostBudget.Model        // CostBudget, CandidateCost, AgentReviewMark, CacheDecision, BudgetReason, CacheDecisionReport
+open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
+open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.Provenance.Model        // BuilderIdentity
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -60,7 +65,9 @@ module Loop =
           AuditOut: string
           StorePath: string
           PersistStore: bool
-          ExplicitPlain: bool }
+          ExplicitPlain: bool
+          CostBudgetOut: string
+          ProvenanceOut: string }
 
     type UsageError =
         | UnknownFlag of string
@@ -79,6 +86,8 @@ module Loop =
 
     type ArtifactKind =
         | AuditArtifact
+        | CostBudgetArtifact
+        | ProvenanceArtifact
 
     type Effect =
         | SenseScope of ScopeSelector
@@ -88,6 +97,7 @@ module Loop =
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
+        | SenseProvenance
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
@@ -99,6 +109,7 @@ module Loop =
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | StorePersisted of Result<unit, string>
         | GatesExecuted of (GateId * CommandRecord) list
+        | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
         | Emitted
 
     type Diagnostic =
@@ -129,6 +140,10 @@ module Loop =
           CacheNotes: string list
           StoreDegraded: bool
           PersistAcked: bool
+          Environment: EnvironmentClass option
+          Builder: BuilderIdentity option
+          CacheDecision: CacheDecisionReport option
+          Audit: AuditSnapshot option
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -156,7 +171,9 @@ module Loop =
           AuditOut: string option
           Store: string option
           Persist: bool
-          Plain: bool }
+          Plain: bool
+          CostBudgetOut: string option
+          ProvenanceOut: string option }
 
     let emptyAcc =
         { Repo = None
@@ -168,7 +185,9 @@ module Loop =
           AuditOut = None
           Store = None
           Persist = false
-          Plain = false }
+          Plain = false
+          CostBudgetOut = None
+          ProvenanceOut = None }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
     // clean relative form (`readiness/audit.json`); any other repo is prefixed so the artifact lands
@@ -202,6 +221,10 @@ module Loop =
             | "--profile" :: [] -> Error(MissingValue "--profile")
             | "--audit-out" :: v :: more -> go { acc with AuditOut = Some v } more
             | "--audit-out" :: [] -> Error(MissingValue "--audit-out")
+            | "--cost-budget-out" :: v :: more -> go { acc with CostBudgetOut = Some v } more
+            | "--cost-budget-out" :: [] -> Error(MissingValue "--cost-budget-out")
+            | "--provenance-out" :: v :: more -> go { acc with ProvenanceOut = Some v } more
+            | "--provenance-out" :: [] -> Error(MissingValue "--provenance-out")
             | "--store" :: v :: more -> go { acc with Store = Some v } more
             | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
@@ -258,7 +281,9 @@ module Loop =
                           AuditOut = acc.AuditOut |> Option.defaultValue (under repo "readiness/audit.json")
                           StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
                           PersistStore = acc.Persist
-                          ExplicitPlain = acc.Plain }
+                          ExplicitPlain = acc.Plain
+                          CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (under repo "readiness/cost-budget.json")
+                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (under repo "readiness/provenance.json") }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -278,15 +303,21 @@ module Loop =
               CacheNotes = []
               StoreDegraded = false
               PersistAcked = false
+              Environment = None
+              Builder = None
+              CacheDecision = None
+              Audit = None
               Diagnostics = []
               Exit = Success }
 
+        // F25 wiring (064): sense the two normalized provenance facts FIRST, so `Environment`/`Builder` are
+        // populated before the executed-gate persist projects the `provenance.json` sidecar.
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely (research D4): set candidates here and go straight
         // to the catalog load — the faked git Ports is never consulted for a diff.
-        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ LoadCatalog request.Repo ]
+        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ SenseProvenance; LoadCatalog request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseScope request.Scope ]
+        | DefaultRange -> model, [ SenseProvenance; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws (FR-004/FR-013) ──
 
@@ -381,14 +412,77 @@ module Loop =
             Passing = passing'
             ExitCodeBasis = basis' }
 
+    // ── F25 wiring (064): pure host-edge helpers (kinded-run label, provenance snapshot build) ──
+
+    // The total kinded-run label (FR-004, FR-008). Descriptive metadata derived from the gate's declared
+    // command token (or its id when no command is declared); it never participates in the F032 run identity.
+    // Total over the closed taxonomy: a recognized token maps to its kind; an unrecognized token maps to the
+    // documented `Build` default below — an explicit catch-all at the use site, never a silent mislabel of a
+    // recognized kind. The richer category source (a declared kind on the gate) is a documented later extension.
+    let kindOf (gate: Gate) : CommandKind =
+        let token =
+            match gate.FreshnessKey.Command with
+            | Some(CommandId c) -> c.ToLowerInvariant()
+            | None -> (gateIdValue gate.Id).ToLowerInvariant()
+
+        let has (sub: string) = token.Contains sub
+
+        if has "test" then Test
+        elif has "pack" then Pack
+        elif has "template" || has "scaffold" || has "instantiate" then TemplateInstantiation
+        elif has "diff" then GitDiff
+        elif has "audit" || has "inspect" || has "restore" || has "list" then PackageInspection
+        elif has "capture" || has "visual" || has "screenshot" || has "snapshot" then VisualCapture
+        elif has "build" || has "format" || has "lint" || has "compile" then Build
+        else Build // documented default for an unrecognized command token (no silent mislabel)
+
+    // The agent-review mark per gate (FR-009/D7). The MVP `.fsgg` schema declares no agent-reviewed checks, so
+    // every gate is `Deterministic`; carrying the mark through `decide` keeps the reuse identity correct for the
+    // later agent-review extension. Agent-reviewed checks stay advisory regardless of the decision (D6/D7).
+    let reviewMarkOf (_gate: Gate) : AgentReviewMark = Deterministic
+
+    // The sensed evidence taint per gate (D5). The host produces real runs and the MVP store records no
+    // synthetic-evidence provenance, so taint is `Real` for every gate; a `Stale`/`NoEvidence` finding still
+    // arises purely from the budgeted report's recompute causes. Synthetic-evidence taint is a later extension.
+    let taintOf (_gid: GateId) : EvidenceTaint = Real
+
+    // Build the provenance audit snapshot (D4) from the already-sensed facts plus the two normalized edge
+    // senses, feeding the kinded runs through. `SourceCommit = Head` (D4). Missing optional facts substitute a
+    // deterministic empty value (NEVER a clock/username/host), so `provenance.json` is byte-identical across
+    // machines and re-runs. The environment/builder default to a normalized constant until sensed.
+    let buildSnapshot (model: Model) (runs: KindedCommandRun list) : AuditSnapshot =
+        let sensed = model.Sensed |> Option.defaultValue emptySensedFacts
+        let baseSnap, headSnap = baseHeadOf model
+        let baseRev = sensed.Base |> Option.orElse baseSnap |> Option.defaultValue (Revision "")
+        let headRev = sensed.Head |> Option.orElse headSnap |> Option.defaultValue (Revision "")
+        let ruleHash = sensed.RuleHash |> Option.defaultValue (RuleHash "")
+        let genVer = sensed.GeneratorVersion |> Option.defaultValue (GeneratorVersion "")
+        let digests = sensed.CoveredArtifacts |> Map.toList |> List.collect snd
+        let env = model.Environment |> Option.defaultValue LocalOrCi
+        let builder = model.Builder |> Option.defaultValue (BuilderIdentity "fsgg")
+        FS.GG.Governance.CommandKind.Audit.auditSnapshot headRev baseRev headRev ruleHash genVer digests runs env builder
+
+    let kindedRunsOf (model: Model) (records: (GateId * CommandRecord) list) : KindedCommandRun list =
+        let gateById =
+            model.SelectedGates |> List.map (fun g -> gateIdValue g.Id, g) |> Map.ofList
+
+        records
+        |> List.choose (fun (gid, record) ->
+            match Map.tryFind (gateIdValue gid) gateById with
+            | Some g -> Some { Kind = kindOf g; Record = record }
+            | None -> None)
+
     // ── F052 per-gate classification (pure; recomputable from the model — data-model §classification) ──
+    // F25 wiring (064): the budget filter is layered HERE — an `OverBudget` must-recompute gate is demoted from
+    // `ToExecute` to `Deferred reason`, so it is never executed and never reaches the passed set (SC-002).
 
     type GateClassification =
         | ToExecute of GateCommand
         | ToReuse of ExitCode
+        | Deferred of BudgetReason
         | NoCommand
 
-    let executionPlan (model: Model) : (Gate * GateClassification) list * Map<string, FreshnessInputs> =
+    let executionPlan (model: Model) : (Gate * GateClassification) list * Map<string, FreshnessInputs> * CacheDecisionReport =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
@@ -411,6 +505,32 @@ module Loop =
                         if Map.containsKey k m then m else Map.add k c.Inputs m)
                     Map.empty
 
+            // The budget filter (D1/D3): one `CandidateCost` per selected gate; fold the F041 verdict with
+            // `budgetFor profile mode` (ship threads the request's `Mode`/`Profile` — D3) via `decide`.
+            let budget =
+                FS.GG.Governance.CostBudget.Budget.budgetFor model.Request.Profile model.Request.Mode
+
+            let candidateCosts =
+                model.SelectedGates
+                |> List.map (fun g ->
+                    let verdict =
+                        match Map.tryFind (gateIdValue g.Id) verdictMap with
+                        | Some v -> v
+                        | None -> MustRecompute NoPriorEvidence
+
+                    { Gate = g.Id
+                      Cost = g.Cost
+                      Verdict = verdict
+                      Review = reviewMarkOf g })
+
+            let budgetReport =
+                FS.GG.Governance.CostBudget.Budget.decide budget model.Request.Mode candidateCosts
+
+            let overReasons =
+                FS.GG.Governance.CostBudget.Budget.overBudget budgetReport
+                |> List.map (fun (gid, reason) -> gateIdValue gid, reason)
+                |> Map.ofList
+
             let classify (gate: Gate) : GateClassification =
                 let cmdOpt =
                     match model.Tooling with
@@ -420,15 +540,23 @@ module Loop =
                 match cmdOpt with
                 | None -> NoCommand
                 | Some cmd ->
-                    match Map.tryFind (gateIdValue gate.Id) verdictMap with
-                    | Some(Reusable ref) ->
-                        match Plan.priorExitOf ref with
-                        | Some priorExit -> ToReuse priorExit
-                        | None -> ToExecute cmd
-                    | _ -> ToExecute cmd
+                    let baseClass =
+                        match Map.tryFind (gateIdValue gate.Id) verdictMap with
+                        | Some(Reusable ref) ->
+                            match Plan.priorExitOf ref with
+                            | Some priorExit -> ToReuse priorExit
+                            | None -> ToExecute cmd
+                        | _ -> ToExecute cmd
 
-            (model.SelectedGates |> List.map (fun g -> g, classify g)), inputsMap
-        | _ -> [], Map.empty
+                    match baseClass with
+                    | ToExecute _ ->
+                        match Map.tryFind (gateIdValue gate.Id) overReasons with
+                        | Some reason -> Deferred reason
+                        | None -> baseClass
+                    | other -> other
+
+            (model.SelectedGates |> List.map (fun g -> g, classify g)), inputsMap, budgetReport
+        | _ -> [], Map.empty, CacheDecisionReport []
 
     // Fires once BOTH the sensed facts and the store have arrived: classify the selected gates and request
     // the run of the must-recompute command-gates through the injected F051 port (D5). Reused/no-command
@@ -437,7 +565,7 @@ module Loop =
     let tryExecute (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
         | Some _, Some _, Some _ ->
-            let plan, _ = executionPlan model
+            let plan, _, budgetReport = executionPlan model
 
             let toExecute =
                 plan
@@ -445,9 +573,10 @@ module Loop =
                     match c with
                     | ToExecute cmd -> Some(g.Id, cmd)
                     | ToReuse _
+                    | Deferred _
                     | NoCommand -> None)
 
-            model, [ ExecuteGates toExecute ]
+            { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
         | _ -> model, []
 
     // On `GatesExecuted`: fold F049 `capture` per executed gate (grows the store), build the per-gate
@@ -457,7 +586,7 @@ module Loop =
     let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
         | Some sensed, Some store, Some decision ->
-            let plan, inputsMap = executionPlan model
+            let plan, inputsMap, budgetReport = executionPlan model
 
             let recordMap =
                 records |> List.fold (fun m (gid, r) -> Map.add (gateIdValue gid) r m) Map.empty
@@ -472,6 +601,7 @@ module Loop =
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
                         | ToReuse _
+                        | Deferred _
                         | NoCommand -> s)
                     store
 
@@ -499,6 +629,13 @@ module Loop =
                               Disposition = Reused
                               ExitCode = Some code
                               Passed = Some(Plan.passed code) }
+                        // A deferred (over-budget) gate is NOT executed and NOT reused — recorded NotExecuted so
+                        // it is structurally excluded from the passed set (never coerced to pass — SC-002).
+                        | Deferred _ ->
+                            { GateId = g.Id
+                              Disposition = NotExecuted
+                              ExitCode = None
+                              Passed = None }
                         | NoCommand ->
                             { GateId = g.Id
                               Disposition = NotExecuted
@@ -519,7 +656,20 @@ module Loop =
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
+            // audit.json is projected over the SAME relocated decision + cache report + outcomes as before —
+            // the budgeted findings are NOT folded in, so it stays byte-identical to the pre-wiring golden (D6).
             let auditDoc = AuditJson.ofShipDecision relocated (Some cacheReport) outcomes
+
+            // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
+            // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
+            let findings =
+                FS.GG.Governance.CostBudget.Findings.cacheFindings budgetReport taintOf
+
+            let costBudgetDoc =
+                FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport budgetReport findings
+
+            let snapshot = buildSnapshot model (kindedRunsOf model records)
+            let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
@@ -534,8 +684,13 @@ module Loop =
                 Decision = Some relocated
                 AuditDoc = Some auditDoc
                 Outcomes = outcomes
+                CacheDecision = Some budgetReport
+                Audit = Some snapshot
                 CacheNotes = model.CacheNotes @ persistNotes },
-            WriteArtifact(AuditArtifact, model.Request.AuditOut, auditDoc) :: persistEffects
+            WriteArtifact(AuditArtifact, model.Request.AuditOut, auditDoc)
+            :: WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
+            :: WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc)
+            :: persistEffects
         | _ -> model, []
 
     let rec update (msg: Msg) (model: Model) : Model * Effect list =
@@ -611,12 +766,19 @@ module Loop =
                 fail ToolError ("failed to write artifact: " + reason) model
 
             | Wrote(_, Ok()) ->
-                // F048: when persistence is enabled and not degraded, the summary waits for the store-write
-                // ack (`StorePersisted`) instead of emitting on the audit write (D10).
-                if awaitingPersist model then
-                    { model with Phase = Persisted }, []
-                else
-                    { model with Phase = Persisted }, [ emitEffect model ]
+                // F25 wiring (064): three artifacts may be written (audit.json + the two sidecars), so multiple
+                // `Wrote(Ok)` acks arrive in one batch. Only the FIRST (Phase = Rolled) schedules the summary /
+                // persist wait; subsequent sidecar acks are inert (the summary is already in flight).
+                match model.Phase with
+                | Persisted
+                | Done -> model, []
+                | _ ->
+                    // F048: when persistence is enabled and not degraded, the summary waits for the store-write
+                    // ack (`StorePersisted`) instead of emitting on the audit write (D10).
+                    if awaitingPersist model then
+                        { model with Phase = Persisted }, []
+                    else
+                        { model with Phase = Persisted }, [ emitEffect model ]
 
             // F048: the NON-FATAL store-write ack (FR-006). An `Error` appends a cache note; NEITHER outcome
             // changes `Exit` (it stays governed solely by `ExitCodeBasis` at `Emitted` — never `ToolError`/
@@ -640,6 +802,13 @@ module Loop =
             // command-gates in the verdict, project audit.json with the execution embed, and persist the
             // GROWN store. The relocated decision's `ExitCodeBasis` then governs the terminal exit (D3).
             | GatesExecuted records -> projectExecuted records model
+
+            // F25 wiring (064): record the two normalized provenance senses; pure state, no phase change.
+            | ProvenanceSensed(environment, builder) ->
+                { model with
+                    Environment = Some environment
+                    Builder = Some builder },
+                []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

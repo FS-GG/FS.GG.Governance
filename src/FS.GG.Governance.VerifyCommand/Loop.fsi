@@ -32,6 +32,11 @@ open FS.GG.Governance.CommandRecord.Model        // CommandRecord (F052 — the 
 open FS.GG.Governance.GateExecution.Model         // GateCommand (F052 — the command-to-run)
 open FS.GG.Governance.GateRun.Model               // GateOutcome (F052 — the per-gate execution outcome)
 open FS.GG.Governance.HumanText                   // F27 wiring (063): ReportView (the rich/plain view payload)
+// F25 host wiring (064): the four consumed cost-cache/provenance cores + F033 Provenance.
+open FS.GG.Governance.Config.Model               // Cost, EnvironmentClass (already in Config.Model)
+open FS.GG.Governance.CostBudget.Model            // CacheDecisionReport (budget-filter carrier → cost-budget.json)
+open FS.GG.Governance.CommandKind.Model           // CommandKind, AuditSnapshot (kinded runs → provenance.json)
+open FS.GG.Governance.Provenance.Model            // BuilderIdentity (normalized edge sense)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -69,7 +74,14 @@ module Loop =
           /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
           /// piped/explicit-plain run renders ANSI-free even on a TTY. Layered ON TOP of `--format text|json`:
           /// it never changes the `--json` rejection or the text/json selection — JSON is always ANSI-free.
-          ExplicitPlain: bool }
+          ExplicitPlain: bool
+          /// F25 wiring (064): the deterministic cost-budget sidecar path (`--cost-budget-out`); default
+          /// `<repo>/readiness/cost-budget.json`. A NEW contract (`fsgg.cost-budget/v1`) written beside the
+          /// existing artifacts — never folded into `verify.json`, which stays byte-identical (FR-005/FR-007).
+          CostBudgetOut: string
+          /// F25 wiring (064): the deterministic provenance sidecar path (`--provenance-out`); default
+          /// `<repo>/readiness/provenance.json`. A NEW contract (`fsgg.provenance/v1`).
+          ProvenanceOut: string }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2. `UnrecognizedProfile` carries the offending
     /// string from F023 `recognizeProfile` `Unrecognized`; recognition happens IN `parse` so a typo writes no
@@ -90,9 +102,14 @@ module Loop =
         | InputUnavailable
         | ToolError
 
-    /// Which persisted document an effect/result refers to. Only `VerifyArtifact` (one write).
+    /// Which persisted document an effect/result refers to. `VerifyArtifact` is the existing (byte-identical)
+    /// write; F25 wiring (064) adds the two self-describing sidecar kinds, written through the SAME atomic
+    /// `WriteArtifact` port — `cost-budget.json` (`fsgg.cost-budget/v1`) and `provenance.json`
+    /// (`fsgg.provenance/v1`).
     type ArtifactKind =
         | VerifyArtifact
+        | CostBudgetArtifact
+        | ProvenanceArtifact
 
     /// The I/O the pure `update` REQUESTS but never performs (Principle IV). The edge `Interpreter` executes
     /// each and feeds the result back as a `Msg`. The EXACT ShipCommand vocabulary.
@@ -106,6 +123,11 @@ module Loop =
         | PersistStore of path: string * content: string
         /// F052: run the selected must-recompute command-gates ONCE each through the injected F051 port.
         | ExecuteGates of (GateId * GateCommand) list
+        /// F25 wiring (064): sense the two NEW provenance edge facts — a NORMALIZED `EnvironmentClass` and a
+        /// username/host/clock-free `BuilderIdentity` — so `provenance.json` stays byte-deterministic across
+        /// machines/re-runs (FR-006, SC-003). The ONLY new edge senses this row adds; result fed back as
+        /// `ProvenanceSensed`.
+        | SenseProvenance
         /// F27 wiring (063): emit the rendered output. `text` is the verify.json contract string (human = None)
         /// OR the ANSI-free plain projection used when the sensed mode is `Plain`; `human` carries the
         /// `ReportView` + operational `wrote` line for the `Rich` path the edge selects via `selectMode`
@@ -127,6 +149,8 @@ module Loop =
         | StorePersisted of Result<unit, string>
         /// F052: the assembled records of the executed gates, in request order, each tagged by GateId.
         | GatesExecuted of (GateId * CommandRecord) list
+        /// F25 wiring (064): the two normalized provenance senses fed back from `SenseProvenance`.
+        | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying NO
@@ -164,6 +188,16 @@ module Loop =
           CurrencyNotes: string list
           StoreDegraded: bool
           PersistAcked: bool
+          /// F25 wiring (064): the normalized provenance edge senses, set by `ProvenanceSensed`. `None` until
+          /// sensed (then a deterministic default is used when projecting the sidecar).
+          Environment: EnvironmentClass option
+          Builder: BuilderIdentity option
+          /// F25 wiring (064): the budgeted cache-decision report built in `executionPlan` (the budget filter),
+          /// carried to the persist phase for the `cost-budget.json` projection. `None` until both senses land.
+          CacheDecision: CacheDecisionReport option
+          /// F25 wiring (064): the provenance audit snapshot built on `GatesExecuted`, carried to the persist
+          /// phase for the `provenance.json` projection.
+          Audit: AuditSnapshot option
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -206,3 +240,10 @@ module Loop =
     /// passing gate would otherwise raise — never create one (FR-005: an uncertain result is never coerced to
     /// pass).
     val applyExecution: passedGateIds: Set<GateId> -> decision: ShipDecision -> ShipDecision
+
+    /// F25 wiring (064): the total, pure kinded-run label for an executed gate (FR-004, FR-008). Maps the
+    /// gate's declared command category to exactly one of the seven `CommandKind`s; the kind is DESCRIPTIVE
+    /// metadata only — it never participates in the F032 run identity, so two runs differing only in sensed
+    /// duration share an identity. Total over the closed taxonomy (an unrecognized token maps to the
+    /// documented `Build` default at the use site; never a silent mislabel of a recognized kind).
+    val kindOf: gate: Gate -> CommandKind
