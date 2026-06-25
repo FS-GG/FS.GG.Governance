@@ -1,0 +1,8 @@
+verdict: FAIL
+  Blockers
+    - unknownProtectedBoundaryPath @ src/boundary/Api.fs: blocking — run mode 'verify' reaches the 'verify' blocking boundary for maturity 'block-on-ship' under 'strict' profile
+    - build:ship: blocking — run mode 'verify' reaches the 'verify' blocking boundary for maturity 'block-on-ship' under 'strict' profile
+  Warnings
+    - build:rel: advisory — 'strict' profile does not block this 'block-on-release' finding outside the 'gate' boundary (run mode 'verify')
+  - Passing: 2
+exit status: blocked

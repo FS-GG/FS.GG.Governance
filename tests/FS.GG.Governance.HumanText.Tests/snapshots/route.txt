@@ -1,0 +1,16 @@
+route: 2 selected gate(s)
+  Selected gates
+    - build:compile: domain=build cost=cheap; paths: src/a.fs
+    - docs:lint: domain=build cost=medium; paths: src/a.fs
+  Cost
+    - cheap=0 medium=0 high=0 exhaustive=0
+  Findings
+    - unknownGovernedPath @ src/new/Thing.fs: unclassified path src/new/Thing.fs
+    - unknownProtectedBoundaryPath @ src/boundary/Api.fs: unclassified path src/boundary/Api.fs
+  Cache eligibility
+    - build:rel: recompute: inputs changed (1)
+    - build:ship: reusable: ev-A
+  Gate execution
+    - build:ship: reused — passed
+    - build:rel: executed — failed
+exit status: success

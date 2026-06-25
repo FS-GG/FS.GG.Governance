@@ -13,6 +13,19 @@
     <Compile Include="PackagingTests.fs" />
     <Compile Include="ReadOnlyTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <!-- F27 (P2/P3): the HumanRender edge — rich-over-console / degrade / width, the JSON no-op,
+         watch debounce / read-only / safe-failure, and TUI parity / read-only. -->
+    <Compile Include="RenderSupport.fs" />
+    <Compile Include="RichRenderTests.fs" />
+    <Compile Include="DegradeToPlainTests.fs" />
+    <Compile Include="WidthResilienceTests.fs" />
+    <Compile Include="JsonNoOpTests.fs" />
+    <Compile Include="WatchDebounceTests.fs" />
+    <Compile Include="WatchReadOnlyTests.fs" />
+    <Compile Include="WatchSafeFailureTests.fs" />
+    <Compile Include="TuiParityTests.fs" />
+    <Compile Include="TuiReadOnlyTests.fs" />
+    <Compile Include="HumanRenderSurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -26,6 +39,16 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj" />
+    <!-- F27: the HumanRender presentation library + the pure HumanText projection it renders, and
+         the report cores needed to build a real ReportView fixture. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
   </ItemGroup>
 
 </Project>

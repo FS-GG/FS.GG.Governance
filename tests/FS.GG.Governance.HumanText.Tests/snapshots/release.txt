@@ -1,0 +1,14 @@
+release verdict: FAIL
+  Preconditions
+    - version-bump: unmet — versionBump: unmet
+    - package-metadata: met — packageMetadata: met
+    - template-pins: met — templatePins: met
+    - publish-plan: met — publishPlan: met
+    - trusted-publishing: met — trustedPublishing: met
+    - provenance: met — provenance: met
+  Blockers
+    - version-bump: blocking — release rule 'versionBump' on surface 'release' is not met
+  Warnings
+    - (none)
+  - Passing: 5
+exit status: blocked

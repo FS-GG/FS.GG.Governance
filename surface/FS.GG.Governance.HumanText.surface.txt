@@ -1,0 +1,124 @@
+TYPE FS.GG.Governance.HumanText.HumanTextModule
+  [Method] System.String ofCacheEligibilityReport(CacheEligibilityReport)
+  [Method] System.String ofReleaseReport(ReleaseReport)
+  [Method] System.String ofRouteExplanation(RouteExplanation)
+  [Method] System.String ofRouteResult(RouteResult, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] System.String ofShipDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] System.String ofVerifyDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] System.String render(ReportView)
+TYPE FS.GG.Governance.HumanText.RenderModeModule
+  [Method] RenderMode selectMode(Boolean, ColorCapability)
+  [NestedType] FS.GG.Governance.HumanText.RenderModeModule+ColorCapability
+  [NestedType] FS.GG.Governance.HumanText.RenderModeModule+RenderMode
+TYPE FS.GG.Governance.HumanText.RenderModeModule+ColorCapability
+  [Constructor] Void .ctor(Boolean, Boolean, Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.Int32])
+  [Method] Boolean Equals(ColorCapability)
+  [Method] Boolean Equals(ColorCapability, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExplicitPlain()
+  [Method] Boolean get_IsTty()
+  [Method] Boolean get_NoColorEnv()
+  [Method] Int32 CompareTo(ColorCapability)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_Width()
+  [Method] System.String ToString()
+  [Property] Boolean ExplicitPlain
+  [Property] Boolean IsTty
+  [Property] Boolean NoColorEnv
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] Width
+TYPE FS.GG.Governance.HumanText.RenderModeModule+RenderMode
+  [Method] Boolean Equals(RenderMode)
+  [Method] Boolean Equals(RenderMode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsJson()
+  [Method] Boolean get_IsPlain()
+  [Method] Boolean get_IsRich()
+  [Method] Int32 CompareTo(RenderMode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RenderMode get_Json()
+  [Method] RenderMode get_Plain()
+  [Method] RenderMode get_Rich()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.HumanText.RenderModeModule+RenderMode+Tags
+  [Property] Boolean IsJson
+  [Property] Boolean IsPlain
+  [Property] Boolean IsRich
+  [Property] Int32 Tag
+  [Property] RenderMode Json
+  [Property] RenderMode Plain
+  [Property] RenderMode Rich
+TYPE FS.GG.Governance.HumanText.RenderModeModule+RenderMode+Tags
+  [Field] Int32 Json
+  [Field] Int32 Plain
+  [Field] Int32 Rich
+TYPE FS.GG.Governance.HumanText.ReportViewModule
+  [Method] ReportView viewOfCacheEligibilityReport(CacheEligibilityReport)
+  [Method] ReportView viewOfReleaseReport(ReleaseReport)
+  [Method] ReportView viewOfRouteExplanation(RouteExplanation)
+  [Method] ReportView viewOfRouteResult(RouteResult, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] ReportView viewOfShipDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] ReportView viewOfVerifyDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [NestedType] FS.GG.Governance.HumanText.ReportViewModule+ReportNode
+  [NestedType] FS.GG.Governance.HumanText.ReportViewModule+ReportView
+TYPE FS.GG.Governance.HumanText.ReportViewModule+ReportNode
+  [Method] Boolean Equals(ReportNode)
+  [Method] Boolean Equals(ReportNode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGroup()
+  [Method] Boolean get_IsLeaf()
+  [Method] Int32 CompareTo(ReportNode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReportNode NewGroup(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode])
+  [Method] ReportNode NewLeaf(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Group
+  [NestedType] FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Leaf
+  [NestedType] FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Tags
+  [Property] Boolean IsGroup
+  [Property] Boolean IsLeaf
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Group
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode] get_children()
+  [Method] System.String get_title()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode] children
+  [Property] System.String title
+TYPE FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Leaf
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_detail()
+  [Method] System.String get_label()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] detail
+  [Property] System.String label
+TYPE FS.GG.Governance.HumanText.ReportViewModule+ReportNode+Tags
+  [Field] Int32 Group
+  [Field] Int32 Leaf
+TYPE FS.GG.Governance.HumanText.ReportViewModule+ReportView
+  [Constructor] Void .ctor(System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode])
+  [Method] Boolean Equals(ReportView)
+  [Method] Boolean Equals(ReportView, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReportView)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode] get_Sections()
+  [Method] System.String ToString()
+  [Method] System.String get_ExitStatus()
+  [Method] System.String get_Title()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanText.ReportViewModule+ReportNode] Sections
+  [Property] System.String ExitStatus
+  [Property] System.String Title

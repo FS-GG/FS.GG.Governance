@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F27 (P2/P3): the SOLE CLI-host presentation library and the SOLE owner of the Spectre.Console
+       dependency (FR-005, FR-013, SC-007). It concentrates everything that needs color, a terminal,
+       or a stateful loop:
+         • RichRender — `emit : RenderMode -> ReportView -> plain -> IAnsiConsole -> unit`: a colored
+                        verdict banner + grouped width-resilient tables for `Rich`, degrading to the
+                        precomputed `HumanText` plain string for `Plain` (and a no-op for `Json`,
+                        which the host writes directly).
+         • Watch     — a PURE debounce MVU (Model/Msg/Effect/update) + a FileSystemWatcher interpreter
+                        edge; read-only, coalesces a burst of edits into a single settled re-render.
+         • Tui       — a PURE navigation MVU over a ReportView + a Spectre key/redraw interpreter;
+                        strictly read-only.
+       The pure decision (`RenderMode.selectMode`) and the report→view projections live in the pure
+       FS.GG.Governance.HumanText library; only capability sensing, file-change sensing, terminal
+       writes, and the key loop are effects executed here at the interpreter edge (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.HumanRender</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- A host-edge presentation library, not a published package. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RichRender.fsi" />
+    <Compile Include="RichRender.fs" />
+    <Compile Include="Watch.fsi" />
+    <Compile Include="Watch.fs" />
+    <Compile Include="Tui.fsi" />
+    <Compile Include="Tui.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+    <!-- The ONLY project in the repo that may reference Spectre.Console (FR-013, SC-007). -->
+    <PackageReference Include="Spectre.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+  </ItemGroup>
+
+</Project>

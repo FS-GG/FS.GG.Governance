@@ -1,0 +1,4 @@
+explain: 1 high-cost finding(s)
+  High-cost gates
+    - build:exhaustive: cheaper local alternative: build:compile
+exit status: advisory

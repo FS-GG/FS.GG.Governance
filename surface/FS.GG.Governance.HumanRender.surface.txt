@@ -1,0 +1,245 @@
+TYPE FS.GG.Governance.HumanRender.RichRenderModule
+  [Method] Int32 get_defaultWidth()
+  [Method] Void emit(RenderMode, ReportView, System.String, Spectre.Console.IAnsiConsole)
+  [Property] Int32 defaultWidth
+TYPE FS.GG.Governance.HumanRender.TuiModule
+  [Method] System.Tuple`2[FS.GG.Governance.HumanRender.TuiModule+TuiModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.TuiModule+TuiEffect]] init(ReportView)
+  [Method] System.Tuple`2[FS.GG.Governance.HumanRender.TuiModule+TuiModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.TuiModule+TuiEffect]] update(TuiMsg, TuiModel)
+  [Method] Void run(ReportView, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.HumanRender.TuiModule+TuiMsg], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanRender.TuiModule+TuiModel,Microsoft.FSharp.Core.Unit])
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiEffect
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiModel
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiMsg
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiEffect
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TuiEffect)
+  [Method] Boolean Equals(TuiEffect, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDraw()
+  [Method] Boolean get_IsExit()
+  [Method] Boolean get_IsReadKey()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TuiEffect)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] TuiEffect NewDraw(TuiModel)
+  [Method] TuiEffect get_Exit()
+  [Method] TuiEffect get_ReadKey()
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiEffect+Draw
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiEffect+Tags
+  [Property] Boolean IsDraw
+  [Property] Boolean IsExit
+  [Property] Boolean IsReadKey
+  [Property] Int32 Tag
+  [Property] TuiEffect Exit
+  [Property] TuiEffect ReadKey
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiEffect+Draw
+  [Method] TuiModel get_Item()
+  [Property] TuiModel Item
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiEffect+Tags
+  [Field] Int32 Draw
+  [Field] Int32 Exit
+  [Field] Int32 ReadKey
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiModel
+  [Constructor] Void .ctor(ReportView, Microsoft.FSharp.Collections.FSharpList`1[System.Int32], Microsoft.FSharp.Collections.FSharpSet`1[Microsoft.FSharp.Collections.FSharpList`1[System.Int32]])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TuiModel)
+  [Method] Boolean Equals(TuiModel, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TuiModel)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Int32] get_Path()
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[Microsoft.FSharp.Collections.FSharpList`1[System.Int32]] get_Expanded()
+  [Method] ReportView get_View()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Int32] Path
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[Microsoft.FSharp.Collections.FSharpList`1[System.Int32]] Expanded
+  [Property] ReportView View
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiMsg
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TuiMsg)
+  [Method] Boolean Equals(TuiMsg, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCollapse()
+  [Method] Boolean get_IsExpand()
+  [Method] Boolean get_IsMoveDown()
+  [Method] Boolean get_IsMoveUp()
+  [Method] Boolean get_IsQuit()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TuiMsg)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] TuiMsg get_Collapse()
+  [Method] TuiMsg get_Expand()
+  [Method] TuiMsg get_MoveDown()
+  [Method] TuiMsg get_MoveUp()
+  [Method] TuiMsg get_Quit()
+  [NestedType] FS.GG.Governance.HumanRender.TuiModule+TuiMsg+Tags
+  [Property] Boolean IsCollapse
+  [Property] Boolean IsExpand
+  [Property] Boolean IsMoveDown
+  [Property] Boolean IsMoveUp
+  [Property] Boolean IsQuit
+  [Property] Int32 Tag
+  [Property] TuiMsg Collapse
+  [Property] TuiMsg Expand
+  [Property] TuiMsg MoveDown
+  [Property] TuiMsg MoveUp
+  [Property] TuiMsg Quit
+TYPE FS.GG.Governance.HumanRender.TuiModule+TuiMsg+Tags
+  [Field] Int32 Collapse
+  [Field] Int32 Expand
+  [Field] Int32 MoveDown
+  [Field] Int32 MoveUp
+  [Field] Int32 Quit
+TYPE FS.GG.Governance.HumanRender.WatchModule
+  [Method] Int64 get_debounceWindow()
+  [Method] System.Tuple`2[FS.GG.Governance.HumanRender.WatchModule+WatchModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.WatchModule+WatchEffect]] init(System.String, RenderMode)
+  [Method] System.Tuple`2[FS.GG.Governance.HumanRender.WatchModule+WatchModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.WatchModule+WatchEffect]] update(WatchMsg, WatchModel)
+  [Method] Void run(System.String, RenderMode, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Int64], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.RenderModeModule+RenderMode,FS.GG.Governance.HumanRender.WatchModule+WatchSignal]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Boolean])
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchModel
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchSignal
+  [Property] Int64 debounceWindow
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchEffect
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WatchEffect)
+  [Method] Boolean Equals(WatchEffect, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsReRender()
+  [Method] Boolean get_IsScheduleDebounce()
+  [Method] Boolean get_IsSenseChanges()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WatchEffect)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] WatchEffect NewReRender(System.String, RenderMode)
+  [Method] WatchEffect NewScheduleDebounce(Int64)
+  [Method] WatchEffect NewSenseChanges(System.String)
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect+ReRender
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect+ScheduleDebounce
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect+SenseChanges
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect+Tags
+  [Property] Boolean IsReRender
+  [Property] Boolean IsScheduleDebounce
+  [Property] Boolean IsSenseChanges
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchEffect+ReRender
+  [Method] RenderMode get_mode()
+  [Method] System.String get_root()
+  [Property] RenderMode mode
+  [Property] System.String root
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchEffect+ScheduleDebounce
+  [Method] Int64 get_dueAt()
+  [Property] Int64 dueAt
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchEffect+SenseChanges
+  [Method] System.String get_root()
+  [Property] System.String root
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchEffect+Tags
+  [Field] Int32 ReRender
+  [Field] Int32 ScheduleDebounce
+  [Field] Int32 SenseChanges
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchModel
+  [Constructor] Void .ctor(System.String, RenderMode, Microsoft.FSharp.Core.FSharpOption`1[System.Int64], WatchSignal)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WatchModel)
+  [Method] Boolean Equals(WatchModel, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WatchModel)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int64] get_PendingSince()
+  [Method] RenderMode get_Mode()
+  [Method] System.String ToString()
+  [Method] System.String get_Root()
+  [Method] WatchSignal get_LastSignal()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int64] PendingSince
+  [Property] RenderMode Mode
+  [Property] System.String Root
+  [Property] WatchSignal LastSignal
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchMsg
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WatchMsg)
+  [Method] Boolean Equals(WatchMsg, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsChangeDetected()
+  [Method] Boolean get_IsRerendered()
+  [Method] Boolean get_IsWindowSettled()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WatchMsg)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] WatchMsg NewChangeDetected(Int64)
+  [Method] WatchMsg NewRerendered(WatchSignal)
+  [Method] WatchMsg NewWindowSettled(Int64)
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg+ChangeDetected
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg+Rerendered
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg+Tags
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg+WindowSettled
+  [Property] Boolean IsChangeDetected
+  [Property] Boolean IsRerendered
+  [Property] Boolean IsWindowSettled
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchMsg+ChangeDetected
+  [Method] Int64 get_at()
+  [Property] Int64 at
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchMsg+Rerendered
+  [Method] WatchSignal get_Item()
+  [Property] WatchSignal Item
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchMsg+Tags
+  [Field] Int32 ChangeDetected
+  [Field] Int32 Rerendered
+  [Field] Int32 WindowSettled
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchMsg+WindowSettled
+  [Method] Int64 get_at()
+  [Property] Int64 at
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchSignal
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(WatchSignal)
+  [Method] Boolean Equals(WatchSignal, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsIdle()
+  [Method] Boolean get_IsInputUnreadable()
+  [Method] Boolean get_IsRendered()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(WatchSignal)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] WatchSignal NewInputUnreadable(System.String)
+  [Method] WatchSignal get_Idle()
+  [Method] WatchSignal get_Rendered()
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchSignal+InputUnreadable
+  [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchSignal+Tags
+  [Property] Boolean IsIdle
+  [Property] Boolean IsInputUnreadable
+  [Property] Boolean IsRendered
+  [Property] Int32 Tag
+  [Property] WatchSignal Idle
+  [Property] WatchSignal Rendered
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchSignal+InputUnreadable
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.HumanRender.WatchModule+WatchSignal+Tags
+  [Field] Int32 Idle
+  [Field] Int32 InputUnreadable
+  [Field] Int32 Rendered

@@ -1235,6 +1235,30 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   host edge — `fsgg release` packing every project through the F051 `ExecutionPort`,
   building the snapshot/attestation/report, and writing the sidecar + v2; `fsgg verify`
   emitting the preview — is the follow-up wiring pass (the cores are ready).
+  **F27** (`062-human-projections-watch-tui`) landed the **human-projection libraries** over
+  the F18–F26 immutable report objects — a *second* projection beside the `*Json` contract,
+  changing **no** report object, verdict, exit-code scheme, or JSON schema (every existing
+  `route`/`ship`/`verify`/`release`/`evidence` golden byte-identical): **`FS.GG.Governance.HumanText`**
+  — the PURE, ANSI-free, deterministic projection (one `of*` per report object, each rendering a
+  shared `ReportView` view-model so the plain text and the future rich/TUI surfaces are one
+  structure projected from the same report value, FR-001); it carries `RenderMode` + the total
+  `selectMode` decision (`Json` always wins) and depends on **no** presentation package.
+  **`FS.GG.Governance.HumanRender`** — the sole-owner CLI-host presentation library for the one new
+  dependency **Spectre.Console** (pinned centrally with NEED/SCOPE/OWNER, the YamlDotNet precedent;
+  a dependency-boundary test enforces that no pure core, `*Json`, or `HumanText` references it,
+  FR-013/SC-007): `RichRender.emit` (color verdict banner + width-resilient grouped tables,
+  degrading **verbatim** to the precomputed `HumanText` plain string on non-TTY/`NO_COLOR`/plain,
+  JSON a no-op), the PURE `Watch` debounce MVU (a burst of change events coalesces to a single
+  settled re-render; read-only — sense/schedule/re-render only, no contract write, FR-007/FR-008,
+  with an `InputUnreadable` safe-failure signal, FR-012), and the PURE read-only `Tui` navigation
+  MVU over `ReportView`. Both libraries build green with real-core test evidence (36 HumanText.Tests
+  + 17 HumanRender edge tests in the extended `Cli.Tests`); two surface baselines + the plain-text
+  smoke snapshots committed. **Remaining (the host-wiring pass):** replacing each command host's
+  console summary with a `HumanText` delegation (T021–T026), the Cli capability-sense + render-mode
+  dispatch (T032/T033), and the `watch`/`tui` subcommands + `--watch`/`--plain` flags (T038/T039/
+  T043) — split out because the per-host summaries (changed-path counts, "wrote …" lines) and the
+  legacy `Cli`'s older Kernel/Host `Route`/`Explanation` types make that an invasive per-host change;
+  the libraries here are exactly the surface that wiring consumes.
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the

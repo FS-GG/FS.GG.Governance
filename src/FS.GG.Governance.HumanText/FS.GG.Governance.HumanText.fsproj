@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F27 (P1): the PURE, presentation-free human-text projection library — the second
+       projection of the SAME immutable report objects the *Json libraries render to JSON.
+       It sits beside RouteJson/VerifyJson/ReleaseJson/CacheEligibilityJson: a string-building
+       projection exactly like them, except its output is ANSI-free human text, not JSON.
+
+       Three pure modules (compile order RenderMode -> ReportView -> HumanText):
+         • RenderMode  — RenderMode = Json|Plain|Rich + ColorCapability + the total `selectMode`
+                         decision (JSON always wins). No I/O; the actual TTY/NO_COLOR/width
+                         sensing is a HumanRender Effect, never here.
+         • ReportView  — the navigable view-model (ReportNode tree + ReportView record) and one
+                         `viewOf*` per report object: the single structure behind BOTH the plain
+                         text and the rich/TUI surfaces (parity by construction, FR-001/FR-009).
+         • HumanText   — one `of*` per report object, each a render of the matching ReportView
+                         to deterministic, ANSI-free plain text (FR-002/FR-011).
+
+       PURE and TOTAL (the *Json precedent): no I/O, no git, no clock, no environment, never
+       throws, byte-identical for identical input. NO presentation PackageReference — text is
+       built with System.Text only. It references ONLY the report-object cores it renders; the
+       Spectre dependency lives exclusively in FS.GG.Governance.HumanRender (FR-013, SC-007). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.HumanText</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.HumanText</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RenderMode.fsi" />
+    <Compile Include="RenderMode.fs" />
+    <Compile Include="ReportView.fsi" />
+    <Compile Include="ReportView.fs" />
+    <Compile Include="HumanText.fsi" />
+    <Compile Include="HumanText.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The report-object cores the projections render (read-only; never redefined). -->
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.RouteExplain/FS.GG.Governance.RouteExplain.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

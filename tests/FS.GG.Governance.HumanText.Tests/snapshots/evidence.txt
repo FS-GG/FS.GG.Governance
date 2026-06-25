@@ -1,0 +1,5 @@
+evidence: 2 gate(s)
+  Cache eligibility
+    - build:rel: recompute: inputs changed (1)
+    - build:ship: reusable: ev-A
+exit status: 1 reusable, 1 must-recompute

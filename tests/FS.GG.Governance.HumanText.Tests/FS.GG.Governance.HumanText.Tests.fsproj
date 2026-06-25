@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F27 (P1) semantic tests for the PURE human-text projection library. Every fixture is a REAL
+       report object produced by the genuine F19-F26 cores (`Route.select`, `Ship.rollup`,
+       `RouteExplain.explain`, `CacheEligibility.evaluate`, `Report.assemble`) — never a mock
+       (Principle V). The SAME report value is fed to both `HumanText.of*` and the matching
+       `*Json.of*` for report-object parity. Tests cover ANSI-freedom, determinism, blocked
+       verdicts, smoke snapshots, parity, the surface baseline, and the dependency boundary. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="SmokeTests.fs" />
+    <Compile Include="AnsiFreeTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="BlockedVerdictTests.fs" />
+    <Compile Include="SmokeSnapshotTests.fs" />
+    <Compile Include="ReportParityTests.fs" />
+    <Compile Include="DependencyBoundaryTests.fs" />
+    <Compile Include="NonContractualTextTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The system under test. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <!-- Real report-object cores (route chain). -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.RouteExplain/FS.GG.Governance.RouteExplain.fsproj" />
+    <!-- Ship / verify. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- Evidence / cache eligibility. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <!-- Execution outcomes. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <!-- Release report assembly. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <!-- *Json projections for report-object parity. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.RouteJson/FS.GG.Governance.RouteJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibilityJson/FS.GG.Governance.CacheEligibilityJson.fsproj" />
+  </ItemGroup>
+
+</Project>

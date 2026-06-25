@@ -25,6 +25,18 @@
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
+  <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
+       NEED: color-coded verdict banners, grouped width-resilient gate/finding/blocker tables, and
+       an optional read-only report navigator (FR-005/FR-006/FR-009) — a correct, width-aware rich
+       renderer is required and hand-rolling ANSI/table/reflow logic is out of proportion (the
+       YamlDotNet precedent). SCOPE: PackageReference'd by EXACTLY ONE project,
+       FS.GG.Governance.HumanRender, the sole CLI-host presentation library. It NEVER enters a pure
+       core, the *Json projections, or the pure FS.GG.Governance.HumanText library (FR-013, SC-007,
+       enforced by the dependency-boundary test). OWNER: CLI host maintainer. -->
+  <ItemGroup>
+    <PackageVersion Include="Spectre.Console" Version="0.57.1" />
+  </ItemGroup>
+
   <!-- Test-only: Expecto + FsCheck (property-based order-independence) plus the
        VSTest adapters that let `dotnet test` drive the Expecto runner. None of
        these reach the kernel assembly. -->
