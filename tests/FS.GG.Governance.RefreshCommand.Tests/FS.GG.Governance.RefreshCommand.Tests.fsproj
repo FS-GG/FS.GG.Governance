@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F057 `FS.GG.Governance.RefreshCommand`, exercising the PUBLIC surface: the pure
+       `Loop.parse`/`init`/`update`/`render`/`exitCode` driven with literal Model/Msg values (no I/O, no
+       clock), the row-local `Declaration.parse` over real refresh.yml text, and the edge
+       `Interpreter.run`/`step` driven against a REAL temp-repo fixture (the ReleaseCommand `withTempRepo`
+       precedent) over the REAL F029/F051/F052/RefreshJson cores — never mocks of the cores. Faked
+       Sense/ReadProv/Generate/WriteProv/Write/Out ports for unit coverage; one real-filesystem end-to-end
+       proof with a deterministic generator command (Principle V). Expecto + the VSTest adapters drive
+       `dotnet test`. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="DeclarationTests.fs" />
+    <Compile Include="CurrencyTests.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="EndToEndTests.fs" />
+    <Compile Include="DryRunTests.fs" />
+    <Compile Include="NoMutationTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="FailureTests.fs" />
+    <Compile Include="ScopeTests.fs" />
+    <Compile Include="ScopeGuardTests.fs" />
+    <Compile Include="ProductNeutralityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.RefreshCommand/FS.GG.Governance.RefreshCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,392 @@
+TYPE FS.GG.Governance.RefreshCommand.DeclarationModule
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest,FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+TYPE FS.GG.Governance.RefreshCommand.InterpreterModule
+  [Method] Model run(Ports, RunRequest)
+  [Method] Msg step(Ports, Effect)
+  [Method] Ports realPorts(System.String)
+  [NestedType] FS.GG.Governance.RefreshCommand.InterpreterModule+Ports
+TYPE FS.GG.Governance.RefreshCommand.InterpreterModule+Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String]] get_Generate()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]] get_Sense()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_WriteProv()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]] get_ReadProv()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] get_Out()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String]] Generate
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]] Sense
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] WriteProv
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]] ReadProv
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] Out
+TYPE FS.GG.Governance.RefreshCommand.LoopModule
+  [Method] Int32 exitCode(RefreshOutcome)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RefreshCommand.LoopModule+RunRequest,FS.GG.Governance.RefreshCommand.LoopModule+UsageError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] System.String render(Model, OutputFormat)
+  [Method] System.Tuple`2[FS.GG.Governance.RefreshCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshCommand.LoopModule+Effect]] init(RunRequest)
+  [Method] System.Tuple`2[FS.GG.Governance.RefreshCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshCommand.LoopModule+Effect]] update(Msg, Model)
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Diagnostic
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Model
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+OutputFormat
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Phase
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+RunRequest
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Scope
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+UsageError
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Diagnostic
+  [Constructor] Void .ctor(RefreshOutcome, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] RefreshOutcome get_Category()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] RefreshOutcome Category
+  [Property] System.String Message
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect
+  [Method] Boolean Equals(Effect)
+  [Method] Boolean Equals(Effect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEmitSummary()
+  [Method] Boolean get_IsLoadManifest()
+  [Method] Boolean get_IsReadRecorded()
+  [Method] Boolean get_IsRecordProvenance()
+  [Method] Boolean get_IsRegenerateView()
+  [Method] Boolean get_IsSenseSource()
+  [Method] Boolean get_IsWriteArtifact()
+  [Method] Effect NewEmitSummary(System.String)
+  [Method] Effect NewLoadManifest(System.String)
+  [Method] Effect NewReadRecorded(System.String)
+  [Method] Effect NewRecordProvenance(System.String, System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash])
+  [Method] Effect NewRegenerateView(GenerationEntry)
+  [Method] Effect NewSenseSource(GenerationEntry)
+  [Method] Effect NewWriteArtifact(System.String, System.String)
+  [Method] Int32 CompareTo(Effect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+EmitSummary
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+LoadManifest
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+ReadRecorded
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+RecordProvenance
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+RegenerateView
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+SenseSource
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+Tags
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Effect+WriteArtifact
+  [Property] Boolean IsEmitSummary
+  [Property] Boolean IsLoadManifest
+  [Property] Boolean IsReadRecorded
+  [Property] Boolean IsRecordProvenance
+  [Property] Boolean IsRegenerateView
+  [Property] Boolean IsSenseSource
+  [Property] Boolean IsWriteArtifact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+EmitSummary
+  [Method] System.String get_text()
+  [Property] System.String text
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+LoadManifest
+  [Method] System.String get_repo()
+  [Property] System.String repo
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+ReadRecorded
+  [Method] System.String get_viewId()
+  [Property] System.String viewId
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+RecordProvenance
+  [Method] System.String get_viewId()
+  [Method] System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] get_provenance()
+  [Property] System.String viewId
+  [Property] System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion,FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] provenance
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+RegenerateView
+  [Method] GenerationEntry get_entry()
+  [Property] GenerationEntry entry
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+SenseSource
+  [Method] GenerationEntry get_entry()
+  [Property] GenerationEntry entry
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+Tags
+  [Field] Int32 EmitSummary
+  [Field] Int32 LoadManifest
+  [Field] Int32 ReadRecorded
+  [Field] Int32 RecordProvenance
+  [Field] Int32 RegenerateView
+  [Field] Int32 SenseSource
+  [Field] Int32 WriteArtifact
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Effect+WriteArtifact
+  [Method] System.String get_content()
+  [Method] System.String get_path()
+  [Property] System.String content
+  [Property] System.String path
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Model
+  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry], Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]], Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]], Microsoft.FSharp.Collections.FSharpSet`1[System.String], Int32, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshCommand.LoopModule+Diagnostic], RefreshOutcome)
+  [Method] Boolean Equals(Model)
+  [Method] Boolean Equals(Model, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Model)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_PendingProv()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshCommand.LoopModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] get_InScope()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision] get_Views()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]] get_Recorded()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]] get_Sensed()
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[System.String] get_ExpectedRegen()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest] get_Manifest()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision] get_Decision()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_RefreshDoc()
+  [Method] Phase get_Phase()
+  [Method] RefreshOutcome get_Exit()
+  [Method] RunRequest get_Request()
+  [Method] System.String ToString()
+  [Property] Int32 PendingProv
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshCommand.LoopModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] InScope
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision] Views
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]]] Recorded
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String]] Sensed
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[System.String] ExpectedRegen
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest] Manifest
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision] Decision
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] RefreshDoc
+  [Property] Phase Phase
+  [Property] RefreshOutcome Exit
+  [Property] RunRequest Request
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg
+  [Method] Boolean Equals(Msg)
+  [Method] Boolean Equals(Msg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBegin()
+  [Method] Boolean get_IsEmitted()
+  [Method] Boolean get_IsManifestLoaded()
+  [Method] Boolean get_IsProvenanceWritten()
+  [Method] Boolean get_IsRecordedRead()
+  [Method] Boolean get_IsRegenerated'()
+  [Method] Boolean get_IsSensed()
+  [Method] Boolean get_IsWrote()
+  [Method] Int32 CompareTo(Msg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Msg NewManifestLoaded(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest,FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError])
+  [Method] Msg NewProvenanceWritten(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] Msg NewRecordedRead(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]])
+  [Method] Msg NewRegenerated'(System.String, Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String])
+  [Method] Msg NewSensed(System.String, Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String])
+  [Method] Msg NewWrote(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] Msg get_Begin()
+  [Method] Msg get_Emitted()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+ManifestLoaded
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+ProvenanceWritten
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+RecordedRead
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+Regenerated'
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+Sensed
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+Tags
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Msg+Wrote
+  [Property] Boolean IsBegin
+  [Property] Boolean IsEmitted
+  [Property] Boolean IsManifestLoaded
+  [Property] Boolean IsProvenanceWritten
+  [Property] Boolean IsRecordedRead
+  [Property] Boolean IsRegenerated'
+  [Property] Boolean IsSensed
+  [Property] Boolean IsWrote
+  [Property] Int32 Tag
+  [Property] Msg Begin
+  [Property] Msg Emitted
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+ManifestLoaded
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest,FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest,FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError] Item
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+ProvenanceWritten
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] Item
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+RecordedRead
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]] get_recorded()
+  [Method] System.String get_viewId()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]] recorded
+  [Property] System.String viewId
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+Regenerated'
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String] get_Item2()
+  [Method] System.String get_viewId()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash,System.String] Item2
+  [Property] System.String viewId
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+Sensed
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String] get_Item2()
+  [Method] System.String get_viewId()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String] Item2
+  [Property] System.String viewId
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+Tags
+  [Field] Int32 Begin
+  [Field] Int32 Emitted
+  [Field] Int32 ManifestLoaded
+  [Field] Int32 ProvenanceWritten
+  [Field] Int32 RecordedRead
+  [Field] Int32 Regenerated'
+  [Field] Int32 Sensed
+  [Field] Int32 Wrote
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Msg+Wrote
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] Item
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+OutputFormat
+  [Method] Boolean Equals(OutputFormat)
+  [Method] Boolean Equals(OutputFormat, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsJson()
+  [Method] Boolean get_IsText()
+  [Method] Boolean get_IsTextAndJson()
+  [Method] Int32 CompareTo(OutputFormat)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] OutputFormat get_Json()
+  [Method] OutputFormat get_Text()
+  [Method] OutputFormat get_TextAndJson()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+OutputFormat+Tags
+  [Property] Boolean IsJson
+  [Property] Boolean IsText
+  [Property] Boolean IsTextAndJson
+  [Property] Int32 Tag
+  [Property] OutputFormat Json
+  [Property] OutputFormat Text
+  [Property] OutputFormat TextAndJson
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+OutputFormat+Tags
+  [Field] Int32 Json
+  [Field] Int32 Text
+  [Field] Int32 TextAndJson
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Phase
+  [Method] Boolean Equals(Phase)
+  [Method] Boolean Equals(Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDone()
+  [Method] Boolean get_IsLoaded'()
+  [Method] Boolean get_IsParsed()
+  [Method] Boolean get_IsPersisted()
+  [Method] Boolean get_IsSensed'()
+  [Method] Int32 CompareTo(Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Phase get_Done()
+  [Method] Phase get_Loaded'()
+  [Method] Phase get_Parsed()
+  [Method] Phase get_Persisted()
+  [Method] Phase get_Sensed'()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Phase+Tags
+  [Property] Boolean IsDone
+  [Property] Boolean IsLoaded'
+  [Property] Boolean IsParsed
+  [Property] Boolean IsPersisted
+  [Property] Boolean IsSensed'
+  [Property] Int32 Tag
+  [Property] Phase Done
+  [Property] Phase Loaded'
+  [Property] Phase Parsed
+  [Property] Phase Persisted
+  [Property] Phase Sensed'
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Phase+Tags
+  [Field] Int32 Done
+  [Field] Int32 Loaded'
+  [Field] Int32 Parsed
+  [Field] Int32 Persisted
+  [Field] Int32 Sensed'
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+RunRequest
+  [Constructor] Void .ctor(System.String, Boolean, Scope, OutputFormat, Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] Boolean Equals(RunRequest)
+  [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_DryRun()
+  [Method] Int32 CompareTo(RunRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_RefreshOut()
+  [Method] OutputFormat get_Format()
+  [Method] Scope get_Scope()
+  [Method] System.String ToString()
+  [Method] System.String get_Repo()
+  [Property] Boolean DryRun
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] RefreshOut
+  [Property] OutputFormat Format
+  [Property] Scope Scope
+  [Property] System.String Repo
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Scope
+  [Method] Boolean Equals(Scope)
+  [Method] Boolean Equals(Scope, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAllViews()
+  [Method] Boolean get_IsByKind()
+  [Method] Boolean get_IsByView()
+  [Method] Int32 CompareTo(Scope)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Scope NewByKind(ViewKind)
+  [Method] Scope NewByView(System.String)
+  [Method] Scope get_AllViews()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Scope+ByKind
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Scope+ByView
+  [NestedType] FS.GG.Governance.RefreshCommand.LoopModule+Scope+Tags
+  [Property] Boolean IsAllViews
+  [Property] Boolean IsByKind
+  [Property] Boolean IsByView
+  [Property] Int32 Tag
+  [Property] Scope AllViews
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Scope+ByKind
+  [Method] ViewKind get_Item()
+  [Property] ViewKind Item
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Scope+ByView
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+Scope+Tags
+  [Field] Int32 AllViews
+  [Field] Int32 ByKind
+  [Field] Int32 ByView
+TYPE FS.GG.Governance.RefreshCommand.LoopModule+UsageError
+  [Constructor] Void .ctor(System.String)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(UsageError)
+  [Method] Boolean Equals(UsageError, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(UsageError)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] System.String Message
+TYPE FS.GG.Governance.RefreshCommand.Program
+  [Method] Int32 main(System.String[])
+  [Method] System.String categoryToken(RefreshOutcome)

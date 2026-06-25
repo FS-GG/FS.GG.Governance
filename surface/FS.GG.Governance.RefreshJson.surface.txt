@@ -1,0 +1,263 @@
+TYPE FS.GG.Governance.RefreshJson.RefreshJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofRefreshDecision(RefreshDecision)
+  [Property] System.String schemaVersion
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule
+  [Method] System.String viewKindToken(ViewKind)
+  [Method] ViewKind viewKindOfToken(System.String)
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshOutcome
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus
+  [Method] Boolean Equals(CurrencyStatus)
+  [Method] Boolean Equals(CurrencyStatus, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCurrent()
+  [Method] Boolean get_IsNotEvaluated()
+  [Method] Boolean get_IsRegenerated()
+  [Method] Boolean get_IsStaleUnresolved()
+  [Method] Boolean get_IsWouldRegenerate()
+  [Method] CurrencyStatus NewRegenerated(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] CurrencyStatus NewStaleUnresolved(System.String)
+  [Method] CurrencyStatus NewWouldRegenerate(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] CurrencyStatus get_Current()
+  [Method] CurrencyStatus get_NotEvaluated()
+  [Method] Int32 CompareTo(CurrencyStatus)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+Regenerated
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+StaleUnresolved
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+Tags
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+WouldRegenerate
+  [Property] Boolean IsCurrent
+  [Property] Boolean IsNotEvaluated
+  [Property] Boolean IsRegenerated
+  [Property] Boolean IsStaleUnresolved
+  [Property] Boolean IsWouldRegenerate
+  [Property] CurrencyStatus Current
+  [Property] CurrencyStatus NotEvaluated
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+Regenerated
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_drifted()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] drifted
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+StaleUnresolved
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+Tags
+  [Field] Int32 Current
+  [Field] Int32 NotEvaluated
+  [Field] Int32 Regenerated
+  [Field] Int32 StaleUnresolved
+  [Field] Int32 WouldRegenerate
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+CurrencyStatus+WouldRegenerate
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_drifted()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] drifted
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+DeclError
+  [Constructor] Void .ctor(System.String)
+  [Method] Boolean Equals(DeclError)
+  [Method] Boolean Equals(DeclError, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DeclError)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] System.String Reason
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry
+  [Constructor] Void .ctor(System.String, ViewKind, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], System.String)
+  [Method] Boolean Equals(GenerationEntry)
+  [Method] Boolean Equals(GenerationEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(GenerationEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Generator()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Sources()
+  [Method] System.String ToString()
+  [Method] System.String get_GeneratorBasis()
+  [Method] System.String get_OutputPath()
+  [Method] System.String get_ViewId()
+  [Method] ViewKind get_Kind()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Generator
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Sources
+  [Property] System.String GeneratorBasis
+  [Property] System.String OutputPath
+  [Property] System.String ViewId
+  [Property] ViewKind Kind
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry])
+  [Method] Boolean Equals(GenerationManifest)
+  [Method] Boolean Equals(GenerationManifest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(GenerationManifest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] get_Entries()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] Entries
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision
+  [Constructor] Void .ctor(RefreshOutcome, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision], Int32, Int32, Int32, Int32)
+  [Method] Boolean Equals(RefreshDecision)
+  [Method] Boolean Equals(RefreshDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_DryRun()
+  [Method] Int32 CompareTo(RefreshDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_CurrentCount()
+  [Method] Int32 get_NotEvaluatedCount()
+  [Method] Int32 get_RegeneratedCount()
+  [Method] Int32 get_UnresolvedCount()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision] get_Views()
+  [Method] RefreshOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Property] Boolean DryRun
+  [Property] Int32 CurrentCount
+  [Property] Int32 NotEvaluatedCount
+  [Property] Int32 RegeneratedCount
+  [Property] Int32 UnresolvedCount
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision] Views
+  [Property] RefreshOutcome Outcome
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshOutcome
+  [Method] Boolean Equals(RefreshOutcome)
+  [Method] Boolean Equals(RefreshOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputUnavailable()
+  [Method] Boolean get_IsNothingToRefresh()
+  [Method] Boolean get_IsStaleUnresolved'()
+  [Method] Boolean get_IsToolError()
+  [Method] Boolean get_IsUsageError'()
+  [Method] Boolean get_IsViewsRegenerated()
+  [Method] Int32 CompareTo(RefreshOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RefreshOutcome get_InputUnavailable()
+  [Method] RefreshOutcome get_NothingToRefresh()
+  [Method] RefreshOutcome get_StaleUnresolved'()
+  [Method] RefreshOutcome get_ToolError()
+  [Method] RefreshOutcome get_UsageError'()
+  [Method] RefreshOutcome get_ViewsRegenerated()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshOutcome+Tags
+  [Property] Boolean IsInputUnavailable
+  [Property] Boolean IsNothingToRefresh
+  [Property] Boolean IsStaleUnresolved'
+  [Property] Boolean IsToolError
+  [Property] Boolean IsUsageError'
+  [Property] Boolean IsViewsRegenerated
+  [Property] Int32 Tag
+  [Property] RefreshOutcome InputUnavailable
+  [Property] RefreshOutcome NothingToRefresh
+  [Property] RefreshOutcome StaleUnresolved'
+  [Property] RefreshOutcome ToolError
+  [Property] RefreshOutcome UsageError'
+  [Property] RefreshOutcome ViewsRegenerated
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshOutcome+Tags
+  [Field] Int32 InputUnavailable
+  [Field] Int32 NothingToRefresh
+  [Field] Int32 StaleUnresolved'
+  [Field] Int32 ToolError
+  [Field] Int32 UsageError'
+  [Field] Int32 ViewsRegenerated
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision
+  [Constructor] Void .ctor(GenerationEntry, CurrencyStatus, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(ViewDecision)
+  [Method] Boolean Equals(ViewDecision, System.Collections.IEqualityComparer)
+  [Method] CurrencyStatus get_Status()
+  [Method] GenerationEntry get_Entry()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(ViewDecision)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_Drifted()
+  [Method] System.String ToString()
+  [Property] CurrencyStatus Status
+  [Property] GenerationEntry Entry
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] Drifted
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(ViewKind)
+  [Method] Boolean Equals(ViewKind, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsApiSurfaceDoc()
+  [Method] Boolean get_IsBaseline()
+  [Method] Boolean get_IsCapabilityDoc()
+  [Method] Boolean get_IsGateMetadata()
+  [Method] Boolean get_IsOther()
+  [Method] Boolean get_IsRouteProjection()
+  [Method] Boolean get_IsRuleCatalog()
+  [Method] Boolean get_IsSkillReference()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(ViewKind)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] ViewKind NewOther(System.String)
+  [Method] ViewKind get_ApiSurfaceDoc()
+  [Method] ViewKind get_Baseline()
+  [Method] ViewKind get_CapabilityDoc()
+  [Method] ViewKind get_GateMetadata()
+  [Method] ViewKind get_RouteProjection()
+  [Method] ViewKind get_RuleCatalog()
+  [Method] ViewKind get_SkillReference()
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind+Other
+  [NestedType] FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind+Tags
+  [Property] Boolean IsApiSurfaceDoc
+  [Property] Boolean IsBaseline
+  [Property] Boolean IsCapabilityDoc
+  [Property] Boolean IsGateMetadata
+  [Property] Boolean IsOther
+  [Property] Boolean IsRouteProjection
+  [Property] Boolean IsRuleCatalog
+  [Property] Boolean IsSkillReference
+  [Property] Int32 Tag
+  [Property] ViewKind ApiSurfaceDoc
+  [Property] ViewKind Baseline
+  [Property] ViewKind CapabilityDoc
+  [Property] ViewKind GateMetadata
+  [Property] ViewKind RouteProjection
+  [Property] ViewKind RuleCatalog
+  [Property] ViewKind SkillReference
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind+Other
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+ViewKind+Tags
+  [Field] Int32 ApiSurfaceDoc
+  [Field] Int32 Baseline
+  [Field] Int32 CapabilityDoc
+  [Field] Int32 GateMetadata
+  [Field] Int32 Other
+  [Field] Int32 RouteProjection
+  [Field] Int32 RuleCatalog
+  [Field] Int32 SkillReference

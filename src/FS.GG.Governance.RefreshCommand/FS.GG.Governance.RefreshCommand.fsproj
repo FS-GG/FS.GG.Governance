@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F057 host edge: the `fsgg refresh` host command — the Governance-owned regeneration entry point. It
+       is the closest host sibling of F055 `ReleaseCommand`: it reads a governed repository's row-local
+       generation manifest (`.fsgg/refresh.yml`) through an in-project `Declaration` adapter, SENSES the
+       current digest of each declared source + the generator version, DECIDES per view whether it is
+       current or stale by reusing the F029 `FreshnessKey` comparator VERBATIM (revisions held EQUAL so
+       currency depends on sources + generator, not git position — research D1), REGENERATES exactly the
+       stale views by running each view's declared generator at the edge (the F051/F052 execution port),
+       RECORDS refreshed provenance, RENDERS a human summary + an optional deterministic `refresh.json`
+       (F057 `RefreshJson`), and EXITS with one of SIX distinguishable codes.
+
+       Unlike its read-only siblings it MUTATES the working tree BY DESIGN — but only the stale declared
+       views and their recorded provenance, and only in a non-dry run; the dry-run mode evaluates and
+       writes nothing.
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/update/render/exitCode over Model/Msg/Effect, including the per-view currency decision
+       and the RefreshOutcome -> exit mapping) + an EDGE `Interpreter` (injected, fakeable Ports;
+       realPorts/step/run) + a thin Program. The row-local `Declaration` adapter parses `.fsgg/refresh.yml`;
+       F014 `Config`'s frozen four-file schema is NOT edited. Compile order Declaration -> Loop ->
+       Interpreter -> Program.
+
+       It reuses VERBATIM, via project references: F029 `FreshnessKey` (`compute`/`matches`/`diff`/
+       `categoryToken`), F051 `GateExecution` + F052 `GateRun` (the generator execution port), F014 `Config`
+       (`Loader.FileReader`/`fileSystemReader`), and the new `RefreshJson` projection (which also carries the
+       shared `RefreshModel`). It adds YamlDotNet (already pinned, already used by F014/F055) for the
+       row-local refresh.yml parse — NO new package. The only new impure primitives are `System.IO`
+       digest/read/write, the F051 process port, and `Environment.Exit` at the Program edge. Reaches NO
+       network.
+
+       IsPackable=false this slice: no central `fsgg` dispatcher exists or is introduced, so this row does
+       NOT ship a NuGet tool that claims a `fsgg` ToolCommandName. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RefreshCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Declaration.fsi" />
+    <Compile Include="Declaration.fs" />
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+  </ItemGroup>
+
+</Project>

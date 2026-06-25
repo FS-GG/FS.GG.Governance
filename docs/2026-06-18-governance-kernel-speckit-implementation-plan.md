@@ -531,24 +531,38 @@ the working board:
 - **MVU:** CLI edge only. **Depends on:** F20.
 - **Exit:** readiness artifacts can explain every selected gate and blocker.
 
-#### F22 · `022-generated-view-refresh` — [ ] Planned
+#### F22 · `022-generated-view-refresh` — [x] Landed as F057 (`057-refresh-command`)
 - **Intent:** `fsgg refresh` is the single regeneration entry point for generated
   views, baselines, catalogs, and readiness projections.
 - **Tier:** 1.
-- **Surface:** `GenerationManifest`, `GeneratedView`, `SourceDigest`,
-  `RendererId`, `RefreshPlan`, `RefreshReport`, `GeneratedViewDrift`.
+- **Surface (as built):** the shared `RefreshModel` (`ViewKind`, `GenerationEntry`,
+  `GenerationManifest`, `CurrencyStatus`, `ViewDecision`, `RefreshOutcome`,
+  `RefreshDecision`) + `RefreshJson.ofRefreshDecision`, plus `RefreshCommand`
+  (`Declaration`/`Loop`/`Interpreter`/`Program`). The authored row-local manifest is
+  `.fsgg/refresh.yml`; recorded provenance is the generated `.fsgg/refresh.lock.json`.
 - **Implementation checklist:**
-  - [ ] Define source/view/generator/currency relationships in a manifest.
-  - [ ] Implement `fsgg refresh` for gate metadata, rule catalogs, capability
-    docs, skill references, API-surface docs, work-model projections, and
-    baselines.
-  - [ ] Detect stale generated views and route drift findings through profiles.
-  - [ ] Keep generated views clearly marked as outputs.
-  - [ ] Add refresh dry-run and JSON output.
-- **Tests:** source digest changes, renderer version changes, stale view blocking
-  at gate, dry-run output, idempotent refresh, and generated-output snapshots.
+  - [x] Define source/view/generator/currency relationships in a manifest
+    (`.fsgg/refresh.yml`, parsed by the in-project `Declaration` adapter).
+  - [x] Implement `fsgg refresh` product-neutrally — it runs each view's *declared*
+    generator command (gate metadata, rule catalogs, capability/API-surface docs,
+    baselines, … are examples a repo declares, never names in code — FR-011) via the
+    F051/F052 execution port.
+  - [x] Detect stale generated views by reusing the F029 `FreshnessKey` comparator
+    (revisions held equal — by digest + generator version, not git position).
+  - [x] Keep generated views clearly marked as outputs (recorded provenance in the
+    generated `.fsgg/refresh.lock.json`, never an authored file).
+  - [x] Add refresh `--dry-run` and deterministic `refresh.json` output (six-way exit
+    contract: 0/1/2/3/4/5).
+  - [ ] Boundary enforcement (stale view blocking at the merge gate / drift findings
+    routed through profiles) remains a later feature — `fsgg refresh` is **not** the
+    merge authority (FR-017).
+- **Tests:** source digest changes, generator-version changes, idempotent (by-digest)
+  re-run, `--dry-run` no-mutation, deterministic `refresh.json` + golden, end-to-end
+  regeneration through the real process port, fail-safe exit codes, scope, network-free
+  + product-neutrality guards. F014/F029/F051/F052 untouched.
 - **MVU:** CLI edge. **Depends on:** F21.
-- **Exit:** generated views cannot pass protected boundaries merely by existing.
+- **Exit:** generated views cannot pass protected boundaries merely by existing (the
+  enforcement half is owed by the later boundary feature).
 
 #### F23 · `023-generated-product-capabilities` — [ ] Planned
 - **Intent:** `.fsgg/capabilities.yml` expands from MVP routing into generated

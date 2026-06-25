@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F057: the optional, packable refresh.json *projection* — plus the shared currency/decision/manifest
+       model the whole F057 row is built from. This leaf project holds two modules:
+
+         • `RefreshModel` — the product-neutral shared vocabulary: `ViewKind`, `GenerationEntry`,
+           `GenerationManifest`, `DeclError`, `CurrencyStatus`, `ViewDecision`, `RefreshOutcome`,
+           `RefreshDecision`. Placed HERE (the leaf) so the `RefreshCommand` executable can consume them by
+           referencing this project, keeping the row to two `src` projects with a clean dependency
+           direction (RefreshCommand -> RefreshJson).
+         • `RefreshJson` — a single pure, total `RefreshJson.ofRefreshDecision : RefreshDecision -> string`
+           (plus a `schemaVersion` constant) that renders one `fsgg refresh` run into the deterministic,
+           versioned `refresh.json` document text — the stable, machine-readable contract CI, dashboards,
+           agents, and humans read instead of an in-memory value.
+
+       Where F020's `route.json` is the per-change route view and F055's `release.json` is the whole-release
+       gate view, this `refresh.json` is the WHOLE-REGENERATION view: the run's outcome shade + per-view
+       currency status, drifted source categories, reasons, and the summary counts.
+
+       It REUSES the F029 `FreshnessKey.Model` `InputCategory` vocabulary VERBATIM (`categoryToken` renders
+       the drifted categories) and adds NO new third-party PackageReference — serialization is the net10.0
+       shared-framework `System.Text.Json` (`Utf8JsonWriter`) the AuditJson/ReleaseJson/VerifyJson
+       projections already use. PURE and TOTAL (FR-007): no I/O, no git, no clock, never throws,
+       byte-identical for identical input (SC-004). Compile order RefreshModel.fsi -> RefreshModel.fs ->
+       RefreshJson.fsi -> RefreshJson.fs. The whole surface is pure leaves — no MVU ceremony (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RefreshJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.RefreshJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RefreshModel.fsi" />
+    <Compile Include="RefreshModel.fs" />
+    <Compile Include="RefreshJson.fsi" />
+    <Compile Include="RefreshJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>
