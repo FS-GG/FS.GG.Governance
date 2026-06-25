@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F25: the packable, pure cost-budget + budgeted-cache-decision core. It supplies the COST dimension the
+       freshness/reuse machinery deliberately lacks: a `CostBudget` ceiling derived from a (Profile, RunMode)
+       pair (the `min` of two monotone D1 projections), and a single budgeted `CacheDecision` per gate that
+       folds the F041 `CacheEligibilityVerdict` VERBATIM with the budget into `Reuse` (free), `Recompute`
+       (charged) or `OverBudget` (skipped/deferred by run-mode class). The `Findings` module surfaces the
+       stale / synthetic-taint / no-evidence states as deterministic, base-`Advisory` findings enforced
+       through the EXISTING `deriveEffectiveSeverity` (the truth table is never re-opened).
+
+       It REUSES every freshness/reuse/identity/enforcement decision unchanged (D4): F014 `Cost`, F018
+       `GateId`, F030 `EvidenceRef`/`RecomputeCause`, F041 `CacheEligibilityVerdict`, F036 `CacheKey`, F023
+       `Profile`/`RunMode`/`Severity`/`deriveEffectiveSeverity`, F029 `InputCategory`/`categoryToken`. It adds
+       NO new freshness dimension, NO new reuse verdict, NO enforcement-truth-table constant, and NO new
+       third-party PackageReference. `Cost` stays excluded from the freshness key. PURE and TOTAL: no I/O, no
+       clock, no git, never throws. Compile order Model -> Budget -> Findings; the whole surface is pure total
+       functions over supplied values — no MVU ceremony (Principle IV). It references only existing leaf cores
+       and no host/edge/CLI assembly. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CostBudget</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CostBudget</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Budget.fsi" />
+    <Compile Include="Budget.fs" />
+    <Compile Include="Findings.fsi" />
+    <Compile Include="Findings.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>

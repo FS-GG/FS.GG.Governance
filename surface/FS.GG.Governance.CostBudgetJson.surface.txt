@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.CostBudgetJson.CostBudgetJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofReport(CacheDecisionReport, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.FindingsModule+CostFinding])
+  [Property] System.String schemaVersion

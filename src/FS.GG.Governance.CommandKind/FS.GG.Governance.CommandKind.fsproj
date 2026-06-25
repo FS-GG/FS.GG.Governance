@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F25: the packable, pure command-run kind taxonomy + provenance audit-snapshot core. It wraps the F032
+       `CommandRecord` with one of seven descriptive `CommandKind`s (Build/Test/Pack/TemplateInstantiation/
+       GitDiff/PackageInspection/VisualCapture) and rolls the recorded runs together with the F033 provenance
+       inputs into a deterministic `AuditSnapshot` via `Provenance.build`. Identity is F032/F033 reused
+       VERBATIM (D5): `runIdentity` = `CommandRecord.canonicalId` and `snapshotIdentity` =
+       `Provenance.canonicalId` — no new fingerprint, and the kind never participates, so a kind-only or
+       duration-only change leaves both unchanged.
+
+       It references ONLY F032 `CommandRecord` and F033 `Provenance` (Config/FreshnessKey arrive transitively
+       but are opened directly for `EnvironmentClass`/`Revision`/… vocabulary). It adds NO new third-party
+       PackageReference and NO new identity formula. PURE and TOTAL: no I/O, no clock, no git, never throws.
+       Compile order Model -> Audit; the whole surface is pure total functions — no MVU ceremony (Principle
+       IV). No host/edge/CLI coupling. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CommandKind</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CommandKind</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Audit.fsi" />
+    <Compile Include="Audit.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+  </ItemGroup>
+
+</Project>

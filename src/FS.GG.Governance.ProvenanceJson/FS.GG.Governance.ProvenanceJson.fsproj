@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F25: the optional, packable provenance.json *projection* — the deterministic, versioned
+       `fsgg.provenance/v1` sidecar the `fsgg verify`/`fsgg ship` hosts write. A single pure, total
+       `ProvenanceJson.ofSnapshot : AuditSnapshot -> string` (plus a `schemaVersion` constant) renders the F25
+       `AuditSnapshot` — the F033 provenance roll-up plus the F25 command-run kind labels — into the stable,
+       machine-readable reproducibility view that proves what ran, against what inputs, in what environment.
+
+       Identity is reused VERBATIM: the top-level `identity` is `Provenance.canonicalId` and each run's
+       `identity` is `CommandRecord.canonicalId` (via `Audit.runIdentity`) — the projection computes no new
+       fingerprint. `artifactDigests` is rendered SORTED (set semantics in the identity); `commandRuns` is in
+       carried order (order-significant in F033). The only sensed field is each run's `durationNanos`,
+       rendered as audit metadata that never affects any identity; a failed/timed-out run is rendered with its
+       F051 sentinel `exitCode` (never dropped). Field order is fixed and raw-text-verified. PURE and TOTAL:
+       no I/O, no git, no clock, no clock/host-path/username leak beyond the opaque
+       `EnvironmentClass`/`BuilderIdentity` tokens carried in. Serialization is the net10.0 shared-framework
+       `System.Text.Json` — NO new PackageReference. Compile order ProvenanceJson.fsi -> ProvenanceJson.fs.
+       The dependency direction stays one-way: ProvenanceJson -> CommandKind -> CommandRecord/Provenance; no
+       host/CLI coupling. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ProvenanceJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ProvenanceJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ProvenanceJson.fsi" />
+    <Compile Include="ProvenanceJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>

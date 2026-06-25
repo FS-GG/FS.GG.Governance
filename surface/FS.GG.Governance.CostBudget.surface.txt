@@ -1,0 +1,286 @@
+TYPE FS.GG.Governance.CostBudget.BudgetModule
+  [Method] Boolean fits(CostBudget, Cost)
+  [Method] CacheDecisionReport decide(CostBudget, RunMode, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.ModelModule+CandidateCost])
+  [Method] CostBudget budgetFor(Profile, RunMode)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry] entries(CacheDecisionReport)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+GateId] recomputeGates(CacheDecisionReport)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+GateId] reuseGates(CacheDecisionReport)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CostBudget.ModelModule+BudgetReason]] overBudget(CacheDecisionReport)
+TYPE FS.GG.Governance.CostBudget.FindingsModule
+  [Method] EnforcementDecision enforce(RunMode, Profile, CostFinding)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.FindingsModule+CostFinding] cacheFindings(CacheDecisionReport, Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CostBudget.FindingsModule+EvidenceTaint])
+  [Method] System.String kindToken(CostFindingKind)
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+CostFinding
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+EvidenceTaint
+TYPE FS.GG.Governance.CostBudget.FindingsModule+CostFinding
+  [Constructor] Void .ctor(GateId, CostFindingKind, Severity, System.String)
+  [Method] Boolean Equals(CostFinding)
+  [Method] Boolean Equals(CostFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CostFindingKind get_Kind()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(CostFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Severity get_BaseSeverity()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] CostFindingKind Kind
+  [Property] GateId Gate
+  [Property] Severity BaseSeverity
+  [Property] System.String Message
+TYPE FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind
+  [Method] Boolean Equals(CostFindingKind)
+  [Method] Boolean Equals(CostFindingKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsNoEvidence()
+  [Method] Boolean get_IsStale()
+  [Method] Boolean get_IsSyntheticTaint()
+  [Method] CostFindingKind NewStale(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] CostFindingKind get_NoEvidence()
+  [Method] CostFindingKind get_SyntheticTaint()
+  [Method] Int32 CompareTo(CostFindingKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind+Stale
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind+Tags
+  [Property] Boolean IsNoEvidence
+  [Property] Boolean IsStale
+  [Property] Boolean IsSyntheticTaint
+  [Property] CostFindingKind NoEvidence
+  [Property] CostFindingKind SyntheticTaint
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind+Stale
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] Item
+TYPE FS.GG.Governance.CostBudget.FindingsModule+CostFindingKind+Tags
+  [Field] Int32 NoEvidence
+  [Field] Int32 Stale
+  [Field] Int32 SyntheticTaint
+TYPE FS.GG.Governance.CostBudget.FindingsModule+EvidenceTaint
+  [Method] Boolean Equals(EvidenceTaint)
+  [Method] Boolean Equals(EvidenceTaint, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsReal()
+  [Method] Boolean get_IsSynthetic()
+  [Method] EvidenceTaint get_Real()
+  [Method] EvidenceTaint get_Synthetic()
+  [Method] Int32 CompareTo(EvidenceTaint)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CostBudget.FindingsModule+EvidenceTaint+Tags
+  [Property] Boolean IsReal
+  [Property] Boolean IsSynthetic
+  [Property] EvidenceTaint Real
+  [Property] EvidenceTaint Synthetic
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CostBudget.FindingsModule+EvidenceTaint+Tags
+  [Field] Int32 Real
+  [Field] Int32 Synthetic
+TYPE FS.GG.Governance.CostBudget.ModelModule
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+BudgetReason
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecision
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CandidateCost
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CostBudget
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+DeferralClass
+TYPE FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark
+  [Method] AgentReviewMark NewAgentReviewed(CacheKey)
+  [Method] AgentReviewMark get_Deterministic()
+  [Method] Boolean Equals(AgentReviewMark)
+  [Method] Boolean Equals(AgentReviewMark, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAgentReviewed()
+  [Method] Boolean get_IsDeterministic()
+  [Method] Int32 CompareTo(AgentReviewMark)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark+AgentReviewed
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark+Tags
+  [Property] AgentReviewMark Deterministic
+  [Property] Boolean IsAgentReviewed
+  [Property] Boolean IsDeterministic
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark+AgentReviewed
+  [Method] CacheKey get_Item()
+  [Property] CacheKey Item
+TYPE FS.GG.Governance.CostBudget.ModelModule+AgentReviewMark+Tags
+  [Field] Int32 AgentReviewed
+  [Field] Int32 Deterministic
+TYPE FS.GG.Governance.CostBudget.ModelModule+BudgetReason
+  [Constructor] Void .ctor(GateId, Cost, Cost, DeferralClass, RecomputeCause)
+  [Method] Boolean Equals(BudgetReason)
+  [Method] Boolean Equals(BudgetReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Cost get_Ceiling()
+  [Method] Cost get_Cost()
+  [Method] DeferralClass get_Class()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(BudgetReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] RecomputeCause get_Cause()
+  [Method] System.String ToString()
+  [Property] Cost Ceiling
+  [Property] Cost Cost
+  [Property] DeferralClass Class
+  [Property] GateId Gate
+  [Property] RecomputeCause Cause
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecision
+  [Method] Boolean Equals(CacheDecision)
+  [Method] Boolean Equals(CacheDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsOverBudget()
+  [Method] Boolean get_IsRecompute()
+  [Method] Boolean get_IsReuse()
+  [Method] CacheDecision NewOverBudget(BudgetReason)
+  [Method] CacheDecision NewRecompute(RecomputeCause)
+  [Method] CacheDecision NewReuse(EvidenceRef)
+  [Method] Int32 CompareTo(CacheDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecision+OverBudget
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Recompute
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Reuse
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Tags
+  [Property] Boolean IsOverBudget
+  [Property] Boolean IsRecompute
+  [Property] Boolean IsReuse
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecision+OverBudget
+  [Method] BudgetReason get_Item()
+  [Property] BudgetReason Item
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Recompute
+  [Method] RecomputeCause get_Item()
+  [Property] RecomputeCause Item
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Reuse
+  [Method] EvidenceRef get_Item()
+  [Property] EvidenceRef Item
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecision+Tags
+  [Field] Int32 OverBudget
+  [Field] Int32 Recompute
+  [Field] Int32 Reuse
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry
+  [Constructor] Void .ctor(GateId, Cost, AgentReviewMark, CacheDecision)
+  [Method] AgentReviewMark get_Review()
+  [Method] Boolean Equals(CacheDecisionEntry)
+  [Method] Boolean Equals(CacheDecisionEntry, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheDecision get_Decision()
+  [Method] Cost get_Cost()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(CacheDecisionEntry)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] AgentReviewMark Review
+  [Property] CacheDecision Decision
+  [Property] Cost Cost
+  [Property] GateId Gate
+TYPE FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport
+  [Method] Boolean Equals(CacheDecisionReport)
+  [Method] Boolean Equals(CacheDecisionReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheDecisionReport NewCacheDecisionReport(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry])
+  [Method] Int32 CompareTo(CacheDecisionReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry] get_Item()
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionEntry] Item
+TYPE FS.GG.Governance.CostBudget.ModelModule+CandidateCost
+  [Constructor] Void .ctor(GateId, Cost, CacheEligibilityVerdict, AgentReviewMark)
+  [Method] AgentReviewMark get_Review()
+  [Method] Boolean Equals(CandidateCost)
+  [Method] Boolean Equals(CandidateCost, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CacheEligibilityVerdict get_Verdict()
+  [Method] Cost get_Cost()
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(CandidateCost)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] AgentReviewMark Review
+  [Property] CacheEligibilityVerdict Verdict
+  [Property] Cost Cost
+  [Property] GateId Gate
+TYPE FS.GG.Governance.CostBudget.ModelModule+CostBudget
+  [Constructor] Void .ctor(Cost)
+  [Method] Boolean Equals(CostBudget)
+  [Method] Boolean Equals(CostBudget, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Cost get_Ceiling()
+  [Method] Int32 CompareTo(CostBudget)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] Cost Ceiling
+TYPE FS.GG.Governance.CostBudget.ModelModule+DeferralClass
+  [Method] Boolean Equals(DeferralClass)
+  [Method] Boolean Equals(DeferralClass, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDeferred()
+  [Method] Boolean get_IsSkipped()
+  [Method] DeferralClass get_Deferred()
+  [Method] DeferralClass get_Skipped()
+  [Method] Int32 CompareTo(DeferralClass)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CostBudget.ModelModule+DeferralClass+Tags
+  [Property] Boolean IsDeferred
+  [Property] Boolean IsSkipped
+  [Property] DeferralClass Deferred
+  [Property] DeferralClass Skipped
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CostBudget.ModelModule+DeferralClass+Tags
+  [Field] Int32 Deferred
+  [Field] Int32 Skipped

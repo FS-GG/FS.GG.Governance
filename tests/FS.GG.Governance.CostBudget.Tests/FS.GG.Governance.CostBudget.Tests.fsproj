@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F25, exercising the PUBLIC surface of FS.GG.Governance.CostBudget:
+       `Budget.budgetFor`/`fits`/`decide`/`recomputeGates`/`reuseGates`/`overBudget`/`entries` and
+       `Findings.cacheFindings`/`kindToken`/`enforce` over REAL, literally-constructible values (Principle V —
+       real F018 `GateId`, real F041 `CacheEligibilityVerdict` from the real `CacheEligibility.evaluateGate`,
+       real F036 `CacheKey` from the real `AgentReviewKey.compute`, real `Enforcement.deriveEffectiveSeverity`;
+       no mock, no clock, no I/O). Expecto + FsCheck give the 4×6 budget matrix, the single-dimension cache
+       hit/miss matrix, skip/defer, the cost/cache findings, the agent-review-never-blocks matrix, the reuse
+       guard, and the determinism/reorder properties. The reflective SurfaceDrift test pins the Tier-1 public
+       surface + the scope guard. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="SmokeTests.fs" />
+    <Compile Include="BudgetForTests.fs" />
+    <Compile Include="DecideBudgetMatrixTests.fs" />
+    <Compile Include="SkipDeferReportTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="CacheHitMissTests.fs" />
+    <Compile Include="CostExcludedFromReuseTests.fs" />
+    <Compile Include="CacheFindingsTests.fs" />
+    <Compile Include="FindingsEnforceTests.fs" />
+    <Compile Include="FindingsDeterminismTests.fs" />
+    <Compile Include="AgentReviewCacheTests.fs" />
+    <Compile Include="AgentReviewNeverBlocksTests.fs" />
+    <Compile Include="ReuseGuardTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.AgentReviewKey/FS.GG.Governance.AgentReviewKey.fsproj" />
+  </ItemGroup>
+
+</Project>

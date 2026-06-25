@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F25, exercising the PUBLIC surface of FS.GG.Governance.ProvenanceJson:
+       `ProvenanceJson.ofSnapshot`/`schemaVersion` over REAL `AuditSnapshot` values built through the real
+       `Audit.auditSnapshot` from real `CommandRecord`s (Principle V; no mock). Expecto verifies the
+       schemaVersion, the F033 identity verbatim, the fixed field order (raw-text), sorted artifactDigests,
+       the per-run shape + exhaustive kind token, duration-invariant identity, the kept failing run, and the
+       well-formed empty run list. The reflective SurfaceDrift test pins the Tier-1 public surface. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="OfSnapshotTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ProvenanceJson/FS.GG.Governance.ProvenanceJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+  </ItemGroup>
+
+</Project>

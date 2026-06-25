@@ -1002,6 +1002,34 @@ sensed-metadata marking + flagged-rendering core (**F034**
   F032's `SensedDuration` verbatim (the only genuinely new fact is `SensedTimestamp`);
   no new dependency. **This closes Phase 11** — its sixth and final row.
 
+- 🟡 Bound expensive recompute by a (profile, mode) budget and reuse expensive evidence only when its
+  freshness key proves it applies, with a deterministic provenance audit snapshot.
+  _(F25 — `025-cost-cache-command-provenance` / spec dir `060-cost-cache-command-provenance`.)_ **Cores +
+  projections complete; host-edge wiring deferred.** Landed and packed in this pass, fully exercised through
+  their public surfaces (85 passing semantic/property tests; four blessed surface baselines):
+    - **`FS.GG.Governance.CostBudget`** — the ordered-`Cost`-ceiling `CostBudget` (`budgetFor` = `min` of two
+      monotone D1 projections, `Cheap` floor), the single budgeted `CacheDecision` per gate
+      (`decide` folds the F041 verdict VERBATIM into `Reuse` (free) / `Recompute` (charged) /
+      `OverBudget` (`Skipped` in inner-loop modes, `Deferred` at boundaries) — never a pass), and the
+      `Findings` core (`Stale`/`SyntheticTaint`/`NoEvidence`, base-`Advisory`, enforced through the EXISTING
+      `deriveEffectiveSeverity` — never re-opening the truth table, never blocking; F039 `AdvisoryPromotion`
+      not invoked).
+    - **`FS.GG.Governance.CommandKind`** — the seven-kind taxonomy
+      (`Build`/`Test`/`Pack`/`TemplateInstantiation`/`GitDiff`/`PackageInspection`/`VisualCapture`) wrapping
+      the F032 `CommandRecord` (kind descriptive, never in identity) and the `auditSnapshot` roll-up over F033
+      `Provenance.build`; `runIdentity`/`snapshotIdentity` reuse `CommandRecord.canonicalId`/
+      `Provenance.canonicalId` verbatim (duration-invariant; a failed/timed-out run kept with its F051
+      sentinel exit code).
+    - **`FS.GG.Governance.CostBudgetJson`** (`fsgg.cost-budget/v1`) and **`FS.GG.Governance.ProvenanceJson`**
+      (`fsgg.provenance/v1`) — the two deterministic, byte-identical, order-independent sidecar projections.
+
+  Reuse-only: no new freshness dimension, no new reuse verdict, no `FreshnessKey`/`EvidenceReuse`/
+  `CacheEligibility`/`CommandRecord`/`Provenance` identity change, no enforcement-truth-table change, no new
+  dependency; `Cost` stays excluded from the freshness key. **Remaining (deferred follow-up):** the additive
+  host-edge wiring of `fsgg verify`/`fsgg ship` (budget filters `ExecuteGates`, kinded runs recorded, the two
+  sidecars written) plus its real-filesystem E2E coverage and the every-existing-golden-byte-identical anchor
+  — Phase 8 of `specs/060-cost-cache-command-provenance/tasks.md`.
+
 Exit criteria:
 
 - Expensive evidence is reused only when freshness is defensible.

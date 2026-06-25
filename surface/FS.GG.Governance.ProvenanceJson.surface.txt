@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.ProvenanceJson.ProvenanceJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofSnapshot(AuditSnapshot)
+  [Property] System.String schemaVersion
