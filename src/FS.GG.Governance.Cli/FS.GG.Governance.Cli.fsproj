@@ -28,6 +28,15 @@
     <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+    <!-- F27 wiring (063): the pure human projection (RenderMode/ReportView) and the Spectre-owning rich
+         render + capability sensing. The dispatcher renders the read-only watch/tui surfaces through these;
+         it adds NO direct Spectre.Console reference (Spectre stays confined to HumanRender — FR-011/SC-007). -->
+    <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
+    <!-- F27 wiring (063, US3/US4): the dispatcher COMPOSES a real F19 RouteResult by reusing the
+         RouteCommand pipeline (Interpreter.run + Loop.humanView) over the repo root, then projects it to a
+         ReportView for the read-only watch/tui navigators. No JSON contract is touched. -->
+    <ProjectReference Include="../FS.GG.Governance.RouteCommand/FS.GG.Governance.RouteCommand.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -43,13 +43,24 @@ new dependency** (Spectre already pinned 0.57.1, owned by `HumanRender`).
 - **Unchanged**: `FS.GG.Governance.HumanText.surface.txt` and the `HumanRender` `RichRender`/`Watch`/`Tui` surfaces
   (consumed, not modified).
 
+## Dispatcher `watch`/`tui` — RESOLVED by composing the F19 `RouteResult` in the dispatcher
+
+The dispatcher's read-only `watch`/`tui` subcommands are **delivered**. Because the kernel-era `Cli` holds the
+`Kernel.Route`/`ProjectEvidenceReport` (whose JSON is the byte-identical contract) and not the F19/F41 report
+objects `HumanText` projects, the dispatcher **composes a real F19 `RouteResult`** over the repo root by reusing
+the RouteCommand pipeline (`Program.composeRouteView` = `RouteCommand.Interpreter.run` with no-op write/output
+ports + `Loop.humanView`) and projects it to the shared `ReportView`. These are **new** read-only surfaces with no
+JSON contract, so the byte-identity anchor (SC-002) and report-object-identity (SC-001) both hold. `--plain`
+(`--no-color`) is added to the dispatcher parser; `requestJson` is unchanged. Proven by `WatchTuiHostWiringTests`
+over a real temp git tree + a real-binary `fsgg-governance tui` smoke.
+
 ## Deferrals (scoped — NOT in this row; see research.md D2)
 
 | Deferred surface | Reason | Gated on |
 |---|---|---|
+| legacy `Cli` **one-shot** `route`/`evidence` *human* delegation | the one-shot commands' JSON is the frozen contract built from `Kernel.Route`/`ProjectEvidenceReport`; projecting the F19/F41 object as their human view would make the human a *second source of truth* (SC-001). The F19/F41 human projection ships through the new `watch`/`tui` surfaces instead. | a future contract migration that re-truths the one-shot commands onto F19/F41 |
 | `release` human delegation (`ofReleaseReport`) | `ReleaseCommand` holds only F53 `ReleaseDecision`; `ReleaseReport.assemble` needs F54 `SensedRelease` + F26 `PackEvidenceSet` + `AttestationSummary` | the deferred **F26 release host-wiring thread** |
 | `explain` human delegation (`ofRouteExplanation`) | `Cli` `explain` = F03 `Check.Explanation list`, not F19 `RouteExplanation`; no host surfaces an F19 explanation for human render | a future host that surfaces an F19 `RouteExplanation` |
-| legacy `Cli` `evidence` delegation | `Cli` evidence = older `ProjectEvidenceReport`, not F41 `CacheEligibilityReport` (the standalone `CacheEligibilityCommand` IS wired) | routing the F41 report through the dispatcher |
 
 ## Documentation (FR-012)
 

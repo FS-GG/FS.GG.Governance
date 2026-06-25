@@ -26,6 +26,8 @@
     <Compile Include="TuiParityTests.fs" />
     <Compile Include="TuiReadOnlyTests.fs" />
     <Compile Include="HumanRenderSurfaceDriftTests.fs" />
+    <!-- F27 wiring (063, US3/US4): the DISPATCHER's read-only watch/tui surfaces over a composed F19 view. -->
+    <Compile Include="WatchTuiHostWiringTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -49,6 +51,11 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- F27 wiring (063): reuse the RouteCommand test harness `withTempRepo`/`validCatalog` (a REAL temp
+         git tree + real `.fsgg` catalog) so the dispatcher watch/tui wiring is proven through the SAME
+         real compose path (Constitution V). Expecto scans only this entry assembly, so its tests do not
+         double-run. The reference also brings RouteCommand for the compose call. -->
+    <ProjectReference Include="../FS.GG.Governance.RouteCommand.Tests/FS.GG.Governance.RouteCommand.Tests.fsproj" />
   </ItemGroup>
 
 </Project>

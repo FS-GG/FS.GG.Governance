@@ -11,6 +11,8 @@ type CommandKind =
     | ExplainCommand
     | ContractCommand
     | EvidenceCommand
+    | WatchCommand
+    | TuiCommand
 
 type OutputFormat =
     | Text
@@ -30,7 +32,8 @@ type RunRequest =
       ReviewBudget: ReviewBudget
       ReviewStore: string option
       OutputPath: string option
-      Judge: JudgeId }
+      Judge: JudgeId
+      ExplicitPlain: bool }
 
 type ParseError =
     | MissingCommand
@@ -126,6 +129,8 @@ module Cli =
         | ExplainCommand -> "explain"
         | ContractCommand -> "contract"
         | EvidenceCommand -> "evidence"
+        | WatchCommand -> "watch"
+        | TuiCommand -> "tui"
 
     let modeName mode =
         match mode with
@@ -171,6 +176,8 @@ module Cli =
         | "explain" -> Ok ExplainCommand
         | "contract" -> Ok ContractCommand
         | "evidence" -> Ok EvidenceCommand
+        | "watch" -> Ok WatchCommand
+        | "tui" -> Ok TuiCommand
         | other -> Error(UnknownCommand other)
 
     let parseMode (text: string) =
@@ -214,6 +221,7 @@ module Cli =
           OutputPath: string option
           JudgeModel: string
           JudgeVersion: string
+          ExplicitPlain: bool
           Errors: ParseError list }
 
     let addError (error: ParseError) (acc: ParseAcc) = { acc with Errors = acc.Errors @ [ error ] }
@@ -238,12 +246,17 @@ module Cli =
               OutputPath = None
               JudgeModel = defaultJudge.ModelId
               JudgeVersion = defaultJudge.Version
+              ExplicitPlain = false
               Errors = [] }
 
         let rec loop (acc: ParseAcc) remaining =
             match remaining with
             | [] -> acc
             | "--json" :: tail -> loop { acc with Format = Json } tail
+            // F27 wiring (063): additive explicit-plain signal. It composes with --json/--format without
+            // changing their meaning (the Json branch still wins); it only forces ANSI-free output on a TTY.
+            | "--plain" :: tail
+            | "--no-color" :: tail -> loop { acc with ExplicitPlain = true } tail
             | "--root" :: tail ->
                 let acc, tail =
                     requireValue
@@ -350,7 +363,8 @@ module Cli =
                   OutputPath = acc.OutputPath
                   Judge =
                     { ModelId = acc.JudgeModel
-                      Version = acc.JudgeVersion } }
+                      Version = acc.JudgeVersion }
+                  ExplicitPlain = acc.ExplicitPlain }
 
             Ok
                 request
@@ -441,6 +455,11 @@ module Cli =
         | ExplainCommand -> ExplainPayload(explanationsFor request host)
         | ContractCommand -> ContractPayload(Contract.ofRules (commandCatalog request).Catalog)
         | EvidenceCommand -> EvidencePayload(Project.evidenceReport host)
+        // F27 wiring (063): the read-only watch/tui surfaces are dispatched at the Program edge and never
+        // reach this one-shot payload path. If the pure MVU is driven with them directly (tests), fall back
+        // to the route payload — a benign one-shot view, never an interactive loop.
+        | WatchCommand
+        | TuiCommand -> RoutePayload host.Route
 
     let exitFor (host: FS.GG.Governance.Host.Model<ProjectFact>) =
         if hasBlockingFailure host.Route host.Facts then

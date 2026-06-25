@@ -1260,7 +1260,8 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   legacy `Cli`'s older Kernel/Host `Route`/`Explanation` types make that an invasive per-host change;
   the libraries here are exactly the surface that wiring consumes.
 
-  **F27 host wiring** (`063-human-projection-host-wiring`) — IN PROGRESS. Delivered (full solution green):
+  **F27 host wiring** (`063-human-projection-host-wiring`) — 🟢 core complete (US1–US4; bounded human-delegation
+  deferrals documented below). Delivered (full solution green):
   **US1 plain delegation** on all four standalone hosts whose held report object matches `HumanText.of*`
   — `route` (`RouteResult`), `ship`/`verify` (`ShipDecision`), and the standalone cache-eligibility host
   (`CacheEligibilityReport`) — each command's text branch is now the shared `HumanText` projection of the
@@ -1275,13 +1276,25 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   `HumanRender.Watch.run` edge whose read-only `reRender` re-runs the existing evaluation with no-op
   write/output ports (no contract written), closing F27's `[PARTIAL]` with a **real-`FileSystemWatcher`
   end-to-end settle** test over a temp tree (+ read-only and `InputUnreadable` safe-failure tests).
-  **Remaining (deferred follow-ups):** the legacy `Cli` dispatcher's own render-mode dispatch and its
-  `watch`/`tui` subcommands, plus the optional `tui` surface (US4) — all gated on the kernel-era `Cli`
-  holding `Kernel.Route`/`ProjectEvidenceReport`/`Explanation` payloads rather than the F19 `RouteResult`/
-  F41 `CacheEligibilityReport`/F19 `RouteExplanation` that `HumanText` projects, so they need an F19/F41
-  evaluation path threaded into the dispatcher (the same report-object mismatch that already defers
-  `release`-human, `explain`, and legacy-`Cli` `evidence` delegation). `release`-human delegation remains
-  gated on the F26 `ReleaseReport` assembly thread.
+  **US3/US4 dispatcher `watch`/`tui`** (`fsgg-governance`) — DELIVERED by **composing the F19 `RouteResult`
+  inside the dispatcher**. The kernel-era `Cli` holds `Kernel.Route`/`ProjectEvidenceReport` (whose JSON is
+  the byte-identical contract), not the F19 `RouteResult` that `HumanText` projects — so rather than
+  retrofit the contracted one-shot commands (which would make the human view a *second source of truth*
+  beside the JSON, violating report-object-identity), the dispatcher now adds two **new read-only
+  subcommands** (`watch`, `tui`) and an `ExplicitPlain`/`--plain` flag, and COMPOSES a real F19 `RouteResult`
+  over the repo root by reusing the proven RouteCommand pipeline (`Program.composeRouteView` =
+  `RouteCommand.Interpreter.run` with no-op write/output ports + `Loop.humanView`). `watch` drives
+  `HumanRender.Watch.run` (debounced, read-only re-render via `RichRender.emitStdout`/plain by sensed mode);
+  `tui` drives `HumanRender.Tui.run` over the same `ReportView` (cursor/expand navigation, plain-text draw at
+  the edge so Spectre stays confined to `HumanRender`). These surfaces carry **no** JSON contract, so the
+  byte-identity anchor and the single-source-of-truth invariant both hold; `requestJson` is unchanged.
+  Proven by `WatchTuiHostWiringTests` over a **real temp git tree** (parity + read-only + ANSI-free + no
+  artifact written) and a real-binary `fsgg-governance tui` smoke. The dispatcher adds **no** direct
+  Spectre reference (it references `HumanText`/`HumanRender`/`RouteCommand`).
+  **Remaining (deferred follow-ups, unchanged):** the legacy `Cli`'s **one-shot** `route`/`evidence`/`explain`
+  *human* delegation stays on its existing Kernel rendering (its JSON contract is frozen; the F19/F41 human
+  projection is delivered through the new `watch`/`tui` surfaces, not by re-truthing the contracted commands).
+  `release`-human delegation remains gated on the F26 `ReleaseReport` assembly thread.
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the

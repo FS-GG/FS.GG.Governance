@@ -180,6 +180,31 @@ dotnet tool install FS.GG.Governance.Cli --tool-path .tmp/f12-tool --add-source 
 .tmp/f12-tool/fsgg-governance route --root . --mode inner
 ```
 
+### Render modes (F27)
+
+Every command emits one of three renderings of the **same** report object; **JSON is the only contract**,
+plain and rich are non-contractual presentations:
+
+| Requested / sensed state | Mode | Output |
+|---|---|---|
+| `--json` / `--format json` | **JSON** | the stable, byte-identical machine contract (always wins, never colored) |
+| interactive TTY, color on, no `--plain` | **Rich** | Spectre color banner + grouped tables |
+| non-TTY / piped / `NO_COLOR` / `--plain` (`--no-color`) | **Plain** | the exact ANSI-free `HumanText` projection |
+
+`--plain` (alias `--no-color`) forces ANSI-free output even on a TTY; it never changes `--json`/`--format`
+meaning, and JSON always overrides it.
+
+Two read-only interactive surfaces navigate a freshly composed route report (they write **no** artifact and
+carry **no** JSON contract):
+
+```bash
+fsgg-governance watch --root .   # debounced read-only re-render on working-tree change (q to quit)
+fsgg-governance tui   --root .   # navigate the route report (arrows/hjkl move/expand, q to quit)
+```
+
+The packed `fsgg` (route-only tool) also accepts `fsgg route --watch`/`--plain`. The generic spellings
+`fsgg watch` / `fsgg tui` resolve to `fsgg-governance` until a future single-tool unification.
+
 ## Design lineage
 
 The checker paradigm follows [Cedar](https://cedarpolicy.com/en) (and OPA/Rego):

@@ -14,12 +14,17 @@ namespace FS.GG.Governance.Cli
 open FS.GG.Governance.Kernel
 open FS.GG.Governance.Host
 
-/// The fixed user-visible operations.
+/// The fixed user-visible operations. `WatchCommand`/`TuiCommand` (F27 wiring 063, US3/US4) are the
+/// read-only interactive surfaces: they carry NO JSON contract and are dispatched at the Program edge
+/// (which composes a real F19 `RouteResult` view via the RouteCommand pipeline and drives
+/// `HumanRender.Watch.run`/`Tui.run`), never through the one-shot snapshot→host→output MVU.
 type CommandKind =
     | RouteCommand
     | ExplainCommand
     | ContractCommand
     | EvidenceCommand
+    | WatchCommand
+    | TuiCommand
 
 /// Output format selected by `--format` or `--json`.
 type OutputFormat =
@@ -42,7 +47,11 @@ type RunRequest =
       ReviewBudget: ReviewBudget
       ReviewStore: string option
       OutputPath: string option
-      Judge: JudgeId }
+      Judge: JudgeId
+      /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+      /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). It is NOT serialized
+      /// into the JSON envelope (`requestJson` is unchanged), so every JSON contract stays byte-identical.
+      ExplicitPlain: bool }
 
 /// A parse/usage error. These map to exit code 64.
 type ParseError =
