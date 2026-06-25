@@ -47,6 +47,8 @@
     <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <!-- F26: render the release.json v2 additive fields from the ReleaseReport single source of truth. -->
+    <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
   </ItemGroup>
 
 </Project>

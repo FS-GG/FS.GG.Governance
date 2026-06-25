@@ -1209,6 +1209,32 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   F014 `Loader.FileReader`; **F014/F053/F054 are untouched** (no frozen-core edit, no
   schema bump). 56 tests green (11 ReleaseJson + 45 ReleaseCommand); surface baselines +
   golden committed; CLI smoke proves exit 0/1/2/3 distinct and byte-identical `release.json`.
+  **F26** (`061-verify-release-provenance`) landed the **publication-evidence cores** the
+  release rules are evaluated against, plus the publication-grade attestation — five pure
+  leaves and two additive projections, composing F053/F054/F055/F056/F25/F33/F51 verbatim
+  (no new release-rule family, no exit-code-scheme change, no identity change, no new
+  dependency): **`FS.GG.Governance.PackEvidence`** — the packed-version-is-truth policy
+  (`versionPolicy`/`evaluatePack`/`factContributions`) grounding the existing
+  `VersionBump`/`PackageMetadata`/`Provenance` families in real pack output (an
+  unbumped/downgraded/failed/no-artifact pack contributes `Unmet`); **`...ReleaseReport`** —
+  the immutable single-source-of-truth report carrying the F53 `ReleaseDecision` verbatim
+  with a release exit-code basis distinct from ship, the publish-plan/posture/template-pin
+  preconditions surfaced first-class, and an advisory `preview`; **`...Attestation`** +
+  **`...AttestationJson`** — the SLSA/in-toto-**shaped** `AttestationSummary` projected from
+  the F25 `AuditSnapshot` (subjects from produced artifacts only, identity =
+  `Provenance.canonicalId`, the always-present `compatible-shape-not-formal-compliance`
+  marker) emitted to the deterministic `attestation.json` (`fsgg.attestation/v1`) sidecar;
+  **`...ValidationMatrix`** — the scheduled-exhaustive-matrix decision reusing the F25
+  `CostBudget` ceiling (`decideMatrix`: deferred in the inner loop, runs at the boundary,
+  never invented). `release.json` bumped additively to **`fsgg.release/v2`**
+  (`ofReleaseReport` appends `packageEvidence`/`versionPolicy`/`attestation`); `verify.json`
+  gained an optional advisory `releaseReadiness` block **without** a schema bump
+  (byte-identical when absent). 117 tests green across the new/changed suites; five new
+  surface baselines blessed + the `release.json` golden re-blessed v1→v2; every existing
+  `route.json`/`ship.json`/`verify.json` golden byte-identical. **Remaining:** the Phase 8
+  host edge — `fsgg release` packing every project through the F051 `ExecutionPort`,
+  building the snapshot/attestation/report, and writing the sidecar + v2; `fsgg verify`
+  emitting the preview — is the follow-up wiring pass (the cores are ready).
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the

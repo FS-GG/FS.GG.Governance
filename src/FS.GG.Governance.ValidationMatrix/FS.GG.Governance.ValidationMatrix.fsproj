@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F26 (P3): the pure scheduled-exhaustive-matrix decision. A declared broad validation matrix runs now or
+       is deferred to the scheduled/release boundary, reusing the F25 CostBudget ordered Cost ceiling VERBATIM
+       (research D4) — no scheduler, no cron, no network in the core. None ⇒ NotDeclared (never an invented
+       matrix, FR-009). Reuses Config (Cost) and CostBudget (the ordered ceiling + `Budget.fits`) — no new
+       dependency. Compile order Model -> Matrix. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ValidationMatrix</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ValidationMatrix</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Matrix.fsi" />
+    <Compile Include="Matrix.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+  </ItemGroup>
+
+</Project>

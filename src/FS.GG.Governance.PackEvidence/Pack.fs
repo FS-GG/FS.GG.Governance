@@ -1,0 +1,198 @@
+namespace FS.GG.Governance.PackEvidence
+
+open System
+open FS.GG.Governance.Config.Model
+open FS.GG.Governance.ReleaseRules.Model
+open FS.GG.Governance.CommandKind.Model
+open FS.GG.Governance.PackEvidence.Model
+
+// The F26 packed-evidence + version-policy core (P1). PURE and TOTAL: a single linear pass over already-sensed
+// pack outcomes, never reading a clock/filesystem/process. The packed artifact's version is the source of
+// truth for releasability (research D1). `factContributions` feeds the EXISTING F53
+// VersionBump/PackageMetadata/Provenance families — no new release-rule family (FR-003). The surface is
+// Pack.fsi (Principle II) — no access modifiers here.
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Pack =
+
+    // ── value helpers (hidden — absent from Pack.fsi) ──
+
+    let surfaceValue (SurfaceId s) = s
+
+    let runOf (outcome: PackOutcome) : KindedCommandRun =
+        match outcome with
+        | Packed(_, run) -> run
+        | PackedNoArtifact(_, _, run) -> run
+        | PackFailed(_, _, run) -> run
+
+    let surfaceOf (outcome: PackOutcome) : SurfaceId =
+        match outcome with
+        | Packed(art, _) -> art.Surface
+        | PackedNoArtifact(surface, _, _) -> surface
+        | PackFailed(surface, _, _) -> surface
+
+    let artifactPathOf (outcome: PackOutcome) : string =
+        match outcome with
+        | Packed(art, _) -> art.ArtifactPath
+        | PackedNoArtifact _ -> ""
+        | PackFailed _ -> ""
+
+    // ── semantic-version comparison (total, never throws) ──
+
+    /// Strip build metadata (`+…`) and split the optional pre-release (`-…`) off the numeric core.
+    let splitMeta (v: string) : string * string option =
+        let noBuild =
+            match v.IndexOf('+') with
+            | -1 -> v
+            | i -> v.Substring(0, i)
+
+        match noBuild.IndexOf('-') with
+        | -1 -> noBuild, None
+        | i -> noBuild.Substring(0, i), Some(noBuild.Substring(i + 1))
+
+    /// Compare two dot-separated core versions: each segment numerically when both parse as integers, else
+    /// ordinally. Missing trailing segments are treated as 0 (`1.2` = `1.2.0`).
+    let compareCore (a: string) (b: string) : int =
+        let pa = a.Split('.')
+        let pb = b.Split('.')
+        let n = max pa.Length pb.Length
+        let mutable res = 0
+        let mutable i = 0
+
+        while res = 0 && i < n do
+            let segA = if i < pa.Length then pa.[i] else "0"
+            let segB = if i < pb.Length then pb.[i] else "0"
+
+            res <-
+                match Int64.TryParse segA, Int64.TryParse segB with
+                | (true, na), (true, nb) -> compare na nb
+                | _ -> String.CompareOrdinal(segA, segB)
+
+            i <- i + 1
+
+        res
+
+    /// Compare two pre-release identifiers per semantic-version precedence (numeric < alphanumeric).
+    let compareIdent (a: string) (b: string) : int =
+        match Int64.TryParse a, Int64.TryParse b with
+        | (true, na), (true, nb) -> compare na nb
+        | (true, _), (false, _) -> -1
+        | (false, _), (true, _) -> 1
+        | _ -> String.CompareOrdinal(a, b)
+
+    /// A version with NO pre-release outranks one WITH; both present ⇒ compare identifiers, shorter < longer.
+    let comparePre (a: string option) (b: string option) : int =
+        match a, b with
+        | None, None -> 0
+        | None, Some _ -> 1
+        | Some _, None -> -1
+        | Some pa, Some pb ->
+            let xa = pa.Split('.')
+            let xb = pb.Split('.')
+            let n = max xa.Length xb.Length
+            let mutable res = 0
+            let mutable i = 0
+
+            while res = 0 && i < n do
+                res <-
+                    if i >= xa.Length then -1
+                    elif i >= xb.Length then 1
+                    else compareIdent xa.[i] xb.[i]
+
+                i <- i + 1
+
+            res
+
+    let compareVersions (a: string) (b: string) : int =
+        let ca, pa = splitMeta a
+        let cb, pb = splitMeta b
+        let c = compareCore ca cb
+        if c <> 0 then c else comparePre pa pb
+
+    // ── the public operations ──
+
+    let versionPolicy (baseline: string option) (packed: string option) : VersionVerdict =
+        match packed with
+        | None -> NotPackable
+        | Some p ->
+            match baseline with
+            | None -> NoBaseline p
+            | Some b ->
+                match sign (compareVersions p b) with
+                | 1 -> Bumped(b, p)
+                | 0 -> Unbumped p
+                | _ -> Downgraded(b, p)
+
+    /// The product-neutral, self-explaining reason naming the project, outcome, and version basis.
+    let reasonFor (surface: SurfaceId) (outcome: PackOutcome) (version: VersionVerdict) : string =
+        let outcomeToken =
+            match outcome with
+            | Packed _ -> "packed"
+            | PackedNoArtifact(_, NoArtifactEmitted, _) -> "packed but no artifact emitted"
+            | PackedNoArtifact(_, ArtifactUnreadable msg, _) -> sprintf "packed but artifact unreadable: %s" msg
+            | PackFailed(_, sentinel, _) -> sprintf "pack failed (sentinel exit %d)" sentinel
+
+        let versionToken =
+            match version with
+            | Bumped(b, p) -> sprintf "version bumped %s -> %s" b p
+            | Unbumped v -> sprintf "version unbumped at %s" v
+            | Downgraded(b, p) -> sprintf "version downgraded %s -> %s" b p
+            | NoBaseline p -> sprintf "no released baseline (packed %s)" p
+            | NotPackable -> "no packable artifact"
+
+        sprintf "%s: %s; %s" (surfaceValue surface) outcomeToken versionToken
+
+    let evaluatePack (baselines: Map<SurfaceId, string>) (outcomes: PackOutcome list) : PackEvidenceSet =
+        let toVerdict (outcome: PackOutcome) : PackVerdict =
+            let surface = surfaceOf outcome
+
+            let version =
+                match outcome with
+                | Packed(art, _) -> versionPolicy (Map.tryFind surface baselines) (Some art.PackedVersion)
+                | PackedNoArtifact _
+                | PackFailed _ -> NotPackable
+
+            { Surface = surface
+              Outcome = outcome
+              Version = version
+              Reason = reasonFor surface outcome version }
+
+        let verdicts =
+            outcomes
+            |> List.map toVerdict
+            |> List.sortWith (fun a b ->
+                let s = String.CompareOrdinal(surfaceValue a.Surface, surfaceValue b.Surface)
+
+                if s <> 0 then
+                    s
+                else
+                    String.CompareOrdinal(artifactPathOf a.Outcome, artifactPathOf b.Outcome))
+
+        { Verdicts = verdicts
+          Runs = outcomes |> List.map runOf
+          NoPackableProjects = List.isEmpty outcomes }
+
+    let factContributions (set: PackEvidenceSet) : Map<ReleaseRuleKind, FactState> =
+        if set.NoPackableProjects then
+            Map.empty
+        else
+            let hasArtifact (v: PackVerdict) =
+                match v.Outcome with
+                | Packed _ -> true
+                | _ -> false
+
+            let versionOk (v: PackVerdict) =
+                match v.Version with
+                | Bumped _
+                | NoBaseline _ -> true
+                | Unbumped _
+                | Downgraded _
+                | NotPackable -> false
+
+            let stateOf predicate =
+                if set.Verdicts |> List.forall predicate then Met else Unmet
+
+            Map.ofList
+                [ VersionBump, stateOf versionOk
+                  PackageMetadata, stateOf hasArtifact
+                  Provenance, stateOf hasArtifact ]

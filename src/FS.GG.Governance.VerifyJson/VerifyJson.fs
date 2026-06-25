@@ -15,6 +15,9 @@ open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
 open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
 open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
+open FS.GG.Governance.PackEvidence.Model         // F26: PackEvidenceSet / PackVerdict / VersionVerdict
+open FS.GG.Governance.Attestation.Model          // F26: AttestationSummary
+open FS.GG.Governance.ReleaseReport.Model        // F26: VerifyReleasePreview
 
 module SC = FS.GG.Governance.SurfaceChecks.Model // F24: the additive surfaceChecks section
 
@@ -329,19 +332,146 @@ module VerifyJson =
         w.WriteString("message", f.Message)
         w.WriteEndObject()
 
-    // ── the public entry points ──
+    // ── F26: the additive `releaseReadiness` advisory preview block. Mirrors the release.json v2
+    //    packageEvidence/versionPolicy/attestation shape (the cores own their own writers — the codebase
+    //    convention each projection duplicates its token helpers). `advisory` is ALWAYS true; verify's exit
+    //    code is decided WITHOUT it (FR-005). Written ONLY when a preview is present; absent ⇒ byte-identical
+    //    to the pre-F26 projection (no schemaVersion bump — fsgg.verify/v1 stays). ──
 
-    let ofVerifyDecisionWithSurfaceChecks
+    let private rrSurfaceValue (SurfaceId s) : string = s
+    let private rrArtifactHashValue (ArtifactHash s) : string = s
+
+    let private rrVerdictToken (verdict: Verdict) : string =
+        match verdict with
+        | Pass -> "pass"
+        | Fail -> "fail"
+
+    let private rrPackOutcomeToken (outcome: PackOutcome) : string =
+        match outcome with
+        | Packed _ -> "packed"
+        | PackedNoArtifact _ -> "packedNoArtifact"
+        | PackFailed _ -> "packFailed"
+
+    let private rrVersionVerdictToken (v: VersionVerdict) : string =
+        match v with
+        | Bumped _ -> "bumped"
+        | Unbumped _ -> "unbumped"
+        | Downgraded _ -> "downgraded"
+        | NoBaseline _ -> "noBaseline"
+        | NotPackable -> "notPackable"
+
+    let private rrNullableString (w: Utf8JsonWriter) (name: string) (value: string option) =
+        match value with
+        | Some s -> w.WriteString(name, s)
+        | None -> w.WritePropertyName name; w.WriteNullValue()
+
+    let private rrNullableInt (w: Utf8JsonWriter) (name: string) (value: int option) =
+        match value with
+        | Some i -> w.WriteNumber(name, i)
+        | None -> w.WritePropertyName name; w.WriteNullValue()
+
+    let private rrPathOf (v: PackVerdict) : string =
+        match v.Outcome with
+        | Packed(art, _) -> art.ArtifactPath
+        | PackedNoArtifact _
+        | PackFailed _ -> ""
+
+    let private writePackProject (w: Utf8JsonWriter) (verdict: PackVerdict) =
+        let artifactPath, packedVersion, digest =
+            match verdict.Outcome with
+            | Packed(art, _) -> Some art.ArtifactPath, Some art.PackedVersion, Some(rrArtifactHashValue art.Digest)
+            | PackedNoArtifact _
+            | PackFailed _ -> None, None, None
+
+        let sentinel =
+            match verdict.Outcome with
+            | PackFailed(_, s, _) -> Some s
+            | Packed _
+            | PackedNoArtifact _ -> None
+
+        w.WriteStartObject()
+        w.WriteString("surface", rrSurfaceValue verdict.Surface)
+        w.WriteString("outcome", rrPackOutcomeToken verdict.Outcome)
+        rrNullableString w "artifactPath" artifactPath
+        rrNullableString w "packedVersion" packedVersion
+        rrNullableString w "digest" digest
+        rrNullableInt w "sentinel" sentinel
+        w.WriteString("reason", verdict.Reason)
+        w.WriteEndObject()
+
+    let private writePackageEvidence (w: Utf8JsonWriter) (pack: PackEvidenceSet) =
+        let sorted =
+            pack.Verdicts
+            |> List.sortWith (fun a b ->
+                let s = System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface)
+                if s <> 0 then s else System.String.CompareOrdinal(rrPathOf a, rrPathOf b))
+
+        w.WritePropertyName "packageEvidence"
+        w.WriteStartObject()
+        w.WriteBoolean("noPackableProjects", pack.NoPackableProjects)
+        w.WritePropertyName "projects"
+        w.WriteStartArray()
+        for v in sorted do
+            writePackProject w v
+        w.WriteEndArray()
+        w.WriteEndObject()
+
+    let private writeVersionPolicy (w: Utf8JsonWriter) (pack: PackEvidenceSet) =
+        let baselineAndPacked (v: VersionVerdict) =
+            match v with
+            | Bumped(b, p) -> Some b, Some p
+            | Downgraded(b, p) -> Some b, Some p
+            | Unbumped p -> None, Some p
+            | NoBaseline p -> None, Some p
+            | NotPackable -> None, None
+
+        let sorted =
+            pack.Verdicts
+            |> List.sortWith (fun a b -> System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface))
+
+        w.WritePropertyName "versionPolicy"
+        w.WriteStartObject()
+        w.WritePropertyName "projects"
+        w.WriteStartArray()
+        for v in sorted do
+            let baseline, packed = baselineAndPacked v.Version
+            w.WriteStartObject()
+            w.WriteString("surface", rrSurfaceValue v.Surface)
+            w.WriteString("verdict", rrVersionVerdictToken v.Version)
+            rrNullableString w "baseline" baseline
+            rrNullableString w "packed" packed
+            w.WriteEndObject()
+        w.WriteEndArray()
+        w.WriteEndObject()
+
+    let private writeAttestationRef (w: Utf8JsonWriter) (attestation: AttestationSummary) =
+        w.WritePropertyName "attestation"
+        w.WriteStartObject()
+        w.WriteString("schemaVersion", "fsgg.attestation/v1")
+        w.WriteString("identity", attestation.Identity)
+        w.WriteString("compliance", "compatible-shape-not-formal-compliance")
+        w.WriteNumber("subjectCount", List.length attestation.Subjects)
+        w.WriteEndObject()
+
+    let writeReleaseReadiness (w: Utf8JsonWriter) (preview: VerifyReleasePreview) =
+        w.WritePropertyName "releaseReadiness"
+        w.WriteStartObject()
+        w.WriteBoolean("advisory", preview.Advisory)
+        w.WriteString("verdict", rrVerdictToken preview.Verdict)
+        writePackageEvidence w preview.Package
+        writeVersionPolicy w preview.Package
+        writeAttestationRef w preview.Attestation
+        w.WriteEndObject()
+
+    // ── the shared core (hidden) — schemaVersion → currency → optional surfaceChecks, no open/close ──
+
+    let private writeCore
+        (w: Utf8JsonWriter)
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
         (findings: SC.SurfaceFinding list)
-        : string =
-        // One linear walk of the already-ordered `ShipDecision`, writing the top-level object in the FIXED
-        // order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing → currency. The
-        // verdict/basis are carried VERBATIM from the decision value — never recomputed from the item
-        // sections, never mapped to a numeric process exit code. Each section is emitted in its existing
-        // composite order, re-sorting NOTHING.
+        =
         let lookup: GateId -> CacheEligibilityVerdict option =
             match cache with
             | None -> fun _ -> None
@@ -352,28 +482,36 @@ module VerifyJson =
         let execByGate = outcomeByGate execution
         let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
+        w.WriteString("schemaVersion", schemaVersion)
+        w.WriteString("verdict", verdictToken decision.Verdict)
+        w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
+        writeSection w lookup execLookup "blockers" decision.Blockers
+        writeSection w lookup execLookup "warnings" decision.Warnings
+        writeSection w lookup execLookup "passing" decision.Passing
+        writeCurrency w decision cache
+
+        // F24: the additive product-surface findings. Written ONLY when non-empty; absent ⇒ byte-identical
+        // to the pre-F24 projection (D8). Emitted in the Composition.run order the caller already fixed.
+        match findings with
+        | [] -> ()
+        | _ ->
+            w.WritePropertyName "surfaceChecks"
+            w.WriteStartArray()
+            for f in findings do
+                writeSurfaceFinding w f
+            w.WriteEndArray()
+
+    // ── the public entry points ──
+
+    let ofVerifyDecisionWithSurfaceChecks
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        (findings: SC.SurfaceFinding list)
+        : string =
         writeToString (fun w ->
             w.WriteStartObject()
-            w.WriteString("schemaVersion", schemaVersion)
-            w.WriteString("verdict", verdictToken decision.Verdict)
-            w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
-            writeSection w lookup execLookup "blockers" decision.Blockers
-            writeSection w lookup execLookup "warnings" decision.Warnings
-            writeSection w lookup execLookup "passing" decision.Passing
-            writeCurrency w decision cache
-
-            // F24: the additive product-surface findings, as the document's LAST field. Written ONLY when
-            // non-empty; absent (default-empty) ⇒ byte-identical to the pre-F24 projection (D8). Emitted in
-            // the Composition.run order the caller already fixed — re-sorting NOTHING.
-            match findings with
-            | [] -> ()
-            | _ ->
-                w.WritePropertyName "surfaceChecks"
-                w.WriteStartArray()
-                for f in findings do
-                    writeSurfaceFinding w f
-                w.WriteEndArray()
-
+            writeCore w decision cache execution findings
             w.WriteEndObject())
 
     /// The F056 contract, unchanged: no surface findings ⇒ NO `surfaceChecks` field, so this is
@@ -384,3 +522,25 @@ module VerifyJson =
         (execution: (GateId * GateOutcome) list)
         : string =
         ofVerifyDecisionWithSurfaceChecks decision cache execution []
+
+    /// F26 (additive, non-breaking): the same projection plus an advisory `releaseReadiness` block carrying
+    /// the F26 VerifyReleasePreview. The block is emitted as the document's LAST top-level field ONLY when
+    /// `preview` is `Some`; a `None` preview writes NO block, so the output is BYTE-IDENTICAL to
+    /// `ofVerifyDecisionWithSurfaceChecks decision cache execution findings` (no `schemaVersion` bump —
+    /// fsgg.verify/v1 stays). PURE and TOTAL.
+    let ofVerifyDecisionWithPreview
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        (findings: SC.SurfaceFinding list)
+        (preview: VerifyReleasePreview option)
+        : string =
+        writeToString (fun w ->
+            w.WriteStartObject()
+            writeCore w decision cache execution findings
+
+            match preview with
+            | None -> ()
+            | Some p -> writeReleaseReadiness w p
+
+            w.WriteEndObject())

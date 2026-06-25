@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F26 (P1): the pure packed-evidence + version-policy leaf. Evaluates the version against the PACKED
+       artifact's version (research D1), builds the deterministic per-product PackEvidenceSet, and derives the
+       Met/Unmet contributions for the EXISTING F53 VersionBump/PackageMetadata/Provenance families
+       (factContributions) — introducing NO new release-rule family (FR-003). Pure and TOTAL over already-sensed
+       pack outcomes; the only I/O (running the pack, reading the artifact) lives at the ReleaseCommand edge
+       (FR-014). Reuses Config (SurfaceId), ReleaseRules (ReleaseRuleKind/FactState), CommandKind
+       (KindedCommandRun), CommandRecord, FreshnessKey (ArtifactHash) verbatim — no new dependency. Compile
+       order Model -> Pack. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.PackEvidence</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.PackEvidence</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Pack.fsi" />
+    <Compile Include="Pack.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>

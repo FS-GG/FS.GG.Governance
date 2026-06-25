@@ -1,4 +1,5 @@
 TYPE FS.GG.Governance.ReleaseJson.ReleaseJsonModule
   [Method] System.String get_schemaVersion()
   [Method] System.String ofRelease(ReleaseDecision, SensedRelease)
+  [Method] System.String ofReleaseReport(ReleaseReport)
   [Property] System.String schemaVersion

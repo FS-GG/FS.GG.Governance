@@ -1,0 +1,202 @@
+TYPE FS.GG.Governance.PackEvidence.ModelModule
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackArtifact
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackEvidenceSet
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackOutcome
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackVerdict
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict
+TYPE FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason
+  [Method] Boolean Equals(NoArtifactReason)
+  [Method] Boolean Equals(NoArtifactReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactUnreadable()
+  [Method] Boolean get_IsNoArtifactEmitted()
+  [Method] Int32 CompareTo(NoArtifactReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] NoArtifactReason NewArtifactUnreadable(System.String)
+  [Method] NoArtifactReason get_NoArtifactEmitted()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason+ArtifactUnreadable
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason+Tags
+  [Property] Boolean IsArtifactUnreadable
+  [Property] Boolean IsNoArtifactEmitted
+  [Property] Int32 Tag
+  [Property] NoArtifactReason NoArtifactEmitted
+TYPE FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason+ArtifactUnreadable
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.PackEvidence.ModelModule+NoArtifactReason+Tags
+  [Field] Int32 ArtifactUnreadable
+  [Field] Int32 NoArtifactEmitted
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackArtifact
+  [Constructor] Void .ctor(SurfaceId, System.String, System.String, ArtifactHash)
+  [Method] ArtifactHash get_Digest()
+  [Method] Boolean Equals(PackArtifact)
+  [Method] Boolean Equals(PackArtifact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PackArtifact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Method] System.String get_ArtifactPath()
+  [Method] System.String get_PackedVersion()
+  [Property] ArtifactHash Digest
+  [Property] SurfaceId Surface
+  [Property] System.String ArtifactPath
+  [Property] System.String PackedVersion
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackEvidenceSet
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackEvidence.ModelModule+PackVerdict], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun], Boolean)
+  [Method] Boolean Equals(PackEvidenceSet)
+  [Method] Boolean Equals(PackEvidenceSet, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_NoPackableProjects()
+  [Method] Int32 CompareTo(PackEvidenceSet)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] get_Runs()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackEvidence.ModelModule+PackVerdict] get_Verdicts()
+  [Method] System.String ToString()
+  [Property] Boolean NoPackableProjects
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] Runs
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackEvidence.ModelModule+PackVerdict] Verdicts
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackOutcome
+  [Method] Boolean Equals(PackOutcome)
+  [Method] Boolean Equals(PackOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsPackFailed()
+  [Method] Boolean get_IsPacked()
+  [Method] Boolean get_IsPackedNoArtifact()
+  [Method] Int32 CompareTo(PackOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PackOutcome NewPackFailed(SurfaceId, Int32, KindedCommandRun)
+  [Method] PackOutcome NewPacked(PackArtifact, KindedCommandRun)
+  [Method] PackOutcome NewPackedNoArtifact(SurfaceId, NoArtifactReason, KindedCommandRun)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+PackFailed
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+Packed
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+PackedNoArtifact
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+Tags
+  [Property] Boolean IsPackFailed
+  [Property] Boolean IsPacked
+  [Property] Boolean IsPackedNoArtifact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+PackFailed
+  [Method] Int32 get_sentinel()
+  [Method] KindedCommandRun get_run()
+  [Method] SurfaceId get_surface()
+  [Property] Int32 sentinel
+  [Property] KindedCommandRun run
+  [Property] SurfaceId surface
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+Packed
+  [Method] KindedCommandRun get_run()
+  [Method] PackArtifact get_artifact()
+  [Property] KindedCommandRun run
+  [Property] PackArtifact artifact
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+PackedNoArtifact
+  [Method] KindedCommandRun get_run()
+  [Method] NoArtifactReason get_reason()
+  [Method] SurfaceId get_surface()
+  [Property] KindedCommandRun run
+  [Property] NoArtifactReason reason
+  [Property] SurfaceId surface
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackOutcome+Tags
+  [Field] Int32 PackFailed
+  [Field] Int32 Packed
+  [Field] Int32 PackedNoArtifact
+TYPE FS.GG.Governance.PackEvidence.ModelModule+PackVerdict
+  [Constructor] Void .ctor(SurfaceId, PackOutcome, VersionVerdict, System.String)
+  [Method] Boolean Equals(PackVerdict)
+  [Method] Boolean Equals(PackVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PackVerdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] PackOutcome get_Outcome()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Method] VersionVerdict get_Version()
+  [Property] PackOutcome Outcome
+  [Property] SurfaceId Surface
+  [Property] System.String Reason
+  [Property] VersionVerdict Version
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(VersionVerdict)
+  [Method] Boolean Equals(VersionVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBumped()
+  [Method] Boolean get_IsDowngraded()
+  [Method] Boolean get_IsNoBaseline()
+  [Method] Boolean get_IsNotPackable()
+  [Method] Boolean get_IsUnbumped()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(VersionVerdict)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] VersionVerdict NewBumped(System.String, System.String)
+  [Method] VersionVerdict NewDowngraded(System.String, System.String)
+  [Method] VersionVerdict NewNoBaseline(System.String)
+  [Method] VersionVerdict NewUnbumped(System.String)
+  [Method] VersionVerdict get_NotPackable()
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Bumped
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Downgraded
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+NoBaseline
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Tags
+  [NestedType] FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Unbumped
+  [Property] Boolean IsBumped
+  [Property] Boolean IsDowngraded
+  [Property] Boolean IsNoBaseline
+  [Property] Boolean IsNotPackable
+  [Property] Boolean IsUnbumped
+  [Property] Int32 Tag
+  [Property] VersionVerdict NotPackable
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Bumped
+  [Method] System.String get_baseline()
+  [Method] System.String get_packed()
+  [Property] System.String baseline
+  [Property] System.String packed
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Downgraded
+  [Method] System.String get_baseline()
+  [Method] System.String get_packed()
+  [Property] System.String baseline
+  [Property] System.String packed
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+NoBaseline
+  [Method] System.String get_packed()
+  [Property] System.String packed
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Tags
+  [Field] Int32 Bumped
+  [Field] Int32 Downgraded
+  [Field] Int32 NoBaseline
+  [Field] Int32 NotPackable
+  [Field] Int32 Unbumped
+TYPE FS.GG.Governance.PackEvidence.ModelModule+VersionVerdict+Unbumped
+  [Method] System.String get_version()
+  [Property] System.String version
+TYPE FS.GG.Governance.PackEvidence.PackModule
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind,FS.GG.Governance.ReleaseRules.ModelModule+FactState] factContributions(PackEvidenceSet)
+  [Method] PackEvidenceSet evaluatePack(Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackEvidence.ModelModule+PackOutcome])
+  [Method] VersionVerdict versionPolicy(Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])

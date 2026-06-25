@@ -28,14 +28,26 @@ namespace FS.GG.Governance.ReleaseJson
 
 open FS.GG.Governance.ReleaseRules.Model
 open FS.GG.Governance.ReleaseFactsSensing.Model
+open FS.GG.Governance.ReleaseReport.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReleaseJson =
 
     /// The declared schema-version token stamped into every emitted document and recorded as the
     /// document's `schemaVersion` field, so consumers can branch on the contract version. A fixed,
-    /// deterministic constant (`"fsgg.release/v1"`) — never derived from a clock, environment, or input.
+    /// deterministic constant (`"fsgg.release/v2"` — the F26 additive bump; every v1 field unchanged in
+    /// shape and order) — never derived from a clock, environment, or input.
     val schemaVersion: string
+
+    /// Project the F26 ReleaseReport (the single source of truth, FR-012) into `fsgg.release/v2`. Renders
+    /// the v1 fields VERBATIM from `report.Decision` + `report.Sensed` (schemaVersion, verdict,
+    /// exitCodeBasis, rules, evidence — the publish-plan/posture/template-pin precondition state + reason
+    /// surface through the existing `rules` array, no new field), then appends exactly three additive
+    /// fields in fixed order: `packageEvidence` (per-project surface/outcome/version/digest, sorted by
+    /// surface then artifact path), `versionPolicy` (per-project version verdict), and `attestation` (a
+    /// self-contained identity reference; the full summary lives in the attestation.json sidecar). PURE,
+    /// TOTAL, byte-identical for identical input.
+    val ofReleaseReport: report: ReleaseReport -> string
 
     /// Project an F053 `ReleaseDecision` + an F054 `SensedRelease` into the deterministic, versioned
     /// `release.json` whole-release audit document text.

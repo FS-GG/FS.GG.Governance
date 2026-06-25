@@ -1,0 +1,105 @@
+TYPE FS.GG.Governance.Attestation.AttestationModule
+  [Method] AttestationSummary summarize(AuditSnapshot, PackEvidenceSet)
+TYPE FS.GG.Governance.Attestation.ModelModule
+  [NestedType] FS.GG.Governance.Attestation.ModelModule+AttestationInvocation
+  [NestedType] FS.GG.Governance.Attestation.ModelModule+AttestationMaterials
+  [NestedType] FS.GG.Governance.Attestation.ModelModule+AttestationSubject
+  [NestedType] FS.GG.Governance.Attestation.ModelModule+AttestationSummary
+  [NestedType] FS.GG.Governance.Attestation.ModelModule+ComplianceMarker
+TYPE FS.GG.Governance.Attestation.ModelModule+AttestationInvocation
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun])
+  [Method] Boolean Equals(AttestationInvocation)
+  [Method] Boolean Equals(AttestationInvocation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AttestationInvocation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] get_Runs()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] Runs
+TYPE FS.GG.Governance.Attestation.ModelModule+AttestationMaterials
+  [Constructor] Void .ctor(RuleHash, GeneratorVersion, Revision, Revision, Revision, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash], EnvironmentClass)
+  [Method] Boolean Equals(AttestationMaterials)
+  [Method] Boolean Equals(AttestationMaterials, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvironmentClass get_Environment()
+  [Method] GeneratorVersion get_GeneratorVersion()
+  [Method] Int32 CompareTo(AttestationMaterials)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] get_ArtifactDigests()
+  [Method] Revision get_BaseRevision()
+  [Method] Revision get_HeadRevision()
+  [Method] Revision get_SourceCommit()
+  [Method] RuleHash get_RuleHash()
+  [Method] System.String ToString()
+  [Property] EnvironmentClass Environment
+  [Property] GeneratorVersion GeneratorVersion
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash] ArtifactDigests
+  [Property] Revision BaseRevision
+  [Property] Revision HeadRevision
+  [Property] Revision SourceCommit
+  [Property] RuleHash RuleHash
+TYPE FS.GG.Governance.Attestation.ModelModule+AttestationSubject
+  [Constructor] Void .ctor(System.String, ArtifactHash, System.String)
+  [Method] ArtifactHash get_Digest()
+  [Method] Boolean Equals(AttestationSubject)
+  [Method] Boolean Equals(AttestationSubject, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AttestationSubject)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Name()
+  [Method] System.String get_Version()
+  [Property] ArtifactHash Digest
+  [Property] System.String Name
+  [Property] System.String Version
+TYPE FS.GG.Governance.Attestation.ModelModule+AttestationSummary
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Attestation.ModelModule+AttestationSubject], BuilderIdentity, AttestationMaterials, AttestationInvocation, System.String, ComplianceMarker)
+  [Method] AttestationInvocation get_Invocation()
+  [Method] AttestationMaterials get_Materials()
+  [Method] Boolean Equals(AttestationSummary)
+  [Method] Boolean Equals(AttestationSummary, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] BuilderIdentity get_Builder()
+  [Method] ComplianceMarker get_Compliance()
+  [Method] Int32 CompareTo(AttestationSummary)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Attestation.ModelModule+AttestationSubject] get_Subjects()
+  [Method] System.String ToString()
+  [Method] System.String get_Identity()
+  [Property] AttestationInvocation Invocation
+  [Property] AttestationMaterials Materials
+  [Property] BuilderIdentity Builder
+  [Property] ComplianceMarker Compliance
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Attestation.ModelModule+AttestationSubject] Subjects
+  [Property] System.String Identity
+TYPE FS.GG.Governance.Attestation.ModelModule+ComplianceMarker
+  [Method] Boolean Equals(ComplianceMarker)
+  [Method] Boolean Equals(ComplianceMarker, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ComplianceMarker get_CompatibleShapeNotFormalCompliance()
+  [Method] Int32 CompareTo(ComplianceMarker)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] ComplianceMarker CompatibleShapeNotFormalCompliance
+  [Property] Int32 Tag

@@ -49,6 +49,8 @@
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <!-- F26: the advisory releaseReadiness preview projects the ReleaseReport single source of truth. -->
+    <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
   </ItemGroup>
 
 </Project>

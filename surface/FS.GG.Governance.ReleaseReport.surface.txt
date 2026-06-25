@@ -1,0 +1,71 @@
+TYPE FS.GG.Governance.ReleaseReport.ModelModule
+  [NestedType] FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence
+  [NestedType] FS.GG.Governance.ReleaseReport.ModelModule+ReleaseReport
+  [NestedType] FS.GG.Governance.ReleaseReport.ModelModule+VerifyReleasePreview
+TYPE FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence
+  [Constructor] Void .ctor(ReleaseRuleKind, FactState, System.String)
+  [Method] Boolean Equals(PreconditionEvidence)
+  [Method] Boolean Equals(PreconditionEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FactState get_State()
+  [Method] Int32 CompareTo(PreconditionEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReleaseRuleKind get_Kind()
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] FactState State
+  [Property] ReleaseRuleKind Kind
+  [Property] System.String Reason
+TYPE FS.GG.Governance.ReleaseReport.ModelModule+ReleaseReport
+  [Constructor] Void .ctor(ReleaseDecision, SensedRelease, PackEvidenceSet, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence], AttestationSummary, ExitCodeBasis)
+  [Method] AttestationSummary get_Attestation()
+  [Method] Boolean Equals(ReleaseReport)
+  [Method] Boolean Equals(ReleaseReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitCodeBasis get_ReleaseExitCodeBasis()
+  [Method] Int32 CompareTo(ReleaseReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence] get_Preconditions()
+  [Method] PackEvidenceSet get_Package()
+  [Method] ReleaseDecision get_Decision()
+  [Method] SensedRelease get_Sensed()
+  [Method] System.String ToString()
+  [Property] AttestationSummary Attestation
+  [Property] ExitCodeBasis ReleaseExitCodeBasis
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence] Preconditions
+  [Property] PackEvidenceSet Package
+  [Property] ReleaseDecision Decision
+  [Property] SensedRelease Sensed
+TYPE FS.GG.Governance.ReleaseReport.ModelModule+VerifyReleasePreview
+  [Constructor] Void .ctor(Verdict, PackEvidenceSet, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence], AttestationSummary, Boolean)
+  [Method] AttestationSummary get_Attestation()
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(VerifyReleasePreview)
+  [Method] Boolean Equals(VerifyReleasePreview, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Advisory()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(VerifyReleasePreview)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence] get_Preconditions()
+  [Method] PackEvidenceSet get_Package()
+  [Method] System.String ToString()
+  [Method] Verdict get_Verdict()
+  [Property] AttestationSummary Attestation
+  [Property] Boolean Advisory
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseReport.ModelModule+PreconditionEvidence] Preconditions
+  [Property] PackEvidenceSet Package
+  [Property] Verdict Verdict
+TYPE FS.GG.Governance.ReleaseReport.ReportModule
+  [Method] ReleaseReport assemble(ReleaseDecision, SensedRelease, PackEvidenceSet, AttestationSummary)
+  [Method] VerifyReleasePreview preview(ReleaseReport)

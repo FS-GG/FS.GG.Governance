@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F26 PackEvidence, exercising the PUBLIC surface of FS.GG.Governance.PackEvidence:
+       Pack.versionPolicy / evaluatePack / factContributions over REAL KindedCommandRun values built through
+       the real CommandRecord.build (Principle V; no mock), composed with the REAL
+       ReleaseRules.evaluateRelease. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="VersionPolicyMatrixTests.fs" />
+    <Compile Include="EvaluatePackTests.fs" />
+    <Compile Include="FactContributionsTests.fs" />
+    <Compile Include="ReuseGuardTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>

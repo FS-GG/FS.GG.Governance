@@ -14,15 +14,18 @@ let private parse (s: string) = JsonDocument.Parse(s).RootElement
 let tests =
     testList
         "ReleaseJson"
-        [ test "schemaVersion is the fixed fsgg.release/v1 literal" {
-              Expect.equal ReleaseJson.schemaVersion "fsgg.release/v1" "schema version"
+        [ test "schemaVersion is the fixed fsgg.release/v2 literal (F26 additive bump)" {
+              Expect.equal ReleaseJson.schemaVersion "fsgg.release/v2" "schema version"
           }
 
-          test "top-level field order is schemaVersion, verdict, exitCodeBasis, rules, evidence" {
+          test "top-level field order keeps the v1 prefix then the three F26 additive fields" {
               let json = ReleaseJson.ofRelease decisionMet sensedMet
               let root = parse json
               let names = root.EnumerateObject() |> Seq.map (fun p -> p.Name) |> List.ofSeq
-              Expect.equal names [ "schemaVersion"; "verdict"; "exitCodeBasis"; "rules"; "evidence" ] "fixed field order"
+              Expect.equal
+                  names
+                  [ "schemaVersion"; "verdict"; "exitCodeBasis"; "rules"; "evidence"; "packageEvidence"; "versionPolicy"; "attestation" ]
+                  "v1 fields unchanged in order; the three additive fields appended"
           }
 
           test "rules has exactly six entries in F053 composite order with the documented fields" {

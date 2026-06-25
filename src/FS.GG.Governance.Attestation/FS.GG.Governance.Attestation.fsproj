@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F26 (P2): the pure SLSA/in-toto-SHAPED projection of the F25 AuditSnapshot (+ pack subjects). Builds
+       subjects from the Packed outcomes ONLY (no subject for a failed/no-artifact build, FR-008),
+       Materials/Invocation from the snapshot's Provenance/Runs, and Identity from Provenance.canonicalId
+       (F033 verbatim — duration never affects it). Compliance is ALWAYS
+       CompatibleShapeNotFormalCompliance — never overclaims. Pure and TOTAL; byte-identical for identical
+       inputs (SC-005). Reuses CommandKind, Provenance, CommandRecord, FreshnessKey, Config, PackEvidence —
+       no new dependency. Compile order Model -> Attestation. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Attestation</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Attestation</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Attestation.fsi" />
+    <Compile Include="Attestation.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+  </ItemGroup>
+
+</Project>

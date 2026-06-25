@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F26 ValidationMatrix, exercising the PUBLIC surface of
+       FS.GG.Governance.ValidationMatrix: Matrix.decideMatrix over REAL CostBudget values (Principle V).
+       Asserts deferred-in-inner-loop, runs-at-the-boundary, and never-invented. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="DecideMatrixTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+  </ItemGroup>
+
+</Project>

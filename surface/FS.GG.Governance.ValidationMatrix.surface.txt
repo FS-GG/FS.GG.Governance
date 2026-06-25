@@ -1,0 +1,104 @@
+TYPE FS.GG.Governance.ValidationMatrix.MatrixModule
+  [Method] MatrixPlan decideMatrix(CostBudget, MatrixBoundary, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix])
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+DeferReason
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixBoundary
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+DeferReason
+  [Method] Boolean Equals(DeferReason)
+  [Method] Boolean Equals(DeferReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Cost get_cost()
+  [Method] DeferReason NewDeferredToScheduledBoundary(System.String, Cost)
+  [Method] Int32 CompareTo(DeferReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] System.String get_name()
+  [Property] Cost cost
+  [Property] Int32 Tag
+  [Property] System.String name
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix
+  [Constructor] Void .ctor(System.String, Cost, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ExhaustiveMatrix)
+  [Method] Boolean Equals(ExhaustiveMatrix, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Cost get_Cost()
+  [Method] Int32 CompareTo(ExhaustiveMatrix)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Dimensions()
+  [Method] System.String ToString()
+  [Method] System.String get_Name()
+  [Property] Cost Cost
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Dimensions
+  [Property] System.String Name
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixBoundary
+  [Method] Boolean Equals(MatrixBoundary)
+  [Method] Boolean Equals(MatrixBoundary, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInnerLoop()
+  [Method] Boolean get_IsScheduledOrRelease()
+  [Method] Int32 CompareTo(MatrixBoundary)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] MatrixBoundary get_InnerLoop()
+  [Method] MatrixBoundary get_ScheduledOrRelease()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixBoundary+Tags
+  [Property] Boolean IsInnerLoop
+  [Property] Boolean IsScheduledOrRelease
+  [Property] Int32 Tag
+  [Property] MatrixBoundary InnerLoop
+  [Property] MatrixBoundary ScheduledOrRelease
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixBoundary+Tags
+  [Field] Int32 InnerLoop
+  [Field] Int32 ScheduledOrRelease
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan
+  [Method] Boolean Equals(MatrixPlan)
+  [Method] Boolean Equals(MatrixPlan, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDeferred()
+  [Method] Boolean get_IsNotDeclared()
+  [Method] Boolean get_IsRunNow()
+  [Method] Int32 CompareTo(MatrixPlan)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] MatrixPlan NewDeferred(DeferReason)
+  [Method] MatrixPlan NewRunNow(ExhaustiveMatrix)
+  [Method] MatrixPlan get_NotDeclared()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+Deferred
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+RunNow
+  [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+Tags
+  [Property] Boolean IsDeferred
+  [Property] Boolean IsNotDeclared
+  [Property] Boolean IsRunNow
+  [Property] Int32 Tag
+  [Property] MatrixPlan NotDeclared
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+Deferred
+  [Method] DeferReason get_Item()
+  [Property] DeferReason Item
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+RunNow
+  [Method] ExhaustiveMatrix get_Item()
+  [Property] ExhaustiveMatrix Item
+TYPE FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan+Tags
+  [Field] Int32 Deferred
+  [Field] Int32 NotDeclared
+  [Field] Int32 RunNow

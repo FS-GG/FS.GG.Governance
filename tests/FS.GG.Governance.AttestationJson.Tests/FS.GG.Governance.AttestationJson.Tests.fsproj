@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F26 AttestationJson, exercising the PUBLIC surface of
+       FS.GG.Governance.AttestationJson: AttestationJson.ofAttestation / schemaVersion over REAL
+       AttestationSummary values built through the real Attestation.summarize (Principle V; no mock). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="OfAttestationTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.AttestationJson/FS.GG.Governance.AttestationJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+  </ItemGroup>
+
+</Project>

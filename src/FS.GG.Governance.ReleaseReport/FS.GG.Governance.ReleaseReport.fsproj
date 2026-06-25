@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F26 (P1): the immutable, presentation-free single-source-of-truth publication report (FR-012). Carries
+       the F53 ReleaseDecision VERBATIM (never re-derives a verdict or exit-code basis), the pack evidence,
+       the publish-plan/posture/pins/version/metadata/provenance preconditions (projected from the F54
+       SensedRelease, ordered by releaseRuleKindOrdinal), and the attestation summary. ReleaseExitCodeBasis is
+       named at the report level so publication reads as a first-class boundary distinct from ship (FR-004).
+       `preview` is the advisory verify projection (FR-005). Pure and TOTAL. Reuses ReleaseRules,
+       ReleaseFactsSensing, PackEvidence, Attestation, Ship — no new dependency. Compile order Model ->
+       Report. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseReport</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReleaseReport</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Report.fsi" />
+    <Compile Include="Report.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>

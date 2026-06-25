@@ -31,6 +31,7 @@ open FS.GG.Governance.Ship.Model              // ShipDecision
 open FS.GG.Governance.Gates.Model             // GateId
 open FS.GG.Governance.GateRun.Model           // GateOutcome
 open FS.GG.Governance.CacheEligibility.Model  // CacheEligibilityReport
+open FS.GG.Governance.ReleaseReport.Model     // VerifyReleasePreview (F26)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VerifyJson =
@@ -85,4 +86,20 @@ module VerifyJson =
         cache: CacheEligibilityReport option ->
         execution: (GateId * GateOutcome) list ->
         findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list ->
+            string
+
+    /// F26 (additive, non-breaking): the same projection as `ofVerifyDecisionWithSurfaceChecks` plus an
+    /// advisory `releaseReadiness` block carrying the F26 `VerifyReleasePreview`. The block is the
+    /// document's LAST top-level field, emitted ONLY when `preview` is `Some`; a `None` preview writes NO
+    /// block, so the output is BYTE-IDENTICAL to `ofVerifyDecisionWithSurfaceChecks decision cache execution
+    /// findings` (the F24 optional-additive precedent — `schemaVersion` stays `fsgg.verify/v1`, existing
+    /// goldens untouched, verify's exit code decided WITHOUT the preview). The block carries `advisory:
+    /// true`, the previewed `verdict`, and the same `packageEvidence`/`versionPolicy`/`attestation` shape as
+    /// `release.json` v2. PURE and TOTAL.
+    val ofVerifyDecisionWithPreview:
+        decision: ShipDecision ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+        findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list ->
+        preview: VerifyReleasePreview option ->
             string

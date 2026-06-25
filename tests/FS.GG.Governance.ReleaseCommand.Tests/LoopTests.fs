@@ -73,7 +73,7 @@ let tests =
               match eff2 with
               | [ Loop.WriteArtifact(path, content) ] ->
                   Expect.equal path "out/release.json" "writes to the requested out path"
-                  Expect.isTrue (content.Contains "\"schemaVersion\":\"fsgg.release/v1\"") "content is the projection"
+                  Expect.isTrue (content.Contains "\"schemaVersion\":\"fsgg.release/v2\"") "content is the projection (F26 additive bump to v2)"
               | other -> failtestf "expected a single WriteArtifact, got %A" other
           }
 

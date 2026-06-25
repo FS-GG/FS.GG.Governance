@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F26 (P2): the optional, packable attestation.json *projection* — the deterministic, versioned
+       `fsgg.attestation/v1` sidecar the `fsgg release` host writes (the F25 ProvenanceJson/provenance.json
+       precedent). A single pure, total `AttestationJson.ofAttestation : AttestationSummary -> string` (plus a
+       `schemaVersion` constant) renders the SLSA/in-toto-SHAPED summary in a fixed field order. Identity is
+       reused VERBATIM (Provenance.canonicalId via the summary's Identity; each run's identity via
+       Audit.runIdentity); `subjects` sorted by name; `artifactDigests` sorted (set); `invocation.runs` in
+       carried order; `durationNanos` is sensed metadata that never affects any identity; the `compliance`
+       marker + note are always present (never an overclaim). Serialization is the net10.0 shared-framework
+       System.Text.Json — NO new PackageReference. Compile order AttestationJson.fsi -> AttestationJson.fs. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.AttestationJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.AttestationJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AttestationJson.fsi" />
+    <Compile Include="AttestationJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+  </ItemGroup>
+
+</Project>
