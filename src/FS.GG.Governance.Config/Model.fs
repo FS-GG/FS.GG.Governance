@@ -34,11 +34,26 @@ module Model =
         | BlockOnRelease
 
     type SurfaceClass =
+        // — MVP (F014, unchanged) —
         | Routine
         | GovernedRoot
         | ProtectedSurface
         | GeneratedView
         | ReleaseSurface
+        // — F23 product kinds (capabilities.yml v2) —
+        | PackageSurface
+        | DocsSurface
+        | SkillSurface
+        | DesignSurface
+        | SampleAppSurface
+        | GeneratedProductRoot
+
+    type GeneratedProductTier =
+        | StructuralScan
+        | RestoreBuild
+        | FocusedTests
+        | FullVerify
+        | ReleaseValidation
 
     // ── Identity newtypes ──
 
@@ -50,6 +65,12 @@ module Model =
     type CommandId = CommandId of string
     type Owner = Owner of string
     type TimeoutLimit = TimeoutLimit of seconds: int
+
+    // ── F23 product-surface attributes (single-string newtypes) ──
+
+    type EvidenceTag = EvidenceTag of string
+    type TemplateProfile = TemplateProfile of string
+    type Baseline = Baseline of string
 
     // ── project.yml ──
 
@@ -86,7 +107,10 @@ module Model =
           Class: SurfaceClass
           Paths: GovernedPath list
           Owner: Owner
-          Maturity: Maturity }
+          Maturity: Maturity
+          EvidenceTag: EvidenceTag option
+          TemplateProfile: TemplateProfile option
+          Baseline: Baseline option }
 
     type Check =
         { Id: CheckId
@@ -95,7 +119,8 @@ module Model =
           Owner: Owner
           Cost: Cost
           Environment: EnvironmentClass
-          Maturity: Maturity }
+          Maturity: Maturity
+          Tier: GeneratedProductTier option }
 
     type CapabilityFacts =
         { SchemaVersion: SchemaVersion
@@ -181,6 +206,39 @@ module Model =
         | DanglingReference -> "danglingReference"
         | EmptyFile -> "emptyFile"
         | MissingRequiredFile -> "missingRequiredFile"
+
+    // Total, deterministic: every SurfaceClass maps to its YAML `kind` token. A new case is a
+    // compile error here until it gets a token (closed set, single-sourced with Schema's parse, D2).
+    let surfaceClassToken (cls: SurfaceClass) : string =
+        match cls with
+        | Routine -> "routine"
+        | GovernedRoot -> "governedRoot"
+        | ProtectedSurface -> "protected"
+        | GeneratedView -> "generatedView"
+        | ReleaseSurface -> "release"
+        | PackageSurface -> "package"
+        | DocsSurface -> "docs"
+        | SkillSurface -> "skill"
+        | DesignSurface -> "design"
+        | SampleAppSurface -> "sampleApp"
+        | GeneratedProductRoot -> "generatedProduct"
+
+    // The closed order StructuralScan < RestoreBuild < FocusedTests < FullVerify < ReleaseValidation.
+    let generatedProductTierRank (tier: GeneratedProductTier) : int =
+        match tier with
+        | StructuralScan -> 1
+        | RestoreBuild -> 2
+        | FocusedTests -> 3
+        | FullVerify -> 4
+        | ReleaseValidation -> 5
+
+    let generatedProductTierToken (tier: GeneratedProductTier) : string =
+        match tier with
+        | StructuralScan -> "structuralScan"
+        | RestoreBuild -> "restoreBuild"
+        | FocusedTests -> "focusedTests"
+        | FullVerify -> "fullVerify"
+        | ReleaseValidation -> "releaseValidation"
 
     // ── Path normalization (single-sourced — F016 research D7) ──
 

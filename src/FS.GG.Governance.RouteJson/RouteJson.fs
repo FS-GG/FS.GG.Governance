@@ -14,6 +14,7 @@ open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
 open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
 open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
+open FS.GG.Governance.ProductSurfaces.Model      // F23: ProductSurfaceReport/ProductClassification/TierAlternative
 
 // The F020 route.json projection (US1–US4). Renders the F019 `RouteResult` into the deterministic,
 // versioned `route.json` document text via a hand-driven `System.Text.Json` `Utf8JsonWriter` walk —
@@ -283,12 +284,42 @@ module RouteJson =
         w.WriteNumber("exhaustive", cost.Exhaustive)
         w.WriteEndObject()
 
-    // ── the public entry point ──
+    // ── F23: the additive product-surface classification section (default-empty ⇒ output unchanged) ──
+    // The class/tier/reason tokens are REUSED VERBATIM from public upstream — `surfaceClassToken` and
+    // `generatedProductTierToken` (F23 Config.Model), `classificationReasonToken` (ProductSurfaces.Model).
+    // Each `match` is EXHAUSTIVE with NO wildcard, so a future SurfaceClass/tier/reason case is a compile
+    // error here, never a silently mis-tokened field.
 
-    let ofRouteResult
+    /// The `alternative` value: a strictly-cheaper, locally-runnable declared tier token, or `"none"` (the
+    /// explicit no-cheaper-local outcome — never null, the no-hide rule).
+    let alternativeToken (alt: TierAlternative) : string =
+        match alt with
+        | CheaperLocalTier t -> generatedProductTierToken t
+        | NoCheaperLocalTier -> "none"
+
+    /// One product-surface classification — field order `path`, `capability`, `surface`, `class`, `tier`,
+    /// `tierDeclared`, `alternative`. Only declared ids; no raw YAML/host path/timestamp.
+    let writeProductClassification (w: Utf8JsonWriter) (c: ProductClassification) =
+        w.WriteStartObject()
+        let (GovernedPath path) = c.Path
+        w.WriteString("path", path)
+        let (DomainId capability) = c.Capability
+        w.WriteString("capability", capability)
+        let (SurfaceId surface) = c.Surface
+        w.WriteString("surface", surface)
+        w.WriteString("class", surfaceClassToken c.Class)
+        w.WriteString("tier", generatedProductTierToken c.SelectedTier)
+        w.WriteBoolean("tierDeclared", c.TierIsDeclared)
+        w.WriteString("alternative", alternativeToken c.Alternative)
+        w.WriteEndObject()
+
+    // ── the public entry points ──
+
+    let ofRouteResultWithProductSurfaces
         (result: RouteResult)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
+        (productSurfaces: ProductSurfaceReport)
         : string =
         // One linear walk of the already-ordered `RouteResult`, writing the top-level object in the
         // FIXED order schemaVersion → selectedGates → findings → cost → cacheEligibilityEvaluated. Every
@@ -333,4 +364,24 @@ module RouteJson =
 
             w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
 
+            // F23: the additive product-surface classification, as the document's LAST field. Written ONLY
+            // when non-empty; absent (default-empty) ⇒ byte-identical to the F052-era projection (D6).
+            match productSurfaces.Classifications with
+            | [] -> ()
+            | classifications ->
+                w.WritePropertyName "productSurfaces"
+                w.WriteStartArray()
+                for c in classifications do
+                    writeProductClassification w c
+                w.WriteEndArray()
+
             w.WriteEndObject())
+
+    let ofRouteResult
+        (result: RouteResult)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        : string =
+        // The F020/F045/F052 contract, unchanged: an empty product-surface report writes NO productSurfaces
+        // field, so this is byte-identical to the pre-F23 projection (existing goldens untouched).
+        ofRouteResultWithProductSurfaces result cache execution { Classifications = [] }

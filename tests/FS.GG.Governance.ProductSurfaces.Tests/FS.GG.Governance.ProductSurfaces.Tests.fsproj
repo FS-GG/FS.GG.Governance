@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F23, exercising the PUBLIC surface of FS.GG.Governance.ProductSurfaces:
+       `ProductSurfaces.classify` over real `TypedFacts` (assembled via Config.loadAndValidate over real
+       `.fsgg` fixture dirs) and real `RouteReport`s (built by calling Routing.route) — the actual values
+       the command edge passes, never mocks and never private helpers (Principle V). Expecto + FsCheck give
+       the precedence/determinism properties; the VSTest adapters let `dotnet test` drive the runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ClassifyTests.fs" />
+    <Compile Include="PrecedenceTests.fs" />
+    <Compile Include="TierBaselineTests.fs" />
+    <Compile Include="TierProfileTests.fs" />
+    <Compile Include="TierSnapTests.fs" />
+    <Compile Include="TierDeterminismTests.fs" />
+    <Compile Include="StandaloneTests.fs" />
+    <Compile Include="ScopeGuardTests.fs" />
+    <Compile Include="ProductNeutralityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

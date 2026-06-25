@@ -1,0 +1,110 @@
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule
+  [Method] System.String classificationReasonToken(ClassificationReason)
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+ClassificationReason
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+ProductClassification
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+ProductSurfaceReport
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+ClassificationReason
+  [Method] Boolean Equals(ClassificationReason)
+  [Method] Boolean Equals(ClassificationReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsHighestPrecedenceKind()
+  [Method] Boolean get_IsOnlySurface()
+  [Method] Boolean get_IsOrdinalSurfaceTiebreak()
+  [Method] ClassificationReason get_HighestPrecedenceKind()
+  [Method] ClassificationReason get_OnlySurface()
+  [Method] ClassificationReason get_OrdinalSurfaceTiebreak()
+  [Method] Int32 CompareTo(ClassificationReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+ClassificationReason+Tags
+  [Property] Boolean IsHighestPrecedenceKind
+  [Property] Boolean IsOnlySurface
+  [Property] Boolean IsOrdinalSurfaceTiebreak
+  [Property] ClassificationReason HighestPrecedenceKind
+  [Property] ClassificationReason OnlySurface
+  [Property] ClassificationReason OrdinalSurfaceTiebreak
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+ClassificationReason+Tags
+  [Field] Int32 HighestPrecedenceKind
+  [Field] Int32 OnlySurface
+  [Field] Int32 OrdinalSurfaceTiebreak
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+ProductClassification
+  [Constructor] Void .ctor(GovernedPath, DomainId, SurfaceId, SurfaceClass, GeneratedProductTier, Boolean, TierAlternative, ClassificationReason, System.String)
+  [Method] Boolean Equals(ProductClassification)
+  [Method] Boolean Equals(ProductClassification, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_TierIsDeclared()
+  [Method] ClassificationReason get_Reason()
+  [Method] DomainId get_Capability()
+  [Method] GeneratedProductTier get_SelectedTier()
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(ProductClassification)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SurfaceClass get_Class()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Method] System.String get_Explanation()
+  [Method] TierAlternative get_Alternative()
+  [Property] Boolean TierIsDeclared
+  [Property] ClassificationReason Reason
+  [Property] DomainId Capability
+  [Property] GeneratedProductTier SelectedTier
+  [Property] GovernedPath Path
+  [Property] SurfaceClass Class
+  [Property] SurfaceId Surface
+  [Property] System.String Explanation
+  [Property] TierAlternative Alternative
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+ProductSurfaceReport
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ProductSurfaces.ModelModule+ProductClassification])
+  [Method] Boolean Equals(ProductSurfaceReport)
+  [Method] Boolean Equals(ProductSurfaceReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProductSurfaceReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ProductSurfaces.ModelModule+ProductClassification] get_Classifications()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ProductSurfaces.ModelModule+ProductClassification] Classifications
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TierAlternative)
+  [Method] Boolean Equals(TierAlternative, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCheaperLocalTier()
+  [Method] Boolean get_IsNoCheaperLocalTier()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TierAlternative)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] TierAlternative NewCheaperLocalTier(GeneratedProductTier)
+  [Method] TierAlternative get_NoCheaperLocalTier()
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative+CheaperLocalTier
+  [NestedType] FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative+Tags
+  [Property] Boolean IsCheaperLocalTier
+  [Property] Boolean IsNoCheaperLocalTier
+  [Property] Int32 Tag
+  [Property] TierAlternative NoCheaperLocalTier
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative+CheaperLocalTier
+  [Method] GeneratedProductTier get_Item()
+  [Property] GeneratedProductTier Item
+TYPE FS.GG.Governance.ProductSurfaces.ModelModule+TierAlternative+Tags
+  [Field] Int32 CheaperLocalTier
+  [Field] Int32 NoCheaperLocalTier
+TYPE FS.GG.Governance.ProductSurfaces.ProductSurfacesModule
+  [Method] ProductSurfaceReport classify(TypedFacts, RouteReport, ProfileId)

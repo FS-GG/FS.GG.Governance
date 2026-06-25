@@ -54,7 +54,8 @@ let check
       Owner = Owner "fixture"
       Cost = cost
       Environment = environment
-      Maturity = Observe }
+      Maturity = Observe
+      Tier = None }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults.
 let command (commandId: string) (timeoutSeconds: int) : CommandSpec =

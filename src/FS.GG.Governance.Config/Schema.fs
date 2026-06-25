@@ -27,9 +27,18 @@ module Schema =
           Capabilities: FileSlot
           Tooling: FileSlot }
 
-    // ── Supported versions ──
+    // ── Supported versions (F23 D1: per-file) ──
 
-    let supportedSchemaVersion = SchemaVersion 1
+    let supportedVersionFor (file: FsggFile) : SchemaVersion =
+        match file with
+        | Capabilities -> SchemaVersion 2
+        | Project
+        | Policy
+        | Tooling -> SchemaVersion 1
+
+    /// The migration-guidance pointer named by an unsupported-`capabilities.yml` diagnostic (SC-006).
+    /// A repo-relative doc path — never a host-absolute path (SC-002/SC-005).
+    let migrationDoc = "specs/058-generated-product-capabilities/contracts/migration.md"
 
     // ── Diagnostic constructor ──
 
@@ -115,31 +124,33 @@ module Schema =
 
     // ── schemaVersion handling ──
 
-    let private (|Supported|_|) (SchemaVersion v) =
-        let (SchemaVersion s) = supportedSchemaVersion
-        if v = s then Some() else None
+    /// The supported-version message for a file, naming the actual version and (for `capabilities.yml`)
+    /// the v1→v2 migration pointer (SC-006). Per-file as of F23 (D1).
+    let private unsupportedMessage (file: FsggFile) (actual: int) : string =
+        let (SchemaVersion want) = supportedVersionFor file
+        match file with
+        | Capabilities ->
+            sprintf
+                "schemaVersion %d is not supported; capabilities.yml requires version %d — see %s for v1→v2 migration guidance"
+                actual
+                want
+                migrationDoc
+        | _ -> sprintf "schemaVersion %d is not supported; this build understands version %d" actual want
 
     let private readSchemaVersion (m: YamlMappingNode) (file: FsggFile) : Result<SchemaVersion, Diagnostic> =
+        let (SchemaVersion want) = supportedVersionFor file
         match getField m "schemaVersion" with
         | None ->
-            Error(diag MissingSchemaVersion file (Some "schemaVersion") None None "every `.fsgg` file must declare 'schemaVersion: 1'")
+            Error(diag MissingSchemaVersion file (Some "schemaVersion") None None (sprintf "every `.fsgg` file must declare 'schemaVersion: %d'" want))
         | Some node ->
             match scalarValue node with
             | Some v ->
                 match Int32.TryParse v with
                 | true, n ->
-                    match SchemaVersion n with
-                    | Supported -> Ok(SchemaVersion n)
-                    | _ ->
-                        Error(
-                            diag
-                                UnsupportedSchemaVersion
-                                file
-                                (Some "schemaVersion")
-                                None
-                                (lineOf node)
-                                (sprintf "schemaVersion %d is not supported; this build understands version 1" n)
-                        )
+                    if n = want then
+                        Ok(SchemaVersion n)
+                    else
+                        Error(diag UnsupportedSchemaVersion file (Some "schemaVersion") None (lineOf node) (unsupportedMessage file n))
                 | _ ->
                     Error(
                         diag
@@ -189,6 +200,22 @@ module Schema =
         | "protected" -> Some ProtectedSurface
         | "generatedView" -> Some GeneratedView
         | "release" -> Some ReleaseSurface
+        // — F23 product kinds (single-sourced with Model.surfaceClassToken) —
+        | "package" -> Some PackageSurface
+        | "docs" -> Some DocsSurface
+        | "skill" -> Some SkillSurface
+        | "design" -> Some DesignSurface
+        | "sampleApp" -> Some SampleAppSurface
+        | "generatedProduct" -> Some GeneratedProductRoot
+        | _ -> None
+
+    let private parseTier =
+        function
+        | "structuralScan" -> Some StructuralScan
+        | "restoreBuild" -> Some RestoreBuild
+        | "focusedTests" -> Some FocusedTests
+        | "fullVerify" -> Some FullVerify
+        | "releaseValidation" -> Some ReleaseValidation
         | _ -> None
 
     let private environmentToken =
@@ -270,6 +297,22 @@ module Schema =
         | None ->
             addMissing diags file name
             None
+        | Some node ->
+            match scalarValue node with
+            | Some v ->
+                match parse v with
+                | Some e -> Some e
+                | None ->
+                    addMalformed diags file name node (sprintf "field '%s' has an out-of-set value '%s'" name v)
+                    None
+            | None ->
+                addMalformed diags file name node (sprintf "field '%s' must be a scalar" name)
+                None
+
+    /// An optional closed-enum scalar (absent → None; present-but-out-of-set → `MalformedValue`).
+    let private optEnum (parse: string -> 'e option) (diags: ResizeArray<Diagnostic>) m file name : 'e option =
+        match getField m name with
+        | None -> None
         | Some node ->
             match scalarValue node with
             | Some v ->
@@ -403,12 +446,16 @@ module Schema =
         | _ -> None
 
     let private parseSurface (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : Surface option =
-        diags.AddRange(unknownFields m (set [ "id"; "kind"; "paths"; "owner"; "maturity" ]) Capabilities)
+        diags.AddRange(unknownFields m (set [ "id"; "kind"; "paths"; "owner"; "maturity"; "evidenceTag"; "templateProfile"; "baseline" ]) Capabilities)
         let id = reqString diags m Capabilities "id" |> Option.map SurfaceId
         let kind = reqEnum parseSurfaceClass diags m Capabilities "kind"
         let paths = reqPathList diags m Capabilities "paths"
         let owner = reqString diags m Capabilities "owner" |> Option.map Owner
         let maturity = reqEnum parseMaturity diags m Capabilities "maturity"
+        // F23 optional product attributes — all None for an MVP-shaped surface (data-model §1.4).
+        let evidenceTag = optString diags m Capabilities "evidenceTag" |> Option.map EvidenceTag
+        let templateProfile = optString diags m Capabilities "templateProfile" |> Option.map TemplateProfile
+        let baseline = optString diags m Capabilities "baseline" |> Option.map Baseline
         match id, kind, paths, owner, maturity with
         | Some i, Some k, Some ps, Some o, Some mt ->
             Some
@@ -416,11 +463,14 @@ module Schema =
                   Class = k
                   Paths = ps |> sortByKey (fun (GovernedPath p) -> p)
                   Owner = o
-                  Maturity = mt }
+                  Maturity = mt
+                  EvidenceTag = evidenceTag
+                  TemplateProfile = templateProfile
+                  Baseline = baseline }
         | _ -> None
 
     let private parseCheck (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : Check option =
-        diags.AddRange(unknownFields m (set [ "id"; "domain"; "command"; "owner"; "cost"; "environment"; "maturity" ]) Capabilities)
+        diags.AddRange(unknownFields m (set [ "id"; "domain"; "command"; "owner"; "cost"; "environment"; "maturity"; "tier" ]) Capabilities)
         let id = reqString diags m Capabilities "id" |> Option.map CheckId
         let domain = reqString diags m Capabilities "domain" |> Option.map DomainId
         let command = optString diags m Capabilities "command" |> Option.map CommandId
@@ -428,6 +478,8 @@ module Schema =
         let cost = reqEnum parseCost diags m Capabilities "cost"
         let env = reqEnum parseEnvironment diags m Capabilities "environment"
         let maturity = reqEnum parseMaturity diags m Capabilities "maturity"
+        // F23 optional tier — present on cost-tiered generated-product checks (data-model §1.5).
+        let tier = optEnum parseTier diags m Capabilities "tier"
         match id, domain, owner, cost, env, maturity with
         | Some i, Some d, Some o, Some c, Some e, Some mt ->
             Some
@@ -437,7 +489,8 @@ module Schema =
                   Owner = o
                   Cost = c
                   Environment = e
-                  Maturity = mt }
+                  Maturity = mt
+                  Tier = tier }
         | _ -> None
 
     let private parseCommandSpec (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : CommandSpec option =

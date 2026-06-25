@@ -1,0 +1,6 @@
+schemaVersion: 1
+id: v3-product
+governedRoot: .
+domains:
+  - package-api
+capabilitiesRef: .fsgg/capabilities.yml

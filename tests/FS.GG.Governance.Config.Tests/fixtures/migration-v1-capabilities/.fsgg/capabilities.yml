@@ -1,0 +1,10 @@
+schemaVersion: 1
+# An MVP-version (v1) capabilities.yml. Under F23 per-file versioning this is rejected with
+# UnsupportedSchemaVersion naming version 1 and pointing at the v1->v2 migration guidance (SC-006) —
+# never silently mis-parsed.
+domains:
+  - package-api
+pathMap:
+  - { glob: "src/**", capability: package-api }
+surfaces:
+  - { id: public-api, kind: protected, paths: ["src/**/*.fsi"], owner: platform, maturity: block-on-ship }

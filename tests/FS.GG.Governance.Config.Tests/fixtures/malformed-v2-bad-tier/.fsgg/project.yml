@@ -1,0 +1,6 @@
+schemaVersion: 1
+id: bad-tier
+governedRoot: .
+domains:
+  - package-api
+capabilitiesRef: .fsgg/capabilities.yml

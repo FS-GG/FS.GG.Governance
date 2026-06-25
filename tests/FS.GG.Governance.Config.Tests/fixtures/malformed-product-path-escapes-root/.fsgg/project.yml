@@ -1,0 +1,6 @@
+schemaVersion: 1
+id: escaping-product
+governedRoot: .
+domains:
+  - package-api
+capabilitiesRef: .fsgg/capabilities.yml

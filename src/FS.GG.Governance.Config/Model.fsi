@@ -54,15 +54,39 @@ module Model =
         | BlockOnShip
         | BlockOnRelease
 
-    /// The MVP surface classification (FR-011, D6). `Routine` names an explicitly-declared
+    /// The surface classification (FR-011, D6). `Routine` names an explicitly-declared
     /// unmanaged region; it is NEVER produced for undeclared files (those yield no surface
-    /// fact at all — US3 scenario 3).
+    /// fact at all — US3 scenario 3). The MVP cases (F014) are joined by the F23 product kinds
+    /// (`capabilities.yml` schemaVersion 2): `package`/`docs`/`skill`/`design`/`sampleApp`/
+    /// `generatedProduct` (data-model §1.1). The mapping to/from the YAML `kind` token is total and
+    /// single-sourced in `Schema` (parse) + `surfaceClassToken` (render); an unknown token ⇒
+    /// `MalformedValue` (FR-012). `PackageSurface`, `ReleaseSurface`, and `GeneratedProductRoot`
+    /// are the protected boundaries the F017 escalating-boundary set widens to (FR-003).
     type SurfaceClass =
+        // — MVP (F014, unchanged) —
         | Routine
         | GovernedRoot
         | ProtectedSurface
         | GeneratedView
         | ReleaseSurface
+        // — F23 product kinds (capabilities.yml v2) —
+        | PackageSurface
+        | DocsSurface
+        | SkillSurface
+        | DesignSurface
+        | SampleAppSurface
+        | GeneratedProductRoot
+
+    /// The declared depth of a cost-tiered generated-product check (FR-005, D4). A CLOSED, ORDERED
+    /// class: `StructuralScan < RestoreBuild < FocusedTests < FullVerify < ReleaseValidation`. The
+    /// ordering is given by `generatedProductTierRank` (1..5); the YAML token by
+    /// `generatedProductTierToken`. Distinct from the generic, unchanged `Cost` class.
+    type GeneratedProductTier =
+        | StructuralScan
+        | RestoreBuild
+        | FocusedTests
+        | FullVerify
+        | ReleaseValidation
 
     // ── Identity newtypes (kept distinct so cross-references are type-checked) ──
 
@@ -74,6 +98,19 @@ module Model =
     type CommandId = CommandId of string
     type Owner = Owner of string
     type TimeoutLimit = TimeoutLimit of seconds: int
+
+    // ── F23 product-surface attributes (single-string newtypes, D3) ──
+
+    /// A label tying a surface to its currency evidence; the per-domain check that produces the
+    /// evidence is F24. A declared `EvidenceTag` without its check is a known, non-error state (FR-016).
+    type EvidenceTag = EvidenceTag of string
+
+    /// The template a `generatedProduct` root was instantiated from (meaningful on `GeneratedProductRoot`).
+    type TemplateProfile = TemplateProfile of string
+
+    /// The pin fixing a package surface; the drift check that compares against it is F24
+    /// (meaningful on `PackageSurface`).
+    type Baseline = Baseline of string
 
     // ── project.yml ──
 
@@ -111,13 +148,19 @@ module Model =
           Capability: DomainId }
 
     /// A classified region of the tree (FR-011). `Owner`/`Maturity` are preserved (US3
-    /// scenario 2).
+    /// scenario 2). The three F23 product attributes are OPTIONAL — all `None` for an MVP-shaped
+    /// surface (a subset declaration is valid, not an error; data-model §1.4). They are parsed only
+    /// under `capabilities.yml` v2; an unknown field still ⇒ `UnknownField`.
     type Surface =
         { Id: SurfaceId
           Class: SurfaceClass
           Paths: GovernedPath list
           Owner: Owner
-          Maturity: Maturity }
+          Maturity: Maturity
+          // — F23 optional product attributes —
+          EvidenceTag: EvidenceTag option
+          TemplateProfile: TemplateProfile option
+          Baseline: Baseline option }
 
     /// A declared verification associated with a capability domain (FR-004). `Command`, when
     /// present, references a declared `tooling.yml` command (cross-file, FR-009). Carries the
@@ -129,7 +172,9 @@ module Model =
           Owner: Owner
           Cost: Cost
           Environment: EnvironmentClass
-          Maturity: Maturity }
+          Maturity: Maturity
+          // — F23 — present on cost-tiered generated-product checks (data-model §1.5) —
+          Tier: GeneratedProductTier option }
 
     type CapabilityFacts =
         { SchemaVersion: SchemaVersion
@@ -217,6 +262,19 @@ module Model =
     /// The stable wire token for a `DiagnosticId` (e.g. `DuplicateId` → `"duplicateId"`).
     /// Deterministic and total.
     val diagnosticIdToken: id: DiagnosticId -> string
+
+    /// The stable wire token for a `SurfaceClass` (e.g. `PackageSurface` → `"package"`). Total,
+    /// deterministic, and single-sourced: a new `SurfaceClass` case is a compile error here until it
+    /// gets a token (the closed-set discipline, D2). Mirrors the `Schema` parse mapping.
+    val surfaceClassToken: cls: SurfaceClass -> string
+
+    /// The rank of a `GeneratedProductTier` in its closed order, 1 (`StructuralScan`) .. 5
+    /// (`ReleaseValidation`). Deterministic and total (D4).
+    val generatedProductTierRank: tier: GeneratedProductTier -> int
+
+    /// The stable wire token for a `GeneratedProductTier` (e.g. `FocusedTests` → `"focusedTests"`).
+    /// Total and deterministic; a new case is a compile error here until it gets a token (D4).
+    val generatedProductTierToken: tier: GeneratedProductTier -> string
 
     // ── Path normalization (single-sourced — F016 research D7) ──
 

@@ -1,0 +1,7 @@
+schemaVersion: 2
+# A new-kind (package) surface carries a field the v2 schema does not define: UnknownField names it
+# (the closed diagnostic set extends to the new fields, FR-012).
+domains:
+  - package-api
+surfaces:
+  - { id: public-api, kind: package, paths: ["src/**/*.fsi"], owner: platform, maturity: block-on-ship, templateProfle: typo-here }

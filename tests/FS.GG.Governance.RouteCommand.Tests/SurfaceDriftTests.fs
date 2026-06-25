@@ -101,6 +101,8 @@ let tests =
                   || name = "FS.GG.Governance.Route"
                   || name = "FS.GG.Governance.RouteJson"
                   || name = "FS.GG.Governance.GatesJson"
+                  // F23: the edge-side product-surface classification (classify) + its additive route.json embed.
+                  || name = "FS.GG.Governance.ProductSurfaces"
                   // F045: RouteJson's `ofRouteResult` takes a `CacheEligibilityReport option` ⇒ F041 arrives.
                   || name = "FS.GG.Governance.CacheEligibility"
                   // F046: the cache-eligibility pipeline — the shared sensing edge + the resolution/store cores.

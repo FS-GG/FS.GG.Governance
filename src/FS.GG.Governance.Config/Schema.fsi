@@ -51,13 +51,15 @@ module Schema =
           Capabilities: FileSlot
           Tooling: FileSlot }
 
-    // ── Supported versions (FR-007) ──
+    // ── Supported versions (FR-007, F23 D1: per-file) ──
 
-    /// The schema version this build understands. Any `schemaVersion` other than this fails with
-    /// `UnsupportedSchemaVersion`: greater is "upgrade the tool" (spec edge case); lesser is
-    /// likewise rejected — no historical versions exist for the MVP, and silently accepting one
-    /// would be partial acceptance (FR-006).
-    val supportedSchemaVersion: SchemaVersion
+    /// The schema version this build understands for a given `.fsgg` file. Per-file as of F23 (D1):
+    /// `Capabilities → 2` (the expanded product-surface vocabulary), `Project`/`Policy`/`Tooling → 1`
+    /// (untouched). `validate` checks each present file's declared `schemaVersion` against this; any
+    /// other value fails with `UnsupportedSchemaVersion` naming the version (and, for `capabilities.yml`,
+    /// pointing at the v1→v2 migration guidance — SC-006). Greater is "upgrade the tool"; lesser is
+    /// likewise rejected — silently accepting one would be partial acceptance (FR-006).
+    val supportedVersionFor: file: FsggFile -> SchemaVersion
 
     // ── The pure validation entry point ──
 

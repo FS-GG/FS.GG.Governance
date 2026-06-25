@@ -1,0 +1,4 @@
+schemaVersion: 3
+# A too-new capabilities.yml — rejected with UnsupportedSchemaVersion naming version 3.
+domains:
+  - package-api

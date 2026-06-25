@@ -45,6 +45,10 @@
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <!-- F052: the optional per-gate `execution` embed carries the `GateOutcome` vocabulary (GateRun). -->
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <!-- F23: the optional, ADDITIVE `productSurfaces` section carries the F23 product-surface
+         classification (ProductSurfaces). `ofRouteResult` is unchanged and byte-identical; the new
+         `ofRouteResultWithProductSurfaces` adds the section only when the report is non-empty. -->
+    <ProjectReference Include="../FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
   </ItemGroup>
 
 </Project>

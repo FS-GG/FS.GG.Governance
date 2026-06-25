@@ -93,9 +93,11 @@ let tests =
               let expectedReport = expectedCacheReport selectedGates baseHead
               let gatesDoc = Option.get m2.GatesDoc
               let outcomes = expectedOutcomes validCatalog selectedGates
-              let routeDoc = RouteJson.ofRouteResult result (Some expectedReport) outcomes
+              // F23: the route doc carries the additive productSurfaces section built from the model's own
+              // edge-side classification (m2.Classifications, populated at Loaded).
+              let routeDoc = RouteJson.ofRouteResultWithProductSurfaces result (Some expectedReport) outcomes m2.Classifications
 
-              Expect.equal m5.RouteDoc (Some routeDoc) "RouteDoc = ofRouteResult result (Some report) outcomes"
+              Expect.equal m5.RouteDoc (Some routeDoc) "RouteDoc = ofRouteResultWithProductSurfaces result (Some report) outcomes classifications"
               Expect.equal
                   e5
                   [ Loop.WriteArtifact(Loop.GatesArtifact, req.GatesOut, gatesDoc)

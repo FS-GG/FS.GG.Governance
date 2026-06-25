@@ -39,7 +39,8 @@ let check
       Owner = Owner owner
       Cost = cost
       Environment = environment
-      Maturity = maturity }
+      Maturity = maturity
+      Tier = None }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// registry never reads (`Command`/`Environment`).

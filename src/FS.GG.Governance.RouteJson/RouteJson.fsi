@@ -23,6 +23,7 @@ open FS.GG.Governance.Route.Model
 open FS.GG.Governance.Gates.Model              // GateId (F052 execution embed matched by gate)
 open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
 open FS.GG.Governance.GateRun.Model            // F052: GateOutcome (the per-gate execution embed)
+open FS.GG.Governance.ProductSurfaces.Model    // F23: ProductSurfaceReport (the additive productSurfaces section)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RouteJson =
@@ -97,4 +98,19 @@ module RouteJson =
         result: RouteResult ->
         cache: CacheEligibilityReport option ->
         execution: (GateId * GateOutcome) list ->
+            string
+
+    /// F23 (additive, non-breaking): the same projection as `ofRouteResult` plus an additive
+    /// `productSurfaces` array carrying the F23 product-surface classification. The array is emitted as the
+    /// document's LAST top-level field ONLY when `productSurfaces.Classifications` is non-empty; an EMPTY
+    /// report writes NO `productSurfaces` field, so the output is BYTE-IDENTICAL to `ofRouteResult result
+    /// cache execution` (the F052 default-empty precedent — existing goldens are untouched, schemaVersion is
+    /// unchanged). Each entry is `{ path, capability, surface, class, tier, tierDeclared, alternative }`,
+    /// sorted by path then surface (the report's own deterministic order). PURE and TOTAL, like
+    /// `ofRouteResult`; the classification is consumed verbatim — no re-classification, no re-sort.
+    val ofRouteResultWithProductSurfaces:
+        result: RouteResult ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+        productSurfaces: ProductSurfaceReport ->
             string

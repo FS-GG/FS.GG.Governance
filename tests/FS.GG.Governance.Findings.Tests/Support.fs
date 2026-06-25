@@ -36,7 +36,10 @@ let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
       Class = cls
       Paths = paths |> List.map GovernedPath
       Owner = Owner "fixture"
-      Maturity = Observe }
+      Maturity = Observe
+      EvidenceTag = None
+      TemplateProfile = None
+      Baseline = None }
 
 /// Assemble a real `TypedFacts` with the given governed root, a `glob → domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), and a

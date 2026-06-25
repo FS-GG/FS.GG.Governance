@@ -148,11 +148,33 @@ module Findings =
             else
                 System.String.CompareOrdinal(findingIdToken a.Id, findingIdToken b.Id))
 
+    // ── Escalating-boundary set (F23 FR-003, SC-002) ──
+
+    /// The surface classes that escalate an unclassified in-root path to `UnknownProtectedBoundaryPath`
+    /// rather than an ordinary `UnknownGovernedPath`. F23 widens this from `ProtectedSurface` alone to the
+    /// full protected-boundary set so a NEW protected surface (`package`/`release`/`generatedProduct`)
+    /// placed under a governed root with no path-map glob is never a silent pass. The four non-protected
+    /// product kinds (`docs`/`skill`/`design`/`sampleApp`) and the inert MVP classes stay ordinary. Closed
+    /// match, no wildcard — a future `SurfaceClass` case is a compile error here until it is placed.
+    let private isEscalatingBoundary (cls: SurfaceClass) : bool =
+        match cls with
+        | ProtectedSurface
+        | PackageSurface
+        | ReleaseSurface
+        | GeneratedProductRoot -> true
+        | Routine
+        | GovernedRoot
+        | GeneratedView
+        | DocsSurface
+        | SkillSurface
+        | DesignSurface
+        | SampleAppSurface -> false
+
     // ── The entry point (T013, FR-001/FR-011/FR-012) ──
 
     let findUnknownGovernedPaths (facts: TypedFacts) (report: RouteReport) : FindingReport =
         let surfaces = facts.Capabilities.Surfaces
-        let protectedSurfaces = surfaces |> List.filter (fun s -> s.Class = ProtectedSurface)
+        let protectedSurfaces = surfaces |> List.filter (fun s -> isEscalatingBoundary s.Class)
         let routineSurfaces = surfaces |> List.filter (fun s -> s.Class = Routine)
 
         let findings =

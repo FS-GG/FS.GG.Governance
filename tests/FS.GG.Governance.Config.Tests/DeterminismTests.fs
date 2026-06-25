@@ -22,7 +22,8 @@ let private projectYaml (ds: string list) =
     + (ds |> List.map (sprintf "  - %s") |> String.concat "\n")
 
 let private capsYaml (ds: string list) =
-    "schemaVersion: 1\ndomains:\n" + (ds |> List.map (sprintf "  - %s") |> String.concat "\n")
+    // capabilities.yml is schemaVersion 2 as of F23 (per-file versioning, D1).
+    "schemaVersion: 2\ndomains:\n" + (ds |> List.map (sprintf "  - %s") |> String.concat "\n")
 
 let private sourceFor (ds: string list) : RawSource =
     { Root = GovernedPath "."

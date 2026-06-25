@@ -26,6 +26,7 @@ open FS.GG.Governance.Config.Model          // ToolingFacts (F052 — declared c
 open FS.GG.Governance.CommandRecord.Model    // CommandRecord (F052 — the assembled run record)
 open FS.GG.Governance.GateExecution.Model     // GateCommand (F052 — the command-to-run)
 open FS.GG.Governance.GateRun.Model           // GateOutcome (F052 — the per-gate execution outcome)
+open FS.GG.Governance.ProductSurfaces.Model    // ProductSurfaceReport (F23 — the product-surface classification)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -146,6 +147,10 @@ module Loop =
           RouteDoc: string option
           Snapshot: RepoSnapshot option
           SelectedGates: Gate list
+          /// F23: the product-surface classification computed at the edge (at `Loaded(Valid)`) from the
+          /// loaded facts + the route report under the catalog's default profile; threaded into the
+          /// additive `productSurfaces` route.json section and the human summary. Empty until loaded.
+          Classifications: ProductSurfaceReport
           Sensed: SensedFacts option
           Store: ReuseStore option
           /// F052: the declared tooling (command specs) carried from the loaded catalog, so the

@@ -54,7 +54,8 @@ let check
       Owner = Owner ("owner-" + domain)
       Cost = cost
       Environment = environment
-      Maturity = maturity }
+      Maturity = maturity
+      Tier = None }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// downstream join never reads. The timeout becomes the gate's projected `timeout`.
@@ -71,7 +72,10 @@ let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
       Class = cls
       Paths = paths |> List.map GovernedPath
       Owner = Owner "fixture"
-      Maturity = Observe }
+      Maturity = Observe
+      EvidenceTag = None
+      TemplateProfile = None
+      Baseline = None }
 
 /// Assemble a real `TypedFacts` with a governed root, a `glob -> domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), a declared

@@ -1,0 +1,32 @@
+schemaVersion: 2
+domains:
+  - package-api
+  - docs
+  - skills
+  - design
+  - samples
+  - release
+  - misc
+pathMap:
+  - { glob: "src/**", capability: package-api }
+  - { glob: "docs/**", capability: docs }
+  - { glob: "skills/**", capability: skills }
+  - { glob: "design/**", capability: design }
+  - { glob: "samples/**", capability: samples }
+  - { glob: "release/**", capability: release }
+  - { glob: "misc/**", capability: misc }
+surfaces:
+  - { id: extra-api, kind: package, paths: ["src/**/*.fsi"], owner: platform, maturity: block-on-ship }
+  - { id: public-api, kind: package, paths: ["src/**/*.fsi"], owner: platform, maturity: block-on-ship, baseline: "src/public-api.baseline.txt", evidenceTag: api-surface }
+  - { id: product-root, kind: generatedProduct, paths: ["src", "release"], owner: platform, maturity: block-on-pr, templateProfile: fsharp-lib }
+  - { id: guide-docs, kind: docs, paths: ["docs/**"], owner: docs, maturity: warn, evidenceTag: docs-links }
+  - { id: ship-skill, kind: skill, paths: ["skills/**"], owner: platform, maturity: warn }
+  - { id: tokens, kind: design, paths: ["design/**"], owner: design, maturity: warn, evidenceTag: design-tokens }
+  - { id: sample, kind: sampleApp, paths: ["samples/**"], owner: platform, maturity: observe }
+  - { id: rel, kind: release, paths: ["release/**"], owner: platform, maturity: block-on-release }
+checks:
+  - { id: scan, domain: package-api, owner: platform, cost: cheap, environment: local-or-ci, maturity: warn, tier: structuralScan }
+  - { id: build, domain: package-api, owner: platform, cost: medium, environment: local-or-ci, maturity: block-on-ship, tier: restoreBuild }
+  - { id: test, domain: package-api, owner: platform, cost: high, environment: ci, maturity: block-on-ship, tier: focusedTests }
+  - { id: verify, domain: release, owner: platform, cost: high, environment: ci, maturity: block-on-release, tier: fullVerify }
+  - { id: relgate, domain: release, owner: platform, cost: exhaustive, environment: release, maturity: block-on-release, tier: releaseValidation }

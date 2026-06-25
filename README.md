@@ -73,7 +73,7 @@ fact. All I/O lives at the edge in `Host` (functional core / imperative shell).
 | **M5** | Capability catalog + protected ship skeleton (F14–F17) | Planned |
 | **M6** | Policy truth tables + native SDD model (F18–F20) | Planned |
 | **M7** | Readiness + generated-view currency (F21–F22) | Planned |
-| **M8** | Generated-product and surface-domain checks (F23–F24) | Planned |
+| **M8** | Generated-product and surface-domain checks (F23–F24) | In progress — F23 done (capability catalog expanded to the full product-surface vocabulary; `capabilities.yml` → `schemaVersion: 2` with a documented migration; routing/classification + cost-tier selection + no-hide safety surfaced through `fsgg route`); F24 per-domain checks planned |
 | **M9** | Cost/cache/provenance + release gates (F25–F26) | Planned |
 | **M10** | Human projections over stable reports (F27) | Planned |
 

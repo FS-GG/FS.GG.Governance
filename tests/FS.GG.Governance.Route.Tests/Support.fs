@@ -45,7 +45,8 @@ let check
       Owner = Owner "fixture"
       Cost = cost
       Environment = Local
-      Maturity = Observe }
+      Maturity = Observe
+      Tier = None }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// downstream join never reads.
@@ -62,7 +63,10 @@ let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
       Class = cls
       Paths = paths |> List.map GovernedPath
       Owner = Owner "fixture"
-      Maturity = Observe }
+      Maturity = Observe
+      EvidenceTag = None
+      TemplateProfile = None
+      Baseline = None }
 
 /// Assemble a real `Valid TypedFacts` with a governed root, a `glob -> domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), a declared

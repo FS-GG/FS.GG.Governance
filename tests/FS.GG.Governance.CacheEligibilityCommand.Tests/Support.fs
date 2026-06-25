@@ -113,7 +113,7 @@ let validCatalog: Map<string, string> =
         [ "project.yml", projectYml
           "capabilities.yml",
           yaml """
-schemaVersion: 1
+schemaVersion: 2
 domains:
   - package-api
   - workflow

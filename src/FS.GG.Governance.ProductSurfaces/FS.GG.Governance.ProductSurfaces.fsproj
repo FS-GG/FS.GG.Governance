@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F23 (058-generated-product-capabilities): the pure, total, deterministic product-surface
+       classification + cost-tier selection core. `classify : TypedFacts -> RouteReport -> ProfileId ->
+       ProductSurfaceReport` consumes the already-typed F014 facts and the already-computed F015 route
+       report VERBATIM (re-parses no YAML, re-routes nothing, senses no git) and adds, per routed path that
+       falls under a declared product surface: the matched capability, the surface classification (the
+       documented SurfaceClass precedence + ordinal-SurfaceId tiebreak on multi-match), the selected
+       GeneratedProductTier (cheap-by-default baseline → positive-match profile escalation → snap to the
+       deepest declared tier ≤ target), a cheaper-local alternative, and a deterministic explanation. It
+       keeps ALL product vocabulary out of the kernel (FR-014): a pure leaf mirroring the
+       Routing/Route/RouteExplain/Findings decomposition. It references ONLY FS.GG.Governance.Config (the
+       typed facts + the new product vocabulary) and FS.GG.Governance.Routing (RouteReport + Glob.matches);
+       it adds NO new third-party PackageReference (BCL + FSharp.Core only). Compile order is Model ->
+       ProductSurfaces: the classification types, then the pure projection. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ProductSurfaces</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ProductSurfaces</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="ProductSurfaces.fsi" />
+    <Compile Include="ProductSurfaces.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -46,7 +46,8 @@ let check
       Owner = Owner ("owner-" + domain)
       Cost = cost
       Environment = environment
-      Maturity = maturity }
+      Maturity = maturity
+      Tier = None }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// gate projection never reads. The timeout becomes the gate's projected `timeout`.

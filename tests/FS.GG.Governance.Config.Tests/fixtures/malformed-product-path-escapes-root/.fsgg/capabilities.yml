@@ -1,0 +1,9 @@
+schemaVersion: 2
+# A declared product surface whose path resolves only inside the monorepo (a `..` escape). Standalone,
+# this is a clear PathEscapesRoot input diagnostic — never a fabricated success (FR-010).
+domains:
+  - package-api
+pathMap:
+  - { glob: "src/**", capability: package-api }
+surfaces:
+  - { id: shared-api, kind: package, paths: ["../shared/**/*.fsi"], owner: platform, maturity: block-on-ship }

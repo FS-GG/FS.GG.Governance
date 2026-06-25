@@ -1,0 +1,13 @@
+schemaVersion: 1
+id: gen-product
+governedRoot: .
+domains:
+  - package-api
+  - docs
+  - skills
+  - design
+  - samples
+  - release
+  - misc
+policyRef: .fsgg/policy.yml
+capabilitiesRef: .fsgg/capabilities.yml

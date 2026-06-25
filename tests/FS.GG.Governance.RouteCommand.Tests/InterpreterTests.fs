@@ -36,6 +36,30 @@ let tests =
               Expect.equal (Loop.exitCode model.Exit) 0 "exit code 0"
           }
 
+          test "F23: a change under a product surface ⇒ route.json carries a productSurfaces section + summary line (US1 vertical slice)" {
+              let git = gitWithChanges [ 'M', "src/Lib/Api.fsi" ]
+              let _req, cap, model = runWith productCatalog git Loop.DefaultRange Loop.Text
+
+              // The persisted route.json (the real Interpreter write path) carries the additive section.
+              match writtenOf cap Loop.RouteArtifact with
+              | Some(_, routeDoc) ->
+                  use doc = JsonDocument.Parse routeDoc
+                  let arr = doc.RootElement.GetProperty "productSurfaces"
+                  Expect.isGreaterThan (arr.GetArrayLength()) 0 "productSurfaces is present and non-empty"
+                  let api = arr.[0]
+                  Expect.equal (api.GetProperty("path").GetString()) "src/Lib/Api.fsi" "the changed .fsi path"
+                  Expect.equal (api.GetProperty("class").GetString()) "package" "classified as the package surface"
+                  Expect.equal (api.GetProperty("capability").GetString()) "package-api" "routed capability"
+                  Expect.equal (doc.RootElement.GetProperty("schemaVersion").GetString()) "fsgg.route/v2" "schemaVersion unchanged"
+              | None -> failtest "route.json was not written"
+
+              // The human summary surfaces the classification line.
+              let summary = Loop.render model Loop.Text
+              Expect.stringContains summary "product surfaces:" "the summary has a product-surface section"
+              Expect.stringContains summary "package" "names the package class"
+              Expect.equal (Loop.exitCode model.Exit) 0 "advisory — exit 0"
+          }
+
           test "the summary lists each selected gate by id with its path and the cost rollup (US1 AS2)" {
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text

@@ -17,6 +17,7 @@
     <Compile Include="PrecedenceTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="PlaneUniformityTests.fs" />
+    <Compile Include="BoundaryWideningTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

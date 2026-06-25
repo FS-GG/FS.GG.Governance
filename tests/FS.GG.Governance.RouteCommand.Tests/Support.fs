@@ -121,7 +121,7 @@ let validCatalog: Map<string, string> =
         [ "project.yml", projectYml
           "capabilities.yml",
           yaml """
-schemaVersion: 1
+schemaVersion: 2
 domains:
   - package-api
   - workflow
@@ -162,13 +162,56 @@ checks:
           "policy.yml", policyYml
           "tooling.yml", toolingYml ]
 
+// F23: a catalog declaring a product surface (package, on src/**/*.fsi) plus the generated-product root,
+// so a change under src/**/*.fsi routes to package-api AND classifies — driving a non-empty productSurfaces
+// section in route.json end-to-end through the real Interpreter pipeline.
+let productCatalog: Map<string, string> =
+    Map
+        [ "project.yml", projectYml
+          "capabilities.yml",
+          yaml """
+schemaVersion: 2
+domains:
+  - package-api
+  - workflow
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+  - glob: "work/**"
+    capability: workflow
+surfaces:
+  - id: public-api
+    kind: package
+    paths: ["src/**/*.fsi"]
+    owner: platform
+    maturity: block-on-ship
+    baseline: "src/public-api.baseline.txt"
+  - id: product-root
+    kind: generatedProduct
+    paths: ["src"]
+    owner: platform
+    maturity: block-on-pr
+    templateProfile: fsharp-lib
+checks:
+  - id: build
+    domain: package-api
+    command: dotnet-build
+    owner: platform
+    cost: medium
+    environment: local-or-ci
+    maturity: block-on-ship
+    tier: restoreBuild
+"""
+          "policy.yml", policyYml
+          "tooling.yml", toolingYml ]
+
 // A valid-but-empty catalog: two domains, no checks ⇒ an empty GateRegistry (the empty-registry case).
 let emptyCatalog: Map<string, string> =
     Map
         [ "project.yml", projectYml
           "capabilities.yml",
           yaml """
-schemaVersion: 1
+schemaVersion: 2
 domains:
   - package-api
   - workflow
@@ -468,7 +511,10 @@ let projectExpected (files: Map<string, string>) (candidates: GovernedPath list)
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
     let cacheReport = expectedCacheReport selectedGates (baseHeadOfSnap snap)
     let outcomes = expectedOutcomes files selectedGates
-    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResult result (Some cacheReport) outcomes
+    // F23: mirror the command's edge-side product-surface classification (default profile / standard).
+    let profile = facts.Policy |> Option.map (fun p -> p.DefaultProfile) |> Option.defaultValue (ProfileId "standard")
+    let classifications = FS.GG.Governance.ProductSurfaces.ProductSurfaces.classify facts report profile
+    GatesJson.ofGateRegistry registry, RouteJson.ofRouteResultWithProductSurfaces result (Some cacheReport) outcomes classifications
 
 // ── Capturing write/output edges ──
 

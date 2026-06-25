@@ -1,0 +1,5 @@
+schemaVersion: 2
+domains:
+  - package-api
+checks:
+  - { id: scan, domain: package-api, owner: platform, cost: cheap, environment: local-or-ci, maturity: warn, tier: superDeep }

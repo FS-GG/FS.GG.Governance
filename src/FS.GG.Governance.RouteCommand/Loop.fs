@@ -16,6 +16,8 @@ open FS.GG.Governance.Gates               // Gates.buildRegistry, gateIdValue
 open FS.GG.Governance.Gates.Model         // Gate, GateId
 open FS.GG.Governance.Route               // Route.select
 open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate, SelectingPath, CostRollup
+open FS.GG.Governance.ProductSurfaces       // ProductSurfaces.classify (F23 — edge-side product-surface classification)
+open FS.GG.Governance.ProductSurfaces.Model  // ProductSurfaceReport, ProductClassification, TierAlternative
 open FS.GG.Governance.RouteJson           // RouteJson.ofRouteResult, schemaVersion
 open FS.GG.Governance.GatesJson           // GatesJson.ofGateRegistry, schemaVersion
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
@@ -114,6 +116,7 @@ module Loop =
           RouteDoc: string option
           Snapshot: RepoSnapshot option
           SelectedGates: Gate list
+          Classifications: ProductSurfaceReport
           Sensed: SensedFacts option
           Store: ReuseStore option
           Tooling: ToolingFacts option
@@ -232,6 +235,7 @@ module Loop =
               RouteDoc = None
               Snapshot = None
               SelectedGates = []
+              Classifications = { Classifications = [] }
               Sensed = None
               Store = None
               Tooling = None
@@ -440,7 +444,8 @@ module Loop =
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
-            let routeDoc = RouteJson.ofRouteResult result (Some cacheReport) outcomes
+            // F23: the additive productSurfaces section (empty ⇒ byte-identical to the F052-era route.json).
+            let routeDoc = RouteJson.ofRouteResultWithProductSurfaces result (Some cacheReport) outcomes model.Classifications
 
             let writes =
                 [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
@@ -497,11 +502,18 @@ module Loop =
                 let gatesDoc = GatesJson.ofGateRegistry registry
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
+                // F23: classify the routed paths into product surfaces at the EDGE (not inside a pure
+                // `update` body that touches I/O — this is pure). The active profile is the catalog's
+                // declared default (or `standard` when no policy is declared).
+                let profile = facts.Policy |> Option.map (fun p -> p.DefaultProfile) |> Option.defaultValue (ProfileId "standard")
+                let classifications = ProductSurfaces.classify facts report profile
+
                 { model with
                     Phase = Selected
                     Result = Some result
                     GatesDoc = Some gatesDoc
                     SelectedGates = selectedGates
+                    Classifications = classifications
                     Tooling = facts.Tooling },
                 [ SenseFreshness(selectedGates, baseHeadOf model)
                   LoadStore model.Request.StorePath ]
@@ -674,6 +686,23 @@ module Loop =
 
             (sprintf "execution: %d gate(s)" (List.length outcomes)) :: (outcomes |> List.map line)
 
+    // F23 product-surface summary — one line per classified path: capability · class · tier · alternative.
+    and productSurfaceLinesOf (model: Model) : string list =
+        match model.Classifications.Classifications with
+        | [] -> [ "product surfaces: none" ]
+        | cs ->
+            let altWord (a: TierAlternative) =
+                match a with
+                | CheaperLocalTier t -> "cheaper-local " + generatedProductTierToken t
+                | NoCheaperLocalTier -> "no cheaper-local tier"
+
+            let line (c: ProductClassification) =
+                let (DomainId cap) = c.Capability
+                let declared = if c.TierIsDeclared then "" else " (tier pending F24)"
+                sprintf "  %s -> %s · %s · %s%s · %s" (pathValue c.Path) cap (surfaceClassToken c.Class) (generatedProductTierToken c.SelectedTier) declared (altWord c.Alternative)
+
+            (sprintf "product surfaces: %d" (List.length cs)) :: (cs |> List.map line)
+
     and renderText (model: Model) : string =
         match model.Result with
         | None ->
@@ -716,6 +745,8 @@ module Loop =
               gateLines
               [ ""; costLine ]
               findingLines
+              [ "" ]
+              productSurfaceLinesOf model
               [ "" ]
               cacheLinesOf model
               [ "" ]

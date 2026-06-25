@@ -1,0 +1,11 @@
+schemaVersion: 2
+# Two surfaces of the NEW product kinds share an id, and two new-kind checks share an id: strict
+# validation rejects both with DuplicateId, exactly as the MVP fields (FR-012).
+domains:
+  - package-api
+surfaces:
+  - { id: dup-surface, kind: package, paths: ["src/**/*.fsi"], owner: platform, maturity: block-on-ship }
+  - { id: dup-surface, kind: docs, paths: ["docs/**"], owner: docs, maturity: warn }
+checks:
+  - { id: dup-check, domain: package-api, owner: platform, cost: cheap, environment: local-or-ci, maturity: warn, tier: structuralScan }
+  - { id: dup-check, domain: package-api, owner: platform, cost: high, environment: ci, maturity: block-on-ship, tier: focusedTests }

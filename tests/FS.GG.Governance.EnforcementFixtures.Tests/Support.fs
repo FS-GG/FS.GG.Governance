@@ -106,7 +106,10 @@ let private surface (cls: SurfaceClass) (id: string) (paths: string list) : Surf
       Class = cls
       Paths = paths |> List.map GovernedPath
       Owner = Owner "fixture"
-      Maturity = Observe }
+      Maturity = Observe
+      EvidenceTag = None
+      TemplateProfile = None
+      Baseline = None }
 
 /// The minimal real facts for the route-class scenarios: a governed root `src`, one path-map glob
 /// (`src/build/** → build`) so a fenced path genuinely `Routed`s, and one declared `ProtectedSurface`

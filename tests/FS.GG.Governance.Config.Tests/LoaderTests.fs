@@ -12,7 +12,7 @@ open FS.GG.Governance.Config.Tests.Support
 // (FR-015), read-error surfacing (Principle VI), and host-path independence (SC-002/SC-005).
 
 let private minimalProject = "schemaVersion: 1\nid: p\ngovernedRoot: .\ndomains:\n  - workflow"
-let private minimalCaps = "schemaVersion: 1\ndomains:\n  - workflow"
+let private minimalCaps = "schemaVersion: 2\ndomains:\n  - workflow"
 
 /// Recursively copy a fixture's `.fsgg` dir into a fresh parent and return that parent.
 let private copyFixtureToTemp (name: string) : string =

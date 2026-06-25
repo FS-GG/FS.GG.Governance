@@ -53,7 +53,10 @@ let tests =
                       Class = ProtectedSurface
                       Paths = [ GovernedPath "src/**/*.fsi" ]
                       Owner = Owner "platform"
-                      Maturity = BlockOnShip } ]
+                      Maturity = BlockOnShip
+                      EvidenceTag = None
+                      TemplateProfile = None
+                      Baseline = None } ]
                   "surfaces classified"
               Expect.equal
                   c.Checks
@@ -63,7 +66,8 @@ let tests =
                       Owner = Owner "platform"
                       Cost = Medium
                       Environment = LocalOrCi
-                      Maturity = BlockOnShip } ]
+                      Maturity = BlockOnShip
+                      Tier = None } ]
                   "checks with per-entry metadata"
           }
 

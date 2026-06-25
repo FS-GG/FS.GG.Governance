@@ -98,6 +98,8 @@ let tests =
                   || name = "FS.GG.Governance.CacheEligibility"
                   || name = "FS.GG.Governance.EvidenceReuse"
                   || name = "FS.GG.Governance.FreshnessKey"
+                  // F23: ProductSurfaces (the additive productSurfaces embed via ofRouteResultWithProductSurfaces).
+                  || name = "FS.GG.Governance.ProductSurfaces"
                   // F052: GateRun (the per-gate execution embed) + its transitive F051/F032 graph.
                   || name = "FS.GG.Governance.GateRun"
                   || name = "FS.GG.Governance.GateExecution"
