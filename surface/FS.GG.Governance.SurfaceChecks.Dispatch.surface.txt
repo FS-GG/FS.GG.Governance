@@ -1,0 +1,27 @@
+TYPE FS.GG.Governance.SurfaceChecks.Dispatch.CompositionModule
+  [Method] DomainFactBundle get_emptyBundle()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceCheckRequest] requestsOf(TypedFacts, ProductSurfaceReport)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] run(TypedFacts, ProductSurfaceReport, DomainFactBundle)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain] domainOf(SurfaceClass)
+  [NestedType] FS.GG.Governance.SurfaceChecks.Dispatch.CompositionModule+DomainFactBundle
+  [Property] DomainFactBundle emptyBundle
+TYPE FS.GG.Governance.SurfaceChecks.Dispatch.CompositionModule+DomainFactBundle
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.PackageChecks.ModelModule+PackageFacts], Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DocsChecks.ModelModule+DocsFacts], Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.SkillChecks.ModelModule+SkillFacts], Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DesignChecks.ModelModule+DesignFacts])
+  [Method] Boolean Equals(DomainFactBundle)
+  [Method] Boolean Equals(DomainFactBundle, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DomainFactBundle)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DesignChecks.ModelModule+DesignFacts] get_Design()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DocsChecks.ModelModule+DocsFacts] get_Docs()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.PackageChecks.ModelModule+PackageFacts] get_Package()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.SkillChecks.ModelModule+SkillFacts] get_Skill()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DesignChecks.ModelModule+DesignFacts] Design
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.DocsChecks.ModelModule+DocsFacts] Docs
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.PackageChecks.ModelModule+PackageFacts] Package
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[FS.GG.Governance.Config.ModelModule+SurfaceId,FS.GG.Governance.SkillChecks.ModelModule+SkillFacts] Skill

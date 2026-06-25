@@ -1,0 +1,144 @@
+TYPE FS.GG.Governance.DesignChecks.DesignChecksModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, DesignFacts)
+TYPE FS.GG.Governance.DesignChecks.InterpreterModule
+  [Method] DesignFacts senseDesign(DesignPort, SurfaceCheckRequest)
+  [Method] DesignPort realPort(System.String, System.Tuple`4[System.String,System.String,System.String,System.String])
+  [NestedType] FS.GG.Governance.DesignChecks.InterpreterModule+DesignPort
+TYPE FS.GG.Governance.DesignChecks.InterpreterModule+DesignPort
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.Tuple`2[System.Decimal,System.Decimal]],System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_ReadDescriptor()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.Tuple`2[System.Decimal,System.Decimal]],System.String]] get_ReadContrastCatalog()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] get_ReadCaptureCatalog()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] get_ReadControlCatalog()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] get_ReadTokenCatalog()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] ReadDescriptor
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.Tuple`2[System.Decimal,System.Decimal]],System.String]] ReadContrastCatalog
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] ReadCaptureCatalog
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] ReadControlCatalog
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpSet`1[System.String],System.String]] ReadTokenCatalog
+TYPE FS.GG.Governance.DesignChecks.ModelModule
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+CaptureFact
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+ContrastFact
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+ControlFact
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+DesignFacts
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+TokenFact
+TYPE FS.GG.Governance.DesignChecks.ModelModule+CaptureFact
+  [Constructor] Void .ctor(System.String, ResolveOutcome)
+  [Method] Boolean Equals(CaptureFact)
+  [Method] Boolean Equals(CaptureFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CaptureFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ResolveOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_Capture()
+  [Property] ResolveOutcome Outcome
+  [Property] System.String Capture
+TYPE FS.GG.Governance.DesignChecks.ModelModule+ContrastFact
+  [Constructor] Void .ctor(System.String, System.Decimal, System.Decimal, Boolean)
+  [Method] Boolean Equals(ContrastFact)
+  [Method] Boolean Equals(ContrastFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Meets()
+  [Method] Int32 CompareTo(ContrastFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.Decimal get_Ratio()
+  [Method] System.Decimal get_Threshold()
+  [Method] System.String ToString()
+  [Method] System.String get_Pair()
+  [Property] Boolean Meets
+  [Property] System.Decimal Ratio
+  [Property] System.Decimal Threshold
+  [Property] System.String Pair
+TYPE FS.GG.Governance.DesignChecks.ModelModule+ControlFact
+  [Constructor] Void .ctor(System.String, ResolveOutcome)
+  [Method] Boolean Equals(ControlFact)
+  [Method] Boolean Equals(ControlFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ControlFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ResolveOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_Control()
+  [Property] ResolveOutcome Outcome
+  [Property] System.String Control
+TYPE FS.GG.Governance.DesignChecks.ModelModule+DesignFacts
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+TokenFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+CaptureFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ControlFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ContrastFact], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(DesignFacts)
+  [Method] Boolean Equals(DesignFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DesignFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+CaptureFact] get_Captures()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ContrastFact] get_Contrasts()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ControlFact] get_Controls()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+TokenFact] get_Tokens()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_CatalogUnavailable()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+CaptureFact] Captures
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ContrastFact] Contrasts
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+ControlFact] Controls
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.ModelModule+TokenFact] Tokens
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] CatalogUnavailable
+TYPE FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome
+  [Method] Boolean Equals(ResolveOutcome)
+  [Method] Boolean Equals(ResolveOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAbsent()
+  [Method] Boolean get_IsResolves()
+  [Method] Int32 CompareTo(ResolveOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ResolveOutcome NewAbsent(System.String)
+  [Method] ResolveOutcome get_Resolves()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome+Absent
+  [NestedType] FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome+Tags
+  [Property] Boolean IsAbsent
+  [Property] Boolean IsResolves
+  [Property] Int32 Tag
+  [Property] ResolveOutcome Resolves
+TYPE FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome+Absent
+  [Method] System.String get_entry()
+  [Property] System.String entry
+TYPE FS.GG.Governance.DesignChecks.ModelModule+ResolveOutcome+Tags
+  [Field] Int32 Absent
+  [Field] Int32 Resolves
+TYPE FS.GG.Governance.DesignChecks.ModelModule+TokenFact
+  [Constructor] Void .ctor(System.String, ResolveOutcome)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TokenFact)
+  [Method] Boolean Equals(TokenFact, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TokenFact)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ResolveOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_Token()
+  [Property] ResolveOutcome Outcome
+  [Property] System.String Token

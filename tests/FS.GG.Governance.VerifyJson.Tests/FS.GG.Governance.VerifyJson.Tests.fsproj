@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Compile Include="Support.fs" />
+    <Compile Include="SurfaceChecksEmbedTests.fs" />
     <Compile Include="VerifyJsonTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="GoldenTests.fs" />
@@ -29,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for F24 P1 (package/API checks), exercising the PUBLIC surface of
+       FS.GG.Governance.PackageChecks: the pure `PackageChecks.evaluate` over hand-built `PackageFacts`, and
+       the edge `Interpreter.sensePackage` over a REAL temporary fixture repository read through `realPort`
+       (Principle V — real files; transcripts run through the REAL F051 GateExecution port). Expecto +
+       FsCheck. No network. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="EvaluateTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="EvidenceTagTests.fs" />
+    <Compile Include="SensorTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.PackageChecks/FS.GG.Governance.PackageChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+  </ItemGroup>
+
+</Project>

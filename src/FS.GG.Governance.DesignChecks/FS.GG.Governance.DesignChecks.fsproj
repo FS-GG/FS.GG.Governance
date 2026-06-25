@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F24 (P3, RENDER-FENCED): the DESIGN/RENDERING deterministic check pack — token / capture / contrast /
+       control resolution. Bundles `Model` (closed design fact vocabulary), `DesignChecks.evaluate`
+       (PURE/TOTAL — no I/O, NO rendering reference), and `Interpreter` (the SOLE seam, reading the catalogs
+       via System.IO / System.Text.Json ONLY — no Skia, no rendering, no UI, no registry, no network).
+       THE LOAD-BEARING CONTRACT (FR-007, SC-004): `Model` + `evaluate` + this `.fsproj` carry ZERO
+       rendering/UI/registry dependency. References ONLY SurfaceChecks + Config. No new third-party package. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.DesignChecks</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.DesignChecks</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="DesignChecks.fsi" />
+    <Compile Include="DesignChecks.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

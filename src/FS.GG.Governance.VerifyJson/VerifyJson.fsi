@@ -70,3 +70,19 @@ module VerifyJson =
         cache: CacheEligibilityReport option ->
         execution: (GateId * GateOutcome) list ->
             string
+
+    /// F24 (additive, non-breaking): the same projection as `ofVerifyDecision` plus an additive
+    /// `surfaceChecks` array carrying the F24 product-surface findings. The array is emitted as the
+    /// document's LAST top-level field ONLY when `findings` is non-empty; an EMPTY list writes NO
+    /// `surfaceChecks` field, so the output is BYTE-IDENTICAL to `ofVerifyDecision decision cache execution`
+    /// (the F23 default-empty precedent — existing goldens untouched, `schemaVersion` unchanged). Each entry
+    /// is `{ domain, surface, code, file, detail, severity, inputState, evidenceTag?, message }`, emitted in
+    /// the caller's (Composition.run) order — re-sorting NOTHING. `evidenceTag` is omitted when the surface
+    /// declared none (FR-009); `severity` is the base severity (advisory entries appear but never change the
+    /// exit code — FR-011). PURE and TOTAL, like `ofVerifyDecision`.
+    val ofVerifyDecisionWithSurfaceChecks:
+        decision: ShipDecision ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+        findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list ->
+            string

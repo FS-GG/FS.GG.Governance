@@ -1,0 +1,185 @@
+TYPE FS.GG.Governance.DocsChecks.DocsChecksModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, DocsFacts)
+TYPE FS.GG.Governance.DocsChecks.InterpreterModule
+  [Method] DocsFacts senseDocs(DocsPort, SurfaceCheckRequest)
+  [Method] DocsPort realPort(System.String)
+  [NestedType] FS.GG.Governance.DocsChecks.InterpreterModule+DocsPort
+TYPE FS.GG.Governance.DocsChecks.InterpreterModule+DocsPort
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean], Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_ReadSource()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] get_ResolveSymbol()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] get_ResolveTarget()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] ReadSource
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] ResolveSymbol
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] ResolveTarget
+TYPE FS.GG.Governance.DocsChecks.ModelModule
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+DocsFacts
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ExampleFact
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+LinkFact
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ReferenceFact
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome
+TYPE FS.GG.Governance.DocsChecks.ModelModule+DocsFacts
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+LinkFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ReferenceFact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ExampleFact], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(DocsFacts)
+  [Method] Boolean Equals(DocsFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DocsFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Sources()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ExampleFact] get_Examples()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+LinkFact] get_Links()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ReferenceFact] get_References()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Unreadable()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Sources
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ExampleFact] Examples
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+LinkFact] Links
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.ModelModule+ReferenceFact] References
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Unreadable
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ExampleFact
+  [Constructor] Void .ctor(GovernedPath, System.String, ExampleOutcome)
+  [Method] Boolean Equals(ExampleFact)
+  [Method] Boolean Equals(ExampleFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExampleOutcome get_Outcome()
+  [Method] GovernedPath get_Source()
+  [Method] Int32 CompareTo(ExampleFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Example()
+  [Property] ExampleOutcome Outcome
+  [Property] GovernedPath Source
+  [Property] System.String Example
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome
+  [Method] Boolean Equals(ExampleOutcome)
+  [Method] Boolean Equals(ExampleOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsExampleCurrent()
+  [Method] Boolean get_IsExampleStale()
+  [Method] ExampleOutcome NewExampleStale(System.String)
+  [Method] ExampleOutcome get_ExampleCurrent()
+  [Method] Int32 CompareTo(ExampleOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome+ExampleStale
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome+Tags
+  [Property] Boolean IsExampleCurrent
+  [Property] Boolean IsExampleStale
+  [Property] ExampleOutcome ExampleCurrent
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome+ExampleStale
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ExampleOutcome+Tags
+  [Field] Int32 ExampleCurrent
+  [Field] Int32 ExampleStale
+TYPE FS.GG.Governance.DocsChecks.ModelModule+LinkFact
+  [Constructor] Void .ctor(GovernedPath, System.String, System.String, LinkOutcome)
+  [Method] Boolean Equals(LinkFact)
+  [Method] Boolean Equals(LinkFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Source()
+  [Method] Int32 CompareTo(LinkFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] LinkOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_LinkText()
+  [Method] System.String get_Target()
+  [Property] GovernedPath Source
+  [Property] LinkOutcome Outcome
+  [Property] System.String LinkText
+  [Property] System.String Target
+TYPE FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome
+  [Method] Boolean Equals(LinkOutcome)
+  [Method] Boolean Equals(LinkOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLinkDangling()
+  [Method] Boolean get_IsLinkResolves()
+  [Method] Int32 CompareTo(LinkOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] LinkOutcome NewLinkDangling(System.String)
+  [Method] LinkOutcome get_LinkResolves()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome+LinkDangling
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome+Tags
+  [Property] Boolean IsLinkDangling
+  [Property] Boolean IsLinkResolves
+  [Property] Int32 Tag
+  [Property] LinkOutcome LinkResolves
+TYPE FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome+LinkDangling
+  [Method] System.String get_target()
+  [Property] System.String target
+TYPE FS.GG.Governance.DocsChecks.ModelModule+LinkOutcome+Tags
+  [Field] Int32 LinkDangling
+  [Field] Int32 LinkResolves
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ReferenceFact
+  [Constructor] Void .ctor(GovernedPath, System.String, ReferenceOutcome)
+  [Method] Boolean Equals(ReferenceFact)
+  [Method] Boolean Equals(ReferenceFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Source()
+  [Method] Int32 CompareTo(ReferenceFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ReferenceOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_Reference()
+  [Property] GovernedPath Source
+  [Property] ReferenceOutcome Outcome
+  [Property] System.String Reference
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome
+  [Method] Boolean Equals(ReferenceOutcome)
+  [Method] Boolean Equals(ReferenceOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsReferenceResolves()
+  [Method] Boolean get_IsReferenceStale()
+  [Method] Int32 CompareTo(ReferenceOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReferenceOutcome NewReferenceStale(System.String)
+  [Method] ReferenceOutcome get_ReferenceResolves()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome+ReferenceStale
+  [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome+Tags
+  [Property] Boolean IsReferenceResolves
+  [Property] Boolean IsReferenceStale
+  [Property] Int32 Tag
+  [Property] ReferenceOutcome ReferenceResolves
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome+ReferenceStale
+  [Method] System.String get_symbol()
+  [Property] System.String symbol
+TYPE FS.GG.Governance.DocsChecks.ModelModule+ReferenceOutcome+Tags
+  [Field] Int32 ReferenceResolves
+  [Field] Int32 ReferenceStale

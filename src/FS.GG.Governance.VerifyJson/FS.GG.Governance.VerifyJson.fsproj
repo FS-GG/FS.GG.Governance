@@ -44,6 +44,8 @@
   <ItemGroup>
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <!-- F24: the shared SurfaceFinding shape for the additive `surfaceChecks` section. -->
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />

@@ -16,6 +16,8 @@ open FS.GG.Governance.CacheEligibility
 open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
 open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
 
+module SC = FS.GG.Governance.SurfaceChecks.Model // F24: the additive surfaceChecks section
+
 // The F056 verify.json projection. Renders the F024 `ShipDecision` (rolled at `RunMode.Verify`) + the F041
 // `CacheEligibilityReport` + the F052 per-gate execution outcomes into the deterministic, versioned
 // `verify.json` WHOLE-CHANGE pre-PR verification document text via a hand-driven `System.Text.Json`
@@ -303,12 +305,37 @@ module VerifyJson =
 
         w.WriteEndObject()
 
-    // ── the public entry point ──
+    // ── F24: the additive `surfaceChecks` element — `{ domain, surface, code, file, detail, severity,
+    //    inputState, evidenceTag?, message }`. `evidenceTag` is emitted ONLY when the surface declared one
+    //    (FR-009); omitted otherwise. `severity` is the BASE severity (advisory entries appear but never
+    //    change the exit code — FR-011). Deterministic: no abs-path/clock/username (FR-010). ──
 
-    let ofVerifyDecision
+    let writeSurfaceFinding (w: Utf8JsonWriter) (f: SC.SurfaceFinding) =
+        w.WriteStartObject()
+        w.WriteString("domain", SC.checkDomainToken f.Domain)
+        let (SurfaceId sid) = f.Surface
+        w.WriteString("surface", sid)
+        w.WriteString("code", f.Code)
+        let (GovernedPath file) = f.Location.File
+        w.WriteString("file", file)
+        w.WriteString("detail", f.Location.Detail)
+        w.WriteString("severity", severityToken f.BaseSeverity)
+        w.WriteBoolean("inputState", f.IsInputState)
+
+        match f.EvidenceTag with
+        | Some(EvidenceTag t) -> w.WriteString("evidenceTag", t)
+        | None -> ()
+
+        w.WriteString("message", f.Message)
+        w.WriteEndObject()
+
+    // ── the public entry points ──
+
+    let ofVerifyDecisionWithSurfaceChecks
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
+        (findings: SC.SurfaceFinding list)
         : string =
         // One linear walk of the already-ordered `ShipDecision`, writing the top-level object in the FIXED
         // order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing → currency. The
@@ -334,4 +361,26 @@ module VerifyJson =
             writeSection w lookup execLookup "warnings" decision.Warnings
             writeSection w lookup execLookup "passing" decision.Passing
             writeCurrency w decision cache
+
+            // F24: the additive product-surface findings, as the document's LAST field. Written ONLY when
+            // non-empty; absent (default-empty) ⇒ byte-identical to the pre-F24 projection (D8). Emitted in
+            // the Composition.run order the caller already fixed — re-sorting NOTHING.
+            match findings with
+            | [] -> ()
+            | _ ->
+                w.WritePropertyName "surfaceChecks"
+                w.WriteStartArray()
+                for f in findings do
+                    writeSurfaceFinding w f
+                w.WriteEndArray()
+
             w.WriteEndObject())
+
+    /// The F056 contract, unchanged: no surface findings ⇒ NO `surfaceChecks` field, so this is
+    /// byte-identical to the pre-F24 projection (existing goldens untouched).
+    let ofVerifyDecision
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        : string =
+        ofVerifyDecisionWithSurfaceChecks decision cache execution []

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F24: the pure DISPATCHER — split into its OWN project to break the core <-> domains reference cycle
+       (data-model §1.1). `Composition.DomainFactBundle` references the four domain `Model` types, while each
+       domain library references SurfaceChecks for the SurfaceFinding shape — so the dispatcher cannot live
+       in the shared core. Given the F23 ProductSurfaceReport + the per-domain sensed facts, it builds one
+       request per applicable classification, runs the matching pack's pure `evaluate`, and aggregates
+       order-independently (sorted — FR-008, SC-008). References SurfaceChecks + Config + ProductSurfaces +
+       the four domain libraries. The four domain libraries reference ONLY SurfaceChecks — never this project,
+       never each other — so there is no cycle and no pack depends on another. No new third-party package. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.SurfaceChecks.Dispatch</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.SurfaceChecks.Dispatch</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Composition.fsi" />
+    <Compile Include="Composition.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.PackageChecks/FS.GG.Governance.PackageChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+  </ItemGroup>
+
+</Project>

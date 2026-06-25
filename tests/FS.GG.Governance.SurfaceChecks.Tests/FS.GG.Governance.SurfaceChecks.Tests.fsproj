@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the shared F24 core (FS.GG.Governance.SurfaceChecks) + the pure dispatcher
+       (FS.GG.Governance.SurfaceChecks.Dispatch): the smoke test over the public surface, Composition
+       request derivation + order-independence, the advisory enforcement matrix (real Enforcement, never
+       mocked), the no-new-vocabulary reuse guard, product neutrality, a standalone read-scope guard, and
+       the two surface-drift baselines. It references the four domain libs to build DomainFactBundles. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="SmokeTests.fs" />
+    <Compile Include="CompositionTests.fs" />
+    <Compile Include="OrderIndependenceTests.fs" />
+    <Compile Include="AdvisoryMatrixTests.fs" />
+    <Compile Include="ReuseGuardTests.fs" />
+    <Compile Include="NeutralityTests.fs" />
+    <Compile Include="StandaloneTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks.Dispatch/FS.GG.Governance.SurfaceChecks.Dispatch.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.PackageChecks/FS.GG.Governance.PackageChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+  </ItemGroup>
+
+</Project>

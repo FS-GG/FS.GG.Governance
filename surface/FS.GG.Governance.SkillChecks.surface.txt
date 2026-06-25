@@ -1,0 +1,166 @@
+TYPE FS.GG.Governance.SkillChecks.InterpreterModule
+  [Method] SkillFacts senseSkill(SkillPort, SurfaceCheckRequest)
+  [Method] SkillPort realPort(System.String)
+  [NestedType] FS.GG.Governance.SkillChecks.InterpreterModule+SkillPort
+TYPE FS.GG.Governance.SkillChecks.InterpreterModule+SkillPort
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_ReadManifest()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_ReadMirror()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,System.String]] get_ResolvePath()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] ReadManifest
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] ReadMirror
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,System.String]] ResolvePath
+TYPE FS.GG.Governance.SkillChecks.ModelModule
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+PathContractFact
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+SkillFacts
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome
+TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome
+  [Method] Boolean Equals(MirrorOutcome)
+  [Method] Boolean Equals(MirrorOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMirrorDrifted()
+  [Method] Boolean get_IsMirrorInSync()
+  [Method] Boolean get_IsMirrorMissing()
+  [Method] Boolean get_IsNoMirrorDeclared()
+  [Method] Int32 CompareTo(MirrorOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] MirrorOutcome NewMirrorDrifted(System.String, System.String)
+  [Method] MirrorOutcome NewMirrorMissing(System.String)
+  [Method] MirrorOutcome get_MirrorInSync()
+  [Method] MirrorOutcome get_NoMirrorDeclared()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorDrifted
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorMissing
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+Tags
+  [Property] Boolean IsMirrorDrifted
+  [Property] Boolean IsMirrorInSync
+  [Property] Boolean IsMirrorMissing
+  [Property] Boolean IsNoMirrorDeclared
+  [Property] Int32 Tag
+  [Property] MirrorOutcome MirrorInSync
+  [Property] MirrorOutcome NoMirrorDeclared
+TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorDrifted
+  [Method] System.String get_detail()
+  [Method] System.String get_mirror()
+  [Property] System.String detail
+  [Property] System.String mirror
+TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorMissing
+  [Method] System.String get_mirror()
+  [Property] System.String mirror
+TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+Tags
+  [Field] Int32 MirrorDrifted
+  [Field] Int32 MirrorInSync
+  [Field] Int32 MirrorMissing
+  [Field] Int32 NoMirrorDeclared
+TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractFact
+  [Constructor] Void .ctor(System.String, PathContractOutcome)
+  [Method] Boolean Equals(PathContractFact)
+  [Method] Boolean Equals(PathContractFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PathContractFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] PathContractOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Method] System.String get_Claimed()
+  [Property] PathContractOutcome Outcome
+  [Property] System.String Claimed
+TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome
+  [Method] Boolean Equals(PathContractOutcome)
+  [Method] Boolean Equals(PathContractOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsPathEscapesBounds()
+  [Method] Boolean get_IsPathHolds()
+  [Method] Boolean get_IsPathUnresolved()
+  [Method] Int32 CompareTo(PathContractOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PathContractOutcome NewPathEscapesBounds(System.String)
+  [Method] PathContractOutcome NewPathUnresolved(System.String)
+  [Method] PathContractOutcome get_PathHolds()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+PathEscapesBounds
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+PathUnresolved
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+Tags
+  [Property] Boolean IsPathEscapesBounds
+  [Property] Boolean IsPathHolds
+  [Property] Boolean IsPathUnresolved
+  [Property] Int32 Tag
+  [Property] PathContractOutcome PathHolds
+TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+PathEscapesBounds
+  [Method] System.String get_claimed()
+  [Property] System.String claimed
+TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+PathUnresolved
+  [Method] System.String get_claimed()
+  [Property] System.String claimed
+TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractOutcome+Tags
+  [Field] Int32 PathEscapesBounds
+  [Field] Int32 PathHolds
+  [Field] Int32 PathUnresolved
+TYPE FS.GG.Governance.SkillChecks.ModelModule+SkillFacts
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SkillChecks.ModelModule+PathContractFact], TaskListOutcome, MirrorOutcome, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(SkillFacts)
+  [Method] Boolean Equals(SkillFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SkillFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SkillChecks.ModelModule+PathContractFact] get_PathContract()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Unreadable()
+  [Method] MirrorOutcome get_Mirror()
+  [Method] System.String ToString()
+  [Method] System.String get_SkillId()
+  [Method] TaskListOutcome get_TaskList()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SkillChecks.ModelModule+PathContractFact] PathContract
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Unreadable
+  [Property] MirrorOutcome Mirror
+  [Property] System.String SkillId
+  [Property] TaskListOutcome TaskList
+TYPE FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TaskListOutcome)
+  [Method] Boolean Equals(TaskListOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsTaskListConsistent()
+  [Method] Boolean get_IsTaskListInconsistent()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TaskListOutcome)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] TaskListOutcome NewTaskListInconsistent(System.String)
+  [Method] TaskListOutcome get_TaskListConsistent()
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome+Tags
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome+TaskListInconsistent
+  [Property] Boolean IsTaskListConsistent
+  [Property] Boolean IsTaskListInconsistent
+  [Property] Int32 Tag
+  [Property] TaskListOutcome TaskListConsistent
+TYPE FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome+Tags
+  [Field] Int32 TaskListConsistent
+  [Field] Int32 TaskListInconsistent
+TYPE FS.GG.Governance.SkillChecks.ModelModule+TaskListOutcome+TaskListInconsistent
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.SkillChecks.SkillChecksModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, SkillFacts)

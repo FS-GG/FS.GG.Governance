@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F24 (P2): the SKILL deterministic check pack — path contracts, task-skill-list consistency, declared
+       mirrors. Bundles `Model` (closed skill fact vocabulary), `SkillChecks.evaluate` (PURE/TOTAL — no I/O),
+       and `Interpreter` (the SOLE filesystem seam: reads the skill manifest + mirror, resolves claimed
+       paths). A skill that declares NO mirror is not an error. References ONLY SurfaceChecks + Config.
+       No cross-domain reference (FR-008). No new third-party package. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.SkillChecks</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.SkillChecks</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="SkillChecks.fsi" />
+    <Compile Include="SkillChecks.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

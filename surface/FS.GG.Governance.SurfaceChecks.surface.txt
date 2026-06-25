@@ -1,0 +1,112 @@
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule
+  [Method] EnforcementInput enforcementInputOf(SurfaceFinding, RunMode, Profile)
+  [Method] Int32 checkDomainOrdinal(CheckDomain)
+  [Method] System.String checkDomainToken(CheckDomain)
+  [Method] System.String severityToken(Severity)
+  [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain
+  [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+FindingLocation
+  [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceCheckRequest
+  [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain
+  [Method] Boolean Equals(CheckDomain)
+  [Method] Boolean Equals(CheckDomain, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDesignDomain()
+  [Method] Boolean get_IsDocsDomain()
+  [Method] Boolean get_IsPackageDomain()
+  [Method] Boolean get_IsSkillDomain()
+  [Method] CheckDomain get_DesignDomain()
+  [Method] CheckDomain get_DocsDomain()
+  [Method] CheckDomain get_PackageDomain()
+  [Method] CheckDomain get_SkillDomain()
+  [Method] Int32 CompareTo(CheckDomain)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain+Tags
+  [Property] Boolean IsDesignDomain
+  [Property] Boolean IsDocsDomain
+  [Property] Boolean IsPackageDomain
+  [Property] Boolean IsSkillDomain
+  [Property] CheckDomain DesignDomain
+  [Property] CheckDomain DocsDomain
+  [Property] CheckDomain PackageDomain
+  [Property] CheckDomain SkillDomain
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain+Tags
+  [Field] Int32 DesignDomain
+  [Field] Int32 DocsDomain
+  [Field] Int32 PackageDomain
+  [Field] Int32 SkillDomain
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule+FindingLocation
+  [Constructor] Void .ctor(GovernedPath, System.String)
+  [Method] Boolean Equals(FindingLocation)
+  [Method] Boolean Equals(FindingLocation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_File()
+  [Method] Int32 CompareTo(FindingLocation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Detail()
+  [Property] GovernedPath File
+  [Property] System.String Detail
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceCheckRequest
+  [Constructor] Void .ctor(CheckDomain, SurfaceId, SurfaceClass, GovernedPath, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag])
+  [Method] Boolean Equals(SurfaceCheckRequest)
+  [Method] Boolean Equals(SurfaceCheckRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CheckDomain get_Domain()
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(SurfaceCheckRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag] get_EvidenceTag()
+  [Method] SurfaceClass get_Class()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Property] CheckDomain Domain
+  [Property] GovernedPath Path
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag] EvidenceTag
+  [Property] SurfaceClass Class
+  [Property] SurfaceId Surface
+TYPE FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding
+  [Constructor] Void .ctor(CheckDomain, SurfaceId, System.String, FindingLocation, Severity, Maturity, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag], Boolean, System.String)
+  [Method] Boolean Equals(SurfaceFinding)
+  [Method] Boolean Equals(SurfaceFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputState()
+  [Method] CheckDomain get_Domain()
+  [Method] FindingLocation get_Location()
+  [Method] Int32 CompareTo(SurfaceFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag] get_EvidenceTag()
+  [Method] Severity get_BaseSeverity()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Method] System.String get_Code()
+  [Method] System.String get_Message()
+  [Property] Boolean IsInputState
+  [Property] CheckDomain Domain
+  [Property] FindingLocation Location
+  [Property] Maturity Maturity
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EvidenceTag] EvidenceTag
+  [Property] Severity BaseSeverity
+  [Property] SurfaceId Surface
+  [Property] System.String Code
+  [Property] System.String Message

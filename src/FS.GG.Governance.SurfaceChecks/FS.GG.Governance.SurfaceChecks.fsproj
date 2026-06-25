@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F24: the shared SURFACE-CHECK CORE — the cross-domain finding vocabulary every F24 domain pack
+       produces and the host consumes. It carries `Model` ONLY: the closed `CheckDomain`, the single
+       `SurfaceFinding`/`SurfaceCheckRequest` shape (with its F023 `Severity`/`Maturity`, bound `EvidenceTag`,
+       input-state flag, and exact `FindingLocation`), the stable render-token tables, and `enforcementInputOf`
+       (which builds the F023 `EnforcementInput` from a finding — reuse only, no truth-table logic).
+
+       It references ONLY the two cores whose vocabulary it reuses verbatim: FS.GG.Governance.Config (F014 —
+       SurfaceId/SurfaceClass/EvidenceTag/GovernedPath/normalizePath) and FS.GG.Governance.Enforcement (F023 —
+       Severity/Maturity/RunMode/Profile/EnforcementInput). It does NOT reference any domain pack, the
+       Dispatch composition, ProductSurfaces, or any rendering/registry/filesystem SDK (FR-007). The pure
+       `Composition` dispatcher lives in the adjacent FS.GG.Governance.SurfaceChecks.Dispatch project (split to
+       break the core <-> domains reference cycle, data-model §1.1). NO new third-party PackageReference. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.SurfaceChecks</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.SurfaceChecks</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+  </ItemGroup>
+
+</Project>

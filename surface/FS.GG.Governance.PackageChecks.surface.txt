@@ -1,0 +1,169 @@
+TYPE FS.GG.Governance.PackageChecks.InterpreterModule
+  [Method] PackageFacts sensePackage(PackagePort, SurfaceCheckRequest)
+  [Method] PackagePort realPort(System.String, Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome])
+  [NestedType] FS.GG.Governance.PackageChecks.InterpreterModule+PackagePort
+TYPE FS.GG.Governance.PackageChecks.InterpreterModule+PackagePort
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome,System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_WriteBaseline()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,System.String]] get_RegenerateSurface()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome,System.String]] get_RunTranscript()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath],System.String]] get_ListTranscripts()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens],System.String]] get_ReadBaseline()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] WriteBaseline
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens,System.String]] RegenerateSurface
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome,System.String]] RunTranscript
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath],System.String]] ListTranscripts
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens],System.String]] ReadBaseline
+TYPE FS.GG.Governance.PackageChecks.ModelModule
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+PackageFacts
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptFact
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome
+TYPE FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact
+  [Method] Boolean Equals(FsiBaselineFact)
+  [Method] Boolean Equals(FsiBaselineFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBaselineAbsent()
+  [Method] Boolean get_IsBaselineDrift()
+  [Method] Boolean get_IsBaselineMatches()
+  [Method] Boolean get_IsBaselineUnreadable()
+  [Method] FsiBaselineFact NewBaselineAbsent(SurfaceTokens)
+  [Method] FsiBaselineFact NewBaselineDrift(Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] FsiBaselineFact NewBaselineUnreadable(System.String)
+  [Method] FsiBaselineFact get_BaselineMatches()
+  [Method] Int32 CompareTo(FsiBaselineFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineAbsent
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineDrift
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineUnreadable
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+Tags
+  [Property] Boolean IsBaselineAbsent
+  [Property] Boolean IsBaselineDrift
+  [Property] Boolean IsBaselineMatches
+  [Property] Boolean IsBaselineUnreadable
+  [Property] FsiBaselineFact BaselineMatches
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineAbsent
+  [Method] SurfaceTokens get_generated()
+  [Property] SurfaceTokens generated
+TYPE FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineDrift
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_added()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_removed()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] added
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] removed
+TYPE FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+BaselineUnreadable
+  [Method] System.String get_source()
+  [Property] System.String source
+TYPE FS.GG.Governance.PackageChecks.ModelModule+FsiBaselineFact+Tags
+  [Field] Int32 BaselineAbsent
+  [Field] Int32 BaselineDrift
+  [Field] Int32 BaselineMatches
+  [Field] Int32 BaselineUnreadable
+TYPE FS.GG.Governance.PackageChecks.ModelModule+PackageFacts
+  [Constructor] Void .ctor(GovernedPath, FsiBaselineFact, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackageChecks.ModelModule+TranscriptFact])
+  [Method] Boolean Equals(PackageFacts)
+  [Method] Boolean Equals(PackageFacts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FsiBaselineFact get_Baseline()
+  [Method] GovernedPath get_BaselineSource()
+  [Method] Int32 CompareTo(PackageFacts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackageChecks.ModelModule+TranscriptFact] get_Transcripts()
+  [Method] System.String ToString()
+  [Property] FsiBaselineFact Baseline
+  [Property] GovernedPath BaselineSource
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.PackageChecks.ModelModule+TranscriptFact] Transcripts
+TYPE FS.GG.Governance.PackageChecks.ModelModule+SurfaceTokens
+  [Method] Boolean Equals(SurfaceTokens)
+  [Method] Boolean Equals(SurfaceTokens, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SurfaceTokens)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Item()
+  [Method] SurfaceTokens NewSurfaceTokens(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Item
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptFact
+  [Constructor] Void .ctor(System.String, GovernedPath, TranscriptOutcome)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TranscriptFact)
+  [Method] Boolean Equals(TranscriptFact, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Source()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TranscriptFact)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_ExampleId()
+  [Method] TranscriptOutcome get_Outcome()
+  [Property] GovernedPath Source
+  [Property] System.String ExampleId
+  [Property] TranscriptOutcome Outcome
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(TranscriptOutcome)
+  [Method] Boolean Equals(TranscriptOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsTranscriptCompileFailed()
+  [Method] Boolean get_IsTranscriptPasses()
+  [Method] Boolean get_IsTranscriptResultChanged()
+  [Method] Boolean get_IsTranscriptUnlocatable()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(TranscriptOutcome)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] TranscriptOutcome NewTranscriptCompileFailed(System.String)
+  [Method] TranscriptOutcome NewTranscriptResultChanged(System.String, System.String)
+  [Method] TranscriptOutcome NewTranscriptUnlocatable(System.String)
+  [Method] TranscriptOutcome get_TranscriptPasses()
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+Tags
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptCompileFailed
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptResultChanged
+  [NestedType] FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptUnlocatable
+  [Property] Boolean IsTranscriptCompileFailed
+  [Property] Boolean IsTranscriptPasses
+  [Property] Boolean IsTranscriptResultChanged
+  [Property] Boolean IsTranscriptUnlocatable
+  [Property] Int32 Tag
+  [Property] TranscriptOutcome TranscriptPasses
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+Tags
+  [Field] Int32 TranscriptCompileFailed
+  [Field] Int32 TranscriptPasses
+  [Field] Int32 TranscriptResultChanged
+  [Field] Int32 TranscriptUnlocatable
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptCompileFailed
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptResultChanged
+  [Method] System.String get_actual()
+  [Method] System.String get_expected()
+  [Property] System.String actual
+  [Property] System.String expected
+TYPE FS.GG.Governance.PackageChecks.ModelModule+TranscriptOutcome+TranscriptUnlocatable
+  [Method] System.String get_source()
+  [Property] System.String source
+TYPE FS.GG.Governance.PackageChecks.PackageChecksModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, PackageFacts)
