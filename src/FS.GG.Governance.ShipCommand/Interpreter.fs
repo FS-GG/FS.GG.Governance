@@ -15,6 +15,8 @@ open FS.GG.Governance.Config              // Loader, Schema
 open FS.GG.Governance.Config.Model         // GovernedPath, Validation, Invalid, Diagnostic, Locator, DiagnosticId
 open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken
 open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness, loadStore, realSensor, realStoreReader (F046)
+open FS.GG.Governance.HumanText              // RenderMode (selectMode), ReportView (F27 wiring 063)
+open FS.GG.Governance.HumanRender            // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -30,7 +32,9 @@ module Interpreter =
           Store: FreshnessSensing.StoreReader
           Write: ArtifactWriter
           Out: OutputSink
-          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort }
+          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
+          SenseCapability: bool -> RenderMode.ColorCapability
+          RenderReport: ReportView.ReportView -> unit }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (FR-010/FR-013).
@@ -122,8 +126,21 @@ module Interpreter =
                     gateId, FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command)
             )
 
-        | Loop.EmitSummary text ->
-            ports.Out text
+        // F27 wiring (063): the render-mode dispatch lives HERE at the edge (FR-004). Json (human = None)
+        // and the ANSI-free Plain path go via the existing `Out` sink (byte-stable, captured in tests); only
+        // the interactive `Rich` path goes through `RenderReport` (Spectre, confined to HumanRender) followed
+        // by the operational line. The mode is `selectMode false (senseCapability explicitPlain)`.
+        | Loop.EmitSummary(text, human, explicitPlain) ->
+            match human with
+            | None -> ports.Out text
+            | Some(view, operational) ->
+                match RenderMode.selectMode false (ports.SenseCapability explicitPlain) with
+                | RenderMode.Rich ->
+                    ports.RenderReport view
+                    if operational <> "" then ports.Out operational
+                | RenderMode.Plain
+                | RenderMode.Json -> ports.Out text
+
             Loop.Emitted
 
     let realPorts (repo: string) : Ports =
@@ -133,7 +150,9 @@ module Interpreter =
           Store = FreshnessSensing.realStoreReader
           Write = writeAtomic
           Out = fun text -> Console.Out.WriteLine text
-          Execute = FS.GG.Governance.GateExecution.Interpreter.realPort }
+          Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
+          SenseCapability = Capability.senseCapability
+          RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view "" }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

@@ -6,7 +6,10 @@
 module FS.GG.Governance.RouteCommand.Program
 
 open System
+open System.Diagnostics
 open FS.GG.Governance.RouteCommand
+open FS.GG.Governance.HumanText
+open FS.GG.Governance.HumanRender
 
 let usageMessage (err: Loop.UsageError) : string =
     match err with
@@ -28,6 +31,39 @@ let main argv =
     | Error err ->
         eprintfn "fsgg route: %s" (usageMessage err)
         Loop.exitCode Loop.UsageError'
+    | Ok request when request.Watch ->
+        // F27 wiring (063, US3): the read-only watch loop. A burst of edits coalesces into ONE settled
+        // re-render via the pure `Watch.update` debounce; each re-render re-runs the EXISTING route
+        // evaluation and re-projects — it writes NO new contract (FR-009). Stop on a `q` keypress.
+        let mode = RenderMode.selectMode false (Capability.senseCapability request.ExplicitPlain)
+        let mode = if mode = RenderMode.Json then RenderMode.Plain else mode // watch is interactive, never Json
+        let sw = Stopwatch.StartNew()
+
+        let reRender (root: string) (md: RenderMode.RenderMode) : Watch.WatchSignal =
+            try
+                // Read-only: re-run the EXISTING evaluation with no-op write/output ports so the watch
+                // re-render computes the report WITHOUT persisting any contract artifact (FR-009).
+                let roPorts =
+                    { Interpreter.realPorts root with
+                        Write = (fun _ _ -> Ok())
+                        Out = (fun _ -> ()) }
+
+                let m = Interpreter.run roPorts { request with Watch = false }
+
+                match Loop.humanView m with
+                | Some view ->
+                    RichRender.emitStdout md view (HumanText.render view)
+                    Watch.Rendered
+                | None -> Watch.InputUnreadable "route evaluation produced no report"
+            with e ->
+                Watch.InputUnreadable e.Message
+
+        let shouldStop () =
+            Console.KeyAvailable && Console.ReadKey(true).Key = ConsoleKey.Q
+
+        Watch.run request.Repo mode (fun () -> sw.ElapsedMilliseconds) reRender shouldStop
+        Loop.exitCode Loop.Success
+
     | Ok request ->
         let ports = Interpreter.realPorts request.Repo
         let model = Interpreter.run ports request

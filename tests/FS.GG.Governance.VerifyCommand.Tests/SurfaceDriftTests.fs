@@ -102,7 +102,10 @@ let tests =
                       || n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
+                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the verify host
+                      // reaches rich rendering through HumanRender's emitStdout, never a direct reference.
+                      || n = "Spectre.Console")
 
-              Expect.isEmpty forbidden (sprintf "verify must not reference AuditJson/RouteJson/GatesJson/kernel/host/cli/adapters; found: %A" forbidden)
+              Expect.isEmpty forbidden (sprintf "verify must not reference AuditJson/RouteJson/GatesJson/kernel/host/cli/adapters/Spectre; found: %A" forbidden)
           } ]

@@ -51,6 +51,10 @@
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <!-- F056: verify projects its OWN deterministic document (NOT AuditJson). -->
     <ProjectReference Include="../FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <!-- F27 wiring (063): the plain human projection over the SAME ShipDecision the verify.json path serializes -->
+    <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <!-- F27 wiring (063): the rich render + capability sensing at the edge (Spectre stays confined here) -->
+    <ProjectReference Include="../FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
     <!-- F046: the cache-eligibility pipeline (sense → resolve → evaluate → embed Some report) -->
     <ProjectReference Include="../FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />

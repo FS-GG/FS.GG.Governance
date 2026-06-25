@@ -21,30 +21,39 @@ let private runWith profile sensor exec =
     let cap = newCapture ()
     let req = requestForProfile srcScope Loop.Text profile
     let ports = fakePortsExec validCatalog gitSrcChange sensor absentStoreReader exec cap
-    Interpreter.run ports req |> ignore
-    String.concat "\n" cap.Emits
+    let model = Interpreter.run ports req
+    model, String.concat "\n" cap.Emits
 
 [<Tests>]
 let tests =
     testList
         "Currency (US2)"
-        [ test "an empty store ⇒ every selected check is stale/recomputed (noPriorEvidence) in the currency section" {
-              let text = runWith Standard fakeSensor fakeExecPortPass
-              Expect.stringContains text "currency:" "currency header present"
-              Expect.stringContains text "stale/recomputed:" "stale/recomputed block"
-              Expect.stringContains text "noPriorEvidence" "noPriorEvidence cause"
+        [ test "an empty store ⇒ every selected check is recompute (no prior evidence) in the cache-eligibility section" {
+              let _, text = runWith Standard fakeSensor fakeExecPortPass
+              // F27 wiring (063): currency is now the HumanText "Cache eligibility" section; an absent store ⇒
+              // every selected check is `recompute: no prior evidence`.
+              Expect.stringContains text "Cache eligibility" "cache-eligibility section present"
+              Expect.stringContains text "recompute:" "recompute outcome listed"
+              Expect.stringContains text "no prior evidence" "no-prior-evidence cause"
           }
 
-          test "a freshness sensing failure ⇒ recompute-by-default with the missing freshness tokens" {
-              let text = runWith Standard throwingSensor fakeExecPortPass
-              Expect.stringContains text "recompute by default" "recompute-by-default block"
-              // a non-fatal degrade note is appended (never changes the verdict).
-              Expect.stringContains text "currency note:" "non-fatal degrade note"
+          test "a freshness sensing failure ⇒ a recorded non-fatal currency note, verdict unchanged" {
+              // F27 wiring (063): the missing-freshness degrade is a model/contract fact — a non-fatal currency
+              // note recorded on the model (no longer echoed in the non-contractual human summary) — and the
+              // verdict/exit stay unchanged.
+              let model, _ = runWith Standard throwingSensor fakeExecPortPass
+              Expect.equal model.Exit Loop.Success "a sensing failure never changes the exit"
+              Expect.isNonEmpty model.CurrencyNotes "a non-fatal currency note is recorded"
+              Expect.stringContains (String.concat " " model.CurrencyNotes) "could not be sensed" "the note names the unsensed input"
           }
 
           test "currency findings carry the owning gate's effective severity — advisory under Standard" {
-              let text = runWith Standard fakeSensor fakeExecPortPass
-              Expect.stringContains text "[advisory]" "advisory severity tag at Verify/Standard"
+              // F27 wiring (063): at Verify/Standard the block-on-ship checks are effective-Advisory; a failing
+              // run leaves them in the HumanText "Warnings" section, each item detail prefixed with its
+              // effective severity (`advisory — …`). The verdict stays a pass.
+              let model, text = runWith Standard fakeSensor fakeExecPortFail
+              Expect.equal model.Exit Loop.Success "advisory-only ⇒ still a pass"
+              Expect.stringContains text "advisory" "advisory effective severity surfaced under Standard"
           }
 
           test "a blocking-severity currency finding rides the EXISTING rollup to Blocked (no second route)" {
@@ -56,5 +65,5 @@ let tests =
               let model = Interpreter.run ports req
               let text = String.concat "\n" cap.Emits
               Expect.equal model.Exit Loop.Blocked "blocking check ⇒ Blocked via the existing rollup"
-              Expect.stringContains text "[blocking]" "blocking severity tag at Verify/Strict"
-              Expect.stringContains text "verdict blocked" "verdict blocked" } ]
+              Expect.stringContains text "blocking" "blocking effective severity at Verify/Strict"
+              Expect.stringContains text "verdict: FAIL" "verdict blocked" } ]

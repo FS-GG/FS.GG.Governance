@@ -100,6 +100,13 @@ let tests =
                   || name = "FS.GG.Governance.CacheEligibility"
                   || name = "FS.GG.Governance.CacheEligibilityJson"
                   || name = "FS.GG.Governance.EvidenceReuse"
+                  // F27 wiring (063): the plain human projection (HumanText.ofCacheEligibilityReport) over the
+                  // SAME CacheEligibilityReport the cache-eligibility.json path serializes. Not Spectre.
+                  || name = "FS.GG.Governance.HumanText"
+                  // F27 wiring (063) US2: the rich render + capability sensing at the edge. Spectre is referenced
+                  // by HumanRender ONLY — the cache host reaches it through RichRender.emitStdout/senseCapability,
+                  // never a direct Spectre reference (the forbidden check below still guards that).
+                  || name = "FS.GG.Governance.HumanRender"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"
@@ -123,7 +130,10 @@ let tests =
                       || n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
+                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F27 wiring (063) US2, FR-011/SC-007: Spectre stays confined to HumanRender — the cache
+                      // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
+                      || n = "Spectre.Console")
 
               Expect.isEmpty forbidden (sprintf "must not reference route/audit json, RouteCommand, kernel/host/cli/adapters; found: %A" forbidden)
           } ]

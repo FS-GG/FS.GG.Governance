@@ -119,6 +119,13 @@ let tests =
                   || name = "FS.GG.Governance.EvidenceCapture"
                   || name = "FS.GG.Governance.ExecutionRecord"
                   || name = "FS.GG.Governance.CommandRecord"
+                  // F27 wiring (063): the plain human projection (HumanText.ofRouteResult) over the SAME
+                  // RouteResult the *Json path serializes. Not Spectre — that stays confined to HumanRender.
+                  || name = "FS.GG.Governance.HumanText"
+                  // F27 wiring (063): the rich render + capability sensing at the edge. Spectre is referenced
+                  // by HumanRender ONLY — RouteCommand reaches it through RichRender.emitStdout/senseCapability,
+                  // never a direct Spectre reference (the forbidden check below still guards that).
+                  || name = "FS.GG.Governance.HumanRender"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"
@@ -138,7 +145,10 @@ let tests =
                       n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
+                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the route
+                      // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
+                      || n = "Spectre.Console")
 
               Expect.isEmpty forbidden (sprintf "RouteCommand must not reference kernel/host/cli/adapters; found: %A" forbidden)
           } ]

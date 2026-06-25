@@ -55,3 +55,9 @@ module RichRender =
             // ANSI) so it stays byte-equal to the HumanText.of* string (FR-004, SC-004).
             console.Profile.Out.Writer.Write plain
         | RenderMode.Rich -> emitRich view console
+
+    // F27 wiring (063): the stdout-bound emit hosts inject as their `RenderReport` edge port — it renders
+    // to the real terminal via the default Spectre console so NO host references Spectre directly (FR-011,
+    // SC-007); the dependency boundary stays confined to HumanRender.
+    let emitStdout (mode: RenderMode.RenderMode) (view: ReportView) (plain: string) : unit =
+        emit mode view plain AnsiConsole.Console

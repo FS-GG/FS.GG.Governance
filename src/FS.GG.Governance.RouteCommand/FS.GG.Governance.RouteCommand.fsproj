@@ -47,6 +47,10 @@
     <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.RouteJson/FS.GG.Governance.RouteJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.GatesJson/FS.GG.Governance.GatesJson.fsproj" />
+    <!-- F27 wiring (063): the plain human projection over the SAME RouteResult the *Json path serializes -->
+    <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <!-- F27 wiring (063): the rich render + capability sensing at the edge (Spectre stays confined here) -->
+    <ProjectReference Include="../FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
     <!-- F046: the cache-eligibility pipeline (sense → resolve → evaluate → embed Some report) -->
     <ProjectReference Include="../FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />

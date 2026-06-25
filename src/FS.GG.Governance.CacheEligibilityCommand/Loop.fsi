@@ -22,6 +22,7 @@ open FS.GG.Governance.Gates.Model // Gate
 open FS.GG.Governance.FreshnessKey.Model // Revision
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts, FreshnessResolutionReport
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore
+open FS.GG.Governance.HumanText // F27 wiring (063): ReportView (the rich/plain view payload)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -47,7 +48,10 @@ module Loop =
           StorePath: string
           CacheOut: string
           UnresolvedOut: string
-          Format: OutputFormat }
+          Format: OutputFormat
+          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+          /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
+          ExplicitPlain: bool }
 
     /// Pure-parser rejections (mirrors RouteCommand.Loop.UsageError) — each maps to `UsageError'`/exit 2.
     type UsageError =
@@ -80,7 +84,12 @@ module Loop =
         | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
         | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
-        | EmitSummary of text: string
+        /// F27 wiring (063): emit the rendered output. `text` is the Json contract string (human = None) OR
+        /// the ANSI-free plain projection used when the sensed mode is `Plain`; `human` carries the
+        /// `ReportView` + operational lines (the `wrote`/unresolved input-signal lines) for the `Rich` path the
+        /// edge selects via `selectMode (senseCapability explicitPlain)`. The mode decision is at the edge,
+        /// never here (FR-004).
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     /// External results the interpreter feeds back into `update`. An ABSENT store file is `StoreLoaded
     /// (Ok empty)`, never an `Error` (FR-006); a malformed present store is `StoreLoaded (Error _)`.

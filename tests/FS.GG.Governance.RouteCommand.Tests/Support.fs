@@ -43,6 +43,21 @@ open FS.GG.Governance.EvidenceCapture
 // RouteCommand edge while `FS.GG.Governance.Snapshot.Interpreter.senseSnapshot` / `GitPort` / `Ports` /
 // `RepoCheck`… reach the F016 git surface.
 open FS.GG.Governance.Snapshot
+// F27 wiring (063): the render-mode dispatch edge ports (capability sensing + rich render).
+open FS.GG.Governance.HumanText
+
+// A non-TTY (piped/redirected) capability ⇒ `selectMode` picks `Plain` — the default for the
+// faked ports so existing tests keep capturing the ANSI-free summary via the `Out` sink. The
+// render-dispatch test overrides this with a forced-TTY synthetic capability to exercise Rich.
+let plainCapability: bool -> RenderMode.ColorCapability =
+    fun explicitPlain ->
+        { IsTty = false
+          NoColorEnv = false
+          ExplicitPlain = explicitPlain
+          Width = None }
+
+// A no-op rich renderer for the faked ports (the Plain path never calls it).
+let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
 
 // ── repo-root locator (for the surface baseline) ──
 
@@ -549,7 +564,9 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       Store = absentStoreReader
       Write = capturingWriter cap Set.empty req.GatesOut req.RouteOut
       Out = capturingSink cap
-      Execute = fakeExecPort }
+      Execute = fakeExecPort
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -559,7 +576,9 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Store = store
       Write = capturingWriter cap Set.empty req.GatesOut req.RouteOut
       Out = capturingSink cap
-      Execute = fakeExecPort }
+      Execute = fakeExecPort
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -569,7 +588,9 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       Store = absentStoreReader
       Write = capturingWriter cap failPaths req.GatesOut req.RouteOut
       Out = capturingSink cap
-      Execute = fakeExecPort }
+      Execute = fakeExecPort
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 /// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -579,7 +600,9 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Store = store
       Write = capturingWriter cap Set.empty req.GatesOut req.RouteOut
       Out = capturingSink cap
-      Execute = exec }
+      Execute = exec
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 /// A real RepoSnapshot the F016 core derives from a faked git port (for the pure `update` tests).
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
@@ -603,7 +626,9 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       GatesOut = ".fsgg/gates.json"
       RouteOut = "readiness/route.json"
       StorePath = "readiness/evidence-reuse.json"
-      PersistStore = false }
+      PersistStore = false
+      ExplicitPlain = false
+      Watch = false }
 
 // ── Real git temp-repo helper (the ONE end-to-end proof) ──
 

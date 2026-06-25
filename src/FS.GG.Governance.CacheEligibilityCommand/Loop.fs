@@ -24,6 +24,7 @@ open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityV
 open FS.GG.Governance.CacheEligibilityJson // ofReport, schemaVersion
 open FS.GG.Governance.EvidenceReuse // referenceValue
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, EvidenceRef, RecomputeCause
+open FS.GG.Governance.HumanText // F27 wiring (063): HumanText.ofCacheEligibilityReport — the plain projection
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -43,7 +44,8 @@ module Loop =
           StorePath: string
           CacheOut: string
           UnresolvedOut: string
-          Format: OutputFormat }
+          Format: OutputFormat
+          ExplicitPlain: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -68,7 +70,7 @@ module Loop =
         | SenseFreshness of gates: Gate list * baseHead: (Revision option * Revision option)
         | LoadStore of path: string
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
-        | EmitSummary of text: string
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
         | Begin
@@ -128,7 +130,8 @@ module Loop =
           Since: string option
           Store: string option
           Out: string option
-          Format: string option }
+          Format: string option
+          Plain: bool }
 
     let emptyAcc =
         { Repo = None
@@ -136,7 +139,8 @@ module Loop =
           Since = None
           Store = None
           Out = None
-          Format = None }
+          Format = None
+          Plain = false }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
     // relative form; any other repo is prefixed so the artifact lands inside it. Pure string composition —
@@ -181,6 +185,7 @@ module Loop =
             | "--out" :: [] -> Error(MissingValue "--out")
             | "--format" :: v :: more -> go { acc with Format = Some v } more
             | "--format" :: [] -> Error(MissingValue "--format")
+            | "--plain" :: more -> go { acc with Plain = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
@@ -219,7 +224,8 @@ module Loop =
                           StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
                           CacheOut = cacheOut
                           UnresolvedOut = deriveUnresolved cacheOut
-                          Format = format }
+                          Format = format
+                          ExplicitPlain = acc.Plain }
 
     // ── init — initial Model + first effect ──
 
@@ -328,6 +334,17 @@ module Loop =
             CacheEligibility.evaluate candidates store |> CacheEligibility.entries
         | _ -> []
 
+    // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
+    // model's sensed facts + loaded store — the SAME value the cache-eligibility.json artifact carries — for
+    // the shared HumanText projection. `None` until both senses have arrived.
+    let cacheReportOf (model: Model) : CacheEligibilityReport option =
+        match model.Sensed, model.Store with
+        | Some sensed, Some store ->
+            let report = FreshnessResolution.resolve model.SelectedGates sensed
+            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+            Some(CacheEligibility.evaluate candidates store)
+        | _ -> None
+
     let unresolvedEntriesOf (model: Model) : (string * string list) list =
         match model.Resolution with
         | Some report ->
@@ -335,11 +352,6 @@ module Loop =
             |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
             |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
         | None -> []
-
-    let causeHuman (cause: RecomputeCause) : string =
-        match cause with
-        | NoPriorEvidence -> "noPriorEvidence"
-        | InputsChanged cats -> "inputsChanged: " + (cats |> List.map categoryToken |> String.concat ",")
 
     let causeJson (cause: RecomputeCause) : string =
         match cause with
@@ -409,11 +421,32 @@ module Loop =
                 // (already Persisted) emits the summary. The Phase carries the count — no counter field.
                 match model.Phase with
                 | Projected -> { model with Phase = Persisted }, []
-                | _ -> model, [ EmitSummary(render model model.Request.Format) ]
+                | _ -> model, [ emitEffect model ]
 
             | Emitted -> { model with Phase = Done; Exit = Success }, []
 
     // ── render — the deterministic summary, separate from the persisted artifacts ──
+
+    // F27 wiring (063): the host operational lines — the no-hide unresolved input-signal (the sidecar's
+    // recompute-by-default gates, NOT part of the CacheEligibilityReport — FR-003) plus the `wrote`
+    // confirmations. Host output kept around the report projection, never part of the JSON contract. Empty
+    // when there is no report.
+    and operationalLines (model: Model) : string =
+        match model.Resolution with
+        | None -> ""
+        | Some _ ->
+            let unresolvedLines =
+                match unresolvedEntriesOf model with
+                | [] -> []
+                | unresolved ->
+                    "recompute by default (unresolved):"
+                    :: (unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts)))
+
+            let wroteLines =
+                [ sprintf "wrote %s    (%s)" model.Request.CacheOut CacheEligibilityJson.schemaVersion
+                  sprintf "wrote %s    (%s)" model.Request.UnresolvedOut unresolvedSchemaVersion ]
+
+            [ unresolvedLines; wroteLines ] |> List.concat |> String.concat "\n"
 
     and renderHuman (model: Model) : string =
         match model.Resolution with
@@ -422,51 +455,26 @@ module Loop =
             |> List.map (fun d -> "error: " + d.Message)
             |> String.concat "\n"
         | Some _ ->
-            let entries = cacheEntriesOf model
-            let unresolved = unresolvedEntriesOf model
+            // F27 wiring (063): the cache-report facts come from the shared HumanText projection over the
+            // SAME CacheEligibilityReport the cache-eligibility.json path serializes (FR-001). The host keeps
+            // only its operational `wrote`/unresolved lines (NOT part of the JSON contract — FR-003).
+            let projection =
+                match cacheReportOf model with
+                | Some report -> HumanText.ofCacheEligibilityReport report
+                | None -> ""
 
-            let reusable =
-                entries
-                |> List.choose (fun e ->
-                    match e.Verdict with
-                    | Reusable ref -> Some(gateIdValue e.Gate, EvidenceReuse.referenceValue ref)
-                    | MustRecompute _ -> None)
+            [ projection; operationalLines model ] |> String.concat "\n"
 
-            let recompute =
-                entries
-                |> List.choose (fun e ->
-                    match e.Verdict with
-                    | MustRecompute cause -> Some(gateIdValue e.Gate, causeHuman cause)
-                    | Reusable _ -> None)
-
-            let header =
-                sprintf "cache-eligibility: %d reusable, %d must-recompute, %d unresolved" reusable.Length recompute.Length unresolved.Length
-
-            let block (title: string) (lines: string list) =
-                match lines with
-                | [] -> [ title + " none" ]
-                | _ -> title :: lines
-
-            let reusableLines = reusable |> List.map (fun (g, r) -> sprintf "  %s <- %s" g r)
-            let recomputeLines = recompute |> List.map (fun (g, c) -> sprintf "  %s   (%s)" g c)
-
-            let unresolvedLines =
-                unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts))
-
-            let wroteLines =
-                [ sprintf "wrote %s    (%s)" model.Request.CacheOut CacheEligibilityJson.schemaVersion
-                  sprintf "wrote %s    (%s)" model.Request.UnresolvedOut unresolvedSchemaVersion ]
-
-            [ [ header; "" ]
-              block "reusable:" reusableLines
-              [ "" ]
-              block "must recompute:" recomputeLines
-              [ "" ]
-              block "recompute by default (unresolved):" unresolvedLines
-              [ "" ]
-              wroteLines ]
-            |> List.concat
-            |> String.concat "\n"
+    // F27 wiring (063): build the emit effect. Json carries the contract string (human = None). Human carries
+    // the ANSI-free plain string (used for `Plain`) PLUS the `ReportView` + operational lines (used for the
+    // `Rich` path the edge selects); the mode is decided at the edge via `selectMode (senseCapability …)`.
+    and emitEffect (model: Model) : Effect =
+        match model.Request.Format with
+        | Json -> EmitSummary(renderJson model, None, false)
+        | Human ->
+            match cacheReportOf model with
+            | Some report -> EmitSummary(renderHuman model, Some(ReportView.viewOfCacheEligibilityReport report, operationalLines model), model.Request.ExplicitPlain)
+            | None -> EmitSummary(renderHuman model, None, model.Request.ExplicitPlain)
 
     and renderJson (model: Model) : string =
         match model.Resolution with

@@ -4,10 +4,12 @@ TYPE FS.GG.Governance.RouteCommand.InterpreterModule
   [Method] Ports realPorts(System.String)
   [NestedType] FS.GG.Governance.RouteCommand.InterpreterModule+Ports
 TYPE FS.GG.Governance.RouteCommand.InterpreterModule+Ports
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome])
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit])
   [Method] FS.GG.Governance.Snapshot.Ports get_Git()
   [Method] FreshnessSensor get_Freshness()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_Execute()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] get_RenderReport()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] get_SenseCapability()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_Store()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
@@ -16,12 +18,15 @@ TYPE FS.GG.Governance.RouteCommand.InterpreterModule+Ports
   [Property] FS.GG.Governance.Snapshot.Ports Git
   [Property] FreshnessSensor Freshness
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] Execute
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] RenderReport
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] SenseCapability
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] Store
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] Out
 TYPE FS.GG.Governance.RouteCommand.LoopModule
   [Method] Int32 exitCode(ExitDecision)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.HumanText.ReportViewModule+ReportView] humanView(Model)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.RouteCommand.LoopModule+RunRequest,FS.GG.Governance.RouteCommand.LoopModule+UsageError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] System.String render(Model, OutputFormat)
   [Method] System.Tuple`2[FS.GG.Governance.RouteCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteCommand.LoopModule+Effect]] init(RunRequest)
@@ -91,7 +96,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [Method] Boolean get_IsSenseFreshness()
   [Method] Boolean get_IsSenseScope()
   [Method] Boolean get_IsWriteArtifact()
-  [Method] Effect NewEmitSummary(System.String)
+  [Method] Effect NewEmitSummary(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]], Boolean)
   [Method] Effect NewExecuteGates(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]])
   [Method] Effect NewLoadCatalog(System.String)
   [Method] Effect NewLoadStore(System.String)
@@ -125,7 +130,11 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [Property] Boolean IsWriteArtifact
   [Property] Int32 Tag
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+EmitSummary
+  [Method] Boolean get_explicitPlain()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]] get_human()
   [Method] System.String get_text()
+  [Property] Boolean explicitPlain
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]] human
   [Property] System.String text
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+ExecuteGates
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]] get_Item()
@@ -407,12 +416,14 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Phase+Tags
   [Field] Int32 Selected
   [Field] Int32 Sensed'
 TYPE FS.GG.Governance.RouteCommand.LoopModule+RunRequest
-  [Constructor] Void .ctor(System.String, ScopeSelector, OutputFormat, System.String, System.String, System.String, Boolean)
+  [Constructor] Void .ctor(System.String, ScopeSelector, OutputFormat, System.String, System.String, System.String, Boolean, Boolean, Boolean)
   [Method] Boolean Equals(RunRequest)
   [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExplicitPlain()
   [Method] Boolean get_PersistStore()
+  [Method] Boolean get_Watch()
   [Method] Int32 CompareTo(RunRequest)
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -425,7 +436,9 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+RunRequest
   [Method] System.String get_Repo()
   [Method] System.String get_RouteOut()
   [Method] System.String get_StorePath()
+  [Property] Boolean ExplicitPlain
   [Property] Boolean PersistStore
+  [Property] Boolean Watch
   [Property] OutputFormat Format
   [Property] ScopeSelector Scope
   [Property] System.String GatesOut

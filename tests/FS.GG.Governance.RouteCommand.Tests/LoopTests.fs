@@ -154,7 +154,11 @@ let tests =
               Expect.equal e5 [] "no effect on the first write ack"
 
               let m6, e6 = Loop.update (Loop.Wrote(Loop.RouteArtifact, Ok())) m5
-              Expect.equal e6 [ Loop.EmitSummary(Loop.render m5 req.Format) ] "second write ack ⇒ EmitSummary"
+              // F27 wiring (063): EmitSummary now also carries the human payload + --plain flag (the mode is
+              // decided at the edge). The contract is unchanged: the carried `text` is `render model format`.
+              match e6 with
+              | [ Loop.EmitSummary(text, _, _) ] -> Expect.equal text (Loop.render m5 req.Format) "second write ack ⇒ EmitSummary with the rendered text"
+              | other -> failtestf "expected a single EmitSummary, got %A" other
 
               let m7, e7 = Loop.update Loop.Emitted m6
               Expect.equal m7.Phase Loop.Done "Emitted ⇒ Done"
@@ -172,8 +176,10 @@ let tests =
               let m4, _ = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
 
               let summary = Loop.render m4 Loop.Text
-              Expect.stringContains summary "cache-eligibility:" "summary carries the cache outcome header"
-              Expect.stringContains summary "must recompute:" "summary lists the must-recompute block"
+              // F27 wiring (063): the cache outcomes are the HumanText "Cache eligibility" section; an absent
+              // store ⇒ every gate is `recompute: no prior evidence`.
+              Expect.stringContains summary "Cache eligibility" "summary carries the cache outcome section"
+              Expect.stringContains summary "recompute:" "summary lists the must-recompute outcome"
               // An absent store ⇒ every selected gate must-recompute; the summary names each gate.
               for g in m2.SelectedGates do
                   Expect.stringContains summary (gateIdValue g.Id) "summary names each selected gate's cache outcome"

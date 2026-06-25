@@ -27,6 +27,9 @@
     <Compile Include="PersistenceEdgeTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="ExecutionTests.fs" />
+    <Compile Include="HumanTextParityTests.fs" />
+    <Compile Include="RenderModeDispatchTests.fs" />
+    <Compile Include="WatchHostTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -49,6 +52,10 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.RouteJson/FS.GG.Governance.RouteJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.GatesJson/FS.GG.Governance.GatesJson.fsproj" />
+    <!-- F27 wiring (063): the parity test asserts the host summary embeds the HumanText.ofRouteResult projection. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <!-- F27 wiring (063, US3): the watch host-wiring tests drive HumanRender.Watch.run over a real temp tree. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
   </ItemGroup>
 
 </Project>

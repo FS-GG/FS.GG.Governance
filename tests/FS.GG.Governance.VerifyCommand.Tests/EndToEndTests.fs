@@ -31,7 +31,8 @@ let tests =
         [ test "clean: Standard profile + passing checks ⇒ passing verdict, exit 0, written bytes match the projection" {
               let model, cap = runWith Standard fakeExecPortPass
               Expect.equal model.Exit Loop.Success "clean ⇒ Success"
-              Expect.stringContains (emitted cap) "verdict pass" "passing verdict"
+              // F27 wiring (063): the human summary is the shared HumanText projection (Title "verdict: PASS").
+              Expect.stringContains (emitted cap) "verdict: PASS" "passing verdict"
 
               match writtenVerify cap with
               | Some(path, content) ->
@@ -44,8 +45,8 @@ let tests =
               let model, cap = runWith Strict fakeExecPortFail
               Expect.equal model.Exit Loop.Blocked "blocking ⇒ Blocked"
               let text = emitted cap
-              Expect.stringContains text "verdict blocked" "blocked verdict"
-              Expect.stringContains text "blockers:" "blockers section present"
+              Expect.stringContains text "verdict: FAIL" "blocked verdict"
+              Expect.stringContains text "Blockers" "blockers section present"
               // exit 1 is distinct from 2/3/4.
               Expect.equal (Loop.exitCode model.Exit) 1 "exit 1 distinct"
           }
@@ -54,8 +55,8 @@ let tests =
               let model, cap = runWith Standard fakeExecPortFail
               Expect.equal model.Exit Loop.Success "advisory-only ⇒ Success"
               let text = emitted cap
-              Expect.stringContains text "verdict pass" "still passing"
-              Expect.stringContains text "warnings:" "advisory under warnings"
+              Expect.stringContains text "verdict: PASS" "still passing"
+              Expect.stringContains text "Warnings" "advisory under warnings"
           }
 
           test "nothing-to-verify: an empty change ⇒ 'nothing to verify', exit 0" {
@@ -64,12 +65,18 @@ let tests =
               let ports = fakePortsExec validCatalog gitEmpty fakeSensor absentStoreReader fakeExecPortPass cap
               let model = Interpreter.run ports req
               Expect.equal model.Exit Loop.Success "nothing to verify ⇒ Success"
-              Expect.stringContains (emitted cap) "nothing to verify" "nothing-to-verify text"
+              // F27 wiring (063): an empty selection ⇒ a passing decision; the HumanText projection renders it
+              // as "verdict: PASS" (the dedicated "nothing to verify" wording was non-contractual host text).
+              Expect.stringContains (emitted cap) "verdict: PASS" "empty selection ⇒ passing verdict text"
           }
 
           test "uncertain: a blocking check reporting an uncertain (exit 125) result is never coerced to pass ⇒ Blocked, exit 1" {
               let model, cap = runWith Strict fakeExecPortUncertain
               Expect.equal model.Exit Loop.Blocked "uncertain blocking ⇒ Blocked, not coerced to pass"
               let text = emitted cap
-              Expect.stringContains text "verdict blocked" "blocked, not pass"
-              Expect.stringContains text "125" "the uncertain exit code is surfaced" } ]
+              Expect.stringContains text "verdict: FAIL" "blocked, not pass"
+              // F27 wiring (063): the exit code is surfaced in the CONTRACT (verify.json), not the
+              // non-contractual human view (which states pass/failed per gate, not the raw code).
+              match writtenVerify cap with
+              | Some(_, content) -> Expect.stringContains content "125" "the uncertain exit code is surfaced in verify.json"
+              | None -> failtest "expected a verify.json write" } ]

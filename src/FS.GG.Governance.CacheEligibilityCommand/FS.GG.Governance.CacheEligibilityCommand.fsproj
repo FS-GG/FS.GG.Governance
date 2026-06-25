@@ -53,6 +53,11 @@
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.CacheEligibilityJson/FS.GG.Governance.CacheEligibilityJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <!-- F27 wiring (063): the shared plain human projection (HumanText.ofCacheEligibilityReport) over the
+         SAME CacheEligibilityReport the *Json path serializes. Not Spectre — that stays confined to HumanRender. -->
+    <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <!-- F27 wiring (063) US2: the rich render + capability sensing at the edge (Spectre stays confined here) -->
+    <ProjectReference Include="../FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
   </ItemGroup>
 
 </Project>

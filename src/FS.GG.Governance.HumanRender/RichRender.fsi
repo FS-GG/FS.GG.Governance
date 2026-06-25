@@ -29,3 +29,7 @@ module RichRender =
         plain: string ->
         console: IAnsiConsole ->
             unit
+
+    /// F27 wiring (063): render to the real stdout terminal (the default Spectre console). Hosts inject
+    /// this as their `RenderReport` edge port so NO host references Spectre directly (FR-011, SC-007).
+    val emitStdout: mode: RenderMode.RenderMode -> view: ReportView.ReportView -> plain: string -> unit

@@ -22,6 +22,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Capability.fsi" />
+    <Compile Include="Capability.fs" />
     <Compile Include="RichRender.fsi" />
     <Compile Include="RichRender.fs" />
     <Compile Include="Watch.fsi" />

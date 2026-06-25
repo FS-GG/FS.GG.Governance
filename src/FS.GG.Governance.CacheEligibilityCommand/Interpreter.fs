@@ -22,6 +22,8 @@ open FS.GG.Governance.FreshnessKey.Model // RuleHash, ArtifactHash, CommandVersi
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts
 open FS.GG.Governance.EvidenceReuse // empty
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, RecordedEvidence, EvidenceRef
+open FS.GG.Governance.HumanText // RenderMode (selectMode), ReportView (F27 wiring 063 US2)
+open FS.GG.Governance.HumanRender // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -40,7 +42,9 @@ module Interpreter =
           Freshness: FreshnessSensor
           Store: StoreReader
           Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+          Out: string -> unit
+          SenseCapability: bool -> RenderMode.ColorCapability
+          RenderReport: ReportView.ReportView -> unit }
 
     // ── safety helpers (mirror RouteCommand) ──
 
@@ -302,8 +306,21 @@ module Interpreter =
 
         | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, guard (fun () -> ports.Write path content))
 
-        | Loop.EmitSummary text ->
-            ports.Out text
+        // F27 wiring (063) US2: the render-mode dispatch lives HERE at the edge (FR-004). Json (human = None)
+        // and the ANSI-free Plain path go via the existing `Out` sink (byte-stable, captured in tests); only
+        // the interactive `Rich` path goes through `RenderReport` (Spectre, confined to HumanRender) followed
+        // by the operational lines. The mode is `selectMode false (senseCapability explicitPlain)`.
+        | Loop.EmitSummary(text, human, explicitPlain) ->
+            match human with
+            | None -> ports.Out text
+            | Some(view, operational) ->
+                match RenderMode.selectMode false (ports.SenseCapability explicitPlain) with
+                | RenderMode.Rich ->
+                    ports.RenderReport view
+                    if operational <> "" then ports.Out operational
+                | RenderMode.Plain
+                | RenderMode.Json -> ports.Out text
+
             Loop.Emitted
 
     // ── realPorts — wire the real edges ──
@@ -332,7 +349,9 @@ module Interpreter =
           Freshness = sensor
           Store = realStoreReader
           Write = writeAtomic
-          Out = fun text -> Console.Out.WriteLine text }
+          Out = fun text -> Console.Out.WriteLine text
+          SenseCapability = Capability.senseCapability
+          RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view "" }
 
     // ── run — drive init → update* to Done ──
 

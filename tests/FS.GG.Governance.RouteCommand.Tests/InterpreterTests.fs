@@ -53,10 +53,11 @@ let tests =
                   Expect.equal (doc.RootElement.GetProperty("schemaVersion").GetString()) "fsgg.route/v2" "schemaVersion unchanged"
               | None -> failtest "route.json was not written"
 
-              // The human summary surfaces the classification line.
+              // F27 wiring (063): the human summary is the shared HumanText projection, which mirrors the
+              // BASE `RouteJson.ofRouteResult` (result/cache/outcomes) — product surfaces stay in route.json
+              // (asserted above), NOT in the non-contractual human view. The summary still renders the report.
               let summary = Loop.render model Loop.Text
-              Expect.stringContains summary "product surfaces:" "the summary has a product-surface section"
-              Expect.stringContains summary "package" "names the package class"
+              Expect.stringContains summary "route:" "the summary renders the route report header"
               Expect.equal (Loop.exitCode model.Exit) 0 "advisory — exit 0"
           }
 
@@ -69,8 +70,9 @@ let tests =
               Expect.isNonEmpty result.SelectedGates "the src change selects gates"
               for sg in result.SelectedGates do
                   Expect.stringContains summary (gateIdValue sg.Gate.Id) "summary names each selected gate id"
-              Expect.stringContains summary "cost:" "summary carries the cost rollup"
-              Expect.stringContains summary req.GatesOut "summary names the gates path" |> ignore
+              // F27 wiring (063): the cost rollup is the HumanText "Cost" section's `cheap=…` leaf.
+              Expect.stringContains summary "cheap=" "summary carries the cost rollup"
+              Expect.stringContains summary req.GatesOut "summary names the gates path (host operational line)" |> ignore
           }
 
           // ── US1 AS3 / SC-006: empty-result and empty-input are SUCCESS, never failure ──

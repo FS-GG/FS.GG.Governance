@@ -29,6 +29,21 @@ open FS.GG.Governance.CacheEligibilityJson
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibilityCommand
+// F27 wiring (063) US2: the render-mode dispatch edge ports (capability sensing + rich render).
+open FS.GG.Governance.HumanText
+
+// A non-TTY (piped/redirected) capability ⇒ `selectMode` picks `Plain` — the default for the faked ports so
+// existing tests keep capturing the ANSI-free summary via the `Out` sink. The render-dispatch test overrides
+// this with a forced-TTY synthetic capability to exercise Rich.
+let plainCapability: bool -> RenderMode.ColorCapability =
+    fun explicitPlain ->
+        { IsTty = false
+          NoColorEnv = false
+          ExplicitPlain = explicitPlain
+          Width = None }
+
+// A no-op rich renderer for the faked ports (the Plain path never calls it).
+let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
 
 // ── repo-root locator (for the surface baseline) ──
 
@@ -400,7 +415,9 @@ let fakePorts
       Freshness = sensor
       Store = store
       Write = capturingWriter cap Set.empty req.CacheOut req.UnresolvedOut
-      Out = capturingSink cap }
+      Out = capturingSink cap
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let fakePortsFailingWrites
     (files: Map<string, string>)
@@ -416,7 +433,9 @@ let fakePortsFailingWrites
       Freshness = sensor
       Store = store
       Write = capturingWriter cap failPaths req.CacheOut req.UnresolvedOut
-      Out = capturingSink cap }
+      Out = capturingSink cap
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let writtenOf (cap: Capture) (kind: Loop.ArtifactKind) : (string * string) option =
     cap.Writes |> List.tryPick (fun (k, p, c) -> if k = kind then Some(p, c) else None)
@@ -429,7 +448,8 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       StorePath = "readiness/evidence-reuse.json"
       CacheOut = "readiness/cache-eligibility.json"
       UnresolvedOut = "readiness/cache-eligibility.unresolved.json"
-      Format = format }
+      Format = format
+      ExplicitPlain = false }
 
 /// A fresh Model in the `Selected` phase carrying literal gates — the entry point for the pure-Loop tier
 /// (bypasses catalog/selection so resolve→evaluate→project can be driven with controlled SensedFacts/store).

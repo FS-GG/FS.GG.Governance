@@ -41,6 +41,21 @@ open FS.GG.Governance.GateRun
 open FS.GG.Governance.GateRun.Model
 open FS.GG.Governance.EvidenceCapture
 open FS.GG.Governance.Snapshot
+// F27 wiring (063): the render-mode dispatch edge ports (capability sensing + rich render).
+open FS.GG.Governance.HumanText
+
+// A non-TTY (piped/redirected) capability ⇒ `selectMode` picks `Plain` — the default for the faked ports so
+// existing tests keep capturing the ANSI-free summary via the `Out` sink. The render-dispatch test overrides
+// this with a forced-TTY synthetic capability to exercise Rich.
+let plainCapability: bool -> RenderMode.ColorCapability =
+    fun explicitPlain ->
+        { IsTty = false
+          NoColorEnv = false
+          ExplicitPlain = explicitPlain
+          Width = None }
+
+// A no-op rich renderer for the faked ports (the Plain path never calls it).
+let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
 
 // ── repo-root locator (for the surface baseline) ──
 
@@ -402,7 +417,9 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpr
       Store = absentStoreReader
       Write = capturingWriter cap Set.empty
       Out = capturingSink cap
-      Execute = fakeExecPortFail }
+      Execute = fakeExecPortFail
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -411,7 +428,9 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Store = store
       Write = capturingWriter cap Set.empty
       Out = capturingSink cap
-      Execute = fakeExecPortFail }
+      Execute = fakeExecPortFail
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
     { Files = readerOf files
@@ -420,7 +439,9 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       Store = absentStoreReader
       Write = capturingWriter cap failPaths
       Out = capturingSink cap
-      Execute = fakeExecPortFail }
+      Execute = fakeExecPortFail
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -429,7 +450,9 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Store = store
       Write = capturingWriter cap Set.empty
       Out = capturingSink cap
-      Execute = exec }
+      Execute = exec
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts
@@ -450,7 +473,8 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       Format = format
       VerifyOut = "readiness/verify.json"
       StorePath = "readiness/evidence-reuse.json"
-      PersistStore = false }
+      PersistStore = false
+      ExplicitPlain = false }
 
 /// A request under an explicit profile (for the blocking / uncertain scenarios at Strict).
 let requestForProfile (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) (profile: Profile) : Loop.RunRequest =

@@ -1259,6 +1259,29 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   T043) — split out because the per-host summaries (changed-path counts, "wrote …" lines) and the
   legacy `Cli`'s older Kernel/Host `Route`/`Explanation` types make that an invasive per-host change;
   the libraries here are exactly the surface that wiring consumes.
+
+  **F27 host wiring** (`063-human-projection-host-wiring`) — IN PROGRESS. Delivered (full solution green):
+  **US1 plain delegation** on all four standalone hosts whose held report object matches `HumanText.of*`
+  — `route` (`RouteResult`), `ship`/`verify` (`ShipDecision`), and the standalone cache-eligibility host
+  (`CacheEligibilityReport`) — each command's text branch is now the shared `HumanText` projection of the
+  SAME report value the `*Json` path serializes, with the host's operational `wrote …` lines kept around
+  it; every persisted/`--json` golden stays byte-identical (proven per host). **Phase 2 capability
+  sensing**: `HumanRender.Capability.senseCapability` (the sole TTY/`NO_COLOR`/width edge effect) +
+  `RichRender.emitStdout` (so no host references Spectre directly). **US2 render-mode dispatch** on the
+  four standalone hosts: a `--plain` flag + an interpreter-edge `selectMode (senseCapability …)` that
+  routes `Json`/`Plain` via the existing sink and `Rich` via a `RenderReport` edge port; per-host
+  `RenderModeDispatchTests` + a per-host dependency-boundary check (forbids a direct `Spectre.Console`
+  reference). **US3 watch** on the packed `fsgg route`: a `--watch` flag + `Loop.humanView` + the
+  `HumanRender.Watch.run` edge whose read-only `reRender` re-runs the existing evaluation with no-op
+  write/output ports (no contract written), closing F27's `[PARTIAL]` with a **real-`FileSystemWatcher`
+  end-to-end settle** test over a temp tree (+ read-only and `InputUnreadable` safe-failure tests).
+  **Remaining (deferred follow-ups):** the legacy `Cli` dispatcher's own render-mode dispatch and its
+  `watch`/`tui` subcommands, plus the optional `tui` surface (US4) — all gated on the kernel-era `Cli`
+  holding `Kernel.Route`/`ProjectEvidenceReport`/`Explanation` payloads rather than the F19 `RouteResult`/
+  F41 `CacheEligibilityReport`/F19 `RouteExplanation` that `HumanText` projects, so they need an F19/F41
+  evaluation path threaded into the dispatcher (the same report-object mismatch that already defers
+  `release`-human, `explain`, and legacy-`Cli` `evidence` delegation). `release`-human delegation remains
+  gated on the F26 `ReleaseReport` assembly thread.
 - 🟢 [x] Add Spectre.Console projections backed by the same report objects used for
   JSON. (Feature `019-spectre-rendering`: `--rich` projection over the same
   `CommandReport`. Feature `021-rich-validation-report` extends the same edge to the

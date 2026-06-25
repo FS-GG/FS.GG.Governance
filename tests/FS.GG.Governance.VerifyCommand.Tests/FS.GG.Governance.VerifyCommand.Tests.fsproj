@@ -28,6 +28,8 @@
     <Compile Include="ScopeGuardTests.fs" />
     <Compile Include="NoMutationTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="HumanTextParityTests.fs" />
+    <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -42,6 +44,8 @@
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.VerifyCommand/FS.GG.Governance.VerifyCommand.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <!-- F27 wiring (063): the plain human projection asserted at parity with the verify.json contract -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />

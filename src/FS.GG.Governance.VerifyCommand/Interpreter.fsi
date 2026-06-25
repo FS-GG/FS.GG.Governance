@@ -18,6 +18,7 @@ namespace FS.GG.Governance.VerifyCommand
 open FS.GG.Governance.Config              // Loader.FileReader
 open FS.GG.Governance.Snapshot            // Ports
 open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
+open FS.GG.Governance.HumanText           // RenderMode, ReportView (F27 wiring 063)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -46,7 +47,15 @@ module Interpreter =
           /// F052: the injected GATE-EXECUTION port — the only seam through which the command touches a gate
           /// process. `realPorts` wires the merged F051 `GateExecution.Interpreter.realPort`; tests inject a
           /// deterministic fake.
-          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort }
+          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
+          /// F27 wiring (063): sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag into a
+          /// `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires `Capability.senseCapability`;
+          /// tests inject a synthetic capability (e.g. a forced TTY) to exercise the Rich path.
+          SenseCapability: bool -> RenderMode.ColorCapability
+          /// F27 wiring (063): render the report view richly to the terminal (the `Rich` path). `realPorts`
+          /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
+          /// inject a capturing renderer. Plain/Json still go via `Out`.
+          RenderReport: ReportView.ReportView -> unit }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, the F046 real sensor/store reader, the F051 real execution port,

@@ -29,6 +29,8 @@
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="ExecutionTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="HumanTextParityTests.fs" />
+    <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -51,6 +53,8 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
+    <!-- F27 wiring (063): the shared plain human projection (parity + JSON-golden tests) -->
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
     <!-- F046: the cache-eligibility pipeline (faked sensing ports + the genuine-core expected-report computer) -->
     <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />

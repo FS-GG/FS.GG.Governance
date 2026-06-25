@@ -16,9 +16,11 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.InterpreterModule+FreshnessSensor
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]] SenseGeneratorVersion
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+RuleHash]] SenseRuleHash
 TYPE FS.GG.Governance.CacheEligibilityCommand.InterpreterModule+Ports
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit])
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit])
   [Method] FS.GG.Governance.Snapshot.Ports get_Git()
   [Method] FreshnessSensor get_Freshness()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] get_RenderReport()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] get_SenseCapability()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_Store()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
@@ -26,6 +28,8 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.InterpreterModule+Ports
   [Method] System.String ToString()
   [Property] FS.GG.Governance.Snapshot.Ports Git
   [Property] FreshnessSensor Freshness
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] RenderReport
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] SenseCapability
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] Store
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
@@ -101,7 +105,7 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+Effect
   [Method] Boolean get_IsSenseFreshness()
   [Method] Boolean get_IsSenseScope()
   [Method] Boolean get_IsWriteArtifact()
-  [Method] Effect NewEmitSummary(System.String)
+  [Method] Effect NewEmitSummary(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]], Boolean)
   [Method] Effect NewLoadCatalog(System.String)
   [Method] Effect NewLoadStore(System.String)
   [Method] Effect NewSenseFreshness(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], System.Tuple`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision],Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision]])
@@ -129,7 +133,11 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+Effect
   [Property] Boolean IsWriteArtifact
   [Property] Int32 Tag
 TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+Effect+EmitSummary
+  [Method] Boolean get_explicitPlain()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]] get_human()
   [Method] System.String get_text()
+  [Property] Boolean explicitPlain
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]] human
   [Property] System.String text
 TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+Effect+LoadCatalog
   [Method] System.String get_repo()
@@ -381,11 +389,12 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+Phase+Tags
   [Field] Int32 Selected
   [Field] Int32 Sensed'
 TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+RunRequest
-  [Constructor] Void .ctor(System.String, ScopeSelector, System.String, System.String, System.String, OutputFormat)
+  [Constructor] Void .ctor(System.String, ScopeSelector, System.String, System.String, System.String, OutputFormat, Boolean)
   [Method] Boolean Equals(RunRequest)
   [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExplicitPlain()
   [Method] Int32 CompareTo(RunRequest)
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -398,6 +407,7 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+RunRequest
   [Method] System.String get_Repo()
   [Method] System.String get_StorePath()
   [Method] System.String get_UnresolvedOut()
+  [Property] Boolean ExplicitPlain
   [Property] OutputFormat Format
   [Property] ScopeSelector Scope
   [Property] System.String CacheOut

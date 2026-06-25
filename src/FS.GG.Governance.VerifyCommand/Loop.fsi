@@ -31,6 +31,7 @@ open FS.GG.Governance.EvidenceReuse.Model       // ReuseStore (F046 — the read
 open FS.GG.Governance.CommandRecord.Model        // CommandRecord (F052 — the assembled run record)
 open FS.GG.Governance.GateExecution.Model         // GateCommand (F052 — the command-to-run)
 open FS.GG.Governance.GateRun.Model               // GateOutcome (F052 — the per-gate execution outcome)
+open FS.GG.Governance.HumanText                   // F27 wiring (063): ReportView (the rich/plain view payload)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -64,7 +65,11 @@ module Loop =
           /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
           /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts and
           /// an unchanged verdict/exit.
-          PersistStore: bool }
+          PersistStore: bool
+          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+          /// piped/explicit-plain run renders ANSI-free even on a TTY. Layered ON TOP of `--format text|json`:
+          /// it never changes the `--json` rejection or the text/json selection — JSON is always ANSI-free.
+          ExplicitPlain: bool }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2. `UnrecognizedProfile` carries the offending
     /// string from F023 `recognizeProfile` `Unrecognized`; recognition happens IN `parse` so a typo writes no
@@ -101,7 +106,11 @@ module Loop =
         | PersistStore of path: string * content: string
         /// F052: run the selected must-recompute command-gates ONCE each through the injected F051 port.
         | ExecuteGates of (GateId * GateCommand) list
-        | EmitSummary of text: string
+        /// F27 wiring (063): emit the rendered output. `text` is the verify.json contract string (human = None)
+        /// OR the ANSI-free plain projection used when the sensed mode is `Plain`; `human` carries the
+        /// `ReportView` + operational `wrote` line for the `Rich` path the edge selects via `selectMode`
+        /// (`senseCapability explicitPlain`). The mode decision is at the edge, never here.
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal currency

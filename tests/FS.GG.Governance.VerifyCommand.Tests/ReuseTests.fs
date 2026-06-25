@@ -42,7 +42,9 @@ let private portsWith (sensor: FreshnessSensing.FreshnessSensor) (exec) (cap: Ca
       Store = FreshnessSensing.realStoreReader
       Write = diskWriter
       Out = capturingSink cap
-      Execute = exec }
+      Execute = exec
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 let private reqIn dir =
     { requestForProfile srcScope Loop.Text Standard with
@@ -73,8 +75,9 @@ let tests =
                   Expect.equal c2.Calls 0 "run 2 reuses everything — no further executions"
 
                   let text = String.concat "\n" cap2.Emits
-                  Expect.stringContains text "fresh/reused:" "run 2 reports fresh/reused"
-                  Expect.isFalse (text.Contains "noPriorEvidence") "nothing recomputed for no-prior-evidence on run 2")
+                  // F27 wiring (063): reuse shows as the HumanText "Cache eligibility" `reusable:` outcome.
+                  Expect.stringContains text "reusable:" "run 2 reports reusable evidence"
+                  Expect.isFalse (text.Contains "no prior evidence") "nothing recomputed for no-prior-evidence on run 2")
           }
 
           test "flipping one check's command version recomputes EXACTLY that check, reported stale with its category" {
@@ -91,5 +94,6 @@ let tests =
                   Expect.equal c.Calls 1 "exactly one check (build) is recomputed"
 
                   let text = String.concat "\n" cap.Emits
-                  Expect.stringContains text "fresh/reused:" "format stays fresh/reused"
-                  Expect.stringContains text "inputsChanged" "build is stale with its changed category") } ]
+                  // F27 wiring (063): format stays `reusable:`; build recomputes as `inputs changed (n)`.
+                  Expect.stringContains text "reusable:" "format stays reusable"
+                  Expect.stringContains text "inputs changed" "build is stale with its changed category") } ]

@@ -20,6 +20,7 @@ open FS.GG.Governance.ProductSurfaces       // ProductSurfaces.classify (F23 —
 open FS.GG.Governance.ProductSurfaces.Model  // ProductSurfaceReport, ProductClassification, TierAlternative
 open FS.GG.Governance.RouteJson           // RouteJson.ofRouteResult, schemaVersion
 open FS.GG.Governance.GatesJson           // GatesJson.ofGateRegistry, schemaVersion
+open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofRouteResult — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
 open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
 open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
@@ -55,7 +56,9 @@ module Loop =
           GatesOut: string
           RouteOut: string
           StorePath: string
-          PersistStore: bool }
+          PersistStore: bool
+          ExplicitPlain: bool
+          Watch: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -81,7 +84,7 @@ module Loop =
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
-        | EmitSummary of text: string
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
         | Begin
@@ -148,7 +151,9 @@ module Loop =
           GatesOut: string option
           RouteOut: string option
           Store: string option
-          Persist: bool }
+          Persist: bool
+          Plain: bool
+          Watch: bool }
 
     let emptyAcc =
         { Repo = None
@@ -158,7 +163,9 @@ module Loop =
           GatesOut = None
           RouteOut = None
           Store = None
-          Persist = false }
+          Persist = false
+          Plain = false
+          Watch = false }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
     // clean relative form (`.fsgg/gates.json`); any other repo is prefixed so the artifact lands
@@ -193,6 +200,8 @@ module Loop =
             | "--store" :: v :: more -> go { acc with Store = Some v } more
             | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
+            | "--plain" :: more -> go { acc with Plain = true } more
+            | "--watch" :: more -> go { acc with Watch = true } more
             | "--persist-store" :: more -> go { acc with Persist = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
@@ -221,7 +230,9 @@ module Loop =
                       GatesOut = acc.GatesOut |> Option.defaultValue (under repo ".fsgg/gates.json")
                       RouteOut = acc.RouteOut |> Option.defaultValue (under repo "readiness/route.json")
                       StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
-                      PersistStore = acc.Persist }
+                      PersistStore = acc.Persist
+                      ExplicitPlain = acc.Plain
+                      Watch = acc.Watch }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -557,7 +568,7 @@ module Loop =
                     if awaitingPersist model then
                         model, []
                     else
-                        model, [ EmitSummary(render model model.Request.Format) ]
+                        model, [ emitEffect model ]
 
             // F048: the NON-FATAL store-write ack (FR-006). An `Error` appends a cache note; NEITHER outcome
             // changes `Exit` (set later at `Emitted`) nor the already-emitted route.json/gates.json. Once the
@@ -573,7 +584,7 @@ module Loop =
                 let model = { model with PersistAcked = true; CacheNotes = notes }
 
                 match model.Phase with
-                | Persisted -> model, [ EmitSummary(render model model.Request.Format) ]
+                | Persisted -> model, [ emitEffect model ]
                 | _ -> model, []
 
             // F052: the executed gates' records arrive — capture each into the store, build the per-gate
@@ -596,112 +607,26 @@ module Loop =
 
     and jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
 
-    // ── F046 cache summary (the F044 pattern; recomputed purely from the model's sensed/store/gates) ──
-
-    and cacheEntriesOf (model: Model) : CacheEligibilityEntry list =
+    // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
+    // model's sensed facts + loaded store — the same value the route.json embed carries — for the shared
+    // HumanText projection. `None` until both senses have arrived.
+    and cacheReportOf (model: Model) : CacheEligibilityReport option =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
-            CacheEligibility.evaluate candidates store |> CacheEligibility.entries
-        | _ -> []
+            Some(CacheEligibility.evaluate candidates store)
+        | _ -> None
 
-    and unresolvedEntriesOf (model: Model) : (string * string list) list =
-        match model.Sensed with
-        | Some sensed ->
-            FreshnessResolution.resolve model.SelectedGates sensed
-            |> FreshnessResolution.entries
-            |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
-            |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
-        | None -> []
-
-    and causeHuman (cause: RecomputeCause) : string =
-        match cause with
-        | NoPriorEvidence -> "noPriorEvidence"
-        | InputsChanged cats -> "inputsChanged: " + (cats |> List.map categoryToken |> String.concat ",")
-
-    and cacheLinesOf (model: Model) : string list =
-        let entries = cacheEntriesOf model
-        let unresolved = unresolvedEntriesOf model
-
-        let reusable =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | Reusable ref -> Some(gateIdValue e.Gate, EvidenceReuse.referenceValue ref)
-                | MustRecompute _ -> None)
-
-        let recompute =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | MustRecompute cause -> Some(gateIdValue e.Gate, causeHuman cause)
-                | Reusable _ -> None)
-
-        let header =
-            sprintf "cache-eligibility: %d reusable, %d must-recompute, %d unresolved" reusable.Length recompute.Length unresolved.Length
-
-        let block (title: string) (lines: string list) =
-            match lines with
-            | [] -> [ title + " none" ]
-            | _ -> title :: lines
-
-        let reusableLines = reusable |> List.map (fun (g, r) -> sprintf "  %s <- %s" g r)
-        let recomputeLines = recompute |> List.map (fun (g, c) -> sprintf "  %s   (%s)" g c)
-
-        let unresolvedLines =
-            unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts))
-
-        [ header
-          yield! block "reusable:" reusableLines
-          yield! block "must recompute:" recomputeLines
-          yield! block "recompute by default (unresolved):" unresolvedLines
-          yield! model.CacheNotes ]
-
-    // ── F052 execution summary (FR-016) — which gates were executed / reused / not-executed, pass/fail ──
-
-    and dispositionWord (d: GateDisposition) : string =
-        match d with
-        | Executed -> "executed"
-        | Reused -> "reused"
-        | NotExecuted -> "not-executed"
-
-    and executionLinesOf (model: Model) : string list =
-        match model.Outcomes with
-        | [] -> [ "execution: none" ]
-        | outcomes ->
-            let line (gid, (o: GateOutcome)) =
-                let verdict =
-                    match o.Passed with
-                    | Some true -> "pass"
-                    | Some false ->
-                        match o.ExitCode with
-                        | Some(ExitCode code) when code = 124 -> "fail (timeout)"
-                        | Some(ExitCode code) when code = 127 -> "fail (start-failure)"
-                        | Some(ExitCode code) -> sprintf "fail (exit %d)" code
-                        | None -> "fail"
-                    | None -> "—"
-
-                sprintf "  %s   (%s, %s)" (gateIdValue gid) (dispositionWord o.Disposition) verdict
-
-            (sprintf "execution: %d gate(s)" (List.length outcomes)) :: (outcomes |> List.map line)
-
-    // F23 product-surface summary — one line per classified path: capability · class · tier · alternative.
-    and productSurfaceLinesOf (model: Model) : string list =
-        match model.Classifications.Classifications with
-        | [] -> [ "product surfaces: none" ]
-        | cs ->
-            let altWord (a: TierAlternative) =
-                match a with
-                | CheaperLocalTier t -> "cheaper-local " + generatedProductTierToken t
-                | NoCheaperLocalTier -> "no cheaper-local tier"
-
-            let line (c: ProductClassification) =
-                let (DomainId cap) = c.Capability
-                let declared = if c.TierIsDeclared then "" else " (tier pending F24)"
-                sprintf "  %s -> %s · %s · %s%s · %s" (pathValue c.Path) cap (surfaceClassToken c.Class) (generatedProductTierToken c.SelectedTier) declared (altWord c.Alternative)
-
-            (sprintf "product surfaces: %d" (List.length cs)) :: (cs |> List.map line)
+    // F27 wiring (063): the host operational lines (wrote confirmations) — host output kept around the
+    // report projection, never part of the JSON contract (FR-003). Empty when there is no report.
+    and operationalLines (model: Model) : string =
+        match model.Result with
+        | Some result ->
+            [ sprintf "wrote %s    (%s)" model.Request.GatesOut GatesJson.schemaVersion
+              sprintf "wrote %s    (%s, %d selected)" model.Request.RouteOut RouteJson.schemaVersion result.SelectedGates.Length ]
+            |> String.concat "\n"
+        | None -> ""
 
     and renderText (model: Model) : string =
         match model.Result with
@@ -710,51 +635,31 @@ module Loop =
             |> List.map (fun d -> "error: " + d.Message)
             |> String.concat "\n"
         | Some result ->
-            let selected = result.SelectedGates
-            let changed = model.Candidates |> Option.map List.length |> Option.defaultValue 0
-            let header = sprintf "route: %d gate(s) selected for %d changed path(s)" selected.Length changed
+            // F27 wiring (063): the report facts come from the shared HumanText projection over the SAME
+            // RouteResult the *Json path serializes (FR-001); the host keeps only its operational `wrote`
+            // lines (never part of the JSON contract — FR-003).
+            let projection = HumanText.ofRouteResult result (cacheReportOf model) model.Outcomes
+            [ projection; operationalLines model ] |> String.concat "\n"
 
-            let gateLines =
-                if List.isEmpty selected then
-                    [ "  (no gates selected)" ]
-                else
-                    selected
-                    |> List.collect (fun sg ->
-                        let id = gateIdValue sg.Gate.Id
-                        let cost = costToken sg.Gate.Cost
+    // F27 wiring (063): build the emit effect. Json carries the contract string (human = None). Text carries
+    // the ANSI-free plain string (used for `Plain`) PLUS the `ReportView` + operational lines (used for the
+    // `Rich` path the edge selects); the mode is decided at the edge via `selectMode (senseCapability …)`.
+    and emitEffect (model: Model) : Effect =
+        match model.Request.Format with
+        | Json -> EmitSummary(renderJson model, None, false)
+        | Text ->
+            match model.Result with
+            | Some result ->
+                let view = ReportView.viewOfRouteResult result (cacheReportOf model) model.Outcomes
+                EmitSummary(renderText model, Some(view, operationalLines model), model.Request.ExplicitPlain)
+            | None -> EmitSummary(renderText model, None, model.Request.ExplicitPlain)
 
-                        match sg.SelectingPaths with
-                        | [] -> [ sprintf "  %s   (%s)" id cost ]
-                        | ps -> ps |> List.map (fun sp -> sprintf "  %s <- %s   (%s)" id (pathValue sp.Path) cost))
-
-            let c = result.Cost
-            let costLine = sprintf "cost: cheap=%d medium=%d high=%d exhaustive=%d" c.Cheap c.Medium c.High c.Exhaustive
-
-            let findingLines =
-                match result.Findings.Findings with
-                | [] -> [ "findings: none" ]
-                | fs ->
-                    (sprintf "findings: %d" (List.length fs))
-                    :: (fs |> List.map (fun f -> sprintf "  %s: %s" (pathValue f.Path) f.Message))
-
-            let wroteLines =
-                [ sprintf "wrote %s    (%s)" model.Request.GatesOut GatesJson.schemaVersion
-                  sprintf "wrote %s    (%s, %d selected)" model.Request.RouteOut RouteJson.schemaVersion selected.Length ]
-
-            [ [ header; "" ]
-              gateLines
-              [ ""; costLine ]
-              findingLines
-              [ "" ]
-              productSurfaceLinesOf model
-              [ "" ]
-              cacheLinesOf model
-              [ "" ]
-              executionLinesOf model
-              [ "" ]
-              wroteLines ]
-            |> List.concat
-            |> String.concat "\n"
+    // F27 wiring (063, US3/US4): the report view from a terminal model — the SAME projection the one-shot
+    // plain/rich renders use. The read-only watch/tui edges re-render through this. `None` ⇒ no report.
+    and humanView (model: Model) : ReportView.ReportView option =
+        match model.Result with
+        | Some result -> Some(ReportView.viewOfRouteResult result (cacheReportOf model) model.Outcomes)
+        | None -> None
 
     and renderJson (model: Model) : string =
         match model.Result with

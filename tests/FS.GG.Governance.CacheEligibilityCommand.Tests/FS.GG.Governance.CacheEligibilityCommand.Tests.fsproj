@@ -27,6 +27,8 @@
     <Compile Include="StoreFormatTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="HumanTextParityTests.fs" />
+    <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -50,6 +52,7 @@
     <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibilityJson/FS.GG.Governance.CacheEligibilityJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
   </ItemGroup>
 
 </Project>

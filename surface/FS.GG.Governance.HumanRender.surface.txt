@@ -1,6 +1,9 @@
+TYPE FS.GG.Governance.HumanRender.CapabilityModule
+  [Method] ColorCapability senseCapability(Boolean)
 TYPE FS.GG.Governance.HumanRender.RichRenderModule
   [Method] Int32 get_defaultWidth()
   [Method] Void emit(RenderMode, ReportView, System.String, Spectre.Console.IAnsiConsole)
+  [Method] Void emitStdout(RenderMode, ReportView, System.String)
   [Property] Int32 defaultWidth
 TYPE FS.GG.Governance.HumanRender.TuiModule
   [Method] System.Tuple`2[FS.GG.Governance.HumanRender.TuiModule+TuiModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.TuiModule+TuiEffect]] init(ReportView)

@@ -103,6 +103,12 @@ let tests =
                   || name = "FS.GG.Governance.Enforcement"
                   || name = "FS.GG.Governance.Ship"
                   || name = "FS.GG.Governance.AuditJson"
+                  // F27 wiring (063): the shared plain human projection over the SAME ShipDecision.
+                  || name = "FS.GG.Governance.HumanText"
+                  // F27 wiring (063): the rich render + capability sensing at the edge. Spectre is referenced
+                  // by HumanRender ONLY — ShipCommand reaches it through RichRender.emitStdout/senseCapability,
+                  // never a direct Spectre reference (the forbidden check below still guards that).
+                  || name = "FS.GG.Governance.HumanRender"
                   // F045: AuditJson's `ofShipDecision` takes a `CacheEligibilityReport option` ⇒ F041 arrives.
                   || name = "FS.GG.Governance.CacheEligibility"
                   // F046: the cache-eligibility pipeline — the shared sensing edge + the resolution/store cores.
@@ -141,7 +147,10 @@ let tests =
                       || n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
+                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the ship
+                      // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
+                      || n = "Spectre.Console")
 
               Expect.isEmpty forbidden (sprintf "ShipCommand must not reference RouteJson/GatesJson/kernel/host/cli/adapters; found: %A" forbidden)
           } ]

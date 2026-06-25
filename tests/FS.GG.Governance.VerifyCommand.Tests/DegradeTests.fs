@@ -19,7 +19,9 @@ let tests =
               let ports = fakePortsExec validCatalog gitSrcChange throwingSensor absentStoreReader fakeExecPortPass cap
               let model = Interpreter.run ports (requestForProfile srcScope Loop.Text Standard)
               Expect.equal model.Exit Loop.Success "freshness degrade ⇒ exit unchanged (Success)"
-              Expect.stringContains (String.concat "\n" cap.Emits) "currency note:" "non-fatal currency note appended"
+              // F27 wiring (063): the non-fatal note is a model fact (the non-contractual human summary no
+              // longer echoes it).
+              Expect.stringContains (String.concat " " model.CurrencyNotes) "currency note:" "non-fatal currency note recorded"
           }
 
           test "a malformed store degrades (StoreDegraded), suppresses persistence, leaves the verdict/exit unchanged" {
@@ -28,7 +30,9 @@ let tests =
               let model = Interpreter.run ports (requestForProfile srcScope Loop.Text Standard)
               Expect.equal model.Exit Loop.Success "store degrade ⇒ exit unchanged (Success)"
               Expect.isTrue model.StoreDegraded "store marked degraded"
-              Expect.stringContains (String.concat "\n" cap.Emits) "currency note:" "non-fatal currency note appended"
+              // F27 wiring (063): the non-fatal note is a model fact (the non-contractual human summary no
+              // longer echoes it).
+              Expect.stringContains (String.concat " " model.CurrencyNotes) "currency note:" "non-fatal currency note recorded"
           }
 
           test "the degraded verdict equals the non-degraded verdict (a note never perturbs the rollup)" {

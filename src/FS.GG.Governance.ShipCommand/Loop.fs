@@ -22,6 +22,7 @@ open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile, Severity, Rec
 open FS.GG.Governance.Ship                // Ship.rollup
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
 open FS.GG.Governance.AuditJson           // AuditJson.ofShipDecision
+open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofShipDecision — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
 open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
 open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
@@ -58,7 +59,8 @@ module Loop =
           Format: OutputFormat
           AuditOut: string
           StorePath: string
-          PersistStore: bool }
+          PersistStore: bool
+          ExplicitPlain: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -86,7 +88,7 @@ module Loop =
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
-        | EmitSummary of text: string
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
         | Begin
@@ -153,7 +155,8 @@ module Loop =
           Json: bool
           AuditOut: string option
           Store: string option
-          Persist: bool }
+          Persist: bool
+          Plain: bool }
 
     let emptyAcc =
         { Repo = None
@@ -164,7 +167,8 @@ module Loop =
           Json = false
           AuditOut = None
           Store = None
-          Persist = false }
+          Persist = false
+          Plain = false }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
     // clean relative form (`readiness/audit.json`); any other repo is prefixed so the artifact lands
@@ -201,6 +205,7 @@ module Loop =
             | "--store" :: v :: more -> go { acc with Store = Some v } more
             | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
+            | "--plain" :: more -> go { acc with Plain = true } more
             | "--persist-store" :: more -> go { acc with Persist = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
@@ -252,7 +257,8 @@ module Loop =
                           Format = (if acc.Json then Json else Text)
                           AuditOut = acc.AuditOut |> Option.defaultValue (under repo "readiness/audit.json")
                           StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
-                          PersistStore = acc.Persist }
+                          PersistStore = acc.Persist
+                          ExplicitPlain = acc.Plain }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -610,7 +616,7 @@ module Loop =
                 if awaitingPersist model then
                     { model with Phase = Persisted }, []
                 else
-                    { model with Phase = Persisted }, [ EmitSummary(render model model.Request.Format) ]
+                    { model with Phase = Persisted }, [ emitEffect model ]
 
             // F048: the NON-FATAL store-write ack (FR-006). An `Error` appends a cache note; NEITHER outcome
             // changes `Exit` (it stays governed solely by `ExitCodeBasis` at `Emitted` — never `ToolError`/
@@ -627,7 +633,7 @@ module Loop =
                 let model = { model with PersistAcked = true; CacheNotes = notes }
 
                 match model.Phase with
-                | Persisted -> model, [ EmitSummary(render model model.Request.Format) ]
+                | Persisted -> model, [ emitEffect model ]
                 | _ -> model, []
 
             // F052: the executed gates' records arrive — capture each, build outcomes, RELOCATE passing
@@ -647,120 +653,23 @@ module Loop =
 
     // ── render (research D8) — the deterministic summary ──
 
-    and severityToken (s: Severity) : string =
-        match s with
-        | Advisory -> "advisory"
-        | Blocking -> "blocking"
-
-    and pathValue (GovernedPath p) = p
-
-    and itemLine (item: EnforcedItem) : string =
-        let identity =
-            match item.Id with
-            | GateItem g -> sprintf "gate %s" (gateIdValue g)
-            | FindingItem(fid, path) -> sprintf "finding %s <- %s" (findingIdToken fid) (pathValue path)
-
-        sprintf "  %s   (base %s, effective %s)" identity (severityToken item.Decision.BaseSeverity) (severityToken item.Decision.EffectiveSeverity)
-
-    and section (name: string) (items: EnforcedItem list) : string list =
-        match items with
-        | [] -> [ sprintf "%s: none" name ]
-        | xs -> (sprintf "%s: %d" name (List.length xs)) :: (xs |> List.map itemLine)
-
-    and isFinding (item: EnforcedItem) : bool =
-        match item.Id with
-        | FindingItem _ -> true
-        | GateItem _ -> false
-
-    // ── F046 cache summary (the F044 pattern; recomputed purely from the model's sensed/store/gates) ──
-
-    and cacheEntriesOf (model: Model) : CacheEligibilityEntry list =
+    // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
+    // model's sensed facts + loaded store — the same value the audit.json embed carries — for the shared
+    // HumanText projection. `None` until both senses have arrived.
+    and cacheReportOf (model: Model) : CacheEligibilityReport option =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
-            CacheEligibility.evaluate candidates store |> CacheEligibility.entries
-        | _ -> []
+            Some(CacheEligibility.evaluate candidates store)
+        | _ -> None
 
-    and unresolvedEntriesOf (model: Model) : (string * string list) list =
-        match model.Sensed with
-        | Some sensed ->
-            FreshnessResolution.resolve model.SelectedGates sensed
-            |> FreshnessResolution.entries
-            |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
-            |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
-        | None -> []
-
-    and cacheCauseHuman (cause: RecomputeCause) : string =
-        match cause with
-        | NoPriorEvidence -> "noPriorEvidence"
-        | InputsChanged cats -> "inputsChanged: " + (cats |> List.map categoryToken |> String.concat ",")
-
-    and cacheLinesOf (model: Model) : string list =
-        let entries = cacheEntriesOf model
-        let unresolved = unresolvedEntriesOf model
-
-        let reusable =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | Reusable ref -> Some(gateIdValue e.Gate, EvidenceReuse.referenceValue ref)
-                | MustRecompute _ -> None)
-
-        let recompute =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | MustRecompute cause -> Some(gateIdValue e.Gate, cacheCauseHuman cause)
-                | Reusable _ -> None)
-
-        let header =
-            sprintf "cache-eligibility: %d reusable, %d must-recompute, %d unresolved" reusable.Length recompute.Length unresolved.Length
-
-        let block (title: string) (lines: string list) =
-            match lines with
-            | [] -> [ title + " none" ]
-            | _ -> title :: lines
-
-        let reusableLines = reusable |> List.map (fun (g, r) -> sprintf "  %s <- %s" g r)
-        let recomputeLines = recompute |> List.map (fun (g, c) -> sprintf "  %s   (%s)" g c)
-
-        let unresolvedLines =
-            unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts))
-
-        [ header
-          yield! block "reusable:" reusableLines
-          yield! block "must recompute:" recomputeLines
-          yield! block "recompute by default (unresolved):" unresolvedLines
-          yield! model.CacheNotes ]
-
-    // ── F052 execution summary (FR-016) — which gates were executed / reused / not-executed, pass/fail ──
-
-    and dispositionWord (d: GateDisposition) : string =
-        match d with
-        | Executed -> "executed"
-        | Reused -> "reused"
-        | NotExecuted -> "not-executed"
-
-    and executionLinesOf (model: Model) : string list =
-        match model.Outcomes with
-        | [] -> [ "execution: none" ]
-        | outcomes ->
-            let line (gid, (o: GateOutcome)) =
-                let verdict =
-                    match o.Passed with
-                    | Some true -> "pass"
-                    | Some false ->
-                        match o.ExitCode with
-                        | Some(ExitCode code) when code = 124 -> "fail (timeout)"
-                        | Some(ExitCode code) when code = 127 -> "fail (start-failure)"
-                        | Some(ExitCode code) -> sprintf "fail (exit %d)" code
-                        | None -> "fail"
-                    | None -> "—"
-
-                sprintf "  %s   (%s, %s)" (gateIdValue gid) (dispositionWord o.Disposition) verdict
-
-            (sprintf "execution: %d gate(s)" (List.length outcomes)) :: (outcomes |> List.map line)
+    // F27 wiring (063): the host operational line (the audit `wrote` confirmation) — host output kept around
+    // the report projection, never part of the JSON contract (FR-003). Empty when there is no decision.
+    and operationalLines (model: Model) : string =
+        match model.Decision with
+        | Some _ -> sprintf "wrote %s    (%s)" model.Request.AuditOut AuditJson.schemaVersion
+        | None -> ""
 
     and renderText (model: Model) : string =
         match model.Decision with
@@ -769,43 +678,24 @@ module Loop =
             |> List.map (fun d -> "error: " + d.Message)
             |> String.concat "\n"
         | Some decision ->
-            let verdictToken =
-                match decision.Verdict with
-                | Pass -> "pass"
-                | Fail -> "fail"
+            // F27 wiring (063): the report facts come from the shared HumanText projection over the SAME
+            // ShipDecision the audit.json path serializes (FR-001); the host keeps only its operational
+            // `wrote` line (never part of the JSON contract — FR-003).
+            let projection = HumanText.ofShipDecision decision (cacheReportOf model) model.Outcomes
+            [ projection; operationalLines model ] |> String.concat "\n"
 
-            let basisToken =
-                match decision.ExitCodeBasis with
-                | Clean -> "clean"
-                | ExitCodeBasis.Blocked -> "blocked"
-
-            let header = sprintf "ship: verdict %s (exit-code basis: %s)" verdictToken basisToken
-
-            // The unknown-governed-path findings surface as `FindingItem`s across the partition; list
-            // them explicitly so the no-default-deny reasoning is observable (FR-012).
-            let allFindings =
-                [ decision.Blockers; decision.Warnings; decision.Passing ]
-                |> List.concat
-                |> List.filter isFinding
-
-            let findingLines =
-                match allFindings with
-                | [] -> [ "findings: none" ]
-                | fs -> (sprintf "findings: %d" (List.length fs)) :: (fs |> List.map itemLine)
-
-            [ [ header; "" ]
-              section "blockers" decision.Blockers
-              section "warnings" decision.Warnings
-              section "passing" decision.Passing
-              [ "" ]
-              findingLines
-              [ "" ]
-              cacheLinesOf model
-              [ "" ]
-              executionLinesOf model
-              [ ""; sprintf "wrote %s    (%s)" model.Request.AuditOut AuditJson.schemaVersion ] ]
-            |> List.concat
-            |> String.concat "\n"
+    // F27 wiring (063): build the emit effect. Json carries the contract string (human = None). Text carries
+    // the ANSI-free plain string (used for `Plain`) PLUS the `ReportView` + operational line (used for the
+    // `Rich` path the edge selects); the mode is decided at the edge via `selectMode (senseCapability …)`.
+    and emitEffect (model: Model) : Effect =
+        match model.Request.Format with
+        | Json -> EmitSummary(renderJson model, None, false)
+        | Text ->
+            match model.Decision with
+            | Some decision ->
+                let view = ReportView.viewOfShipDecision decision (cacheReportOf model) model.Outcomes
+                EmitSummary(renderText model, Some(view, operationalLines model), model.Request.ExplicitPlain)
+            | None -> EmitSummary(renderText model, None, model.Request.ExplicitPlain)
 
     // The Json form IS the F025 `audit.json` document verbatim (research D8, FR-007): `--json` stdout
     // equals the persisted file byte-for-byte and inherits F025 byte-stability. The text form is

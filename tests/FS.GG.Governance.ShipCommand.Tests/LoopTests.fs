@@ -124,7 +124,12 @@ let tests =
 
               let m5, e5 = Loop.update (Loop.Wrote(Loop.AuditArtifact, Ok())) m4
               Expect.equal m5.Phase Loop.Persisted "write ack ⇒ Persisted"
-              Expect.equal e5 [ Loop.EmitSummary(Loop.render m4 req.Format) ] "write ack ⇒ EmitSummary"
+
+              // F27 wiring (063): EmitSummary now also carries the human payload + --plain flag (the mode is
+              // decided at the edge). The carried text is still the rendered summary.
+              match e5 with
+              | [ Loop.EmitSummary(text, _, _) ] -> Expect.equal text (Loop.render m4 req.Format) "write ack ⇒ EmitSummary with the rendered text"
+              | other -> failtestf "expected a single EmitSummary, got %A" other
 
               let m6, e6 = Loop.update Loop.Emitted m5
               Expect.equal m6.Phase Loop.Done "Emitted ⇒ Done"
@@ -164,10 +169,12 @@ let tests =
               let m4, _ = toJoined snap m2
               let text = Loop.render m4 Loop.Text
 
-              Expect.stringContains text "verdict fail" "states the verdict"
-              Expect.stringContains text "exit-code basis: blocked" "states the exit-code basis"
-              Expect.stringContains text "blockers:" "lists the blockers section"
-              Expect.stringContains text "cache-eligibility:" "lists the cache outcome"
+              // F27 wiring (063): the text is now the shared HumanText.ofShipDecision projection (NON-contractual
+              // wording): Title "verdict: FAIL", exit status line, "Blockers" group, "Cache eligibility" section.
+              Expect.stringContains text "verdict: FAIL" "states the verdict"
+              Expect.stringContains text "exit status: blocked" "states the exit-code basis"
+              Expect.stringContains text "Blockers" "lists the blockers section"
+              Expect.stringContains text "Cache eligibility" "lists the cache outcome"
               for g in m2.SelectedGates do
                   Expect.stringContains text (gateIdValue g.Id) "summary names each selected gate's cache outcome"
               Expect.equal text (Loop.render m4 Loop.Text) "Text render is pure"

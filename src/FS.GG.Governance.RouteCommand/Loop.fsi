@@ -27,6 +27,7 @@ open FS.GG.Governance.CommandRecord.Model    // CommandRecord (F052 — the asse
 open FS.GG.Governance.GateExecution.Model     // GateCommand (F052 — the command-to-run)
 open FS.GG.Governance.GateRun.Model           // GateOutcome (F052 — the per-gate execution outcome)
 open FS.GG.Governance.ProductSurfaces.Model    // ProductSurfaceReport (F23 — the product-surface classification)
+open FS.GG.Governance.HumanText               // F27 wiring (063): ReportView (the rich/plain view payload)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -57,7 +58,14 @@ module Loop =
           /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
           /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts
           /// (FR-004/FR-007).
-          PersistStore: bool }
+          PersistStore: bool
+          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+          /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
+          ExplicitPlain: bool
+          /// F27 wiring (063, US3): the host-parsed `--watch` flag. A pure-Loop no-op (the read-only watch
+          /// loop is an interpreter-edge concern driven by `HumanRender.Watch.run`); the one-shot evaluation
+          /// and the persisted artifacts are unaffected (FR-009). Never selects `Json`.
+          Watch: bool }
 
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
@@ -96,7 +104,11 @@ module Loop =
         /// F052: run the selected must-recompute command-gates ONCE each through the injected F051 port (D4).
         /// `update` requests this after cache eligibility; the interpreter runs `senseExecution` per gate.
         | ExecuteGates of (GateId * GateCommand) list
-        | EmitSummary of text: string
+        /// F27 wiring (063): emit the rendered output. `text` is the Json contract string (human = None)
+        /// OR the ANSI-free plain projection used when the sensed mode is `Plain`; `human` carries the
+        /// `ReportView` + operational lines for the `Rich` path the edge selects via `selectMode`
+        /// (`senseCapability explicitPlain`). The mode decision is at the edge, never here (FR-004).
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal cache
@@ -194,3 +206,8 @@ module Loop =
     /// Map the decided outcome to a numeric process exit code: `Success` 0, `UsageError'` 2,
     /// `InputUnavailable` 3, `ToolError` 4 (research D6). No `GovernedBlocking` code (FR-008).
     val exitCode: decision: ExitDecision -> int
+
+    /// F27 wiring (063): the report view projected from a terminal model — the SAME `ReportView` the plain
+    /// and rich one-shot renders use (`viewOfRouteResult` over the resolved `RouteResult` + recomputed cache
+    /// + outcomes). `None` when the model carries no report. The watch/tui edges re-render through this.
+    val humanView: model: Model -> ReportView.ReportView option

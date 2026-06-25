@@ -23,6 +23,7 @@ open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Seve
 open FS.GG.Governance.Ship                // Ship.rollup
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
 open FS.GG.Governance.VerifyJson           // VerifyJson.ofVerifyDecision
+open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofVerifyDecision — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
 open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
 open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
@@ -58,7 +59,8 @@ module Loop =
           Format: OutputFormat
           VerifyOut: string
           StorePath: string
-          PersistStore: bool }
+          PersistStore: bool
+          ExplicitPlain: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -85,7 +87,7 @@ module Loop =
         | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
-        | EmitSummary of text: string
+        | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
         | Begin
@@ -151,7 +153,8 @@ module Loop =
           Json: bool
           VerifyOut: string option
           Store: string option
-          Persist: bool }
+          Persist: bool
+          Plain: bool }
 
     let emptyAcc =
         { Repo = None
@@ -161,7 +164,8 @@ module Loop =
           Json = false
           VerifyOut = None
           Store = None
-          Persist = false }
+          Persist = false
+          Plain = false }
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
     // relative form (`readiness/verify.json`); any other repo is prefixed so the artifact lands inside it.
@@ -196,6 +200,7 @@ module Loop =
             | "--store" :: v :: more -> go { acc with Store = Some v } more
             | "--store" :: [] -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
+            | "--plain" :: more -> go { acc with Plain = true } more
             | "--persist-store" :: more -> go { acc with Persist = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
@@ -238,7 +243,8 @@ module Loop =
                           Format = (if acc.Json then Json else Text)
                           VerifyOut = acc.VerifyOut |> Option.defaultValue (under repo "readiness/verify.json")
                           StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
-                          PersistStore = acc.Persist }
+                          PersistStore = acc.Persist
+                          ExplicitPlain = acc.Plain }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -602,7 +608,8 @@ module Loop =
                 if awaitingPersist model then
                     { model with Phase = Persisted }, []
                 else
-                    { model with Phase = Persisted }, [ EmitSummary(render model model.Request.Format) ]
+                    let model = { model with Phase = Persisted }
+                    model, [ emitEffect model ]
 
             // F048: the NON-FATAL store-write ack. An `Error` appends a currency note; NEITHER outcome changes
             // `Exit` (it stays governed solely by `ExitCodeBasis` at `Emitted`) nor the already-emitted verify
@@ -618,7 +625,7 @@ module Loop =
                 let model = { model with PersistAcked = true; CurrencyNotes = notes }
 
                 match model.Phase with
-                | Persisted -> model, [ EmitSummary(render model model.Request.Format) ]
+                | Persisted -> model, [ emitEffect model ]
                 | _ -> model, []
 
             // F052: the executed gates' records arrive — capture each, build outcomes, RELOCATE passing
@@ -638,149 +645,23 @@ module Loop =
 
     // ── render — the deterministic summary ──
 
-    and severityToken (s: Severity) : string =
-        match s with
-        | Advisory -> "advisory"
-        | Blocking -> "blocking"
-
-    and pathValue (GovernedPath p) = p
-
-    and itemLine (item: EnforcedItem) : string =
-        let identity =
-            match item.Id with
-            | GateItem g -> sprintf "gate %s" (gateIdValue g)
-            | FindingItem(fid, path) -> sprintf "finding %s <- %s" (findingIdToken fid) (pathValue path)
-
-        sprintf "  %s   (base %s, effective %s)" identity (severityToken item.Decision.BaseSeverity) (severityToken item.Decision.EffectiveSeverity)
-
-    and section (name: string) (items: EnforcedItem list) : string list =
-        match items with
-        | [] -> [ sprintf "%s: none" name ]
-        | xs -> (sprintf "%s: %d" name (List.length xs)) :: (xs |> List.map itemLine)
-
-    and isFinding (item: EnforcedItem) : bool =
-        match item.Id with
-        | FindingItem _ -> true
-        | GateItem _ -> false
-
-    // ── the gate → enforcement-assigned effective severity map (data-model §6) — a currency finding carries
-    //    its owning gate's effective severity, read from the matching `EnforcedItem.Decision` in the decision
-    //    partition. Verify builds NO new EnforcedItem and adds NO new severity path. ──
-
-    and gateSeverityMap (model: Model) : Map<string, Severity> =
-        match model.Decision with
-        | None -> Map.empty
-        | Some decision ->
-            [ decision.Blockers; decision.Warnings; decision.Passing ]
-            |> List.concat
-            |> List.fold
-                (fun m item ->
-                    match item.Id with
-                    | GateItem g ->
-                        let k = gateIdValue g
-                        if Map.containsKey k m then m else Map.add k item.Decision.EffectiveSeverity m
-                    | FindingItem _ -> m)
-                Map.empty
-
-    and gateSeverityTag (sevMap: Map<string, Severity>) (gate: string) : string =
-        match Map.tryFind gate sevMap with
-        | Some s -> sprintf " [%s]" (severityToken s)
-        | None -> ""
-
-    // ── F046 currency findings (the first-class projection; recomputed purely from sensed/store/gates) ──
-
-    and cacheEntriesOf (model: Model) : CacheEligibilityEntry list =
+    // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
+    // model's sensed facts + loaded store — the SAME value the verify.json embed carries — for the shared
+    // HumanText projection. `None` until both senses have arrived (mirrors VerifyJson's `Some cacheReport`).
+    and cacheReportOf (model: Model) : CacheEligibilityReport option =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
-            CacheEligibility.evaluate candidates store |> CacheEligibility.entries
-        | _ -> []
+            Some(CacheEligibility.evaluate candidates store)
+        | _ -> None
 
-    and unresolvedEntriesOf (model: Model) : (string * string list) list =
-        match model.Sensed with
-        | Some sensed ->
-            FreshnessResolution.resolve model.SelectedGates sensed
-            |> FreshnessResolution.entries
-            |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
-            |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
-        | None -> []
-
-    and currencyCauseHuman (cause: RecomputeCause) : string =
-        match cause with
-        | NoPriorEvidence -> "noPriorEvidence"
-        | InputsChanged cats -> "inputsChanged: " + (cats |> List.map categoryToken |> String.concat ",")
-
-    and currencyLinesOf (model: Model) : string list =
-        let entries = cacheEntriesOf model
-        let unresolved = unresolvedEntriesOf model
-        let sevMap = gateSeverityMap model
-
-        let reusable =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | Reusable ref -> Some(gateIdValue e.Gate, EvidenceReuse.referenceValue ref)
-                | MustRecompute _ -> None)
-
-        let recompute =
-            entries
-            |> List.choose (fun e ->
-                match e.Verdict with
-                | MustRecompute cause -> Some(gateIdValue e.Gate, currencyCauseHuman cause)
-                | Reusable _ -> None)
-
-        let header =
-            sprintf "currency: %d fresh/reused, %d stale/recomputed, %d recompute-by-default" reusable.Length recompute.Length unresolved.Length
-
-        let block (title: string) (lines: string list) =
-            match lines with
-            | [] -> [ title + " none" ]
-            | _ -> title :: lines
-
-        let reusableLines =
-            reusable |> List.map (fun (g, r) -> sprintf "  %s <- %s%s" g r (gateSeverityTag sevMap g))
-
-        let recomputeLines =
-            recompute |> List.map (fun (g, c) -> sprintf "  %s   (%s)%s" g c (gateSeverityTag sevMap g))
-
-        let unresolvedLines =
-            unresolved
-            |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s%s" g (String.concat "," facts) (gateSeverityTag sevMap g))
-
-        [ header
-          yield! block "fresh/reused:" reusableLines
-          yield! block "stale/recomputed:" recomputeLines
-          yield! block "recompute by default (unresolved):" unresolvedLines
-          yield! model.CurrencyNotes ]
-
-    // ── F052 execution summary — which gates were executed / reused / not-executed, pass/fail ──
-
-    and dispositionWord (d: GateDisposition) : string =
-        match d with
-        | Executed -> "executed"
-        | Reused -> "reused"
-        | NotExecuted -> "not-executed"
-
-    and executionLinesOf (model: Model) : string list =
-        match model.Outcomes with
-        | [] -> [ "execution: none" ]
-        | outcomes ->
-            let line (gid, (o: GateOutcome)) =
-                let verdict =
-                    match o.Passed with
-                    | Some true -> "pass"
-                    | Some false ->
-                        match o.ExitCode with
-                        | Some(ExitCode code) when code = 124 -> "fail (timeout)"
-                        | Some(ExitCode code) when code = 127 -> "fail (start-failure)"
-                        | Some(ExitCode code) -> sprintf "fail (exit %d)" code
-                        | None -> "fail"
-                    | None -> "—"
-
-                sprintf "  %s   (%s, %s)" (gateIdValue gid) (dispositionWord o.Disposition) verdict
-
-            (sprintf "execution: %d gate(s)" (List.length outcomes)) :: (outcomes |> List.map line)
+    // F27 wiring (063): the host operational line (the `wrote` confirmation) — host output kept around the
+    // report projection, never part of the JSON contract (FR-003). Empty when there is no decision.
+    and operationalLines (model: Model) : string =
+        match model.Decision with
+        | Some _ -> sprintf "wrote %s    (%s)" model.Request.VerifyOut VerifyJson.schemaVersion
+        | None -> ""
 
     and renderText (model: Model) : string =
         match model.Decision with
@@ -789,51 +670,25 @@ module Loop =
             |> List.map (fun d -> "error: " + d.Message)
             |> String.concat "\n"
         | Some decision ->
-            let verdictToken =
-                match decision.Verdict with
-                | Pass -> "pass"
-                | Fail -> "blocked"
+            // F27 wiring (063) US1: the report facts come from the shared HumanText projection over the SAME
+            // ShipDecision the verify.json path serializes (FR-001); the host keeps only its operational `wrote`
+            // line (never part of the JSON contract — FR-003).
+            let projection = HumanText.ofVerifyDecision decision (cacheReportOf model) model.Outcomes
+            [ projection; operationalLines model ] |> String.concat "\n"
 
-            let basisToken =
-                match decision.ExitCodeBasis with
-                | Clean -> "clean"
-                | ExitCodeBasis.Blocked -> "blocked"
-
-            let allFindings =
-                [ decision.Blockers; decision.Warnings; decision.Passing ]
-                |> List.concat
-                |> List.filter isFinding
-
-            // "nothing to verify" (FR-012): an empty selection with no findings — the change touches no
-            // governed path / selects no profile-appropriate check.
-            if List.isEmpty model.SelectedGates && List.isEmpty allFindings then
-                [ sprintf "verify: verdict %s (exit-code basis: %s)" verdictToken basisToken
-                  ""
-                  "nothing to verify (no profile-appropriate checks for this change)"
-                  ""
-                  sprintf "wrote %s    (%s)" model.Request.VerifyOut VerifyJson.schemaVersion ]
-                |> String.concat "\n"
-            else
-                let header = sprintf "verify: verdict %s (exit-code basis: %s)" verdictToken basisToken
-
-                let findingLines =
-                    match allFindings with
-                    | [] -> [ "findings: none" ]
-                    | fs -> (sprintf "findings: %d" (List.length fs)) :: (fs |> List.map itemLine)
-
-                [ [ header; "" ]
-                  section "blockers" decision.Blockers
-                  section "warnings" decision.Warnings
-                  section "passing" decision.Passing
-                  [ "" ]
-                  findingLines
-                  [ "" ]
-                  currencyLinesOf model
-                  [ "" ]
-                  executionLinesOf model
-                  [ ""; sprintf "wrote %s    (%s)" model.Request.VerifyOut VerifyJson.schemaVersion ] ]
-                |> List.concat
-                |> String.concat "\n"
+    // F27 wiring (063) US2: build the emit effect. Json carries the contract string (human = None). Text carries
+    // the ANSI-free plain string (used for `Plain`) PLUS the `ReportView` + operational line (used for the
+    // `Rich` path the edge selects); the mode is decided at the edge via `selectMode (senseCapability …)`.
+    // `--json` (Format = Json) is ALWAYS the ANSI-free contract — never the rich path.
+    and emitEffect (model: Model) : Effect =
+        match model.Request.Format with
+        | Json -> EmitSummary(renderJson model, None, false)
+        | Text ->
+            match model.Decision with
+            | Some decision ->
+                let view = ReportView.viewOfVerifyDecision decision (cacheReportOf model) model.Outcomes
+                EmitSummary(renderText model, Some(view, operationalLines model), model.Request.ExplicitPlain)
+            | None -> EmitSummary(renderText model, None, model.Request.ExplicitPlain)
 
     // The Json form IS the F056 `verify.json` document verbatim (FR-007): `--json` stdout equals the
     // persisted file byte-for-byte. The text form is suppressed under `Json`.

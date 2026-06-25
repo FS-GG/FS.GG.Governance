@@ -31,7 +31,9 @@ let private realishPorts (dir: string) (cap: Capture) : Interpreter.Ports =
       Store = FreshnessSensing.realStoreReader
       Write = diskWriter
       Out = capturingSink cap
-      Execute = fakeExecPortPass }
+      Execute = fakeExecPortPass
+      SenseCapability = plainCapability
+      RenderReport = noRichRender }
 
 /// Relative-path → content-hash snapshot of a directory tree, skipping `.git`.
 let private snapshotTree (dir: string) : Map<string, string> =

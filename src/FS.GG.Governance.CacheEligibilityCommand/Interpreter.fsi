@@ -21,6 +21,7 @@ open FS.GG.Governance.Config.Model // CommandId
 open FS.GG.Governance.Gates.Model // Gate
 open FS.GG.Governance.FreshnessKey.Model // RuleHash, ArtifactHash, CommandVersion, GeneratorVersion
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore
+open FS.GG.Governance.HumanText // RenderMode, ReportView (F27 wiring 063 US2)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -52,7 +53,15 @@ module Interpreter =
           Freshness: FreshnessSensor
           Store: StoreReader
           Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+          Out: string -> unit
+          /// F27 wiring (063) US2: sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag
+          /// into a `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires
+          /// `Capability.senseCapability`; tests inject a synthetic capability to exercise the Rich path.
+          SenseCapability: bool -> RenderMode.ColorCapability
+          /// F27 wiring (063) US2: render the report view richly to the terminal (the `Rich` path). `realPorts`
+          /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
+          /// inject a capturing renderer. Plain/Json still go via `Out`.
+          RenderReport: ReportView.ReportView -> unit }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a real BCL-crypto `FreshnessSensor` (real SHA-256 over the

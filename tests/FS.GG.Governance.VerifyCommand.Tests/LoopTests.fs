@@ -71,8 +71,10 @@ let tests =
               Expect.isTrue (hasEffect (function Loop.WriteArtifact _ -> true | _ -> false) eff) "writes verify.json"
               Expect.equal m1.Phase Loop.Rolled "rolled"
 
-              // The render says nothing to verify; the verdict is a pass.
-              Expect.stringContains (Loop.render m1 Loop.Text) "nothing to verify" "nothing-to-verify text"
+              // F27 wiring (063): the render delegates to the shared HumanText projection; an empty selection
+              // is a passing decision, rendered as "verdict: PASS" (the dedicated "nothing to verify" wording
+              // was non-contractual host text).
+              Expect.stringContains (Loop.render m1 Loop.Text) "verdict: PASS" "empty selection ⇒ passing verdict text"
 
               // On the write ack the summary is emitted and the terminal exit is Success.
               let m2, _ = Loop.update (Loop.Wrote(Loop.VerifyArtifact, Ok())) m1

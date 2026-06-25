@@ -53,8 +53,10 @@ let tests =
               let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
               let req, cap, _ = runWith validCatalog git Loop.DefaultRange Loop.Text Gate Standard
               let summary = Expect.wantSome (List.tryHead cap.Emits) "a summary was emitted"
-              Expect.stringContains summary "verdict fail" "summary states the verdict"
-              Expect.stringContains summary "blockers:" "summary lists the blockers section"
+              // F27 wiring (063): the summary is the shared HumanText.ofShipDecision projection (NON-contractual
+              // wording) plus the host's `wrote` line — Title "verdict: FAIL" and a "Blockers" group.
+              Expect.stringContains summary "verdict: FAIL" "summary states the verdict"
+              Expect.stringContains summary "Blockers" "summary lists the blockers section"
               Expect.stringContains summary req.AuditOut "summary names the written path"
           }
 
@@ -122,7 +124,7 @@ let tests =
               let persisted = writtenAudit capJson |> Option.map snd |> Option.defaultValue ""
               Expect.equal j persisted "--json stdout = the persisted audit.json byte-for-byte"
               use _doc = JsonDocument.Parse j // throws if not valid JSON
-              Expect.isFalse (j.Contains "verdict fail") "json form is not the human text"
+              Expect.isFalse (j.Contains "verdict: FAIL") "json form is not the human text"
 
               let t = Expect.wantSome (List.tryHead capText.Emits) "text summary emitted"
               Expect.stringContains t "verdict" "text form is the human summary"
