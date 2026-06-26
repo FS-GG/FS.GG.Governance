@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 071: semantic tests for FS.GG.Governance.Scaffold, exercising the PUBLIC surface — the pure
+       `Loop.init`/`update` driven with literal Model/Msg values (no I/O), and the edge
+       `Interpreter.run`/`step` driven against a REAL temp directory (Principle V) plus recording fake
+       ports for pure-edge assertions. The only synthetic element is the deliberately out-of-scope
+       provider CONTENT, supplied by a disclosed FAKE in-proc provider value (research D8). Expecto +
+       the VSTest adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="ParityTests.fs" />
+    <Compile Include="NoProviderTests.fs" />
+    <Compile Include="InterpreterTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
+  </ItemGroup>
+
+</Project>

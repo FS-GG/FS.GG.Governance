@@ -1,0 +1,420 @@
+TYPE FS.GG.Governance.Scaffold.InterpreterModule
+  [Method] Model run(Ports, RunRequest)
+  [Method] Msg step(Ports, Effect)
+  [Method] Ports realPorts(System.String)
+  [NestedType] FS.GG.Governance.Scaffold.InterpreterModule+Ports
+TYPE FS.GG.Governance.Scaffold.InterpreterModule+Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]]] get_Invoke()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String]] get_Probe()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]] get_Write()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] get_Out()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]]] Invoke
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String]] Probe
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]],Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]] Write
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] Out
+TYPE FS.GG.Governance.Scaffold.LoopModule
+  [Method] System.Tuple`2[FS.GG.Governance.Scaffold.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.LoopModule+Effect]] init(ScaffoldRequest, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider])
+  [Method] System.Tuple`2[FS.GG.Governance.Scaffold.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.LoopModule+Effect]] update(Msg, Model)
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Effect
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Model
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Msg
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Phase
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+RunRequest
+TYPE FS.GG.Governance.Scaffold.LoopModule+Effect
+  [Method] Boolean get_IsInvokeProvider()
+  [Method] Boolean get_IsProbeCollisions()
+  [Method] Boolean get_IsWriteAll()
+  [Method] Effect NewInvokeProvider(TemplateProvider, ScaffoldRequest)
+  [Method] Effect NewProbeCollisions(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Effect NewWriteAll(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Effect+InvokeProvider
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Effect+ProbeCollisions
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Effect+Tags
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Effect+WriteAll
+  [Property] Boolean IsInvokeProvider
+  [Property] Boolean IsProbeCollisions
+  [Property] Boolean IsWriteAll
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Scaffold.LoopModule+Effect+InvokeProvider
+  [Method] ScaffoldRequest get_request()
+  [Method] TemplateProvider get_provider()
+  [Property] ScaffoldRequest request
+  [Property] TemplateProvider provider
+TYPE FS.GG.Governance.Scaffold.LoopModule+Effect+ProbeCollisions
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_paths()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] paths
+TYPE FS.GG.Governance.Scaffold.LoopModule+Effect+Tags
+  [Field] Int32 InvokeProvider
+  [Field] Int32 ProbeCollisions
+  [Field] Int32 WriteAll
+TYPE FS.GG.Governance.Scaffold.LoopModule+Effect+WriteAll
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_files()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] files
+TYPE FS.GG.Governance.Scaffold.LoopModule+Model
+  [Constructor] Void .ctor(ScaffoldRequest, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider], Phase, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ScaffoldManifest])
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission] get_Emission()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ScaffoldManifest] get_Manifest()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider] get_Provider()
+  [Method] Phase get_Phase()
+  [Method] ScaffoldRequest get_Request()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission] Emission
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+ScaffoldManifest] Manifest
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider] Provider
+  [Property] Phase Phase
+  [Property] ScaffoldRequest Request
+TYPE FS.GG.Governance.Scaffold.LoopModule+Msg
+  [Method] Boolean Equals(Msg)
+  [Method] Boolean Equals(Msg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCollisionsProbed()
+  [Method] Boolean get_IsFilesWritten()
+  [Method] Boolean get_IsProviderEmitted()
+  [Method] Int32 CompareTo(Msg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Msg NewCollisionsProbed(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String])
+  [Method] Msg NewFilesWritten(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] Msg NewProviderEmitted(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError])
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Msg+CollisionsProbed
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Msg+FilesWritten
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Msg+ProviderEmitted
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Msg+Tags
+  [Property] Boolean IsCollisionsProbed
+  [Property] Boolean IsFilesWritten
+  [Property] Boolean IsProviderEmitted
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Scaffold.LoopModule+Msg+CollisionsProbed
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[System.String],System.String] Item
+TYPE FS.GG.Governance.Scaffold.LoopModule+Msg+FilesWritten
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] Item
+TYPE FS.GG.Governance.Scaffold.LoopModule+Msg+ProviderEmitted
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError] Item
+TYPE FS.GG.Governance.Scaffold.LoopModule+Msg+Tags
+  [Field] Int32 CollisionsProbed
+  [Field] Int32 FilesWritten
+  [Field] Int32 ProviderEmitted
+TYPE FS.GG.Governance.Scaffold.LoopModule+Phase
+  [Method] Boolean Equals(Phase)
+  [Method] Boolean Equals(Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDone()
+  [Method] Boolean get_IsInvoking()
+  [Method] Boolean get_IsProbing()
+  [Method] Boolean get_IsWriting()
+  [Method] Int32 CompareTo(Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Phase get_Done()
+  [Method] Phase get_Invoking()
+  [Method] Phase get_Probing()
+  [Method] Phase get_Writing()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.LoopModule+Phase+Tags
+  [Property] Boolean IsDone
+  [Property] Boolean IsInvoking
+  [Property] Boolean IsProbing
+  [Property] Boolean IsWriting
+  [Property] Int32 Tag
+  [Property] Phase Done
+  [Property] Phase Invoking
+  [Property] Phase Probing
+  [Property] Phase Writing
+TYPE FS.GG.Governance.Scaffold.LoopModule+Phase+Tags
+  [Field] Int32 Done
+  [Field] Int32 Invoking
+  [Field] Int32 Probing
+  [Field] Int32 Writing
+TYPE FS.GG.Governance.Scaffold.LoopModule+RunRequest
+  [Constructor] Void .ctor(ScaffoldRequest, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider])
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider] get_Provider()
+  [Method] ScaffoldRequest get_Request()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Scaffold.ModelModule+TemplateProvider] Provider
+  [Property] ScaffoldRequest Request
+TYPE FS.GG.Governance.Scaffold.ModelModule
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+EmittedFile
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+GeneratedPath
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+PathOwnership
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderContractVersion
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderEmission
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderError
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderId
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ScaffoldManifest
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+TemplateProvider
+TYPE FS.GG.Governance.Scaffold.ModelModule+EmittedFile
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(EmittedFile)
+  [Method] Boolean Equals(EmittedFile, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EmittedFile)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Contents()
+  [Method] System.String get_RelativePath()
+  [Property] System.String Contents
+  [Property] System.String RelativePath
+TYPE FS.GG.Governance.Scaffold.ModelModule+GeneratedPath
+  [Constructor] Void .ctor(System.String, PathOwnership)
+  [Method] Boolean Equals(GeneratedPath)
+  [Method] Boolean Equals(GeneratedPath, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(GeneratedPath)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] PathOwnership get_Ownership()
+  [Method] System.String ToString()
+  [Method] System.String get_RelativePath()
+  [Property] PathOwnership Ownership
+  [Property] System.String RelativePath
+TYPE FS.GG.Governance.Scaffold.ModelModule+PathOwnership
+  [Method] Boolean Equals(PathOwnership)
+  [Method] Boolean Equals(PathOwnership, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PathOwnership)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PathOwnership get_ProviderOwned()
+  [Method] System.String ToString()
+  [Property] Int32 Tag
+  [Property] PathOwnership ProviderOwned
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderContractVersion
+  [Constructor] Void .ctor(Int32, Int32)
+  [Method] Boolean Equals(ProviderContractVersion)
+  [Method] Boolean Equals(ProviderContractVersion, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderContractVersion)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Major()
+  [Method] Int32 get_Minor()
+  [Method] System.String ToString()
+  [Property] Int32 Major
+  [Property] Int32 Minor
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderEmission
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+EmittedFile])
+  [Method] Boolean Equals(ProviderEmission)
+  [Method] Boolean Equals(ProviderEmission, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderEmission)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+EmittedFile] get_Files()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+EmittedFile] Files
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderError
+  [Method] Boolean Equals(ProviderError)
+  [Method] Boolean Equals(ProviderError, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEmitFailed()
+  [Method] Boolean get_IsUnresolvable()
+  [Method] Int32 CompareTo(ProviderError)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderError NewEmitFailed(System.String)
+  [Method] ProviderError NewUnresolvable(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderError+EmitFailed
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderError+Tags
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ProviderError+Unresolvable
+  [Property] Boolean IsEmitFailed
+  [Property] Boolean IsUnresolvable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderError+EmitFailed
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderError+Tags
+  [Field] Int32 EmitFailed
+  [Field] Int32 Unresolvable
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderError+Unresolvable
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.Scaffold.ModelModule+ProviderId
+  [Method] Boolean Equals(ProviderId)
+  [Method] Boolean Equals(ProviderId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderId NewProviderId(System.String)
+  [Method] System.String ToString()
+  [Method] System.String get_Item()
+  [Property] Int32 Tag
+  [Property] System.String Item
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal
+  [Method] Boolean Equals(Refusal)
+  [Method] Boolean Equals(Refusal, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCollision()
+  [Method] Boolean get_IsContractMismatch()
+  [Method] Boolean get_IsOutOfTarget()
+  [Method] Boolean get_IsProviderErrored()
+  [Method] Boolean get_IsProviderUnavailable()
+  [Method] Int32 CompareTo(Refusal)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Refusal NewCollision(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Refusal NewContractMismatch(ProviderContractVersion)
+  [Method] Refusal NewOutOfTarget(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Refusal NewProviderErrored(System.String)
+  [Method] Refusal NewProviderUnavailable(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+Collision
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+ContractMismatch
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+OutOfTarget
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+ProviderErrored
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+ProviderUnavailable
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+Refusal+Tags
+  [Property] Boolean IsCollision
+  [Property] Boolean IsContractMismatch
+  [Property] Boolean IsOutOfTarget
+  [Property] Boolean IsProviderErrored
+  [Property] Boolean IsProviderUnavailable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+Collision
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_paths()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] paths
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+ContractMismatch
+  [Method] ProviderContractVersion get_declared()
+  [Property] ProviderContractVersion declared
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+OutOfTarget
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_paths()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] paths
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+ProviderErrored
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+ProviderUnavailable
+  [Method] System.String get_detail()
+  [Property] System.String detail
+TYPE FS.GG.Governance.Scaffold.ModelModule+Refusal+Tags
+  [Field] Int32 Collision
+  [Field] Int32 ContractMismatch
+  [Field] Int32 OutOfTarget
+  [Field] Int32 ProviderErrored
+  [Field] Int32 ProviderUnavailable
+TYPE FS.GG.Governance.Scaffold.ModelModule+ScaffoldManifest
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.Scaffold.ModelModule+ProviderId,FS.GG.Governance.Scaffold.ModelModule+ProviderContractVersion]], ScaffoldOutcome, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+GeneratedPath], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ScaffoldManifest)
+  [Method] Boolean Equals(ScaffoldManifest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ScaffoldManifest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+GeneratedPath] get_Generated()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Collisions()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.Scaffold.ModelModule+ProviderId,FS.GG.Governance.Scaffold.ModelModule+ProviderContractVersion]] get_Provider()
+  [Method] ScaffoldOutcome get_Outcome()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Scaffold.ModelModule+GeneratedPath] Generated
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Collisions
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.Scaffold.ModelModule+ProviderId,FS.GG.Governance.Scaffold.ModelModule+ProviderContractVersion]] Provider
+  [Property] ScaffoldOutcome Outcome
+TYPE FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome
+  [Method] Boolean Equals(ScaffoldOutcome)
+  [Method] Boolean Equals(ScaffoldOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsNoProvider()
+  [Method] Boolean get_IsRefused()
+  [Method] Boolean get_IsScaffolded()
+  [Method] Int32 CompareTo(ScaffoldOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ScaffoldOutcome NewRefused(Refusal)
+  [Method] ScaffoldOutcome get_NoProvider()
+  [Method] ScaffoldOutcome get_Scaffolded()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome+Refused
+  [NestedType] FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome+Tags
+  [Property] Boolean IsNoProvider
+  [Property] Boolean IsRefused
+  [Property] Boolean IsScaffolded
+  [Property] Int32 Tag
+  [Property] ScaffoldOutcome NoProvider
+  [Property] ScaffoldOutcome Scaffolded
+TYPE FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome+Refused
+  [Method] Refusal get_Item()
+  [Property] Refusal Item
+TYPE FS.GG.Governance.Scaffold.ModelModule+ScaffoldOutcome+Tags
+  [Field] Int32 NoProvider
+  [Field] Int32 Refused
+  [Field] Int32 Scaffolded
+TYPE FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ScaffoldRequest)
+  [Method] Boolean Equals(ScaffoldRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ScaffoldRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ReservedPaths()
+  [Method] System.String ToString()
+  [Method] System.String get_Target()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ReservedPaths
+  [Property] System.String Target
+TYPE FS.GG.Governance.Scaffold.ModelModule+TemplateProvider
+  [Constructor] Void .ctor(ProviderId, ProviderContractVersion, Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]] get_Emit()
+  [Method] ProviderContractVersion get_ContractVersion()
+  [Method] ProviderId get_Id()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Scaffold.ModelModule+ScaffoldRequest,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Scaffold.ModelModule+ProviderEmission,FS.GG.Governance.Scaffold.ModelModule+ProviderError]] Emit
+  [Property] ProviderContractVersion ContractVersion
+  [Property] ProviderId Id

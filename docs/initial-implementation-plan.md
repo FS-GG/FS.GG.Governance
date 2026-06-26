@@ -917,7 +917,7 @@ without altering the `charter -> ship` chain
 `specs/014-agent-guidance/readiness/artifact-traceability.md` for the full
 requirement-to-evidence map.
 
-### Phase 9: Bootstrap And Migration Experience — 🟢 SDD slice complete (runtime templates optional/out of scope)
+### Phase 9: Bootstrap And Migration Experience — 🟢 SDD slice complete · 🟡 runtime template-provider seam core landed (host wiring deferred to FS.GG.SDD)
 
 Owner: `FS.GG.SDD`, with optional FS.GG.Rendering template providers and
 Governance policy setup.
@@ -929,21 +929,36 @@ Status (reconciled 2026-06-21): the **SDD-owned slice is complete**. The
 `003-native-sdd-lifecycle-commands`); the end-to-end quickstart, migration
 guidance, Governance-after-init integration boundary, and an automated
 no-Governance lifecycle smoke harness landed in feature `016-bootstrap-migration`
-(evidence: `specs/016-bootstrap-migration/readiness/`). Runtime product-skeleton
-templates and FS.GG.Rendering template-provider delegation are explicitly
-**optional and out of scope** for the SDD slice.
+(evidence: `specs/016-bootstrap-migration/readiness/`). The **generic runtime
+template-provider seam core** subsequently landed as Governance libraries in feature
+`071-runtime-project-templates` (`FS.GG.Governance.Scaffold` +
+`FS.GG.Governance.ScaffoldManifestJson`); **host wiring** of that seam into
+`fsgg-sdd init` remains **deferred to the sibling `FS.GG.SDD` repo** (research D0).
+Runtime product ownership stays outside the SDD lifecycle.
 
-Legend: 🟢 complete · ⬜ optional / not started.
+Legend: 🟢 complete · 🟡 generic seam landed, host wiring deferred · ⬜ optional / not started.
 
-- ⬜ [ ] Add project templates for a new SDD-governed product skeleton. (Optional;
-  kept out of scope by feature `016-bootstrap-migration` — runtime templates are a
-  template-provider concern.)
+- 🟡 [~] Add project templates for a new SDD-governed product skeleton — **generic
+  template-provider seam core landed** in Governance feature
+  `071-runtime-project-templates`: the packable `FS.GG.Governance.Scaffold` (provider
+  contract + pure scaffold-orchestration MVU + total edge interpreter) and
+  `FS.GG.Governance.ScaffoldManifestJson` (deterministic, byte-stable
+  scaffold-manifest projection) libraries. The seam hardcodes no provider name,
+  package id, target name, or layout (FR-003). **Host wiring into `fsgg-sdd init`**
+  (provider selection flag, lifecycle-skeleton-first ordering, exit-code mapping,
+  manifest persistence) remains **deferred to the sibling `FS.GG.SDD` repo**
+  (research `specs/071-runtime-project-templates/research.md` D0 — tracked, not
+  silently omitted).
 - 🟢 [x] Create `.fsgg/project.yml`, `.fsgg/sdd.yml`, `.fsgg/agents.yml`, `work/`,
   and initial readiness directories. (Feature `003-native-sdd-lifecycle-commands`
   `fsgg-sdd init`.)
-- ⬜ [ ] Optionally call a template provider for runtime code while keeping runtime
-  ownership outside SDD. (Optional; out of scope by feature
-  `016-bootstrap-migration`.)
+- 🟡 [~] Optionally call a template provider for runtime code while keeping runtime
+  ownership outside SDD — **generic seam core landed** in feature
+  `071-runtime-project-templates` (the in-process `TemplateProvider` port: the
+  provider *describes* target-relative files, the tool owns every write and every
+  safety refusal; provider discovery/resolution and a concrete built-in provider are
+  deferred host concerns). **Host wiring into `fsgg-sdd init`** is **deferred to the
+  sibling `FS.GG.SDD` repo** (research D0).
 - 🟢 [x] Provide migration guidance from existing Spec Kit projects to native SDD
   artifacts. (Feature `016-bootstrap-migration`.)
 - 🟢 [x] Preserve standard Spec Kit as a valid development workflow for the SDD repo

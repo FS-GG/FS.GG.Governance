@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 071: the generic template-provider SEAM CORE — a LIBRARY (research D0), NOT an Exe. It mirrors
+       the RouteCommand split (pure MVU `Loop` + edge `Interpreter`) with one addition: a `Model`
+       module carrying the contract/manifest value types and the in-process provider port. It hardcodes
+       NO provider name, package id, target name, toolchain, or layout (FR-003); all such knowledge
+       lives behind the injected `TemplateProvider` port. Host wiring into `fsgg-sdd init`
+       (provider-selection flag, lifecycle-skeleton-first ordering, exit-code mapping, manifest
+       persistence) is DEFERRED to the sibling FS.GG.SDD repo (research D0).
+
+       It adds NO new third-party PackageReference and references ONLY FS.GG.Governance.Kernel; the
+       only impure primitives are `System.IO` writes (the Write port) at the edge — both BCL. No git,
+       no FS-scan, no FAKE, no rendering dependency in the core (research D7). Compile order
+       Model -> Loop -> Interpreter: Loop references Model's value types; Interpreter references Loop's
+       Effect/Msg/Model/RunRequest. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Scaffold</RootNamespace>
+    <Version>0.1.0</Version>
+    <OutputType>Library</OutputType>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Scaffold</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+  </ItemGroup>
+
+</Project>

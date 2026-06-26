@@ -1,0 +1,4 @@
+TYPE FS.GG.Governance.ScaffoldManifestJson.ScaffoldManifestJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofManifest(ScaffoldManifest)
+  [Property] System.String schemaVersion

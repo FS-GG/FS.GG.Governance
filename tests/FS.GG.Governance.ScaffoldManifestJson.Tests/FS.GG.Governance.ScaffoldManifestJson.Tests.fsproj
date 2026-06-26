@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 071: semantic tests for FS.GG.Governance.ScaffoldManifestJson, exercising the PUBLIC surface —
+       `ScaffoldManifestJson.ofManifest` over REAL `ScaffoldManifest` values (assembled via the
+       Scaffold seam / its Model types), inspecting the EMITTED BYTES via a read-only
+       `System.Text.Json.JsonDocument` parse, exactly as the RouteJson tests do. Determinism +
+       field-exclusion sweeps prove no absolute path/clock/env reaches the output (SC-004, SC-006).
+       Expecto + the VSTest adapters let `dotnet test` drive the Expecto runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ProjectionTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ScaffoldManifestJson/FS.GG.Governance.ScaffoldManifestJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
+  </ItemGroup>
+
+</Project>

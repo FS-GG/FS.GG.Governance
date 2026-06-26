@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 071: the deterministic scaffold-manifest PROJECTION LEAF — mirrors RouteJson/EvidenceJson. A
+       single pure, total `ScaffoldManifestJson.ofManifest : ScaffoldManifest -> string` (plus a
+       `schemaVersion` constant) renders the seam's `ScaffoldManifest` value into the deterministic,
+       versioned `scaffold-manifest` document text. PURE and TOTAL (no I/O, git, clock, env); it carries
+       NO absolute target path, wall-clock, or environment value, so the same provider over the same
+       empty target yields byte-identical output on any machine (SC-004, SC-006, research D6).
+
+       It references ONLY FS.GG.Governance.Scaffold (for the `ScaffoldManifest` type) and adds NO new
+       third-party PackageReference — serialization is the net10.0 shared-framework `System.Text.Json`
+       (`Utf8JsonWriter`). It is a leaf with no cycle: no command/host/Cli reference (research D7).
+       Compile order ScaffoldManifestJson.fsi -> ScaffoldManifestJson.fs. The whole surface is a pure
+       total function — no MVU ceremony (Principle III/IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ScaffoldManifestJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ScaffoldManifestJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ScaffoldManifestJson.fsi" />
+    <Compile Include="ScaffoldManifestJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
+  </ItemGroup>
+
+</Project>
