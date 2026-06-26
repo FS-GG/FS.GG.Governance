@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the F070 edge-sensing core (FS.GG.Governance.CurrencySensing): parseManifest over
+       real refresh.yml text, and senseRepo against a REAL temp repo (real refresh.yml + real
+       refresh.lock.json + real source files) — the genuine I/O path, never mocked. Plus the surface baseline. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="SenseRepoTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.CurrencySensing/FS.GG.Governance.CurrencySensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

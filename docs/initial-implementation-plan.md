@@ -233,11 +233,11 @@ cost/cache/provenance host wiring + the verify/release publication boundary
 (F060–F061); and the full **host-wiring stream** — human projections (F062→**063**),
 cost-cache (**064**), release-provenance (**065**, with real-`dotnet pack` E2E in **066**),
 and product-surface checks into `fsgg verify` (**067**). **Phase 10 is now complete** and
-every command-host product-surface thread is closed. The genuinely-remaining open rows are
-narrow: (a) per-finding **rule-id** modeling upstream (Phase 5 🟡 — blocks the rule-hash
-guarantee); (b) a dedicated Governance **`evidence.json`** effective-evidence projection
-host (Phase 6 🟡); and (c) folding a stale-view currency finding into a **blocking** verdict
-at the Governance boundary (Phase 7 🟡).
+every command-host product-surface thread is closed. The three previously-open rows are now
+all closed: (a) per-finding **rule-id** modeling (Phase 5 — closed by **068**); (b) a dedicated
+Governance **`evidence.json`** effective-evidence projection host (Phase 6 — closed by **069**);
+and (c) folding a stale-view currency finding into a **blocking** verdict at the Governance
+boundary (Phase 7 — closed by **070**). No open functional roadmap rows remain.
 
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.
@@ -829,7 +829,7 @@ Exit criteria:
 - Task readiness explains missing skills and missing tests before implementation
   or ship.
 
-### Phase 7: Generated Views And Refresh — 🟢 SDD + Governance `fsgg refresh` complete (boundary stale-view *blocking* pending)
+### Phase 7: Generated Views And Refresh — 🟢 complete (SDD + Governance `fsgg refresh` + boundary stale-view *blocking* via 070)
 
 Owner: Shared.
 
@@ -857,10 +857,18 @@ Purpose: make generated artifacts explicit, reproducible, and currency-checked.
   provenance to `.fsgg/refresh.lock.json`, and emits an optional deterministic `refresh.json`.)
 - 🟢 [x] Emit stale-view diagnostics when generated views are older than their
   declared sources.
-- 🟡 [ ] Block stale generated views at the configured Governance boundary.
-  (Governance-owned; SDD reports, Governance enforces. `fsgg verify` (F056) already
-  surfaces first-class **currency findings**; the remaining work is folding a stale-view
-  currency finding into a **blocking** verdict at the configured boundary — not yet wired.)
+- 🟢 [x] Block stale generated views at the configured Governance boundary. (070.
+  Governance-owned; SDD reports, Governance enforces. A new pure `CurrencyEnforcement`
+  leaf owns the stale-view finding vocabulary + the `decideCurrency`/`findingsOf`/`decisionOf`
+  bridge into the F023 truth table; a new `CurrencySensing` core senses generated-view
+  currency at the verify/ship edge (parse `.fsgg/refresh.yml`, read the provenance lock,
+  digest sources — reusing the F057 determination, no new staleness detection); the
+  `fsgg verify`/`fsgg ship` hosts fold a stale-view finding through the **existing**
+  `deriveEffectiveSeverity` into the verdict and project it into an additive `generatedViews`
+  array. Opt-in via the manifest-level `currency-enforcement:` maturity dial; byte-identical
+  when unconfigured. `fsgg ship` blocks at the gate boundary; `fsgg verify` blocks under a
+  `strict` profile that tightens the `block-on-pr` floor to the verify run mode, and otherwise
+  surfaces a no-hide warning.)
 - 🟢 [x] Add snapshot or golden-fixture coverage once a generated view becomes
   public or tool-facing. (Covered by real-evidence `RefreshCommandTests` over
   disposable shipped project trees, per the 014 precedent.)

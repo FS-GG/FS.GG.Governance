@@ -16,6 +16,7 @@
 namespace FS.GG.Governance.RefreshJson
 
 open FS.GG.Governance.FreshnessKey.Model    // InputCategory
+open FS.GG.Governance.Config.Model          // Maturity (F070 additive currency-enforcement dial)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RefreshModel =
@@ -48,7 +49,14 @@ module RefreshModel =
           GeneratorBasis: string }
 
     /// The whole authored generation manifest. An EMPTY entry list is VALID ("nothing to refresh", FR-012).
-    type GenerationManifest = { Entries: GenerationEntry list }
+    /// `CurrencyEnforcement` is the F070 ADDITIVE opt-in stale-view blocking dial (the manifest-level
+    /// `currency-enforcement:` key): `None` (default) keeps stale-view findings advisory and every existing
+    /// artifact byte-identical; `Some maturity` lets a stale generated view fold into the verify/ship verdict
+    /// through the existing F023 truth table. It is NOT projected into `refresh.json` (the projection renders
+    /// only the fields it already renders), so `refresh.json` stays byte-identical.
+    type GenerationManifest =
+        { Entries: GenerationEntry list
+          CurrencyEnforcement: Maturity option }
 
     /// A closed, explained rejection of a malformed/unreadable `refresh.yml` (the `ReleaseCommand.DeclError`
     /// spirit). Parsing is PURE and TOTAL — malformed input is an `Error DeclError`, never an exception.

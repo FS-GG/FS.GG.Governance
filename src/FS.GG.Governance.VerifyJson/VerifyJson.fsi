@@ -103,3 +103,17 @@ module VerifyJson =
         findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list ->
         preview: VerifyReleasePreview option ->
             string
+
+    /// F070: the additive overload carrying the stale-generated-view currency findings + their F023
+    /// `EnforcementDecision`s. Emits an additive `generatedViews` array (omitted when empty ⇒ byte-identical to
+    /// `ofVerifyDecisionWithPreview`, FR-004). Existing entry points untouched (FR-010).
+    val ofVerifyDecisionWithGeneratedViews:
+        decision: ShipDecision ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+        findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list ->
+        preview: VerifyReleasePreview option ->
+        generatedViews:
+            (FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding *
+             FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
+            string

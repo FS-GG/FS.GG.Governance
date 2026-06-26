@@ -4,7 +4,7 @@ TYPE FS.GG.Governance.VerifyCommand.InterpreterModule
   [Method] Ports realPorts(System.String)
   [NestedType] FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
 TYPE FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SourceLayout,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseExpectations,FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ProductSurfaces.ModelModule+ProductSurfaceReport,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding]])
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SourceLayout,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseExpectations,FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ProductSurfaces.ModelModule+ProductSurfaceReport,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding]])
   [Method] FS.GG.Governance.Snapshot.Ports get_Git()
   [Method] FreshnessSensor get_Freshness()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_Execute()
@@ -14,6 +14,7 @@ TYPE FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Config.ModelModule+EnvironmentClass] get_SenseEnvironment()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Provenance.ModelModule+BuilderIdentity] get_SenseBuilder()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] get_SenseCapability()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding]] get_SenseViewCurrency()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_Store()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
@@ -28,6 +29,7 @@ TYPE FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Config.ModelModule+EnvironmentClass] SenseEnvironment
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Provenance.ModelModule+BuilderIdentity] SenseBuilder
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] SenseCapability
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding]] SenseViewCurrency
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] Store
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
@@ -112,6 +114,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect
   [Method] Boolean get_IsSenseReleasePreview()
   [Method] Boolean get_IsSenseScope()
   [Method] Boolean get_IsSenseSurfaces()
+  [Method] Boolean get_IsSenseViewCurrency()
   [Method] Boolean get_IsWriteArtifact()
   [Method] Effect NewEmitSummary(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]], Boolean)
   [Method] Effect NewExecuteGates(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]])
@@ -122,6 +125,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect
   [Method] Effect NewSenseReleasePreview(System.String)
   [Method] Effect NewSenseScope(ScopeSelector)
   [Method] Effect NewSenseSurfaces(ProductSurfaceReport)
+  [Method] Effect NewSenseViewCurrency(System.String)
   [Method] Effect NewWriteArtifact(ArtifactKind, System.String, System.String)
   [Method] Effect get_SenseProvenance()
   [Method] Int32 CompareTo(Effect)
@@ -140,6 +144,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseReleasePreview
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseScope
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseSurfaces
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseViewCurrency
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+Tags
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect+WriteArtifact
   [Property] Boolean IsEmitSummary
@@ -152,6 +157,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect
   [Property] Boolean IsSenseReleasePreview
   [Property] Boolean IsSenseScope
   [Property] Boolean IsSenseSurfaces
+  [Property] Boolean IsSenseViewCurrency
   [Property] Boolean IsWriteArtifact
   [Property] Effect SenseProvenance
   [Property] Int32 Tag
@@ -190,6 +196,9 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseScope
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseSurfaces
   [Method] ProductSurfaceReport get_report()
   [Property] ProductSurfaceReport report
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+SenseViewCurrency
+  [Method] System.String get_repo()
+  [Property] System.String repo
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+Tags
   [Field] Int32 EmitSummary
   [Field] Int32 ExecuteGates
@@ -201,6 +210,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+Tags
   [Field] Int32 SenseReleasePreview
   [Field] Int32 SenseScope
   [Field] Int32 SenseSurfaces
+  [Field] Int32 SenseViewCurrency
   [Field] Int32 WriteArtifact
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+Effect+WriteArtifact
   [Method] ArtifactKind get_kind()
@@ -250,7 +260,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+ExitDecision+Tags
   [Field] Int32 ToolError
   [Field] Int32 UsageError'
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+Model
-  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Ship.ModelModule+ShipDecision], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]], Microsoft.FSharp.Collections.FSharpList`1[System.String], Boolean, Boolean, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandKind.ModelModule+AuditSnapshot], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseReport.ModelModule+VerifyReleasePreview], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding], Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic], ExitDecision)
+  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Ship.ModelModule+ShipDecision], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]], Microsoft.FSharp.Collections.FSharpList`1[System.String], Boolean, Boolean, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandKind.ModelModule+AuditSnapshot], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseReport.ModelModule+VerifyReleasePreview], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+MatrixPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding], Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic], ExitDecision)
   [Method] Boolean Equals(Model)
   [Method] Boolean Equals(Model, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -264,6 +274,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Model
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] get_ViewCurrencyFindings()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] get_SelectedGates()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] get_SurfaceFindings()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic] get_Diagnostics()
@@ -291,6 +302,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Model
   [Property] Boolean StoreDegraded
   [Property] Boolean SurfacesPending
   [Property] ExitDecision Exit
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] ViewCurrencyFindings
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] SelectedGates
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] SurfaceFindings
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic] Diagnostics
@@ -329,6 +341,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [Method] Boolean get_IsStoreLoaded()
   [Method] Boolean get_IsStorePersisted()
   [Method] Boolean get_IsSurfacesSensed()
+  [Method] Boolean get_IsViewCurrencySensed()
   [Method] Boolean get_IsWrote()
   [Method] Int32 CompareTo(Msg)
   [Method] Int32 CompareTo(System.Object)
@@ -345,6 +358,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [Method] Msg NewStoreLoaded(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore,System.String])
   [Method] Msg NewStorePersisted(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
   [Method] Msg NewSurfacesSensed(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding])
+  [Method] Msg NewViewCurrencySensed(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding])
   [Method] Msg NewWrote(ArtifactKind, Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
   [Method] Msg get_Begin()
   [Method] Msg get_Emitted()
@@ -359,6 +373,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg+StorePersisted
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg+SurfacesSensed
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg+Tags
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg+ViewCurrencySensed
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg+Wrote
   [Property] Boolean IsBegin
   [Property] Boolean IsEmitted
@@ -371,6 +386,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [Property] Boolean IsStoreLoaded
   [Property] Boolean IsStorePersisted
   [Property] Boolean IsSurfacesSensed
+  [Property] Boolean IsViewCurrencySensed
   [Property] Boolean IsWrote
   [Property] Int32 Tag
   [Property] Msg Begin
@@ -416,7 +432,11 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg+Tags
   [Field] Int32 StoreLoaded
   [Field] Int32 StorePersisted
   [Field] Int32 SurfacesSensed
+  [Field] Int32 ViewCurrencySensed
   [Field] Int32 Wrote
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg+ViewCurrencySensed
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] get_findings()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] findings
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+Msg+Wrote
   [Method] ArtifactKind get_kind()
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_result()

@@ -98,6 +98,11 @@
     <ProjectReference Include="../FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+    <!-- F070 (stale-view blocking): the pure CurrencyEnforcement leaf (the Loop folds its findings) + the
+         impure CurrencySensing core (the shared refresh.yml parse + lock read + source digest at the edge —
+         a CORE, never the RefreshCommand host: the repo forbids command→command references). -->
+    <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CurrencySensing/FS.GG.Governance.CurrencySensing.fsproj" />
   </ItemGroup>
 
 </Project>

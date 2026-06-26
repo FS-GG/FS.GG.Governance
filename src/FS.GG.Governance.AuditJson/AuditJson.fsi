@@ -117,3 +117,16 @@ module AuditJson =
         cache: CacheEligibilityReport option ->
         execution: (GateId * GateOutcome) list ->
             string
+
+    /// F070: the additive overload carrying the stale-generated-view currency findings + their F023
+    /// `EnforcementDecision`s. Emits an additive `generatedViews` array (omitted when empty ⇒ byte-identical
+    /// to `ofShipDecision`, FR-004). Used for both `ship.json` and `audit.json`. `ofShipDecision` is untouched
+    /// (FR-010).
+    val ofShipDecisionWithGeneratedViews:
+        decision: ShipDecision ->
+        cache: CacheEligibilityReport option ->
+        execution: (GateId * GateOutcome) list ->
+        generatedViews:
+            (FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding *
+             FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
+            string

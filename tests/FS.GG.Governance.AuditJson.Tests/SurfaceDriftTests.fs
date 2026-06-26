@@ -106,6 +106,10 @@ let tests =
                   || name = "FS.GG.Governance.CommandRecord"
                   // 068: the dependency-free RuleIdentity leaf (the additive per-finding ruleId source).
                   || name = "FS.GG.Governance.RuleIdentity"
+                  // F070: the additive `generatedViews` overload references the pure CurrencyEnforcement leaf
+                  // (CurrencyFinding) + RefreshJson (RefreshModel.viewKindToken). Both cores. No host reference.
+                  || name = "FS.GG.Governance.CurrencyEnforcement"
+                  || name = "FS.GG.Governance.RefreshJson"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

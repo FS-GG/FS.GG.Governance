@@ -65,7 +65,11 @@ module Interpreter =
           /// and re-runs (FR-006, SC-003). `realPorts` wires constant/CI-derived senses; tests inject synthetic
           /// (`Synthetic`-named, disclosed) values.
           SenseEnvironment: unit -> EnvironmentClass
-          SenseBuilder: unit -> BuilderIdentity }
+          SenseBuilder: unit -> BuilderIdentity
+          /// F070: sense generated-view currency for `repo`, returning the stale-view findings gated by the
+          /// manifest's `currency-enforcement` dial. `realPorts` reuses the F057 refresh machinery; tests
+          /// inject a deterministic port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`). `[]` ⇒ byte-identical.
+          SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

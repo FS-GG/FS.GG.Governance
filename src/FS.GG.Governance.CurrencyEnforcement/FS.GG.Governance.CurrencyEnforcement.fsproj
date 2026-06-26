@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F070: the pure STALE-GENERATED-VIEW finding vocabulary + the bridge into the F023 enforcement truth
+       table. The analogue of FS.GG.Governance.SurfaceChecks.Model. It carries the `CurrencyFinding`/
+       `StaleCause` shape, the pure `decideCurrency` (re-expressing the F057 per-view currency decision over
+       the F029 `FreshnessKey.matches`/`diff` comparator VERBATIM), the opt-in `findingsOf` gate, and the
+       `enforcementInputOf`/`decisionOf` bridge (reuse only — NO truth-table logic, no new severity, mode,
+       profile, maturity value, or truth-table branch — FR-003).
+
+       It references ONLY the four pure cores whose vocabulary it reuses: RefreshJson (F057 currency
+       representation), FreshnessKey (F029 comparator), Enforcement (F023 truth table), and Config (F014
+       Maturity). It does NOT reference any command/host/Cli/Ship project, so it stays a leaf and cannot
+       introduce a cycle (mirrors SurfaceChecks.Model -> Enforcement). NO new third-party PackageReference. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CurrencyEnforcement</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CurrencyEnforcement</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CurrencyEnforcement.fsi" />
+    <Compile Include="CurrencyEnforcement.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

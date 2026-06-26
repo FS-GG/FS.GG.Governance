@@ -151,6 +151,11 @@ module Loop =
         /// `SurfaceFinding list` is fed back as `SurfacesSensed`. An empty report ⇒ no requests ⇒ `[]` ⇒
         /// byte-identical `verify.json` (FR-004).
         | SenseSurfaces of report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+        /// F070 (stale-view blocking): sense generated-view currency at the edge for `repo` — parse
+        /// `.fsgg/refresh.yml`, read each view's recorded provenance lock, sense source digests + generator
+        /// version, decide currency, apply the manifest's `currency-enforcement` gate. Fed back as
+        /// `ViewCurrencySensed`. `[]` (unconfigured / absent manifest) ⇒ byte-identical verify.json (FR-004).
+        | SenseViewCurrency of repo: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal currency
@@ -178,6 +183,10 @@ module Loop =
         /// `enforcementInputOf` + the existing `deriveEffectiveSeverity` — no truth-table change, FR-007); it
         /// never re-sorts or re-runs. `[]` ⇒ byte-identical `verify.json` (FR-004).
         | SurfacesSensed of findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+        /// F070: the deterministic stale-generated-view currency findings sensed at the edge. `update` folds
+        /// them into the verdict (via the existing `deriveEffectiveSeverity` — no truth-table change) and
+        /// projects them additively into verify.json's `generatedViews` array. `[]` ⇒ byte-identical (FR-004).
+        | ViewCurrencySensed of findings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying NO
@@ -240,6 +249,10 @@ module Loop =
           /// 067: `true` once `SenseSurfaces` is emitted, `false` on `SurfacesSensed` — joins the readiness
           /// gate so `verify.json` is projected only after the surface checks (like the release preview) land.
           SurfacesPending: bool
+          /// F070: the stale-generated-view currency findings sensed at the edge (`[]` until `ViewCurrencySensed`;
+          /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
+          /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).
+          ViewCurrencyFindings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

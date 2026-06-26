@@ -101,7 +101,7 @@ TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry
   [Property] System.String ViewId
   [Property] ViewKind Kind
 TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest
-  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry])
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity])
   [Method] Boolean Equals(GenerationManifest)
   [Method] Boolean Equals(GenerationManifest, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -112,8 +112,10 @@ TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationManifest
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] get_Entries()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity] get_CurrencyEnforcement()
   [Method] System.String ToString()
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+GenerationEntry] Entries
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity] CurrencyEnforcement
 TYPE FS.GG.Governance.RefreshJson.RefreshModelModule+RefreshDecision
   [Constructor] Void .ctor(RefreshOutcome, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision], Int32, Int32, Int32, Int32)
   [Method] Boolean Equals(RefreshDecision)

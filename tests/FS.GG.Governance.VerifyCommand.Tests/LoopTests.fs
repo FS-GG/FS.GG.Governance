@@ -25,7 +25,12 @@ let tests =
               let m, effExplicit = initFor (Loop.ExplicitPaths [ gp "src/a.fs" ])
               // F25 (064): provenance first. 065 (US3): the release preview is sensed BEFORE the catalog load
               // (SenseReleasePreview ⇒ ReleasePreviewSensed ⇒ LoadCatalog), so the preview is ready at projection.
-              Expect.equal effExplicit [ Loop.SenseProvenance; Loop.SenseReleasePreview "." ] "ExplicitPaths senses the preview first"
+              // F070: generated-view currency is sensed FIRST in the init batch, so `ViewCurrencyFindings` is
+              // populated before either projection path runs (breadth-first driver).
+              Expect.equal
+                  effExplicit
+                  [ Loop.SenseViewCurrency "."; Loop.SenseProvenance; Loop.SenseReleasePreview "." ]
+                  "ExplicitPaths senses currency, then the preview"
               Expect.equal m.Candidates (Some [ gp "src/a.fs" ]) "candidates set from explicit paths"
           }
 

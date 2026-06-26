@@ -76,6 +76,11 @@
     <ProjectReference Include="../FS.GG.Governance.CostBudgetJson/FS.GG.Governance.CostBudgetJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ProvenanceJson/FS.GG.Governance.ProvenanceJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <!-- F070 (stale-view blocking): the pure CurrencyEnforcement leaf (decideCurrency/findingsOf/decisionOf +
+         the CurrencyFinding vocabulary the Loop folds) and the impure CurrencySensing core (the shared
+         refresh.yml parse + lock read + source digest at the edge — a CORE, never the RefreshCommand host). -->
+    <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CurrencySensing/FS.GG.Governance.CurrencySensing.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -59,4 +59,44 @@ let tests =
                   Expect.equal model.Exit Loop.Success "relaxed run mode ⇒ clean pass (exit 0)"
                   Expect.isNonEmpty (Option.get model.Decision).Warnings "the base-blocking gates relax to warnings (no-hide)"
                   Expect.isTrue (File.Exists req.AuditOut) "audit.json still written")
+          }
+
+          // F070 (US1): a configured stale generated view, sensed by the REAL interpreter (real refresh.yml +
+          // real refresh.lock.json + real source digest), folds into a Fail/Blocked verdict and rides in
+          // audit.json's `generatedViews` blocker naming the stale view (SC-001, SC-005). Not Synthetic — the
+          // currency is sensed from real on-disk state through Interpreter.realPorts.
+          test "F070: a configured stale generated view ⇒ Fail/Blocked + a generatedViews blocker in audit.json" {
+              withTempRepo (fun dir ->
+                  let sha (s: string) =
+                      use h = System.Security.Cryptography.SHA256.Create()
+                      h.ComputeHash(System.Text.Encoding.UTF8.GetBytes s) |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+                  // A real, configured-blocking, source-drifted generated view in the working tree.
+                  writeFile dir "view-src.txt" "current\n"
+
+                  writeFile
+                      dir
+                      ".fsgg/refresh.yml"
+                      ("currency-enforcement: block-on-ship\n"
+                       + "views:\n  - id: route-projection\n    kind: route-projection\n    output: out.json\n    sources:\n      - view-src.txt\n    generator: [\"cp\"]\n    generatorBasis: g1\n")
+
+                  // recorded provenance disagrees with the live source digest ⇒ stale.
+                  writeFile
+                      dir
+                      ".fsgg/refresh.lock.json"
+                      (sprintf "{\"views\":{\"route-projection\":{\"sources\":[\"%s\"],\"generatorVersion\":\"g1\",\"output\":\"x\"}}}" (sha "OLD\n"))
+
+                  let req =
+                      match Loop.parse [ "ship"; "--repo"; dir; "--since"; "HEAD~1"; "--mode"; "gate"; "--profile"; "standard" ] with
+                      | Ok r -> r
+                      | Error e -> failtestf "parse failed: %A" e
+
+                  let model = Interpreter.run ({ Interpreter.realPorts req.Repo with Execute = fakeExecPort }) req
+
+                  Expect.equal (Option.get model.Decision).Verdict Fail "a stale generated view at block-on-ship ⇒ Fail"
+                  Expect.equal model.Exit Loop.Blocked "blocked exit"
+                  let audit = File.ReadAllText req.AuditOut
+                  Expect.stringContains audit "\"generatedViews\"" "audit.json carries the generatedViews detail"
+                  Expect.stringContains audit "route-projection" "the blocker names the stale view"
+                  Expect.stringContains audit "\"effectiveSeverity\":\"blocking\"" "the stale view blocks at the gate boundary")
           } ]

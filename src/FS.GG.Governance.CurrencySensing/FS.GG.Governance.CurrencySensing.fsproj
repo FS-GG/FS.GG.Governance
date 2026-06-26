@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F070: the impure EDGE-SENSING core for generated-view currency. It is the host-shared seam that turns a
+       repo path into the stale-view findings: it parses `.fsgg/refresh.yml` (the currency-enforcement dial +
+       each view's id/kind/sources/generatorBasis), reads each view's recorded provenance from
+       `.fsgg/refresh.lock.json`, digests the declared sources, and feeds the pure leaf's `decideCurrency` /
+       `findingsOf`. It exists as a CORE (not in a command host) so `fsgg verify` and `fsgg ship` can reuse it
+       without depending on the `RefreshCommand` host — the repo forbids command→command references.
+
+       It re-expresses the F057 refresh-host edge sensing (RefreshCommand.Interpreter's digest/lock helpers +
+       Declaration's manifest node-walk) for the currency-only fields; OutputPath/Generator are not needed for
+       the currency decision and are left empty. YamlDotNet is the already-pinned parser (the F014/F055/F057
+       precedent). References ONLY pure cores: RefreshJson (RefreshModel), FreshnessKey, CurrencyEnforcement,
+       Config. NO command/host/Cli reference. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CurrencySensing</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CurrencySensing</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CurrencySensing.fsi" />
+    <Compile Include="CurrencySensing.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

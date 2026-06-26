@@ -1,4 +1,5 @@
 TYPE FS.GG.Governance.AuditJson.AuditJsonModule
   [Method] System.String get_schemaVersion()
   [Method] System.String ofShipDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] System.String ofShipDecisionWithGeneratedViews(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding,FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision]])
   [Property] System.String schemaVersion

@@ -79,4 +79,48 @@ let tests =
               // non-contractual human view (which states pass/failed per gate, not the raw code).
               match writtenVerify cap with
               | Some(_, content) -> Expect.stringContains content "125" "the uncertain exit code is surfaced in verify.json"
-              | None -> failtest "expected a verify.json write" } ]
+              | None -> failtest "expected a verify.json write" }
+
+          // F070: a configured stale generated view, sensed by the REAL verify interpreter (real refresh.yml +
+          // lock + source digest). Proves C1 (block-on-pr blocks under verify ONLY under a strict profile that
+          // tightens the floor to the verify run mode) and US3/FR-009 no-hide (under standard the same finding
+          // is a visible WARNING carrying BOTH severities, never dropped). Not Synthetic — real on-disk state.
+          test "F070: stale view blocks verify under strict (C1) and warns (no-hide) under standard" {
+              withTempRepo (fun dir ->
+                  let sha (s: string) =
+                      use h = System.Security.Cryptography.SHA256.Create()
+                      h.ComputeHash(System.Text.Encoding.UTF8.GetBytes s) |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+                  writeFile dir "view-src.txt" "current\n"
+
+                  writeFile
+                      dir
+                      ".fsgg/refresh.yml"
+                      ("currency-enforcement: block-on-pr\n"
+                       + "views:\n  - id: route-projection\n    kind: route-projection\n    output: out.json\n    sources:\n      - view-src.txt\n    generator: [\"cp\"]\n    generatorBasis: g1\n")
+
+                  writeFile
+                      dir
+                      ".fsgg/refresh.lock.json"
+                      (sprintf "{\"views\":{\"route-projection\":{\"sources\":[\"%s\"],\"generatorVersion\":\"g1\",\"output\":\"x\"}}}" (sha "OLD\n"))
+
+                  let runP (profile: string) =
+                      let req =
+                          match Loop.parse [ "verify"; "--repo"; dir; "--since"; "HEAD~1"; "--profile"; profile ] with
+                          | Ok r -> r
+                          | Error e -> failtestf "parse failed: %A" e
+
+                      let model = Interpreter.run ({ Interpreter.realPorts req.Repo with Execute = fakeExecPortPass }) req
+                      model, System.IO.File.ReadAllText req.VerifyOut
+
+                  // strict: the block-on-pr floor tightens down to the verify run mode ⇒ the stale view BLOCKS (C1).
+                  let _, vStrict = runP "strict"
+                  Expect.stringContains vStrict "\"generatedViews\"" "verify.json carries the generatedViews detail"
+                  Expect.stringContains vStrict "route-projection" "names the stale view"
+                  Expect.stringContains vStrict "\"effectiveSeverity\":\"blocking\"" "block-on-pr blocks under verify+strict (C1)"
+
+                  // standard: verify sits below the block-on-pr floor ⇒ a visible WARNING with BOTH severities (no-hide).
+                  let _, vStd = runP "standard"
+                  Expect.stringContains vStd "\"generatedViews\"" "the relaxed finding is still present (no-hide)"
+                  Expect.stringContains vStd "\"baseSeverity\":\"blocking\"" "base severity shown"
+                  Expect.stringContains vStd "\"effectiveSeverity\":\"advisory\"" "relaxed to a warning under verify+standard (FR-009)") } ]

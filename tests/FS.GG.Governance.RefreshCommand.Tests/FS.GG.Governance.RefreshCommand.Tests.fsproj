@@ -17,6 +17,7 @@
     <Compile Include="Support.fs" />
     <Compile Include="ParseTests.fs" />
     <Compile Include="DeclarationTests.fs" />
+    <Compile Include="CurrencyEnforcementTests.fs" />
     <Compile Include="CurrencyTests.fs" />
     <Compile Include="LoopTests.fs" />
     <Compile Include="EndToEndTests.fs" />

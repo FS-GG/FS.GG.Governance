@@ -44,6 +44,8 @@ open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Rea
 open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
 open FS.GG.Governance.Provenance.Model        // BuilderIdentity
 
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
 
@@ -99,6 +101,7 @@ module Loop =
         | ExecuteGates of (GateId * GateCommand) list
         | SenseProvenance
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        | SenseViewCurrency of repo: string
 
     type Msg =
         | Begin
@@ -110,6 +113,7 @@ module Loop =
         | StorePersisted of Result<unit, string>
         | GatesExecuted of (GateId * CommandRecord) list
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
+        | ViewCurrencySensed of findings: CE.CurrencyFinding list
         | Emitted
 
     type Diagnostic =
@@ -144,6 +148,7 @@ module Loop =
           Builder: BuilderIdentity option
           CacheDecision: CacheDecisionReport option
           Audit: AuditSnapshot option
+          ViewCurrencyFindings: CE.CurrencyFinding list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -307,17 +312,21 @@ module Loop =
               Builder = None
               CacheDecision = None
               Audit = None
+              ViewCurrencyFindings = []
               Diagnostics = []
               Exit = Success }
 
         // F25 wiring (064): sense the two normalized provenance facts FIRST, so `Environment`/`Builder` are
-        // populated before the executed-gate persist projects the `provenance.json` sidecar.
+        // populated before the executed-gate persist projects the `provenance.json` sidecar. F070: sense
+        // generated-view currency in this first batch too, so `ViewCurrencyFindings` is populated before the
+        // gate-execution chain reaches `projectExecuted` (the breadth-first driver processes this batch first).
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely (research D4): set candidates here and go straight
         // to the catalog load — the faked git Ports is never consulted for a diff.
-        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ SenseProvenance; LoadCatalog request.Repo ]
+        | ExplicitPaths paths ->
+            { model with Candidates = Some paths }, [ SenseViewCurrency request.Repo; SenseProvenance; LoadCatalog request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseProvenance; SenseScope request.Scope ]
+        | DefaultRange -> model, [ SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws (FR-004/FR-013) ──
 
@@ -583,6 +592,27 @@ module Loop =
     // `GateOutcome`s, RELOCATE passing command-gates in the verdict (`applyExecution`), project audit.json
     // WITH the execution embed over the RELOCATED decision (cache report over the LOADED pre-run store), emit
     // the write, and persist the GROWN store. The relocated decision's `ExitCodeBasis` governs the exit (D3).
+    // F070: fold the stale-generated-view findings into the verdict (mirroring F067's `foldSurfaceVerdict`).
+    // Any finding whose EFFECTIVE severity (the existing F023 `deriveEffectiveSeverity`, via the leaf's
+    // `decisionOf`) is `Blocking` fails the run; otherwise identity. An empty list (unconfigured / all-current)
+    // ⇒ identity ⇒ byte-identical ship.json (FR-004). NO truth-table logic here — reuse only (FR-003).
+    let viewCurrencyBlocks (mode: RunMode) (profile: Profile) (findings: CE.CurrencyFinding list) : bool =
+        findings
+        |> List.exists (fun f -> (CE.decisionOf f mode profile).EffectiveSeverity = Blocking)
+
+    let foldViewCurrencyVerdict
+        (mode: RunMode)
+        (profile: Profile)
+        (findings: CE.CurrencyFinding list)
+        (decision: ShipDecision)
+        : ShipDecision =
+        if viewCurrencyBlocks mode profile findings then
+            { decision with
+                Verdict = Fail
+                ExitCodeBasis = ExitCodeBasis.Blocked }
+        else
+            decision
+
     let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
         | Some sensed, Some store, Some decision ->
@@ -652,13 +682,23 @@ module Loop =
                 |> Set.ofList
 
             let relocated = applyExecution passedGateIds decision
+            // F070: fold the stale-generated-view currency findings into the verdict AFTER `applyExecution`
+            // (which recomputes from gate blockers only). An effective-Blocking finding fails the run at the
+            // Gate boundary; an empty list (unconfigured) is the identity, so the pre-F070 golden is unchanged.
+            let folded =
+                foldViewCurrencyVerdict model.Request.Mode model.Request.Profile model.ViewCurrencyFindings relocated
+
+            let currencyDetail =
+                model.ViewCurrencyFindings
+                |> List.map (fun f -> f, CE.decisionOf f model.Request.Mode model.Request.Profile)
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
-            // audit.json is projected over the SAME relocated decision + cache report + outcomes as before —
-            // the budgeted findings are NOT folded in, so it stays byte-identical to the pre-wiring golden (D6).
-            let auditDoc = AuditJson.ofShipDecision relocated (Some cacheReport) outcomes
+            // audit.json is projected over the currency-folded decision + cache report + outcomes; the additive
+            // `generatedViews` array is omitted when there are no currency findings ⇒ byte-identical (FR-004/D6).
+            let auditDoc =
+                AuditJson.ofShipDecisionWithGeneratedViews folded (Some cacheReport) outcomes currencyDetail
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
@@ -681,7 +721,7 @@ module Loop =
 
             { model with
                 Phase = Rolled
-                Decision = Some relocated
+                Decision = Some folded
                 AuditDoc = Some auditDoc
                 Outcomes = outcomes
                 CacheDecision = Some budgetReport
@@ -809,6 +849,11 @@ module Loop =
                     Environment = Some environment
                     Builder = Some builder },
                 []
+
+            // F070: the stale-generated-view currency findings landed. Store them; the verdict fold and the
+            // additive `generatedViews` projection happen in `projectExecuted`, which reads this field. Pure
+            // state, no phase change. `[]` (unconfigured) ⇒ identity fold ⇒ byte-identical ship.json (FR-004).
+            | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

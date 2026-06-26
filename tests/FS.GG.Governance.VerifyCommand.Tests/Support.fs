@@ -470,6 +470,11 @@ let fakeSenseSurfaces
         -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
     fun _ -> [] // SYNTHETIC: no product surfaces in the legacy catalogs ⇒ empty, matching the real sense
 
+// F070: the default fake currency sense — no stale generated views (unconfigured / no refresh.yml). The
+// currency E2E tests inject a real port; everything else inherits this empty default ⇒ byte-identical.
+let fakeSenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list =
+    fun _ -> []
+
 // 067: the GENUINE read-only surface sense over a real temp tree — NOT synthetic. Lifted from
 // `Interpreter.realPorts` so the E2E proofs drive the exact production sense (real package/docs/skill/design
 // file reads, read-only package port) while git/exec stay faked. Reuses the real port without growing the
@@ -493,7 +498,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpr
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces }
+      SenseSurfaces = fakeSenseSurfaces
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -508,7 +514,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces }
+      SenseSurfaces = fakeSenseSurfaces
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
     { Files = readerOf files
@@ -523,7 +530,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces }
+      SenseSurfaces = fakeSenseSurfaces
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -538,7 +546,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces }
+      SenseSurfaces = fakeSenseSurfaces
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts

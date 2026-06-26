@@ -80,7 +80,11 @@ module Interpreter =
           /// yet emit from disk, disclosed per Constitution V).
           SenseSurfaces:
               FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
-                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list }
+                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+          /// F070: sense generated-view currency for `repo`, returning the stale-view findings gated by the
+          /// manifest's `currency-enforcement` dial. `realPorts` reuses the F057 refresh machinery; tests inject
+          /// a deterministic port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`). `[]` ⇒ byte-identical.
+          SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, the F046 real sensor/store reader, the F051 real execution port,

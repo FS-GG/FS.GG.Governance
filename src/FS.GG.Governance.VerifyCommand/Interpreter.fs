@@ -19,6 +19,9 @@ open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness,
 open FS.GG.Governance.HumanText              // RenderMode (selectMode), ReportView (F27 wiring 063)
 open FS.GG.Governance.HumanRender            // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
 
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: CurrencyFinding (the port's result)
+module CS = FS.GG.Governance.CurrencySensing.CurrencySensing         // F070: the shared edge sensing (senseRepo)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
@@ -45,7 +48,9 @@ module Interpreter =
           // 067: the read-only product-surface sense + dispatch port (classified report ⇒ findings).
           SenseSurfaces:
               FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
-                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list }
+                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+          // F070: the read-only generated-view currency sense (repo ⇒ stale-view findings). TOTAL & SAFE.
+          SenseViewCurrency: string -> CE.CurrencyFinding list }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the interpreter
     // never throws out of itself.
@@ -141,6 +146,10 @@ module Interpreter =
         // port is TOTAL & SAFE (it catches its own exceptions ⇒ no fabricated findings, no crash — FR-010);
         // an empty report ⇒ `[]` ⇒ byte-identical verify.json (FR-004).
         | Loop.SenseSurfaces report -> Loop.SurfacesSensed(ports.SenseSurfaces report)
+
+        // F070 (stale-view blocking): sense generated-view currency at the edge. TOTAL & SAFE; `[]` ⇒
+        // byte-identical verify.json (FR-004).
+        | Loop.SenseViewCurrency repo -> Loop.ViewCurrencySensed(ports.SenseViewCurrency repo)
 
         // F25 wiring (064): the two NEW normalized provenance senses. Both are normalized (no username, host,
         // absolute path, or wall-clock) so `provenance.json` is byte-identical across machines/re-runs.
@@ -289,7 +298,9 @@ module Interpreter =
                     exp
           // 067: the real read-only surface sense closes over `repo` + the F051 real execution port at
           // construction time (mirroring `SenseRelease`/`Execute`), so the effect carries only the report.
-          SenseSurfaces = senseSurfacesReal repo FS.GG.Governance.GateExecution.Interpreter.realPort }
+          SenseSurfaces = senseSurfacesReal repo FS.GG.Governance.GateExecution.Interpreter.realPort
+          // F070: the shared read-only generated-view currency sense (the CurrencySensing core).
+          SenseViewCurrency = CS.senseRepo }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

@@ -68,6 +68,11 @@ let fakeSenseEnvironment: unit -> EnvironmentClass = fun () -> Local // SYNTHETI
 let fakeSenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity =
     fun () -> FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg-test" // SYNTHETIC: fixed builder id
 
+// F070: the default fake currency sense — no stale views (unconfigured). The currency E2E tests inject a
+// real/synthetic port that returns findings; everything else inherits this empty default ⇒ byte-identical.
+let fakeSenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list =
+    fun _ -> []
+
 // ── repo-root locator (for the surface baseline) ──
 
 let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
@@ -530,7 +535,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -544,7 +550,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -558,7 +565,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 /// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -572,7 +580,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseViewCurrency = fakeSenseViewCurrency }
 
 /// A real RepoSnapshot the F016 core derives from a faked git port (for the pure `update` tests).
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =

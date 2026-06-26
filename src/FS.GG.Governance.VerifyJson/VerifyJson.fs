@@ -19,8 +19,10 @@ open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOu
 open FS.GG.Governance.PackEvidence.Model         // F26: PackEvidenceSet / PackVerdict / VersionVerdict
 open FS.GG.Governance.Attestation.Model          // F26: AttestationSummary
 open FS.GG.Governance.ReleaseReport.Model        // F26: VerifyReleasePreview
+open FS.GG.Governance.RefreshJson                // F070: RefreshModel.viewKindToken for the generatedViews kind
 
 module SC = FS.GG.Governance.SurfaceChecks.Model // F24: the additive surfaceChecks section
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary
 
 // The F056 verify.json projection. Renders the F024 `ShipDecision` (rolled at `RunMode.Verify`) + the F041
 // `CacheEligibilityReport` + the F052 per-gate execution outcomes into the deterministic, versioned
@@ -560,4 +562,64 @@ module VerifyJson =
             | None -> ()
             | Some p -> writeReleaseReadiness w p
 
+            w.WriteEndObject())
+
+    // F070: the additive `generatedViews` array (stale-generated-view findings folded through the existing
+    // F023 truth table). Each entry carries the view id/kind, the stale cause, the drifted categories (or the
+    // undeterminable detail), and BOTH base and effective severity + the lever-naming reason (no-hide, FR-006).
+    // Sorted by viewId; written ONLY when non-empty ⇒ absent ⇒ byte-identical to the pre-F070 projection (FR-004).
+    let writeGeneratedView (w: Utf8JsonWriter) (finding: CE.CurrencyFinding) (decision: EnforcementDecision) =
+        w.WriteStartObject()
+        w.WriteString("viewId", finding.ViewId)
+        w.WriteString("kind", RefreshModel.viewKindToken finding.Kind)
+        w.WriteString("cause", CE.staleCauseToken finding.Cause)
+
+        match finding.Cause with
+        | CE.SourceDrift drifted ->
+            w.WritePropertyName "drifted"
+            w.WriteStartArray()
+
+            for category in drifted do
+                w.WriteStringValue(categoryToken category)
+
+            w.WriteEndArray()
+        | CE.Undeterminable reason -> w.WriteString("detail", reason)
+
+        w.WriteString("baseSeverity", severityToken finding.BaseSeverity)
+        w.WriteString("effectiveSeverity", severityToken decision.EffectiveSeverity)
+        w.WriteString("reason", decision.Reason)
+        w.WriteEndObject()
+
+    let writeGeneratedViews (w: Utf8JsonWriter) (views: (CE.CurrencyFinding * EnforcementDecision) list) =
+        match views with
+        | [] -> ()
+        | _ ->
+            w.WritePropertyName "generatedViews"
+            w.WriteStartArray()
+
+            for finding, decision in views |> List.sortBy (fun (f, _) -> f.ViewId) do
+                writeGeneratedView w finding decision
+
+            w.WriteEndArray()
+
+    /// F070: the additive verify.json overload carrying the stale-generated-view currency findings + their
+    /// F023 `EnforcementDecision`s. Identical to `ofVerifyDecisionWithPreview` plus the trailing
+    /// `generatedViews` array (omitted when empty ⇒ byte-identical, FR-004). Existing entry points untouched.
+    let ofVerifyDecisionWithGeneratedViews
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (execution: (GateId * GateOutcome) list)
+        (findings: SC.SurfaceFinding list)
+        (preview: VerifyReleasePreview option)
+        (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
+        : string =
+        writeToString (fun w ->
+            w.WriteStartObject()
+            writeCore w decision cache execution findings
+
+            match preview with
+            | None -> ()
+            | Some p -> writeReleaseReadiness w p
+
+            writeGeneratedViews w generatedViews
             w.WriteEndObject())

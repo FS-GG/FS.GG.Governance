@@ -56,6 +56,11 @@
     <!-- F052: the optional per-gate `execution` embed carries the `GateOutcome` vocabulary (GateRun). -->
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
     <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
+    <!-- F070: the stale-generated-view `generatedViews` overload references the pure CurrencyEnforcement
+         leaf (CurrencyFinding/StaleCause/staleCauseToken) and RefreshJson (RefreshModel.viewKindToken);
+         Enforcement/FreshnessKey arrive transitively. No new third-party package. -->
+    <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
   </ItemGroup>
 
 </Project>

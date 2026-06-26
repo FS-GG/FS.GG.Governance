@@ -10,6 +10,7 @@
 namespace FS.GG.Governance.RefreshCommand
 
 open YamlDotNet.RepresentationModel
+open FS.GG.Governance.Config.Model            // Maturity (F070 currency-enforcement dial)
 open FS.GG.Governance.RefreshJson.RefreshModel
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -128,6 +129,24 @@ module Declaration =
             | Ok xs, Ok x -> Ok(xs @ [ x ])
             | Ok _, Error e -> Error e)
 
+    // ── F070 manifest-level currency-enforcement dial (hidden) ──
+    // Recognizes the canonical F014 Maturity tokens VERBATIM (the Config.Schema.parseMaturity vocabulary,
+    // re-expressed here since that helper is private to Config). An unknown value is an Error — never silently
+    // dropped (it would otherwise read as "advisory"). Absent key ⇒ None (opt-in / byte-identity).
+    let recognizeMaturity (raw: string) : Result<Maturity, string> =
+        match raw.Trim() with
+        | "observe" -> Ok Observe
+        | "warn" -> Ok Warn
+        | "block-on-pr" -> Ok BlockOnPr
+        | "block-on-ship" -> Ok BlockOnShip
+        | "block-on-release" -> Ok BlockOnRelease
+        | other ->
+            Error(
+                sprintf
+                    "refresh.yml 'currency-enforcement' has an unknown value '%s' (expected one of: observe, warn, block-on-pr, block-on-ship, block-on-release)"
+                    other
+            )
+
     // ── the public entry point ──
 
     let parse (lines: string list) : Result<GenerationManifest, DeclError> =
@@ -159,6 +178,16 @@ module Declaration =
                         if not (List.isEmpty duplicated) then
                             Error(sprintf "refresh.yml declares a view id more than once (%s)" (String.concat ", " duplicated))
                         else
-                            Ok { Entries = entries }
+                            // F070: an absent `currency-enforcement` key ⇒ None (opt-in); a present unknown
+                            // value is a hard error, not a silent advisory default.
+                            match scalarField root "currency-enforcement" with
+                            | None -> Ok { Entries = entries; CurrencyEnforcement = None }
+                            | Some raw ->
+                                match recognizeMaturity raw with
+                                | Error e -> Error e
+                                | Ok maturity ->
+                                    Ok
+                                        { Entries = entries
+                                          CurrencyEnforcement = Some maturity }
 
         result |> Result.mapError (fun reason -> { Reason = reason })

@@ -50,6 +50,8 @@ open FS.GG.Governance.ValidationMatrix.Model       // MatrixPlan, MatrixBoundary
 open FS.GG.Governance.ReleaseReport.Model          // VerifyReleasePreview
 open FS.GG.Governance.ReleaseDeclaration           // Declaration (the shared leaf)
 
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
 
@@ -106,6 +108,8 @@ module Loop =
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
         // 067: sense + run the product-surface checks at the edge (the report is classified purely in update).
         | SenseSurfaces of report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+        // F070: sense generated-view currency at the edge for `repo` (parse manifest, read provenance, sense).
+        | SenseViewCurrency of repo: string
 
     type Msg =
         | Begin
@@ -120,6 +124,8 @@ module Loop =
         | ReleasePreviewSensed of (Declaration.ReleaseDeclaration * SensedRelease) option
         // 067: the deterministic, already-sorted findings from `Composition.run`, folded into the verdict.
         | SurfacesSensed of findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+        // F070: the deterministic stale-generated-view currency findings, folded into the verdict + projected.
+        | ViewCurrencySensed of findings: CE.CurrencyFinding list
         | Emitted
 
     type Diagnostic =
@@ -161,6 +167,8 @@ module Loop =
           // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed) + the readiness flag.
           SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
           SurfacesPending: bool
+          // F070: the stale-generated-view currency findings sensed at the edge ([] until ViewCurrencySensed).
+          ViewCurrencyFindings: CE.CurrencyFinding list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -317,20 +325,24 @@ module Loop =
               ReleaseMatrix = None
               SurfaceFindings = []
               SurfacesPending = false
+              ViewCurrencyFindings = []
               Diagnostics = []
               Exit = Success }
 
         // F25 wiring (064): sense the two normalized provenance facts FIRST, so `Environment`/`Builder` are
         // populated before either the empty-selection short-circuit or the executed-gate persist projects the
-        // `provenance.json` sidecar.
+        // `provenance.json` sidecar. F070: sense generated-view currency in this first batch too, so
+        // `ViewCurrencyFindings` is populated before either projection path runs (breadth-first driver).
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely: set candidates here and go straight to the catalog load.
         // 065 (US3): the declaration load + release-fact sense is serialized BEFORE the catalog load (the
         // preview must be ready when verify.json is projected). `SenseReleasePreview` ⇒ `ReleasePreviewSensed`
         // ⇒ `LoadCatalog`.
-        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ SenseProvenance; SenseReleasePreview request.Repo ]
+        | ExplicitPaths paths ->
+            { model with Candidates = Some paths },
+            [ SenseViewCurrency request.Repo; SenseProvenance; SenseReleasePreview request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseProvenance; SenseScope request.Scope ]
+        | DefaultRange -> model, [ SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws ──
 
@@ -447,6 +459,32 @@ module Loop =
                 ExitCodeBasis = ExitCodeBasis.Blocked }
         else
             decision
+
+    // ── F070: stale-generated-view verdict fold (mirrors foldSurfaceVerdict; truth table NOT re-opened) ──
+    // True iff any currency finding is effective-Blocking at `RunMode.Verify` under the active profile, via the
+    // EXISTING `deriveEffectiveSeverity` (through the leaf's `decisionOf`). Reuse only — no new rule/severity.
+    // A finding configured `block-on-ship`/`block-on-release` is effective-Advisory under verify (a warning,
+    // FR-009); a `block-on-pr` finding blocks under verify only under a `strict`/`release` profile (C1).
+    let viewCurrencyBlocks (profile: Profile) (findings: CE.CurrencyFinding list) : bool =
+        findings
+        |> List.exists (fun f -> (CE.decisionOf f Verify profile).EffectiveSeverity = Blocking)
+
+    let foldViewCurrencyVerdict
+        (profile: Profile)
+        (findings: CE.CurrencyFinding list)
+        (decision: ShipDecision)
+        : ShipDecision =
+        if viewCurrencyBlocks profile findings then
+            { decision with
+                Verdict = Fail
+                ExitCodeBasis = ExitCodeBasis.Blocked }
+        else
+            decision
+
+    // F070: pair each finding with its EnforcementDecision (Verify run mode + active profile) for the
+    // additive `generatedViews` projection — carries both base + effective severity + the lever reason.
+    let viewCurrencyDetail (profile: Profile) (findings: CE.CurrencyFinding list) =
+        findings |> List.map (fun f -> f, CE.decisionOf f Verify profile)
 
     // ── F25 wiring (064): pure host-edge helpers (kinded-run label, provenance snapshot build) ──
 
@@ -655,7 +693,17 @@ module Loop =
             let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
             let preview = previewOf model snapshot
             let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
-            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview folded None [] model.SurfaceFindings preview
+            // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
+            let folded = foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
+
+            let verifyDoc =
+                VerifyJson.ofVerifyDecisionWithGeneratedViews
+                    folded
+                    None
+                    []
+                    model.SurfaceFindings
+                    preview
+                    (viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
 
             { model with
                 Phase = Rolled
@@ -749,6 +797,8 @@ module Loop =
             // FR-007) AFTER `applyExecution`, which recomputes from gate blockers only. With no findings this is
             // the identity, so the executed path stays byte-identical to the pre-067 golden (FR-004).
             let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
+            // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
+            let folded = foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
@@ -759,7 +809,14 @@ module Loop =
             // section is emitted when non-empty and omitted (byte-identical) when empty.
             let snapshot = buildSnapshot model (kindedRunsOf model records)
             let preview = previewOf model snapshot
-            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview folded (Some cacheReport) outcomes model.SurfaceFindings preview
+            let verifyDoc =
+                VerifyJson.ofVerifyDecisionWithGeneratedViews
+                    folded
+                    (Some cacheReport)
+                    outcomes
+                    model.SurfaceFindings
+                    preview
+                    (viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
@@ -980,6 +1037,11 @@ module Loop =
                     projectEmpty model
                 else
                     model, []
+
+            // F070: the stale-generated-view currency findings landed (sensed in the first batch, before the
+            // catalog/gate chain). Store them; both projection paths read `model.ViewCurrencyFindings`. Pure
+            // state, no projection trigger. `[]` (unconfigured) ⇒ byte-identical verify.json (FR-004).
+            | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

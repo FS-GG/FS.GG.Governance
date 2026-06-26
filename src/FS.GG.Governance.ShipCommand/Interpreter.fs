@@ -18,6 +18,9 @@ open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness,
 open FS.GG.Governance.HumanText              // RenderMode (selectMode), ReportView (F27 wiring 063)
 open FS.GG.Governance.HumanRender            // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
 
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: CurrencyFinding (the port's result)
+module CS = FS.GG.Governance.CurrencySensing.CurrencySensing         // F070: the shared edge sensing (senseRepo)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
@@ -36,7 +39,12 @@ module Interpreter =
           SenseCapability: bool -> RenderMode.ColorCapability
           RenderReport: ReportView.ReportView -> unit
           SenseEnvironment: unit -> FS.GG.Governance.Config.Model.EnvironmentClass
-          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity }
+          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity
+          /// F070: sense generated-view currency for `repo`, returning the stale-view findings (gated by the
+          /// manifest's `currency-enforcement` dial). `realPorts` wires the real read-only sense reusing the
+          /// F057 refresh machinery; tests inject a deterministic port. TOTAL & SAFE (catches its own
+          /// exceptions ⇒ `[]`, never a fabricated finding, never a crash). `[]` ⇒ byte-identical ship.json.
+          SenseViewCurrency: string -> CE.CurrencyFinding list }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (FR-010/FR-013).
@@ -149,6 +157,10 @@ module Interpreter =
 
             Loop.Emitted
 
+        // F070 (stale-view blocking): sense generated-view currency at the edge. The port is TOTAL & SAFE; an
+        // empty result ⇒ byte-identical ship.json (FR-004).
+        | Loop.SenseViewCurrency repo -> Loop.ViewCurrencySensed(ports.SenseViewCurrency repo)
+
     // F25 wiring (064): the real, NORMALIZED provenance senses. Environment is classified from the presence of
     // a generic `CI` marker only (`Ci` vs `Local`) — never a hostname, username, or path. Builder is a fixed,
     // machine-independent tool identity so `provenance.json` is byte-identical across machines and re-runs.
@@ -172,7 +184,9 @@ module Interpreter =
           SenseCapability = Capability.senseCapability
           RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
           SenseEnvironment = senseEnvironmentReal
-          SenseBuilder = senseBuilderReal }
+          SenseBuilder = senseBuilderReal
+          // F070: the shared read-only generated-view currency sense (the CurrencySensing core).
+          SenseViewCurrency = CS.senseRepo }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

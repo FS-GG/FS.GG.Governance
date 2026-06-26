@@ -8,6 +8,7 @@
 namespace FS.GG.Governance.RefreshJson
 
 open FS.GG.Governance.FreshnessKey.Model    // InputCategory
+open FS.GG.Governance.Config.Model          // Maturity (F070 additive currency-enforcement dial)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RefreshModel =
@@ -30,7 +31,9 @@ module RefreshModel =
           Generator: string list
           GeneratorBasis: string }
 
-    type GenerationManifest = { Entries: GenerationEntry list }
+    type GenerationManifest =
+        { Entries: GenerationEntry list
+          CurrencyEnforcement: Maturity option }
 
     type DeclError = { Reason: string }
 

@@ -1,0 +1,61 @@
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule
+  [Method] EnforcementDecision decisionOf(CurrencyFinding, RunMode, Profile)
+  [Method] EnforcementInput enforcementInputOf(CurrencyFinding, RunMode, Profile)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] findingsOf(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision])
+  [Method] System.String staleCauseToken(StaleCause)
+  [Method] ViewDecision decideCurrency(GenerationEntry, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion]], Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+ArtifactHash],FS.GG.Governance.FreshnessKey.ModelModule+GeneratorVersion],System.String])
+  [NestedType] FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding
+  [NestedType] FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding
+  [Constructor] Void .ctor(System.String, ViewKind, StaleCause, Severity, Maturity)
+  [Method] Boolean Equals(CurrencyFinding)
+  [Method] Boolean Equals(CurrencyFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CurrencyFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
+  [Method] Severity get_BaseSeverity()
+  [Method] StaleCause get_Cause()
+  [Method] System.String ToString()
+  [Method] System.String get_ViewId()
+  [Method] ViewKind get_Kind()
+  [Property] Maturity Maturity
+  [Property] Severity BaseSeverity
+  [Property] StaleCause Cause
+  [Property] System.String ViewId
+  [Property] ViewKind Kind
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause
+  [Method] Boolean Equals(StaleCause)
+  [Method] Boolean Equals(StaleCause, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsSourceDrift()
+  [Method] Boolean get_IsUndeterminable()
+  [Method] Int32 CompareTo(StaleCause)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] StaleCause NewSourceDrift(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory])
+  [Method] StaleCause NewUndeterminable(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+SourceDrift
+  [NestedType] FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+Tags
+  [NestedType] FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+Undeterminable
+  [Property] Boolean IsSourceDrift
+  [Property] Boolean IsUndeterminable
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+SourceDrift
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] get_drifted()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessKey.ModelModule+InputCategory] drifted
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+Tags
+  [Field] Int32 SourceDrift
+  [Field] Int32 Undeterminable
+TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+StaleCause+Undeterminable
+  [Method] System.String get_reason()
+  [Property] System.String reason

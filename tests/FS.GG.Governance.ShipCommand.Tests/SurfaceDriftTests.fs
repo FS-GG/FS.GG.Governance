@@ -133,6 +133,13 @@ let tests =
                   || name = "FS.GG.Governance.ProvenanceJson"
                   || name = "FS.GG.Governance.Provenance"
                   || name = "FS.GG.Governance.AgentReviewKey"
+                  // F070 (stale-view blocking): the pure CurrencyEnforcement leaf (folded into the verdict),
+                  // the impure CurrencySensing core (the shared refresh.yml parse + lock read + source digest
+                  // at the edge), and RefreshJson (RefreshModel — the generatedViews kind + the manifest types).
+                  // All CORES — NOT the RefreshCommand host (the repo forbids command→command references).
+                  || name = "FS.GG.Governance.CurrencyEnforcement"
+                  || name = "FS.GG.Governance.CurrencySensing"
+                  || name = "FS.GG.Governance.RefreshJson"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

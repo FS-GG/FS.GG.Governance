@@ -130,6 +130,11 @@ module Loop =
         /// `ReportView` + operational lines for the `Rich` path the edge selects via `selectMode`
         /// (`senseCapability explicitPlain`). The mode decision is at the edge, never here (FR-004).
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        /// F070 (stale-view blocking): sense generated-view currency at the edge for `repo` — parse
+        /// `.fsgg/refresh.yml`, read each view's recorded provenance lock, sense source digests + generator
+        /// version, decide currency, and apply the manifest's `currency-enforcement` gate. Result fed back as
+        /// `ViewCurrencySensed`. `[]` (unconfigured / absent manifest) ⇒ byte-identical ship.json (FR-004).
+        | SenseViewCurrency of repo: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal cache
@@ -150,6 +155,10 @@ module Loop =
         | GatesExecuted of (GateId * CommandRecord) list
         /// F25 wiring (064): the two normalized provenance senses fed back from `SenseProvenance`.
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
+        /// F070: the deterministic stale-generated-view currency findings sensed at the edge. `update` folds
+        /// them into the verdict (via the existing `deriveEffectiveSeverity` — no truth-table change) and
+        /// projects them additively into `ship.json`/`audit.json`'s `generatedViews` array. `[]` ⇒ byte-identical.
+        | ViewCurrencySensed of findings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
@@ -207,6 +216,10 @@ module Loop =
           /// F25 wiring (064): the provenance audit snapshot built on `GatesExecuted`, carried to the persist
           /// phase for the `provenance.json` projection.
           Audit: AuditSnapshot option
+          /// F070: the stale-generated-view currency findings sensed at the edge (`[]` until `ViewCurrencySensed`;
+          /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
+          /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).
+          ViewCurrencyFindings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
