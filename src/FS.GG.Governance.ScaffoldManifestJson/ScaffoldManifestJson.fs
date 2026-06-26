@@ -14,22 +14,14 @@ open FS.GG.Governance.Scaffold.Model
 // token helper and sub-object writer below is hidden by its absence from the .fsi (the Kernel/Json.fs
 // precedent). Carries NO absolute path, clock, or env value (SC-004, SC-006).
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ScaffoldManifestJson =
 
     let schemaVersion = "fsgg.scaffold-manifest/v1"
 
     // ── internal writer plumbing (hidden — absent from ScaffoldManifestJson.fsi) ──
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs`
-    /// `writeToString` precedent).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     // ── closed-token helpers (hidden) — each match is EXHAUSTIVE and wildcard-free, so a future case
     //    is a compile error here, never a silently mis-tokened field. ──
@@ -90,7 +82,7 @@ module ScaffoldManifestJson =
         w.WriteEndObject()
 
     let ofManifest (manifest: ScaffoldManifest) : string =
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
 
             // Fixed field order: schemaVersion, outcome, refusal, provider, generated, collisions.

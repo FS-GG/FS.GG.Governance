@@ -15,22 +15,14 @@ open FS.GG.Governance.RefreshJson.RefreshModel
 // Each closed-enum `match` is EXHAUSTIVE with NO wildcard, so a future outcome/status case is a compile
 // error here, never a silently mis-tokened field.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RefreshJson =
 
     let schemaVersion = "fsgg.refresh/v1"
 
     // ── internal writer plumbing (hidden — absent from RefreshJson.fsi) ──
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the shared `writeToString`
-    /// precedent).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     // ── closed-enum token helpers (hidden) — each EXHAUSTIVE with NO wildcard ──
 
@@ -87,7 +79,7 @@ module RefreshJson =
         // One linear walk, top-level object in the FIXED order schemaVersion → outcome → dryRun → summary →
         // views. Everything is carried VERBATIM from the decision value — re-deriving / re-sorting NOTHING;
         // `views` stays in the decision's declared order.
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("outcome", outcomeToken decision.Outcome)

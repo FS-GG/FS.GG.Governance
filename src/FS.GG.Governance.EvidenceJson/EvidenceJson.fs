@@ -4,6 +4,8 @@ open System.IO
 open System.Text
 open System.Text.Json
 open FS.GG.Governance.Kernel
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper
+open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.FreshnessResolution
 open FS.GG.Governance.EvidenceReuse.Model
@@ -57,16 +59,6 @@ module EvidenceJson =
 
     // ── internal writer plumbing (hidden — absent from EvidenceJson.fsi) ──
 
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs` `writeToString`
-    /// precedent shared by the sibling projections).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     // ── closed-DU token renderers (hidden) — exhaustive, NO wildcard ──
 
     /// The `EvidenceState` wire token — the closed six-case Kernel DU (FR-005). `Skipped` is a DISTINCT token
@@ -80,25 +72,6 @@ module EvidenceJson =
         | Skipped -> "Skipped"
         | AutoSynthetic -> "AutoSynthetic"
 
-    /// The tagged `cause` object inside a `stale` freshness (FR-003) — field order `kind`, then `categories`
-    /// for `inputsChanged`. `NoPriorEvidence` ⇒ `{ kind:"noPriorEvidence" }` (NO `categories` field — distinct
-    /// from `inputsChanged []`). `InputsChanged cats` ⇒ `{ kind:"inputsChanged", categories:[…] }`, named via
-    /// `categoryToken` in CORE order — none dropped, added, or truncated.
-    let writeCause (w: Utf8JsonWriter) (cause: RecomputeCause) =
-        w.WriteStartObject()
-
-        match cause with
-        | NoPriorEvidence -> w.WriteString("kind", "noPriorEvidence")
-        | InputsChanged cats ->
-            w.WriteString("kind", "inputsChanged")
-            w.WritePropertyName "categories"
-            w.WriteStartArray()
-            for c in cats do
-                w.WriteStringValue(categoryToken c)
-            w.WriteEndArray()
-
-        w.WriteEndObject()
-
     /// The tagged `freshness` object (no-hide, FR-003) — `fresh` | `stale`+cause | `unresolved`+missing |
     /// `unknown`. `Unknown` is the only causeless freshness — an explicit honest null-equivalent, never a
     /// guessed `fresh`. Exhaustive over `NodeFreshness`.
@@ -110,7 +83,7 @@ module EvidenceJson =
         | NodeFreshness.Stale cause ->
             w.WriteString("kind", "stale")
             w.WritePropertyName "cause"
-            writeCause w cause
+            JsonWriters.writeCause w cause
         | NodeFreshness.Unresolved missing ->
             w.WriteString("kind", "unresolved")
             w.WritePropertyName "missing"
@@ -177,7 +150,7 @@ module EvidenceJson =
         // carries the named `graphFailure` and OMITS `nodes`/`dependencies` entirely (FR-004), then
         // `disclosures`. Every collection is rendered in a stable order; cause/missing token lists keep their
         // CORE order. PURE and TOTAL: the empty graph yields a present, empty `nodes` array — a valid success.
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
 

@@ -22,6 +22,8 @@ open FS.GG.Governance.GateExecution.Model            // GateCommand
 open FS.GG.Governance.FreshnessKey.Model             // ArtifactHash, GeneratorVersion
 open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationEntry
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
@@ -41,14 +43,6 @@ module Interpreter =
             call ()
         with e ->
             Error e.Message
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string (deterministic).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     /// A non-null string from a `JsonElement.GetString()` (Nullable=enable safe).
     let str (e: JsonElement) : string =
@@ -167,7 +161,7 @@ module Interpreter =
             Map.empty
 
     let renderLock (views: Map<string, string list * string * string>) : string =
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", "fsgg.refresh-lock/v1")
             w.WritePropertyName "views"

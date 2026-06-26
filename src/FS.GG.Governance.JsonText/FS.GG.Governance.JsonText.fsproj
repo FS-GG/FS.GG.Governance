@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 073: the dependency-free, packable JsonText leaf — the canonical deterministic-emit helper.
+       A single pure `writeToString : (Utf8JsonWriter -> unit) -> string` that runs a caller's emit
+       callback over a default-options `Utf8JsonWriter` and returns the compact (non-indented), UTF-8
+       JSON text. Every `*Json` projection (plus EvidenceReuseStore and the RefreshCommand interpreter)
+       shared a byte-identical hand-copied definition of this helper; this leaf collapses the ~14 copies
+       into one (the kernel keeps its own irreducible copy — the BCL-only core may reference no leaf).
+
+       It references ONLY the net10.0 shared-framework System.Text.Json (Utf8JsonWriter) plus System.IO
+       and System.Text — NO governance ProjectReference and NO new third-party PackageReference
+       (Directory.Packages.props unchanged) — so it CANNOT introduce a cycle, stays System.*/FSharp.Core-
+       only, and any projection may reference it WITHOUT pulling in the kernel/host capability the pure
+       projections deliberately exclude (their scope-guard tests forbid a Kernel edge). It reads no
+       clock/filesystem/git/environment/network and emits nothing of its own — it is pure plumbing. The
+       whole surface is one total function — no MVU ceremony (Principle IV). Compile order is
+       JsonText.fsi -> JsonText.fs: the curated public surface, then the pure body. The dependency
+       direction stays one-way: every projection -> JsonText. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.JsonText</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the sibling *Json projections (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.JsonText</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonText.fsi" />
+    <Compile Include="JsonText.fs" />
+  </ItemGroup>
+
+</Project>

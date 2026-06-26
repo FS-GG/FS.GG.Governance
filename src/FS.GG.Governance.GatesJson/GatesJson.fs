@@ -18,6 +18,9 @@ open FS.GG.Governance.Gates.Model
 // The per-gate field set here is exactly F020's `selectedGates[*]` entry MINUS the route-specific
 // `selectingPaths`; the shared gate fields render identically in both artifacts.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GatesJson =
 
@@ -27,41 +30,9 @@ module GatesJson =
 
     // ── internal writer plumbing (hidden — absent from GatesJson.fsi) ──
 
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs`
-    /// `writeToString` precedent).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     // ── closed-enum token helpers (hidden) ──
     // Each `match` is EXHAUSTIVE over the closed DU with NO wildcard (research D3), so a future
     // tier/maturity/environment case is a compile error here, never a silently mis-tokened field.
-
-    let costToken (cost: Cost) : string =
-        match cost with
-        | Cheap -> "cheap"
-        | Medium -> "medium"
-        | High -> "high"
-        | Exhaustive -> "exhaustive"
-
-    let maturityToken (maturity: Maturity) : string =
-        match maturity with
-        | Observe -> "observe"
-        | Warn -> "warn"
-        | BlockOnPr -> "blockOnPr"
-        | BlockOnShip -> "blockOnShip"
-        | BlockOnRelease -> "blockOnRelease"
-
-    let environmentToken (env: EnvironmentClass) : string =
-        match env with
-        | Local -> "local"
-        | Ci -> "ci"
-        | LocalOrCi -> "localOrCi"
-        | Release -> "release"
 
     // ── sub-object writers (hidden) — each emits its documented field order verbatim ──
 
@@ -74,8 +45,8 @@ module GatesJson =
         w.WriteString("check", check)
         let (DomainId domain) = key.Domain
         w.WriteString("domain", domain)
-        w.WriteString("cost", costToken key.Cost)
-        w.WriteString("environment", environmentToken key.Environment)
+        w.WriteString("cost", JsonTokens.costToken key.Cost)
+        w.WriteString("environment", JsonTokens.environmentToken key.Environment)
 
         match key.Command with
         | Some(CommandId c) -> w.WriteString("command", c)
@@ -102,12 +73,12 @@ module GatesJson =
         let (DomainId domain) = gate.Domain
         w.WriteString("domain", domain)
         w.WriteString("description", gate.Description)
-        w.WriteString("cost", costToken gate.Cost)
+        w.WriteString("cost", JsonTokens.costToken gate.Cost)
         let (TimeoutLimit seconds) = gate.Timeout
         w.WriteNumber("timeout", seconds)
         let (Owner owner) = gate.Owner
         w.WriteString("owner", owner)
-        w.WriteString("maturity", maturityToken gate.Maturity)
+        w.WriteString("maturity", JsonTokens.maturityToken gate.Maturity)
         w.WriteBoolean("productCheck", gate.ProductCheck)
 
         w.WritePropertyName "prerequisites"
@@ -129,7 +100,7 @@ module GatesJson =
         // ordinal order (fixed by F018 `buildRegistry`), each gate's prerequisites in their carried
         // order — re-sorting NOTHING (FR-007). PURE and TOTAL: the empty registry yields
         // { "schemaVersion": "fsgg.gates/v1", "gates": [] } — a valid success (FR-008/FR-009).
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
 

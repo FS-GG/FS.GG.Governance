@@ -58,4 +58,23 @@
     <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- 073: the shared deterministic-emit helper JsonText.writeToString (pure System.Text.Json leaf;
+         NOT the kernel — the pure projections must not reference the kernel/host capability). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- 073: the shared closed-enum token helpers (pure JsonTokens leaf; module-qualified calls). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- 073: the shared sub-object/map writers (pure JsonWriters leaf; module-qualified calls). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
+  </ItemGroup>
+
 </Project>

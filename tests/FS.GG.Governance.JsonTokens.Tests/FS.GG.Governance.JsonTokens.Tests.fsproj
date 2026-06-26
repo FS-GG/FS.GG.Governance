@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the 073 JsonTokens leaf, exercising its PUBLIC surface: the seven closed-enum
+       token helpers over REAL, literally-constructed DU values (Principle V — real values, no mocks; the
+       helpers are pure so no upstream chain is needed). Each helper's verbatim token strings are pinned
+       by ordinary string comparison — these are the strings the *Json goldens depend on. The reflective
+       SurfaceBaseline test pins the public surface + the dependency-hygiene scope guard (no kernel/host/
+       projection edge — the leaf sits above the domain-enum owners and below the projections). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonTokensTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+  </ItemGroup>
+
+</Project>

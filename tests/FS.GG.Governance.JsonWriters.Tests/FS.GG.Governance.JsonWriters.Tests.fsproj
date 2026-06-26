@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the 073 JsonWriters leaf, exercising its PUBLIC surface — writeCause /
+       verdictByGate / outcomeByGate / writeExecution — over REAL, literally-constructed domain values
+       (Principle V — real values, no mocks; the writers are pure). The emitted JSON is captured through a
+       real Utf8JsonWriter and inspected by ordinary string comparison: byte-shape must match the field
+       order the *Json goldens depend on. The reflective SurfaceBaseline test pins the public surface + the
+       dependency-hygiene scope guard (no kernel/host/projection edge). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonWritersTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
+</Project>

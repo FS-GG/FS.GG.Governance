@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 073: the pure sub-object/map writer leaf — the single home of the byte-identical sub-object writers
+       and gate-map helpers the *Json projections used to hand-copy: writeCause (the tagged `cause` object,
+       5 identical copies), verdictByGate / outcomeByGate (first-by-list-order-wins gate-id maps, 3 copies
+       each), and writeExecution (the per-gate `execution` object, the Audit/Route form). It references
+       JsonTokens (writeExecution calls dispositionToken) and the domain owners of the values it walks.
+       Output is byte-identical to today's projections (feature 073 acceptance gate: goldens unchanged).
+
+       SCOPE NOTE (byte-identity gate): only TRULY byte-identical copies move here. VerifyJson's
+       `writeCauseValue` (bare-string `noPriorEvidence`, not a tagged object) and its `writeExecution`
+       (`GateOutcome option`, explicit `null` fields, the divergent `not-executed` token) stay local; and
+       `writeEnforcement` stays local in both AuditJson (mode via the single-use `modeToken d.Mode`) and
+       VerifyJson (fixed literal `"verify"`) — those forms DIVERGE, so unifying would change bytes.
+
+       Placed ABOVE the domain owners and BELOW the projections; NOT under Kernel (the pure projections
+       must not reference the kernel/host capability). Pure and total; no MVU ceremony (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.JsonWriters</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.JsonWriters</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonWriters.fsi" />
+    <Compile Include="JsonWriters.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+  </ItemGroup>
+
+</Project>

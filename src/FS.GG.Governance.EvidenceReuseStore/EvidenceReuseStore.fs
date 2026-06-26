@@ -18,6 +18,8 @@ open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module EvidenceReuseStore =
 
@@ -26,16 +28,6 @@ module EvidenceReuseStore =
     let defaultRetentionBound = 256
 
     // ── internal writer plumbing (hidden — absent from EvidenceReuseStore.fsi) ──
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact, byte-stable output (the `Json.fs`
-    /// `writeToString` precedent shared by F020/F021/F025/F042; research D2).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     /// The EXHAUSTIVE inverse of the F046 reader's `parseEnv`, with NO wildcard (research D6): a future
     /// `EnvironmentClass` case is a compile error here, never a silently mis-tokened field.
@@ -93,7 +85,7 @@ module EvidenceReuseStore =
         // One linear walk: the top-level object in the FIXED order schemaVersion → recorded, entries emitted in
         // the store's existing newest-first list order, re-sorting NOTHING (research D7). The empty store yields
         // a present, empty `recorded` array — a well-formed document, never throwing (FR-005/FR-009).
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WritePropertyName "recorded"

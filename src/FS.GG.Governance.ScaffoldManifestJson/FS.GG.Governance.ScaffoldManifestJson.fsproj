@@ -28,4 +28,10 @@
     <ProjectReference Include="../FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- 073: the shared deterministic-emit helper JsonText.writeToString (pure System.Text.Json leaf). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
 </Project>

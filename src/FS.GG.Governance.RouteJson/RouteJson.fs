@@ -25,6 +25,10 @@ open FS.GG.Governance.ProductSurfaces.Model      // F23: ProductSurfaceReport/Pr
 // modifiers — the surface is RouteJson.fsi (Principle II); every token helper and sub-object writer
 // below is hidden by its absence from the .fsi, the `Kernel/Json.fs` precedent.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RouteJson =
 
@@ -35,41 +39,9 @@ module RouteJson =
 
     // ── internal writer plumbing (hidden — absent from RouteJson.fsi) ──
 
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs`
-    /// `writeToString` precedent).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     // ── closed-enum token helpers (hidden) ──
     // Each `match` is EXHAUSTIVE over the closed DU with NO wildcard (research D3), so a future
     // tier/maturity/zone/environment case is a compile error here, never a silently mis-tokened field.
-
-    let costToken (cost: Cost) : string =
-        match cost with
-        | Cheap -> "cheap"
-        | Medium -> "medium"
-        | High -> "high"
-        | Exhaustive -> "exhaustive"
-
-    let maturityToken (maturity: Maturity) : string =
-        match maturity with
-        | Observe -> "observe"
-        | Warn -> "warn"
-        | BlockOnPr -> "blockOnPr"
-        | BlockOnShip -> "blockOnShip"
-        | BlockOnRelease -> "blockOnRelease"
-
-    let environmentToken (env: EnvironmentClass) : string =
-        match env with
-        | Local -> "local"
-        | Ci -> "ci"
-        | LocalOrCi -> "localOrCi"
-        | Release -> "release"
 
     /// Write a finding `zone`: `GovernedRootUnknown` → the string `"governedRootUnknown"`;
     /// `ProtectedBoundaryUnknown sid` → the object `{ "protectedBoundary": "<surfaceId>" }`.
@@ -92,8 +64,8 @@ module RouteJson =
         w.WriteString("check", check)
         let (DomainId domain) = key.Domain
         w.WriteString("domain", domain)
-        w.WriteString("cost", costToken key.Cost)
-        w.WriteString("environment", environmentToken key.Environment)
+        w.WriteString("cost", JsonTokens.costToken key.Cost)
+        w.WriteString("environment", JsonTokens.environmentToken key.Environment)
 
         match key.Command with
         | Some(CommandId c) -> w.WriteString("command", c)
@@ -140,35 +112,6 @@ module RouteJson =
     // compile error here, never a silently mis-tokened field. The render NEVER dereferences the opaque
     // evidence reference, computes no key/hash/decision, and resolves nothing (FR-010, FR-011).
 
-    /// First-by-report-order-wins lookup from the report (research D4). On a duplicate `GateId` the FIRST
-    /// entry by the report's LIST POSITION wins (the fold keeps the earliest add) — deterministic and
-    /// total, keyed purely on `CacheEligibility.entries` order, never re-derived from the `GateId` value.
-    let verdictByGate (report: CacheEligibilityReport) : Map<string, CacheEligibilityVerdict> =
-        CacheEligibility.entries report
-        |> List.fold
-            (fun m e ->
-                let k = gateIdValue e.Gate
-                if Map.containsKey k m then m else Map.add k e.Verdict m)
-            Map.empty
-
-    /// The tagged `cause` object (no-hide, FR-009) — field order `kind`, then `categories` for
-    /// `inputsChanged`. `NoPriorEvidence` ⇒ `{ kind:"noPriorEvidence" }` (NO `categories` field). The
-    /// categories are named via `categoryToken` in the report's order — none dropped, added, truncated.
-    let writeCause (w: Utf8JsonWriter) (cause: RecomputeCause) =
-        w.WriteStartObject()
-
-        match cause with
-        | NoPriorEvidence -> w.WriteString("kind", "noPriorEvidence")
-        | InputsChanged cats ->
-            w.WriteString("kind", "inputsChanged")
-            w.WritePropertyName "categories"
-            w.WriteStartArray()
-            for c in cats do
-                w.WriteStringValue(categoryToken c)
-            w.WriteEndArray()
-
-        w.WriteEndObject()
-
     /// The per-gate `cacheEligibility` verdict object — field order `kind`, then payload. `Some (Reusable
     /// ref)` ⇒ `{ kind:"reusable", evidence:<referenceValue ref> }` (only the opaque reference verbatim,
     /// never parsed/dereferenced — FR-011). `Some (MustRecompute cause)` ⇒ `{ kind:"mustRecompute",
@@ -184,44 +127,12 @@ module RouteJson =
         | Some(MustRecompute cause) ->
             w.WriteString("kind", "mustRecompute")
             w.WritePropertyName "cause"
-            writeCause w cause
+            JsonWriters.writeCause w cause
         | None -> w.WriteString("kind", "notEvaluated")
 
         w.WriteEndObject()
 
     // ── F052: the embedded per-gate execution outcome (additive, default-empty ⇒ output unchanged) ──
-
-    let dispositionToken (disposition: GateDisposition) : string =
-        match disposition with
-        | Executed -> "executed"
-        | Reused -> "reused"
-        | NotExecuted -> "notExecuted"
-
-    /// First-by-list-order-wins lookup of the per-gate execution outcome, keyed on the gate-id string (the
-    /// F045 `verdictByGate` precedent). Empty list ⇒ empty map ⇒ no `execution` object emitted anywhere.
-    let outcomeByGate (execution: (GateId * GateOutcome) list) : Map<string, GateOutcome> =
-        execution
-        |> List.fold
-            (fun m (gid, outcome) ->
-                let k = gateIdValue gid
-                if Map.containsKey k m then m else Map.add k outcome m)
-            Map.empty
-
-    /// The per-gate `execution` object — field order `disposition`, then (when present) `exitCode`, `passed`.
-    /// `exitCode`/`passed` are OMITTED for `notExecuted` (no run, no exit — D6).
-    let writeExecution (w: Utf8JsonWriter) (outcome: GateOutcome) =
-        w.WriteStartObject()
-        w.WriteString("disposition", dispositionToken outcome.Disposition)
-
-        match outcome.ExitCode with
-        | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
-        | None -> ()
-
-        match outcome.Passed with
-        | Some passed -> w.WriteBoolean("passed", passed)
-        | None -> ()
-
-        w.WriteEndObject()
 
     /// One selected gate — the documented field order (contracts/route-json-document.md). Carries the
     /// embedded F018 `Gate` VERBATIM (FR-002); `id` via `Gates.gateIdValue`, never re-parsed (FR-010);
@@ -244,12 +155,12 @@ module RouteJson =
         let (DomainId domain) = gate.Domain
         w.WriteString("domain", domain)
         w.WriteString("description", gate.Description)
-        w.WriteString("cost", costToken gate.Cost)
+        w.WriteString("cost", JsonTokens.costToken gate.Cost)
         let (TimeoutLimit seconds) = gate.Timeout
         w.WriteNumber("timeout", seconds)
         let (Owner owner) = gate.Owner
         w.WriteString("owner", owner)
-        w.WriteString("maturity", maturityToken gate.Maturity)
+        w.WriteString("maturity", JsonTokens.maturityToken gate.Maturity)
         w.WriteBoolean("productCheck", gate.ProductCheck)
 
         w.WritePropertyName "prerequisites"
@@ -276,7 +187,7 @@ module RouteJson =
         match execLookup gate.Id with
         | Some outcome ->
             w.WritePropertyName "execution"
-            writeExecution w outcome
+            JsonWriters.writeExecution w outcome
         | None -> ()
 
         w.WriteEndObject()
@@ -343,14 +254,14 @@ module RouteJson =
             match cache with
             | None -> fun _ -> None
             | Some report ->
-                let byGate = verdictByGate report
+                let byGate = JsonWriters.verdictByGate report
                 fun gateId -> Map.tryFind (gateIdValue gateId) byGate
 
         // F052: the per-gate execution lookup, built once from the supplied outcomes (empty ⇒ always None).
-        let execByGate = outcomeByGate execution
+        let execByGate = JsonWriters.outcomeByGate execution
         let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
 

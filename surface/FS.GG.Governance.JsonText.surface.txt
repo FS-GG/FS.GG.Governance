@@ -1,0 +1,2 @@
+TYPE FS.GG.Governance.JsonText.JsonTextModule
+  [Method] System.String writeToString(Microsoft.FSharp.Core.FSharpFunc`2[System.Text.Json.Utf8JsonWriter,Microsoft.FSharp.Core.Unit])

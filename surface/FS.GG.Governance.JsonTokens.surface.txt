@@ -1,0 +1,8 @@
+TYPE FS.GG.Governance.JsonTokens.JsonTokensModule
+  [Method] System.String basisToken(ExitCodeBasis)
+  [Method] System.String costToken(Cost)
+  [Method] System.String dispositionToken(GateDisposition)
+  [Method] System.String environmentToken(EnvironmentClass)
+  [Method] System.String maturityToken(Maturity)
+  [Method] System.String profileToken(Profile)
+  [Method] System.String severityToken(Severity)

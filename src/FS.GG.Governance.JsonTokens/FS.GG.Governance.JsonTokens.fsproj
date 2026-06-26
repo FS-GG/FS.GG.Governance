@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 073: the pure closed-enum token leaf — the single home of the seven hand-copied enum→string
+       token helpers shared by the *Json projections (costToken, maturityToken, severityToken,
+       environmentToken, dispositionToken, basisToken, profileToken). Each is an EXHAUSTIVE match over a
+       closed DU with NO wildcard, so a future enum case is a compile error here, never a silently
+       mis-tokened JSON field. Token strings are byte-identical to the strings the projections emit today
+       (feature 073 acceptance gate: goldens unchanged).
+
+       It references ONLY the enum-owning domain projects — Config (Cost/Maturity/EnvironmentClass),
+       GateRun (GateDisposition), Enforcement (Severity/Profile), Ship (ExitCodeBasis) — and adds NO new
+       third-party PackageReference. It is placed ABOVE the domain-enum owners and BELOW the projections;
+       it is NOT under Kernel (the kernel cannot see these domain enums, and the pure projections must not
+       reference the kernel/host capability). Pure and total: no clock/host/filesystem/git/environment/
+       network; no MVU ceremony (Principle IV). Compile order is JsonTokens.fsi -> JsonTokens.fs. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.JsonTokens</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.JsonTokens</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonTokens.fsi" />
+    <Compile Include="JsonTokens.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+  </ItemGroup>
+
+</Project>

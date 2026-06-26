@@ -27,22 +27,15 @@ open FS.GG.Governance.ReleaseReport.Model
 // wildcard, so a future verdict/basis/severity/factState/outcome/kind case is a compile error here, never a
 // silently mis-tokened field.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReleaseJson =
 
     let schemaVersion = "fsgg.release/v2"
 
     // ── internal writer plumbing (hidden — absent from ReleaseJson.fsi) ──
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs`
-    /// `writeToString` precedent shared by F020/F021/F025/F042).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     // ── closed-enum token helpers (hidden) — each EXHAUSTIVE with NO wildcard ──
 
@@ -52,16 +45,6 @@ module ReleaseJson =
         match verdict with
         | Pass -> "pass"
         | Fail -> "fail"
-
-    let basisToken (basis: ExitCodeBasis) : string =
-        match basis with
-        | Clean -> "clean"
-        | Blocked -> "blocked"
-
-    let severityToken (severity: Severity) : string =
-        match severity with
-        | Advisory -> "advisory"
-        | Blocking -> "blocking"
 
     let factStateToken (state: FactState) : string =
         match state with
@@ -88,8 +71,8 @@ module ReleaseJson =
         w.WriteString("surface", surfaceValue f.Surface)
         w.WriteString("factState", factStateToken (Release.factFor facts f.Kind))
         w.WriteString("outcome", outcomeToken f.Outcome)
-        w.WriteString("baseSeverity", severityToken f.BaseSeverity)
-        w.WriteString("effectiveSeverity", severityToken enforced.Decision.EffectiveSeverity)
+        w.WriteString("baseSeverity", JsonTokens.severityToken f.BaseSeverity)
+        w.WriteString("effectiveSeverity", JsonTokens.severityToken enforced.Decision.EffectiveSeverity)
         w.WriteString("reason", f.Reason)
         w.WriteEndObject()
 
@@ -318,7 +301,7 @@ module ReleaseJson =
             |> List.sortBy (fun e -> Release.releaseRuleKindOrdinal e.Finding.Kind, surfaceValue e.Finding.Surface)
 
         w.WriteString("verdict", verdictToken decision.Verdict)
-        w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
+        w.WriteString("exitCodeBasis", JsonTokens.basisToken decision.ExitCodeBasis)
         w.WritePropertyName "rules"
         w.WriteStartArray()
         for r in rules do
@@ -333,7 +316,7 @@ module ReleaseJson =
         // Retained for callers that have only a decision+snapshot: emits a well-formed v2 document with an
         // empty packageEvidence/versionPolicy and a null attestation (no fabricated attestation). The v1
         // fields are byte-identical to v1; the schemaVersion token is the only v1-field change (v1 → v2).
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             writeV1Body w decision sensed
@@ -346,7 +329,7 @@ module ReleaseJson =
         // The single-source-of-truth projection: the v1 fields render from report.Decision + report.Sensed,
         // then the three additive fields render from report.Package + report.Attestation. The verify
         // preview and the F27 human projections render from the SAME ReleaseReport (FR-012, D3).
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             writeV1Body w report.Decision report.Sensed

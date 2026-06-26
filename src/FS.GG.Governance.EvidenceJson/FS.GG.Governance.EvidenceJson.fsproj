@@ -45,4 +45,16 @@
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- 073: the shared deterministic-emit helper JsonText.writeToString (pure System.Text.Json leaf). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- 073: the shared sub-object/map writers (pure JsonWriters leaf; module-qualified calls). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
+  </ItemGroup>
+
 </Project>

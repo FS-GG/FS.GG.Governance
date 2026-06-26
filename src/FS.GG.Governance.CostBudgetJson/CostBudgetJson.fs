@@ -21,6 +21,10 @@ open FS.GG.Governance.CostBudget.Findings
 // future DU case is a compile error here. No access modifiers — the surface is CostBudgetJson.fsi
 // (Principle II).
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CostBudgetJson =
 
@@ -28,21 +32,7 @@ module CostBudgetJson =
 
     // ── internal writer plumbing (hidden — absent from CostBudgetJson.fsi) ──
 
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     // ── closed-enum token helpers (exhaustive, no wildcard) ──
-
-    let costToken (cost: Cost) : string =
-        match cost with
-        | Cheap -> "cheap"
-        | Medium -> "medium"
-        | High -> "high"
-        | Exhaustive -> "exhaustive"
 
     let reviewToken (review: AgentReviewMark) : string =
         match review with
@@ -54,31 +44,9 @@ module CostBudgetJson =
         | Skipped -> "skipped"
         | Deferred -> "deferred"
 
-    let severityToken (severity: Severity) : string =
-        match severity with
-        | Advisory -> "advisory"
-        | Blocking -> "blocking"
-
     let findingKindToken (kind: CostFindingKind) : string = kindToken kind
 
     // ── tagged sub-object writers (hidden) — each emits its documented field order verbatim ──
-
-    /// The recompute `cause` object — reuses the F042 `CacheEligibilityJson` shape verbatim:
-    /// `{ kind:"noPriorEvidence" }` or `{ kind:"inputsChanged", categories:[…] }` named via `categoryToken`.
-    let writeCause (w: Utf8JsonWriter) (cause: RecomputeCause) =
-        w.WriteStartObject()
-
-        match cause with
-        | NoPriorEvidence -> w.WriteString("kind", "noPriorEvidence")
-        | InputsChanged cats ->
-            w.WriteString("kind", "inputsChanged")
-            w.WritePropertyName "categories"
-            w.WriteStartArray()
-            for c in cats do
-                w.WriteStringValue(categoryToken c)
-            w.WriteEndArray()
-
-        w.WriteEndObject()
 
     /// The tagged `decision` object — exactly one shape. `overBudget` carries `class`, `ceiling`, and a
     /// deterministic `reason` string (the underlying cause is surfaced in the findings section, not here).
@@ -92,18 +60,18 @@ module CostBudgetJson =
         | Recompute cause ->
             w.WriteString("kind", "recompute")
             w.WritePropertyName "cause"
-            writeCause w cause
+            JsonWriters.writeCause w cause
         | OverBudget reason ->
             w.WriteString("kind", "overBudget")
             w.WriteString("class", deferralToken reason.Class)
-            w.WriteString("ceiling", costToken reason.Ceiling)
+            w.WriteString("ceiling", JsonTokens.costToken reason.Ceiling)
 
             let reasonText =
                 sprintf
                     "%s (%s) exceeds the %s budget"
                     (gateIdValue gate)
-                    (costToken reason.Cost)
-                    (costToken reason.Ceiling)
+                    (JsonTokens.costToken reason.Cost)
+                    (JsonTokens.costToken reason.Ceiling)
 
             w.WriteString("reason", reasonText)
 
@@ -113,7 +81,7 @@ module CostBudgetJson =
     let writeEntry (w: Utf8JsonWriter) (entry: CacheDecisionEntry) =
         w.WriteStartObject()
         w.WriteString("gate", gateIdValue entry.Gate)
-        w.WriteString("cost", costToken entry.Cost)
+        w.WriteString("cost", JsonTokens.costToken entry.Cost)
         w.WriteString("review", reviewToken entry.Review)
         w.WritePropertyName "decision"
         writeDecision w entry.Gate entry.Decision
@@ -124,7 +92,7 @@ module CostBudgetJson =
         w.WriteStartObject()
         w.WriteString("gate", gateIdValue finding.Gate)
         w.WriteString("kind", findingKindToken finding.Kind)
-        w.WriteString("baseSeverity", severityToken finding.BaseSeverity)
+        w.WriteString("baseSeverity", JsonTokens.severityToken finding.BaseSeverity)
 
         match finding.Kind with
         | Stale cats ->
@@ -144,7 +112,7 @@ module CostBudgetJson =
     let ofReport (report: CacheDecisionReport) (findings: CostFinding list) : string =
         let (CacheDecisionReport entries) = report
 
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
 

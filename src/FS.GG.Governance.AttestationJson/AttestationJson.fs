@@ -21,6 +21,9 @@ open FS.GG.Governance.Attestation.Model
 // never affects any identity; the compliance marker + note are ALWAYS present. The surface is
 // AttestationJson.fsi (Principle II) — no access modifiers here.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AttestationJson =
 
@@ -33,13 +36,6 @@ module AttestationJson =
 
     // ── internal writer plumbing + value/token helpers (hidden — absent from AttestationJson.fsi) ──
 
-    let private writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     let private revisionValue (Revision s) = s
     let private ruleHashValue (RuleHash s) = s
     let private generatorVersionValue (GeneratorVersion s) = s
@@ -47,14 +43,6 @@ module AttestationJson =
     let private builderValue (BuilderIdentity s) = s
     let private exitCodeValue (ExitCode i) = i
     let private durationNanos (SensedDuration n) = n
-
-    /// Closed environment-class token (the F25 ProvenanceJson convention). Exhaustive, no wildcard.
-    let private environmentToken (env: EnvironmentClass) : string =
-        match env with
-        | Local -> "local"
-        | Ci -> "ci"
-        | LocalOrCi -> "localOrCi"
-        | Release -> "release"
 
     let private complianceMarkerToken (marker: ComplianceMarker) : string =
         match marker with
@@ -91,7 +79,7 @@ module AttestationJson =
             |> List.map artifactValue
             |> List.sortWith (fun a b -> String.CompareOrdinal(a, b))
 
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("compliance", complianceMarkerToken summary.Compliance)
@@ -119,7 +107,7 @@ module AttestationJson =
                 w.WriteStringValue d
             w.WriteEndArray()
 
-            w.WriteString("environment", environmentToken m.Environment)
+            w.WriteString("environment", JsonTokens.environmentToken m.Environment)
             w.WriteEndObject()
 
             w.WritePropertyName "invocation"

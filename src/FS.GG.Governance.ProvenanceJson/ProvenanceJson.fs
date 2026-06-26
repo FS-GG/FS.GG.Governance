@@ -22,19 +22,15 @@ open FS.GG.Governance.CommandKind.Model
 // `commandRuns` is rendered in carried order (order-significant in F033). No access modifiers — the surface
 // is ProvenanceJson.fsi (Principle II).
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProvenanceJson =
 
     let schemaVersion = "fsgg.provenance/v1"
 
     // ── internal writer plumbing + value/token helpers (hidden — absent from ProvenanceJson.fsi) ──
-
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     let revisionValue (Revision s) = s
     let ruleHashValue (RuleHash s) = s
@@ -43,14 +39,6 @@ module ProvenanceJson =
     let builderValue (BuilderIdentity s) = s
     let exitCodeValue (ExitCode i) = i
     let durationNanos (SensedDuration n) = n
-
-    /// Closed environment-class token (the F020 `RouteJson` convention). Exhaustive, no wildcard.
-    let environmentToken (env: EnvironmentClass) : string =
-        match env with
-        | Local -> "local"
-        | Ci -> "ci"
-        | LocalOrCi -> "localOrCi"
-        | Release -> "release"
 
     /// One command run — field order `kind`, `identity`, `exitCode`, `durationNanos`. `identity` reuses the
     /// F032 identity verbatim (via `Audit.runIdentity`); `durationNanos` is the sensed metadata, never part
@@ -73,7 +61,7 @@ module ProvenanceJson =
             |> List.map artifactValue
             |> List.sortWith (fun a b -> String.CompareOrdinal(a, b))
 
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("identity", Audit.snapshotIdentity snapshot)
@@ -82,7 +70,7 @@ module ProvenanceJson =
             w.WriteString("head", revisionValue p.Head)
             w.WriteString("ruleHash", ruleHashValue p.RuleHash)
             w.WriteString("generatorVersion", generatorVersionValue p.GeneratorVersion)
-            w.WriteString("environment", environmentToken p.Environment)
+            w.WriteString("environment", JsonTokens.environmentToken p.Environment)
             w.WriteString("builder", builderValue p.Builder)
 
             w.WritePropertyName "artifactDigests"

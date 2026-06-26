@@ -72,6 +72,10 @@ let tests =
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"
+                  // 073: the dependency-free JsonText leaf (the shared deterministic-emit helper writeToString).
+                  || name = "FS.GG.Governance.JsonText"
+                  // 073: the pure JsonWriters leaf (the shared sub-object/map writers).
+                  || name = "FS.GG.Governance.JsonWriters"
                   || name.StartsWith "System."
 
               let offending =

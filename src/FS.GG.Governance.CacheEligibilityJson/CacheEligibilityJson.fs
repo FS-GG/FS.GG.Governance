@@ -24,6 +24,9 @@ open FS.GG.Governance.CacheEligibility
 // sub-object writer below is hidden by its absence from the .fsi, the `Kernel/Json.fs` + `AuditJson.fs`
 // precedent.
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CacheEligibilityJson =
 
@@ -33,40 +36,11 @@ module CacheEligibilityJson =
 
     // ── internal writer plumbing (hidden — absent from CacheEligibilityJson.fsi) ──
 
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs` `writeToString`
-    /// precedent shared by F020/F021/F025).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
-
     // ── tagged sub-object writers (hidden) — each emits its documented field order verbatim ──
     // Every `match` rendering a token is EXHAUSTIVE over the closed DU with NO wildcard (research D4), so a
     // future verdict/cause case is a compile error here, never a silently mis-tokened field. The IDENTITY/token
     // renderers are REUSED from public upstream: `gateIdValue` (F018), `referenceValue` (F030),
     // `categoryToken` (F029).
-
-    /// The tagged `cause` object (no-hide, FR-004) — field order `kind`, then `categories` for `inputsChanged`.
-    /// `NoPriorEvidence` ⇒ `{ kind:"noPriorEvidence" }` (NO `categories` field — distinct from
-    /// `inputsChanged []`, FR-006). `InputsChanged cats` ⇒ `{ kind:"inputsChanged", categories:[…] }`, the
-    /// categories named via `categoryToken` in the report's order — none dropped, added, or truncated.
-    let writeCause (w: Utf8JsonWriter) (cause: RecomputeCause) =
-        w.WriteStartObject()
-
-        match cause with
-        | NoPriorEvidence -> w.WriteString("kind", "noPriorEvidence")
-        | InputsChanged cats ->
-            w.WriteString("kind", "inputsChanged")
-            w.WritePropertyName "categories"
-            w.WriteStartArray()
-            for c in cats do
-                w.WriteStringValue(categoryToken c)
-            w.WriteEndArray()
-
-        w.WriteEndObject()
 
     /// The tagged `verdict` object — field order `kind`, then payload. `Reusable ref` ⇒ `{ kind:"reusable",
     /// evidence:<referenceValue ref> }` (only `kind` + the opaque reference verbatim, never parsed/dereferenced
@@ -82,7 +56,7 @@ module CacheEligibilityJson =
         | MustRecompute cause ->
             w.WriteString("kind", "mustRecompute")
             w.WritePropertyName "cause"
-            writeCause w cause
+            JsonWriters.writeCause w cause
 
         w.WriteEndObject()
 
@@ -105,7 +79,7 @@ module CacheEligibilityJson =
         // freshness key/hash, no input resolved, the opaque evidence reference never dereferenced (FR-002/
         // FR-008). PURE and TOTAL: the empty report yields a present, empty `entries` array — a valid success
         // (FR-009).
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WritePropertyName "entries"

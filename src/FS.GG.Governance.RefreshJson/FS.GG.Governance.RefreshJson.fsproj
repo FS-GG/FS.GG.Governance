@@ -46,4 +46,11 @@
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- 073: the shared deterministic-emit helper JsonText.writeToString (pure System.Text.Json leaf;
+         NOT the kernel — the pure projections must not reference the kernel/host capability). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
 </Project>

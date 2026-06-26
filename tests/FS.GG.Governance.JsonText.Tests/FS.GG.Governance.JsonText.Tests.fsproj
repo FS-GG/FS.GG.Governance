@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the 073 JsonText leaf, exercising its PUBLIC surface:
+       `JsonText.writeToString` over REAL emit callbacks (Principle V — every value is a real value,
+       never a mock; the helper is pure so no upstream chain is needed). The emitted text is inspected
+       by ordinary string comparison: it must be compact (non-indented), byte-for-byte deterministic,
+       and round the callback's writes verbatim. The reflective SurfaceBaseline test pins the public
+       surface + the FSharp.Core/BCL-only scope guard (the leaf takes no governance dependency). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="JsonTextTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+  </ItemGroup>
+
+</Project>

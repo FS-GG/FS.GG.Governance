@@ -37,22 +37,16 @@ module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: th
 // verdict/basis/severity/maturity/profile/disposition/cause case is a compile error here, never a silently
 // mis-tokened field. `mode` is the fixed literal `"verify"` (the command threads only `RunMode.Verify`).
 
+open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VerifyJson =
 
     let schemaVersion = "fsgg.verify/v1"
 
     // ── internal writer plumbing (hidden — absent from VerifyJson.fsi) ──
-
-    /// Emit compact (non-indented) UTF-8 JSON through a callback and return it as a string. Default
-    /// `Utf8JsonWriter` options ⇒ no indentation ⇒ deterministic, compact output (the `Json.fs`
-    /// `writeToString` precedent shared by F020/F021/F025/F042/F055).
-    let writeToString (emit: Utf8JsonWriter -> unit) : string =
-        use stream = new MemoryStream()
-        use writer = new Utf8JsonWriter(stream)
-        emit writer
-        writer.Flush()
-        Encoding.UTF8.GetString(stream.ToArray())
 
     // ── closed-enum token helpers (hidden) — each EXHAUSTIVE with NO wildcard ──
 
@@ -61,31 +55,10 @@ module VerifyJson =
         | Pass -> "pass"
         | Fail -> "blocked"
 
-    let basisToken (basis: ExitCodeBasis) : string =
-        match basis with
-        | Clean -> "clean"
-        | Blocked -> "blocked"
-
-    let severityToken (severity: Severity) : string =
-        match severity with
-        | Advisory -> "advisory"
-        | Blocking -> "blocking"
-
-    let maturityToken (maturity: Maturity) : string =
-        match maturity with
-        | Observe -> "observe"
-        | Warn -> "warn"
-        | BlockOnPr -> "blockOnPr"
-        | BlockOnShip -> "blockOnShip"
-        | BlockOnRelease -> "blockOnRelease"
-
-    let profileToken (profile: Profile) : string =
-        match profile with
-        | Light -> "light"
-        | Standard -> "standard"
-        | Strict -> "strict"
-        | Profile.Release -> "release"
-
+    // 073: `dispositionToken` STAYS LOCAL — VerifyJson emits `not-executed` (hyphen) where the shared
+    // `JsonTokens.dispositionToken` emits `notExecuted` (camelCase). The strings DIVERGE, so unifying
+    // would change bytes; like `verdictToken` (`Fail` → `blocked`), this copy is out of scope (research
+    // D3 flagged only the Verdict token; this Disposition divergence was caught by the byte-identity gate).
     let dispositionToken (disposition: GateDisposition) : string =
         match disposition with
         | Executed -> "executed"
@@ -116,11 +89,11 @@ module VerifyJson =
 
     let writeEnforcement (w: Utf8JsonWriter) (d: EnforcementDecision) =
         w.WriteStartObject()
-        w.WriteString("baseSeverity", severityToken d.BaseSeverity)
-        w.WriteString("maturity", maturityToken d.Maturity)
+        w.WriteString("baseSeverity", JsonTokens.severityToken d.BaseSeverity)
+        w.WriteString("maturity", JsonTokens.maturityToken d.Maturity)
         w.WriteString("mode", "verify")
-        w.WriteString("profile", profileToken d.Profile)
-        w.WriteString("effectiveSeverity", severityToken d.EffectiveSeverity)
+        w.WriteString("profile", JsonTokens.profileToken d.Profile)
+        w.WriteString("effectiveSeverity", JsonTokens.severityToken d.EffectiveSeverity)
         w.WriteString("reason", d.Reason)
         w.WriteEndObject()
 
@@ -164,23 +137,7 @@ module VerifyJson =
             w.WriteEndObject()
         | None -> w.WriteNullValue()
 
-    // ── per-gate lookups, first-by-list-order-wins (the AuditJson `verdictByGate`/`outcomeByGate` precedent) ──
-
-    let verdictByGate (report: CacheEligibilityReport) : Map<string, CacheEligibilityVerdict> =
-        CacheEligibility.entries report
-        |> List.fold
-            (fun m e ->
-                let k = gateIdValue e.Gate
-                if Map.containsKey k m then m else Map.add k e.Verdict m)
-            Map.empty
-
-    let outcomeByGate (execution: (GateId * GateOutcome) list) : Map<string, GateOutcome> =
-        execution
-        |> List.fold
-            (fun m (gid, outcome) ->
-                let k = gateIdValue gid
-                if Map.containsKey k m then m else Map.add k outcome m)
-            Map.empty
+    // ── per-gate lookups, first-by-list-order-wins (the AuditJson `JsonWriters.verdictByGate`/`JsonWriters.outcomeByGate` precedent) ──
 
     // ── one enforced item — a tagged `id` object (`gate`/`finding`), `enforcement`, `cache`, `execution`.
     //    A finding carries `cache:null`/`execution:null` (cache + execution are gate-scoped). ──
@@ -341,7 +298,7 @@ module VerifyJson =
         let (GovernedPath file) = f.Location.File
         w.WriteString("file", file)
         w.WriteString("detail", f.Location.Detail)
-        w.WriteString("severity", severityToken f.BaseSeverity)
+        w.WriteString("severity", JsonTokens.severityToken f.BaseSeverity)
         w.WriteBoolean("inputState", f.IsInputState)
 
         match f.EvidenceTag with
@@ -495,15 +452,15 @@ module VerifyJson =
             match cache with
             | None -> fun _ -> None
             | Some report ->
-                let byGate = verdictByGate report
+                let byGate = JsonWriters.verdictByGate report
                 fun gateId -> Map.tryFind (gateIdValue gateId) byGate
 
-        let execByGate = outcomeByGate execution
+        let execByGate = JsonWriters.outcomeByGate execution
         let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
         w.WriteString("schemaVersion", schemaVersion)
         w.WriteString("verdict", verdictToken decision.Verdict)
-        w.WriteString("exitCodeBasis", basisToken decision.ExitCodeBasis)
+        w.WriteString("exitCodeBasis", JsonTokens.basisToken decision.ExitCodeBasis)
         writeSection w lookup execLookup "blockers" decision.Blockers
         writeSection w lookup execLookup "warnings" decision.Warnings
         writeSection w lookup execLookup "passing" decision.Passing
@@ -528,7 +485,7 @@ module VerifyJson =
         (execution: (GateId * GateOutcome) list)
         (findings: SC.SurfaceFinding list)
         : string =
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             writeCore w decision cache execution findings
             w.WriteEndObject())
@@ -554,7 +511,7 @@ module VerifyJson =
         (findings: SC.SurfaceFinding list)
         (preview: VerifyReleasePreview option)
         : string =
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             writeCore w decision cache execution findings
 
@@ -585,8 +542,8 @@ module VerifyJson =
             w.WriteEndArray()
         | CE.Undeterminable reason -> w.WriteString("detail", reason)
 
-        w.WriteString("baseSeverity", severityToken finding.BaseSeverity)
-        w.WriteString("effectiveSeverity", severityToken decision.EffectiveSeverity)
+        w.WriteString("baseSeverity", JsonTokens.severityToken finding.BaseSeverity)
+        w.WriteString("effectiveSeverity", JsonTokens.severityToken decision.EffectiveSeverity)
         w.WriteString("reason", decision.Reason)
         w.WriteEndObject()
 
@@ -613,7 +570,7 @@ module VerifyJson =
         (preview: VerifyReleasePreview option)
         (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
         : string =
-        writeToString (fun w ->
+        JsonText.writeToString (fun w ->
             w.WriteStartObject()
             writeCore w decision cache execution findings
 
