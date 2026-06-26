@@ -47,7 +47,8 @@ let private portsWith (sensor: FreshnessSensing.FreshnessSensor) (exec) (cap: Ca
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease }
+      SenseRelease = fakeSenseRelease
+      SenseSurfaces = fakeSenseSurfaces }
 
 let private reqIn dir =
     { requestForProfile srcScope Loop.Text Standard with

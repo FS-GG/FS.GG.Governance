@@ -74,15 +74,22 @@ let tests =
               Expect.isEmpty m1.SelectedGates "no gates selected"
               Expect.isFalse (hasEffect (function Loop.SenseFreshness _ -> true | _ -> false) eff) "no freshness sense"
               Expect.isFalse (hasEffect (function Loop.ExecuteGates _ -> true | _ -> false) eff) "no execute"
-              Expect.isTrue (hasEffect (function Loop.WriteArtifact _ -> true | _ -> false) eff) "writes verify.json"
-              Expect.equal m1.Phase Loop.Rolled "rolled"
+              // 067: the empty-selection projection is deferred until the read-only surface checks land (so a
+              // surface finding on a no-gate change can still be folded). `Loaded` senses surfaces; the write
+              // is emitted on `SurfacesSensed`. validCatalog declares no product surface ⇒ `[]` ⇒ byte-identical.
+              Expect.isTrue (hasEffect (function Loop.SenseSurfaces _ -> true | _ -> false) eff) "senses surfaces"
+              Expect.isFalse (hasEffect (function Loop.WriteArtifact _ -> true | _ -> false) eff) "no write before surfaces land"
+
+              let m1b, eff2 = Loop.update (Loop.SurfacesSensed []) m1
+              Expect.isTrue (hasEffect (function Loop.WriteArtifact _ -> true | _ -> false) eff2) "writes verify.json once surfaces land"
+              Expect.equal m1b.Phase Loop.Rolled "rolled"
 
               // F27 wiring (063): the render delegates to the shared HumanText projection; an empty selection
               // is a passing decision, rendered as "verdict: PASS" (the dedicated "nothing to verify" wording
               // was non-contractual host text).
-              Expect.stringContains (Loop.render m1 Loop.Text) "verdict: PASS" "empty selection ⇒ passing verdict text"
+              Expect.stringContains (Loop.render m1b Loop.Text) "verdict: PASS" "empty selection ⇒ passing verdict text"
 
               // On the write ack the summary is emitted and the terminal exit is Success.
-              let m2, _ = Loop.update (Loop.Wrote(Loop.VerifyArtifact, Ok())) m1
+              let m2, _ = Loop.update (Loop.Wrote(Loop.VerifyArtifact, Ok())) m1b
               let m3, _ = Loop.update Loop.Emitted m2
               Expect.equal m3.Exit Loop.Success "nothing to verify ⇒ exit Success" } ]

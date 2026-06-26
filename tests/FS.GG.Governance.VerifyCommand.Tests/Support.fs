@@ -461,6 +461,22 @@ let fakeSenseRelease
         -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease =
     fun _ _ -> failwith "fakeSenseRelease: no .fsgg/release.yml in this fixture"
 
+// 067: the default surface-sense port for the legacy faked-port fixtures. SYNTHETIC: returns no findings (the
+// legacy catalogs declare no product surfaces, so the real sense would also return [] — this stub just spares
+// the legacy tests the real filesystem read). Tests that exercise surface findings either inject a real
+// temp-tree sense (`realSurfaceSense`) or a hand-built advisory port (disclosed at the use site).
+let fakeSenseSurfaces
+    : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+        -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+    fun _ -> [] // SYNTHETIC: no product surfaces in the legacy catalogs ⇒ empty, matching the real sense
+
+// 067: the GENUINE read-only surface sense over a real temp tree — NOT synthetic. Lifted from
+// `Interpreter.realPorts` so the E2E proofs drive the exact production sense (real package/docs/skill/design
+// file reads, read-only package port) while git/exec stay faked. Reuses the real port without growing the
+// public surface (the field is already on the `realPorts` record).
+let realSurfaceSense (repo: string) : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+    (FS.GG.Governance.VerifyCommand.Interpreter.realPorts repo).SenseSurfaces
+
 /// Assemble faked Interpreter.Ports from a catalog map, a git port, and a capture (no failing writes). The
 /// F046 sensing ports default to the fully-sensing fake sensor + an absent (⇒ empty) store; the F052 exec
 /// port defaults to the failing port (advisory under Standard, blocking under Strict).
@@ -476,7 +492,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpr
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease }
+      SenseRelease = fakeSenseRelease
+      SenseSurfaces = fakeSenseSurfaces }
 
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -490,7 +507,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease }
+      SenseRelease = fakeSenseRelease
+      SenseSurfaces = fakeSenseSurfaces }
 
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
     { Files = readerOf files
@@ -504,7 +522,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease }
+      SenseRelease = fakeSenseRelease
+      SenseSurfaces = fakeSenseSurfaces }
 
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -518,7 +537,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease }
+      SenseRelease = fakeSenseRelease
+      SenseSurfaces = fakeSenseSurfaces }
 
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts
@@ -636,3 +656,193 @@ let selectedGatesFor (files: Map<string, string>) (candidates: GovernedPath list
     let registry = Gates.buildRegistry facts
     let findings = Findings.findUnknownGovernedPaths facts report
     (Route.select registry report findings).SelectedGates |> List.map (fun sg -> sg.Gate)
+
+// ── 067 (F24 verify-host wiring): product-surface fixtures + the read-only E2E ports ──
+
+// The E2E ports for the surface proofs: the REAL ports over a temp tree (real Files/Git/Freshness/Store AND
+// the real read-only surface sense — genuine package/docs/skill/design file reads), with ONLY the F051
+// execution port faked (so a `build` gate never shells `dotnet`) and the write/stdout edges captured. This is
+// Principle V: the cores and the surface sensors run for real; only the process-spawning edge is substituted.
+let surfaceE2EPorts (dir: string) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
+    { FS.GG.Governance.VerifyCommand.Interpreter.realPorts dir with
+        Execute = exec
+        Write = capturingWriter cap Set.empty
+        Out = capturingSink cap }
+
+// A package-surface catalog: one declared `kind: package` surface over `src/**/*.fsi` (with an evidenceTag)
+// plus a single block-on-ship `build` gate. A drifted `.fsi` ⇒ a `package.baseline-drift` BLOCKING surface
+// finding; the gate exercises the executed projection path so the fold runs over a relocated decision.
+let surfaceCatalog: Map<string, string> =
+    Map
+        [ "project.yml", projectYml
+          "capabilities.yml",
+          yaml """
+schemaVersion: 2
+domains:
+  - package-api
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+surfaces:
+  - id: pkg-surface
+    kind: package
+    paths: ["src/**/*.fsi"]
+    owner: platform
+    maturity: block-on-ship
+    evidenceTag: api-contract
+checks:
+  - id: build
+    domain: package-api
+    command: dotnet-build
+    owner: platform
+    cost: medium
+    environment: local-or-ci
+    maturity: block-on-ship
+"""
+          "policy.yml", policyYml
+          "tooling.yml", toolingYml ]
+
+// A no-product-surface catalog over a real temp tree: the byte-identity anchor (US2). Reuses `validCatalog`
+// (its only surface is `protected` ⇒ not a product domain ⇒ no requests ⇒ no findings ⇒ `surfaceChecks`
+// omitted).
+let private writeCatalog (dir: string) (catalog: Map<string, string>) : unit =
+    for KeyValue(name, content) in catalog do
+        writeFile dir (".fsgg/" + name) content
+
+// Create a disposable temp git repo declaring a PACKAGE surface whose committed baseline DRIFTS from the
+// head `.fsi` (a real on-disk drift the real package sensor detects): base commits `src/Api.fsi` + a
+// deliberately-stale `src/Api.fsi.baseline`; head edits `src/Api.fsi` so the regenerated token set diverges
+// from the committed baseline. The changed `.fsi` is the routed/classified path. `body` runs against the path.
+let withDriftedPackageRepo (body: string -> 'a) : 'a =
+    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-surface-" + Guid.NewGuid().ToString("N"))
+    Directory.CreateDirectory dir |> ignore
+    try
+        git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
+        git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
+        git dir [ "config"; "user.name"; "FSGG Fixture" ] |> ignore
+        git dir [ "config"; "commit.gpgsign"; "false" ] |> ignore
+        writeCatalog dir surfaceCatalog
+        // base: a surface source + a committed baseline that already disagrees with it on one ghost token.
+        writeFile dir "src/Api.fsi" "val foo: int\n"
+        writeFile dir "src/Api.fsi.baseline" "ghost-token-only\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "base" ] |> ignore
+        // head: edit the surface so the regenerated tokens diverge further from the stale baseline (drift) and
+        // `src/Api.fsi` shows up as the changed/routed path in base..head.
+        writeFile dir "src/Api.fsi" "val foo: int -> string\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "head" ] |> ignore
+        body dir
+    finally
+        try Directory.Delete(dir, true) with _ -> ()
+
+// Create a disposable temp git repo declaring NO product surface (the `validCatalog` no-surface case) with a
+// real two-commit `.fs` edit. The byte-identity anchor for SC-002.
+let withNoSurfaceRepo (body: string -> 'a) : 'a =
+    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-nosurface-" + Guid.NewGuid().ToString("N"))
+    Directory.CreateDirectory dir |> ignore
+    try
+        git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
+        git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
+        git dir [ "config"; "user.name"; "FSGG Fixture" ] |> ignore
+        git dir [ "config"; "commit.gpgsign"; "false" ] |> ignore
+        writeCatalog dir validCatalog
+        writeFile dir "src/Lib/Thing.fs" "module Thing\nlet v = 1\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "base" ] |> ignore
+        writeFile dir "src/Lib/Thing.fs" "module Thing\nlet v = 2\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "head" ] |> ignore
+        body dir
+    finally
+        try Directory.Delete(dir, true) with _ -> ()
+
+// A request rooted at a real temp repo (so the default artifact paths sit under it). The capturing writer
+// records the bytes; nothing is written to disk.
+let requestForRepo (dir: string) (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.RunRequest =
+    { requestFor scope format with
+        Repo = dir
+        VerifyOut = dir + "/readiness/verify.json"
+        StorePath = dir + "/readiness/evidence-reuse.json"
+        CostBudgetOut = dir + "/readiness/cost-budget.json"
+        ProvenanceOut = dir + "/readiness/provenance.json" }
+
+// ── 067: hand-built (SYNTHETIC, disclosed) surface findings for the verdict-fold proofs ──
+// The real domain sensors emit only Blocking findings from disk today (the lone Advisory finding,
+// `docs.example-freshness`, the real docs sensor does not yet populate). These literal findings drive the
+// PURE verdict fold (a blocking finding fails, an advisory one does not) through the public interpreter.
+
+let private mkSyntheticFinding (code: string) (severity: Severity) : FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
+    // SYNTHETIC: a hand-built finding, not sensed from disk — used only to drive the verdict fold under test.
+    { Domain = FS.GG.Governance.SurfaceChecks.Model.DocsDomain
+      Surface = SurfaceId "synthetic-surface"
+      Code = code
+      Location =
+        ({ File = gp "docs/synthetic.md"
+           Detail = "synthetic" }
+        : FS.GG.Governance.SurfaceChecks.Model.FindingLocation)
+      BaseSeverity = severity
+      Maturity = BlockOnPr
+      EvidenceTag = None
+      IsInputState = false
+      Message = "SYNTHETIC: hand-built finding for the verify verdict-fold test" }
+
+let blockingSurfaceFinding: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
+    mkSyntheticFinding "package.baseline-drift" Blocking
+
+let advisorySurfaceFinding: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
+    mkSyntheticFinding "docs.example-freshness" Advisory
+
+// A synthetic surface-sense port returning a fixed finding list regardless of the report (disclosed). Lets a
+// faked-port run drive the verdict fold without a real drifted tree.
+let syntheticSurfaceSense (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+    fun _ -> findings // SYNTHETIC: ignores the report, returns the literal findings under test
+
+// A package-surface catalog with NO gates (empty `checks`) — isolates the read-only surface sense (no gate
+// ever shells a process), for the no-write / no-spawn proof (FR-012, T009b) and the absent-baseline case.
+let surfaceCatalogNoGates: Map<string, string> =
+    Map
+        [ "project.yml", projectYml
+          "capabilities.yml",
+          yaml """
+schemaVersion: 2
+domains:
+  - package-api
+pathMap:
+  - glob: "src/**"
+    capability: package-api
+surfaces:
+  - id: pkg-surface
+    kind: package
+    paths: ["src/**/*.fsi"]
+    owner: platform
+    maturity: block-on-ship
+    evidenceTag: api-contract
+checks: []
+"""
+          "policy.yml", policyYml
+          "tooling.yml", toolingYml ]
+
+// A temp repo declaring a package surface with NO committed baseline and a declared transcript file. A
+// read-only verify MUST report `package.baseline-absent` (blocking) WITHOUT writing the `.baseline` and
+// WITHOUT executing the transcript (no process). `body` runs against the repo path.
+let withAbsentBaselineRepo (body: string -> 'a) : 'a =
+    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-absent-" + Guid.NewGuid().ToString("N"))
+    Directory.CreateDirectory dir |> ignore
+    try
+        git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
+        git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
+        git dir [ "config"; "user.name"; "FSGG Fixture" ] |> ignore
+        git dir [ "config"; "commit.gpgsign"; "false" ] |> ignore
+        writeCatalog dir surfaceCatalogNoGates
+        writeFile dir "src/Api.fsi" "val foo: int\n"
+        // a declared transcript next to the surface — verify must NOT run it (read-only port lists none).
+        writeFile dir "src/transcripts/example.fsx" "printfn \"hi\"\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "base" ] |> ignore
+        writeFile dir "src/Api.fsi" "val foo: int -> string\n"
+        git dir [ "add"; "-A" ] |> ignore
+        git dir [ "commit"; "-qm"; "head" ] |> ignore
+        body dir
+    finally
+        try Directory.Delete(dir, true) with _ -> ()

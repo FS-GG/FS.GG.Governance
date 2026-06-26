@@ -80,7 +80,10 @@ let private driveTo (opt: (Declaration.ReleaseDeclaration * SensedRelease) optio
     let m1b, _ = Loop.update (Loop.ProvenanceSensed(EnvironmentClass.Local, FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg")) m1
     let m2, _ = Loop.update (Loop.ReleasePreviewSensed opt) m1b
     let m3, _ = Loop.update (Loop.Loaded(Valid(factsOf emptyCatalog))) m2
-    m3
+    // 067: the empty-selection projection is now deferred until the (read-only) surface checks land; the
+    // emptyCatalog declares no product surface, so the sense returns `[]` (byte-identical, no verdict fold).
+    let m4, _ = Loop.update (Loop.SurfacesSensed []) m3
+    m4
 
 [<Tests>]
 let tests =

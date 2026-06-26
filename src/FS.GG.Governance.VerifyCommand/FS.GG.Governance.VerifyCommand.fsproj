@@ -86,6 +86,18 @@
     <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ReleaseDeclaration/FS.GG.Governance.ReleaseDeclaration.fsproj" />
+    <!-- 067 (F24 verify-host wiring): the product-surface CLASSIFY → SENSE → RUN cores, consumed VERBATIM at
+         the MVU interpreter edge so `fsgg verify` runs the surface checks for the first time. Classification
+         (ProductSurfaces) mirrors `fsgg route`; the dispatcher (SurfaceChecks.Dispatch) aggregates the four
+         domain packs' findings; each domain (Package/Docs/Skill/Design) senses its facts through a READ-ONLY
+         port (FR-012). No new external/NuGet dependency — Directory.Packages.props unchanged. -->
+    <ProjectReference Include="../FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks.Dispatch/FS.GG.Governance.SurfaceChecks.Dispatch.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.PackageChecks/FS.GG.Governance.PackageChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
   </ItemGroup>
 
 </Project>

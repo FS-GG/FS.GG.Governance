@@ -917,6 +917,21 @@ products.
 Purpose: expand beyond the MVP catalog into the product surfaces named by the
 design.
 
+**Product-surface host wiring — CLOSED.** The F23 classification core
+(`ProductSurfaces.classify`) and the F24 surface-check cores (the four
+package/docs/skill/design packs + `SurfaceChecks.Dispatch.Composition.run`) are
+built and tested, `fsgg route` emits the `productSurfaces` classification, and —
+as of `067-verify-surface-checks-wiring` — **`fsgg verify` now runs the surface
+checks themselves**: it classifies the declared surfaces ∩ verify scope, senses
+the four domains through **read-only** ports (the package domain no-ops the
+baseline write and runs no transcripts — verify stays side-effect-free and
+deterministic), runs the dispatcher, folds a blocking finding into the verdict
+via the existing `deriveEffectiveSeverity` (no truth-table change), and emits the
+additive `surfaceChecks` section of `verify.json` (byte-identical when empty).
+This was the one product-surface thread still open on a command host; it closes
+the deferred `059` tasks **T045 / T048 / T052**. (Schema migration of
+`.fsgg/capabilities.yml` for the full product taxonomy below remains roadmap.)
+
 - 🔴 [ ] Expand `.fsgg/capabilities.yml` for generated products, package surfaces,
   docs, skills, samples, design artifacts, release surfaces, baselines,
   template profiles, and evidence tags.

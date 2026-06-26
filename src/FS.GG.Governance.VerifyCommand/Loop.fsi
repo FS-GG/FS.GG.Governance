@@ -143,6 +143,14 @@ module Loop =
         /// `ReportView` + operational `wrote` line for the `Rich` path the edge selects via `selectMode`
         /// (`senseCapability explicitPlain`). The mode decision is at the edge, never here.
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        /// 067 (F24 verify-host wiring): sense + run the product-surface checks at the interpreter edge. The
+        /// effect carries the already-classified `ProductSurfaceReport` (classification is pure — `update`
+        /// runs `FS.GG.Governance.ProductSurfaces.classify` over the declared surfaces ∩ verify scope, mirroring `fsgg route`).
+        /// The edge port `ports.SenseSurfaces` senses the four declared domains through READ-ONLY ports
+        /// (no baseline write, no transcript execution — FR-012) and runs `Composition.run`; the resulting
+        /// `SurfaceFinding list` is fed back as `SurfacesSensed`. An empty report ⇒ no requests ⇒ `[]` ⇒
+        /// byte-identical `verify.json` (FR-004).
+        | SenseSurfaces of report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal currency
@@ -165,6 +173,11 @@ module Loop =
         /// `.fsgg/release.yml`). Serialized BEFORE `LoadCatalog` so the preview is ready when verify.json is
         /// projected; never participates in the verify verdict or exit code.
         | ReleasePreviewSensed of (Declaration.ReleaseDeclaration * SensedRelease) option
+        /// 067 (F24 verify-host wiring): the deterministic, already-sorted `SurfaceFinding list` returned by
+        /// `Composition.run`. `update` folds it into the model (and thereby the verdict, via
+        /// `enforcementInputOf` + the existing `deriveEffectiveSeverity` — no truth-table change, FR-007); it
+        /// never re-sorts or re-runs. `[]` ⇒ byte-identical `verify.json` (FR-004).
+        | SurfacesSensed of findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying NO
@@ -219,6 +232,14 @@ module Loop =
           ReleaseSensed: SensedRelease option
           ReleasePreview: VerifyReleasePreview option
           ReleaseMatrix: MatrixPlan option
+          /// 067 (F24 verify-host wiring): the deterministic surface-check findings sensed at the edge
+          /// (`[]` until `SurfacesSensed`; default `[]`). Folded into the verdict via `enforcementInputOf` +
+          /// the existing `deriveEffectiveSeverity` (no truth-table change — FR-007) and projected additively
+          /// into `verify.json`'s `surfaceChecks` section (omitted when `[]` — FR-004).
+          SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+          /// 067: `true` once `SenseSurfaces` is emitted, `false` on `SurfacesSensed` — joins the readiness
+          /// gate so `verify.json` is projected only after the surface checks (like the release preview) land.
+          SurfacesPending: bool
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

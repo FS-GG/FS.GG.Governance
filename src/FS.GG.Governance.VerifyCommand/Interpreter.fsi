@@ -69,7 +69,18 @@ module Interpreter =
           /// 065 wiring (US3): the REUSED F54 release-fact sensor, used ONLY when a `.fsgg/release.yml` is
           /// present (the advisory preview). `realPorts` wires `ReleaseFactsSensing.Interpreter.senseRelease`
           /// over the repo; tests inject a synthetic sense. Verify does NOT pack — this is the only new edge.
-          SenseRelease: SourceLayout -> ReleaseExpectations -> SensedRelease }
+          SenseRelease: SourceLayout -> ReleaseExpectations -> SensedRelease
+          /// 067 (F24 verify-host wiring): sense + run the product-surface checks for an already-classified
+          /// `ProductSurfaceReport`, returning the deterministic `SurfaceFinding list`. `realPorts` wires the
+          /// real read-only sense over `repo` (closing over `repo` + the F051 `Execute` port at construction
+          /// time, mirroring `SenseRelease`): the four declared domains are sensed through READ-ONLY ports —
+          /// the **package** port no-ops `WriteBaseline` and lists no transcripts (an absent baseline is
+          /// REPORTED but never written, no FSI is spawned — FR-012) — then `Composition.run` aggregates the
+          /// findings. Tests inject a synthetic port (e.g. an advisory-only finding the real sensors cannot
+          /// yet emit from disk, disclosed per Constitution V).
+          SenseSurfaces:
+              FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, the F046 real sensor/store reader, the F051 real execution port,

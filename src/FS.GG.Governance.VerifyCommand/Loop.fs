@@ -104,6 +104,8 @@ module Loop =
         | SenseProvenance
         | SenseReleasePreview of repo: string
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        // 067: sense + run the product-surface checks at the edge (the report is classified purely in update).
+        | SenseSurfaces of report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
 
     type Msg =
         | Begin
@@ -116,6 +118,8 @@ module Loop =
         | GatesExecuted of (GateId * CommandRecord) list
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
         | ReleasePreviewSensed of (Declaration.ReleaseDeclaration * SensedRelease) option
+        // 067: the deterministic, already-sorted findings from `Composition.run`, folded into the verdict.
+        | SurfacesSensed of findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
         | Emitted
 
     type Diagnostic =
@@ -154,6 +158,9 @@ module Loop =
           ReleaseSensed: SensedRelease option
           ReleasePreview: VerifyReleasePreview option
           ReleaseMatrix: MatrixPlan option
+          // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed) + the readiness flag.
+          SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+          SurfacesPending: bool
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -308,6 +315,8 @@ module Loop =
               ReleaseSensed = None
               ReleasePreview = None
               ReleaseMatrix = None
+              SurfaceFindings = []
+              SurfacesPending = false
               Diagnostics = []
               Exit = Success }
 
@@ -408,6 +417,36 @@ module Loop =
             Warnings = warningsKept
             Passing = passing'
             ExitCodeBasis = basis' }
+
+    // ── 067: surface-findings verdict fold (the contract change; the truth table is NOT re-opened) ──
+
+    // True iff any surface finding is effective-Blocking at `RunMode.Verify` under the active profile. The
+    // effective severity is derived by the EXISTING `deriveEffectiveSeverity` over the input `enforcementInputOf`
+    // builds from the finding — reuse only, no new rule, no new severity (FR-007, FR-008). A base-Advisory
+    // finding never escalates; a base-Blocking finding blocks once the verify floor is reached.
+    let surfaceBlocks (profile: Profile) (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) : bool =
+        findings
+        |> List.exists (fun f ->
+            (deriveEffectiveSeverity (FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf f Verify profile))
+                .EffectiveSeverity = Blocking)
+
+    // Fold the surface findings into an ALREADY-rolled (and, on the executed path, ALREADY-relocated) decision:
+    // a blocking surface finding fails the run; an advisory one leaves the verdict/exit untouched. Surface
+    // findings stay DISTINCT from gate/finding items in the projection (`surfaceChecks` vs `execution`) — this
+    // only flips the verdict/exit basis, it never injects a surface item into Blockers/Warnings/Passing. MUST
+    // run AFTER `applyExecution` (which recomputes from gate blockers only and would otherwise erase the
+    // surface-driven block). With `findings = []` it is the identity ⇒ byte-identical verify.json (FR-004).
+    let foldSurfaceVerdict
+        (profile: Profile)
+        (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list)
+        (decision: ShipDecision)
+        : ShipDecision =
+        if surfaceBlocks profile findings then
+            { decision with
+                Verdict = Fail
+                ExitCodeBasis = ExitCodeBasis.Blocked }
+        else
+            decision
 
     // ── F25 wiring (064): pure host-edge helpers (kinded-run label, provenance snapshot build) ──
 
@@ -601,6 +640,37 @@ module Loop =
             { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
         | _ -> model, []
 
+    // 067: the empty-selection ("nothing to verify") projection, now deferred until `SurfacesSensed` arrives so
+    // a surface finding (e.g. a drifted package baseline on a repo whose changed paths select no gates) is still
+    // sensed, folded, and reported. Mirrors the pre-067 inline empty-path body verbatim EXCEPT: (a) the verdict
+    // is folded through `foldSurfaceVerdict` (a blocking surface finding fails the run — FR-007), and (b) the
+    // real `model.SurfaceFindings` replace the `[]` projection placeholder. With no findings it is byte-identical
+    // to the pre-067 output (FR-004). Emits the same three artifacts (verify.json + the two sidecars).
+    let projectEmpty (model: Model) : Model * Effect list =
+        match model.Decision with
+        | Some decision ->
+            let emptyReport = CacheDecisionReport []
+            let costBudgetDoc = FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
+            let snapshot = buildSnapshot model []
+            let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+            let preview = previewOf model snapshot
+            let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
+            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview folded None [] model.SurfaceFindings preview
+
+            { model with
+                Phase = Rolled
+                Decision = Some folded
+                VerifyDoc = Some verifyDoc
+                SelectedGates = []
+                CacheDecision = Some emptyReport
+                Audit = Some snapshot
+                ReleasePreview = preview
+                PersistAcked = true },
+            [ WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
+              WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
+              WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc) ]
+        | None -> model, []
+
     // On `GatesExecuted`: fold F049 `capture` per executed gate (grows the store), build the per-gate
     // `GateOutcome`s, RELOCATE passing command-gates in the verdict (`applyExecution`), project verify.json
     // WITH the execution embed over the RELOCATED decision (cache report over the LOADED pre-run store), emit
@@ -675,17 +745,21 @@ module Loop =
                 |> Set.ofList
 
             let relocated = applyExecution passedGateIds decision
+            // 067: fold the surface findings into the RELOCATED verdict (a blocking finding fails the run —
+            // FR-007) AFTER `applyExecution`, which recomputes from gate blockers only. With no findings this is
+            // the identity, so the executed path stays byte-identical to the pre-067 golden (FR-004).
+            let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
-            // verify.json is projected over the SAME relocated decision + cache report + outcomes as before —
-            // the budgeted findings are NOT folded in, so it stays byte-identical to the pre-wiring golden (D6).
-            // 065 (US3): build the snapshot first so the advisory preview can use it; switch to the additive
-            // `WithPreview` projection (byte-identical when `preview = None` — findings stay empty).
+            // verify.json is projected over the surface-folded decision + cache report + outcomes; the budgeted
+            // findings are NOT folded in (D6). 065 (US3): build the snapshot first so the advisory preview can
+            // use it. 067: thread the real `model.SurfaceFindings` (was `[]`) so the additive `surfaceChecks`
+            // section is emitted when non-empty and omitted (byte-identical) when empty.
             let snapshot = buildSnapshot model (kindedRunsOf model records)
             let preview = previewOf model snapshot
-            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview relocated (Some cacheReport) outcomes [] preview
+            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview folded (Some cacheReport) outcomes model.SurfaceFindings preview
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
@@ -708,7 +782,7 @@ module Loop =
 
             { model with
                 Phase = Rolled
-                Decision = Some relocated
+                Decision = Some folded
                 VerifyDoc = Some verifyDoc
                 Outcomes = outcomes
                 CacheDecision = Some budgetReport
@@ -748,7 +822,7 @@ module Loop =
                 // values verbatim. The verdict is decided here (`Ship.rollup` at `RunMode.Verify`). Select the
                 // gates to sense, then request the two cache senses — UNLESS the selection is empty, in which
                 // case short-circuit to a passing "nothing to verify" verdict (FR-012) with no freshness/store/
-                // execute work: project verify.json now and emit the single write.
+                // execute work.
                 let candidates = model.Candidates |> Option.defaultValue []
                 let report = Routing.route facts candidates
                 let registry = Gates.buildRegistry facts
@@ -757,38 +831,41 @@ module Loop =
                 let decision = Ship.rollup result Verify model.Request.Profile
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
-                if List.isEmpty selectedGates then
-                    // F25 wiring (064): even the "nothing to verify" path emits well-formed empty-array sidecars
-                    // (no decisions, no findings, no runs) so the contract surface is uniform (SC-004 empty case).
-                    let emptyReport = CacheDecisionReport []
-                    let costBudgetDoc = FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
-                    let snapshot = buildSnapshot model []
-                    let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
-                    // 065 (US3): the advisory preview (None unless a declaration was sensed); byte-identical
-                    // verify.json when None (findings stay empty).
-                    let preview = previewOf model snapshot
-                    let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview decision None [] [] preview
+                // 067: classify the declared product surfaces ∩ verify scope (PURE — same feed `fsgg route`
+                // uses, so classification is identical — FR-001) and request the read-only sense+dispatch at
+                // the interpreter edge. BOTH projection paths (empty-selection and executed) now wait for
+                // `SurfacesSensed` so the findings are folded into the verdict and projected before verify.json
+                // is written. An empty report ⇒ no requests ⇒ `[]` ⇒ byte-identical verify.json (FR-004).
+                let profileId =
+                    facts.Policy
+                    |> Option.map (fun p -> p.DefaultProfile)
+                    |> Option.defaultValue (ProfileId "standard")
 
+                let productReport =
+                    FS.GG.Governance.ProductSurfaces.ProductSurfaces.classify facts report profileId
+
+                if List.isEmpty selectedGates then
+                    // The "nothing to verify" path: store the passing decision and sense surfaces; `projectEmpty`
+                    // fires on `SurfacesSensed`. A drifted surface on a no-gate change still blocks here.
                     { model with
-                        Phase = Rolled
+                        Phase = Selected
                         Decision = Some decision
-                        VerifyDoc = Some verifyDoc
                         SelectedGates = []
                         Tooling = facts.Tooling
-                        CacheDecision = Some emptyReport
-                        Audit = Some snapshot
-                        ReleasePreview = preview
-                        PersistAcked = true },
-                    [ WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
-                      WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
-                      WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc) ]
+                        SurfacesPending = true },
+                    [ SenseSurfaces productReport ]
                 else
                     { model with
                         Phase = Selected
                         Decision = Some decision
                         SelectedGates = selectedGates
-                        Tooling = facts.Tooling },
-                    [ SenseFreshness(selectedGates, baseHeadOf model)
+                        Tooling = facts.Tooling
+                        SurfacesPending = true },
+                    // SenseSurfaces FIRST so `SurfacesSensed` is folded before `StoreLoaded` triggers
+                    // `tryExecute` ⇒ `ExecuteGates` ⇒ `GatesExecuted` ⇒ `projectExecuted` (which reads the
+                    // already-populated `model.SurfaceFindings`).
+                    [ SenseSurfaces productReport
+                      SenseFreshness(selectedGates, baseHeadOf model)
                       LoadStore model.Request.StorePath ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
@@ -888,6 +965,21 @@ module Loop =
                     ReleaseSensed = sensed
                     ReleaseMatrix = matrix },
                 [ LoadCatalog model.Request.Repo ]
+
+            // 067: the deterministic surface findings landed. Store them (the verdict fold happens at
+            // projection via `foldSurfaceVerdict`). The empty-selection path projects HERE (it was deferred so
+            // the findings could be folded); the executed path projects later in `projectExecuted`, which reads
+            // the now-populated `model.SurfaceFindings`. `findings = []` ⇒ byte-identical verify.json (FR-004).
+            | SurfacesSensed surfaceFindings ->
+                let model =
+                    { model with
+                        SurfaceFindings = surfaceFindings
+                        SurfacesPending = false }
+
+                if List.isEmpty model.SelectedGates then
+                    projectEmpty model
+                else
+                    model, []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

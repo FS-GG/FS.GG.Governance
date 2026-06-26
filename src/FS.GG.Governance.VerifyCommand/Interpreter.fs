@@ -41,7 +41,11 @@ module Interpreter =
           SenseRelease:
               FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
                   -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
-                  -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease }
+                  -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease
+          // 067: the read-only product-surface sense + dispatch port (classified report ⇒ findings).
+          SenseSurfaces:
+              FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the interpreter
     // never throws out of itself.
@@ -133,6 +137,11 @@ module Interpreter =
                     gateId, FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command)
             )
 
+        // 067 (F24 verify-host wiring): sense + run the product-surface checks for the classified report. The
+        // port is TOTAL & SAFE (it catches its own exceptions ⇒ no fabricated findings, no crash — FR-010);
+        // an empty report ⇒ `[]` ⇒ byte-identical verify.json (FR-004).
+        | Loop.SenseSurfaces report -> Loop.SurfacesSensed(ports.SenseSurfaces report)
+
         // F25 wiring (064): the two NEW normalized provenance senses. Both are normalized (no username, host,
         // absolute path, or wall-clock) so `provenance.json` is byte-identical across machines/re-runs.
         | Loop.SenseProvenance -> Loop.ProvenanceSensed(ports.SenseEnvironment(), ports.SenseBuilder())
@@ -185,6 +194,82 @@ module Interpreter =
     let senseBuilderReal () : FS.GG.Governance.Provenance.Model.BuilderIdentity =
         FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg"
 
+    // 067 (F24 verify-host wiring): the design-catalog layout the design sensor reads (repo-relative JSON
+    // catalogs). The established default mirrors the DesignChecks sensor tests; a per-repo override is a
+    // documented later extension (no config field exists yet — the four catalogs are absent in most repos, so
+    // the design sensor reports `catalog-unavailable` input facts rather than fabricating, FR-010/FR-012).
+    let designCatalogLayout: string * string * string * string =
+        "design/tokens.json", "design/captures.json", "design/controls.json", "design/contrast.json"
+
+    // 067: the REAL read-only product-surface sense + dispatch over a repo working directory. Loads `TypedFacts`
+    // (read-only) for the request build, senses each DECLARED domain through a READ-ONLY port, then runs the
+    // pure `Composition.run` aggregator. Crucially side-effect-free at verify (FR-012): the **package** port
+    // no-ops `WriteBaseline` (an absent baseline is REPORTED via `package.baseline-absent`, never written) and
+    // lists NO transcripts (no FSI process is spawned). TOTAL & SAFE: an invalid/absent catalog or an
+    // unexpected exception degrades to `[]` (no fabricated findings, no crash — FR-010, research D6). The four
+    // domain sensors themselves already encode bounded, disclosed outcomes for missing/unreadable inputs.
+    let senseSurfacesReal
+        (repo: string)
+        (exec: FS.GG.Governance.GateExecution.Model.ExecutionPort)
+        (report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport)
+        : FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+        try
+            match Loader.readSource (GovernedPath ".") (Loader.fileSystemReader repo) |> Schema.validate with
+            | Invalid _ -> []
+            | Valid facts ->
+                let requests =
+                    FS.GG.Governance.SurfaceChecks.Dispatch.Composition.requestsOf facts report
+
+                // The READ-ONLY package port (FR-012): regenerate/read are kept; the WRITE and the transcript
+                // EXEC are removed (baseline establishment + transcript runs belong to route/ship).
+                let pkgPort =
+                    { FS.GG.Governance.PackageChecks.Interpreter.realPort repo exec with
+                        WriteBaseline = (fun _ _ -> Ok())
+                        ListTranscripts = (fun _ -> Ok []) }
+
+                let docsPort = FS.GG.Governance.DocsChecks.Interpreter.realPort repo
+                let skillPort = FS.GG.Governance.SkillChecks.Interpreter.realPort repo
+                let designPort = FS.GG.Governance.DesignChecks.Interpreter.realPort repo designCatalogLayout
+
+                let bundle =
+                    requests
+                    |> List.fold
+                        (fun (b: FS.GG.Governance.SurfaceChecks.Dispatch.Composition.DomainFactBundle) req ->
+                            match req.Domain with
+                            | FS.GG.Governance.SurfaceChecks.Model.PackageDomain ->
+                                { b with
+                                    Package =
+                                        Map.add
+                                            req.Surface
+                                            (FS.GG.Governance.PackageChecks.Interpreter.sensePackage pkgPort req)
+                                            b.Package }
+                            | FS.GG.Governance.SurfaceChecks.Model.DocsDomain ->
+                                { b with
+                                    Docs =
+                                        Map.add
+                                            req.Surface
+                                            (FS.GG.Governance.DocsChecks.Interpreter.senseDocs docsPort req)
+                                            b.Docs }
+                            | FS.GG.Governance.SurfaceChecks.Model.SkillDomain ->
+                                { b with
+                                    Skill =
+                                        Map.add
+                                            req.Surface
+                                            (FS.GG.Governance.SkillChecks.Interpreter.senseSkill skillPort req)
+                                            b.Skill }
+                            | FS.GG.Governance.SurfaceChecks.Model.DesignDomain ->
+                                { b with
+                                    Design =
+                                        Map.add
+                                            req.Surface
+                                            (FS.GG.Governance.DesignChecks.Interpreter.senseDesign designPort req)
+                                            b.Design })
+                        FS.GG.Governance.SurfaceChecks.Dispatch.Composition.emptyBundle
+
+                FS.GG.Governance.SurfaceChecks.Dispatch.Composition.run facts report bundle
+        with _ ->
+            []
+
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo
           Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
@@ -201,7 +286,10 @@ module Interpreter =
             fun layout exp ->
                 FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
                     (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
-                    exp }
+                    exp
+          // 067: the real read-only surface sense closes over `repo` + the F051 real execution port at
+          // construction time (mirroring `SenseRelease`/`Execute`), so the effect carries only the report.
+          SenseSurfaces = senseSurfacesReal repo FS.GG.Governance.GateExecution.Interpreter.realPort }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request
