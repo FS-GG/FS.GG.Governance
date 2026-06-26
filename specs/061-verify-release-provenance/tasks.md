@@ -557,7 +557,7 @@ pack runs + sidecar write are `Effect`s at the `Interpreter` edge through the ex
 
 ### Tests ⚠️ (write first, must FAIL before impl)
 
-- [ ] T048 [P] `tests/FS.GG.Governance.ReleaseCommand.Tests/PackBoundaryE2ETests.fs` — real-filesystem `fsgg
+- [X] T048 [P] **[DONE — landed via `065-release-provenance-host-wiring` (T041 flip) + `066-release-pack-e2e-evidence` (real `dotnet pack` E2E in `ReleaseCommand.Tests/RealPackTests.fs`, 066:T004–T009)]** `tests/FS.GG.Governance.ReleaseCommand.Tests/PackBoundaryE2ETests.fs` — real-filesystem `fsgg
   release` (standalone, no monorepo): a product whose every packable project packs at a bumped version ⇒ the
   pack/version preconditions are `Met` and the release exits `0`; one project's pack exits non-zero ⇒ release
   **blocked** (exit `1`), the reason names the project + pack failure, and the failed `Pack` run is in the
@@ -566,19 +566,19 @@ pack runs + sidecar write are `Effect`s at the `Interpreter` edge through the ex
   written; both are byte-identical on a re-run with unchanged inputs (pack duration retained only as sensed
   `durationNanos`); every existing `route.json`/`ship.json` golden stays **byte-identical** (FR-001, FR-002,
   FR-014, FR-015, SC-001, SC-002; quickstart Scenarios 1–2).
-- [ ] T049 [P] `tests/FS.GG.Governance.ReleaseCommand.Tests/MergeableNotReleasableE2ETests.fs` — a product that
+- [X] T049 [P] **[DONE — landed via `065` (T041 flip) + `066` (mergeable-vs-releasable proof in `ReleaseCommand.Tests/MergeableTests.fs`, 066:T010–T013)]** `tests/FS.GG.Governance.ReleaseCommand.Tests/MergeableNotReleasableE2ETests.fs` — a product that
   passes `fsgg ship` (mergeable) but is not releasable (unbumped version / missing publish plan / drifted pin) ⇒
   `fsgg ship` exits `0` while `fsgg release` exits `1` with a release exit-code basis **distinct** from ship,
   the `release.json` report carrying the failing precondition; a fully-releasable product ⇒ `fsgg release` exits
   `0` with `ReleaseExitCodeBasis = Clean`; the two verdicts are reported independently, neither masking the other
   (FR-004, SC-002; quickstart Scenario 2, Scenario 4).
-- [ ] T050 [P] `tests/FS.GG.Governance.VerifyCommand.Tests/ReleaseReadinessPreviewE2ETests.fs` — real-filesystem
+- [X] T050 [P] **[DONE — landed via `065` (T041 flip; release-readiness preview in `VerifyCommand.Tests/ReleasePreviewTests.fs`)]** `tests/FS.GG.Governance.VerifyCommand.Tests/ReleaseReadinessPreviewE2ETests.fs` — real-filesystem
   `fsgg verify` on a pre-PR scope ⇒ `verify.json` carries a `releaseReadiness` block (`advisory: true`) with the
   same evidence the release boundary would; an unreleasable-but-mergeable product still exits per the **unchanged**
   F56 verify scheme (the preview never changes verify's exit code); a declared exhaustive matrix at the inner-loop
   boundary is recorded **deferred** and does not run; the existing `verify.json` golden fields are unchanged
   (FR-005, FR-009, SC-003, SC-006; quickstart Scenarios 3, 6).
-- [ ] T051 [P] `tests/FS.GG.Governance.ReleaseCommand.Tests/SafeFailureE2ETests.fs` — a product with **no**
+- [X] T051 [P] **[DONE — landed via `065` (T041 flip) + `066` (`ReleaseCommand.Tests/SafeFailureTests.fs` + 066:T008a zero-exit-no-artifact case)]** `tests/FS.GG.Governance.ReleaseCommand.Tests/SafeFailureE2ETests.fs` — a product with **no**
   packable projects ⇒ `NoPackableProjects = true`, the pack precondition vacuously satisfied and the report
   states "no packable projects" — never a fabricated pack; an unreadable pack output / absent provenance input /
   missing publish plan ⇒ a clear input signal, the release **blocks**, no hollow attestation, no fabricated pass
@@ -637,7 +637,7 @@ determinism/standalone/reuse guards, update docs, and run the quickstart validat
   `…ReleaseJson.surface.txt` / `…VerifyJson.surface.txt` (changed only by the added projection `val`s — additive,
   no existing signature altered) and `…ReleaseCommand.surface.txt` / `…VerifyCommand.surface.txt` (changed only
   by the additive `Model`/`Loop` surface — T053/T055).
-- [ ] T057 [P] Commit/refresh the deterministic goldens under the projection test projects' `golden/` dirs: an
+- [X] T057 [P] **[DONE — landed via `065` (T041 flip) + `066` (four frozen byte-identity goldens under each producing host's `Tests/goldens/`, 066:T014–T018)]** Commit/refresh the deterministic goldens under the projection test projects' `golden/` dirs: an
   `attestation.json` golden (packed subjects + a sentinel-exit run, the not-formal-compliance marker), a
   `release.json` v2 golden (a mixed package-evidence report), and a `verify.json` golden carrying the advisory
   `releaseReadiness` block; **re-bless the existing `release.json` golden** in `ReleaseJson.Tests` for the
@@ -668,7 +668,7 @@ determinism/standalone/reuse guards, update docs, and run the quickstart validat
   first-class, and the scheduled-exhaustive-matrix decision (`ValidationMatrix`, reusing the F25 cost ceiling);
   note the F53/F54/F55/F56/F25/F33/F51 reuse (no new release-rule family, no exit-code-scheme change, no identity
   change, no new dependency).
-- [ ] T062 Run the `quickstart.md` validation end to end (all seven scenarios + the constitution-gate checks):
+- [X] T062 **[DONE — landed via `065` (T041 flip) + `066` (T019 full solution build + test sweep green, 2051+ tests)]** Run the `quickstart.md` validation end to end (all seven scenarios + the constitution-gate checks):
   `dotnet build FS.GG.Governance.sln` clean (warnings-as-errors); the five new test projects + the two extended
   host test projects + the whole solution green (no regression); the five new surface baselines + the four
   re-blessed baselines match; the version-bump matrix, the real-`ExecutionPort` pack fixture (incl. failed-pack

@@ -240,26 +240,29 @@ plain text contains **no** ANSI escapes, and it matches its committed smoke snap
 - [X] T020 [US1] `src/FS.GG.Governance.HumanText/HumanText.fs` — replace the stubs with real bodies, each rendering
   its `ReportView` (from T019) to ANSI-free plain text (verdict header, sections, exit-status line); no
   re-derivation. Pure, total, deterministic. Makes T014–T018 pass. Depends on T019.
-- [ ] T021 **[DEFERRED]** [P] [US1] Delegate `fsgg route`'s human view to `HumanText.ofRouteResult`: in
+- [X] T021 **[DONE — landed via `063-human-projection-host-wiring`; see `RouteCommand/Loop.fs` `HumanText.ofRouteResult`]** [P] [US1] Delegate `fsgg route`'s human view to `HumanText.ofRouteResult`: in
   `src/FS.GG.Governance.RouteCommand/Loop.fs`, replace the inline plain-text `render` branch with a call over the
   **same** `RouteResult` (+ `CacheEligibilityReport option` + `(GateId*GateOutcome) list`) the JSON path projects;
   **leave the `Json` branch and the persisted `route.json` byte-identical** (add a `HumanText` project reference to
   `FS.GG.Governance.RouteCommand.fsproj`). (FR-001, FR-010, SC-002.)
-- [ ] T022 **[DEFERRED]** [P] [US1] Delegate `fsgg ship`'s human view to `HumanText.ofShipDecision` (over the `Ship.ShipDecision`
+- [X] T022 **[DONE — landed via `063-human-projection-host-wiring`; see `ShipCommand/Loop.fs` `HumanText.ofShipDecision`]** [P] [US1] Delegate `fsgg ship`'s human view to `HumanText.ofShipDecision` (over the `Ship.ShipDecision`
   the command resolves) in `src/FS.GG.Governance.ShipCommand/Loop.fs` (same pattern, `ship.json` byte-identical).
-- [ ] T023 **[DEFERRED]** [P] [US1] Delegate `fsgg verify`'s human view to `HumanText.ofVerifyDecision` (over the same
+- [X] T023 **[DONE — landed via `063-human-projection-host-wiring`; see `VerifyCommand/Loop.fs` `HumanText.ofVerifyDecision`]** [P] [US1] Delegate `fsgg verify`'s human view to `HumanText.ofVerifyDecision` (over the same
   `Ship.ShipDecision` that `VerifyJson.ofVerifyDecision` projects) in `src/FS.GG.Governance.VerifyCommand/Loop.fs`
   (`verify.json` byte-identical).
-- [ ] T024 **[DEFERRED]** [P] [US1] Delegate `fsgg release`'s human view to `HumanText.ofReleaseReport` (over the
+- [ ] T024 **[STILL DEFERRED — NOT landed]** [P] [US1] Delegate `fsgg release`'s human view to `HumanText.ofReleaseReport` (over the
   `ReleaseReport.ReleaseReport`) in `src/FS.GG.Governance.ReleaseCommand/Loop.fs` (`release.json` byte-identical).
-- [ ] T025 **[DEFERRED]** [P] [US1] Delegate `fsgg explain`'s and `fsgg evidence`'s human views to `HumanText.ofRouteExplanation`
+  *(Status as of `066`: the F26 release host landed in `065`/`066` emitting `release.json` v2 only — `ReleaseCommand/Loop.fs`
+  still has no `HumanText.ofReleaseReport` call. `HumanText.ofReleaseReport`/`viewOfReleaseReport` exist in the F27 library;
+  only the host-edge delegation remains. This is the one human-projection host wiring not yet closed.)*
+- [ ] T025 **[PARTIAL — evidence half landed via `063` (`CacheEligibilityCommand/Loop.fs` `HumanText.ofCacheEligibilityReport`); `explain` delegation in `Cli.fs` still deferred]** [P] [US1] Delegate `fsgg explain`'s and `fsgg evidence`'s human views to `HumanText.ofRouteExplanation`
   (over `RouteExplain.RouteExplanation`) / `HumanText.ofCacheEligibilityReport` (over the
   `CacheEligibility.CacheEligibilityReport` from `Project.evidenceReport`) at **both** dispatch sites: the
   multi-subcommand `src/FS.GG.Governance.Cli/Cli.fs` (the `explain`/`evidence` subcommands) **and** the standalone
   `src/FS.GG.Governance.CacheEligibilityCommand/Loop.fs`, which prints the evidence view directly (confirmed: it
   has its own `Loop.fs`). Add the `HumanText` project reference to both hosts; keep each host's JSON
   byte-identical.
-- [ ] T026 **[DEFERRED]** [US1] Host parity goldens: extend each command host's tests
+- [ ] T026 **[PARTIAL — route/ship/verify/evidence parity landed via `063` (e.g. `VerifyCommand.Tests/HumanTextParityTests.fs`); release/explain parity pending on T024/T025]** [US1] Host parity goldens: extend each command host's tests
   (`tests/FS.GG.Governance.RouteCommand.Tests`, `…ShipCommand.Tests`, `…VerifyCommand.Tests`,
   `…ReleaseCommand.Tests`, `…CacheEligibilityCommand.Tests`, and the CLI-host evidence/explain tests) to assert
   (a) the no-`--json` run prints the `HumanText` projection with **no** ANSI escapes and (b) the `--json` run's
@@ -312,11 +315,11 @@ without corrupting layout; `--json` is ANSI-free and byte-identical regardless o
   ANSI. `Json` ⇒ not handled (present in the match for totality). The `plain` arg is the precomputed `HumanText.of*`
   string so the degrade path is byte-equal and `RichRender` need not re-import every report type. Exercisable with
   an injected `TestConsole`/width (T027/T029). Depends on T020 (plain text) and T019 (`ReportView`).
-- [ ] T032 **[DEFERRED]** [US2] Author the **capability-sensing effect** at the CLI host edge: sense `IsTty` / `NO_COLOR` /
+- [X] T032 **[DONE — landed via `063-human-projection-host-wiring` (US2)]** [US2] Author the **capability-sensing effect** at the CLI host edge: sense `IsTty` / `NO_COLOR` /
   explicit-`--plain` / terminal `Width` into a `RenderMode.ColorCapability`, executed only at the interpreter edge
   (no pure function senses) — in `src/FS.GG.Governance.HumanRender` (an edge helper) consumed by the CLI dispatch.
   Pure `selectMode` is **not** changed; this only fills its input (FR-004; data-model §1/§6 D6).
-- [ ] T033 **[DEFERRED]** [US2] Wire render-mode selection into CLI dispatch: compute `RenderMode.selectMode` from the sensed
+- [X] T033 **[DONE — landed via `063-human-projection-host-wiring` (US2; `RenderModeDispatchTests`)]** [US2] Wire render-mode selection into CLI dispatch: compute `RenderMode.selectMode` from the sensed
   capability (T032) + `--json`, then route to JSON (existing `*Json` path) / `HumanText` / `HumanRender.RichRender`
   accordingly, in `src/FS.GG.Governance.Cli/Cli.fs` (and any per-command host that prints directly). `--json`
   always wins; `Cli` references `HumanText` + `HumanRender` (no direct Spectre ref). Makes T027–T030 pass. Depends
@@ -376,13 +379,13 @@ state; the session changes no verdict and emits no new contract; a transiently-u
   `ScheduleDebounce (at+window)`; `WindowSettled` with no later change clears it + emits one `ReRender`;
   `Rerendered` sets `LastSignal`). `init`/`update` do **no** I/O. Makes T034–T036 pass. Depends on T033 (re-render
   reuses the render-mode dispatch).
-- [ ] T038 **[PARTIAL]** [US3] Author the watch **interpreter edge** in `src/FS.GG.Governance.HumanRender/Watch.fs`: the
+- [X] T038 **[DONE — landed via `063-human-projection-host-wiring` (US3; `WatchHostReadOnlyTests`)]** [US3] Author the watch **interpreter edge** in `src/FS.GG.Governance.HumanRender/Watch.fs`: the
   file-change sensing effect (`FileSystemWatcher`, with a poll fallback for unreliable filesystems — plan D4), the
   debounce timer effect, and the `ReRender` effect that re-runs the existing route/evidence/check evaluation and
   prints via the T033 dispatch. Read-only — writes **no** new contract artifact. Includes a real-`FileSystemWatcher`
   interpreter test over a temp tree driving at least one end-to-end settle where safe (Constitution IV/V). Depends
   on T037.
-- [ ] T039 **[DEFERRED]** [US3] Wire the `--watch` flag / `watch` command into CLI parsing + dispatch as a **read-only** mode
+- [X] T039 **[DONE — landed via `063-human-projection-host-wiring` (US3)]** [US3] Wire the `--watch` flag / `watch` command into CLI parsing + dispatch as a **read-only** mode
   over route/evidence/check. Add the `watch` **subcommand** to the multi-subcommand dispatcher
   `src/FS.GG.Governance.Cli/Cli.fs` (+ `Cli.fsi`) — packed as `fsgg-governance`, beside `route`/`explain`/
   `evidence` — and attach the `--watch` **flag** to the standalone packed `fsgg` (`src/FS.GG.Governance.RouteCommand`)
@@ -426,7 +429,7 @@ changes no verdict, runs no new gate, and emits no contract.
   `TuiMsg = MoveUp | MoveDown | Expand | Collapse | Quit`; `TuiEffect = ReadKey | Draw of TuiModel | Exit`; `init`,
   and a **pure** `update` that handles selection/expansion only (no I/O, no evaluation; non-`Quit` ⇒ `Draw` then
   `ReadKey`; `Quit` ⇒ `Exit`). Makes T040/T041 pass. Depends on T019 (`ReportView`).
-- [ ] T043 **[DEFERRED]** [US4] Author the TUI **interpreter edge** + `tui` command wiring: the Spectre key-read + redraw loop in
+- [X] T043 **[DONE — landed via `063-human-projection-host-wiring` (US4; `WatchTuiHostWiringTests`)]** [US4] Author the TUI **interpreter edge** + `tui` command wiring: the Spectre key-read + redraw loop in
   `src/FS.GG.Governance.HumanRender/Tui.fs`, and the `tui` **subcommand** in the multi-subcommand dispatcher
   `src/FS.GG.Governance.Cli/Cli.fs` + `Cli.fsi` (packed as `fsgg-governance`; spec spelling "`fsgg tui`" is the
   generic name per C2 host binding above); new public command surface ⇒ Tier-1 `.fsi` + baseline (T045). Depends
@@ -457,10 +460,10 @@ invariant, document the new modes/commands, and gate the full suite.
   deliberate plain-text wording/layout change updates **only** its smoke snapshot while **every** JSON golden stays
   byte-identical and no verdict/exit code changes (a guard proving plain text is non-contractual). (FR-003, SC-008;
   quickstart scenario 5.)
-- [ ] T049 **[PARTIAL]** [P] Update docs: document the render modes (JSON / plain / rich), `--plain`/`--no-color`/`NO_COLOR`/TTY
+- [X] T049 **[DONE — landed via `063-human-projection-host-wiring` (T044: README "Render modes (F27)" + roadmap)]** [P] Update docs: document the render modes (JSON / plain / rich), `--plain`/`--no-color`/`NO_COLOR`/TTY
   behavior, `--watch` / `fsgg watch`, and `fsgg tui` in the CLI docs/README; note plain/rich are non-contractual
   and JSON is the only contract; record the Spectre.Console NEED/SCOPE/OWNER.
-- [ ] T050 **[PARTIAL]** Full-suite green gate: `dotnet build FS.GG.Governance.sln` + `dotnet test` across all affected projects;
+- [X] T050 **[DONE — landed via `063-human-projection-host-wiring` (T046: full solution green, JSON goldens byte-identical)]** Full-suite green gate: `dotnet build FS.GG.Governance.sln` + `dotnet test` across all affected projects;
   confirm every pre-F27 JSON golden (route/ship/verify/release/evidence) is byte-identical (SC-002) and all smoke
   snapshots stable (SC-003). Depends on the desired stories being complete.
 

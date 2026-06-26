@@ -497,8 +497,8 @@ reuse guards, update docs, and run the quickstart validation.
   green: `surface/FS.GG.Governance.CostBudget.surface.txt`, `…CommandKind.surface.txt`,
   `…CostBudgetJson.surface.txt`, `…ProvenanceJson.surface.txt`; re-bless `…VerifyCommand.surface.txt` /
   `…ShipCommand.surface.txt` **only if** their `Model`/`Loop` surface changed (T043/T045).
-- [ ] T047 [P] *(deferred with Phase 8 — the projection shapes are already pinned byte-for-byte by the
-  `CostBudgetJson`/`ProvenanceJson` tests; committed `golden/` files + the host byte-identity anchors land with
+- [X] T047 [P] *(DONE — landed via `064-cost-cache-host-wiring` (T031 quickstart + committed goldens/byte-identity anchors); the projection shapes are pinned byte-for-byte by the
+  `CostBudgetJson`/`ProvenanceJson` tests; committed `golden/` files + the host byte-identity anchors landed with
   the host wiring.)* Commit the deterministic goldens: a `cost-budget.json` golden (a mixed report with each decision
   kind + each finding kind) and a `provenance.json` golden (runs of several kinds + a sentinel-exit run) under
   the projection test projects' `golden/` dirs; plus the pre-F25 `verify.json`/`route.json`/`audit.json`
@@ -519,8 +519,8 @@ reuse guards, update docs, and run the quickstart validation.
   wired additively through `fsgg verify`/`fsgg ship`; note the F029/F030/F041/F032/F033/F036/F018-F023 reuse
   (no new freshness dimension, reuse verdict, identity, or truth-table change) and that agent-reviewed checks stay
   advisory (F039 `AdvisoryPromotion` deferred).
-- [ ] T051 *(blocked on Phase 8 — the library-level matrices/determinism/surface checks all pass today; the
-  real-host `fsgg verify` smoke + the "every existing golden byte-identical" anchor need the host wiring first.)*
+- [X] T051 *(DONE — landed via `064-cost-cache-host-wiring` (T031 quickstart end-to-end + T032 full-solution gate green); the library-level matrices/determinism/surface checks pass, and the
+  real-host `fsgg verify` smoke + the "every existing golden byte-identical" anchor landed with the host wiring.)*
   Run the `quickstart.md` validation end to end (all six scenarios + the constitution-gate checks):
   `dotnet build FS.GG.Governance.sln` clean (warnings-as-errors); the four new test projects + the two extended
   host test projects + the whole solution green (no regression); the four new surface baselines match; the 4×6
