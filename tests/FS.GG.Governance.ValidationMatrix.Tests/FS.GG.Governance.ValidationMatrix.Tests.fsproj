@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
   </ItemGroup>

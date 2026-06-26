@@ -9,29 +9,8 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Routing.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Route.Model
-
-// Shared REAL-input builders + FsCheck generators for the F031 tests (Principle V — no mocks). Two
-// families of builder:
-//   • the genuine F014->F015->F017->F018->F019 chain (`facts` -> `registryOf` -> `selectOf`), reusing the
-//     Route `Support.fs` shape so a `RouteResult`/`GateRegistry` is a real upstream value; and
-//   • hand-built literal `Gate`/`SelectedGate`/`RouteResult`/`GateRegistry` builders for the
-//     disordered/duplicate inputs the chain will not naturally produce (`gate`/`sp`/`selGate`/`routeOf`/
-//     `catalog`).
-// No I/O beyond repo-root resolution.
-
-// ── Repo root (for the surface baseline path) ──
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary.
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── The genuine upstream chain (real F018 registry / F019 route — no mocks) ──
 

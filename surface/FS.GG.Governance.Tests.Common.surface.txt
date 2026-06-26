@@ -1,0 +1,78 @@
+TYPE FS.GG.Governance.Tests.Common.CatalogFixtures
+  [Method] GovernedPath gp(System.String)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] get_emptyCatalog()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] get_invalidCatalog()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] get_validCatalog()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] readerOf(Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String])
+  [Method] System.String get_policyYml()
+  [Method] System.String get_projectYml()
+  [Method] System.String get_toolingYml()
+  [Method] System.String yaml(System.String)
+  [Method] TypedFacts factsOf(Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String])
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] emptyCatalog
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] invalidCatalog
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] validCatalog
+  [Property] System.String policyYml
+  [Property] System.String projectYml
+  [Property] System.String toolingYml
+TYPE FS.GG.Governance.Tests.Common.FakePorts
+  [Method] ColorCapability plainCapability(Boolean)
+  [Method] FS.GG.Governance.Snapshot.Ports portsGit(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]])
+  [Method] FreshnessSensor get_fakeSensor()
+  [Method] FreshnessSensor get_throwingSensor()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] countingExecPort(ExecCounter, Int32)
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] fakeExecPortExiting(Int32)
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_gitEmpty()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_gitNotRepo()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_gitUnavailable()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] gitWithChanges(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.Char,System.String]])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_absentStoreReader()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_malformedStoreReader()
+  [Method] System.String diffPayload(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.Char,System.String]])
+  [Method] Void noRichRender(ReportView)
+  [NestedType] FS.GG.Governance.Tests.Common.FakePorts+ExecCounter
+  [Property] FreshnessSensor fakeSensor
+  [Property] FreshnessSensor throwingSensor
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] gitEmpty
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] gitNotRepo
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] gitUnavailable
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] absentStoreReader
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] malformedStoreReader
+TYPE FS.GG.Governance.Tests.Common.FakePorts+ExecCounter
+  [Constructor] Void .ctor(Int32)
+  [Field] Int32 Calls@
+  [Method] Boolean Equals(ExecCounter)
+  [Method] Boolean Equals(ExecCounter, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ExecCounter)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Calls()
+  [Method] System.String ToString()
+  [Method] Void set_Calls(Int32)
+  [Property] Int32 Calls
+TYPE FS.GG.Governance.Tests.Common.RepositoryHelpers
+  [Method] System.String findRepoRoot(System.IO.DirectoryInfo)
+  [Method] System.String get_repoRoot()
+  [Property] System.String repoRoot
+TYPE FS.GG.Governance.Tests.Common.SnapshotHelpers
+  [Method] EvidenceRef syntheticRef(System.String)
+  [Method] FreshnessInputs persistInputs(System.String, System.String)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] candidatesOf(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], SnapshotOptions)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] candidatesOfRepo(System.String, SnapshotOptions)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] selectedGatesFor(Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]] expectedOutcomesWith(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate])
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore] readStore(System.String)
+  [Method] RepoSnapshot snapshotOf(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Snapshot.GitCommand,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], SnapshotOptions)
+  [Method] RepoSnapshot snapshotOfRepo(System.String, SnapshotOptions)
+  [Method] ReuseStore storeOf(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.FreshnessKey.ModelModule+FreshnessInputs,FS.GG.Governance.EvidenceReuse.ModelModule+EvidenceRef]])
+  [Method] Revision revOfCommit(CommitId)
+  [Method] SnapshotOptions get_defaultOpts()
+  [Method] SnapshotOptions sinceOpts(System.String)
+  [Method] System.String git(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] System.Tuple`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision],Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision]] baseHeadOfSnap(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot])
+  [Method] Void writeFile(System.String, System.String, System.String)
+  [Property] SnapshotOptions defaultOpts

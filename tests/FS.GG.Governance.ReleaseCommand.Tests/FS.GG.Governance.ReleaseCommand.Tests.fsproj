@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseCommand/FS.GG.Governance.ReleaseCommand.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseDeclaration/FS.GG.Governance.ReleaseDeclaration.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />

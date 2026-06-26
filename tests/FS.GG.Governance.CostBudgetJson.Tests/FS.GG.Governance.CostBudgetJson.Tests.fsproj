@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.CostBudgetJson/FS.GG.Governance.CostBudgetJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />

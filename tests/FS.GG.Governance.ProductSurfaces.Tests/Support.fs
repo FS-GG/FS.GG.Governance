@@ -8,20 +8,8 @@ open FS.GG.Governance.Routing
 open FS.GG.Governance.Routing.Model
 open FS.GG.Governance.ProductSurfaces
 open FS.GG.Governance.ProductSurfaces.Model
-
-// Locate fixtures on the REAL filesystem (Principle V): walk up from the test binary to the repo root
-// (the dir holding the solution), then into the SHARED Config.Tests fixtures — the same real `.fsgg`
-// catalogs the Config suite validates. `classify` is exercised over the actual `TypedFacts`/`RouteReport`
-// the command edge passes (Config.loadAndValidate + Routing.route), never mocks.
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext = File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 /// The on-disk `.fsgg` parent directory for a named fixture (shared with the Config test suite).
 let fixtureDir (name: string) =

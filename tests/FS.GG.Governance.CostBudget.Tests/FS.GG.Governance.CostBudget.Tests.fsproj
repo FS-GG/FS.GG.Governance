@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />

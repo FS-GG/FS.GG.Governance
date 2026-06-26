@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCommand/FS.GG.Governance.EvidenceCommand.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />

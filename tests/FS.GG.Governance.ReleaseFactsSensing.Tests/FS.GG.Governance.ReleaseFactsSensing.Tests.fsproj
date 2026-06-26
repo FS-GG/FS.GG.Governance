@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <!-- Test-only: build the F053 `ReleaseRule.BaseSeverity` (Severity) for the hand-off fixtures. The

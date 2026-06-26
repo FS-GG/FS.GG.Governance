@@ -70,14 +70,5 @@ let summaryWith (runs: KindedCommandRun list) (pack: PackEvidenceSet) : Attestat
     Attestation.summarize (snapshotOf runs) pack
 
 let baseSummary: AttestationSummary = summaryWith [ packRun ] twoPacked
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

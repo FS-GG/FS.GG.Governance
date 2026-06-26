@@ -16,17 +16,8 @@ open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.GateExecution
 open FS.GG.Governance.GateExecution.Model
 open FS.GG.Governance.EvidenceCapture
-
-// ── repo-root locator (for the surface baseline) ──
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext = File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── tooling / command-spec builders ──
 

@@ -5,26 +5,8 @@ open System.IO
 open System.Text.Json
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Gates.Model
-
-// Fixture builders that assemble REAL inputs of the exact type the F014->F018 chain consumes — a real
-// `TypedFacts` and a real `GateRegistry` (from `Gates.buildRegistry`) — never synthetic mocks
-// (Principle V, research D7). The `GateRegistry` they produce is the genuine value a downstream
-// `fsgg`/CI/agent caller holds; the JSON read helpers inspect the EMITTED BYTES via a read-only
-// `JsonDocument` parse, exactly as the kernel's `Json` tests do. No I/O, no YAML, no clock.
-
-// ── repo root (for the surface-drift baseline check, Principle II) ──
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary.
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── real upstream-assembly fixture builders (mirroring the F018/F020 test Support) ──
 

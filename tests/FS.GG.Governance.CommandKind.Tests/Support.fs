@@ -83,14 +83,7 @@ let env = Local
 let builder = BuilderIdentity "ci-runner"
 
 // ── Repo root (for the surface baseline path) ──
+// 074: findRepoRoot now lives once in the shared RepositoryHelpers (sln||slnx superset). repoRoot is
+// re-exported so dependents (SurfaceDriftTests) keep resolving it through this Support module.
 
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

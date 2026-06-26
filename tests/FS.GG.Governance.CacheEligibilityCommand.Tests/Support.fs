@@ -44,17 +44,8 @@ let plainCapability: bool -> RenderMode.ColorCapability =
 
 // A no-op rich renderer for the faked ports (the Plain path never calls it).
 let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
-
-// ── repo-root locator (for the surface baseline) ──
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext = File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 let gp (s: string) = GovernedPath s
 

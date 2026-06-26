@@ -31,23 +31,8 @@ open FS.GG.Governance.Attestation
 open FS.GG.Governance.Attestation.Model
 open FS.GG.Governance.ReleaseReport.Model
 open FS.GG.Governance.ReleaseReport
-
-// Shared REAL-input builders for the F27 human-text projection tests (Principle V — every fixture is
-// a genuine report object from the real F19-F26 cores, never a mock). The SAME value drives both
-// `HumanText.of*` and the matching `*Json.of*` in the parity tests.
-
-// ── repo root (for snapshots + the surface baseline) ──
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── real F018 gate / F017 finding / F019 route builders (mirroring VerifyJson.Tests.Support) ──
 

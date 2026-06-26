@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />

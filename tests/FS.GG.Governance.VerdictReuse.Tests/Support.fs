@@ -154,17 +154,5 @@ let fscheckConfig =
 /// Build a same-set permutation generator for a given input's reviewed artifacts (used by the set-semantics
 /// order/dup invariance properties).
 let samePermutationOf = genSameSetPermutation
-
-// ── Repo root (for the surface baseline path) ──
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary.
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

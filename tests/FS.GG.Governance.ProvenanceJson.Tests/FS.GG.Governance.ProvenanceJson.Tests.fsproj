@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ProvenanceJson/FS.GG.Governance.ProvenanceJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />

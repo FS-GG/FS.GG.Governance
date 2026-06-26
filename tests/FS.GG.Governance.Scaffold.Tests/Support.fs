@@ -4,25 +4,8 @@ open System
 open System.IO
 open FS.GG.Governance.Scaffold
 open FS.GG.Governance.Scaffold.Model
-
-// Fixture builders for the seam tests. The ONLY synthetic element is the deliberately out-of-scope
-// provider CONTENT: a fake in-proc `TemplateProvider` value that DESCRIBES a couple of target-relative
-// files and never writes (research D8, Principle V). Every filesystem effect is exercised against a
-// REAL temp directory via `Interpreter.realPorts`. The fakes carry the `Synthetic` token in the test
-// names that exercise them, and a `// SYNTHETIC:` comment at each use site.
-
-// ── repo root (for the surface-drift baseline check, Principle II) ──
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── fake in-proc providers (SYNTHETIC provider content) ──
 

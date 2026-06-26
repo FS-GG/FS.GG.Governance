@@ -3,23 +3,8 @@ module FS.GG.Governance.Gates.Tests.Support
 open System
 open System.IO
 open FS.GG.Governance.Config.Model
-
-// Fixture builders that assemble REAL inputs of the exact type `buildRegistry` consumes — a real
-// in-memory `TypedFacts` (the shape Config emits, the genuine value a downstream caller passes) —
-// not synthetic mocks (Principle V, research D10). No I/O, no YAML.
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary —
-/// used by the surface-drift baseline check (Principle II).
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 /// A real `Check` from its distinguishing fields, with inert defaults so a test varies only the
 /// field under test. `command` is the optional `tooling.yml` reference; everything else carries a

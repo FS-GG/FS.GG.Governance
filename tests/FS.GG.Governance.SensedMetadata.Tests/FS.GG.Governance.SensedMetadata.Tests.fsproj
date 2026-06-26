@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.SensedMetadata/FS.GG.Governance.SensedMetadata.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
   </ItemGroup>
 

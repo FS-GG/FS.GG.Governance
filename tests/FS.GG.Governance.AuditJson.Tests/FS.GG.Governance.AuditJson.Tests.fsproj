@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <!-- F045: build REAL CacheEligibilityReports for the embed tests via CacheEligibility.evaluate over
          real FreshnessInputs / ReuseStore (EvidenceReuse.record) — no mocks (Principle V). -->

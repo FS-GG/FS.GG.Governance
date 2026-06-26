@@ -4,23 +4,8 @@ open System
 open System.IO
 open System.Text.Json
 open FS.GG.Governance.Scaffold.Model
-
-// Fixture builders for the projection tests — REAL `ScaffoldManifest` values of the exact type the seam
-// folds, inspected through the EMITTED BYTES via a read-only `JsonDocument` parse (the RouteJson tests'
-// discipline). No I/O, no clock.
-
-// ── repo root (for the surface-drift baseline check, Principle II) ──
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 // ── manifest builders ──
 

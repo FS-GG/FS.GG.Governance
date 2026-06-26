@@ -5,25 +5,8 @@ open System.Diagnostics
 open System.IO
 open FS.GG.Governance.Scaffold
 open FS.GG.Governance.Scaffold.Model
-
-// Fixtures for the layered worked example. Filesystem effects run against a REAL temp directory via
-// `Interpreter.realPorts` (Principle V); the e2e build step shells out to the REAL .NET SDK. The ONLY
-// synthetic element is the lifecycle-precondition stand-in — in production that layer is authored by
-// sibling-owned `fsgg-sdd init` (research D4); here it is a disclosed literal fixture, marked at its use
-// site below and named in the PR description.
-
-// ── repo root (for the surface-drift baselines + the committed golden) ──
-
-let rec findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 /// The committed, byte-stable manifest golden the worked example asserts (data-model §4).
 let goldenPath =

@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ScaffoldManifestJson/FS.GG.Governance.ScaffoldManifestJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
   </ItemGroup>
 

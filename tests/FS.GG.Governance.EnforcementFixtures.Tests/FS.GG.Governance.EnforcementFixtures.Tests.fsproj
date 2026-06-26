@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />

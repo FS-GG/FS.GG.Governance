@@ -39,14 +39,5 @@ let mixedFindings =
     [ advisory (gid "a" "reuse") SyntheticTaint "gate a:reuse: evidence is synthetic, not from a real run"
       advisory (gid "b" "recompute") (Stale [ RuleHashCat; BaseRevisionCat ]) "gate b:recompute: evidence stale"
       advisory (gid "c" "noev") NoEvidence "gate c:noev: no prior evidence to reuse" ]
-
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        if File.Exists(Path.Combine(d.FullName, "FS.GG.Governance.sln")) then
-            d.FullName
-        else
-            findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

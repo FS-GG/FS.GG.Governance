@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ExecutionRecord/FS.GG.Governance.ExecutionRecord.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />

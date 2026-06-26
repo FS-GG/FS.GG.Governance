@@ -40,3 +40,6 @@ specs/*/readiness/
 Thumbs.db
 *.tmp
 *.swp
+
+# Agent memory / session data (not a project deliverable)
+.claude/projects/

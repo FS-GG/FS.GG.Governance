@@ -11,26 +11,8 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Route.Model
 open FS.GG.Governance.Ship.Model
-
-// Shared, story-agnostic helpers for the F028 fixtures: repo-root resolution, the byte-compare-or-bless
-// guard, the closed dial enumerations, and the REAL `TypedFacts`/`RouteResult` builders the generator
-// drives through the genuine cores. Every value below is a real, literally-constructible typed value
-// (Principle V) — never a mock; the only I/O is the test reading/writing committed fixture bytes at the
-// edge (ordinary test-fixture I/O, not a modeled workflow — Principle IV N/A).
-
-// ── Repo root + fixtures dir (the F025 `Support.fs` walk-up precedent) ──
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary.
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 /// The committed golden directory: `<repo>/fixtures/enforcement` (reconciliation D2).
 let fixturesDir = Path.Combine(repoRoot, "fixtures", "enforcement")

@@ -303,13 +303,35 @@ recorded pivot (decision D1 superseded).
    in an ADR under `docs/decisions/`.
 4. Acceptance: all command + projection goldens byte-identical; full suite green.
 
-### Phase D — Shared test library (low risk, ~1,000–3,500 LOC) — can run in parallel with A
-1. Create `FS.GG.Governance.Tests.Common` with `RepositoryHelpers`,
-   `CatalogFixtures`, `FakePorts`, `SnapshotHelpers`, `CaptureHelpers`.
-2. Migrate the four command suites first (largest win), then sweep the remaining
-   71 `Support.fs` files, deleting local `findRepoRoot`/git/fixture copies.
-3. Acceptance: full suite green with identical test counts (no tests lost in the
-   move).
+### Phase D — Shared test library (low risk) — ✅ DELIVERED (feature 074, 2026-06-26)
+
+**Delivered net test-support reduction ≈ -1,200 LOC** (-1,677 across the swept
+`Support.fs` files; +481 in the single shared library `.fs`+`.fsi`). Per-project
+test counts identical to the pre-migration baseline; every golden and snapshot
+byte-identical (only `Support.fs` + `.fsproj` files changed). Full suite green
+(2259 → 2265, the +6 being the additive `Tests.Common.Tests` harness only).
+
+1. Created the test-only `FS.GG.Governance.Tests.Common` (`IsPackable=false`,
+   under `tests/`, referenced by NO `src` project — a tested scope guard).
+2. **Key correction to the original plan — only FOUR modules carry shared content.**
+   `RepositoryHelpers` (the 60-copy `findRepoRoot`, shared as the `sln||slnx`
+   superset), `CatalogFixtures` (project/policy/tooling YAML + valid/empty/invalid
+   catalogs + `readerOf`/`factsOf`), `FakePorts` (git/exec/sensor fakes),
+   `SnapshotHelpers` (real-`git` temp-repo builders + the real-core snapshot/gate/
+   evidence expectation builders). ⚠ The sketched fifth group **`CaptureHelpers`
+   has no shareable members** — each command suite's `Capture`/`capturingSink`/
+   `capturingWriter` is parametrised by THAT command's own `Loop.ArtifactKind` /
+   `Interpreter.OutputSink`, so the text is byte-identical but the TYPES diverge.
+   Per FR-006 it stays local (the byte-identity discipline caught it, mirroring
+   Phase A's local `dispositionToken`).
+3. Migrated the three command suites (Verify/Ship/Route, −1,000 LOC) via thin
+   re-exports through each `Support` module, then swept the remaining 56 leaf
+   `Support.fs` files (all `findRepoRoot` copies). Suite-specific variants stay
+   local (each command's `fakePorts`/`verifyExpected`/`withTempRepo`,
+   `expectedCacheReport[With]` which diverges in Route, `ExecCounter`, and the 3
+   leaf real-`git` builders that predate the shared form).
+4. Acceptance: full suite green with identical per-project test counts; every
+   golden/snapshot byte-identical.
 
 ### Phase E — CLI decomposition (medium risk, ~200 LOC)
 1. Extract `CliRender.fs` (all `render*` out of `Cli.fs`).
@@ -331,7 +353,7 @@ and a clean full-suite run.
 | A ✅ | JSON emit (`JsonText`/`JsonTokens`/`JsonWriters` leaves, NOT Kernel) | Low | **~260 delivered** |
 | B | CommandHost skeleton | Medium | ~400–500 |
 | C | VerifyCommand/VerifyJson split (+ optional GateRunHost) | Med/High | ~150 (clarity) |
-| D | Shared test library | Low | ~1,000–3,500 |
+| D ✅ | Shared test library (`Tests.Common`; CaptureHelpers proved local) | Low | **~1,200 delivered** |
 | E | CLI render/IO split | Medium | ~200 (moved) |
 | **Total** | | | **~1,700–4,200** |
 

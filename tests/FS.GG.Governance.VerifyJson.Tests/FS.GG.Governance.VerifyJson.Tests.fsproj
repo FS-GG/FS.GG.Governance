@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <!-- 068: the cross-surface (verify vs ship) ruleId-match test (T013, SC-005) projects the same
          ShipDecision through AuditJson too, asserting the per-finding ruleId is identical on both surfaces. -->
     <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />

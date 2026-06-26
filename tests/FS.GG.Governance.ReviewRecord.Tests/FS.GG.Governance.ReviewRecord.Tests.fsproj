@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ReviewRecord/FS.GG.Governance.ReviewRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.PromptIsolation/FS.GG.Governance.PromptIsolation.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.SensedMetadata/FS.GG.Governance.SensedMetadata.fsproj" />
   </ItemGroup>

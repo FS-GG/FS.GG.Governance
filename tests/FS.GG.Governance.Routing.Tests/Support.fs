@@ -3,22 +3,8 @@ module FS.GG.Governance.Routing.Tests.Support
 open System
 open System.IO
 open FS.GG.Governance.Config.Model
-
-// Fixture builders that assemble REAL inputs of the exact types `Routing.route` consumes
-// (TypedFacts / GovernedPath / DomainId) — not synthetic mocks (Principle V). No I/O, no YAML.
-
-/// Locate the repo root (the dir holding the solution) by walking up from the test binary —
-/// used by the surface-drift baseline check (Principle II).
-let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
-    match dir with
-    | null -> failwith "repo root (FS.GG.Governance.sln) not found"
-    | d ->
-        let here ext =
-            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
-
-let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
+// 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
+let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
 /// A governed path from a raw (already F014-normalized) string.
 let gp (s: string) = GovernedPath s

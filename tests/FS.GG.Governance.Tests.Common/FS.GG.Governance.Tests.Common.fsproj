@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 074 (Phase D): the test-only shared support library. It aggregates the five duplicated
+       test-helper groups behind one curated `.fsi` — RepositoryHelpers (the 60-copy findRepoRoot,
+       shared as the `sln||slnx` superset), FakePorts (git/exec/sensor fakes), CatalogFixtures
+       (project/policy/tooling YAML + valid/empty/invalid catalogs), SnapshotHelpers (real-`git`
+       temp-repo builders), and CaptureHelpers. Test projects reference it via ProjectReference and
+       delete their now-redundant local copies; intentional per-suite variants stay local.
+
+       It is TEST-ONLY: IsPackable=false, lives under tests/, and NO `src` project references it
+       (the scope-guard test in the sibling .Tests project enforces FR-008). It carries NO Expecto /
+       Microsoft.NET.Test.Sdk package (it is a plain library, not a test project) and adds NO new
+       third-party PackageReference (Directory.Packages.props unchanged). The src-core
+       ProjectReferences below are the union the command suites' fakes/fixtures already require so
+       FakePorts/CatalogFixtures can construct typed port and catalog values (research D2). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Tests.Common</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="TestsCommon.fsi" />
+    <Compile Include="TestsCommon.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessSensing/FS.GG.Governance.FreshnessSensing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
+  </ItemGroup>
+
+</Project>
