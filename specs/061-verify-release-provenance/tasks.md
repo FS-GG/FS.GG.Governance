@@ -11,13 +11,19 @@
 > additive, the verify preview is byte-identical-when-absent). One downstream assertion (`ReleaseCommand.Tests`)
 > was updated for the additive v1→v2 schemaVersion bump.
 >
-> **Deferred to a follow-up pass: the Phase 8 host edge (T048–T055) and its dependents (T057 host goldens,
-> T062 host smoke).** `fsgg release` does not yet pack every packable project through the F051 `ExecutionPort`,
-> build the `AuditSnapshot`/`AttestationSummary`/`ReleaseReport`, or write the `attestation.json` sidecar /
-> `release.json` v2 via `ofReleaseReport`; `fsgg verify` does not yet emit the advisory `releaseReadiness`
-> preview. These cores are ready to wire; the MVU host rework + real-`dotnet pack` E2E evidence is the
-> remaining work. Honest status only — no `[US*]` host task is marked `[X]` until the user-facing surface is
-> exercised end-to-end (the vertical-slice rule).
+> **LANDED by `065-release-provenance-host-wiring`.** The Phase 8 host edge (the MVU host rework —
+> T052/T053/T054/T055) is wired and green: `fsgg release` packs every declared packable project through the
+> F051 `ExecutionPort` (the shared `FS.GG.Governance.ReleaseDeclaration` leaf supersedes the row-local
+> `Declaration`), builds the `AuditSnapshot`/`AttestationSummary`/`ReleaseReport`, and writes `attestation.json`
+> (`fsgg.attestation/v1`) + `release.json` v2 (`ofReleaseReport`); `fsgg verify` emits the advisory,
+> declaration-gated `releaseReadiness` preview (byte-identical verify.json when absent). The host surfaces are
+> re-blessed and the existing `route.json`/`ship.json`/no-declaration `verify.json` stay byte-identical.
+> **Partial, tracked in `065` tasks.md:** the real-filesystem `dotnet pack` E2E (T048/T050/T051 → 065 T018),
+> the mergeable-vs-releasable + FR-008 precondition fixture (T049 → 065 T023), and the frozen byte-identity
+> host goldens / quickstart smoke (T057/T062 → 065 T009/T024) — the wiring is covered by pure-MVU transition +
+> emitted-effect tests over the real F26 cores with disclosed-synthetic pack execution; the real-`dotnet pack`
+> evidence and frozen goldens remain. Honest status: those `[US*]` E2E tasks stay `[ ]` until the real surface
+> is exercised end-to-end (the vertical-slice rule).
 
 **Input**: Design documents from `/specs/061-verify-release-provenance/`
 
@@ -582,14 +588,14 @@ pack runs + sidecar write are `Effect`s at the `Interpreter` edge through the ex
 
 ### Implementation
 
-- [ ] T052 `src/FS.GG.Governance.ReleaseCommand/Declaration.fs(i)` — additive: parse `.fsgg/release.yml`'s
+- [X] T052 (landed by 065) `src/FS.GG.Governance.ReleaseCommand/Declaration.fs(i)` — additive: parse `.fsgg/release.yml`'s
   `PackableProjects: (SurfaceId * GateCommand * string option) list` (per project: surface id, the F51 pack
   `GateCommand`, the released version baseline — `None` ⇒ first release) and the optional `Matrix:
   ExhaustiveMatrix option`; the F53/F54 declaration fields unchanged (additive only). Add the
   `PackEvidence`/`Attestation`/`ReleaseReport`/`ValidationMatrix`/`AttestationJson`/`ReleaseJson` project
   references to `FS.GG.Governance.ReleaseCommand.fsproj`. (contracts/release-yml-packable.md.) Depends on
   T027/T040/T041/T047/T033.
-- [ ] T053 `src/FS.GG.Governance.ReleaseCommand/Loop.fs` (+ `Loop.fsi` for the `Model`/`Msg`/`Effect` surface) —
+- [X] T053 (landed by 065) `src/FS.GG.Governance.ReleaseCommand/Loop.fs` (+ `Loop.fsi` for the `Model`/`Msg`/`Effect` surface) —
   additive `Effect.PackProjects of (SurfaceId * GateCommand) list`; additive `Model` fields (`PackEvidence:
   PackEvidenceSet option`, `Snapshot: AuditSnapshot option`, `Attestation: AttestationSummary option`, `Report:
   ReleaseReport option`, `AttestationDoc: string option`). In `update`: from the recorded pack outcomes build the
@@ -599,13 +605,13 @@ pack runs + sidecar write are `Effect`s at the `Interpreter` edge through the ex
   (`Attestation.summarize`), the `ReleaseReport` (`Report.assemble`), the `attestation.json`
   (`AttestationJson.ofAttestation`) and `release.json` v2 (`ReleaseJson.ofReleaseReport`), and decide the matrix
   (`Matrix.decideMatrix`). Pure `update`; no I/O here. Depends on T052.
-- [ ] T054 `src/FS.GG.Governance.ReleaseCommand/Interpreter.fs(i)` — at the edge: run each pack via the F51
+- [X] T054 (landed by 065) `src/FS.GG.Governance.ReleaseCommand/Interpreter.fs(i)` — at the edge: run each pack via the F51
   `GateExecution.ExecutionPort` (sentinel exit on failure, never dropped), read each output's artifact path +
   packed version + digest into a `PackOutcome`, and write the `attestation.json` sidecar through the existing
   `ArtifactWriter` (temp+rename); the extended `release.json` v2 is written by the existing release `ArtifactWriter`
   path. Empty inputs ⇒ the sidecar/JSON stay well-formed; existing goldens untouched; the F55 exit-code scheme
   unchanged. Makes T048/T049/T051 pass. Depends on T053.
-- [ ] T055 `src/FS.GG.Governance.VerifyCommand/Loop.fs(i)` — additive `Model.ReleasePreview:
+- [X] T055 (landed by 065) `src/FS.GG.Governance.VerifyCommand/Loop.fs(i)` — additive `Model.ReleasePreview:
   VerifyReleasePreview option` (never affects `Exit`). In `update` at the verify boundary: build the same
   evidence advisory (pack evidence + sensed preconditions + attestation summary), assemble a `ReleaseReport`, and
   `Report.preview` it; record `Matrix.decideMatrix` (deferred at the inner loop). Project the additive

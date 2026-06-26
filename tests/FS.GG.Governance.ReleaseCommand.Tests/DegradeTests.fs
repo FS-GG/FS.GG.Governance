@@ -17,7 +17,8 @@ let private runText repo =
     let request =
         { Loop.Repo = repo
           Loop.Format = Loop.Text
-          Loop.ReleaseOut = Path.Combine(repo, "release.json") }
+          Loop.ReleaseOut = Path.Combine(repo, "release.json")
+          Loop.AttestationOut = Path.Combine(repo, "attestation.json") }
 
     Interpreter.run ports request
 

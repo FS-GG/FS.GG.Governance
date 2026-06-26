@@ -1,63 +1,63 @@
-// Curated public signature contract for the EDGE interpreter of the `fsgg release` host command (F055).
-//
-// This .fsi is the SOLE declaration of the module's public surface (Constitution Principle II). The
-// matching Interpreter.fs carries NO `private`/`internal`/`public` modifiers on top-level bindings — the
-// atomic writer, the declaration-read glue, and the exception guard live ONLY in the .fs.
+// Curated public signature contract for the EDGE interpreter of the `fsgg release` host command (F055,
+// grown by 065 F26 host wiring). This .fsi is the SOLE declaration of the module's public surface
+// (Constitution Principle II). The matching Interpreter.fs carries NO access modifiers on top-level
+// bindings — the atomic writer, the pack-output reader, the head sense, and the exception guard live ONLY
+// in the .fs.
 //
 // This module is the IMPURE side of the Constitution's MVU boundary (Principle IV): it executes the
-// `Loop.Effect`s the pure `update` requests against INJECTED, FAKEABLE ports, and feeds each result back
-// as a `Loop.Msg`. It REUSES the existing edges verbatim — `Config.Loader.FileReader` for the
-// `.fsgg/release.yml` read (F014) and F054 `senseRelease`/`realPort` for the repository sensing (the
-// `Sense` port) — adding only the persistence (`ArtifactWriter`) and stdout (`OutputSink`) ports. It is
-// TOTAL and SAFE: every port `Error` and every thrown exception is caught and reified to the matching
-// `Msg` — the interpreter NEVER throws and (via temp+rename) NEVER leaves a partial artifact, and a write
-// failure is reified to a `Wrote(Error)` (mapped by `update` to `ToolError`, never a blocked verdict).
-// NETWORK-FREE by construction: the sensing port reaches only local files via `System.IO` (F054, SC-008).
+// `Loop.Effect`s the pure `update` requests against INJECTED, FAKEABLE ports, and feeds each result back as
+// a `Loop.Msg`. 065 adds the F51 execution port (`Execute`), a pack-output reader (`PackRead`), and the
+// normalized head/environment/builder senses the release attestation needs — every new edge here, with NO
+// I/O entering any pure core (FR-010). It is TOTAL and SAFE: every port `Error` and thrown write exception
+// is caught and reified to the matching `Msg`; the interpreter NEVER throws and (via temp+rename) NEVER
+// leaves a partial artifact.
 
 namespace FS.GG.Governance.ReleaseCommand
 
 open FS.GG.Governance.Config                       // Loader.FileReader
-open FS.GG.Governance.ReleaseFactsSensing.Model     // SourceLayout, ReleaseExpectations, SensedRelease
+open FS.GG.Governance.Config.Model                  // SurfaceId, EnvironmentClass
+open FS.GG.Governance.FreshnessKey.Model            // Revision
+open FS.GG.Governance.Provenance.Model              // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model           // ExecutionPort
+open FS.GG.Governance.CommandKind.Model             // KindedCommandRun
+open FS.GG.Governance.PackEvidence.Model            // PackOutcome
+open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
-    /// The injected PERSISTENCE port: write `content` to `path`, returning `Ok ()` or `Error reason` (an
-    /// unwritable location is a value, never an exception). The real port writes via temp-file + atomic
-    /// rename so a failed write never leaves a truncated `release.json` (FR-012); tests back it with an
-    /// in-memory capturing or faulting writer.
+    /// The injected PERSISTENCE port (temp-file + atomic rename so a failed write never leaves a truncated
+    /// file). Tests back it with an in-memory capturing or faulting writer.
     type ArtifactWriter = string -> string -> Result<unit, string>
 
-    /// The injected STDOUT port: emit the rendered summary. The real port writes to `Console.Out`; tests
-    /// capture the emitted string.
+    /// The injected STDOUT port.
     type OutputSink = string -> unit
 
-    /// The bundle of injected edge ports — everything impure the command touches. `Files` is the REUSED
-    /// F014 read port (bound to the repo's `.fsgg`); `Sense` wraps F054 `realPort`+`senseRelease` (the
-    /// real F053/F054 cores, NEVER mocked in end-to-end tests); `Write`/`Out` are the persistence/stdout
-    /// ports faked in unit tests.
+    /// The bundle of injected edge ports. `Files`/`Sense`/`Write`/`Out` are the existing F055 ports; 065
+    /// adds the F51 `Execute` port, the `PackRead` pack-output reader (it reads the produced `.nupkg`'s
+    /// normalized path/version/digest from the recorded `Pack` run and classifies `Packed` /
+    /// `PackedNoArtifact` / `PackFailed` — a non-zero exit ⇒ `PackFailed`, an unreadable artifact ⇒
+    /// `PackedNoArtifact (ArtifactUnreadable …)`, never a throw), and the three normalized provenance senses.
     type Ports =
         { Files: Loader.FileReader
           Sense: SourceLayout -> ReleaseExpectations -> SensedRelease
+          Execute: ExecutionPort
+          PackRead: SurfaceId -> KindedCommandRun -> PackOutcome
+          SenseHead: unit -> Revision
+          SenseEnvironment: unit -> EnvironmentClass
+          SenseBuilder: unit -> BuilderIdentity
           Write: ArtifactWriter
           Out: OutputSink }
 
-    /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`
-    /// (reads `<repo>/.fsgg/release.yml`), a `Sense` that builds `ReleaseFactsSensing.Interpreter.realPort
-    /// repo layout` and runs `senseRelease`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.
-    /// This is the ONLY place the command touches the real filesystem for writing; reading and sensing are
-    /// delegated to the reused edges. Reaches NO network.
+    /// Build the REAL ports for a repository working directory: the reused F014 reader + F054 sense + atomic
+    /// writer + console sink, PLUS the real F51 execution port, a real pack-output reader (locating the
+    /// produced `.nupkg` under the constitution's pack-output dir and computing its `ArtifactHash`), the
+    /// F016 head-revision sense, and the normalized environment/builder senses (no username/host/clock).
     val realPorts: repo: string -> Ports
 
-    /// Execute ONE `Loop.Effect` against the ports and return its result `Loop.Msg`. TOTAL and SAFE:
-    /// catches every port `Error` and thrown exception, reifying it to the matching `Msg` (an absent /
-    /// unreadable / malformed declaration ⇒ `DeclarationLoaded(Error _)`, a write failure ⇒
-    /// `Wrote(Error _)`). NEVER throws.
+    /// Execute ONE `Loop.Effect` against the ports and return its result `Loop.Msg`. TOTAL and SAFE.
     val step: ports: Ports -> effect: Loop.Effect -> Loop.Msg
 
-    /// The interpreter loop (mirrors `ShipCommand.Interpreter.run`): `Loop.init` the request, thread each
-    /// emitted `Effect` through `step`, feed every result `Msg` back into `Loop.update`, and stop at
-    /// `Done`. Returns the terminal `Loop.Model` (carrying the decided `ExitDecision` — including a
-    /// `Blocked` verdict). TOTAL — never throws; the whole composition, the verdict, AND the exit-code
-    /// mapping are exercised deterministically against a real temp-repo fixture (Principle V, SC-007).
+    /// The interpreter loop: `Loop.init` the request, thread each emitted `Effect` through `step`, feed every
+    /// result `Msg` back into `Loop.update`, and stop at `Done`. Returns the terminal `Loop.Model`.
     val run: ports: Ports -> request: Loop.RunRequest -> Loop.Model

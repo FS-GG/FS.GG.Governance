@@ -16,7 +16,6 @@
   <ItemGroup>
     <Compile Include="Support.fs" />
     <Compile Include="ParseTests.fs" />
-    <Compile Include="DeclarationTests.fs" />
     <Compile Include="LoopTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="DeterminismTests.fs" />
@@ -25,6 +24,7 @@
     <Compile Include="DegradeTests.fs" />
     <Compile Include="NoMutationTests.fs" />
     <Compile Include="ScopeGuardTests.fs" />
+    <Compile Include="SafeFailureTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -39,12 +39,25 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseCommand/FS.GG.Governance.ReleaseCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseDeclaration/FS.GG.Governance.ReleaseDeclaration.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- 065 (US1/US2): the F26 cores + execution/command vocabulary the tests now construct. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.AttestationJson/FS.GG.Governance.AttestationJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ExecutionRecord/FS.GG.Governance.ExecutionRecord.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
   </ItemGroup>
 
 </Project>

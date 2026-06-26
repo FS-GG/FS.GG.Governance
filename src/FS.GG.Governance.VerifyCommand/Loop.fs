@@ -44,6 +44,11 @@ open FS.GG.Governance.CostBudget.Model        // CostBudget, CandidateCost, Agen
 open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
 open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
 open FS.GG.Governance.Provenance.Model        // BuilderIdentity
+// 065 wiring (US3): the declaration-gated advisory release-readiness preview (verify does NOT pack).
+open FS.GG.Governance.ReleaseFactsSensing.Model   // SourceLayout, ReleaseExpectations, SensedRelease (F54)
+open FS.GG.Governance.ValidationMatrix.Model       // MatrixPlan, MatrixBoundary (InnerLoop)
+open FS.GG.Governance.ReleaseReport.Model          // VerifyReleasePreview
+open FS.GG.Governance.ReleaseDeclaration           // Declaration (the shared leaf)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -97,6 +102,7 @@ module Loop =
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
         | SenseProvenance
+        | SenseReleasePreview of repo: string
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
 
     type Msg =
@@ -109,6 +115,7 @@ module Loop =
         | StorePersisted of Result<unit, string>
         | GatesExecuted of (GateId * CommandRecord) list
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
+        | ReleasePreviewSensed of (Declaration.ReleaseDeclaration * SensedRelease) option
         | Emitted
 
     type Diagnostic =
@@ -143,6 +150,10 @@ module Loop =
           Builder: BuilderIdentity option
           CacheDecision: CacheDecisionReport option
           Audit: AuditSnapshot option
+          ReleaseDecl: Declaration.ReleaseDeclaration option
+          ReleaseSensed: SensedRelease option
+          ReleasePreview: VerifyReleasePreview option
+          ReleaseMatrix: MatrixPlan option
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -293,6 +304,10 @@ module Loop =
               Builder = None
               CacheDecision = None
               Audit = None
+              ReleaseDecl = None
+              ReleaseSensed = None
+              ReleasePreview = None
+              ReleaseMatrix = None
               Diagnostics = []
               Exit = Success }
 
@@ -301,7 +316,10 @@ module Loop =
         // `provenance.json` sidecar.
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely: set candidates here and go straight to the catalog load.
-        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ SenseProvenance; LoadCatalog request.Repo ]
+        // 065 (US3): the declaration load + release-fact sense is serialized BEFORE the catalog load (the
+        // preview must be ready when verify.json is projected). `SenseReleasePreview` ⇒ `ReleasePreviewSensed`
+        // ⇒ `LoadCatalog`.
+        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ SenseProvenance; SenseReleasePreview request.Repo ]
         | Since _
         | DefaultRange -> model, [ SenseProvenance; SenseScope request.Scope ]
 
@@ -442,6 +460,28 @@ module Loop =
         let env = model.Environment |> Option.defaultValue LocalOrCi
         let builder = model.Builder |> Option.defaultValue (BuilderIdentity "fsgg")
         FS.GG.Governance.CommandKind.Audit.auditSnapshot headRev baseRev headRev ruleHash genVer digests runs env builder
+
+    // 065 (US3): assemble the advisory release-readiness preview from the loaded declaration + sensed F54
+    // facts + the run's audit snapshot, with an EMPTY PackEvidenceSet — verify does NOT pack, so there is no
+    // attested subject (FR-007). PURE; never participates in the verify verdict or exit code.
+    let previewFrom (decl: Declaration.ReleaseDeclaration) (sensed: SensedRelease) (snapshot: AuditSnapshot) : VerifyReleasePreview =
+        let decision = FS.GG.Governance.ReleaseRules.Release.evaluateRelease decl.Rules sensed.Facts
+
+        let emptyPack: FS.GG.Governance.PackEvidence.Model.PackEvidenceSet =
+            { Verdicts = []
+              Runs = []
+              NoPackableProjects = true }
+
+        let attestation = FS.GG.Governance.Attestation.Attestation.summarize snapshot emptyPack
+        let report = FS.GG.Governance.ReleaseReport.Report.assemble decision sensed emptyPack attestation
+        FS.GG.Governance.ReleaseReport.Report.preview report
+
+    // The advisory preview for the current model (None unless a parseable `.fsgg/release.yml` was sensed ⇒
+    // byte-identical verify.json, no `releaseReadiness` block).
+    let previewOf (model: Model) (snapshot: AuditSnapshot) : VerifyReleasePreview option =
+        match model.ReleaseDecl, model.ReleaseSensed with
+        | Some decl, Some sensed -> Some(previewFrom decl sensed snapshot)
+        | _ -> None
 
     // The kinded runs for the executed gates: pair each returned `CommandRecord` with `kindOf` over the gate.
     let kindedRunsOf (model: Model) (records: (GateId * CommandRecord) list) : KindedCommandRun list =
@@ -641,7 +681,11 @@ module Loop =
             let cacheReport = CacheEligibility.evaluate candidates store
             // verify.json is projected over the SAME relocated decision + cache report + outcomes as before —
             // the budgeted findings are NOT folded in, so it stays byte-identical to the pre-wiring golden (D6).
-            let verifyDoc = VerifyJson.ofVerifyDecision relocated (Some cacheReport) outcomes
+            // 065 (US3): build the snapshot first so the advisory preview can use it; switch to the additive
+            // `WithPreview` projection (byte-identical when `preview = None` — findings stay empty).
+            let snapshot = buildSnapshot model (kindedRunsOf model records)
+            let preview = previewOf model snapshot
+            let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview relocated (Some cacheReport) outcomes [] preview
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
@@ -651,7 +695,7 @@ module Loop =
             let costBudgetDoc =
                 FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport budgetReport findings
 
-            let snapshot = buildSnapshot model (kindedRunsOf model records)
+            // `snapshot` already built above (065 — used by the preview); reuse it for provenance.json.
             let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
 
             let persistEffects, persistNotes =
@@ -669,6 +713,7 @@ module Loop =
                 Outcomes = outcomes
                 CacheDecision = Some budgetReport
                 Audit = Some snapshot
+                ReleasePreview = preview
                 CurrencyNotes = model.CurrencyNotes @ persistNotes },
             WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
             :: WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
@@ -691,7 +736,8 @@ module Loop =
                     Phase = Sensed'
                     Candidates = Some candidates
                     Snapshot = Some snapshot },
-                [ LoadCatalog model.Request.Repo ]
+                // 065 (US3): sense the release preview before loading the catalog (see init).
+                [ SenseReleasePreview model.Request.Repo ]
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
 
@@ -712,13 +758,16 @@ module Loop =
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
                 if List.isEmpty selectedGates then
-                    let verifyDoc = VerifyJson.ofVerifyDecision decision None []
                     // F25 wiring (064): even the "nothing to verify" path emits well-formed empty-array sidecars
                     // (no decisions, no findings, no runs) so the contract surface is uniform (SC-004 empty case).
                     let emptyReport = CacheDecisionReport []
                     let costBudgetDoc = FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
                     let snapshot = buildSnapshot model []
                     let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+                    // 065 (US3): the advisory preview (None unless a declaration was sensed); byte-identical
+                    // verify.json when None (findings stay empty).
+                    let preview = previewOf model snapshot
+                    let verifyDoc = VerifyJson.ofVerifyDecisionWithPreview decision None [] [] preview
 
                     { model with
                         Phase = Rolled
@@ -728,6 +777,7 @@ module Loop =
                         Tooling = facts.Tooling
                         CacheDecision = Some emptyReport
                         Audit = Some snapshot
+                        ReleasePreview = preview
                         PersistAcked = true },
                     [ WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
                       WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
@@ -815,6 +865,29 @@ module Loop =
                     Environment = Some environment
                     Builder = Some builder },
                 []
+
+            // 065 (US3): the declaration + sensed F54 facts (or None) landed — store them, record the
+            // inner-loop matrix decision (a declared matrix is `Deferred`; an undeclared one `NotDeclared`),
+            // then proceed to the catalog load. Never changes the verify verdict or exit code (FR-006/FR-009).
+            | ReleasePreviewSensed opt ->
+                let decl, sensed =
+                    match opt with
+                    | Some(d, s) -> Some d, Some s
+                    | None -> None, None
+
+                let matrix =
+                    decl
+                    |> Option.map (fun d ->
+                        FS.GG.Governance.ValidationMatrix.Matrix.decideMatrix
+                            (FS.GG.Governance.CostBudget.Budget.budgetFor model.Request.Profile Verify)
+                            InnerLoop
+                            d.Matrix)
+
+                { model with
+                    ReleaseDecl = decl
+                    ReleaseSensed = sensed
+                    ReleaseMatrix = matrix },
+                [ LoadCatalog model.Request.Repo ]
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

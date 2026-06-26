@@ -25,7 +25,8 @@ let private runBoth repo outPath =
     let request =
         { Loop.Repo = repo
           Loop.Format = Loop.TextAndJson
-          Loop.ReleaseOut = outPath }
+          Loop.ReleaseOut = outPath
+          Loop.AttestationOut = outPath + ".attestation.json" }
 
     Interpreter.run ports request
 
@@ -54,7 +55,9 @@ let tests =
 
                   let after = hashTree repo
                   let added = Map.toList after |> List.map fst |> List.filter (fun p -> not (Map.containsKey p before))
-                  Expect.equal added [ "release.json" ] "the only added path is release.json"
+                  // 065: the publication boundary writes BOTH the release doc and the attestation sidecar
+                  // (here both requested INSIDE the repo via `runBoth`); nothing else is added (FR-016).
+                  Expect.equal added [ "release.json"; "release.json.attestation.json" ] "only the two requested artifacts are added"
 
                   // No pre-existing file changed.
                   let changed =

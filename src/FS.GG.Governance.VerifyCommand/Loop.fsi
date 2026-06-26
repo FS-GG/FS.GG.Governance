@@ -37,6 +37,11 @@ open FS.GG.Governance.Config.Model               // Cost, EnvironmentClass (alre
 open FS.GG.Governance.CostBudget.Model            // CacheDecisionReport (budget-filter carrier → cost-budget.json)
 open FS.GG.Governance.CommandKind.Model           // CommandKind, AuditSnapshot (kinded runs → provenance.json)
 open FS.GG.Governance.Provenance.Model            // BuilderIdentity (normalized edge sense)
+// 065 wiring (US3): the declaration-gated advisory release-readiness preview surfaces.
+open FS.GG.Governance.ReleaseFactsSensing.Model    // SourceLayout, ReleaseExpectations, SensedRelease (F54)
+open FS.GG.Governance.ValidationMatrix.Model        // MatrixPlan (decideMatrix at InnerLoop)
+open FS.GG.Governance.ReleaseReport.Model           // VerifyReleasePreview (F26)
+open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -128,6 +133,11 @@ module Loop =
         /// machines/re-runs (FR-006, SC-003). The ONLY new edge senses this row adds; result fed back as
         /// `ProvenanceSensed`.
         | SenseProvenance
+        /// 065 wiring (US3): load `.fsgg/release.yml` through the existing `Files` port and, IF present and
+        /// it parses, sense the F54 release facts — so the advisory preview can assemble a `ReleaseReport`
+        /// WITHOUT packing (verify is the inner loop). Result fed back as `ReleasePreviewSensed`; an absent
+        /// or unparsable declaration ⇒ `None` ⇒ no preview ⇒ byte-identical `verify.json`.
+        | SenseReleasePreview of repo: string
         /// F27 wiring (063): emit the rendered output. `text` is the verify.json contract string (human = None)
         /// OR the ANSI-free plain projection used when the sensed mode is `Plain`; `human` carries the
         /// `ReportView` + operational `wrote` line for the `Rich` path the edge selects via `selectMode`
@@ -151,6 +161,10 @@ module Loop =
         | GatesExecuted of (GateId * CommandRecord) list
         /// F25 wiring (064): the two normalized provenance senses fed back from `SenseProvenance`.
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
+        /// 065 wiring (US3): the loaded declaration + sensed F54 facts (or `None` when no parseable
+        /// `.fsgg/release.yml`). Serialized BEFORE `LoadCatalog` so the preview is ready when verify.json is
+        /// projected; never participates in the verify verdict or exit code.
+        | ReleasePreviewSensed of (Declaration.ReleaseDeclaration * SensedRelease) option
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying NO
@@ -198,6 +212,13 @@ module Loop =
           /// F25 wiring (064): the provenance audit snapshot built on `GatesExecuted`, carried to the persist
           /// phase for the `provenance.json` projection.
           Audit: AuditSnapshot option
+          /// 065 wiring (US3): the loaded release declaration + sensed F54 facts (declaration-gated; `None`
+          /// when no parseable `.fsgg/release.yml`), the assembled advisory preview, and the inner-loop matrix
+          /// decision. NONE of these participate in the verify verdict or exit code (FR-006).
+          ReleaseDecl: Declaration.ReleaseDeclaration option
+          ReleaseSensed: SensedRelease option
+          ReleasePreview: VerifyReleasePreview option
+          ReleaseMatrix: MatrixPlan option
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

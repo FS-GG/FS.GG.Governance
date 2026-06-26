@@ -1,0 +1,59 @@
+TYPE FS.GG.Governance.ReleaseDeclaration.DeclarationModule
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration,FS.GG.Governance.ReleaseDeclaration.DeclarationModule+DeclError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [NestedType] FS.GG.Governance.ReleaseDeclaration.DeclarationModule+DeclError
+  [NestedType] FS.GG.Governance.ReleaseDeclaration.DeclarationModule+PackableProject
+  [NestedType] FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration
+TYPE FS.GG.Governance.ReleaseDeclaration.DeclarationModule+DeclError
+  [Constructor] Void .ctor(System.String)
+  [Method] Boolean Equals(DeclError)
+  [Method] Boolean Equals(DeclError, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DeclError)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Reason()
+  [Property] System.String Reason
+TYPE FS.GG.Governance.ReleaseDeclaration.DeclarationModule+PackableProject
+  [Constructor] Void .ctor(SurfaceId, GateCommand, Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] Boolean Equals(PackableProject)
+  [Method] Boolean Equals(PackableProject, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GateCommand get_PackCommand()
+  [Method] Int32 CompareTo(PackableProject)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Baseline()
+  [Method] SurfaceId get_Surface()
+  [Method] System.String ToString()
+  [Property] GateCommand PackCommand
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Baseline
+  [Property] SurfaceId Surface
+TYPE FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule], ReleaseExpectations, SourceLayout, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+PackableProject], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix])
+  [Method] Boolean Equals(ReleaseDeclaration)
+  [Method] Boolean Equals(ReleaseDeclaration, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReleaseDeclaration)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+PackableProject] get_PackableProjects()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule] get_Rules()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix] get_Matrix()
+  [Method] ReleaseExpectations get_Expectations()
+  [Method] SourceLayout get_Layout()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+PackableProject] PackableProjects
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule] Rules
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix] Matrix
+  [Property] ReleaseExpectations Expectations
+  [Property] SourceLayout Layout

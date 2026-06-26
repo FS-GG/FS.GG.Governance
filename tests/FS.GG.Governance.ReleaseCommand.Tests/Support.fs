@@ -4,9 +4,16 @@ open System
 open System.IO
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
+open FS.GG.Governance.CommandRecord.Model
+open FS.GG.Governance.CommandKind.Model
+open FS.GG.Governance.GateExecution.Model
+open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.PackEvidence.Model
+open FS.GG.Governance.Provenance.Model
 open FS.GG.Governance.ReleaseRules.Model
 open FS.GG.Governance.ReleaseFactsSensing
 open FS.GG.Governance.ReleaseFactsSensing.Model
+open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
 open FS.GG.Governance.ReleaseCommand
 
 // Shared REAL-input builders for the F055 ReleaseCommand tests (Principle V — every value below is a real,
@@ -99,8 +106,32 @@ let parseYml (yml: string) : Declaration.ReleaseDeclaration =
     | Ok d -> d
     | Error e -> failwithf "fixture release.yml failed to parse: %s" e.Reason
 
-/// The compliant declaration (parsed from the fixture yml — exercises the real adapter).
+/// The compliant declaration (parsed from the fixture yml — exercises the real adapter). No packable
+/// projects ⇒ the pack precondition is vacuously satisfied.
 let compliantDeclaration: Declaration.ReleaseDeclaration = parseYml releaseYmlAllBlocking
+
+/// 065: a declaration with ONE declared packable project (surface `pkg`, baseline `1.2.0`) — the pack
+/// boundary input. A packed version above `1.2.0` ⇒ Bumped; equal ⇒ Unbumped; below ⇒ Downgraded.
+let releaseYmlWithPackables =
+    releaseYmlAllBlocking
+    + "packableProjects:\n  - surface: pkg\n    packCommand:\n      executable: dotnet\n      arguments: [pack]\n    baseline: \"1.2.0\"\n"
+
+let declWithPackables: Declaration.ReleaseDeclaration = parseYml releaseYmlWithPackables
+
+/// 065: as above PLUS a declared exhaustive matrix (admitted `RunNow` at the release boundary, never run).
+let releaseYmlWithPackablesAndMatrix =
+    releaseYmlWithPackables + "matrix:\n  name: cross\n  cost: exhaustive\n  dimensions: [net10]\n"
+
+let declWithPackablesAndMatrix: Declaration.ReleaseDeclaration = parseYml releaseYmlWithPackablesAndMatrix
+
+/// 065: TWO declared packable projects (the order-independence / multi-project boundary fixture).
+let releaseYmlTwoPackables =
+    releaseYmlAllBlocking
+    + "packableProjects:\n"
+    + "  - surface: pkg\n    packCommand:\n      executable: dotnet\n      arguments: [pack]\n    baseline: \"1.2.0\"\n"
+    + "  - surface: pkg2\n    packCommand:\n      executable: dotnet\n      arguments: [pack]\n    baseline: \"2.0.0\"\n"
+
+let declWithTwoPackables: Declaration.ReleaseDeclaration = parseYml releaseYmlTwoPackables
 
 // ── Real temp-repository fixture (the edge tests' Principle-V input) ──
 
@@ -156,18 +187,77 @@ let withTempRepo (yml: string) (writeSources: string -> unit) (body: string -> '
         writeSources dir
         body dir)
 
+// ── 065: fake pack/provenance ports (the cores stay REAL; only the execution/IO edge is faked, disclosed) ──
+
+/// A synthetic `KindedCommandRun` for a `Pack` at a given exit code (the run is recorded in every outcome,
+/// never dropped — FR-001). SYNTHETIC: no real `dotnet pack` process; the run record is literal.
+let synthaticPackRun (exitCode: int) : KindedCommandRun =
+    let record =
+        FS.GG.Governance.ExecutionRecord.ExecutionRecord.recordOf
+            (Executable "dotnet")
+            [ Argument "pack" ]
+            (WorkingDirectory ".")
+            { Added = []; Changed = []; Removed = [] }
+            (TimeoutLimit 600)
+            (ExitCode exitCode)
+            [||]
+            [||]
+            NoCapturedOutput
+            (SensedDuration 0L)
+
+    { Kind = Pack; Record = record }
+
+/// A `Packed` outcome at a real (literal) version/digest. SYNTHETIC: the artifact is a literal, not a real
+/// `.nupkg` (the pure cores evaluate it for real).
+let synthaticPacked (surface: string) (version: string) : PackOutcome =
+    Packed(
+        { Surface = SurfaceId surface
+          ArtifactPath = sprintf "%s.%s.nupkg" surface version
+          PackedVersion = version
+          Digest = ArtifactHash(sprintf "digest-%s-%s" surface version) },
+        synthaticPackRun 0
+    )
+
+let synthaticPackFailed (surface: string) (sentinel: int) : PackOutcome =
+    PackFailed(SurfaceId surface, sentinel, synthaticPackRun sentinel)
+
 /// A faked `Ports` over the REAL cores: real `Files` reader + real `Sense` (F054), with a supplied
-/// capturing/faulting `Write` and a capturing `Out`. Mirrors `realPorts` but lets a test fault the writer
-/// or capture stdout without touching the real console/atomic writer.
-let portsWith (repo: string) (write: Interpreter.ArtifactWriter) (out: string -> unit) : Interpreter.Ports =
+/// capturing/faulting `Write` and a capturing `Out`, normalized provenance senses, and an injected list of
+/// pack outcomes (`PackRead` replays them in request order; `Execute` is a never-failing stub the pure
+/// cores never inspect). SYNTHETIC: the pack execution/output read is replayed from `packs`, disclosed here.
+let portsWithPacks (repo: string) (packs: PackOutcome list) (write: Interpreter.ArtifactWriter) (out: string -> unit) : Interpreter.Ports =
+    let remaining = ref packs
+
     { Files = FS.GG.Governance.Config.Loader.fileSystemReader repo
       Sense =
         fun lay exp ->
             FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
                 (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo lay)
                 exp
+      Execute =
+        fun _ ->
+            { Stdout = [||]
+              Stderr = [||]
+              ExitCode = ExitCode 0
+              Duration = SensedDuration 0L }
+      PackRead =
+        fun _ _ ->
+            // Replay the injected outcomes in request order (the interpreter calls per declared project).
+            match !remaining with
+            | x :: rest ->
+                remaining.Value <- rest
+                x
+            | [] -> failwith "portsWithPacks: more PackRead calls than injected outcomes"
+      SenseHead = fun () -> Revision ""
+      SenseEnvironment = fun () -> EnvironmentClass.Local
+      SenseBuilder = fun () -> BuilderIdentity "fsgg"
       Write = write
       Out = out }
+
+/// The common no-packable-projects faked ports (the existing fixtures declare no packable projects ⇒ no
+/// pack call). Mirrors `realPorts` but lets a test fault the writer or capture stdout.
+let portsWith (repo: string) (write: Interpreter.ArtifactWriter) (out: string -> unit) : Interpreter.Ports =
+    portsWithPacks repo [] write out
 
 // ── Repo root (for the surface baseline path) ──
 

@@ -20,7 +20,8 @@ let tests =
                   let request =
                       { Loop.Repo = repo
                         Loop.Format = Loop.TextAndJson
-                        Loop.ReleaseOut = outPath }
+                        Loop.ReleaseOut = outPath
+                        Loop.AttestationOut = outPath + ".attestation.json" }
 
                   let model = Interpreter.run ports request
                   Expect.equal model.Exit Loop.ToolError "write failure → ToolError (exit 4)"
@@ -40,7 +41,8 @@ let tests =
                   let request =
                       { Loop.Repo = repo
                         Loop.Format = Loop.Json
-                        Loop.ReleaseOut = outPath }
+                        Loop.ReleaseOut = outPath
+                        Loop.AttestationOut = outPath + ".attestation.json" }
 
                   let model = Interpreter.run ports request
                   Expect.equal model.Exit Loop.ToolError "unwritable destination → ToolError"

@@ -16,7 +16,8 @@ let private runBoth repo =
     let request =
         { Loop.Repo = repo
           Loop.Format = Loop.TextAndJson
-          Loop.ReleaseOut = Path.Combine(repo, "release.json") }
+          Loop.ReleaseOut = Path.Combine(repo, "release.json")
+          Loop.AttestationOut = Path.Combine(repo, "attestation.json") }
 
     let model = Interpreter.run ports request
     model, snd written.[0], String.concat "\n" (List.ofSeq outs)

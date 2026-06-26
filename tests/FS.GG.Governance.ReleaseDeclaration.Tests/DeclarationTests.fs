@@ -1,31 +1,22 @@
-module FS.GG.Governance.ReleaseCommand.Tests.DeclarationTests
+module FS.GG.Governance.ReleaseDeclaration.Tests.DeclarationTests
 
 open Expecto
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.ReleaseRules
 open FS.GG.Governance.ReleaseRules.Model
-open FS.GG.Governance.ReleaseCommand
-open FS.GG.Governance.ReleaseCommand.Tests.Support
+open FS.GG.Governance.ReleaseDeclaration
+open FS.GG.Governance.ReleaseDeclaration.Tests.Support
 
-// `Declaration.parse` is the row-local `.fsgg/release.yml` adapter: well-formed content → `Ok` with six
-// F053 rules (normalized to the stable composite key), the F054 expectations + the F054 source layout;
-// malformed/absent values → `Error DeclError`. Product-neutral: every value comes from the file.
-
-let private okDecl yml =
-    match Declaration.parse (ymlLines yml) with
-    | Ok d -> d
-    | Error e -> failtestf "expected Ok, got Error: %s" e.Reason
-
-let private isErr yml =
-    match Declaration.parse (ymlLines yml) with
-    | Error _ -> true
-    | Ok _ -> false
+// The F055 rules/expectations/layout parse, re-homed VERBATIM from the release host's `DeclarationTests`
+// onto the shared leaf (065 / research D6): well-formed content → `Ok` with six F053 rules (normalized to
+// the stable composite key), the F054 expectations + the F054 source layout; malformed/absent values →
+// `Error DeclError`. Product-neutral: every value comes from the file. Behaviour is unchanged by the lift.
 
 [<Tests>]
 let tests =
     testList
-        "Declaration"
+        "Declaration.rehomed"
         [ test "a well-formed release.yml yields six rules in F053 composite order" {
               let d = okDecl releaseYmlAllBlocking
 
@@ -50,7 +41,6 @@ let tests =
           }
 
           test "kind tokens map onto F053 releaseRuleKindToken (kebab/camel tolerant)" {
-              // Each parsed kind round-trips through the F053 stable token.
               let d = okDecl releaseYmlAllBlocking
               let tokens = d.Rules |> List.map (fun r -> Release.releaseRuleKindToken r.Kind)
               Expect.contains tokens "versionBump" "versionBump present"
@@ -58,7 +48,6 @@ let tests =
           }
 
           test "an absent expectation for a declared family is allowed (sensing resolves it later)" {
-              // Drop the requiredProvenance criterion; the provenance RULE is still declared.
               let yml = releaseYmlAllBlocking.Replace("  requiredProvenance: [attestation]\n", "")
               let d = okDecl yml
               Expect.equal (d.Rules |> List.length) 6 "still six rules"

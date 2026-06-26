@@ -37,7 +37,11 @@ module Interpreter =
           SenseCapability: bool -> RenderMode.ColorCapability
           RenderReport: ReportView.ReportView -> unit
           SenseEnvironment: unit -> FS.GG.Governance.Config.Model.EnvironmentClass
-          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity }
+          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity
+          SenseRelease:
+              FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
+                  -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
+                  -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the interpreter
     // never throws out of itself.
@@ -133,6 +137,25 @@ module Interpreter =
         // absolute path, or wall-clock) so `provenance.json` is byte-identical across machines/re-runs.
         | Loop.SenseProvenance -> Loop.ProvenanceSensed(ports.SenseEnvironment(), ports.SenseBuilder())
 
+        // 065 (US3): load `.fsgg/release.yml` through the pre-bound `Files` reader and, IF it parses, sense the
+        // F54 release facts so the advisory preview can assemble a ReleaseReport WITHOUT packing. An absent or
+        // unparsable declaration ⇒ `None` ⇒ no preview ⇒ byte-identical verify.json. TOTAL & SAFE.
+        | Loop.SenseReleasePreview _ ->
+            let result =
+                try
+                    match ports.Files "release.yml" with
+                    | Ok(Some content) ->
+                        let lines = content.Replace("\r\n", "\n").Split('\n') |> List.ofArray
+
+                        match FS.GG.Governance.ReleaseDeclaration.Declaration.parse lines with
+                        | Ok decl -> Some(decl, ports.SenseRelease decl.Layout decl.Expectations)
+                        | Error _ -> None
+                    | _ -> None
+                with _ ->
+                    None
+
+            Loop.ReleasePreviewSensed result
+
         // F27 wiring (063) US2: the render-mode dispatch lives HERE at the edge (FR-004). Json (human = None)
         // and the ANSI-free Plain path go via the existing `Out` sink (byte-stable, captured in tests); only the
         // interactive `Rich` path goes through `RenderReport` (Spectre, confined to HumanRender) followed by the
@@ -173,7 +196,12 @@ module Interpreter =
           SenseCapability = Capability.senseCapability
           RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
           SenseEnvironment = senseEnvironmentReal
-          SenseBuilder = senseBuilderReal }
+          SenseBuilder = senseBuilderReal
+          SenseRelease =
+            fun layout exp ->
+                FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
+                    (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
+                    exp }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

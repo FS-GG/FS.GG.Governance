@@ -76,6 +76,16 @@
     <ProjectReference Include="../FS.GG.Governance.CostBudgetJson/FS.GG.Governance.CostBudgetJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ProvenanceJson/FS.GG.Governance.ProvenanceJson.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <!-- 065 (US3): the declaration-gated advisory release-readiness preview — sense F54 + evaluate F53 →
+         assemble (empty pack) → preview → ofVerifyDecisionWithPreview; the shared declaration leaf. Verify
+         does NOT pack. No new external dependency. -->
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseDeclaration/FS.GG.Governance.ReleaseDeclaration.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 065 (F26 host wiring): the SHARED `.fsgg/release.yml` declaration adapter — the F055
+       `ReleaseCommand.Declaration` adapter LIFTED OUT of the release exe so BOTH `fsgg release` and
+       `fsgg verify` parse the identical file through ONE module (research D6). It is an ADAPTER
+       RELOCATION, not a new pure evaluation core: the rules/expectations/layout parse is preserved
+       VERBATIM from F055, and two additive sections are layered on — `packableProjects`
+       (SurfaceId * pack GateCommand * baseline option) and the optional declared exhaustive `matrix`
+       (ExhaustiveMatrix). PURE and TOTAL (FR-014): a malformed/absent value is an `Error DeclError`,
+       never an exception and never partial facts; product-neutral (every value from the file). Reuses
+       the already-pinned YamlDotNet in parse-to-node mode only (the F014 `Schema.fs` precedent) — NO new
+       dependency. Compile order Declaration.fsi -> Declaration.fs. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.ReleaseDeclaration</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.ReleaseDeclaration</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Declaration.fsi" />
+    <Compile Include="Declaration.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+
+</Project>

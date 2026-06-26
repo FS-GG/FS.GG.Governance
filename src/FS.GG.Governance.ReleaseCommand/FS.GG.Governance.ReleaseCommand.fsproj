@@ -31,8 +31,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Declaration.fsi" />
-    <Compile Include="Declaration.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
@@ -50,6 +48,22 @@
     <ProjectReference Include="../FS.GG.Governance.ReleaseFactsSensing/FS.GG.Governance.ReleaseFactsSensing.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ReleaseJson/FS.GG.Governance.ReleaseJson.fsproj" />
+    <!-- 065: the shared release-declaration leaf (supersedes the removed row-local Declaration). -->
+    <ProjectReference Include="../FS.GG.Governance.ReleaseDeclaration/FS.GG.Governance.ReleaseDeclaration.fsproj" />
+    <!-- 065 (US1/US2): the seven F26 surfaces + the F51 execution port the release host did not yet carry. -->
+    <ProjectReference Include="../FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ValidationMatrix/FS.GG.Governance.ValidationMatrix.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.AttestationJson/FS.GG.Governance.AttestationJson.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.ExecutionRecord/FS.GG.Governance.ExecutionRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
   </ItemGroup>
 
 </Project>

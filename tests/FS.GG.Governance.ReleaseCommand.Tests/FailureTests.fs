@@ -2,6 +2,7 @@ module FS.GG.Governance.ReleaseCommand.Tests.FailureTests
 
 open System.IO
 open Expecto
+open FS.GG.Governance.ReleaseDeclaration
 open FS.GG.Governance.ReleaseCommand
 open FS.GG.Governance.ReleaseCommand.Tests.Support
 
@@ -14,7 +15,8 @@ let private runText repo =
     let request =
         { Loop.Repo = repo
           Loop.Format = Loop.Text
-          Loop.ReleaseOut = Path.Combine(repo, "release.json") }
+          Loop.ReleaseOut = Path.Combine(repo, "release.json")
+          Loop.AttestationOut = Path.Combine(repo, "attestation.json") }
 
     Interpreter.run ports request
 
@@ -22,7 +24,8 @@ let private m0 () =
     Loop.init
         { Loop.Repo = "."
           Loop.Format = Loop.Text
-          Loop.ReleaseOut = "release.json" }
+          Loop.ReleaseOut = "release.json"
+          Loop.AttestationOut = "attestation.json" }
     |> fst
 
 [<Tests>]
@@ -64,7 +67,8 @@ let tests =
                   let request =
                       { Loop.Repo = repo
                         Loop.Format = Loop.Json
-                        Loop.ReleaseOut = outPath }
+                        Loop.ReleaseOut = outPath
+                        Loop.AttestationOut = outPath + ".attestation.json" }
 
                   let model = Interpreter.run ports request
                   Expect.equal model.Exit Loop.ToolError "write failure → ToolError (exit 4)"

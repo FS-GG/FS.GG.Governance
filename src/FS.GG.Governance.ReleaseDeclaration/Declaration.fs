@@ -1,17 +1,20 @@
-// The row-local `.fsgg/release.yml` declaration adapter (F055). Visibility lives in Declaration.fsi
-// (Principle II) — this file carries NO top-level access modifiers; the YamlDotNet node helpers and the
-// token recognizers are hidden by their absence from the .fsi. It parses the new release-declaration
-// surface into the EXACT F053/F054 inputs (`ReleaseRule list`, `ReleaseExpectations`, `SourceLayout`)
-// WITHOUT editing F014 `Config`'s frozen four-file schema (research D2). YamlDotNet is used in
-// parse-to-node mode only (the F014 `Schema.fs` precedent — NO new dependency). PURE and TOTAL: a
-// malformed/absent value is an `Error DeclError`, never an exception and never partial facts. Every value
-// is read from the file (product-neutral, FR-014).
+// The SHARED `.fsgg/release.yml` declaration adapter (065 — F26 host wiring). Visibility lives in
+// Declaration.fsi (Principle II) — this file carries NO top-level access modifiers; the YamlDotNet node
+// helpers and token recognizers are hidden by their absence from the .fsi. The rules/expectations/layout
+// parse is the F055 `ReleaseCommand.Declaration` behaviour preserved VERBATIM; two additive sections —
+// `packableProjects` and the optional `matrix` — are layered on. YamlDotNet is used in parse-to-node mode
+// only (the F014 `Schema.fs` precedent — NO new dependency). PURE and TOTAL: a malformed/absent value is an
+// `Error DeclError`, never an exception and never partial facts. Every value is read from the file
+// (product-neutral, FR-014).
 
-namespace FS.GG.Governance.ReleaseCommand
+namespace FS.GG.Governance.ReleaseDeclaration
 
 open YamlDotNet.RepresentationModel
 open FS.GG.Governance.Config.Model
+open FS.GG.Governance.CommandRecord.Model
 open FS.GG.Governance.Enforcement.Enforcement
+open FS.GG.Governance.GateExecution.Model
+open FS.GG.Governance.ValidationMatrix.Model
 open FS.GG.Governance.ReleaseRules
 open FS.GG.Governance.ReleaseRules.Model
 open FS.GG.Governance.ReleaseFactsSensing.Model
@@ -19,10 +22,17 @@ open FS.GG.Governance.ReleaseFactsSensing.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Declaration =
 
+    type PackableProject =
+        { Surface: SurfaceId
+          PackCommand: GateCommand
+          Baseline: string option }
+
     type ReleaseDeclaration =
         { Rules: ReleaseRule list
           Expectations: ReleaseExpectations
-          Layout: SourceLayout }
+          Layout: SourceLayout
+          PackableProjects: PackableProject list
+          Matrix: ExhaustiveMatrix option }
 
     type DeclError = { Reason: string }
 
@@ -121,6 +131,15 @@ module Declaration =
         | "blockonrelease" -> Some BlockOnRelease
         | _ -> None
 
+    /// The declared exhaustive-matrix cost ceiling (F26 `ExhaustiveMatrix.Cost`); product-neutral token.
+    let recognizeCost (raw: string) : Cost option =
+        match normalizeToken raw with
+        | "cheap" -> Some Cheap
+        | "medium" -> Some Medium
+        | "high" -> Some High
+        | "exhaustive" -> Some Exhaustive
+        | _ -> None
+
     let allFamilies: ReleaseRuleKind list =
         [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
 
@@ -216,6 +235,100 @@ module Declaration =
                       ProvenancePath = pr }
             | _ -> Error "release.yml 'layout' must declare all six source paths (versionPath, metadataPath, pinsPath, publishPlanPath, trustedPublishingPath, provenancePath)"
 
+    // ── additive section parsers (065) — packable projects + the optional matrix ──
+
+    /// An empty environment delta — a pack command inherits the host environment (the common case; the F051
+    /// `GateCommand` carries a three-class DELTA, not a full snapshot).
+    let emptyEnv: EnvironmentDelta = { Added = []; Changed = []; Removed = [] }
+
+    /// Build one project's pack `GateCommand` from its declared `executable`/`arguments`/`workingDirectory?`/
+    /// `timeoutSeconds?`. `executable` + `arguments` are required (a pack with no program is malformed);
+    /// `workingDirectory` defaults to `.` and `timeoutSeconds` to 600. No captured-output target (the F051
+    /// common case). Every value comes from the file (product-neutral).
+    let parsePackCommand (m: YamlMappingNode) : Result<GateCommand, string> =
+        match scalarField m "executable" with
+        | None -> Error "a packableProjects[] entry's packCommand is missing its 'executable'"
+        | Some exe ->
+            let argsResult =
+                match childByKey m "arguments" with
+                | None -> Ok []
+                | Some n ->
+                    match scalarList n with
+                    | Some xs -> Ok xs
+                    | None -> Error "a packCommand 'arguments' must be a sequence of scalars"
+
+            match argsResult with
+            | Error e -> Error e
+            | Ok args ->
+                let workDir = scalarField m "workingDirectory" |> Option.defaultValue "."
+
+                let timeoutResult =
+                    match scalarField m "timeoutSeconds" with
+                    | None -> Ok 600
+                    | Some raw ->
+                        match System.Int32.TryParse raw with
+                        | true, n when n > 0 -> Ok n
+                        | _ -> Error(sprintf "a packCommand 'timeoutSeconds' must be a positive integer, got: %s" raw)
+
+                match timeoutResult with
+                | Error e -> Error e
+                | Ok timeout ->
+                    Ok
+                        { Executable = Executable exe
+                          Arguments = args |> List.map Argument
+                          WorkingDirectory = WorkingDirectory workDir
+                          Environment = emptyEnv
+                          Timeout = TimeoutLimit timeout
+                          CapturedOutput = NoCapturedOutput }
+
+    let parsePackable (n: YamlNode) : Result<PackableProject, string> =
+        match asMapping n with
+        | None -> Error "each packableProjects[] entry must be a mapping with surface/packCommand"
+        | Some m ->
+            match scalarField m "surface" with
+            | None -> Error "a packableProjects[] entry is missing its 'surface'"
+            | Some s ->
+                match childByKey m "packCommand" |> Option.bind asMapping with
+                | None -> Error(sprintf "packableProjects[] entry '%s' is missing its 'packCommand' mapping" s)
+                | Some cmdNode ->
+                    match parsePackCommand cmdNode with
+                    | Error e -> Error e
+                    | Ok command ->
+                        Ok
+                            { Surface = SurfaceId s
+                              PackCommand = command
+                              Baseline = scalarField m "baseline" }
+
+    /// The optional `packableProjects` sequence. ABSENT ⇒ `Ok []` (GD-3 backward-compat — vacuously
+    /// satisfied). Present-but-not-a-sequence, or a malformed entry, ⇒ `Error` (never partial facts).
+    let parsePackables (root: YamlMappingNode) : Result<PackableProject list, string> =
+        match childByKey root "packableProjects" with
+        | None -> Ok []
+        | Some n ->
+            match asSeq n with
+            | None -> Error "release.yml 'packableProjects' must be a sequence"
+            | Some entries -> entries |> List.map parsePackable |> sequenceResults
+
+    /// The optional `matrix` mapping. ABSENT ⇒ `Ok None` (GD-3 — `NotDeclared`, never invented).
+    /// Present-but-malformed (missing name/cost/dimensions, unrecognized cost) ⇒ `Error`.
+    let parseMatrix (root: YamlMappingNode) : Result<ExhaustiveMatrix option, string> =
+        match childByKey root "matrix" with
+        | None -> Ok None
+        | Some n ->
+            match asMapping n with
+            | None -> Error "release.yml 'matrix' must be a mapping"
+            | Some m ->
+                match scalarField m "name" with
+                | None -> Error "release.yml 'matrix' is missing its 'name'"
+                | Some name ->
+                    match scalarField m "cost" |> Option.bind recognizeCost with
+                    | None -> Error "release.yml 'matrix' has a missing/unrecognized 'cost' (expected cheap|medium|high|exhaustive)"
+                    | Some cost ->
+                        match childByKey m "dimensions" |> Option.bind scalarList with
+                        | None -> Error "release.yml 'matrix' must declare a 'dimensions' sequence of scalars"
+                        | Some dimensions ->
+                            Ok(Some { Name = name; Cost = cost; Dimensions = dimensions })
+
     // ── the public entry point ──
 
     let parse (lines: string list) : Result<ReleaseDeclaration, DeclError> =
@@ -236,9 +349,17 @@ module Declaration =
                         match parseLayout root with
                         | Error e -> Error e
                         | Ok layout ->
-                            Ok
-                                { Rules = rules
-                                  Expectations = parseExpectations surface root
-                                  Layout = layout }
+                            match parsePackables root with
+                            | Error e -> Error e
+                            | Ok packables ->
+                                match parseMatrix root with
+                                | Error e -> Error e
+                                | Ok matrix ->
+                                    Ok
+                                        { Rules = rules
+                                          Expectations = parseExpectations surface root
+                                          Layout = layout
+                                          PackableProjects = packables
+                                          Matrix = matrix }
 
         result |> Result.mapError (fun reason -> { Reason = reason })

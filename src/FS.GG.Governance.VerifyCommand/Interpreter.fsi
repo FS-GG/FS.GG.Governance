@@ -20,6 +20,7 @@ open FS.GG.Governance.Config.Model        // EnvironmentClass (F25 wiring 064 �
 open FS.GG.Governance.Snapshot            // Ports
 open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
 open FS.GG.Governance.Provenance.Model     // BuilderIdentity (F25 wiring 064 — normalized builder sense)
+open FS.GG.Governance.ReleaseFactsSensing.Model  // SourceLayout, ReleaseExpectations, SensedRelease (065 US3)
 open FS.GG.Governance.HumanText           // RenderMode, ReportView (F27 wiring 063)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -64,7 +65,11 @@ module Interpreter =
           /// and re-runs (FR-006, SC-003). `realPorts` wires constant/CI-derived senses; tests inject synthetic
           /// (`Synthetic`-named, disclosed) values.
           SenseEnvironment: unit -> EnvironmentClass
-          SenseBuilder: unit -> BuilderIdentity }
+          SenseBuilder: unit -> BuilderIdentity
+          /// 065 wiring (US3): the REUSED F54 release-fact sensor, used ONLY when a `.fsgg/release.yml` is
+          /// present (the advisory preview). `realPorts` wires `ReleaseFactsSensing.Interpreter.senseRelease`
+          /// over the repo; tests inject a synthetic sense. Verify does NOT pack — this is the only new edge.
+          SenseRelease: SourceLayout -> ReleaseExpectations -> SensedRelease }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, the F046 real sensor/store reader, the F051 real execution port,

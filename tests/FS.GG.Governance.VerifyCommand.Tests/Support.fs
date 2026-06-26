@@ -452,6 +452,15 @@ let capturingWriter (cap: Capture) (failPaths: Set<string>) : Interpreter.Artifa
 let capturingSink (cap: Capture) : Interpreter.OutputSink =
     fun text -> cap.Emits <- cap.Emits @ [ text ]
 
+// 065 (US3): the legacy verify fixtures declare NO `.fsgg/release.yml`, so `SenseReleasePreview` reads
+// `None` and the preview is never assembled — this stub is provably never invoked (the US3 preview test
+// supplies its own declaration + sense). Loud failure if that invariant is ever violated.
+let fakeSenseRelease
+    : FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
+        -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
+        -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease =
+    fun _ _ -> failwith "fakeSenseRelease: no .fsgg/release.yml in this fixture"
+
 /// Assemble faked Interpreter.Ports from a catalog map, a git port, and a capture (no failing writes). The
 /// F046 sensing ports default to the fully-sensing fake sensor + an absent (⇒ empty) store; the F052 exec
 /// port defaults to the failing port (advisory under Standard, blocking under Strict).
@@ -466,7 +475,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpr
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseRelease = fakeSenseRelease }
 
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -479,7 +489,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseRelease = fakeSenseRelease }
 
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
     { Files = readerOf files
@@ -492,7 +503,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseRelease = fakeSenseRelease }
 
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -505,7 +517,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseCapability = plainCapability
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder }
+      SenseBuilder = fakeSenseBuilder
+      SenseRelease = fakeSenseRelease }
 
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts

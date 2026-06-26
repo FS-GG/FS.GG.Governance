@@ -21,7 +21,8 @@ let private run repo format =
     let request =
         { Loop.Repo = repo
           Loop.Format = format
-          Loop.ReleaseOut = Path.Combine(repo, "release.json") }
+          Loop.ReleaseOut = Path.Combine(repo, "release.json")
+          Loop.AttestationOut = Path.Combine(repo, "attestation.json") }
 
     Interpreter.run ports request, written, outs
 
@@ -72,12 +73,19 @@ let tests =
                   Expect.equal (List.length d.Passing) 5 "the other five pass")
           }
 
-          test "--format both writes the release.json projection and emits a summary" {
+          test "release writes both the release.json v2 projection and the attestation sidecar, and emits a summary" {
               withTempRepo releaseYmlAllBlocking writeMetSources (fun repo ->
                   let model, written, outs = run repo Loop.TextAndJson
                   Expect.equal model.Exit Loop.Success "exit success"
-                  Expect.equal (written.Count) 1 "one artifact written"
-                  let _, content = written.[0]
-                  Expect.isTrue (content.Contains "\"verdict\":\"pass\"") "projection carries the verdict"
+                  // 065: the publication boundary always writes BOTH artifacts (FR-004).
+                  Expect.equal (written.Count) 2 "release.json v2 + attestation.json written"
+
+                  let byPath = written |> Seq.map (fun (p, c) -> Path.GetFileName p, c) |> Map.ofSeq
+                  let releaseDoc = byPath.["release.json"]
+                  let attestationDoc = byPath.["attestation.json"]
+
+                  Expect.isTrue (releaseDoc.Contains "\"verdict\":\"pass\"") "release.json carries the verdict"
+                  Expect.isTrue (releaseDoc.Contains "fsgg.release/v2") "release.json bumped additively to v2"
+                  Expect.isTrue (attestationDoc.Contains "fsgg.attestation/v1") "attestation.json is the v1 sidecar"
                   Expect.isNonEmpty outs "text summary on stdout for 'both'")
           } ]

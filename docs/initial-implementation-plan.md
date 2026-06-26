@@ -1034,8 +1034,9 @@ sensed-metadata marking + flagged-rendering core (**F034**
   write the two deterministic sidecars (`cost-budget.json`, `provenance.json`) through the existing atomic
   `WriteArtifact` port. Every existing `verify.json`/`route.json`/`audit.json`/ship golden stays byte-identical
   (the default Standard ceiling is `Medium`, which admits the frozen fixtures' cheap/medium must-recompute gates);
-  both host surface baselines re-blessed; full solution green. The one remaining deferred host-wiring pass is the
-  F26 release host.
+  both host surface baselines re-blessed; full solution green. The one remaining deferred host-wiring pass — the
+  F26 release host — **landed as `065-release-provenance-host-wiring`** (see F26 below): all three deferred
+  host-wiring passes (F27 → `063`, F25 → `064`, F26 → `065`) are now complete.
 
 Exit criteria:
 
@@ -1238,10 +1239,23 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   gained an optional advisory `releaseReadiness` block **without** a schema bump
   (byte-identical when absent). 117 tests green across the new/changed suites; five new
   surface baselines blessed + the `release.json` golden re-blessed v1→v2; every existing
-  `route.json`/`ship.json`/`verify.json` golden byte-identical. **Remaining:** the Phase 8
-  host edge — `fsgg release` packing every project through the F051 `ExecutionPort`,
-  building the snapshot/attestation/report, and writing the sidecar + v2; `fsgg verify`
-  emitting the preview — is the follow-up wiring pass (the cores are ready).
+  `route.json`/`ship.json`/`verify.json` golden byte-identical.
+
+  **F26 host wiring** (`065-release-provenance-host-wiring`) — 🟢 the Phase 8 host edge landed. A thin shared
+  `FS.GG.Governance.ReleaseDeclaration` leaf (lifted out of the release exe so both hosts parse the same
+  `.fsgg/release.yml` — additive `packableProjects` + optional `matrix`) supersedes the row-local
+  `Declaration`. `fsgg release` now packs every declared packable project through the F051 `ExecutionPort`
+  (recording each as a `Pack` run, never dropped), overlays `factContributions` on the F54 facts, calls
+  `evaluateRelease` **verbatim**, builds the `AuditSnapshot`/`AttestationSummary`/`ReleaseReport`, and writes
+  `attestation.json` (`fsgg.attestation/v1`) + `release.json` v2 (`ofReleaseReport`) through the existing
+  atomic writer; a failed/unbumped/downgraded pack blocks, an unreadable pack output is `InputUnavailable`
+  (exit 3, no hollow attestation). `fsgg verify` emits the advisory, declaration-gated `releaseReadiness`
+  preview (empty pack ⇒ no attested subject; verify never packs) and records the declared matrix `Deferred`
+  at the inner loop — byte-identical `verify.json` when no declaration. Both host surface baselines re-blessed;
+  full solution green (2051 tests). **Partial follow-ups (tracked in `065` tasks.md):** the real-filesystem
+  `dotnet pack` E2E (T018), the mergeable-vs-releasable + FR-008 precondition fixture (T023), and the frozen
+  byte-identity host goldens (T009/T024) — the wiring is covered by pure-MVU transition + emitted-effect tests
+  over the real F26 cores with disclosed-synthetic pack execution.
   **F27** (`062-human-projections-watch-tui`) landed the **human-projection libraries** over
   the F18–F26 immutable report objects — a *second* projection beside the `*Json` contract,
   changing **no** report object, verdict, exit-code scheme, or JSON schema (every existing

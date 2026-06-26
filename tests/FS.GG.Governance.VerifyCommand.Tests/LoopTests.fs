@@ -18,23 +18,28 @@ let private initFor scope = Loop.init (requestFor scope Loop.Text)
 let tests =
     testList
         "Loop (US1)"
-        [ test "init: DefaultRange emits SenseScope; ExplicitPaths goes straight to LoadCatalog" {
+        [ test "init: DefaultRange emits SenseScope; ExplicitPaths senses the release preview before the catalog" {
               let _, effDefault = initFor Loop.DefaultRange
               Expect.isTrue (hasEffect (function Loop.SenseScope _ -> true | _ -> false) effDefault) "DefaultRange senses scope"
 
               let m, effExplicit = initFor (Loop.ExplicitPaths [ gp "src/a.fs" ])
-              // F25 wiring (064): init also senses provenance (env/builder) first, before loading the catalog.
-              Expect.equal effExplicit [ Loop.SenseProvenance; Loop.LoadCatalog "." ] "ExplicitPaths loads catalog directly"
+              // F25 (064): provenance first. 065 (US3): the release preview is sensed BEFORE the catalog load
+              // (SenseReleasePreview ⇒ ReleasePreviewSensed ⇒ LoadCatalog), so the preview is ready at projection.
+              Expect.equal effExplicit [ Loop.SenseProvenance; Loop.SenseReleasePreview "." ] "ExplicitPaths senses the preview first"
               Expect.equal m.Candidates (Some [ gp "src/a.fs" ]) "candidates set from explicit paths"
           }
 
-          test "Sensed(Ok) records candidates and emits LoadCatalog" {
+          test "Sensed(Ok) records candidates and senses the release preview (then the catalog)" {
               let m0, _ = initFor Loop.DefaultRange
               let snap = snapshotOf gitSrcChange defaultOpts
               let m1, eff = Loop.update (Loop.Sensed(Ok snap)) m0
-              Expect.equal eff [ Loop.LoadCatalog "." ] "loads catalog after sensing"
+              Expect.equal eff [ Loop.SenseReleasePreview "." ] "senses the release preview after git sensing"
               Expect.equal m1.Phase Loop.Sensed' "phase advanced"
               Expect.isSome m1.Candidates "candidates recorded"
+              // 065 (US3): the catalog load follows the preview sense.
+              let m2, eff2 = Loop.update (Loop.ReleasePreviewSensed None) m1
+              Expect.equal eff2 [ Loop.LoadCatalog "." ] "ReleasePreviewSensed then loads the catalog"
+              Expect.isNone m2.ReleasePreview "no declaration ⇒ no preview"
           }
 
           test "Loaded(Valid) runs the F015→F019 selection at RunMode.Verify and senses freshness + store" {

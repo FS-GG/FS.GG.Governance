@@ -1,21 +1,37 @@
-// The PURE MVU core of the `fsgg release` host command (F055). Visibility lives in Loop.fsi
-// (Principle II) — this file carries NO top-level access modifiers; helpers absent from the signature are
-// hidden by it. `parse`/`init`/`update`/`render`/`exitCode` perform NO I/O, NO git, NO clock: the whole
-// parse -> load-declaration -> sense -> EVALUATE -> PROJECT -> summarize -> EXIT-FROM-BASIS composition is
-// a pure transition over Model + Msg emitting Effect data the edge Interpreter executes (Principle IV). It
-// re-derives, re-classifies, and re-serializes nothing the cores fixed: the verdict comes from F053
-// `Release.evaluateRelease`, the document bytes from F055 `ReleaseJson.ofRelease`. Like `ship`, it maps the
-// `ReleaseDecision.ExitCodeBasis` to a process exit category, including a distinct `Blocked` code.
+// The PURE MVU core of the `fsgg release` host command (F055, grown by 065 F26 host wiring). Visibility
+// lives in Loop.fsi (Principle II) — this file carries NO top-level access modifiers. `parse`/`init`/
+// `update`/`render`/`exitCode` perform NO I/O, NO git, NO clock. It re-derives, re-classifies, and
+// re-serializes nothing the cores fixed: the verdict comes from F053 `Release.evaluateRelease` (verbatim),
+// the pack evidence from F26 `Pack.evaluatePack`/`factContributions`, the report from `Report.assemble`,
+// and the document bytes from `ReleaseJson.ofReleaseReport` (v2) / `AttestationJson.ofAttestation`.
 
 namespace FS.GG.Governance.ReleaseCommand
 
-open FS.GG.Governance.Config.Model                 // SurfaceId
-open FS.GG.Governance.Enforcement.Enforcement       // Severity, Advisory, Blocking
+open System.Security.Cryptography
+open System.Text
+open FS.GG.Governance.Config.Model                 // SurfaceId, EnvironmentClass
+open FS.GG.Governance.Enforcement.Enforcement       // Severity, Advisory, Blocking, Profile, RunMode
 open FS.GG.Governance.Ship.Model                    // Verdict, ExitCodeBasis, Pass, Fail, Clean, Blocked
+open FS.GG.Governance.FreshnessKey.Model            // Revision, RuleHash, GeneratorVersion, ArtifactHash
+open FS.GG.Governance.Provenance.Model              // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model           // GateCommand
+open FS.GG.Governance.CommandKind                   // Audit.auditSnapshot
+open FS.GG.Governance.CommandKind.Model             // KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.PackEvidence                  // Pack.evaluatePack/factContributions
+open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackArtifact, PackEvidenceSet, PackVerdict
+open FS.GG.Governance.Attestation                   // Attestation.summarize
+open FS.GG.Governance.Attestation.Model             // AttestationSummary
+open FS.GG.Governance.ReleaseReport                 // Report.assemble
+open FS.GG.Governance.ReleaseReport.Model           // ReleaseReport
+open FS.GG.Governance.ValidationMatrix              // Matrix.decideMatrix
+open FS.GG.Governance.ValidationMatrix.Model        // MatrixPlan, MatrixBoundary
+open FS.GG.Governance.CostBudget                    // Budget.budgetFor
 open FS.GG.Governance.ReleaseRules                  // Release.evaluateRelease, Release.releaseRuleKindToken
-open FS.GG.Governance.ReleaseRules.Model             // ReleaseDecision, EnforcedReleaseFinding
+open FS.GG.Governance.ReleaseRules.Model             // ReleaseDecision, ReleaseFacts, FactState, EnforcedReleaseFinding
 open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
-open FS.GG.Governance.ReleaseJson                   // ReleaseJson.ofRelease
+open FS.GG.Governance.ReleaseJson                   // ReleaseJson.ofReleaseReport
+open FS.GG.Governance.AttestationJson               // AttestationJson.ofAttestation
+open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -28,7 +44,8 @@ module Loop =
     type RunRequest =
         { Repo: string
           Format: OutputFormat
-          ReleaseOut: string }
+          ReleaseOut: string
+          AttestationOut: string }
 
     type UsageError = { Message: string }
 
@@ -39,17 +56,25 @@ module Loop =
         | InputUnavailable
         | ToolError
 
+    type ArtifactKind =
+        | ReleaseArtifact
+        | AttestationArtifact
+
     type Effect =
         | LoadDeclaration of repo: string
         | SenseRelease of layout: SourceLayout * expectations: ReleaseExpectations
-        | WriteArtifact of path: string * content: string
+        | PackProjects of (SurfaceId * GateCommand) list
+        | SenseProvenance
+        | WriteArtifact of kind: ArtifactKind * path: string * content: string
         | EmitSummary of text: string
 
     type Msg =
         | Begin
         | DeclarationLoaded of Result<Declaration.ReleaseDeclaration, Declaration.DeclError>
         | Sensed of SensedRelease
-        | Wrote of Result<unit, string>
+        | PacksRun of PackOutcome list
+        | ProvenanceSensed of head: Revision * environment: EnvironmentClass * builder: BuilderIdentity
+        | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | Emitted
 
     type Diagnostic =
@@ -68,12 +93,23 @@ module Loop =
           Phase: Phase
           Declaration: Declaration.ReleaseDeclaration option
           Sensed: SensedRelease option
+          Packs: PackOutcome list option
+          Head: Revision option
+          Environment: EnvironmentClass option
+          Builder: BuilderIdentity option
+          PackEvidence: PackEvidenceSet option
+          Snapshot: AuditSnapshot option
+          Attestation: AttestationSummary option
+          Report: ReleaseReport option
+          Matrix: MatrixPlan option
           Decision: ReleaseDecision option
           ReleaseDoc: string option
+          AttestationDoc: string option
+          Written: Set<ArtifactKind>
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
-    // ── exitCode (cli.md exit-code table) — total, no wildcard; `Blocked` 1 reserved for a blocked verdict ──
+    // ── exitCode (cli.md exit-code table) — total, no wildcard ──
 
     let exitCode (decision: ExitDecision) : int =
         match decision with
@@ -85,23 +121,22 @@ module Loop =
 
     // ── parse — a pure, total argv matcher; usage problems are values, never throws ──
 
-    // Hidden accumulator (absent from Loop.fsi).
     type ParseAcc =
         { Repo: string option
           Format: string option
-          Out: string option }
+          Out: string option
+          AttestationOut: string option }
 
-    let emptyAcc = { Repo = None; Format = None; Out = None }
+    let emptyAcc =
+        { Repo = None
+          Format = None
+          Out = None
+          AttestationOut = None }
 
-    // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
-    // relative form (`release.json`); any other repo is prefixed so the artifact lands inside it. Pure
-    // string composition — no filesystem, no clock, no absolute-path resolution.
     let under (repo: string) (rel: string) : string =
         if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
-        // Flags only — NO leading `release` subcommand token is expected or stripped (cli.md §subcommand
-        // mapping). A leading bare `release` (or any unknown leading positional) is an unknown argument.
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
             | [] -> Ok acc
@@ -111,6 +146,8 @@ module Loop =
             | "--format" :: [] -> Error { Message = "missing value for flag: --format" }
             | "--out" :: v :: more -> go { acc with Out = Some v } more
             | "--out" :: [] -> Error { Message = "missing value for flag: --out" }
+            | "--attestation-out" :: v :: more -> go { acc with AttestationOut = Some v } more
+            | "--attestation-out" :: [] -> Error { Message = "missing value for flag: --attestation-out" }
             | other :: _ -> Error { Message = "unknown argument: " + other }
 
         match go emptyAcc argv with
@@ -133,9 +170,10 @@ module Loop =
                     Ok
                         { Repo = repo
                           Format = format
-                          ReleaseOut = acc.Out |> Option.defaultValue (under repo "release.json") }
+                          ReleaseOut = acc.Out |> Option.defaultValue (under repo "release.json")
+                          AttestationOut = acc.AttestationOut |> Option.defaultValue (under repo "readiness/attestation.json") }
 
-    // ── init (Principle IV) — initial Model + first effect ──
+    // ── init (Principle IV) — initial Model + first effects ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
@@ -143,14 +181,83 @@ module Loop =
               Phase = Parsed
               Declaration = None
               Sensed = None
+              Packs = None
+              Head = None
+              Environment = None
+              Builder = None
+              PackEvidence = None
+              Snapshot = None
+              Attestation = None
+              Report = None
+              Matrix = None
               Decision = None
               ReleaseDoc = None
+              AttestationDoc = None
+              Written = Set.empty
               Diagnostics = []
               Exit = Success }
 
-        model, [ LoadDeclaration request.Repo ]
+        model, [ LoadDeclaration request.Repo; SenseProvenance ]
 
-    // ── update — the whole composition; TOTAL, never throws (FR-013) ──
+    // ── pure host-edge composition helpers (065) — no I/O ──
+
+    /// The pack commands to run, in declared order.
+    let packCommandsOf (decl: Declaration.ReleaseDeclaration) : (SurfaceId * GateCommand) list =
+        decl.PackableProjects |> List.map (fun p -> p.Surface, p.PackCommand)
+
+    /// The released-version baselines map for `evaluatePack` (a project with no baseline ⇒ first release).
+    let baselinesOf (decl: Declaration.ReleaseDeclaration) : Map<SurfaceId, string> =
+        decl.PackableProjects
+        |> List.choose (fun p -> p.Baseline |> Option.map (fun b -> p.Surface, b))
+        |> Map.ofList
+
+    /// Overlay the pack `factContributions` onto the F54 sensed facts: packed evidence wins on the three
+    /// pack families (D1). `factContributions` carries ONLY the pack families (empty when no packable
+    /// projects), so a plain `Map.fold` overlay never disturbs a non-pack family.
+    let mergeFacts (sensed: SensedRelease) (contribs: Map<ReleaseRuleKind, FactState>) : ReleaseFacts =
+        { States = (sensed.Facts.States, contribs) ||> Map.fold (fun acc k v -> Map.add k v acc) }
+
+    /// A deterministic, machine/clock-independent rule hash derived from the declared rules (the attestation
+    /// materials' rule identity). SHA256 over the canonical, already-sorted rule list — byte-identical for
+    /// identical declared rules, different when a rule changes.
+    let ruleHashOf (rules: ReleaseRule list) : RuleHash =
+        let canon =
+            rules
+            |> List.map (fun r ->
+                let (SurfaceId s) = r.Surface
+                sprintf "%s|%s|%A|%A" (Release.releaseRuleKindToken r.Kind) s r.BaseSeverity r.Maturity)
+            |> String.concat ";"
+
+        use sha = SHA256.Create()
+        let hex = canon |> Encoding.UTF8.GetBytes |> sha.ComputeHash |> System.Convert.ToHexString
+        RuleHash(hex.ToLowerInvariant())
+
+    /// The real packed-artifact digests (Packed outcomes only — a failed/no-artifact pack yields no digest,
+    /// hence no attested subject, FR-007).
+    let digestsOf (pack: PackEvidenceSet) : ArtifactHash list =
+        pack.Verdicts
+        |> List.choose (fun (v: PackVerdict) ->
+            match v.Outcome with
+            | Packed(artifact, _) -> Some artifact.Digest
+            | PackedNoArtifact _
+            | PackFailed _ -> None)
+
+    /// The release attestation snapshot (D2): `base = head = sourceCommit` (a release attests a product
+    /// state, not a diff range); digests are the real packed digests; runs are the recorded `Pack` runs;
+    /// rule hash from the declared rules; generator/environment/builder normalized (no username/host/clock).
+    let buildSnapshot (model: Model) (decl: Declaration.ReleaseDeclaration) (pack: PackEvidenceSet) : AuditSnapshot =
+        let head = model.Head |> Option.defaultValue (Revision "")
+        let ruleHash = ruleHashOf decl.Rules
+        let genVer = GeneratorVersion "fsgg"
+        let env = model.Environment |> Option.defaultValue LocalOrCi
+        let builder = model.Builder |> Option.defaultValue (BuilderIdentity "fsgg")
+        Audit.auditSnapshot head head head ruleHash genVer (digestsOf pack) pack.Runs env builder
+
+    // Map the decision's typed ExitCodeBasis to the process-level ExitDecision (cli.md).
+    let exitFromBasis (basis: ExitCodeBasis) : ExitDecision =
+        match basis with
+        | Clean -> Success
+        | ExitCodeBasis.Blocked -> Blocked
 
     // Short-circuit to Done with a mapped ExitDecision + an actionable diagnostic (no clock/abs-path/env).
     let fail (category: ExitDecision) (message: string) (model: Model) : Model * Effect list =
@@ -160,75 +267,16 @@ module Loop =
             Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
         []
 
-    // Map the decision's typed ExitCodeBasis to the process-level ExitDecision (cli.md).
-    let exitFromBasis (basis: ExitCodeBasis) : ExitDecision =
-        match basis with
-        | Clean -> Success
-        | ExitCodeBasis.Blocked -> Blocked
+    // ── render — the deterministic summary (mutually recursive with update) ──
 
-    let rec update (msg: Msg) (model: Model) : Model * Effect list =
-        // Once the pipeline has decided (Done), every further reified Msg is inert (FR-013).
-        if model.Phase = Done then
-            model, []
-        else
-            match msg with
-            | Begin -> model, []
-
-            | DeclarationLoaded(Error e) ->
-                // An absent/invalid declaration is INPUT-unavailable (exit 3) — never a tool defect, never a
-                // blocked verdict. No sensing/write is emitted (data-model state transitions).
-                fail InputUnavailable ("release declaration unavailable: " + e.Reason) model
-
-            | DeclarationLoaded(Ok decl) ->
-                { model with
-                    Phase = Loaded'
-                    Declaration = Some decl },
-                [ SenseRelease(decl.Layout, decl.Expectations) ]
-
-            | Sensed sensed ->
-                match model.Declaration with
-                | None ->
-                    // Unreachable in a well-formed run (sensing follows a loaded declaration); fail safe.
-                    fail ToolError "internal: sensed before declaration loaded" model
-                | Some decl ->
-                    // The composition (FR-003/FR-004): the verdict is decided HERE by F053
-                    // `evaluateRelease` (verbatim), the exit category mapped from its `ExitCodeBasis`. When
-                    // the format requests JSON, the F055 projection is computed BEFORE the write effect.
-                    let decision = Release.evaluateRelease decl.Rules sensed.Facts
-                    let exit = exitFromBasis decision.ExitCodeBasis
-
-                    let model' =
-                        { model with
-                            Phase = Sensed'
-                            Sensed = Some sensed
-                            Decision = Some decision
-                            Exit = exit }
-
-                    match model'.Request.Format with
-                    | Text -> model', [ EmitSummary(render model' Text) ]
-                    | Json
-                    | TextAndJson ->
-                        let doc = ReleaseJson.ofRelease decision sensed
-                        { model' with ReleaseDoc = Some doc }, [ WriteArtifact(model'.Request.ReleaseOut, doc) ]
-
-            | Wrote(Error reason) ->
-                // A write failure is ALWAYS a ToolError (exit 4), NEVER a blocked verdict (FR-011).
-                fail ToolError ("failed to write artifact: " + reason) model
-
-            | Wrote(Ok()) -> { model with Phase = Persisted }, [ EmitSummary(render model model.Request.Format) ]
-
-            | Emitted -> { model with Phase = Done }, []
-
-    // ── render — the deterministic summary ──
-
-    and severityToken (s: Severity) : string =
+    let severityToken (s: Severity) : string =
         match s with
         | Advisory -> "advisory"
         | Blocking -> "blocking"
 
-    and surfaceValue (SurfaceId s) : string = s
+    let surfaceValue (SurfaceId s) : string = s
 
-    and ruleLine (e: EnforcedReleaseFinding) : string =
+    let ruleLine (e: EnforcedReleaseFinding) : string =
         let f = e.Finding
 
         sprintf
@@ -239,12 +287,12 @@ module Loop =
             (severityToken e.Decision.EffectiveSeverity)
             f.Reason
 
-    and section (name: string) (items: EnforcedReleaseFinding list) : string list =
+    let section (name: string) (items: EnforcedReleaseFinding list) : string list =
         match items with
         | [] -> [ sprintf "%s: none" name ]
         | xs -> (sprintf "%s: %d" name (List.length xs)) :: (xs |> List.map ruleLine)
 
-    and renderText (model: Model) : string =
+    let renderText (model: Model) : string =
         match model.Decision with
         | None ->
             model.Diagnostics
@@ -270,9 +318,8 @@ module Loop =
             |> List.concat
             |> String.concat "\n"
 
-    // The Json form IS the F055 `release.json` document verbatim (so `--format json` stdout equals the
-    // persisted file byte-for-byte). The human text is suppressed under `Json`.
-    and renderJson (model: Model) : string =
+    // The Json form IS the F055 `release.json` v2 document verbatim.
+    let renderJson (model: Model) : string =
         match model.ReleaseDoc with
         | Some doc -> doc
         | None ->
@@ -281,8 +328,107 @@ module Loop =
             |> String.concat ","
             |> sprintf "{\"errors\":[%s]}"
 
-    and render (model: Model) (format: OutputFormat) : string =
+    let render (model: Model) (format: OutputFormat) : string =
         match format with
         | Text -> renderText model
         | TextAndJson -> renderText model
         | Json -> renderJson model
+
+    // ── the three-way join composition (FR-001..FR-007) ──
+
+    /// Fire once the sensed facts, the pack outcomes, AND the provenance senses have all landed (Phase still
+    /// `Loaded'`): build the pack evidence, overlay it on the F54 facts, evaluate the release rules VERBATIM,
+    /// assemble the snapshot/attestation/report, project both documents, and emit the two atomic writes.
+    let tryCompose (model: Model) : Model * Effect list =
+        match model.Phase, model.Declaration, model.Sensed, model.Packs, model.Head with
+        | Loaded', Some decl, Some sensed, Some outcomes, Some _ ->
+            // US4 (FR-014): an UNREADABLE pack OUTPUT is an input-unavailable signal (exit 3) — distinct from
+            // a tool defect (exit 4) and from an unmet-rule block (exit 1). Surface a named source, block, and
+            // emit NO writes (no hollow attestation, no fabricated pass). An absent head-revision degrades to a
+            // deterministic sentinel (D2) and a missing publish plan blocks through the verbatim rule path.
+            let unreadable =
+                outcomes
+                |> List.choose (fun o ->
+                    match o with
+                    | PackedNoArtifact(SurfaceId s, ArtifactUnreadable reason, _) -> Some(s, reason)
+                    | _ -> None)
+
+            match unreadable with
+            | (surface, reason) :: _ ->
+                fail InputUnavailable (sprintf "pack output unreadable for surface '%s': %s" surface reason) model
+            | [] ->
+
+            let pack = Pack.evaluatePack (baselinesOf decl) outcomes
+            let merged = mergeFacts sensed (Pack.factContributions pack)
+            let decision = Release.evaluateRelease decl.Rules merged
+            let snapshot = buildSnapshot model decl pack
+            let attestation = Attestation.summarize snapshot pack
+            let report = Report.assemble decision sensed pack attestation
+            let matrix = Matrix.decideMatrix (Budget.budgetFor Profile.Release RunMode.Release) ScheduledOrRelease decl.Matrix
+            let releaseDoc = ReleaseJson.ofReleaseReport report
+            let attestationDoc = AttestationJson.ofAttestation report.Attestation
+
+            { model with
+                Phase = Sensed'
+                PackEvidence = Some pack
+                Decision = Some decision
+                Snapshot = Some snapshot
+                Attestation = Some attestation
+                Report = Some report
+                Matrix = Some matrix
+                ReleaseDoc = Some releaseDoc
+                AttestationDoc = Some attestationDoc
+                Exit = exitFromBasis decision.ExitCodeBasis },
+            [ WriteArtifact(ReleaseArtifact, model.Request.ReleaseOut, releaseDoc)
+              WriteArtifact(AttestationArtifact, model.Request.AttestationOut, attestationDoc) ]
+        | _ -> model, []
+
+    // ── update — the whole composition; TOTAL, never throws ──
+
+    let update (msg: Msg) (model: Model) : Model * Effect list =
+        if model.Phase = Done then
+            model, []
+        else
+            match msg with
+            | Begin -> model, []
+
+            | DeclarationLoaded(Error e) ->
+                fail InputUnavailable ("release declaration unavailable: " + e.Reason) model
+
+            | DeclarationLoaded(Ok decl) ->
+                { model with
+                    Phase = Loaded'
+                    Declaration = Some decl },
+                [ SenseRelease(decl.Layout, decl.Expectations); PackProjects(packCommandsOf decl) ]
+
+            | Sensed sensed -> tryCompose { model with Sensed = Some sensed }
+
+            | PacksRun outcomes -> tryCompose { model with Packs = Some outcomes }
+
+            | ProvenanceSensed(head, environment, builder) ->
+                tryCompose
+                    { model with
+                        Head = Some head
+                        Environment = Some environment
+                        Builder = Some builder }
+
+            | Wrote(_, Error reason) ->
+                // A write failure is ALWAYS a ToolError (exit 4), NEVER a blocked verdict.
+                fail ToolError ("failed to write artifact: " + reason) model
+
+            | Wrote(kind, Ok()) ->
+                // Two artifacts are written (release.json v2 + attestation.json), so two `Wrote(Ok)` acks
+                // arrive in one batch. Only the FIRST (Phase still Sensed') schedules the summary; the second
+                // ack is inert (Phase = Persisted).
+                let written = Set.add kind model.Written
+
+                match model.Phase with
+                | Persisted
+                | Done -> { model with Written = written }, []
+                | _ ->
+                    { model with
+                        Phase = Persisted
+                        Written = written },
+                    [ EmitSummary(render model model.Request.Format) ]
+
+            | Emitted -> { model with Phase = Done }, []
