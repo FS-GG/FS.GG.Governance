@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 069: the optional, packable effective-evidence *projection* — the evidence.json document leaf. A single
+       pure, total `EvidenceJson.ofReport : EvidenceDocument -> string` (plus a `schemaVersion` constant) renders
+       the already-folded effective-evidence world (declared + effective `EvidenceState` per node, the dependency
+       edges, the freshness cause, and any named graph failure) into the deterministic, versioned `evidence.json`
+       document text — the Governance-owned sibling of route.json / audit.json / verify.json /
+       cache-eligibility.json.
+
+       Where cache-eligibility.json is the per-change cache-reuse view, this evidence.json is the per-change
+       EFFECTIVE-EVIDENCE view: for each node it carries BOTH the declared and the effective `EvidenceState`
+       (taint surfaces as the visible delta, never a silent overwrite), the per-node freshness object naming
+       *why* a node is stale/unresolved (or an honest `unknown`), and — when the graph is malformed — the named
+       `GraphError` INSTEAD of a partial/guessed per-node map.
+
+       PURE and TOTAL: no I/O, no git, no clock, never throws; byte-identical for identical input. It re-derives,
+       re-classifies, re-runs, and re-orders NOTHING beyond the fixed field sequence and the documented stable
+       sort of each collection. Every closed-DU token match is EXHAUSTIVE with NO wildcard, so a future
+       EvidenceState / GraphError / freshness-cause case is a compile error here, never a silently mis-tokened
+       field.
+
+       It is a LEAF (research D7): it references ONLY FS.GG.Governance.Kernel (`EvidenceState`,
+       `GraphError<'id>`) plus the freshness-cause vocabulary cores FS.GG.Governance.FreshnessResolution
+       (`MissingFact`, `missingFactToken`) and FS.GG.Governance.EvidenceReuse (`RecomputeCause`); `InputCategory`
+       / `categoryToken` arrive transitively (FreshnessKey). It takes NO command/host/Cli reference, so it cannot
+       introduce a cycle (the CacheEligibilityJson -> CacheEligibility precedent). It adds NO new third-party
+       PackageReference — serialization is the net10.0 shared-framework `System.Text.Json` (`Utf8JsonWriter`).
+       Compile order is EvidenceJson.fsi -> EvidenceJson.fs: the curated public surface, then the pure
+       projection. The whole surface is a pure total function — no MVU ceremony (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.EvidenceJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.EvidenceJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="EvidenceJson.fsi" />
+    <Compile Include="EvidenceJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+  </ItemGroup>
+
+</Project>

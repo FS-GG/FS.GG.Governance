@@ -1,0 +1,349 @@
+TYPE FS.GG.Governance.EvidenceCommand.InterpreterModule
+  [Method] Model run(Ports, RunRequest)
+  [Method] Msg step(Ports, Effect)
+  [Method] Ports realPorts(System.String)
+  [NestedType] FS.GG.Governance.EvidenceCommand.InterpreterModule+Ports
+TYPE FS.GG.Governance.EvidenceCommand.InterpreterModule+Ports
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit])
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault]] get_SenseReport()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] get_Out()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault]] SenseReport
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit] Out
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule
+  [Method] FS.GG.Governance.EvidenceJson.EvidenceDocument toDocument(FS.GG.Governance.Cli.ProjectEvidenceReport)
+  [Method] Int32 exitCode(ExitDecision)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.EvidenceCommand.LoopModule+RunRequest,FS.GG.Governance.EvidenceCommand.LoopModule+UsageError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] System.String render(Model, OutputFormat)
+  [Method] System.Tuple`2[FS.GG.Governance.EvidenceCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceCommand.LoopModule+Effect]] init(RunRequest)
+  [Method] System.Tuple`2[FS.GG.Governance.EvidenceCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceCommand.LoopModule+Effect]] update(Msg, Model)
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Diagnostic
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Effect
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ExitDecision
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Model
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Msg
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+OutputFormat
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Phase
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+RunRequest
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Diagnostic
+  [Constructor] Void .ctor(ExitDecision, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitDecision get_Category()
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Property] ExitDecision Category
+  [Property] System.String Message
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Effect
+  [Method] Boolean Equals(Effect)
+  [Method] Boolean Equals(Effect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEmitSummary()
+  [Method] Boolean get_IsSenseReport()
+  [Method] Boolean get_IsWriteArtifact()
+  [Method] Effect NewEmitSummary(System.String)
+  [Method] Effect NewSenseReport(System.String)
+  [Method] Effect NewWriteArtifact(System.String, System.String)
+  [Method] Int32 CompareTo(Effect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Effect+EmitSummary
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Effect+SenseReport
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Effect+Tags
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Effect+WriteArtifact
+  [Property] Boolean IsEmitSummary
+  [Property] Boolean IsSenseReport
+  [Property] Boolean IsWriteArtifact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Effect+EmitSummary
+  [Method] System.String get_text()
+  [Property] System.String text
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Effect+SenseReport
+  [Method] System.String get_repo()
+  [Property] System.String repo
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Effect+Tags
+  [Field] Int32 EmitSummary
+  [Field] Int32 SenseReport
+  [Field] Int32 WriteArtifact
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Effect+WriteArtifact
+  [Method] System.String get_content()
+  [Method] System.String get_path()
+  [Property] System.String content
+  [Property] System.String path
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ExitDecision
+  [Method] Boolean Equals(ExitDecision)
+  [Method] Boolean Equals(ExitDecision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputUnavailable()
+  [Method] Boolean get_IsSuccess()
+  [Method] Boolean get_IsToolError()
+  [Method] Boolean get_IsUsageError'()
+  [Method] ExitDecision get_InputUnavailable()
+  [Method] ExitDecision get_Success()
+  [Method] ExitDecision get_ToolError()
+  [Method] ExitDecision get_UsageError'()
+  [Method] Int32 CompareTo(ExitDecision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ExitDecision+Tags
+  [Property] Boolean IsInputUnavailable
+  [Property] Boolean IsSuccess
+  [Property] Boolean IsToolError
+  [Property] Boolean IsUsageError'
+  [Property] ExitDecision InputUnavailable
+  [Property] ExitDecision Success
+  [Property] ExitDecision ToolError
+  [Property] ExitDecision UsageError'
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ExitDecision+Tags
+  [Field] Int32 InputUnavailable
+  [Field] Int32 Success
+  [Field] Int32 ToolError
+  [Field] Int32 UsageError'
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Model
+  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Cli.ProjectEvidenceReport], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceJson.EvidenceDocument], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceCommand.LoopModule+Diagnostic], ExitDecision)
+  [Method] Boolean Equals(Model)
+  [Method] Boolean Equals(Model, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] ExitDecision get_Exit()
+  [Method] Int32 CompareTo(Model)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceCommand.LoopModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Cli.ProjectEvidenceReport] get_Report()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceJson.EvidenceDocument] get_Document()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Doc()
+  [Method] Phase get_Phase()
+  [Method] RunRequest get_Request()
+  [Method] System.String ToString()
+  [Property] ExitDecision Exit
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceCommand.LoopModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Cli.ProjectEvidenceReport] Report
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceJson.EvidenceDocument] Document
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Doc
+  [Property] Phase Phase
+  [Property] RunRequest Request
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Msg
+  [Method] Boolean Equals(Msg)
+  [Method] Boolean Equals(Msg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBegin()
+  [Method] Boolean get_IsEmitted()
+  [Method] Boolean get_IsReported()
+  [Method] Boolean get_IsWrote()
+  [Method] Int32 CompareTo(Msg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Msg NewReported(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault])
+  [Method] Msg NewWrote(Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String])
+  [Method] Msg get_Begin()
+  [Method] Msg get_Emitted()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Reported
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Tags
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Wrote
+  [Property] Boolean IsBegin
+  [Property] Boolean IsEmitted
+  [Property] Boolean IsReported
+  [Property] Boolean IsWrote
+  [Property] Int32 Tag
+  [Property] Msg Begin
+  [Property] Msg Emitted
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Reported
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectEvidenceReport,FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault] Item
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Tags
+  [Field] Int32 Begin
+  [Field] Int32 Emitted
+  [Field] Int32 Reported
+  [Field] Int32 Wrote
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Msg+Wrote
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] get_Item()
+  [Property] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] Item
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+OutputFormat
+  [Method] Boolean Equals(OutputFormat)
+  [Method] Boolean Equals(OutputFormat, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsHuman()
+  [Method] Boolean get_IsJson()
+  [Method] Int32 CompareTo(OutputFormat)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] OutputFormat get_Human()
+  [Method] OutputFormat get_Json()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+OutputFormat+Tags
+  [Property] Boolean IsHuman
+  [Property] Boolean IsJson
+  [Property] Int32 Tag
+  [Property] OutputFormat Human
+  [Property] OutputFormat Json
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+OutputFormat+Tags
+  [Field] Int32 Human
+  [Field] Int32 Json
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Phase
+  [Method] Boolean Equals(Phase)
+  [Method] Boolean Equals(Phase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDone()
+  [Method] Boolean get_IsParsed()
+  [Method] Boolean get_IsPersisted()
+  [Method] Boolean get_IsProjected()
+  [Method] Boolean get_IsSensed()
+  [Method] Int32 CompareTo(Phase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Phase get_Done()
+  [Method] Phase get_Parsed()
+  [Method] Phase get_Persisted()
+  [Method] Phase get_Projected()
+  [Method] Phase get_Sensed()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+Phase+Tags
+  [Property] Boolean IsDone
+  [Property] Boolean IsParsed
+  [Property] Boolean IsPersisted
+  [Property] Boolean IsProjected
+  [Property] Boolean IsSensed
+  [Property] Int32 Tag
+  [Property] Phase Done
+  [Property] Phase Parsed
+  [Property] Phase Persisted
+  [Property] Phase Projected
+  [Property] Phase Sensed
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+Phase+Tags
+  [Field] Int32 Done
+  [Field] Int32 Parsed
+  [Field] Int32 Persisted
+  [Field] Int32 Projected
+  [Field] Int32 Sensed
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault
+  [Method] Boolean Equals(ReportFault)
+  [Method] Boolean Equals(ReportFault, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputMissing()
+  [Method] Boolean get_IsToolFault()
+  [Method] Int32 CompareTo(ReportFault)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ReportFault NewInputMissing(System.String)
+  [Method] ReportFault NewToolFault(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+InputMissing
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+Tags
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+ToolFault
+  [Property] Boolean IsInputMissing
+  [Property] Boolean IsToolFault
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+InputMissing
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+Tags
+  [Field] Int32 InputMissing
+  [Field] Int32 ToolFault
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+ReportFault+ToolFault
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+RunRequest
+  [Constructor] Void .ctor(System.String, System.String, OutputFormat, Boolean)
+  [Method] Boolean Equals(RunRequest)
+  [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExplicitPlain()
+  [Method] Int32 CompareTo(RunRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] OutputFormat get_Format()
+  [Method] System.String ToString()
+  [Method] System.String get_Out()
+  [Method] System.String get_Repo()
+  [Property] Boolean ExplicitPlain
+  [Property] OutputFormat Format
+  [Property] System.String Out
+  [Property] System.String Repo
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(UsageError)
+  [Method] Boolean Equals(UsageError, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBadFormat()
+  [Method] Boolean get_IsMissingValue()
+  [Method] Boolean get_IsUnknownFlag()
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(UsageError)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Method] UsageError NewBadFormat(System.String)
+  [Method] UsageError NewMissingValue(System.String)
+  [Method] UsageError NewUnknownFlag(System.String)
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+BadFormat
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+MissingValue
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+Tags
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnknownFlag
+  [Property] Boolean IsBadFormat
+  [Property] Boolean IsMissingValue
+  [Property] Boolean IsUnknownFlag
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+BadFormat
+  [Method] System.String get_value()
+  [Property] System.String value
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+MissingValue
+  [Method] System.String get_flag()
+  [Property] System.String flag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+Tags
+  [Field] Int32 BadFormat
+  [Field] Int32 MissingValue
+  [Field] Int32 UnknownFlag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnknownFlag
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.EvidenceCommand.Program
+  [Method] Int32 main(System.String[])
+  [Method] System.String categoryToken(ExitDecision)
+  [Method] System.String usageMessage(UsageError)

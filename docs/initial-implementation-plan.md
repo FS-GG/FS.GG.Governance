@@ -760,7 +760,7 @@ Exit criteria:
 - Profile-adjusted blocking is explained without changing rule truth. (Held by
   F023's reason text + base-carry/no-drop guarantees at the decision level.)
 
-### Phase 6: Tasks, Evidence, Verify, And Ship Readiness — 🟢 SDD slice complete; Governance protected-branch verdict landed (effective-evidence `evidence.json` projection pending)
+### Phase 6: Tasks, Evidence, Verify, And Ship Readiness — 🟢 SDD slice complete; Governance protected-branch verdict landed; effective-evidence `evidence.json` projection landed (`069`)
 
 Owner: `FS.GG.SDD` for task/evidence declarations and SDD readiness;
 `FS.GG.Governance` for effective evidence freshness and enforcement.
@@ -801,12 +801,19 @@ Legend: 🟢 complete · ⬜ not started (Governance-owned).
   `readiness/<id>/verify.json`. (Feature `012-verify-command`.)
 - 🟢 [x] Add `fsgg-sdd ship` to produce SDD merge-boundary readiness in
   `readiness/<id>/ship.json`. (Feature `013-ship-command`.)
-- 🟡 [ ] Define Governance effective-evidence inputs for freshness, synthetic taint
+- 🟢 [x] Define Governance effective-evidence inputs for freshness, synthetic taint
   propagation, accepted deferrals, and stale evidence. (Governance-owned. **Cores landed**:
   freshness keys/decision (F029/F030), per-gate freshness-inputs resolution (F043), real
   freshness sensing into route/ship (F046), synthetic-taint + sensed-metadata marking
-  (F005/F034). **Remaining**: a dedicated Governance `evidence.json` projection host that
-  emits effective evidence states, taint propagation, and graph failures as one document.)
+  (F005/F034). **Closed by `069-evidence-json-projection`**: a dedicated Governance
+  `evidence.json` projection — the pure packable `FS.GG.Governance.EvidenceJson` leaf
+  (`schemaVersion = "fsgg.evidence/v1"`, `ofReport`) plus the standalone `fsgg evidence`
+  host (`FS.GG.Governance.EvidenceCommand`) — emits each node's declared **and** effective
+  state, the dependency edges, the no-hide freshness cause, and any named graph failure
+  (`cycle`/`unknownNode`/`autoSyntheticDeclared`, recovered from the swallowed `GraphError`)
+  as one deterministic, byte-stable `readiness/evidence.json` document. Purely additive: no
+  existing artifact, schema version, verdict, or exit-code basis changed; the host exit code
+  is operational only.)
 - 🟢 [x] Keep protected-branch enforcement decisions in Governance. (F024 ship-verdict
   rollup + F026 `fsgg ship` protected-branch verdict host + F027 GitHub Actions
   branch-protection guidance — the merge-boundary verdict is computed in Governance.)

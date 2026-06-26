@@ -1,0 +1,116 @@
+TYPE FS.GG.Governance.EvidenceJson.EvidenceContent
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceContent)
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceContent, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsMalformed()
+  [Method] Boolean get_IsWellFormed()
+  [Method] FS.GG.Governance.EvidenceJson.EvidenceContent NewMalformed(FS.GG.Governance.Kernel.GraphError`1[System.String])
+  [Method] FS.GG.Governance.EvidenceJson.EvidenceContent NewWellFormed(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceJson.EvidenceNode], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] Int32 CompareTo(FS.GG.Governance.EvidenceJson.EvidenceContent)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceJson.EvidenceContent+Malformed
+  [NestedType] FS.GG.Governance.EvidenceJson.EvidenceContent+Tags
+  [NestedType] FS.GG.Governance.EvidenceJson.EvidenceContent+WellFormed
+  [Property] Boolean IsMalformed
+  [Property] Boolean IsWellFormed
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceJson.EvidenceContent+Malformed
+  [Method] FS.GG.Governance.Kernel.GraphError`1[System.String] get_failure()
+  [Property] FS.GG.Governance.Kernel.GraphError`1[System.String] failure
+TYPE FS.GG.Governance.EvidenceJson.EvidenceContent+Tags
+  [Field] Int32 Malformed
+  [Field] Int32 WellFormed
+TYPE FS.GG.Governance.EvidenceJson.EvidenceContent+WellFormed
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceJson.EvidenceNode] get_nodes()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_dependencies()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.EvidenceJson.EvidenceNode] nodes
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] dependencies
+TYPE FS.GG.Governance.EvidenceJson.EvidenceDocument
+  [Constructor] Void .ctor(FS.GG.Governance.EvidenceJson.EvidenceContent, Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceDocument)
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceDocument, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.EvidenceJson.EvidenceContent get_Content()
+  [Method] Int32 CompareTo(FS.GG.Governance.EvidenceJson.EvidenceDocument)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_Disclosures()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.EvidenceJson.EvidenceContent Content
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Disclosures
+TYPE FS.GG.Governance.EvidenceJson.EvidenceJsonModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String ofReport(FS.GG.Governance.EvidenceJson.EvidenceDocument)
+  [Property] System.String schemaVersion
+TYPE FS.GG.Governance.EvidenceJson.EvidenceNode
+  [Constructor] Void .ctor(System.String, FS.GG.Governance.Kernel.EvidenceState, FS.GG.Governance.Kernel.EvidenceState, FS.GG.Governance.EvidenceJson.NodeFreshness, System.String)
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceNode)
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.EvidenceNode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.EvidenceJson.NodeFreshness get_Freshness()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Declared()
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_Effective()
+  [Method] Int32 CompareTo(FS.GG.Governance.EvidenceJson.EvidenceNode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Method] System.String get_Source()
+  [Property] FS.GG.Governance.EvidenceJson.NodeFreshness Freshness
+  [Property] FS.GG.Governance.Kernel.EvidenceState Declared
+  [Property] FS.GG.Governance.Kernel.EvidenceState Effective
+  [Property] System.String Id
+  [Property] System.String Source
+TYPE FS.GG.Governance.EvidenceJson.NodeFreshness
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.NodeFreshness)
+  [Method] Boolean Equals(FS.GG.Governance.EvidenceJson.NodeFreshness, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsFresh()
+  [Method] Boolean get_IsStale()
+  [Method] Boolean get_IsUnknown()
+  [Method] Boolean get_IsUnresolved()
+  [Method] FS.GG.Governance.EvidenceJson.NodeFreshness NewStale(RecomputeCause)
+  [Method] FS.GG.Governance.EvidenceJson.NodeFreshness NewUnresolved(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact])
+  [Method] FS.GG.Governance.EvidenceJson.NodeFreshness get_Fresh()
+  [Method] FS.GG.Governance.EvidenceJson.NodeFreshness get_Unknown()
+  [Method] Int32 CompareTo(FS.GG.Governance.EvidenceJson.NodeFreshness)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.EvidenceJson.NodeFreshness+Stale
+  [NestedType] FS.GG.Governance.EvidenceJson.NodeFreshness+Tags
+  [NestedType] FS.GG.Governance.EvidenceJson.NodeFreshness+Unresolved
+  [Property] Boolean IsFresh
+  [Property] Boolean IsStale
+  [Property] Boolean IsUnknown
+  [Property] Boolean IsUnresolved
+  [Property] FS.GG.Governance.EvidenceJson.NodeFreshness Fresh
+  [Property] FS.GG.Governance.EvidenceJson.NodeFreshness Unknown
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.EvidenceJson.NodeFreshness+Stale
+  [Method] RecomputeCause get_cause()
+  [Property] RecomputeCause cause
+TYPE FS.GG.Governance.EvidenceJson.NodeFreshness+Tags
+  [Field] Int32 Fresh
+  [Field] Int32 Stale
+  [Field] Int32 Unknown
+  [Field] Int32 Unresolved
+TYPE FS.GG.Governance.EvidenceJson.NodeFreshness+Unresolved
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact] get_missing()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.FreshnessResolution.ModelModule+MissingFact] missing

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for 069, exercising the PUBLIC surface of FS.GG.Governance.EvidenceCommand: the pure
+       `Loop.parse`/`init`/`toDocument`/`update`/`render`/`exitCode` driven with literal Model/Msg values (no
+       I/O), and the edge `Interpreter.run`/`step` driven against FAKED ports (a capturing SenseReport/Write/Out)
+       PLUS one real-`realPorts` end-to-end proof over the real `tests/golden-fixture/` tree (Principle V). The
+       additivity guard proves the existing `Cli` evidence emitter and schema are untouched (FR-009/SC-005). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ParseTests.fs" />
+    <Compile Include="LoopTests.fs" />
+    <Compile Include="InterpreterTests.fs" />
+    <Compile Include="ExitInformationTests.fs" />
+    <Compile Include="RenderModeDispatchTests.fs" />
+    <Compile Include="EndToEndTests.fs" />
+    <Compile Include="AdditivityTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceCommand/FS.GG.Governance.EvidenceCommand.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for 069, exercising the PUBLIC surface of FS.GG.Governance.EvidenceJson:
+       `EvidenceJson.ofReport` / `schemaVersion` over `EvidenceDocument` values built from real Kernel
+       `EvidenceState` / `GraphError`, real `EvidenceReuse.RecomputeCause`, and real
+       `FreshnessResolution.MissingFact` (never mocks, never private writer helpers — Principle V). The EMITTED
+       BYTES are inspected by a read-only `System.Text.Json.JsonDocument` parse, exactly as the kernel `Json` and
+       sibling `RouteJson`/`AuditJson`/`CacheEligibilityJson` projection tests do. Expecto gives the
+       determinism / no-hide / totality properties; the VSTest adapters let `dotnet test` drive the Expecto
+       runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="ProjectionTests.fs" />
+    <Compile Include="DeterminismTests.fs" />
+    <Compile Include="GraphFailureTests.fs" />
+    <Compile Include="FreshnessCauseTests.fs" />
+    <Compile Include="NoHideTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+  </ItemGroup>
+
+</Project>

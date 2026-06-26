@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 069 host edge: the standalone information-only `fsgg evidence` host — senses the F12 project world from a
+       real repository (SpecKit task states, design-system measurements, review-cache outcomes), folds it with
+       `Project.evidenceReport`, re-runs `Kernel.Evidence.build`/`effective` at its own edge to surface any graph
+       failure BY NAME (recovering the `GraphError` the existing bridge swallows to `Map.empty`), projects the
+       result through the pure `EvidenceJson` leaf, and PERSISTS the deterministic `readiness/evidence.json`
+       artifact.
+
+       It REPLICATES the F12 sensing call-sequence (Cli `loadSnapshot` + `Project.compose`/`toLoopConfig` + the
+       Host loop drive) rather than taking a reusable sensing function (the Cli exposes none) — the same
+       "replicate the call-sequence" pattern the cache-eligibility host uses for the Route selection sequence. It
+       adds NO new third-party dependency: project sensing via Cli/Host/Adapters, projection via EvidenceJson;
+       the only impure primitives are System.IO reads/writes and Environment.Exit at the Program edge — all BCL.
+
+       Information-only: emitting `evidence.json` changes no verdict, truth table, or existing artifact (FR-007).
+       The host exit code is OPERATIONAL ONLY (Success 0 / UsageError 2 / InputUnavailable 3 / ToolError 4),
+       never a ship/merge code.
+
+       Modeled through an Elmish/MVU boundary (Principle IV, load-bearing): a PURE `Loop`
+       (parse/init/toDocument/update/render/exitCode over Model/Msg/Effect) + an EDGE `Interpreter` (injected,
+       fakeable Ports; realPorts/step/run) + a thin Program. Compile order Loop -> Interpreter -> Program. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.EvidenceCommand</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsgg</ToolCommandName>
+    <PackageId>FS.GG.Governance.EvidenceCommand</PackageId>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Loop.fsi" />
+    <Compile Include="Loop.fs" />
+    <Compile Include="Interpreter.fsi" />
+    <Compile Include="Interpreter.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The pure projection leaf -->
+    <ProjectReference Include="../FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
+    <!-- The F12 sensing + evidence-report fold -->
+    <ProjectReference Include="../FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+  </ItemGroup>
+
+</Project>
