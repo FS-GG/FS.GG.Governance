@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 072: the layered worked example + e2e build check for the SDD reference provider. It exercises the
+       PUBLIC 071 seam surface a host would use — `Interpreter.run` over a REAL temp directory (Principle
+       V), `dotnet build`s the emitted skeleton (real evidence, FR-004/SC-002), and asserts the committed
+       manifest golden (FR-008/SC-005). Failure-path tests pin the seam's opt-in/safety guarantees
+       (FR-010/FR-011/SC-007); the surface-drift test guards the sample's OWN baseline AND asserts the two
+       core baselines are byte-identical (SC-006). The ONLY disclosed synthetic element is the
+       lifecycle-precondition stand-in (sibling-owned `fsgg-sdd init` output — research D4). Expecto + the
+       VSTest adapters let `dotnet test` drive the runner. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="WorkedExampleTests.fs" />
+    <Compile Include="FailurePathTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../samples/FS.GG.Governance.Sample.SddReferenceProvider/FS.GG.Governance.Sample.SddReferenceProvider.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.ScaffoldManifestJson/FS.GG.Governance.ScaffoldManifestJson.fsproj" />
+  </ItemGroup>
+
+</Project>

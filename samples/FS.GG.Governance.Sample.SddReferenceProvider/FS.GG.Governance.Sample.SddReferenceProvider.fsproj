@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 072: the SDD reference template provider — a CLEARLY-SEPARATED, NON-PACKABLE example that
+       conforms to the unchanged 071 `TemplateProvider` contract (research D1). It lives under the new
+       top-level `samples/` directory (NOT `src/`) to make the example/product separation structural and
+       obvious (FR-002, SC-006): the generic seam core gains NO provider knowledge.
+
+       It references ONLY FS.GG.Governance.Scaffold (the 071 seam's value types) + FSharp.Core — NO new
+       third-party PackageReference, NO git/FS-scan/FAKE/rendering. `provider` is a pure value whose
+       `Emit` describes a minimal but BUILDABLE F#/.NET skeleton (dependency closure = FSharp.Core only)
+       so `dotnet build` over the emitted result succeeds first-attempt, offline (SC-002/SC-003).
+
+       Production wiring of the seam into `fsgg-sdd init` stays sibling-owned in the FS.GG.SDD repo
+       (FR-013). Compile order: the curated `.fsi` (sole public-surface declaration, Principle II) then
+       the `.fs` body. `IsPackable=false` — this is an example, not a published package. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Sample.SddReferenceProvider</RootNamespace>
+    <OutputType>Library</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SddReferenceProvider.fsi" />
+    <Compile Include="SddReferenceProvider.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Scaffold/FS.GG.Governance.Scaffold.fsproj" />
+  </ItemGroup>
+
+</Project>

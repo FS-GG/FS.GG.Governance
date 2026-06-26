@@ -1,0 +1,5 @@
+TYPE FS.GG.Governance.Sample.SddReferenceProvider.SddReferenceProviderModule
+  [Method] ProviderId get_providerId()
+  [Method] TemplateProvider get_provider()
+  [Property] ProviderId providerId
+  [Property] TemplateProvider provider
