@@ -222,9 +222,22 @@ and the **impure on-disk store write** — atomic temp+rename persistence wired 
 `fsgg route`/`fsgg ship` behind an opt-in `--persist-store` flag, so the cache actually
 warms between runs — landed 2026-06-22 (F048 `FS.GG.Governance.RouteCommand`/`ShipCommand`).
 **The cache-eligibility/freshness thread is now complete end-to-end** (sense → resolve →
-evaluate → embed → persist); the only remaining evidence-reuse work is real
-evidence-reference capture from gate execution. Other open rows are capability-catalog
-expansion, `refresh`/stale-view blocking, and the `verify`/`release` gates.
+evaluate → embed → persist).
+
+**Update (2026-06-26):** the work has advanced well past the 2026-06-22 snapshot above.
+Now landed: real evidence-reference capture + gate execution in route/ship (F049–F052);
+the `fsgg release` host + release-gate cores (F053–F055); the `fsgg verify` host (F056);
+the Governance `fsgg refresh` host (F057); the `capabilities.yml` v2 product taxonomy
+(F058) and the four package/docs/skill/design surface-check packs (F059); the
+cost/cache/provenance host wiring + the verify/release publication boundary
+(F060–F061); and the full **host-wiring stream** — human projections (F062→**063**),
+cost-cache (**064**), release-provenance (**065**, with real-`dotnet pack` E2E in **066**),
+and product-surface checks into `fsgg verify` (**067**). **Phase 10 is now complete** and
+every command-host product-surface thread is closed. The genuinely-remaining open rows are
+narrow: (a) per-finding **rule-id** modeling upstream (Phase 5 🟡 — blocks the rule-hash
+guarantee); (b) a dedicated Governance **`evidence.json`** effective-evidence projection
+host (Phase 6 🟡); and (c) folding a stale-view currency finding into a **blocking** verdict
+at the Governance boundary (Phase 7 🟡).
 
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.
@@ -400,12 +413,13 @@ constant) are all **merged**. **F026 `fsgg ship` host command**
 "Merge F026"), and **F027** (`027-branch-protection-guidance`) — the first GitHub
 Actions branch-protection guidance, the **Phase-2 closing row** — is **🟢 landing** as a
 docs+template deliverable (no new F# code; `docs/ci/` + `scripts/check-ship-ci-guidance.sh`,
-16/16 cross-check assertions green). With it, Phase 2's product surface is complete except
-the **cache-eligibility/freshness** verdict's host emission (the one remaining 🟡 below): the
-cache-eligibility **core** (F041) and its deterministic **`cache-eligibility.json` projection**
-(F042, merged 2026-06-22) have now landed, so the evaluated verdict exists as a projection —
-only the CLI host wiring that resolves `FreshnessInputs` and embeds it into the route/audit
-JSON remains.
+16/16 cross-check assertions green). With it, Phase 2's product surface is complete. The
+**cache-eligibility/freshness** thread that was the last open 🟡 here is **now closed
+end-to-end** (update 2026-06-26): the core (F041) + `cache-eligibility.json` projection
+(F042) + host command (F044) + route/audit embed (F045) + real verdicts flowing from
+`fsgg route`/`fsgg ship` with on-disk store persistence (F046–F048) have all landed, so the
+CLI host wiring that resolves `FreshnessInputs` and embeds the verdict into the route/audit
+JSON is done.
 The SDD→Governance handoff contract is accepted at **v1.0.0** (ADR 0002),
 but its Governance-side **consumer is still not implemented** (grep over Governance
 `src/`+`tests/` finds zero `governance-handoff` references; reader → evidence
@@ -696,25 +710,37 @@ explainable and testable.
 - 🟢 [x] Parse rule maturity: `observe`, `warn`, `block-on-pr`, `block-on-ship`,
   and `block-on-release`. (Reused verbatim from F014 `Config.Model.Maturity`;
   consumed by F023's derivation.)
-- 🟡 [ ] Emit every finding with rule id, verdict, base severity, mode, profile,
+- 🟢 [x] Emit every finding with rule id, verdict, base severity, mode, profile,
   maturity, effective severity, and reason. (F023's `EnforcementDecision` carries
   base severity, mode, profile, maturity, effective severity, and a lever-naming
   reason; **F024** adds the whole-change `Verdict` + `Blockers`/`Warnings`/
-  `Passing` rollup and the typed `ExitCodeBasis`; **F025** `audit.json` now **emits**
+  `Passing` rollup and the typed `ExitCodeBasis`; **F025** `audit.json` emits
   all of it (verdict/basis + each item's `kind`/identity + six-field `enforcement`)
-  to the versioned document. Remaining partial: per-finding **rule id** is still
-  un-modeled upstream, so it is not yet carried.)
-- 🟡 [ ] Ensure profiles never hide underlying verdicts, alter rule hashes, or
+  to the versioned document. **068** closes the last gap: a new dependency-free
+  `FS.GG.Governance.RuleIdentity` leaf (`RuleId` newtype + source-prefixed
+  constructors `gate:`/`boundary:`/`surface:`/`release:`/`unattributed:`) lets each
+  projection derive a stable, deterministic per-finding **rule id** at emit time,
+  surfaced additively as the `ruleId` field on every per-finding object in
+  `audit.json`, `verify.json`, and `route.json` — byte-identical to the pre-feature
+  output for any no-findings input (SC-003).)
+- 🟢 [x] Ensure profiles never hide underlying verdicts, alter rule hashes, or
   remove findings from JSON. (F023 proves base-severity carry (SC-003) and
   no-drop over a finding list (SC-006) at the decision level; **F024** proves the
   no-hide rule at change scale — a relaxed blocker is always a visible
   self-explaining `Warning`, the partition is disjoint + exhaustive (`|B|+|W|+|P|
-  = N+M`, SC-006), and base severity is byte-identical out (SC-003). **F025** now
+  = N+M`, SC-006), and base severity is byte-identical out (SC-003). **F025**
   carries the no-hide rule to the **JSON level** — every emitted item carries both
   `baseSeverity` and `effectiveSeverity` (a relaxed base-`blocking` warning shows
   both, SC-005), every item is rendered with no section overlap and none dropped
   (SC-001), and the exclusion sweep proves no profile/dial value can suppress a
-  field (SC-007). The rule-hash guarantee follows once rule-id is modeled upstream.)
+  field (SC-007). **068** lands the rule-hash-invariance proof at the JSON level:
+  the per-finding `ruleId` is a pure function of the rule's structural identity, so
+  the all-profiles × all-modes invariance sweep shows the `ruleId` set is
+  byte-identical across every profile/mode (no finding dropped, only
+  `effectiveSeverity` differs), and the id maps to the existing catalog-wide
+  `RuleHash`, which is content-of-rule-pack and therefore profile/mode-invariant by
+  construction — so profiles provably never alter rule hashes, hide verdicts, or
+  remove findings.)
 - 🟢 [x] Add scoped `--paths` authoring and complete base/head route parity with
   CI. (F022 `fsgg route` + F026 `fsgg ship` share the `--paths`/`--since`/default
   base-head scope surface.)
@@ -734,7 +760,7 @@ Exit criteria:
 - Profile-adjusted blocking is explained without changing rule truth. (Held by
   F023's reason text + base-carry/no-drop guarantees at the decision level.)
 
-### Phase 6: Tasks, Evidence, Verify, And Ship Readiness — 🟢 SDD slice complete (Governance evidence inputs pending)
+### Phase 6: Tasks, Evidence, Verify, And Ship Readiness — 🟢 SDD slice complete; Governance protected-branch verdict landed (effective-evidence `evidence.json` projection pending)
 
 Owner: `FS.GG.SDD` for task/evidence declarations and SDD readiness;
 `FS.GG.Governance` for effective evidence freshness and enforcement.
@@ -775,9 +801,15 @@ Legend: 🟢 complete · ⬜ not started (Governance-owned).
   `readiness/<id>/verify.json`. (Feature `012-verify-command`.)
 - 🟢 [x] Add `fsgg-sdd ship` to produce SDD merge-boundary readiness in
   `readiness/<id>/ship.json`. (Feature `013-ship-command`.)
-- ⬜ [ ] Define Governance effective-evidence inputs for freshness, synthetic taint
-  propagation, accepted deferrals, and stale evidence. (Governance-owned.)
-- ⬜ [ ] Keep protected-branch enforcement decisions in Governance. (Governance-owned.)
+- 🟡 [ ] Define Governance effective-evidence inputs for freshness, synthetic taint
+  propagation, accepted deferrals, and stale evidence. (Governance-owned. **Cores landed**:
+  freshness keys/decision (F029/F030), per-gate freshness-inputs resolution (F043), real
+  freshness sensing into route/ship (F046), synthetic-taint + sensed-metadata marking
+  (F005/F034). **Remaining**: a dedicated Governance `evidence.json` projection host that
+  emits effective evidence states, taint propagation, and graph failures as one document.)
+- 🟢 [x] Keep protected-branch enforcement decisions in Governance. (F024 ship-verdict
+  rollup + F026 `fsgg ship` protected-branch verdict host + F027 GitHub Actions
+  branch-protection guidance — the merge-boundary verdict is computed in Governance.)
 
 Exit criteria:
 
@@ -790,13 +822,15 @@ Exit criteria:
 - Task readiness explains missing skills and missing tests before implementation
   or ship.
 
-### Phase 7: Generated Views And Refresh — ✅ SDD slice complete
+### Phase 7: Generated Views And Refresh — 🟢 SDD + Governance `fsgg refresh` complete (boundary stale-view *blocking* pending)
 
 Owner: Shared.
 
-Status: SDD-owned `fsgg-sdd refresh` complete on 2026-06-20 — see
-`specs/015-refresh-command/readiness/`. Governance-owned `fsgg refresh` and
-boundary stale-view blocking remain Governance concerns (out of SDD scope).
+Status (2026-06-26): SDD-owned `fsgg-sdd refresh` complete on 2026-06-20 — see
+`specs/015-refresh-command/readiness/`. The Governance-owned `fsgg refresh` host
+landed as **F057** (`057-refresh-command`). The one remaining row is folding a
+stale-view currency finding into a **blocking** verdict at the configured Governance
+boundary (verify/ship already surface currency findings; hard-blocking is unwired).
 
 Purpose: make generated artifacts explicit, reproducible, and currency-checked.
 
@@ -807,13 +841,19 @@ Purpose: make generated artifacts explicit, reproducible, and currency-checked.
   `analysis.json`, `verify.json`, `ship.json` are currency-reported (re-running
   their generators out of lifecycle order corrupts evidence freshness — see
   `specs/015-refresh-command/tasks.md` Implementation Notes).
-- 🟡 [ ] Add Governance `fsgg refresh` for gate metadata, rule catalogs,
+- 🟢 [x] Add Governance `fsgg refresh` for gate metadata, rule catalogs,
   capability docs, skill references, API-surface docs, route projections, and
-  baselines. (Governance-owned; out of SDD scope.)
+  baselines. (F057 `FS.GG.Governance.RefreshCommand`/`RefreshJson` — reads the
+  row-local `.fsgg/refresh.yml` manifest, senses per-view source digests + generator
+  version, decides currency by reusing the F029 `FreshnessKey` comparator, regenerates
+  exactly the stale views through their declared generator port, records refreshed
+  provenance to `.fsgg/refresh.lock.json`, and emits an optional deterministic `refresh.json`.)
 - 🟢 [x] Emit stale-view diagnostics when generated views are older than their
   declared sources.
 - 🟡 [ ] Block stale generated views at the configured Governance boundary.
-  (Governance-owned; SDD reports, Governance enforces.)
+  (Governance-owned; SDD reports, Governance enforces. `fsgg verify` (F056) already
+  surfaces first-class **currency findings**; the remaining work is folding a stale-view
+  currency finding into a **blocking** verdict at the configured boundary — not yet wired.)
 - 🟢 [x] Add snapshot or golden-fixture coverage once a generated view becomes
   public or tool-facing. (Covered by real-evidence `RefreshCommandTests` over
   disposable shipped project trees, per the 014 precedent.)
@@ -909,7 +949,7 @@ Exit criteria:
 - Existing Spec Kit users have a documented migration path.
 - Bootstrap does not assume FS.GG.Rendering, Governance, or a monorepo checkout.
 
-### Phase 10: Capability Catalog And Product Adapter Expansion
+### Phase 10: Capability Catalog And Product Adapter Expansion — 🟢 complete (capabilities v2 + the four surface-check packs + verify host wiring)
 
 Owner: `FS.GG.Governance`, with product facts from FS.GG.Rendering and generated
 products.
@@ -932,23 +972,34 @@ This was the one product-surface thread still open on a command host; it closes
 the deferred `059` tasks **T045 / T048 / T052**. (Schema migration of
 `.fsgg/capabilities.yml` for the full product taxonomy below remains roadmap.)
 
-- 🔴 [ ] Expand `.fsgg/capabilities.yml` for generated products, package surfaces,
+- 🟢 [x] Expand `.fsgg/capabilities.yml` for generated products, package surfaces,
   docs, skills, samples, design artifacts, release surfaces, baselines,
-  template profiles, and evidence tags.
-- 🔴 [ ] Add generated-product checks in cost tiers: structural scan,
-  restore/build, focused tests, full verify, and release validation.
-- 🔴 [ ] Ensure generated products can run Governance locally without monorepo
-  access.
-- 🔴 [ ] Add package/API facts for package projects, public `.fsi` contracts,
-  baselines, compatibility notes, and FSI transcripts.
-- 🔴 [ ] Add docs/examples facts for FsDocs pages, literate scripts, public API
-  docs, links, and reference currency.
-- 🔴 [ ] Add skill facts for skill ids, paths, references, capability mappings,
-  task skill lists, and optional mirrors.
-- 🔴 [ ] Add design/rendering facts for token sources, generated tokens, captures,
-  contrast facts, control catalog, and interaction states.
-- 🔴 [ ] Keep product vocabulary in adapters and capability catalogs, not in the
-  Governance kernel or generic SDD code.
+  template profiles, and evidence tags. (F23/**F058** `capabilities.yml`
+  `schemaVersion: 2` — six product-surface kinds
+  package/docs/skill/design/sampleApp/generatedProduct with optional
+  `evidenceTag`/`templateProfile`/`baseline` attributes and cost-tiered checks;
+  documented v1→v2 migration.)
+- 🟢 [x] Add generated-product checks in cost tiers: structural scan,
+  restore/build, focused tests, full verify, and release validation. (**F059**
+  package/docs/skill/design deterministic surface checks selected by cost tier via
+  the F23 `ProductSurfaces` classifier; wired into `fsgg verify` by **F067**.)
+- 🟢 [x] Ensure generated products can run Governance locally without monorepo
+  access. (F058 standalone generated-product capability — see the
+  `generated-product-standalone` config fixture.)
+- 🟢 [x] Add package/API facts for package projects, public `.fsi` contracts,
+  baselines, compatibility notes, and FSI transcripts. (**F059**
+  `FS.GG.Governance.PackageChecks`.)
+- 🟢 [x] Add docs/examples facts for FsDocs pages, literate scripts, public API
+  docs, links, and reference currency. (**F059** `FS.GG.Governance.DocsChecks`.)
+- 🟢 [x] Add skill facts for skill ids, paths, references, capability mappings,
+  task skill lists, and optional mirrors. (**F059** `FS.GG.Governance.SkillChecks`.)
+- 🟢 [x] Add design/rendering facts for token sources, generated tokens, captures,
+  contrast facts, control catalog, and interaction states. (**F059**
+  `FS.GG.Governance.DesignChecks`.)
+- 🟢 [x] Keep product vocabulary in adapters and capability catalogs, not in the
+  Governance kernel or generic SDD code. (Held by the F23 `ProductSurfaces` leaf +
+  the per-file `capabilities.yml` vocabulary — surface kinds and check ids live in
+  the catalog, not the kernel.)
 
 Exit criteria:
 
@@ -1162,7 +1213,7 @@ Exit criteria:
 - Missing or stale reviews are visible findings.
 - Protected-branch blocking does not depend on uncalibrated agent judgement.
 
-### Phase 13: Release And Distribution Readiness — 🟢 SDD slice complete (Governance release gates pending)
+### Phase 13: Release And Distribution Readiness — 🟢 complete (SDD distribution slice + Governance release/provenance gates + host wiring)
 
 Owner: `FS.GG.Governance` for release gates; `FS.GG.SDD` for SDD package and
 CLI distribution once its lifecycle surface is stable.
@@ -1175,7 +1226,10 @@ Status (2026-06-21): the **SDD-owned distribution slice is complete** — featur
 `020-exhaustive-validation` shipped the scheduled exhaustive validation harness
 (`fsgg-sdd validate`), and feature `021-rich-validation-report` closed the last
 SDD-owned deferral by making `validate --rich` render the `validation-report`
-richly. The remaining rows are **Governance-owned release/provenance gates**.
+richly. **Update (2026-06-26):** the Governance-owned release/provenance gates are now
+**complete** — release-gate cores + sensing + the `fsgg release` host (F053–F055), the
+publication-evidence cores + attestation (F061/F26), and all host wiring (F065/F066 release
+provenance, F063 human projections). All rows below are 🟢.
 
 Legend: 🟢 complete · 🟡 partial · 🔴 not started.
 

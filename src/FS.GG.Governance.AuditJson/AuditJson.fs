@@ -9,6 +9,7 @@ open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
@@ -220,13 +221,20 @@ module AuditJson =
         =
         w.WriteStartObject()
 
+        // 068: each item carries a stable, source-prefixed `ruleId` as the FIRST field after `id` —
+        // `gate (gateIdValue g)` for a typed gate, `boundary (findingIdToken fid)` for a kernel boundary
+        // finding. Derived at emit time from the identity the item already holds; reads no profile / mode /
+        // effective severity / message, so it is invariant across every profile and run mode (FR-003).
+        // Dispatch stays exhaustive over the closed `EnforcedItemId` (no wildcard).
         match item.Id with
         | GateItem g ->
             w.WriteString("kind", "gate")
             w.WriteString("id", gateIdValue g)
+            w.WriteString("ruleId", RuleIdentity.ruleIdToken (RuleIdentity.gate (gateIdValue g)))
         | FindingItem(fid, GovernedPath path) ->
             w.WriteString("kind", "finding")
             w.WriteString("id", findingIdToken fid)
+            w.WriteString("ruleId", RuleIdentity.ruleIdToken (RuleIdentity.boundary (findingIdToken fid)))
             w.WriteString("path", path)
 
         w.WritePropertyName "enforcement"

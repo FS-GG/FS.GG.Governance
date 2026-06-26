@@ -23,6 +23,7 @@
     <Compile Include="TotalityTests.fs" />
     <Compile Include="CacheEmbedTests.fs" />
     <Compile Include="ProductSurfacesEmbedTests.fs" />
+    <Compile Include="RuleIdTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

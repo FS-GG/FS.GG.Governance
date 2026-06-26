@@ -17,6 +17,7 @@
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="GoldenTests.fs" />
     <Compile Include="ReleaseReadinessPreviewTests.fs" />
+    <Compile Include="RuleIdTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -31,6 +32,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
+    <!-- 068: the cross-surface (verify vs ship) ruleId-match test (T013, SC-005) projects the same
+         ShipDecision through AuditJson too, asserting the per-finding ruleId is identical on both surfaces. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />

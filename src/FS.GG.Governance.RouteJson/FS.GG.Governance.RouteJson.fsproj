@@ -49,6 +49,7 @@
          classification (ProductSurfaces). `ofRouteResult` is unchanged and byte-identical; the new
          `ofRouteResultWithProductSurfaces` adds the section only when the report is non-empty. -->
     <ProjectReference Include="../FS.GG.Governance.ProductSurfaces/FS.GG.Governance.ProductSurfaces.fsproj" />
+    <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
   </ItemGroup>
 
 </Project>

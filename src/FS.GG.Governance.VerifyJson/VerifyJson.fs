@@ -9,6 +9,7 @@ open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
@@ -204,6 +205,18 @@ module VerifyJson =
 
         w.WriteEndObject()
 
+        // 068: the stable, source-prefixed `ruleId`, emitted right after the `id` object — `gate
+        // (gateIdValue g)` for a typed gate, `boundary (findingIdToken fid)` for a kernel boundary finding.
+        // Derived at emit time from the identity the item already holds; reads no profile / mode / effective
+        // severity / message, so it matches the audit.json id for the same finding (FR-006) and is invariant
+        // across every profile and run mode (FR-003). Exhaustive over the closed `EnforcedItemId`.
+        let ruleId =
+            match item.Id with
+            | GateItem g -> RuleIdentity.gate (gateIdValue g)
+            | FindingItem(fid, _) -> RuleIdentity.boundary (findingIdToken fid)
+
+        w.WriteString("ruleId", RuleIdentity.ruleIdToken ruleId)
+
         w.WritePropertyName "enforcement"
         writeEnforcement w item.Decision
 
@@ -319,6 +332,10 @@ module VerifyJson =
         let (SurfaceId sid) = f.Surface
         w.WriteString("surface", sid)
         w.WriteString("code", f.Code)
+        // 068: the surface finding's `ruleId` (`surface:<domain>:<code>`), emitted after the leading
+        // domain/surface/code identity triple and before the detail fields. Derived from the same domain +
+        // code already written above; reads no severity / message, so it is profile/mode/message-invariant.
+        w.WriteString("ruleId", RuleIdentity.ruleIdToken (RuleIdentity.surface (SC.checkDomainToken f.Domain) f.Code))
         let (GovernedPath file) = f.Location.File
         w.WriteString("file", file)
         w.WriteString("detail", f.Location.Detail)

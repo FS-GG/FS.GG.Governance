@@ -55,6 +55,7 @@
     <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
     <!-- F052: the optional per-gate `execution` embed carries the `GateOutcome` vocabulary (GateRun). -->
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
   </ItemGroup>
 
 </Project>

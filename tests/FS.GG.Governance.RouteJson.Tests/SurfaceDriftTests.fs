@@ -105,6 +105,8 @@ let tests =
                   || name = "FS.GG.Governance.GateExecution"
                   || name = "FS.GG.Governance.ExecutionRecord"
                   || name = "FS.GG.Governance.CommandRecord"
+                  // 068: the dependency-free RuleIdentity leaf (the additive per-finding ruleId source).
+                  || name = "FS.GG.Governance.RuleIdentity"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

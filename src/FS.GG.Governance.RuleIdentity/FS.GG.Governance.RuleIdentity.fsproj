@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 068: the dependency-free, packable RuleIdentity leaf — the per-finding rule-identity row.
+       A single pure newtype `RuleId = RuleId of string` with source-prefixed smart constructors
+       (`gate`/`boundary`/`surface`/`release`/`unattributed`) and the total `ruleIdToken : RuleId ->
+       string`. Every projection derives a finding's stable, deterministic rule id at emit time from a
+       source value it already holds (a GateId, a boundary FindingId token, a SurfaceFinding domain+code,
+       a ReleaseRuleKind token), so NO projection signature changes — only an additive per-finding
+       `ruleId` field appears in audit.json/verify.json/route.json.
+
+       It references ONLY FSharp.Core — NO governance ProjectReference and NO new third-party
+       PackageReference (Directory.Packages.props unchanged) — so it CANNOT introduce a cycle and any
+       projection may reference it (research D7). It computes no hash, reads no clock/filesystem/git/
+       environment/network, and emits no verdict: it is pure source-prefixing. The whole surface is a
+       newtype + five constructors + one accessor — no MVU ceremony (Principle IV / plan Constitution
+       Check IV). Compile order is RuleIdentity.fsi -> RuleIdentity.fs: the curated public surface, then
+       the pure prefixing body. The dependency direction stays one-way: every projection -> RuleIdentity. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.RuleIdentity</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like the adapters/Config/Gates/FreshnessKey (overrides Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.RuleIdentity</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RuleIdentity.fsi" />
+    <Compile Include="RuleIdentity.fs" />
+  </ItemGroup>
+
+</Project>

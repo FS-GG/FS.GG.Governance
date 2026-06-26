@@ -51,6 +51,7 @@
     <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
     <!-- F26: the advisory releaseReadiness preview projects the ReleaseReport single source of truth. -->
     <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
+    <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -56,8 +56,9 @@ let tests =
               // F045: every GATE item gains a trailing `cacheEligibility` verdict; FINDING items carry none.
               for it in List.concat [ section doc "blockers"; section doc "warnings"; section doc "passing" ] do
                   match itemKind it with
-                  | "gate" -> Expect.equal (fieldOrder it) [ "kind"; "id"; "enforcement"; "cacheEligibility" ] "gate item field order"
-                  | "finding" -> Expect.equal (fieldOrder it) [ "kind"; "id"; "path"; "enforcement" ] "finding item field order"
+                  // 068: every item gains an additive `ruleId` as the field right after `id`.
+                  | "gate" -> Expect.equal (fieldOrder it) [ "kind"; "id"; "ruleId"; "enforcement"; "cacheEligibility" ] "gate item field order"
+                  | "finding" -> Expect.equal (fieldOrder it) [ "kind"; "id"; "ruleId"; "path"; "enforcement" ] "finding item field order"
                   | k -> failtestf "unexpected kind %s" k
 
                   Expect.equal (fieldOrder (it.GetProperty "enforcement")) enforcementOrder "enforcement field order"
@@ -86,7 +87,7 @@ let tests =
 
               let contracted =
                   set [ "schemaVersion"; "verdict"; "exitCodeBasis"; "blockers"; "warnings"; "passing"
-                        "kind"; "id"; "path"; "enforcement"
+                        "kind"; "id"; "ruleId"; "path"; "enforcement"   // 068: additive per-finding ruleId
                         "baseSeverity"; "maturity"; "mode"; "profile"; "effectiveSeverity"; "reason"
                         // F045 cache-eligibility embed
                         "cacheEligibilityEvaluated"; "cacheEligibility"; "evidence"; "cause"; "categories" ]
@@ -111,6 +112,11 @@ let tests =
               let cacheKinds = set [ "reusable"; "mustRecompute"; "notEvaluated"; "noPriorEvidence"; "inputsChanged" ]
               let ids = set [ "build:ship"; "build:rel"; "docs:lint"; "unknownGovernedPath"; "unknownProtectedBoundaryPath" ]
               let paths = set [ "src/boundary/Api.fs"; "src/new/Thing.fs" ]
+              // 068: the additive per-finding ruleId tokens — gate ids prefixed `gate:`, boundary
+              // finding tokens prefixed `boundary:` (the declared source-prefixed vocabulary, FR-008).
+              let ruleIds =
+                  set [ "gate:build:ship"; "gate:build:rel"; "gate:docs:lint"
+                        "boundary:unknownGovernedPath"; "boundary:unknownProtectedBoundaryPath" ]
 
               let reasons =
                   List.concat [ richDecision.Blockers; richDecision.Warnings; richDecision.Passing ]
@@ -120,7 +126,7 @@ let tests =
               let allowed =
                   Set.unionMany
                       [ set [ AuditJson.schemaVersion ]; verdicts; bases; severities; maturities
-                        modes; profiles; kinds; cacheKinds; ids; paths; reasons ]
+                        modes; profiles; kinds; cacheKinds; ids; paths; ruleIds; reasons ]
 
               for s in allStringValues doc.RootElement do
                   Expect.isTrue (Set.contains s allowed) (sprintf "emitted string %A is in the declared vocabulary" s)

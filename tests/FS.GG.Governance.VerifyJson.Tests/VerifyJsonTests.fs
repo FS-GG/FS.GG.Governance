@@ -71,10 +71,11 @@ let tests =
               Expect.equal (strField id "kind") "finding" "kind finding"
           }
 
-          test "each item carries id/enforcement/cache/execution in order; enforcement mode is verify" {
+          test "each item carries id/ruleId/enforcement/cache/execution in order; enforcement mode is verify" {
               use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
               let item = gateItemById doc "build:ship"
-              Expect.equal (fieldOrder item) [ "id"; "enforcement"; "cache"; "execution" ] "item field order"
+              // 068: the additive per-finding `ruleId` is emitted right after the `id` object.
+              Expect.equal (fieldOrder item) [ "id"; "ruleId"; "enforcement"; "cache"; "execution" ] "item field order"
 
               Expect.equal
                   (fieldOrder (item.GetProperty "enforcement"))

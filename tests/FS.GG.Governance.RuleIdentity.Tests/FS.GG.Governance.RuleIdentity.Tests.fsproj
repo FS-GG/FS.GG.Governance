@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for 068, exercising the PUBLIC surface of FS.GG.Governance.RuleIdentity:
+       `RuleIdentity.gate`/`boundary`/`surface`/`release`/`unattributed` and `ruleIdToken` over REAL,
+       literally-constructible string inputs (Principle V — every value is a real value, never a mock;
+       the constructors are pure so no upstream chain is needed). The emitted tokens are inspected by
+       ordinary string comparison. Expecto + FsCheck give the determinism / disjoint-prefix / totality
+       properties; the VSTest adapters let `dotnet test` drive the Expecto runner. The reflective
+       SurfaceBaseline test pins the Tier-1 public surface + the FSharp.Core-only scope guard (plan D7). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RuleIdentityTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.RuleIdentity/FS.GG.Governance.RuleIdentity.fsproj" />
+  </ItemGroup>
+
+</Project>

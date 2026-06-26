@@ -8,6 +8,7 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Route.Model
 open FS.GG.Governance.FreshnessKey.Model
+open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
@@ -122,6 +123,9 @@ module RouteJson =
     let writeFinding (w: Utf8JsonWriter) (f: UnknownGovernedPathFinding) =
         w.WriteStartObject()
         w.WriteString("id", findingIdToken f.Id)
+        // 068: the boundary finding's `ruleId` (`boundary:<findingIdToken>`), after `id` and before `path`.
+        // Non-empty and prefix-distinguishable from a `gate:` id (FR-008); derived from the same id token.
+        w.WriteString("ruleId", RuleIdentity.ruleIdToken (RuleIdentity.boundary (findingIdToken f.Id)))
         let (GovernedPath path) = f.Path
         w.WriteString("path", path)
         w.WritePropertyName "zone"
@@ -234,6 +238,9 @@ module RouteJson =
         let gate = sg.Gate
         w.WriteStartObject()
         w.WriteString("id", gateIdValue gate.Id)
+        // 068: the selected gate's `ruleId` (`gate:<domain>:<check>`), after `id`. Same source value and
+        // constructor as the audit/verify gate items, so the id matches across surfaces (FR-006).
+        w.WriteString("ruleId", RuleIdentity.ruleIdToken (RuleIdentity.gate (gateIdValue gate.Id)))
         let (DomainId domain) = gate.Domain
         w.WriteString("domain", domain)
         w.WriteString("description", gate.Description)
