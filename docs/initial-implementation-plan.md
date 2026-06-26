@@ -1252,10 +1252,19 @@ Legend: 🟢 complete · 🟡 partial · 🔴 not started.
   (exit 3, no hollow attestation). `fsgg verify` emits the advisory, declaration-gated `releaseReadiness`
   preview (empty pack ⇒ no attested subject; verify never packs) and records the declared matrix `Deferred`
   at the inner loop — byte-identical `verify.json` when no declaration. Both host surface baselines re-blessed;
-  full solution green (2051 tests). **Partial follow-ups (tracked in `065` tasks.md):** the real-filesystem
-  `dotnet pack` E2E (T018), the mergeable-vs-releasable + FR-008 precondition fixture (T023), and the frozen
-  byte-identity host goldens (T009/T024) — the wiring is covered by pure-MVU transition + emitted-effect tests
-  over the real F26 cores with disclosed-synthetic pack execution.
+  full solution green (2051 tests). **Follow-ups CLOSED by F66 (`066-release-pack-e2e-evidence`):** the
+  real-filesystem `dotnet pack` E2E (`065` T018), the mergeable-vs-releasable + FR-008 precondition fixture
+  (`065` T023), and the frozen byte-identity host goldens (`065` T009/T024) all landed as a Tier-2
+  evidence-and-goldens pass that changed **no** product code, `.fsi`, schema, verdict, exit code, or surface
+  baseline. `ReleaseCommand.Tests/RealPackTests.fs` upgrades the disclosed-synthetic pack execution to a real
+  `dotnet pack` over a real multi-project tree through `GateExecution.Interpreter.realPort` + a real per-surface
+  `PackRead` (bumped / failed-pack / unbumped / downgraded / no-baseline / zero-exit-no-artifact + a
+  byte-identical determinism re-run, SDK-gated for FR-008); `ReleaseCommand.Tests/MergeableTests.fs` runs the
+  real `fsgg ship` (exit 0) beside the real `fsgg release` (exit 1, blocked basis) and asserts the
+  publishPlan/trustedPublishing/pins precondition states in `release.json` v2; and four committed goldens —
+  `route.json` / `ship.json` / no-declaration `verify.json` frozen from the pre-wiring anchor `5a0cb28`, plus
+  the F26-blessed empty-additive `release.json` v2 — are each pinned byte-for-byte in their producing host's
+  `Tests/PersistenceEdgeTests.fs`.
   **F27** (`062-human-projections-watch-tui`) landed the **human-projection libraries** over
   the F18–F26 immutable report objects — a *second* projection beside the `*Json` contract,
   changing **no** report object, verdict, exit-code scheme, or JSON schema (every existing

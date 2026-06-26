@@ -2,6 +2,8 @@ module FS.GG.Governance.ReleaseCommand.Tests.Support
 
 open System
 open System.IO
+open System.Diagnostics
+open System.Security.Cryptography
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.CommandRecord.Model
@@ -258,6 +260,211 @@ let portsWithPacks (repo: string) (packs: PackOutcome list) (write: Interpreter.
 /// pack call). Mirrors `realPorts` but lets a test fault the writer or capture stdout.
 let portsWith (repo: string) (write: Interpreter.ArtifactWriter) (out: string -> unit) : Interpreter.Ports =
     portsWithPacks repo [] write out
+
+// ── 066 (US1/US2): the REAL `dotnet pack` pack-boundary fixture — a real temp multi-project tree, a real
+//    pack-output reader, and an SDK probe. Nothing here is synthetic: every `dotnet pack` is a real process
+//    run through `GateExecution.Interpreter.realPort`, and `realPackReadInto` reads the produced `.nupkg`
+//    bytes off disk (a real reader, never a replay). The only `Synthetic`-named element is the deliberately
+//    BuildFails / NoArtifact project rigged to provoke a non-happy outcome — the pack execution is real. ──
+
+/// What a generated fixture project should do when packed. The surface doubles as the `PackageId` and the
+/// project dir/file name, so a `Buildable` project packs to `<surface>.<version>.nupkg`.
+type ProjectKind =
+    | Buildable // a normal net10.0 library that packs to a real `.nupkg`
+    | BuildFails // SYNTHETIC: a deliberate compile error so `dotnet pack` exits non-zero (failed pack)
+    | NoArtifact // SYNTHETIC: `IsPackable=false` ⇒ `dotnet pack` exits 0 but emits no `.nupkg`
+
+/// One generated packable project: its surface/PackageId, its `<Version>`, an optional declared baseline
+/// (None ⇒ first release), and what its pack should do.
+type PackProjectSpec =
+    { Surface: string
+      Version: string
+      Baseline: string option
+      Kind: ProjectKind }
+
+let buildable surface version baseline =
+    { Surface = surface
+      Version = version
+      Baseline = Some baseline
+      Kind = Buildable }
+
+/// The fsproj text for one fixture project. `<Deterministic>`/`<ContinuousIntegrationBuild>` make the packed
+/// `.nupkg` byte-identical across packs (SC-003); `IsPackable=false` realises the zero-exit-no-artifact edge.
+let private fsprojText (spec: PackProjectSpec) : string =
+    let isPackable =
+        match spec.Kind with
+        | NoArtifact -> "false"
+        | _ -> "true"
+
+    "<Project Sdk=\"Microsoft.NET.Sdk\">\n"
+    + "  <PropertyGroup>\n"
+    + "    <TargetFramework>net10.0</TargetFramework>\n"
+    + sprintf "    <Version>%s</Version>\n" spec.Version
+    + sprintf "    <PackageId>%s</PackageId>\n" spec.Surface
+    + "    <Authors>fsgg</Authors>\n"
+    + "    <Description>fsgg release-pack fixture (066)</Description>\n"
+    + "    <Deterministic>true</Deterministic>\n"
+    + "    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>\n"
+    + "    <EnableSourceLink>false</EnableSourceLink>\n"
+    + sprintf "    <IsPackable>%s</IsPackable>\n" isPackable
+    + "    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>\n"
+    + "  </PropertyGroup>\n"
+    + "  <ItemGroup><Compile Include=\"Lib.fs\" /></ItemGroup>\n"
+    + "</Project>\n"
+
+/// The one source file. `BuildFails` plants a type error so the F# compiler — hence `dotnet pack` — fails.
+let private libText (spec: PackProjectSpec) : string =
+    match spec.Kind with
+    // SYNTHETIC: an intentional type error forces a real non-zero `dotnet pack` exit (the failed-pack case).
+    | BuildFails -> "module Lib\nlet broken: int = \"not an int\"\n"
+    | _ -> "module Lib\nlet value = 1\n"
+
+/// Write one fixture project under `<repo>/<surface>/` (the fsproj + its single source file).
+let writeProject (repo: string) (spec: PackProjectSpec) : unit =
+    writeFile repo (Path.Combine(spec.Surface, spec.Surface + ".fsproj")) (fsprojText spec)
+    writeFile repo (Path.Combine(spec.Surface, "Lib.fs")) (libText spec)
+
+/// The `.fsgg/release.yml` for a real-pack tree: the all-blocking rules/expectations/layout (so the six
+/// non-pack families are governed) PLUS a `packableProjects` entry per spec whose `packCommand` runs a REAL
+/// `dotnet pack` with RELATIVE paths only — `workingDirectory: "."` (resolved against the test process CWD,
+/// which `withRealPackRepo` pins to the repo) and `--output artifacts`, so NO machine path enters the pack
+/// command identity that the attestation serializes (FR-006).
+let realPackYml (specs: PackProjectSpec list) : string =
+    let entry (s: PackProjectSpec) =
+        let baseline =
+            match s.Baseline with
+            | Some b -> sprintf "    baseline: \"%s\"\n" b
+            | None -> ""
+
+        sprintf "  - surface: %s\n" s.Surface
+        + "    packCommand:\n"
+        + "      executable: dotnet\n"
+        + sprintf
+            "      arguments: [pack, %s/%s.fsproj, --output, artifacts, --configuration, Release, --nologo, -v, quiet]\n"
+            s.Surface
+            s.Surface
+        + "      workingDirectory: \".\"\n"
+        + baseline
+
+    releaseYmlAllBlocking + "packableProjects:\n" + (specs |> List.map entry |> String.concat "")
+
+let private cwdLock = obj ()
+
+/// Materialize a real multi-project temp repo (`.fsgg/release.yml` + the six met sources + the generated
+/// projects), then run `body repo` with the process CWD pinned to `repo` (so the RELATIVE pack commands
+/// resolve) under a lock, restoring the original CWD afterward. SEQUENCED at the call site so the global CWD
+/// swap never races another test. The repo is deleted on the way out.
+let withRealPackRepo (specs: PackProjectSpec list) (body: string -> 'a) : 'a =
+    withTempRepo (realPackYml specs) writeMetSources (fun repo ->
+        for s in specs do
+            writeProject repo s
+
+        lock cwdLock (fun () ->
+            let original = Directory.GetCurrentDirectory()
+            Directory.SetCurrentDirectory repo
+
+            try
+                body repo
+            finally
+                Directory.SetCurrentDirectory original))
+
+/// Parse the package version out of a `<surface>.<version>.nupkg` filename for a known surface — the file is
+/// produced by the surface's own pack command, so the version is exactly the substring between the surface
+/// prefix and the `.nupkg` suffix.
+let private versionFromArtifact (surface: string) (fileName: string) : string =
+    let withoutSuffix =
+        if fileName.EndsWith ".nupkg" then
+            fileName.Substring(0, fileName.Length - ".nupkg".Length)
+        else
+            fileName
+
+    let prefix = surface + "."
+
+    if withoutSuffix.StartsWith prefix then
+        withoutSuffix.Substring prefix.Length
+    else
+        withoutSuffix
+
+/// The REAL pack-output reader (US1, T002), per-surface so a multi-project tree resolves correctly: a
+/// non-zero exit ⇒ `PackFailed` (the sentinel is the real exit code, the run carried, never dropped); a
+/// zero exit whose `<repo>/artifacts/<surface>.*.nupkg` is present ⇒ `Packed` with the artifact's real
+/// packed version + a real SHA-256 `ArtifactHash` over the `.nupkg` bytes; a zero exit with no such artifact
+/// ⇒ `PackedNoArtifact NoArtifactEmitted`; an unreadable artifact ⇒ `PackedNoArtifact (ArtifactUnreadable …)`.
+/// The `ArtifactPath` is normalized to the bare filename so the release/attestation bytes are
+/// machine-independent (FR-006). A real reader, never a replay.
+let realPackReadInto (repo: string) : SurfaceId -> KindedCommandRun -> PackOutcome =
+    fun (SurfaceId surface as sid) run ->
+        let (ExitCode code) = run.Record.Reproducible.ExitCode
+
+        if code <> 0 then
+            PackFailed(sid, code, run)
+        else
+            try
+                let dir = Path.Combine(repo, "artifacts")
+
+                if not (Directory.Exists dir) then
+                    PackedNoArtifact(sid, NoArtifactEmitted, run)
+                else
+                    match
+                        Directory.GetFiles(dir, surface + ".*.nupkg")
+                        |> Array.sortWith (fun a b -> String.CompareOrdinal(a, b))
+                        |> Array.tryHead
+                    with
+                    | None -> PackedNoArtifact(sid, NoArtifactEmitted, run)
+                    | Some path ->
+                        use sha = SHA256.Create()
+                        let digest = File.ReadAllBytes path |> sha.ComputeHash |> Convert.ToHexString
+
+                        let fileName =
+                            match Path.GetFileName path with
+                            | null -> path
+                            | f -> f
+
+                        Packed(
+                            { Surface = sid
+                              ArtifactPath = fileName
+                              PackedVersion = versionFromArtifact surface fileName
+                              Digest = ArtifactHash(digest.ToLowerInvariant()) },
+                            run
+                        )
+            with e ->
+                PackedNoArtifact(sid, ArtifactUnreadable e.Message, run)
+
+/// The REAL edge ports for the pack-boundary fixture: the wired `065` `realPorts` (real F51 execution port,
+/// real senses, atomic writer) with the per-surface real `PackRead` swapped in for the global nuget-local
+/// reader and stdout silenced. Driving `Interpreter.run` with these over a `withRealPackRepo` tree runs real
+/// `dotnet pack` processes — the whole point of US1.
+let realPackPorts (repo: string) : Interpreter.Ports =
+    { Interpreter.realPorts repo with
+        PackRead = realPackReadInto repo
+        Out = ignore }
+
+/// Probe for a working `dotnet pack` SDK. Returns None when the SDK is present, or Some diagnostic naming
+/// the problem when it is absent — so the real-pack tests surface a DISCLOSED skip, never a silent green
+/// (FR-008). Runs `dotnet --version`; a non-zero exit or a throw (e.g. `dotnet` not on PATH) ⇒ skip reason.
+let dotnetSdkSkipReason () : string option =
+    try
+        let psi = ProcessStartInfo("dotnet", "--version")
+        psi.RedirectStandardOutput <- true
+        psi.RedirectStandardError <- true
+        psi.UseShellExecute <- false
+
+        match Process.Start psi with
+        | null -> Some "SKIPPED (FR-008): could not start `dotnet` to probe the SDK — no real `dotnet pack`."
+        | proc ->
+            use proc = proc
+            proc.WaitForExit()
+
+            if proc.ExitCode = 0 then
+                None
+            else
+                Some(
+                    sprintf
+                        "SKIPPED (FR-008): `dotnet --version` exited %d — no working SDK for a real `dotnet pack`."
+                        proc.ExitCode
+                )
+    with e ->
+        Some(sprintf "SKIPPED (FR-008): `dotnet` SDK probe threw (%s) — no real `dotnet pack`." e.Message)
 
 // ── Repo root (for the surface baseline path) ──
 

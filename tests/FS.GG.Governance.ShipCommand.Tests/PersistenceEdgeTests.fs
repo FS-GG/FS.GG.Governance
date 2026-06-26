@@ -152,3 +152,44 @@ let tests =
                   runShip req |> ignore
                   Expect.isFalse (File.Exists req.StorePath) "no store file is written when the flag is absent")
           } ]
+
+// 066 US3 (closes 065 T009/T024): the `ship.json` (audit.json) byte-identity golden. `fsgg ship` was
+// UNTOUCHED by 065, so its bytes over the fixed fixture repo (an empty-checks catalog ⇒ no gate executes ⇒
+// deterministic) are identical at the pre-wiring anchor `5a0cb28` and at `main` by construction. The
+// committed golden was FROZEN from a `5a0cb28` worktree; this test runs the REAL `fsgg ship` host over the
+// same fixed fixture and asserts byte-equality.
+
+let private copyGoldenFixture (dst: string) : unit =
+    let src = Path.Combine(repoRoot, "tests", "golden-fixture")
+
+    for f in Directory.GetFiles(src, "*", SearchOption.AllDirectories) do
+        let target = Path.Combine(dst, Path.GetRelativePath(src, f))
+
+        Path.GetDirectoryName target
+        |> Option.ofObj
+        |> Option.iter (fun d -> Directory.CreateDirectory d |> ignore)
+
+        File.Copy(f, target, true)
+
+[<Tests>]
+let goldenTests =
+    testList
+        "ByteIdentityGolden"
+        [ test "ship.json byte-identical to the frozen pre-wiring golden (5a0cb28)" {
+              let tmp = Path.Combine(Path.GetTempPath(), "fsgg-golden-ship-" + System.Guid.NewGuid().ToString("N"))
+              Directory.CreateDirectory tmp |> ignore
+
+              try
+                  copyGoldenFixture tmp
+                  let req = parseOrFail [ "ship"; "--repo"; tmp; "--paths"; "src/Lib/Thing.fs" ]
+                  let model = Interpreter.run { Interpreter.realPorts req.Repo with Out = ignore } req
+                  Expect.equal model.Exit Loop.Success "ship exits 0 over the fixed fixture (no checks ⇒ clean)"
+                  let produced = File.ReadAllText req.AuditOut
+                  let golden = File.ReadAllText(Path.Combine(repoRoot, "tests", "FS.GG.Governance.ShipCommand.Tests", "goldens", "ship.json"))
+                  Expect.equal produced golden "ship.json byte-identical to the frozen 5a0cb28 golden"
+              finally
+                  try
+                      Directory.Delete(tmp, true)
+                  with _ ->
+                      ()
+          } ]

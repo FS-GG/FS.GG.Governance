@@ -26,6 +26,8 @@
     <Compile Include="ScopeGuardTests.fs" />
     <Compile Include="SafeFailureTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="RealPackTests.fs" />
+    <Compile Include="MergeableTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -46,6 +48,9 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <!-- 066 (US2): the real `fsgg ship` host, run beside `fsgg release` to prove the mergeable-vs-releasable
+         boundary distinction (the ship producer is the real host, never faked). -->
+    <ProjectReference Include="../../src/FS.GG.Governance.ShipCommand/FS.GG.Governance.ShipCommand.fsproj" />
     <!-- 065 (US1/US2): the F26 cores + execution/command vocabulary the tests now construct. -->
     <ProjectReference Include="../../src/FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Attestation/FS.GG.Governance.Attestation.fsproj" />

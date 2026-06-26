@@ -1,0 +1,9 @@
+schemaVersion: 1
+id: my-product
+governedRoot: .
+domains:
+  - package-api
+packageSurfaces:
+  - src
+policyRef: .fsgg/policy.yml
+capabilitiesRef: .fsgg/capabilities.yml

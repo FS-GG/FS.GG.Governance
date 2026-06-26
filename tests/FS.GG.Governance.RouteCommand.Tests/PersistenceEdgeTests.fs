@@ -170,3 +170,46 @@ let tests =
                   runRoute req |> ignore
                   Expect.isFalse (File.Exists req.StorePath) "no store file is written when the flag is absent")
           } ]
+
+// 066 US3 (closes 065 T009/T024): the `route.json` byte-identity golden. `fsgg route` was UNTOUCHED by 065,
+// so its bytes over the fixed fixture repo are identical at the pre-wiring anchor `5a0cb28` and at `main` by
+// construction. The committed golden was FROZEN from a `5a0cb28` worktree; this test runs the REAL `fsgg
+// route` host over the same fixed fixture and asserts byte-equality, so any future drift fails loudly.
+
+let private copyGoldenFixture (dst: string) : unit =
+    let src = Path.Combine(repoRoot, "tests", "golden-fixture")
+
+    for f in Directory.GetFiles(src, "*", SearchOption.AllDirectories) do
+        let target = Path.Combine(dst, Path.GetRelativePath(src, f))
+
+        Path.GetDirectoryName target
+        |> Option.ofObj
+        |> Option.iter (fun d -> Directory.CreateDirectory d |> ignore)
+
+        File.Copy(f, target, true)
+
+let private goldenText (relUnderTests: string) : string =
+    File.ReadAllText(Path.Combine(repoRoot, "tests", relUnderTests))
+
+[<Tests>]
+let goldenTests =
+    testList
+        "ByteIdentityGolden"
+        [ test "route.json byte-identical to the frozen pre-wiring golden (5a0cb28)" {
+              let tmp = Path.Combine(Path.GetTempPath(), "fsgg-golden-route-" + System.Guid.NewGuid().ToString("N"))
+              Directory.CreateDirectory tmp |> ignore
+
+              try
+                  copyGoldenFixture tmp
+                  let req = parseOrFail [ "route"; "--repo"; tmp; "--paths"; "src/Lib/Thing.fs" ]
+                  let model = Interpreter.run { Interpreter.realPorts req.Repo with Out = ignore } req
+                  Expect.equal model.Exit Loop.Success "route exits 0 over the fixed fixture"
+                  let produced = File.ReadAllText req.RouteOut
+                  let golden = goldenText "FS.GG.Governance.RouteCommand.Tests/goldens/route.json"
+                  Expect.equal produced golden "route.json byte-identical to the frozen 5a0cb28 golden"
+              finally
+                  try
+                      Directory.Delete(tmp, true)
+                  with _ ->
+                      ()
+          } ]

@@ -1,0 +1,35 @@
+surface: pkg
+rules:
+  - kind: version-bump
+    severity: blocking
+    maturity: block-on-release
+  - kind: package-metadata
+    severity: blocking
+    maturity: block-on-release
+  - kind: template-pins
+    severity: blocking
+    maturity: block-on-release
+  - kind: publish-plan
+    severity: blocking
+    maturity: block-on-release
+  - kind: trusted-publishing
+    severity: blocking
+    maturity: block-on-release
+  - kind: provenance
+    severity: blocking
+    maturity: block-on-release
+expectations:
+  versionBaseline: "1.2.0"
+  requiredMetadataFields: [authors, license]
+  expectedPins:
+    base: "9.0.0"
+  requiredPublishPosture: [plan-present]
+  requiredTrustedPublishing: [oidc]
+  requiredProvenance: [attestation]
+layout:
+  versionPath: version.txt
+  metadataPath: metadata.txt
+  pinsPath: pins.txt
+  publishPlanPath: publish-plan.txt
+  trustedPublishingPath: trusted-publishing.txt
+  provenancePath: provenance.txt
