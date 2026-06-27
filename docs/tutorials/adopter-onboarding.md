@@ -105,7 +105,11 @@ path, so it is attributable to the provider id + contract version alone.
 Once the runtime product builds, the governed lifecycle proceeds with the
 Governance commands shipped by prior features:
 
-- **Govern** — author/refresh the `.fsgg` policy and routing inputs.
+- **Govern** — author/refresh the `.fsgg` policy and routing inputs. For a curated,
+  populated starting point you can copy unedited, see the reference gate set at
+  [`samples/sdd-reference-gate-set/`](../../samples/sdd-reference-gate-set/README.md) —
+  a full `project`/`policy`/`capabilities`/`tooling` set with `build`/`test`/`evidence`
+  gates and a non-blocking-by-default (`light`) posture.
 - **Verify** — `fsgg verify` runs the product-surface checks (feature 067/F24).
 - **Ship** — `fsgg ship` evaluates the release rules against the gathered evidence.
 

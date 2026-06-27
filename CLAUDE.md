@@ -1,8 +1,37 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
-docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most
-recently DELIVERED feature is specs/078-fix-scaffold-build-test/ (✅ DELIVERED): a
+docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most recently
+DELIVERED feature is specs/079-reference-gate-set/ (✅ DELIVERED): a
+Tier 2 data+test+docs feature publishing a single curated, populated reference `.fsgg`
+gate set at `samples/sdd-reference-gate-set/.fsgg/` (full four-file project/policy/
+capabilities/tooling set, alongside the SDD reference worked-example) plus a co-located
+adopter `README.md` and an `adopter-onboarding.md` cross-link. It declares three
+first-class checks — `build`, `test`, and an in-process `evidence`-integrity check (the
+last bound to `build-evidence` = `"dotnet fsi build.fsx -- evidence"`) — each bound to a
+declared `tooling.yml` command and routed through declared `build`/`test`/`evidence`
+domains + path-map (`src/**`+`*.sln`→build, `tests/**`→test, `build.fsx`→evidence), with
+`light` as the non-blocking default profile. `build`/`test` carry `block-on-ship`,
+`evidence` carries `warn` (advisory everywhere — the first-touch posture). A new
+`FS.GG.Governance.ReferenceGateSet.Tests` regression guard (Expecto+YoloDev like the
+repo's other 80 test projects — **deviation from the spec's xUnit wording**, recorded:
+xUnit is absent from central `Directory.Packages.props`; the framework is incidental and
+the binding G1–G7 assertions hold regardless) loads the on-disk artifact through the
+EXISTING Config→Gates→Routing→Route→Enforcement pipeline (real evidence — no synthetic
+facts, no mocks) and freezes its invariants G1–G7: loads `Valid` with 0 diagnostics,
+exactly 3 gates `build:build`/`test:test`/`evidence:evidence` with no dangling/orphan
+refs (0 orphan commands), `defaultProfile: light`, and — on a failing change at
+`RunMode.Verify` (the one mode where `block-on-ship` is Light-advisory yet
+Strict-blocking, research D5) — every selected gate `Advisory` under `Light` yet ≥1
+`Blocking` under `Strict` (the deliberate ratchet), with `evidence` advisory under both.
+No new public F# surface, no `.fsi`/baseline change (Tier 2). Verified: the guard runs
+8/8 green; a copy-unedited reuse check loads `Valid` (3 checks, `light`) in a fresh dir
+(FR-009/SC-005); and three sanity mutations (empty checks → 5 fail, break a command ref →
+load `Invalid`, 8 fail, flip `defaultProfile` off `light` → G5 fails) each turn the guard
+red, reverting clean (SC-007). Scope: 4 YAML + README + guard project (3 files) + docs
+cross-link + `.sln` registration; no `src/` production code. Unblocks Coordination board
+P4 (Templates overlay copies it unedited). The prior
+DELIVERED feature is specs/078-fix-scaffold-build-test/ (✅ DELIVERED): a
 Tier 2 test-support-only fix bounding the SDD reference-provider worked-example
 real-evidence `dotnet build` (`Support.dotnetBuild`) so the suite never hangs. It adds a
 reusable `Support.runBounded exe args workingDir budget : BuildAttempt` primitive —

@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 079: the FR-010 regression guard for the published reference `.fsgg` gate set at
+       samples/sdd-reference-gate-set/.fsgg/. It loads the ON-DISK artifact through the EXISTING
+       Config -> Gates -> Routing -> Route -> Enforcement pipeline (real evidence, Principle V — no
+       synthetic facts, no mocks) and freezes its invariants (G1-G7): loads Valid with 0
+       diagnostics, exactly 3 gates with no dangling/orphan refs, defaultProfile: light, and — on a
+       failing change at RunMode.Verify — every selected gate Advisory under Light yet >=1 Blocking
+       under Strict. No new public F# surface (Tier 2). This is the ONLY test project spanning all
+       four upper layers + Enforcement (research D6).
+
+       Test framework: Expecto + YoloDev (the repo-wide convention under central package management;
+       the tasks.md "xUnit" wording is incidental — xUnit is not in Directory.Packages.props and
+       every sibling test project uses Expecto). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ReferenceGateSetGuardTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Routing/FS.GG.Governance.Routing.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>
