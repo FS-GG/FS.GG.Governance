@@ -1,3 +1,13 @@
+TYPE FS.GG.Governance.VerifyJson.CoreModule
+  [Method] System.String get_schemaVersion()
+  [Method] Void writeCore(System.Text.Json.Utf8JsonWriter, ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Property] System.String schemaVersion
+TYPE FS.GG.Governance.VerifyJson.GeneratedViewsModule
+  [Method] Void writeGeneratedViews(System.Text.Json.Utf8JsonWriter, Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding,FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision]])
+TYPE FS.GG.Governance.VerifyJson.ReleaseReadinessModule
+  [Method] Void writeReleaseReadiness(System.Text.Json.Utf8JsonWriter, VerifyReleasePreview)
+TYPE FS.GG.Governance.VerifyJson.SurfaceChecksModule
+  [Method] Void writeSurfaceFinding(System.Text.Json.Utf8JsonWriter, SurfaceFinding)
 TYPE FS.GG.Governance.VerifyJson.VerifyJsonModule
   [Method] System.String get_schemaVersion()
   [Method] System.String ofVerifyDecision(ShipDecision, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])

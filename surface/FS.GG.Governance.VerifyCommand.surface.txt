@@ -638,3 +638,13 @@ TYPE FS.GG.Governance.VerifyCommand.Program
   [Method] Int32 main(System.String[])
   [Method] System.String categoryToken(ExitDecision)
   [Method] System.String usageMessage(UsageError)
+TYPE FS.GG.Governance.VerifyCommand.ReleasePreviewModule
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseReport.ModelModule+VerifyReleasePreview] previewOf'(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseDeclaration.DeclarationModule+ReleaseDeclaration], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease], AuditSnapshot)
+  [Method] VerifyReleasePreview previewFrom(ReleaseDeclaration, SensedRelease, AuditSnapshot)
+TYPE FS.GG.Governance.VerifyCommand.SurfaceFoldModule
+  [Method] Boolean surfaceBlocks(Profile, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding])
+  [Method] ShipDecision foldSurfaceVerdict(Profile, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding], ShipDecision)
+TYPE FS.GG.Governance.VerifyCommand.ViewCurrencyFoldModule
+  [Method] Boolean viewCurrencyBlocks(Profile, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding,FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision]] viewCurrencyDetail(Profile, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding])
+  [Method] ShipDecision foldViewCurrencyVerdict(Profile, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding], ShipDecision)

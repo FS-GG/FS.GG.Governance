@@ -1,8 +1,30 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
-docs/initial-implementation-plan.md. The most recently DELIVERED feature is
-specs/075-command-host-skeleton/ (Phase B of the architecture/quality/
+docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most
+recently DELIVERED feature is specs/076-verify-module-split/ (Phase C of the
+architecture/quality/de-duplication roadmap — ✅ DELIVERED): it split the two Verify
+god modules along their feature seams into new additively-public, `.fsi`-curated
+sibling modules — host: `SurfaceFold`/`ViewCurrencyFold`/`ReleasePreview` (the third
+decomposes `previewOf`→`previewOf'` so the fold stays host-`Model`-free, one-line
+`Loop` wrapper); projection: `Core`/`SurfaceChecks`/`ReleaseReadiness`/`GeneratedViews`
++ a thin composing `VerifyJson` entry (`Core.writeCore` is 4-arg — the
+surfaceChecks/releaseReadiness/generatedViews tail moved up into one hidden
+`writeDocument` composer; `dispositionToken`'s `not-executed` divergence stays local in
+`Core`, FR-009). One seam per commit (FR-010); every command/projection golden +
+snapshot byte-identical at every commit; `Loop.fsi`/`VerifyJson.fsi` byte-identical
+(four entry points + `schemaVersion` frozen). The two surface-drift baselines were
+re-blessed ADDITIVELY once (Tier 1; existing `Loop`/`VerifyJson` blocks byte-identical)
+and +4 structural seam scope-guard tests added (VerifyJson.Tests 28→30,
+VerifyCommand.Tests 77→79). Per-file shrink: `Loop.fs` 1,009→946 (−63), `VerifyJson.fs`
+582→122 (−460). **SC-001 deviation (recorded, flagged):** the T024 concrete ≤800-LOC
+bar on `Loop.fs` is NOT met (946) — the three contracted folds (research D2) are small,
+and reaching ≤800 would require extracting pipeline bodies D2 keeps in `Loop` and
+widening the additive 3-module re-bless (against FR-004); honored the contracted scope
+rather than gaming the number (a larger Tier-1 follow-up could extract more if ≤800 is
+required). The `GateRunHost` route→ship→verify unification is recorded as ADR 0003 =
+DEFER (route/ship/verify left unchanged, verified by empty `git diff --stat`). The prior
+DELIVERED feature is specs/075-command-host-skeleton/ (Phase B of the architecture/quality/
 de-duplication roadmap — ✅ DELIVERED). It introduced one new pure leaf library,
 `FS.GG.Governance.CommandHost` (under `src/`, `.fsi`-first, with a surface-area
 baseline + reflective drift test + a scope-guard asserting no `Host`/`Cli`/

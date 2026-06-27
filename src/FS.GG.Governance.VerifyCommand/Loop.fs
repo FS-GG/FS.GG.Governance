@@ -395,61 +395,13 @@ module Loop =
             Passing = passing'
             ExitCodeBasis = basis' }
 
-    // ── 067: surface-findings verdict fold (the contract change; the truth table is NOT re-opened) ──
+    // ── 067: surface-findings verdict fold — extracted to the `SurfaceFold` seam module (076 Phase C).
+    //    `Loop` calls `SurfaceFold.foldSurfaceVerdict` at its two projection sites; the fold is the identity
+    //    when `findings = []`, so verify.json stays byte-identical (FR-004). ──
 
-    // True iff any surface finding is effective-Blocking at `RunMode.Verify` under the active profile. The
-    // effective severity is derived by the EXISTING `deriveEffectiveSeverity` over the input `enforcementInputOf`
-    // builds from the finding — reuse only, no new rule, no new severity (FR-007, FR-008). A base-Advisory
-    // finding never escalates; a base-Blocking finding blocks once the verify floor is reached.
-    let surfaceBlocks (profile: Profile) (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) : bool =
-        findings
-        |> List.exists (fun f ->
-            (deriveEffectiveSeverity (FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf f Verify profile))
-                .EffectiveSeverity = Blocking)
-
-    // Fold the surface findings into an ALREADY-rolled (and, on the executed path, ALREADY-relocated) decision:
-    // a blocking surface finding fails the run; an advisory one leaves the verdict/exit untouched. Surface
-    // findings stay DISTINCT from gate/finding items in the projection (`surfaceChecks` vs `execution`) — this
-    // only flips the verdict/exit basis, it never injects a surface item into Blockers/Warnings/Passing. MUST
-    // run AFTER `applyExecution` (which recomputes from gate blockers only and would otherwise erase the
-    // surface-driven block). With `findings = []` it is the identity ⇒ byte-identical verify.json (FR-004).
-    let foldSurfaceVerdict
-        (profile: Profile)
-        (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list)
-        (decision: ShipDecision)
-        : ShipDecision =
-        if surfaceBlocks profile findings then
-            { decision with
-                Verdict = Fail
-                ExitCodeBasis = ExitCodeBasis.Blocked }
-        else
-            decision
-
-    // ── F070: stale-generated-view verdict fold (mirrors foldSurfaceVerdict; truth table NOT re-opened) ──
-    // True iff any currency finding is effective-Blocking at `RunMode.Verify` under the active profile, via the
-    // EXISTING `deriveEffectiveSeverity` (through the leaf's `decisionOf`). Reuse only — no new rule/severity.
-    // A finding configured `block-on-ship`/`block-on-release` is effective-Advisory under verify (a warning,
-    // FR-009); a `block-on-pr` finding blocks under verify only under a `strict`/`release` profile (C1).
-    let viewCurrencyBlocks (profile: Profile) (findings: CE.CurrencyFinding list) : bool =
-        findings
-        |> List.exists (fun f -> (CE.decisionOf f Verify profile).EffectiveSeverity = Blocking)
-
-    let foldViewCurrencyVerdict
-        (profile: Profile)
-        (findings: CE.CurrencyFinding list)
-        (decision: ShipDecision)
-        : ShipDecision =
-        if viewCurrencyBlocks profile findings then
-            { decision with
-                Verdict = Fail
-                ExitCodeBasis = ExitCodeBasis.Blocked }
-        else
-            decision
-
-    // F070: pair each finding with its EnforcementDecision (Verify run mode + active profile) for the
-    // additive `generatedViews` projection — carries both base + effective severity + the lever reason.
-    let viewCurrencyDetail (profile: Profile) (findings: CE.CurrencyFinding list) =
-        findings |> List.map (fun f -> f, CE.decisionOf f Verify profile)
+    // ── F070: stale-generated-view verdict fold — extracted to the `ViewCurrencyFold` seam module (076
+    //    Phase C). `Loop` calls `ViewCurrencyFold.foldViewCurrencyVerdict`/`viewCurrencyDetail` at its
+    //    projection sites; the fold is the identity when `findings = []` ⇒ byte-identical verify.json (FR-004). ──
 
     // ── F25 wiring (064): pure host-edge helpers (kinded-run label, provenance snapshot build) ──
 
@@ -475,27 +427,12 @@ module Loop =
     // `buildSnapshot` (decomposed model-view inputs) moved to the shared CommandHost leaf (075). Verify's
     // `buildSnapshot` was byte-identical to Ship's, so they share the one leaf form.
 
-    // 065 (US3): assemble the advisory release-readiness preview from the loaded declaration + sensed F54
-    // facts + the run's audit snapshot, with an EMPTY PackEvidenceSet — verify does NOT pack, so there is no
-    // attested subject (FR-007). PURE; never participates in the verify verdict or exit code.
-    let previewFrom (decl: Declaration.ReleaseDeclaration) (sensed: SensedRelease) (snapshot: AuditSnapshot) : VerifyReleasePreview =
-        let decision = FS.GG.Governance.ReleaseRules.Release.evaluateRelease decl.Rules sensed.Facts
-
-        let emptyPack: FS.GG.Governance.PackEvidence.Model.PackEvidenceSet =
-            { Verdicts = []
-              Runs = []
-              NoPackableProjects = true }
-
-        let attestation = FS.GG.Governance.Attestation.Attestation.summarize snapshot emptyPack
-        let report = FS.GG.Governance.ReleaseReport.Report.assemble decision sensed emptyPack attestation
-        FS.GG.Governance.ReleaseReport.Report.preview report
-
-    // The advisory preview for the current model (None unless a parseable `.fsgg/release.yml` was sensed ⇒
-    // byte-identical verify.json, no `releaseReadiness` block).
+    // 065 (US3): the advisory release-readiness preview — extracted to the `ReleasePreview` seam module (076
+    // Phase C; `previewFrom` + the host-`Model`-free `previewOf'`). `Loop` keeps this one-line wrapper that
+    // projects `model.ReleaseDecl`/`model.ReleaseSensed` into the decomposed call (data-model invariant 3).
+    // None unless a parseable `.fsgg/release.yml` was sensed ⇒ byte-identical verify.json, no block.
     let previewOf (model: Model) (snapshot: AuditSnapshot) : VerifyReleasePreview option =
-        match model.ReleaseDecl, model.ReleaseSensed with
-        | Some decl, Some sensed -> Some(previewFrom decl sensed snapshot)
-        | _ -> None
+        ReleasePreview.previewOf' model.ReleaseDecl model.ReleaseSensed snapshot
 
     // `kindedRunsOf`, `GateClassification`, and the parameterized `executionPlan` moved to the shared
     // CommandHost leaf (075, FR-006). The F25 budget fold below (verify uses the literal `Verify` run-mode,
@@ -576,9 +513,9 @@ module Loop =
                     []
             let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
             let preview = previewOf model snapshot
-            let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
+            let folded = SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
             // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
-            let folded = foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
+            let folded = ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
 
             let verifyDoc =
                 VerifyJson.ofVerifyDecisionWithGeneratedViews
@@ -587,7 +524,7 @@ module Loop =
                     []
                     model.SurfaceFindings
                     preview
-                    (viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
+                    (ViewCurrencyFold.viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
 
             { model with
                 Phase = Rolled
@@ -680,9 +617,9 @@ module Loop =
             // 067: fold the surface findings into the RELOCATED verdict (a blocking finding fails the run —
             // FR-007) AFTER `applyExecution`, which recomputes from gate blockers only. With no findings this is
             // the identity, so the executed path stays byte-identical to the pre-067 golden (FR-004).
-            let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
+            let folded = SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
             // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
-            let folded = foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
+            let folded = ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
@@ -706,7 +643,7 @@ module Loop =
                     outcomes
                     model.SurfaceFindings
                     preview
-                    (viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
+                    (ViewCurrencyFold.viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.

@@ -62,7 +62,7 @@ let tests =
                   "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
           }
 
-          test "the public API surface is exactly the Loop + Interpreter modules (plus the Exe entry)" {
+          test "the public API surface is exactly Loop + Interpreter + the three 076 fold seams (plus the Exe entry)" {
               let typeNames = verifyCommand.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
 
               Expect.isTrue
@@ -81,9 +81,15 @@ let tests =
                           || n.Contains "VerifyCommand.InterpreterModule"
                           || n.Contains "VerifyCommand.Loop+"
                           || n.Contains "VerifyCommand.Interpreter+"
-                          || n.Contains "VerifyCommand.Program"))
+                          || n.Contains "VerifyCommand.Program"
+                          // 076 Phase C: the three additive, .fsi-curated host fold seam modules (FR-004).
+                          || n.Contains "VerifyCommand.SurfaceFoldModule"
+                          || n.Contains "VerifyCommand.ViewCurrencyFoldModule"
+                          || n.Contains "VerifyCommand.ReleasePreviewModule"))
 
-              Expect.isEmpty unexpected (sprintf "only Loop/Interpreter (+ Program entry) are public; found extra: %A" unexpected)
+              Expect.isEmpty
+                  unexpected
+                  (sprintf "only Loop/Interpreter/Program + the three 076 fold seams are public; found extra: %A" unexpected)
           }
 
           test "VerifyCommand references VerifyJson (not AuditJson) and no kernel/host/cli" {

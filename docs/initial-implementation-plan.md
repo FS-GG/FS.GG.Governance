@@ -239,6 +239,23 @@ Governance **`evidence.json`** effective-evidence projection host (Phase 6 — c
 and (c) folding a stale-view currency finding into a **blocking** verdict at the Governance
 boundary (Phase 7 — closed by **070**). No open functional roadmap rows remain.
 
+**Update (2026-06-27):** with the functional roadmap closed, work moved to an
+**architecture/quality/de-duplication** track (no behavior change; byte-identical
+goldens/snapshots are the acceptance gate). Delivered: Phase A **073** (pure JSON
+leaves `JsonText`/`JsonTokens`/`JsonWriters` placed below everything); Phase D **074**
+(the test-only `FS.GG.Governance.Tests.Common` library, ≈ −1,200 test-support LOC);
+Phase B **075** (the shared `FS.GG.Governance.CommandHost` MVU-skeleton leaf,
+≈ −318 host LOC); and now Phase C **076** — split the two Verify *god modules* along
+their feature seams into seven new additively-public, `.fsi`-curated sibling modules
+(host folds `SurfaceFold`/`ViewCurrencyFold`/`ReleasePreview`; projection seams
+`Core`/`SurfaceChecks`/`ReleaseReadiness`/`GeneratedViews`) behind unchanged thin
+`Loop`/`VerifyJson` entries (both `.fsi` frozen; surface baselines re-blessed
+additively only; all goldens byte-identical). `VerifyJson.fs` 582→122 LOC;
+`Loop.fs` 1,009→946 (the SC-001 ≤800 concrete bar is **not** met — the contracted
+three-fold scope is small; recorded as a flagged deviation in
+`specs/076-verify-module-split/tasks.md`). The `GateRunHost` route→ship→verify
+unification is recorded as **ADR 0003 = DEFER**.
+
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.
 - 🟢 [x] Create GitHub repository under `FS-GG`.

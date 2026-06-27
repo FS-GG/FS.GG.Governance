@@ -35,6 +35,7 @@
     <!-- 067 (F24 verify-host wiring): the surface-checks verdict fold + the real-filesystem E2E proofs. -->
     <Compile Include="SurfaceRollupTests.fs" />
     <Compile Include="SurfaceChecksE2ETests.fs" />
+    <Compile Include="SeamModuleScopeGuardTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

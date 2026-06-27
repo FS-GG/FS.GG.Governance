@@ -19,6 +19,7 @@
     <Compile Include="ReleaseReadinessPreviewTests.fs" />
     <Compile Include="RuleIdTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="SeamModuleScopeGuardTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

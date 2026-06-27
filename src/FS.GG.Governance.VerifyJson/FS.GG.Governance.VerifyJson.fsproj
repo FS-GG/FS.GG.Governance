@@ -33,6 +33,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 076 Phase C: the four projection seam modules, compiled BEFORE the thin VerifyJson entry. Core is
+         FIRST (the entry + the byte order depend on its verdict body). -->
+    <Compile Include="Core.fsi" />
+    <Compile Include="Core.fs" />
+    <Compile Include="SurfaceChecks.fsi" />
+    <Compile Include="SurfaceChecks.fs" />
+    <Compile Include="ReleaseReadiness.fsi" />
+    <Compile Include="ReleaseReadiness.fs" />
+    <Compile Include="GeneratedViews.fsi" />
+    <Compile Include="GeneratedViews.fs" />
     <Compile Include="VerifyJson.fsi" />
     <Compile Include="VerifyJson.fs" />
   </ItemGroup>

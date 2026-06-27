@@ -29,6 +29,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 076 Phase C: the three optional host folds extracted out of Loop.fs, compiled BEFORE it (leaves
+         the base pipeline calls). Each is .fsi-curated and host-`Model`-free. -->
+    <Compile Include="SurfaceFold.fsi" />
+    <Compile Include="SurfaceFold.fs" />
+    <Compile Include="ViewCurrencyFold.fsi" />
+    <Compile Include="ViewCurrencyFold.fs" />
+    <Compile Include="ReleasePreview.fsi" />
+    <Compile Include="ReleasePreview.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
