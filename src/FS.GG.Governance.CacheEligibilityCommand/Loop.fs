@@ -25,6 +25,7 @@ open FS.GG.Governance.CacheEligibilityJson // ofReport, schemaVersion
 open FS.GG.Governance.EvidenceReuse // referenceValue
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, EvidenceRef, RecomputeCause
 open FS.GG.Governance.HumanText // F27 wiring (063): HumanText.ofCacheEligibilityReport — the plain projection
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — `under`, `revOfCommit`, `baseHeadOf`
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -142,11 +143,6 @@ module Loop =
           Format = None
           Plain = false }
 
-    // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
-    // relative form; any other repo is prefixed so the artifact lands inside it. Pure string composition —
-    // no filesystem, no clock, no absolute-path resolution (mirrors RouteCommand's `under`).
-    let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
 
     // Derive the sidecar path from the cache-eligibility.json path: same directory, `…unresolved.json`
     // stem (C1). Pure string composition.
@@ -216,12 +212,12 @@ module Loop =
                         | None, Some rev -> Since rev
                         | _ -> DefaultRange
 
-                    let cacheOut = acc.Out |> Option.defaultValue (under repo "readiness/cache-eligibility.json")
+                    let cacheOut = acc.Out |> Option.defaultValue (CommandHost.under repo "readiness/cache-eligibility.json")
 
                     Ok
                         { Repo = repo
                           Scope = scope
-                          StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
+                          StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
                           CacheOut = cacheOut
                           UnresolvedOut = deriveUnresolved cacheOut
                           Format = format
@@ -267,15 +263,6 @@ module Loop =
         | _ -> "catalog invalid: " + (diags |> List.map one |> String.concat "; ")
 
     let jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
-
-    // The base/head revisions taken FROM the snapshot range (D4) — never a separate git call, never
-    // fabricated. `Range = None` ⇒ both `None` ⇒ every gate unresolved on base/head (L2).
-    let revOfCommit (CommitId c) = Revision c
-
-    let baseHeadOf (model: Model) : Revision option * Revision option =
-        match model.Snapshot |> Option.bind (fun s -> s.Range) with
-        | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
-        | None -> None, None
 
     let candidatesFromModel (model: Model) : GovernedPath list =
         match model.Snapshot with
@@ -337,6 +324,9 @@ module Loop =
     // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
     // model's sensed facts + loaded store — the SAME value the cache-eligibility.json artifact carries — for
     // the shared HumanText projection. `None` until both senses have arrived.
+    // STAYS LOCAL (075 research D6, FR-008): a single defining site (this host only) — no duplication to
+    // remove, and it reads this host's own `Model`. Moving a single-site helper would add leaf surface for
+    // no de-dup gain.
     let cacheReportOf (model: Model) : CacheEligibilityReport option =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
@@ -398,7 +388,7 @@ module Loop =
                 let findings = Findings.findUnknownGovernedPaths facts report
                 let result = Route.select registry report findings
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
-                let baseHead = baseHeadOf model
+                let baseHead = CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
 
                 { model with
                     Phase = Selected

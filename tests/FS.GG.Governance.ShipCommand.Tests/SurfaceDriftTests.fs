@@ -123,6 +123,8 @@ let tests =
                   || name = "FS.GG.Governance.GateRun"
                   || name = "FS.GG.Governance.GateExecution"
                   || name = "FS.GG.Governance.EvidenceCapture"
+                  // 075 (Phase B): the shared pure command-host skeleton leaf — under/executionPlan/etc.
+                  || name = "FS.GG.Governance.CommandHost"
                   || name = "FS.GG.Governance.ExecutionRecord"
                   || name = "FS.GG.Governance.CommandRecord"
                   // F25 wiring (064): the four consumed cost-cache/provenance cores + F033 Provenance, wired at

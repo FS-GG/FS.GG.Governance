@@ -36,6 +36,10 @@ open FS.GG.Governance.GateExecution.Model     // GateCommand
 open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
 open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
 open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
+open FS.GG.Governance.CommandHost             // 075: shared host skeleton — under/revOfCommit/baseHeadOf/
+                                              //   emptySensedFacts/describeInvalid/persistedContent/
+                                              //   GateClassification/executionPlan (ExitDecision/exitCode/
+                                              //   fail/tryExecute stay LOCAL — type-divergent on this host's Model/Effect)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -167,12 +171,6 @@ module Loop =
           Plain = false
           Watch = false }
 
-    // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the
-    // clean relative form (`.fsgg/gates.json`); any other repo is prefixed so the artifact lands
-    // inside it. Pure string composition — no filesystem, no clock, no absolute-path resolution.
-    let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
-
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `route` verb — the only subcommand this tool ships.
         let tokens =
@@ -227,9 +225,9 @@ module Loop =
                     { Repo = repo
                       Scope = scope
                       Format = (if acc.Json then Json else Text)
-                      GatesOut = acc.GatesOut |> Option.defaultValue (under repo ".fsgg/gates.json")
-                      RouteOut = acc.RouteOut |> Option.defaultValue (under repo "readiness/route.json")
-                      StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
+                      GatesOut = acc.GatesOut |> Option.defaultValue (CommandHost.under repo ".fsgg/gates.json")
+                      RouteOut = acc.RouteOut |> Option.defaultValue (CommandHost.under repo "readiness/route.json")
+                      StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
                       PersistStore = acc.Persist
                       ExplicitPlain = acc.Plain
                       Watch = acc.Watch }
@@ -274,107 +272,28 @@ module Loop =
             Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
         []
 
-    let describeInvalid (diags: FS.GG.Governance.Config.Model.Diagnostic list) : string =
-        let one (d: FS.GG.Governance.Config.Model.Diagnostic) =
-            sprintf "%s (%s)" d.Message (diagnosticIdToken d.Id)
-
-        match diags with
-        | [] -> "catalog invalid"
-        | _ -> "catalog invalid: " + (diags |> List.map one |> String.concat "; ")
-
-    // ── F046 cache-eligibility helpers (pure; the degrade policy lives here, not in the sensing edge — D2) ──
-
-    /// The all-`None`/empty `SensedFacts` substituted when freshness sensing fails (every gate resolves
-    /// unresolved ⇒ `notEvaluated`). NEVER fabricates a sensed value (D2/L3).
-    let emptySensedFacts: SensedFacts =
-        { RuleHash = None
-          GeneratorVersion = None
-          Base = None
-          Head = None
-          CoveredArtifacts = Map.empty
-          CommandVersions = Map.empty }
-
-    // Base/head taken FROM the snapshot range (D5) — never re-sensed, never fabricated. `Range = None`
-    // (e.g. ExplicitPaths) ⇒ both `None` ⇒ every gate unresolved on base/head (L2).
-    let revOfCommit (CommitId c) = Revision c
-
-    let baseHeadOf (model: Model) : Revision option * Revision option =
-        match model.Snapshot |> Option.bind (fun s -> s.Range) with
-        | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
-        | None -> None, None
-
     // ── F048 persistence (pure; the decision lives here, not at the write edge — FR-010/D2) ──
-
-    // The persisted document: F047's prune → bound → serialise pipeline over the LOADED store, verbatim
-    // (data-model §2). No reuse policy / bound of our own — `defaultRetentionBound` and the three pure
-    // operations are F047's exactly. Decoupled from the current run's verdicts (FR-005): this feeds only
-    // the NEXT run's file.
-    let persistedContent (loaded: ReuseStore) : string =
-        loaded
-        |> EvidenceReuseStore.prune
-        |> EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound
-        |> EvidenceReuseStore.serialise
+    // `describeInvalid`/`emptySensedFacts`/`revOfCommit`/`baseHeadOf`/`persistedContent` moved to the shared
+    // CommandHost leaf (075). `baseHeadOf` is decomposed there to take the snapshot diff-range.
 
     // Whether the summary must wait for a store-write ack: persistence is enabled, the load did NOT degrade
     // (a degraded load emits no `PersistStore`, so nothing acks), and no ack has arrived yet (D10).
     let awaitingPersist (model: Model) : bool =
         model.Request.PersistStore && not model.StoreDegraded && not model.PersistAcked
 
-    // ── F052 per-gate classification (pure; recomputable from the model — data-model §classification) ──
-
-    // How one selected gate is handled this run (hidden — absent from Loop.fsi). `ToExecute` carries the
-    // command-to-run (spawned once); `ToReuse` carries the recovered prior exit (NOT spawned); `NoCommand`
-    // declares no command (NotExecuted).
-    type GateClassification =
-        | ToExecute of GateCommand
-        | ToReuse of ExitCode
-        | NoCommand
-
-    // Classify every selected gate and surface the per-gate freshness inputs (the F049 capture key). A gate
-    // with no declared command ⇒ `NoCommand`; with a command and an `isReusable` verdict whose prior exit is
-    // recoverable ⇒ `ToReuse` (the cache payoff — FR-003); otherwise (must-recompute, OR reusable-but-
-    // unrecoverable — D2/FR-004) ⇒ `ToExecute`. PURE: no process, derived entirely from the model.
-    let executionPlan (model: Model) : (Gate * GateClassification) list * Map<string, FreshnessInputs> =
-        match model.Sensed, model.Store with
-        | Some sensed, Some store ->
-            let resReport = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
-            let cacheReport = CacheEligibility.evaluate candidates store
-
-            let verdictMap =
-                CacheEligibility.entries cacheReport
-                |> List.fold
-                    (fun m e ->
-                        let k = gateIdValue e.Gate
-                        if Map.containsKey k m then m else Map.add k e.Verdict m)
-                    Map.empty
-
-            let inputsMap =
-                candidates
-                |> List.fold
-                    (fun m c ->
-                        let k = gateIdValue c.Gate
-                        if Map.containsKey k m then m else Map.add k c.Inputs m)
-                    Map.empty
-
-            let classify (gate: Gate) : GateClassification =
-                let cmdOpt =
-                    match model.Tooling with
-                    | Some tooling -> Plan.commandFor model.Request.Repo tooling gate
-                    | None -> None
-
-                match cmdOpt with
-                | None -> NoCommand
-                | Some cmd ->
-                    match Map.tryFind (gateIdValue gate.Id) verdictMap with
-                    | Some(Reusable ref) ->
-                        match Plan.priorExitOf ref with
-                        | Some priorExit -> ToReuse priorExit
-                        | None -> ToExecute cmd
-                    | _ -> ToExecute cmd
-
-            (model.SelectedGates |> List.map (fun g -> g, classify g)), inputsMap
-        | _ -> [], Map.empty
+    // ── F052 per-gate classification (pure) — `GateClassification` + the parameterized `executionPlan`
+    //    moved to the shared CommandHost leaf (075, FR-006). Route supplies `BudgetFold = None` (no F25
+    //    cost-budget demotion), so it never produces `Deferred`; its consuming matches carry an unreachable,
+    //    behaviour-preserving `Deferred` arm. The leaf returns a 3-tuple (the third element is the empty
+    //    `CacheDecisionReport` for Route, which discards it). ──
+    let routePlan (model: Model) =
+        CommandHost.executionPlan
+            { BudgetFold = None }
+            model.Sensed
+            model.Store
+            model.SelectedGates
+            model.Tooling
+            model.Request.Repo
 
     // Fires once BOTH the sensed facts and the store have arrived (the existing join point): classify the
     // selected gates and request the run of the must-recompute command-gates through the injected F051 port
@@ -383,15 +302,16 @@ module Loop =
     let tryExecute (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Result, model.GatesDoc with
         | Some _, Some _, Some _, Some _ ->
-            let plan, _ = executionPlan model
+            let plan, _, _ = routePlan model
 
             let toExecute =
                 plan
                 |> List.choose (fun (g, c) ->
                     match c with
-                    | ToExecute cmd -> Some(g.Id, cmd)
-                    | ToReuse _
-                    | NoCommand -> None)
+                    | CommandHost.ToExecute cmd -> Some(g.Id, cmd)
+                    | CommandHost.ToReuse _
+                    | CommandHost.Deferred _ // unreachable: Route's BudgetFold = None never defers
+                    | CommandHost.NoCommand -> None)
 
             model, [ ExecuteGates toExecute ]
         | _ -> model, []
@@ -402,7 +322,7 @@ module Loop =
     let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Result, model.GatesDoc with
         | Some sensed, Some store, Some result, Some gatesDoc ->
-            let plan, inputsMap = executionPlan model
+            let plan, inputsMap, _ = routePlan model
 
             let recordMap =
                 records |> List.fold (fun m (gid, r) -> Map.add (gateIdValue gid) r m) Map.empty
@@ -412,12 +332,13 @@ module Loop =
                 |> List.fold
                     (fun s (g, c) ->
                         match c with
-                        | ToExecute _ ->
+                        | CommandHost.ToExecute _ ->
                             match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
-                        | ToReuse _
-                        | NoCommand -> s)
+                        | CommandHost.ToReuse _
+                        | CommandHost.Deferred _ // unreachable: Route never defers
+                        | CommandHost.NoCommand -> s)
                     store
 
             let outcomes =
@@ -425,7 +346,7 @@ module Loop =
                 |> List.map (fun (g, c) ->
                     let outcome =
                         match c with
-                        | ToExecute _ ->
+                        | CommandHost.ToExecute _ ->
                             match Map.tryFind (gateIdValue g.Id) recordMap with
                             | Some record ->
                                 let code = record.Reproducible.ExitCode
@@ -439,12 +360,15 @@ module Loop =
                                   Disposition = NotExecuted
                                   ExitCode = None
                                   Passed = None }
-                        | ToReuse code ->
+                        | CommandHost.ToReuse code ->
                             { GateId = g.Id
                               Disposition = Reused
                               ExitCode = Some code
                               Passed = Some(Plan.passed code) }
-                        | NoCommand ->
+                        // `Deferred` is unreachable for Route (BudgetFold = None); map it exactly as a
+                        // non-executed gate (identical to `NoCommand`) so the plan stays byte-identical.
+                        | CommandHost.Deferred _
+                        | CommandHost.NoCommand ->
                             { GateId = g.Id
                               Disposition = NotExecuted
                               ExitCode = None
@@ -464,7 +388,7 @@ module Loop =
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, persistedContent grownStore) ], []
+                | true, false -> [ PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore) ], []
                 | true, true ->
                     [],
                     [ "cache note: store not persisted: on-disk store failed to parse; left untouched" ]
@@ -498,7 +422,7 @@ module Loop =
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
 
-            | Loaded(Invalid diags) -> fail InputUnavailable (describeInvalid diags) model
+            | Loaded(Invalid diags) -> fail InputUnavailable (CommandHost.describeInvalid diags) model
 
             | Loaded(Valid facts) ->
                 // The composition (FR-004): re-derive/re-sort/re-classify nothing — carry the cores'
@@ -526,7 +450,7 @@ module Loop =
                     SelectedGates = selectedGates
                     Classifications = classifications
                     Tooling = facts.Tooling },
-                [ SenseFreshness(selectedGates, baseHeadOf model)
+                [ SenseFreshness(selectedGates, CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range)))
                   LoadStore model.Request.StorePath ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
@@ -536,7 +460,7 @@ module Loop =
             | FreshnessSensed(Error reason) ->
                 tryExecute
                     { model with
-                        Sensed = Some emptySensedFacts
+                        Sensed = Some CommandHost.emptySensedFacts
                         CacheNotes =
                             model.CacheNotes
                             @ [ "cache note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }

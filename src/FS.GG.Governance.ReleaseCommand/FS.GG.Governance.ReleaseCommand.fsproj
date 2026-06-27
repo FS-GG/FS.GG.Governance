@@ -62,6 +62,7 @@
     <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
   </ItemGroup>

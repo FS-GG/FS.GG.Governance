@@ -34,6 +34,7 @@
     <Compile Include="Interpreter.fsi" />
     <Compile Include="Interpreter.fs" />
     <Compile Include="Program.fs" />
+    <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

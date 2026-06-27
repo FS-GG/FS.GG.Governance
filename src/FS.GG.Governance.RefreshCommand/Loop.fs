@@ -15,6 +15,7 @@ open FS.GG.Governance.FreshnessKey                  // FreshnessKey.matches/diff
 open FS.GG.Governance.FreshnessKey.Model             // FreshnessInputs, ArtifactHash, GeneratorVersion, ...
 open FS.GG.Governance.RefreshJson                   // RefreshJson.ofRefreshDecision
 open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationManifest, CurrencyStatus, RefreshDecision, ...
+open FS.GG.Governance.CommandHost                    // 075: shared host skeleton — `under`
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -111,12 +112,6 @@ module Loop =
           View = None
           Format = None
           RefreshOut = None }
-
-    // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
-    // relative form (`refresh.json`); any other repo is prefixed so the artifact lands inside it. Pure
-    // string composition — no filesystem, no clock, no absolute-path resolution.
-    let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // A leading bare `refresh` token is tolerated (no central dispatcher — command precedent).
@@ -434,7 +429,7 @@ module Loop =
 
         if needsArtifact then
             let doc = RefreshJson.ofRefreshDecision decision
-            let path = model.Request.RefreshOut |> Option.defaultValue (under model.Request.Repo "refresh.json")
+            let path = model.Request.RefreshOut |> Option.defaultValue (CommandHost.under model.Request.Repo "refresh.json")
 
             { model with
                 Phase = Persisted

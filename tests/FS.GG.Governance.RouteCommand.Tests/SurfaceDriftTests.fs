@@ -117,6 +117,13 @@ let tests =
                   || name = "FS.GG.Governance.GateRun"
                   || name = "FS.GG.Governance.GateExecution"
                   || name = "FS.GG.Governance.EvidenceCapture"
+                  // 075 (Phase B): the shared pure command-host skeleton leaf — under/executionPlan/etc.
+                  || name = "FS.GG.Governance.CommandHost"
+                  // 075 (Phase B): pulled in by the shared superset `GateClassification` (`Deferred of
+                  // BudgetReason`) + `executionPlan`'s `CacheDecisionReport` return — both CostBudget types.
+                  // Route never PRODUCES `Deferred` (its BudgetFold = None); it only consumes the shared type.
+                  // A pure domain core, so the new edge keeps the graph acyclic and the pure/impure split (FR-011).
+                  || name = "FS.GG.Governance.CostBudget"
                   || name = "FS.GG.Governance.ExecutionRecord"
                   || name = "FS.GG.Governance.CommandRecord"
                   // F27 wiring (063): the plain human projection (HumanText.ofRouteResult) over the SAME

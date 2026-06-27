@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 075 (roadmap Phase B): the pure command-host skeleton leaf — the single home of the genuinely-shared
+       MVU host helpers the seven command Loop.fs hosts used to hand-copy: the repo-relative path joiner
+       (`under`), the canonical exit classification (`ExitDecision` + total `exitCode`, superset with the
+       optional `Blocked` path), the gate classification (`GateClassification`, superset with `Deferred`),
+       the parameterized gate-execution plan (`executionPlan` over `ExecutionPlanParams` — research D4), and
+       the verbatim micro-helpers (`revOfCommit`, `baseHeadOf`, `emptySensedFacts`, `describeInvalid`,
+       `persistedContent`, the Verify<->Ship `kindOf`/`kindedRunsOf`/`buildSnapshot`). Output is
+       byte-identical to today's per-host copies (feature 075 acceptance gate: every command/projection
+       golden unchanged).
+
+       SCOPE NOTE (byte-identity + FR-008): only genuinely-shared, type-honest members live here. Helpers
+       whose signature is parameterized by a per-host `Model`/`Effect` record (`fail`, `tryExecute`,
+       `awaitingPersist`) DIVERGE per host and stay LOCAL — a shared form would require generics over each
+       host's Model (Constitution III). Refresh's `fail`/`exitCode` (over `RefreshOutcome`), Release's
+       `buildSnapshot` (different input type), and `cacheReportOf` (single site) likewise stay local
+       (research D5/D6). Model-reading movable helpers are DECOMPOSED into the fields they read so the leaf
+       never depends on a host Model.
+
+       Placed BELOW the command hosts and ABOVE the domain-type owners whose values it walks; NOT under
+       Kernel/Host/Cli. Pure and total; no I/O; no MVU ceremony of its own (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.CommandHost</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.CommandHost</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CommandHost.fsi" />
+    <Compile Include="CommandHost.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Provenance/FS.GG.Governance.Provenance.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandKind/FS.GG.Governance.CommandKind.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandRecord/FS.GG.Governance.CommandRecord.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.FreshnessResolution/FS.GG.Governance.FreshnessResolution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CacheEligibility/FS.GG.Governance.CacheEligibility.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.EvidenceReuseStore/FS.GG.Governance.EvidenceReuseStore.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+  </ItemGroup>
+
+</Project>

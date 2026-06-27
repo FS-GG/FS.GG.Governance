@@ -282,7 +282,23 @@ BELOW everything**, not in `Kernel`:
 See `specs/073-kernel-json-consolidation/` for the full spec/plan/tasks and the
 recorded pivot (decision D1 superseded).
 
-### Phase B — CommandHost skeleton extraction (medium risk, ~400–500 LOC)
+### Phase B — CommandHost skeleton extraction (medium risk, ~400–500 LOC) — ✅ DELIVERED (feature 075)
+> **Delivered 2026-06-27** as `specs/075-command-host-skeleton/`. New pure leaf
+> `FS.GG.Governance.CommandHost` (`.fsi`-first, surface baseline + drift + scope-guard
+> tests). Moved: `under`, `revOfCommit`, `baseHeadOf` (decomposed), `emptySensedFacts`,
+> `describeInvalid`, `persistedContent`, superset `GateClassification`, parameterized
+> `executionPlan` (FR-006 — Route `BudgetFold = None`; Ship/Verify supply a budget-fold
+> closure), and the Verify↔Ship `kindOf`/`kindedRunsOf`/`buildSnapshot` (decomposed).
+> **Stayed local (FR-008, type-divergent on each host's `Model`/`Effect`):** `fail`,
+> `tryExecute`, `awaitingPersist`, and `exitCode`+`ExitDecision` (the canonical superset
+> DU is built and unit-tested in the leaf but host adoption — a 6-host public-surface
+> cascade — is deferred as a bounded follow-up); plus Refresh's `RefreshOutcome`-typed
+> `fail`/`exitCode`, Release's `buildSnapshot` (different input), and `cacheReportOf`
+> (single site). Net host reduction ≈ **−318 LOC**; every command/projection golden +
+> snapshot byte-identical; full suite green (modulo the pre-existing Cli pack-timeout
+> flake). See `specs/075-command-host-skeleton/research.md` §D9 for the recorded
+> divergences. Phase C (the `GateRunHost` unification) remains gated on this clean diff.
+
 1. Add `CommandHost` (`.fsi` + `.fs`) with the verbatim helpers
    (`under`, `exitCode` (with optional `Blocked`), `fail`, `describeInvalid`,
    `emptySensedFacts`, `baseHeadOf`, `persistedContent`, `awaitingPersist`,
@@ -351,7 +367,7 @@ and a clean full-suite run.
 | Phase | Area | Risk | Est. LOC removed |
 |---|---|---|---|
 | A ✅ | JSON emit (`JsonText`/`JsonTokens`/`JsonWriters` leaves, NOT Kernel) | Low | **~260 delivered** |
-| B | CommandHost skeleton | Medium | ~400–500 |
+| B ✅ | CommandHost skeleton (leaf `FS.GG.Governance.CommandHost`; fail/tryExecute/exitCode stayed local per FR-008) | Medium | **~318 delivered** |
 | C | VerifyCommand/VerifyJson split (+ optional GateRunHost) | Med/High | ~150 (clarity) |
 | D ✅ | Shared test library (`Tests.Common`; CaptureHelpers proved local) | Low | **~1,200 delivered** |
 | E | CLI render/IO split | Medium | ~200 (moved) |

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for the 075 CommandHost leaf, exercising its PUBLIC surface — exitCode / executionPlan /
+       the relocated micro-helpers — over REAL, literally-constructed domain values (Principle V — real
+       values, no mocks; the helpers are pure). The reflective SurfaceBaseline test pins the public surface +
+       the dependency-hygiene scope guard (no host/Cli/*Command/filesystem/git/process edge). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="CommandHostTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.EvidenceReuse/FS.GG.Governance.EvidenceReuse.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.CostBudget/FS.GG.Governance.CostBudget.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -63,6 +63,7 @@
          (EvidenceCapture), and compose the shared pure helpers + GateOutcome vocabulary (GateRun). -->
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.GateExecution/FS.GG.Governance.GateExecution.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.EvidenceCapture/FS.GG.Governance.EvidenceCapture.fsproj" />
   </ItemGroup>
 

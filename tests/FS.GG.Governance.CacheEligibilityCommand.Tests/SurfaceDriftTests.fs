@@ -107,6 +107,8 @@ let tests =
                   // by HumanRender ONLY — the cache host reaches it through RichRender.emitStdout/senseCapability,
                   // never a direct Spectre reference (the forbidden check below still guards that).
                   || name = "FS.GG.Governance.HumanRender"
+                  // 075 (Phase B): the shared pure command-host skeleton leaf — under/revOfCommit/baseHeadOf.
+                  || name = "FS.GG.Governance.CommandHost"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

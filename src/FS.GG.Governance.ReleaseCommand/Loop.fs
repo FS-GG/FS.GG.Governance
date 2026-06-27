@@ -32,6 +32,7 @@ open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExp
 open FS.GG.Governance.ReleaseJson                   // ReleaseJson.ofReleaseReport
 open FS.GG.Governance.AttestationJson               // AttestationJson.ofAttestation
 open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
+open FS.GG.Governance.CommandHost                   // 075: shared host skeleton — `under`
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -133,9 +134,6 @@ module Loop =
           Out = None
           AttestationOut = None }
 
-    let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
-
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
@@ -170,8 +168,8 @@ module Loop =
                     Ok
                         { Repo = repo
                           Format = format
-                          ReleaseOut = acc.Out |> Option.defaultValue (under repo "release.json")
-                          AttestationOut = acc.AttestationOut |> Option.defaultValue (under repo "readiness/attestation.json") }
+                          ReleaseOut = acc.Out |> Option.defaultValue (CommandHost.under repo "release.json")
+                          AttestationOut = acc.AttestationOut |> Option.defaultValue (CommandHost.under repo "readiness/attestation.json") }
 
     // ── init (Principle IV) — initial Model + first effects ──
 
@@ -245,6 +243,9 @@ module Loop =
     /// The release attestation snapshot (D2): `base = head = sourceCommit` (a release attests a product
     /// state, not a diff range); digests are the real packed digests; runs are the recorded `Pack` runs;
     /// rule hash from the declared rules; generator/environment/builder normalized (no username/host/clock).
+    // STAYS LOCAL (075 research D5, FR-008): a different function that happens to share the name `buildSnapshot`
+    // — it takes `ReleaseDeclaration * PackEvidenceSet`, not the Verify↔Ship `KindedCommandRun list`. The
+    // shared `CommandHost.buildSnapshot` form does NOT fit, so this is not duplication to remove.
     let buildSnapshot (model: Model) (decl: Declaration.ReleaseDeclaration) (pack: PackEvidenceSet) : AuditSnapshot =
         let head = model.Head |> Option.defaultValue (Revision "")
         let ruleHash = ruleHashOf decl.Rules

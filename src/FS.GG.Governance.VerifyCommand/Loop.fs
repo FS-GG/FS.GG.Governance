@@ -44,6 +44,10 @@ open FS.GG.Governance.CostBudget.Model        // CostBudget, CandidateCost, Agen
 open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
 open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
 open FS.GG.Governance.Provenance.Model        // BuilderIdentity
+open FS.GG.Governance.CommandHost             // 075: shared host skeleton — under/describeInvalid/emptySensedFacts/
+                                              //   revOfCommit/baseHeadOf/persistedContent/kindOf/kindedRunsOf/
+                                              //   buildSnapshot/GateClassification/executionPlan (ExitDecision/
+                                              //   exitCode/fail/tryExecute stay LOCAL — type-divergent on Model/Effect)
 // 065 wiring (US3): the declaration-gated advisory release-readiness preview (verify does NOT pack).
 open FS.GG.Governance.ReleaseFactsSensing.Model   // SourceLayout, ReleaseExpectations, SensedRelease (F54)
 open FS.GG.Governance.ValidationMatrix.Model       // MatrixPlan, MatrixBoundary (InnerLoop)
@@ -212,11 +216,6 @@ module Loop =
           CostBudgetOut = None
           ProvenanceOut = None }
 
-    // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
-    // relative form (`readiness/verify.json`); any other repo is prefixed so the artifact lands inside it.
-    // Pure string composition — no filesystem, no clock, no absolute-path resolution.
-    let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `verify` verb — the verb this command implements.
@@ -290,12 +289,12 @@ module Loop =
                           Scope = scope
                           Profile = profile
                           Format = (if acc.Json then Json else Text)
-                          VerifyOut = acc.VerifyOut |> Option.defaultValue (under repo "readiness/verify.json")
-                          StorePath = acc.Store |> Option.defaultValue (under repo "readiness/evidence-reuse.json")
+                          VerifyOut = acc.VerifyOut |> Option.defaultValue (CommandHost.under repo "readiness/verify.json")
+                          StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
                           PersistStore = acc.Persist
                           ExplicitPlain = acc.Plain
-                          CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (under repo "readiness/cost-budget.json")
-                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (under repo "readiness/provenance.json") }
+                          CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
+                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json") }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -354,49 +353,15 @@ module Loop =
             Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
         []
 
-    let describeInvalid (diags: FS.GG.Governance.Config.Model.Diagnostic list) : string =
-        let one (d: FS.GG.Governance.Config.Model.Diagnostic) =
-            sprintf "%s (%s)" d.Message (diagnosticIdToken d.Id)
-
-        match diags with
-        | [] -> "catalog invalid"
-        | _ -> "catalog invalid: " + (diags |> List.map one |> String.concat "; ")
-
     // Map the decision's typed ExitCodeBasis to the process-level ExitDecision.
+    // Host-specific policy mapper — STAYS LOCAL (FR-008): it constructs this host's `ExitDecision`.
     let exitFromBasis (basis: ExitCodeBasis) : ExitDecision =
         match basis with
         | Clean -> Success
         | ExitCodeBasis.Blocked -> Blocked
 
-    // ── F046 cache-eligibility helpers (pure; the degrade policy lives here, not in the sensing edge) ──
-
-    /// The all-`None`/empty `SensedFacts` substituted when freshness sensing fails (every gate resolves
-    /// unresolved ⇒ recompute-by-default). NEVER fabricates a sensed value.
-    let emptySensedFacts: SensedFacts =
-        { RuleHash = None
-          GeneratorVersion = None
-          Base = None
-          Head = None
-          CoveredArtifacts = Map.empty
-          CommandVersions = Map.empty }
-
-    let revOfCommit (CommitId c) = Revision c
-
-    let baseHeadOf (model: Model) : Revision option * Revision option =
-        match model.Snapshot |> Option.bind (fun s -> s.Range) with
-        | Some r -> Some(revOfCommit r.Base), Some(revOfCommit r.Head)
-        | None -> None, None
-
-    // ── F048 persistence (pure; the decision lives here, not at the write edge) ──
-
-    // The persisted document: F047's prune → bound → serialise pipeline over the LOADED store, verbatim. No
-    // reuse policy / bound of our own. Decoupled from the current run's verdict: this feeds only the NEXT
-    // run's file and never perturbs the verify verdict or exit code.
-    let persistedContent (loaded: ReuseStore) : string =
-        loaded
-        |> EvidenceReuseStore.prune
-        |> EvidenceReuseStore.retain EvidenceReuseStore.defaultRetentionBound
-        |> EvidenceReuseStore.serialise
+    // ── F048 persistence (pure) — `emptySensedFacts`/`revOfCommit`/`baseHeadOf`/`persistedContent` moved to
+    //    the shared CommandHost leaf (075); `baseHeadOf` is decomposed there to take the snapshot diff-range. ──
 
     // Whether the summary must wait for a store-write ack: persistence is enabled, the load did NOT degrade,
     // and no ack has arrived yet.
@@ -493,22 +458,9 @@ module Loop =
     // Total over the closed taxonomy: a recognized token maps to its kind; an unrecognized token maps to the
     // documented `Build` default below — an explicit catch-all at the use site, never a silent mislabel of a
     // recognized kind. The richer category source (a declared kind on the gate) is a documented later extension.
-    let kindOf (gate: Gate) : CommandKind =
-        let token =
-            match gate.FreshnessKey.Command with
-            | Some(CommandId c) -> c.ToLowerInvariant()
-            | None -> (gateIdValue gate.Id).ToLowerInvariant()
-
-        let has (sub: string) = token.Contains sub
-
-        if has "test" then Test
-        elif has "pack" then Pack
-        elif has "template" || has "scaffold" || has "instantiate" then TemplateInstantiation
-        elif has "diff" then GitDiff
-        elif has "audit" || has "inspect" || has "restore" || has "list" then PackageInspection
-        elif has "capture" || has "visual" || has "screenshot" || has "snapshot" then VisualCapture
-        elif has "build" || has "format" || has "lint" || has "compile" then Build
-        else Build // documented default for an unrecognized command token (no silent mislabel)
+    // Re-export of the shared CommandHost.kindOf (075) — kept as a public member so this host's Loop.fsi
+    // surface is preserved; the body now lives once in the leaf.
+    let kindOf (gate: Gate) : CommandKind = CommandHost.kindOf gate
 
     // The agent-review mark per gate (FR-009/D7). The MVP `.fsgg` schema declares no agent-reviewed checks, so
     // every gate is `Deterministic`; carrying the mark through `decide` keeps the reuse identity correct for the
@@ -520,23 +472,8 @@ module Loop =
     // arises purely from the budgeted report's recompute causes. Synthetic-evidence taint is a later extension.
     let taintOf (_gid: GateId) : EvidenceTaint = Real
 
-    // Build the provenance audit snapshot (D4) from the already-sensed facts plus the two normalized edge
-    // senses, feeding the kinded runs through. `SourceCommit = Head` (D4). Missing optional facts substitute a
-    // deterministic empty value (NEVER a clock/username/host), so `provenance.json` is byte-identical across
-    // machines and re-runs. The environment/builder default to a normalized constant until sensed.
-    let buildSnapshot (model: Model) (runs: KindedCommandRun list) : AuditSnapshot =
-        let sensed = model.Sensed |> Option.defaultValue emptySensedFacts
-        let baseSnap, headSnap = baseHeadOf model
-        let baseRev = sensed.Base |> Option.orElse baseSnap |> Option.defaultValue (Revision "")
-        let headRev = sensed.Head |> Option.orElse headSnap |> Option.defaultValue (Revision "")
-        let ruleHash = sensed.RuleHash |> Option.defaultValue (RuleHash "")
-        let genVer = sensed.GeneratorVersion |> Option.defaultValue (GeneratorVersion "")
-        // CoveredArtifacts is a Map keyed by GateId; enumeration is GateId-ordinal so the flattened digest list
-        // is deterministic (and F033 treats it as a set in the identity anyway).
-        let digests = sensed.CoveredArtifacts |> Map.toList |> List.collect snd
-        let env = model.Environment |> Option.defaultValue LocalOrCi
-        let builder = model.Builder |> Option.defaultValue (BuilderIdentity "fsgg")
-        FS.GG.Governance.CommandKind.Audit.auditSnapshot headRev baseRev headRev ruleHash genVer digests runs env builder
+    // `buildSnapshot` (decomposed model-view inputs) moved to the shared CommandHost leaf (075). Verify's
+    // `buildSnapshot` was byte-identical to Ship's, so they share the one leaf form.
 
     // 065 (US3): assemble the advisory release-readiness preview from the loaded declaration + sensed F54
     // facts + the run's audit snapshot, with an EMPTY PackEvidenceSet — verify does NOT pack, so there is no
@@ -560,52 +497,12 @@ module Loop =
         | Some decl, Some sensed -> Some(previewFrom decl sensed snapshot)
         | _ -> None
 
-    // The kinded runs for the executed gates: pair each returned `CommandRecord` with `kindOf` over the gate.
-    let kindedRunsOf (model: Model) (records: (GateId * CommandRecord) list) : KindedCommandRun list =
-        let gateById =
-            model.SelectedGates |> List.map (fun g -> gateIdValue g.Id, g) |> Map.ofList
-
-        records
-        |> List.choose (fun (gid, record) ->
-            match Map.tryFind (gateIdValue gid) gateById with
-            | Some g -> Some { Kind = kindOf g; Record = record }
-            | None -> None)
-
-    // ── F052 per-gate classification (pure; recomputable from the model) ──
-    // F25 wiring (064): the budget filter is layered HERE — an `OverBudget` must-recompute gate is demoted from
-    // `ToExecute` to `Deferred reason`, so it is never executed and never reaches the passed set (SC-002).
-
-    type GateClassification =
-        | ToExecute of GateCommand
-        | ToReuse of ExitCode
-        | Deferred of BudgetReason
-        | NoCommand
-
-    let executionPlan (model: Model) : (Gate * GateClassification) list * Map<string, FreshnessInputs> * CacheDecisionReport =
-        match model.Sensed, model.Store with
-        | Some sensed, Some store ->
-            let resReport = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
-            let cacheReport = CacheEligibility.evaluate candidates store
-
-            let verdictMap =
-                CacheEligibility.entries cacheReport
-                |> List.fold
-                    (fun m e ->
-                        let k = gateIdValue e.Gate
-                        if Map.containsKey k m then m else Map.add k e.Verdict m)
-                    Map.empty
-
-            let inputsMap =
-                candidates
-                |> List.fold
-                    (fun m c ->
-                        let k = gateIdValue c.Gate
-                        if Map.containsKey k m then m else Map.add k c.Inputs m)
-                    Map.empty
-
-            // The budget filter (D1/D3): one `CandidateCost` per selected gate from facts already in hand; fold
-            // the F041 verdict with `budgetFor profile Verify` via `decide`; the `OverBudget` gates are demoted.
+    // `kindedRunsOf`, `GateClassification`, and the parameterized `executionPlan` moved to the shared
+    // CommandHost leaf (075, FR-006). The F25 budget fold below (verify uses the literal `Verify` run-mode,
+    // not the request's mode) is supplied to the shared `executionPlan`; it captures this host's request
+    // profile + `reviewMarkOf` (host cost policy) so the leaf stays command-agnostic.
+    let verifyPlan (model: Model) =
+        let budgetFold (verdictMap: Map<string, CacheEligibilityVerdict>) =
             let budget = FS.GG.Governance.CostBudget.Budget.budgetFor model.Request.Profile Verify
 
             let candidateCosts =
@@ -628,34 +525,15 @@ module Loop =
                 |> List.map (fun (gid, reason) -> gateIdValue gid, reason)
                 |> Map.ofList
 
-            let classify (gate: Gate) : GateClassification =
-                let cmdOpt =
-                    match model.Tooling with
-                    | Some tooling -> Plan.commandFor model.Request.Repo tooling gate
-                    | None -> None
+            overReasons, budgetReport
 
-                match cmdOpt with
-                | None -> NoCommand
-                | Some cmd ->
-                    let baseClass =
-                        match Map.tryFind (gateIdValue gate.Id) verdictMap with
-                        | Some(Reusable ref) ->
-                            match Plan.priorExitOf ref with
-                            | Some priorExit -> ToReuse priorExit
-                            | None -> ToExecute cmd
-                        | _ -> ToExecute cmd
-
-                    // Demote an over-budget must-recompute gate out of `ToExecute` (never executed, never
-                    // passed). A `Reuse`/`Recompute`-fits gate is never in `overReasons`, so it is unaffected.
-                    match baseClass with
-                    | ToExecute _ ->
-                        match Map.tryFind (gateIdValue gate.Id) overReasons with
-                        | Some reason -> Deferred reason
-                        | None -> baseClass
-                    | other -> other
-
-            (model.SelectedGates |> List.map (fun g -> g, classify g)), inputsMap, budgetReport
-        | _ -> [], Map.empty, CacheDecisionReport []
+        CommandHost.executionPlan
+            { BudgetFold = Some budgetFold }
+            model.Sensed
+            model.Store
+            model.SelectedGates
+            model.Tooling
+            model.Request.Repo
 
     // Fires once BOTH the sensed facts and the store have arrived: classify the selected gates and request
     // the run of the must-recompute command-gates through the injected F051 port. Reused/no-command gates
@@ -664,16 +542,16 @@ module Loop =
     let tryExecute (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
         | Some _, Some _, Some _ ->
-            let plan, _, budgetReport = executionPlan model
+            let plan, _, budgetReport = verifyPlan model
 
             let toExecute =
                 plan
                 |> List.choose (fun (g, c) ->
                     match c with
-                    | ToExecute cmd -> Some(g.Id, cmd)
-                    | ToReuse _
-                    | Deferred _
-                    | NoCommand -> None)
+                    | CommandHost.ToExecute cmd -> Some(g.Id, cmd)
+                    | CommandHost.ToReuse _
+                    | CommandHost.Deferred _
+                    | CommandHost.NoCommand -> None)
 
             { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
         | _ -> model, []
@@ -689,7 +567,13 @@ module Loop =
         | Some decision ->
             let emptyReport = CacheDecisionReport []
             let costBudgetDoc = FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
-            let snapshot = buildSnapshot model []
+            let snapshot =
+                CommandHost.buildSnapshot
+                    model.Sensed
+                    (model.Snapshot |> Option.bind (fun s -> s.Range))
+                    model.Environment
+                    model.Builder
+                    []
             let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
             let preview = previewOf model snapshot
             let folded = foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
@@ -726,7 +610,7 @@ module Loop =
     let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
         | Some sensed, Some store, Some decision ->
-            let plan, inputsMap, budgetReport = executionPlan model
+            let plan, inputsMap, budgetReport = verifyPlan model
 
             let recordMap =
                 records |> List.fold (fun m (gid, r) -> Map.add (gateIdValue gid) r m) Map.empty
@@ -736,13 +620,13 @@ module Loop =
                 |> List.fold
                     (fun s (g, c) ->
                         match c with
-                        | ToExecute _ ->
+                        | CommandHost.ToExecute _ ->
                             match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
-                        | ToReuse _
-                        | Deferred _
-                        | NoCommand -> s)
+                        | CommandHost.ToReuse _
+                        | CommandHost.Deferred _
+                        | CommandHost.NoCommand -> s)
                     store
 
             let outcomes =
@@ -750,7 +634,7 @@ module Loop =
                 |> List.map (fun (g, c) ->
                     let outcome =
                         match c with
-                        | ToExecute _ ->
+                        | CommandHost.ToExecute _ ->
                             match Map.tryFind (gateIdValue g.Id) recordMap with
                             | Some record ->
                                 let code = record.Reproducible.ExitCode
@@ -764,19 +648,19 @@ module Loop =
                                   Disposition = NotExecuted
                                   ExitCode = None
                                   Passed = None }
-                        | ToReuse code ->
+                        | CommandHost.ToReuse code ->
                             { GateId = g.Id
                               Disposition = Reused
                               ExitCode = Some code
                               Passed = Some(Plan.passed code) }
                         // A deferred (over-budget) gate is NOT executed and NOT reused — recorded NotExecuted so
                         // it is structurally excluded from the passed set (never coerced to pass — SC-002).
-                        | Deferred _ ->
+                        | CommandHost.Deferred _ ->
                             { GateId = g.Id
                               Disposition = NotExecuted
                               ExitCode = None
                               Passed = None }
-                        | NoCommand ->
+                        | CommandHost.NoCommand ->
                             { GateId = g.Id
                               Disposition = NotExecuted
                               ExitCode = None
@@ -807,7 +691,13 @@ module Loop =
             // findings are NOT folded in (D6). 065 (US3): build the snapshot first so the advisory preview can
             // use it. 067: thread the real `model.SurfaceFindings` (was `[]`) so the additive `surfaceChecks`
             // section is emitted when non-empty and omitted (byte-identical) when empty.
-            let snapshot = buildSnapshot model (kindedRunsOf model records)
+            let snapshot =
+                CommandHost.buildSnapshot
+                    model.Sensed
+                    (model.Snapshot |> Option.bind (fun s -> s.Range))
+                    model.Environment
+                    model.Builder
+                    (CommandHost.kindedRunsOf model.SelectedGates records)
             let preview = previewOf model snapshot
             let verifyDoc =
                 VerifyJson.ofVerifyDecisionWithGeneratedViews
@@ -831,7 +721,7 @@ module Loop =
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, persistedContent grownStore) ], []
+                | true, false -> [ PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore) ], []
                 | true, true ->
                     [],
                     [ "currency note: store not persisted: on-disk store failed to parse; left untouched" ]
@@ -872,7 +762,7 @@ module Loop =
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
 
-            | Loaded(Invalid diags) -> fail InputUnavailable (describeInvalid diags) model
+            | Loaded(Invalid diags) -> fail InputUnavailable (CommandHost.describeInvalid diags) model
 
             | Loaded(Valid facts) ->
                 // The composition: re-derive/re-sort/re-classify/re-serialize nothing — carry the cores'
@@ -922,7 +812,7 @@ module Loop =
                     // `tryExecute` ⇒ `ExecuteGates` ⇒ `GatesExecuted` ⇒ `projectExecuted` (which reads the
                     // already-populated `model.SurfaceFindings`).
                     [ SenseSurfaces productReport
-                      SenseFreshness(selectedGates, baseHeadOf model)
+                      SenseFreshness(selectedGates, CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range)))
                       LoadStore model.Request.StorePath ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
@@ -933,7 +823,7 @@ module Loop =
             | FreshnessSensed(Error reason) ->
                 tryExecute
                     { model with
-                        Sensed = Some emptySensedFacts
+                        Sensed = Some CommandHost.emptySensedFacts
                         CurrencyNotes =
                             model.CurrencyNotes
                             @ [ "currency note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
