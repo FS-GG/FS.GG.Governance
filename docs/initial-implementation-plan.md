@@ -254,7 +254,28 @@ additively only; all goldens byte-identical). `VerifyJson.fs` 582→122 LOC;
 `Loop.fs` 1,009→946 (the SC-001 ≤800 concrete bar is **not** met — the contracted
 three-fold scope is small; recorded as a flagged deviation in
 `specs/076-verify-module-split/tasks.md`). The `GateRunHost` route→ship→verify
-unification is recorded as **ADR 0003 = DEFER**.
+unification is recorded as **ADR 0003 = DEFER**. Then Phase E **077** — a structural
+split of the optional CLI into three `.fsi`-curated sibling modules inside the existing
+`FS.GG.Governance.Cli` project (`CliRender` the pure `CommandResult`→text/JSON
+projection; `ArtifactReading` the impure path-resolution/file-reads/parsers; `ReviewStore`
+the review load/save) with `runHost`/`main` reduced to thin orchestration; every CLI
+text/JSON transcript byte-identical, surface baseline grown additively by three module
+lines (`Cli.fs` 829→557, `Program.fs` 673→251).
+
+**Update (2026-06-27, cont.):** with the architecture track's structural splits landed, a
+**Tier 2 test-support fix — 078** bounds the SDD reference-provider worked-example
+real-evidence `dotnet build` (`Support.dotnetBuild`) so the suite can never hang. The fix
+adds a reusable `Support.runBounded` primitive (async stdout/stderr capture defeats the
+`ReadToEnd()` deadlock + `WaitForExit(budget)` + `Kill(entireProcessTree=true)` on overrun →
+a new `BuildAttempt.TimedOut` named-skip case), gates the heavyweight build behind an
+explicit real-evidence opt-in (`FSGG_REAL_EVIDENCE=1` or a truthy `CI`) so the default run
+is a named opt-out skip (worked-example project 5.3 s, well under the 30 s bar), bounds
+MSBuild fan-out (`-maxcpucount:1 --disable-build-servers`, FR-007), and preserves the 072
+real-evidence guarantee (a non-zero build still fails; missing-SDK / timeout / opt-out are
+three distinct named skips). A real forced-stall test (`BoundedBuildTests.fs`) proves the
+bound by killing a real sleeper within budget+margin (additive `+1` test). No production
+code, `.fsi`, golden, or surface baseline touched; the two non-build worked-example tests
+and the manifest golden stay byte-identical (SC-005).
 
 - 🟢 [x] Scaffold empty repository with Spec Kit metadata, constitution, docs, and
   Claude/Codex guidance.

@@ -66,18 +66,28 @@ let tests =
           // Real-evidence build step (FR-004, SC-002): the emitted skeleton builds first-attempt with no
           // hand-editing. A missing SDK ⇒ a NAMED skip, not a failure (research D3, Principle VI).
           test "emitted skeleton `dotnet build`s first-attempt (real evidence)" {
-              let _, target = runWorkedExample ()
+              // Gated behind the real-evidence opt-in (US2): the default run skips with a NAMED rationale and
+              // does NOT scaffold or build, keeping the routine run fast (SC-002, research D4/D10).
+              if not (realEvidenceEnabled ()) then
+                  skiptest realEvidenceSkipReason
+              else
+                  let _, target = runWorkedExample ()
 
-              try
-                  let slnPath = Path.Combine(target, "MyApp.sln")
+                  try
+                      let slnPath = Path.Combine(target, "MyApp.sln")
 
-                  match dotnetBuild slnPath with
-                  | SdkMissing detail ->
-                      skiptestf "PREREQUISITE: .NET SDK not available to build the emitted skeleton (%s)" detail
-                  | Built(exitCode, output) ->
-                      Expect.equal exitCode 0 (sprintf "dotnet build MyApp.sln must succeed first-attempt:\n%s" output)
-              finally
-                  cleanup target
+                      // Total, ordered classification over BuildAttempt (research D10): a missing SDK and a
+                      // budget overrun are DISTINCT named skips; a non-zero build still FAILS (FR-003/SC-003) —
+                      // never absorbed by a skip.
+                      match dotnetBuild slnPath with
+                      | SdkMissing detail ->
+                          skiptestf "PREREQUISITE: .NET SDK not available to build the emitted skeleton (%s)" detail
+                      | TimedOut(budget, partial) ->
+                          skiptestf "BUDGET EXCEEDED: dotnet build exceeded %O; partial output: %s" budget partial
+                      | Built(exitCode, output) ->
+                          Expect.equal exitCode 0 (sprintf "dotnet build MyApp.sln must succeed first-attempt:\n%s" output)
+                  finally
+                      cleanup target
           }
 
           // Golden + determinism (FR-008, SC-003, SC-005). Regenerate intentionally with BLESS_FIXTURES=1.

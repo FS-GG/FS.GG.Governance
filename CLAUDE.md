@@ -2,7 +2,33 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
 docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most
-recently DELIVERED feature is specs/077-cli-decomposition/ (Phase E of the
+recently DELIVERED feature is specs/078-fix-scaffold-build-test/ (✅ DELIVERED): a
+Tier 2 test-support-only fix bounding the SDD reference-provider worked-example
+real-evidence `dotnet build` (`Support.dotnetBuild`) so the suite never hangs. It adds a
+reusable `Support.runBounded exe args workingDir budget : BuildAttempt` primitive —
+async `OutputDataReceived`/`ErrorDataReceived` capture + `BeginOutputReadLine` AFTER
+`Start` (defeats the `ReadToEnd()` deadlock, D1), `WaitForExit(int budget.TotalMilliseconds)`,
+and on overrun `Kill(entireProcessTree=true)` + a bounded `WaitForExit(killDrainMargin)`
+drain → a new `BuildAttempt.TimedOut of budget*partialOutput` named-skip case (a
+start-failure still ⇒ `SdkMissing`, a clean exit ⇒ `Built`). `dotnetBuild` becomes a thin
+wrapper passing `-maxcpucount:1 --disable-build-servers` (collapses the MSBuild worker
+fan-out, FR-007) under `buildBudget` (default 120 s, override `FSGG_BUILD_BUDGET_SECONDS`;
+absent/garbage/≤0 ⇒ default, never unbounded). The heavyweight build is gated behind
+`realEvidenceEnabled ()` (`FSGG_REAL_EVIDENCE=1` OR a truthy `CI` — set and, trimmed +
+case-insensitive, not `""`/`0`/`false`); the default run emits a named opt-out skip and
+does NOT scaffold or build (worked-example project 5.3 s ≪ 30 s, SC-002). The build
+test's match is total/ordered so a non-zero `Built` still FAILS (FR-003/SC-003) and the
+three skips — opt-out / `PREREQUISITE:` missing-SDK / `BUDGET EXCEEDED:` timeout — are
+textually distinct (FR-004/FR-009). A real forced-stall test
+(`BoundedBuildTests.fs`, additive `+1`) kills a real OS sleeper (`sleep` on Unix /
+`ping` on Windows) under a 500 ms budget and asserts `TimedOut`, return within
+budget+`boundAssertionMargin`, and the spawned tree gone. Validated both lanes:
+`FSGG_REAL_EVIDENCE=1` and `CI=true` each run the real build green (11/11). Scope: ONLY
+`Support.fs` + the build test in `WorkedExampleTests.fs` + new `BoundedBuildTests.fs` +
+the `.fsproj` `<Compile>` line; the two non-build worked-example tests and the committed
+manifest golden stay byte-identical, no production code / `.fsi` / golden / surface
+baseline touched (FR-008/SC-005, diff confirmed empty). The prior DELIVERED feature is
+specs/077-cli-decomposition/ (Phase E of the
 architecture/quality/de-duplication roadmap — ✅ DELIVERED): a Tier 1 structural
 split of the optional CLI into three new `.fsi`-curated sibling modules inside the
 existing `FS.GG.Governance.Cli` project (no new project/dependency, FR-008) —
