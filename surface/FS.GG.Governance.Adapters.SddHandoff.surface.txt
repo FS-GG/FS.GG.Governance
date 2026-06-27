@@ -1,5 +1,6 @@
 TYPE FS.GG.Governance.Adapters.SddHandoff.ConsumerModule
   [Method] ConsumeResult consume(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] candidatePaths(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ConsumerModule+ConsumeResult
 TYPE FS.GG.Governance.Adapters.SddHandoff.ConsumerModule+ConsumeResult
   [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic])

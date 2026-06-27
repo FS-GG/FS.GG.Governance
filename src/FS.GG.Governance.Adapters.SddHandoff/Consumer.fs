@@ -156,3 +156,17 @@ module Consumer =
         { Gates = pairs |> List.map fst
           Selected = pairs |> List.map (fun (g, sp) -> { Gate = g; SelectingPaths = sp })
           Diagnostics = diagnostics }
+
+    // F082: the declared `governedReferences` paths of every CONSUMABLE document, projected as
+    // first-class routing candidates. A document `Reader.parse` refuses contributes nothing —
+    // consistent with `consume`'s bad-document rule; its blocking integrity gate is produced by
+    // `consume`, not here (FR-008). Pure + total. Deterministic ordinal order; route re-sorts anyway.
+    let candidatePaths (reads: Reader.HandoffRead list) : GovernedPath list =
+        reads
+        |> List.choose (fun r ->
+            match Reader.parse r with
+            | Ok handoff -> Some handoff
+            | Error _ -> None) // bad document ⇒ no candidates (FR-008)
+        |> List.collect (fun h -> h.GovernedReferences |> List.collect (fun g -> g.Paths))
+        |> List.distinct // dedup across work items / docs (FR-006)
+        |> List.sortBy (fun (GovernedPath p) -> p)

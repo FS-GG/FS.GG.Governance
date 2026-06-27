@@ -14,6 +14,7 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
+open FS.GG.Governance.Config.Model             // GovernedPath
 open FS.GG.Governance.Gates.Model              // Gate
 open FS.GG.Governance.Route.Model              // SelectedGate
 open FS.GG.Governance.Adapters.SddHandoff.Model
@@ -35,3 +36,19 @@ module Consumer =
     /// ⇒ a blocking integrity gate + diagnostic and NO mapped gate for that document (FR-011). Total;
     /// never throws.
     val consume: reads: Reader.HandoffRead list -> ConsumeResult
+
+    /// The de-duplicated declared `governedReferences` paths from every CONSUMABLE document,
+    /// projected as first-class routing candidates (F082). A host merges these into the candidate
+    /// set fed to `Routing.route` BEFORE `Route.select`, so the surface a work item declares it
+    /// governs drives gate selection (FR-001/FR-002).
+    ///
+    /// • A document `Reader.parse` REFUSES (malformed / missing-required / unsupported major /
+    ///   declared-`autoSynthetic`) contributes NOTHING — consistent with `consume`'s bad-document
+    ///   rule; the document's blocking integrity gate is produced by `consume`, not here (FR-008).
+    /// • Paths are already normalized by `Reader.parse`, so they de-duplicate value-equally against
+    ///   the sensed change set (FR-006).
+    /// • Deterministic ordinal order; empty input — or no consumable `governedReferences` — ⇒ `[]`
+    ///   (the no-op path that keeps every existing golden byte-identical — FR-005).
+    ///
+    /// PURE and TOTAL — never throws (Constitution VI).
+    val candidatePaths: reads: Reader.HandoffRead list -> GovernedPath list

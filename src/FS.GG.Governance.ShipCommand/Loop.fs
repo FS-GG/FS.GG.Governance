@@ -657,7 +657,14 @@ module Loop =
                 // the cores' values verbatim. The verdict is decided here (`Ship.rollup`); the audit
                 // document waits for the cache-eligibility join (F046). Select the gates to sense, then
                 // request the two cache senses (NO write is emitted here anymore).
-                let candidates = model.Candidates |> Option.defaultValue []
+                // F082: promote the handoff's declared governedReferences to first-class routing candidates,
+                // merged + de-duplicated with the sensed changed paths BEFORE routing (FR-001/FR-002/FR-006).
+                // Absent / empty / bad handoff ⇒ candidatePaths = [] ⇒ candidates unchanged ⇒ byte-identical
+                // audit output (FR-005, SC-002). The F081 post-select consume-union fold below + Ship.rollup
+                // are UNCHANGED — the handoff's own evidence/readiness/integrity gates stay pre-selected (FR-009).
+                let sensed = model.Candidates |> Option.defaultValue []
+                let declared = Consumer.candidatePaths model.Handoffs
+                let candidates = sensed @ declared |> List.distinct
                 let report = Routing.route facts candidates
                 let registry = Gates.buildRegistry facts
                 let findings = Findings.findUnknownGovernedPaths facts report

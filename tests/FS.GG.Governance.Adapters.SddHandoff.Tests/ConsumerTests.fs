@@ -91,3 +91,74 @@ let tests =
               let r = Consumer.consume [ { Source = "readiness/taint/governance-handoff.json"; Json = json } ]
               Expect.equal (maturityOf r "evidence") (Some BlockOnShip) "a Real node resting on Synthetic taints AutoSynthetic ⇒ blocking"
           } ]
+
+// F082 C1–C8 — `Consumer.candidatePaths` projects the declared `governedReferences` of every
+// CONSUMABLE document into de-duplicated, deterministically-ordered routing candidates. A document
+// `Reader.parse` refuses contributes nothing (FR-008). Pure unit tests over hand-built JSON (no I/O).
+
+let private mk (id: string) (json: string) : Reader.HandoffRead =
+    { Source = sprintf "readiness/%s/governance-handoff.json" id; Json = json }
+
+// A consumable v1 document declaring the given `governedReferences` work items.
+let private docDeclaring (refsJson: string) : string =
+    sprintf
+        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+             "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
+             "governedReferences": %s }"""
+        refsJson
+
+[<Tests>]
+let candidatePathsTests =
+    testList
+        "Consumer.candidatePaths"
+        [ test "C1 — [] ⇒ [] (the no-op path)" {
+              Expect.isEmpty (Consumer.candidatePaths []) "no documents ⇒ no candidates"
+          }
+
+          test "C2 — a consumable doc with no governedReferences ⇒ []" {
+              let doc = mk "wi" (docDeclaring "[]")
+              Expect.isEmpty (Consumer.candidatePaths [ doc ]) "no declared references ⇒ no candidates"
+          }
+
+          test "C3 — declared src/A/x, tests/A/y ⇒ normalized + sorted" {
+              let doc = mk "wi" (docDeclaring """[ { "workItem": "WI-1", "paths": [ "src/A/x", "tests/A/y" ] } ]""")
+              Expect.equal
+                  (Consumer.candidatePaths [ doc ])
+                  [ GovernedPath "src/A/x"; GovernedPath "tests/A/y" ]
+                  "the declared paths, normalized and ordinal-sorted"
+          }
+
+          test "C4 — two consumable docs with overlapping paths ⇒ union, de-duplicated" {
+              let a = mk "aaa" (docDeclaring """[ { "workItem": "WI-1", "paths": [ "src/A/x", "tests/A/y" ] } ]""")
+              let b = mk "bbb" (docDeclaring """[ { "workItem": "WI-2", "paths": [ "src/A/x", "src/B/z" ] } ]""")
+              Expect.equal
+                  (Consumer.candidatePaths [ a; b ])
+                  [ GovernedPath "src/A/x"; GovernedPath "src/B/z"; GovernedPath "tests/A/y" ]
+                  "the union of declared paths, each once, sorted"
+          }
+
+          test "C5 — a consumable + a malformed doc ⇒ only the consumable's paths (FR-008)" {
+              let good = mk "good" (docDeclaring """[ { "workItem": "WI-1", "paths": [ "src/A/x" ] } ]""")
+              let bad = Fixtures.read "malformed"
+              Expect.equal
+                  (Consumer.candidatePaths [ good; bad ])
+                  [ GovernedPath "src/A/x" ]
+                  "the malformed document contributes no candidates"
+          }
+
+          test "C6 — a single version-mismatch doc ⇒ [] (FR-008)" {
+              Expect.isEmpty (Consumer.candidatePaths [ Fixtures.read "v2-major" ]) "an unsupported major contributes no candidates"
+          }
+
+          test "C7 — the same path declared twice across work items ⇒ one entry" {
+              let doc =
+                  mk
+                      "wi"
+                      (docDeclaring """[ { "workItem": "WI-1", "paths": [ "src/A/x" ] }, { "workItem": "WI-2", "paths": [ "src/A/x" ] } ]""")
+              Expect.equal (Consumer.candidatePaths [ doc ]) [ GovernedPath "src/A/x" ] "a path declared twice survives once"
+          }
+
+          test "C8 — a back-slash raw path ⇒ normalized via Reader.parse" {
+              let doc = mk "wi" (docDeclaring """[ { "workItem": "WI-1", "paths": [ "src\\A\\x" ] } ]""")
+              Expect.equal (Consumer.candidatePaths [ doc ]) [ GovernedPath "src/A/x" ] "back-slashes normalize to forward-slashes"
+          } ]

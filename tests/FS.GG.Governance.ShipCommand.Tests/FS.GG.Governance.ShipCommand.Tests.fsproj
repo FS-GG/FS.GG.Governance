@@ -33,6 +33,7 @@
     <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="CostBudgetWiringTests.fs" />
     <Compile Include="HandoffWiringTests.fs" />
+    <Compile Include="GovernedRefRoutingTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

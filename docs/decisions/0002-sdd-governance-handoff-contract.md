@@ -52,6 +52,12 @@ change:
 - `governedReferences[*]` are **optional routing enrichment**; Governance MAY
   ignore them and route from its own F016 snapshot facts. Accepted — they are
   cheap work-item→path provenance, not the primary routing source.
+  **Promoted by F082** (`082-route-governed-refs`, queue item #3 below): the
+  declared paths are now merged into the `Routing.route` candidate set (in
+  addition to, never instead of, the F016 snapshot facts), so they *can* drive
+  domain-gate selection. Still a no-op when absent/empty, so this changes no
+  existing output. No `contractVersion` bump — only Governance's consumption
+  posture changed.
 - Merge-boundary readiness (`shipDisposition`, `verificationReadiness`,
   `blockingDiagnosticIds`, counts, `perViewState`) becomes a **first-class
   gate-registry entry** (F018) that participates in selection, severity
@@ -77,10 +83,19 @@ ships the consumer (`FS.GG.Governance.Adapters.SddHandoff`):
 2. **✅ Resolved (F081).** A pure adapter (`Mapping`) maps `evidence.nodes` +
    `dependencies` into `Evidence.build` and runs `Evidence.effective` for the
    taint closure (parallel to the F10 SpecKit adapter over `TaskDependsOn`).
-3. Optional: fold `governedReferences` into `Routing.route` inputs, or ignore in
-   favour of F016 snapshot facts. **(F081 uses them as optional `SelectingPath`
-   enrichment on the handoff gates when present; correctness is independent of
-   them — FR-010.)**
+3. **✅ Resolved (F082, `082-route-governed-refs`).** `governedReferences` are
+   now **first-class routing candidates**: `Consumer.candidatePaths` projects the
+   declared paths of every consumable document, and each verdict host
+   (`route`/`ship`/`verify`) merges them with the sensed change set
+   (`sensed @ declared |> List.distinct`) BEFORE `Routing.route`, so the surface a
+   work item declares it governs selects the domain gates that own it — even when
+   the sensed diff is empty. The merge is de-duplicated (a path in both sources is
+   routed once) and a no-op when no consumable document declares any
+   `governedReferences` (absent / empty / bad ⇒ `candidatePaths = []` ⇒
+   byte-identical output). A bad document still contributes zero candidates while
+   its blocking integrity gate is produced by the unchanged `consume` fold. F081's
+   `SelectingPath` enrichment on the handoff's OWN gates is retained unchanged;
+   F082 adds the *domain-gate* selection on top of it.
 4. **✅ Resolved (F081, FR-009/FR-015).** SDD merge-boundary readiness becomes a
    **first-class gate-registry entry** (F018), NOT an F010 merge-fence condition —
    it participates in selection, severity resolution, and roll-up like any other

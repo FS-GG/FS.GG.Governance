@@ -37,6 +37,7 @@
     <Compile Include="SurfaceChecksE2ETests.fs" />
     <Compile Include="SeamModuleScopeGuardTests.fs" />
     <Compile Include="HandoffReadinessTests.fs" />
+    <Compile Include="GovernedRefRoutingTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
