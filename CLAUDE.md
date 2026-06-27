@@ -2,7 +2,40 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
 docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most
-recently DELIVERED feature is specs/076-verify-module-split/ (Phase C of the
+recently DELIVERED feature is specs/077-cli-decomposition/ (Phase E of the
+architecture/quality/de-duplication roadmap — ✅ DELIVERED): a Tier 1 structural
+split of the optional CLI into three new `.fsi`-curated sibling modules inside the
+existing `FS.GG.Governance.Cli` project (no new project/dependency, FR-008) —
+`CliRender` (the pure `CommandResult`→text/JSON projection relocated verbatim from
+`Cli.fs`: the four entry points + every `*Json`/`*Text` sub-writer + the render-only
+formatting helpers; `exitCode`+`stableStrings` stay public in `module Cli` and are
+called qualified), `ArtifactReading` (the impure spec-kit/design path resolution +
+file/dir reads + regex task/dep parsers + fact extraction + snapshot assembly,
+`optionsFor`/`readArtifact`/`loadSnapshot` public, `loadSnapshot` uses
+`Path.GetFullPath` not `Program.fullPath`), and `ReviewStore`
+(`loadReview`/`saveReview` + the hidden store-root/sanitize/verdict helpers and the
+`review-store-unavailable` short-circuit). Compile order
+`Cli→CliRender→ArtifactReading→ReviewStore→Program`; `runHost`/`main` reduced to thin
+orchestration with NO inline `File.`/`Directory.` bodies (SC-004), the budget folds +
+the `review-dispatch-failed` branch + the read-only watch/tui block left unchanged
+(research D4, verified by an empty `+`/`-` diff on those functions). One concern per
+commit (FR-009; three commits), every CLI text/JSON transcript byte-identical at each
+(SC-001 — `route`/`explain`/`contract`/`evidence` × text/json + the `bogus`
+usage-error all diff-empty), the four render `val`s relocated out of `Cli.fsi` with
+call sites updated in-commit (research D3), and the name-level surface baseline +
+in-test `generatedSurface` literal grown ADDITIVELY by exactly three lines
+(`module CliRender`/`ArtifactReading`/`ReviewStore`; FR-011). Per-file: `Cli.fs`
+829→557 (−272), `Program.fs` 673→251 (−422); new modules `CliRender.fs` 282,
+`ArtifactReading.fs` 370, `ReviewStore.fs` 74 (~694 LOC relocated). **SC-005 deviation
+(recorded, flagged):** the spec's "~200 LOC" headline tracks only the dominant render
+extraction and undercounts the two edge extractions (~694 actual); the binding
+SC-001/002/003/004 hold regardless (research D7). Suite: the full `dotnet test
+FS.GG.Governance.sln` COMPILED the whole solution and ran 13 test projects green with
+0 failures (Kernel 73, SurfaceChecks 18, … + the CLI suite 50/50 and neighbors Host
+18/RouteCommand 83/VerifyJson 30/VerifyCommand 79); the unrelated SDD
+`fs-gg-fullstack` template-generation integration test (pathologically slow in this
+environment) and the pre-existing CLI `dotnet pack` timeout flake are out-of-scope.
+The prior DELIVERED feature is specs/076-verify-module-split/ (Phase C of the
 architecture/quality/de-duplication roadmap — ✅ DELIVERED): it split the two Verify
 god modules along their feature seams into new additively-public, `.fsi`-curated
 sibling modules — host: `SurfaceFold`/`ViewCurrencyFold`/`ReleasePreview` (the third

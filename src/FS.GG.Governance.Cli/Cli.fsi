@@ -149,17 +149,9 @@ module Cli =
     /// Numeric process exit code for an exit decision.
     val exitCode: decision: ExitDecision -> int
 
-    /// Render a parse error for human text output.
-    val renderParseError: error: ParseError -> string
-
-    /// Render a command result as deterministic terminal text.
-    val renderText: result: CommandResult -> string
-
-    /// Render a command result as deterministic JSON with a stable envelope.
-    val renderJson: result: CommandResult -> string
-
-    /// Select the renderer from the request format. Usage errors with no request render as text.
-    val render: result: CommandResult -> string
+    /// Deterministic ordinal-sorted distinct projection of a string list. Shared pure
+    /// vocabulary reused by the parser (scope normalization) and CliRender (`jsonArray`).
+    val stableStrings: values: string list -> string list
 
     /// Initialize the CLI MVU boundary from raw argv.
     val init: argv: string list -> Model * Effect list

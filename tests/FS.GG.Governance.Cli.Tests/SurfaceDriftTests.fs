@@ -33,7 +33,10 @@ let generatedSurface =
       "type Msg"
       "type Effect"
       "type CliPorts"
-      "module Cli" ]
+      "module Cli"
+      "module CliRender"
+      "module ArtifactReading"
+      "module ReviewStore" ]
 
 [<Tests>]
 let tests =

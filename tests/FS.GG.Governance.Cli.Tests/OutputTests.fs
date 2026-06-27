@@ -34,9 +34,9 @@ let tests =
     testList
         "Output"
         [ test "JSON rendering is stable and parseable" {
-              let a = Cli.renderJson result
-              let b = Cli.renderJson result
-              let c = Cli.renderJson result
+              let a = CliRender.renderJson result
+              let b = CliRender.renderJson result
+              let c = CliRender.renderJson result
               Expect.equal a b "repeat 1"
               Expect.equal b c "repeat 2"
               use doc = JsonDocument.Parse(a)
@@ -44,7 +44,7 @@ let tests =
           }
 
           test "text rendering names command, mode, root, exit, budget, and route state" {
-              let text = Cli.renderText { result with Request = Some { request with Format = Text } }
+              let text = CliRender.renderText { result with Request = Some { request with Format = Text } }
               Expect.stringContains text "command: route" "command"
               Expect.stringContains text "mode: inner" "mode"
               Expect.stringContains text "root: ." "root"
