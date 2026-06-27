@@ -32,6 +32,7 @@
     <Compile Include="HumanTextParityTests.fs" />
     <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="CostBudgetWiringTests.fs" />
+    <Compile Include="HandoffWiringTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

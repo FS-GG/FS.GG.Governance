@@ -44,7 +44,10 @@ module Interpreter =
           /// manifest's `currency-enforcement` dial). `realPorts` wires the real read-only sense reusing the
           /// F057 refresh machinery; tests inject a deterministic port. TOTAL & SAFE (catches its own
           /// exceptions ⇒ `[]`, never a fabricated finding, never a crash). `[]` ⇒ byte-identical ship.json.
-          SenseViewCurrency: string -> CE.CurrencyFinding list }
+          SenseViewCurrency: string -> CE.CurrencyFinding list
+          /// F081: locate + read every `readiness/<id>/governance-handoff.json` under `repo` in stable
+          /// `<id>` order. The only I/O the handoff consumer needs; `[]` when none ⇒ byte-identical ship.
+          Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (FR-010/FR-013).
@@ -161,6 +164,8 @@ module Interpreter =
         // empty result ⇒ byte-identical ship.json (FR-004).
         | Loop.SenseViewCurrency repo -> Loop.ViewCurrencySensed(ports.SenseViewCurrency repo)
 
+        | Loop.LoadHandoffs repo -> Loop.HandoffsLoaded(ports.Handoffs repo)
+
     // F25 wiring (064): the real, NORMALIZED provenance senses. Environment is classified from the presence of
     // a generic `CI` marker only (`Ci` vs `Local`) — never a hostname, username, or path. Builder is a fixed,
     // machine-independent tool identity so `provenance.json` is byte-identical across machines and re-runs.
@@ -172,6 +177,32 @@ module Interpreter =
 
     let senseBuilderReal () : FS.GG.Governance.Provenance.Model.BuilderIdentity =
         FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg"
+
+    // F081: the real handoff-location port. Locate every `readiness/<id>/governance-handoff.json` under
+    // `repo` in stable `<id>` (ordinal) order and read its raw JSON. TOTAL & SAFE — any filesystem error
+    // (or absent `readiness/`) yields `[]` (the no-op path), never a throw.
+    let realHandoffs (repo: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
+        try
+            let readinessDir = Path.Combine(repo, "readiness")
+
+            if not (Directory.Exists readinessDir) then
+                []
+            else
+                Directory.GetDirectories readinessDir
+                |> Array.sortWith (fun a b -> String.CompareOrdinal(Path.GetFileName a, Path.GetFileName b))
+                |> Array.choose (fun dir ->
+                    let file = Path.Combine(dir, "governance-handoff.json")
+
+                    if File.Exists file then
+                        Some
+                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
+                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
+                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
+                    else
+                        None)
+                |> Array.toList
+        with _ ->
+            []
 
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo
@@ -186,7 +217,8 @@ module Interpreter =
           SenseEnvironment = senseEnvironmentReal
           SenseBuilder = senseBuilderReal
           // F070: the shared read-only generated-view currency sense (the CurrencySensing core).
-          SenseViewCurrency = CS.senseRepo }
+          SenseViewCurrency = CS.senseRepo
+          Handoffs = realHandoffs }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

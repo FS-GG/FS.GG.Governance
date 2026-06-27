@@ -264,7 +264,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpr
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
       SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -280,7 +281,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
       SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
     { Files = readerOf files
@@ -296,7 +298,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
       SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { Files = readerOf files
@@ -312,7 +315,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       SenseBuilder = fakeSenseBuilder
       SenseRelease = fakeSenseRelease
       SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 let writtenVerify (cap: Capture) : (string * string) option =
     cap.Writes |> List.tryPick (fun (_, p, c) -> if p = "readiness/verify.json" then Some(p, c) else None)
 

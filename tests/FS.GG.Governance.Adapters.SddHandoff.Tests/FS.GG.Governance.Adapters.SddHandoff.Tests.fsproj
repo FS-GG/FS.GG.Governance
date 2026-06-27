@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test-only project (F081). Exercises the SDD→Governance handoff consumer through its PUBLIC
+       surface (the ProjectReference resolves the built library — Principle I). Expecto +
+       YoloDev.Expecto.TestSdk like the repo's other test projects. Real-evidence: on-disk fixture
+       handoffs parsed/mapped through the library and (in the host test projects) folded through the
+       live Config→Gates→Routing→Route→Enforcement→Ship pipeline — no mocks (Constitution V). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Fixtures.fs" />
+    <Compile Include="ReaderTests.fs" />
+    <Compile Include="MappingTests.fs" />
+    <Compile Include="ReadinessGateTests.fs" />
+    <Compile Include="ConsumerTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.SddHandoff/FS.GG.Governance.Adapters.SddHandoff.fsproj" />
+  </ItemGroup>
+
+</Project>

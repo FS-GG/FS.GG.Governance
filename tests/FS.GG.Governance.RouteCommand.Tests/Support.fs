@@ -290,7 +290,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      Handoffs = fun _ -> [] }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -302,7 +303,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      Handoffs = fun _ -> [] }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -314,7 +316,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       Out = capturingSink cap
       Execute = fakeExecPort
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      Handoffs = fun _ -> [] }
 
 /// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -326,7 +329,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       Out = capturingSink cap
       Execute = exec
       SenseCapability = plainCapability
-      RenderReport = noRichRender }
+      RenderReport = noRichRender
+      Handoffs = fun _ -> [] }
 let writtenOf (cap: Capture) (kind: Loop.ArtifactKind) : (string * string) option =
     cap.Writes
     |> List.tryPick (fun (k, p, c) -> if k = kind then Some(p, c) else None)

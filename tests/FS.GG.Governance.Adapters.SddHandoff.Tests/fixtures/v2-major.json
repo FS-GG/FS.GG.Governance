@@ -1,0 +1,16 @@
+{
+  "contractVersion": "2.0.0",
+  "schemaVersion": 2,
+  "evidence": {
+    "nodes": [ { "id": "build:lib", "state": "real" } ],
+    "dependencies": []
+  },
+  "readiness": {
+    "shipDisposition": "shippable",
+    "verificationReadiness": "complete",
+    "blockingDiagnosticIds": [],
+    "counts": {},
+    "perViewState": {}
+  },
+  "governedReferences": []
+}

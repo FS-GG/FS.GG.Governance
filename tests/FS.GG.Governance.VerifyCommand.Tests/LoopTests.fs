@@ -27,10 +27,12 @@ let tests =
               // (SenseReleasePreview ⇒ ReleasePreviewSensed ⇒ LoadCatalog), so the preview is ready at projection.
               // F070: generated-view currency is sensed FIRST in the init batch, so `ViewCurrencyFindings` is
               // populated before either projection path runs (breadth-first driver).
+              // F081: `LoadHandoffs` is FIRST so `HandoffsLoaded` folds (sets `Handoffs`) before the
+              // `Loaded(Valid)` rollup consumes them (breadth-first driver processes a batch in order).
               Expect.equal
                   effExplicit
-                  [ Loop.SenseViewCurrency "."; Loop.SenseProvenance; Loop.SenseReleasePreview "." ]
-                  "ExplicitPaths senses currency, then the preview"
+                  [ Loop.LoadHandoffs "."; Loop.SenseViewCurrency "."; Loop.SenseProvenance; Loop.SenseReleasePreview "." ]
+                  "ExplicitPaths loads handoffs, senses currency, then the preview"
               Expect.equal m.Candidates (Some [ gp "src/a.fs" ]) "candidates set from explicit paths"
           }
 

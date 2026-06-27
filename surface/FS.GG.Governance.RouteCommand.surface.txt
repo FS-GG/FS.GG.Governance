@@ -4,12 +4,13 @@ TYPE FS.GG.Governance.RouteCommand.InterpreterModule
   [Method] Ports realPorts(System.String)
   [NestedType] FS.GG.Governance.RouteCommand.InterpreterModule+Ports
 TYPE FS.GG.Governance.RouteCommand.InterpreterModule+Ports
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit])
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead]])
   [Method] FS.GG.Governance.Snapshot.Ports get_Git()
   [Method] FreshnessSensor get_Freshness()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_Execute()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] get_RenderReport()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] get_SenseCapability()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead]] get_Handoffs()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] get_Write()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] get_Store()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] get_Files()
@@ -20,6 +21,7 @@ TYPE FS.GG.Governance.RouteCommand.InterpreterModule+Ports
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] Execute
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit] RenderReport
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability] SenseCapability
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead]] Handoffs
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]] Write
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]] Store
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] Files
@@ -91,6 +93,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [Method] Boolean get_IsEmitSummary()
   [Method] Boolean get_IsExecuteGates()
   [Method] Boolean get_IsLoadCatalog()
+  [Method] Boolean get_IsLoadHandoffs()
   [Method] Boolean get_IsLoadStore()
   [Method] Boolean get_IsPersistStore()
   [Method] Boolean get_IsSenseFreshness()
@@ -99,6 +102,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [Method] Effect NewEmitSummary(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,System.String]], Boolean)
   [Method] Effect NewExecuteGates(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]])
   [Method] Effect NewLoadCatalog(System.String)
+  [Method] Effect NewLoadHandoffs(System.String)
   [Method] Effect NewLoadStore(System.String)
   [Method] Effect NewPersistStore(System.String, System.String)
   [Method] Effect NewSenseFreshness(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], System.Tuple`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision],Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision]])
@@ -114,6 +118,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+EmitSummary
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+ExecuteGates
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadCatalog
+  [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadHandoffs
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadStore
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+PersistStore
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Effect+SenseFreshness
@@ -123,6 +128,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect
   [Property] Boolean IsEmitSummary
   [Property] Boolean IsExecuteGates
   [Property] Boolean IsLoadCatalog
+  [Property] Boolean IsLoadHandoffs
   [Property] Boolean IsLoadStore
   [Property] Boolean IsPersistStore
   [Property] Boolean IsSenseFreshness
@@ -140,6 +146,9 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+ExecuteGates
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]] get_Item()
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateExecution.ModelModule+GateCommand]] Item
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadCatalog
+  [Method] System.String get_repo()
+  [Property] System.String repo
+TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadHandoffs
   [Method] System.String get_repo()
   [Property] System.String repo
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+LoadStore
@@ -162,6 +171,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Effect+Tags
   [Field] Int32 EmitSummary
   [Field] Int32 ExecuteGates
   [Field] Int32 LoadCatalog
+  [Field] Int32 LoadHandoffs
   [Field] Int32 LoadStore
   [Field] Int32 PersistStore
   [Field] Int32 SenseFreshness
@@ -210,7 +220,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+ExitDecision+Tags
   [Field] Int32 ToolError
   [Field] Int32 UsageError'
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Model
-  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Route.ModelModule+RouteResult], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], ProductSurfaceReport, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]], Microsoft.FSharp.Collections.FSharpList`1[System.String], Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteCommand.LoopModule+Diagnostic], ExitDecision)
+  [Constructor] Void .ctor(RunRequest, Phase, Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath]], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Route.ModelModule+RouteResult], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], ProductSurfaceReport, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]], Microsoft.FSharp.Collections.FSharpList`1[System.String], Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteCommand.LoopModule+Diagnostic], ExitDecision)
   [Method] Boolean Equals(Model)
   [Method] Boolean Equals(Model, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -223,6 +233,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Model
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] get_Handoffs()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] get_SelectedGates()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteCommand.LoopModule+Diagnostic] get_Diagnostics()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_CacheNotes()
@@ -242,6 +253,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Model
   [Property] Boolean PersistAcked
   [Property] Boolean StoreDegraded
   [Property] ExitDecision Exit
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] Handoffs
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] SelectedGates
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RouteCommand.LoopModule+Diagnostic] Diagnostics
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] CacheNotes
@@ -266,6 +278,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg
   [Method] Boolean get_IsEmitted()
   [Method] Boolean get_IsFreshnessSensed()
   [Method] Boolean get_IsGatesExecuted()
+  [Method] Boolean get_IsHandoffsLoaded()
   [Method] Boolean get_IsLoaded()
   [Method] Boolean get_IsSensed()
   [Method] Boolean get_IsStoreLoaded()
@@ -279,6 +292,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg
   [Method] Int32 get_Tag()
   [Method] Msg NewFreshnessSensed(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts,System.String])
   [Method] Msg NewGatesExecuted(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]])
+  [Method] Msg NewHandoffsLoaded(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
   [Method] Msg NewLoaded(Validation)
   [Method] Msg NewSensed(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String])
   [Method] Msg NewStoreLoaded(Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore,System.String])
@@ -289,6 +303,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg
   [Method] System.String ToString()
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+FreshnessSensed
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+GatesExecuted
+  [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+HandoffsLoaded
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+Loaded
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+Sensed
   [NestedType] FS.GG.Governance.RouteCommand.LoopModule+Msg+StoreLoaded
@@ -299,6 +314,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg
   [Property] Boolean IsEmitted
   [Property] Boolean IsFreshnessSensed
   [Property] Boolean IsGatesExecuted
+  [Property] Boolean IsHandoffsLoaded
   [Property] Boolean IsLoaded
   [Property] Boolean IsSensed
   [Property] Boolean IsStoreLoaded
@@ -313,6 +329,9 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg+FreshnessSensed
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg+GatesExecuted
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]] get_Item()
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]] Item
+TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg+HandoffsLoaded
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] Item
 TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg+Loaded
   [Method] Validation get_Item()
   [Property] Validation Item
@@ -330,6 +349,7 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+Msg+Tags
   [Field] Int32 Emitted
   [Field] Int32 FreshnessSensed
   [Field] Int32 GatesExecuted
+  [Field] Int32 HandoffsLoaded
   [Field] Int32 Loaded
   [Field] Int32 Sensed
   [Field] Int32 StoreLoaded

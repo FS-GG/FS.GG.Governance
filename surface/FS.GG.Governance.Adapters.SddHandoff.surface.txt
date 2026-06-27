@@ -1,0 +1,255 @@
+TYPE FS.GG.Governance.Adapters.SddHandoff.ConsumerModule
+  [Method] ConsumeResult consume(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ConsumerModule+ConsumeResult
+TYPE FS.GG.Governance.Adapters.SddHandoff.ConsumerModule+ConsumeResult
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic])
+  [Method] Boolean Equals(ConsumeResult)
+  [Method] Boolean Equals(ConsumeResult, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ConsumeResult)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] get_Gates()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate] get_Selected()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] Gates
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Route.ModelModule+SelectedGate] Selected
+TYPE FS.GG.Governance.Adapters.SddHandoff.MappingModule
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Kernel.EvidenceState],FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] effectiveStates(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,FS.GG.Governance.Kernel.EvidenceState]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] System.Tuple`2[Microsoft.FSharp.Core.FSharpResult`2[System.Tuple`2[Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,FS.GG.Governance.Kernel.EvidenceState]],Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]]],FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic]] mapEvidence(System.String, EvidenceBlock)
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule
+  [Method] Int32 get_supportedContractMajor()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredState
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+DiagnosticCause
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+EvidenceBlock
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
+  [Property] Int32 supportedContractMajor
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode
+  [Constructor] Void .ctor(System.String, DeclaredState, Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] Boolean Equals(DeclaredNode)
+  [Method] Boolean Equals(DeclaredNode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Stale()
+  [Method] DeclaredState get_State()
+  [Method] Int32 CompareTo(DeclaredNode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Rationale()
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Property] Boolean Stale
+  [Property] DeclaredState State
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Rationale
+  [Property] System.String Id
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredState
+  [Method] Boolean Equals(DeclaredState)
+  [Method] Boolean Equals(DeclaredState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAcceptedDeferral()
+  [Method] Boolean get_IsDeferred()
+  [Method] Boolean get_IsFailed()
+  [Method] Boolean get_IsPending()
+  [Method] Boolean get_IsReal()
+  [Method] Boolean get_IsSkipped()
+  [Method] Boolean get_IsSynthetic()
+  [Method] DeclaredState get_AcceptedDeferral()
+  [Method] DeclaredState get_Deferred()
+  [Method] DeclaredState get_Failed()
+  [Method] DeclaredState get_Pending()
+  [Method] DeclaredState get_Real()
+  [Method] DeclaredState get_Skipped()
+  [Method] DeclaredState get_Synthetic()
+  [Method] Int32 CompareTo(DeclaredState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredState+Tags
+  [Property] Boolean IsAcceptedDeferral
+  [Property] Boolean IsDeferred
+  [Property] Boolean IsFailed
+  [Property] Boolean IsPending
+  [Property] Boolean IsReal
+  [Property] Boolean IsSkipped
+  [Property] Boolean IsSynthetic
+  [Property] DeclaredState AcceptedDeferral
+  [Property] DeclaredState Deferred
+  [Property] DeclaredState Failed
+  [Property] DeclaredState Pending
+  [Property] DeclaredState Real
+  [Property] DeclaredState Skipped
+  [Property] DeclaredState Synthetic
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredState+Tags
+  [Field] Int32 AcceptedDeferral
+  [Field] Int32 Deferred
+  [Field] Int32 Failed
+  [Field] Int32 Pending
+  [Field] Int32 Real
+  [Field] Int32 Skipped
+  [Field] Int32 Synthetic
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic
+  [Constructor] Void .ctor(DiagnosticCause, System.String, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DiagnosticCause get_Cause()
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Method] System.String get_Source()
+  [Property] DiagnosticCause Cause
+  [Property] System.String Message
+  [Property] System.String Source
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DiagnosticCause
+  [Method] Boolean Equals(DiagnosticCause)
+  [Method] Boolean Equals(DiagnosticCause, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAutoSyntheticDeclared()
+  [Method] Boolean get_IsMalformed()
+  [Method] Boolean get_IsStaleEvidence()
+  [Method] Boolean get_IsVersionMismatch()
+  [Method] DiagnosticCause get_AutoSyntheticDeclared()
+  [Method] DiagnosticCause get_Malformed()
+  [Method] DiagnosticCause get_StaleEvidence()
+  [Method] DiagnosticCause get_VersionMismatch()
+  [Method] Int32 CompareTo(DiagnosticCause)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+DiagnosticCause+Tags
+  [Property] Boolean IsAutoSyntheticDeclared
+  [Property] Boolean IsMalformed
+  [Property] Boolean IsStaleEvidence
+  [Property] Boolean IsVersionMismatch
+  [Property] DiagnosticCause AutoSyntheticDeclared
+  [Property] DiagnosticCause Malformed
+  [Property] DiagnosticCause StaleEvidence
+  [Property] DiagnosticCause VersionMismatch
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DiagnosticCause+Tags
+  [Field] Int32 AutoSyntheticDeclared
+  [Field] Int32 Malformed
+  [Field] Int32 StaleEvidence
+  [Field] Int32 VersionMismatch
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+EvidenceBlock
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] Boolean Equals(EvidenceBlock)
+  [Method] Boolean Equals(EvidenceBlock, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EvidenceBlock)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode] get_Nodes()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_Dependencies()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode] Nodes
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Dependencies
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Method] Boolean Equals(GovernedReference)
+  [Method] Boolean Equals(GovernedReference, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(GovernedReference)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Paths()
+  [Method] System.String ToString()
+  [Method] System.String get_WorkItem()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Paths
+  [Property] System.String WorkItem
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
+  [Constructor] Void .ctor(System.String, Int32, EvidenceBlock, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference])
+  [Method] Boolean Equals(Handoff)
+  [Method] Boolean Equals(Handoff, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EvidenceBlock get_Evidence()
+  [Method] Int32 CompareTo(Handoff)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_SchemaVersion()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference] get_GovernedReferences()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock] get_Readiness()
+  [Method] System.String ToString()
+  [Method] System.String get_ContractVersion()
+  [Property] EvidenceBlock Evidence
+  [Property] Int32 SchemaVersion
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference] GovernedReferences
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock] Readiness
+  [Property] System.String ContractVersion
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
+  [Constructor] Void .ctor(System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.Int32]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
+  [Method] Boolean Equals(ReadinessBlock)
+  [Method] Boolean Equals(ReadinessBlock, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReadinessBlock)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_BlockingDiagnosticIds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.Int32]] get_Counts()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_PerViewState()
+  [Method] System.String ToString()
+  [Method] System.String get_ShipDisposition()
+  [Method] System.String get_VerificationReadiness()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] BlockingDiagnosticIds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.Int32]] Counts
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] PerViewState
+  [Property] System.String ShipDisposition
+  [Property] System.String VerificationReadiness
+TYPE FS.GG.Governance.Adapters.SddHandoff.ReaderModule
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff,FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] parse(HandoffRead)
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead
+TYPE FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(HandoffRead)
+  [Method] Boolean Equals(HandoffRead, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(HandoffRead)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Json()
+  [Method] System.String get_Source()
+  [Property] System.String Json
+  [Property] System.String Source
+TYPE FS.GG.Governance.Adapters.SddHandoff.ReadinessModule
+  [Method] Gate toGate(System.String, ReadinessBlock)

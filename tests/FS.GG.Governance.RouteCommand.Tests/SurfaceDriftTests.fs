@@ -99,6 +99,11 @@ let tests =
                   || name = "FS.GG.Governance.Findings"
                   || name = "FS.GG.Governance.Gates"
                   || name = "FS.GG.Governance.Route"
+                  // F081 (research D6): the SDD→Governance handoff CONSUMER. The three verdict hosts each
+                  // gain ONE new edge to this `Adapters.*` leaf so a produced handoff drives the verdict via
+                  // the gate pipeline. A pure value/fold leaf (Kernel/Config/Gates/Route only), so the edge
+                  // keeps the graph acyclic and the pure/impure split. The only permitted `Adapters.*` edge.
+                  || name = "FS.GG.Governance.Adapters.SddHandoff"
                   || name = "FS.GG.Governance.RouteJson"
                   || name = "FS.GG.Governance.GatesJson"
                   // F23: the edge-side product-surface classification (classify) + its additive route.json embed.
@@ -152,7 +157,9 @@ let tests =
                       n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F081 (research D6): the SDD-handoff consumer is the ONE permitted Adapters.* edge;
+                      // every OTHER adapter stays forbidden on the verdict hosts.
+                      || (n.StartsWith "FS.GG.Governance.Adapters" && n <> "FS.GG.Governance.Adapters.SddHandoff")
                       // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the route
                       // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
                       || n = "Spectre.Console")

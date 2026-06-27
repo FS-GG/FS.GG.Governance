@@ -19,6 +19,7 @@ open FS.GG.Governance.Snapshot.Model      // RepoSnapshot
 open FS.GG.Governance.Route.Model          // RouteResult
 open FS.GG.Governance.Config              // Validation (Config.Model)
 open FS.GG.Governance.Gates.Model          // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.Adapters.SddHandoff   // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
 open FS.GG.Governance.FreshnessKey.Model    // Revision (F046 — base/head, passed through from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
 open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore (F046 — the read-only reuse store join input)
@@ -109,6 +110,9 @@ module Loop =
         /// `ReportView` + operational lines for the `Rich` path the edge selects via `selectMode`
         /// (`senseCapability explicitPlain`). The mode decision is at the edge, never here (FR-004).
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        /// F081: locate + read every `readiness/<id>/governance-handoff.json` under `repo` (the impure edge).
+        /// Result fed back as `HandoffsLoaded`. `[]` (no handoff) ⇒ byte-identical route (FR-001).
+        | LoadHandoffs of repo: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal cache
@@ -127,6 +131,9 @@ module Loop =
         /// `update` folds F049 `capture` per record, builds the per-gate `GateOutcome`s, projects the
         /// document with the execution embed, and emits the persist-grown-store effect.
         | GatesExecuted of (GateId * CommandRecord) list
+        /// F081: the raw located handoff reads (path + JSON), in stable `<id>` order. `update` parses + maps
+        /// them through `Consumer.consume` (PURE) and folds the derived gates into the registry + selection.
+        | HandoffsLoaded of FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
@@ -178,6 +185,10 @@ module Loop =
           /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
           /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
           PersistAcked: bool
+          /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
+          /// `Loaded(Valid)` projection — the derived handoff gates union into the registry + selection.
+          /// `[]` ⇒ identity fold ⇒ byte-identical gates.json/route.json (FR-001, SC-003).
+          Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

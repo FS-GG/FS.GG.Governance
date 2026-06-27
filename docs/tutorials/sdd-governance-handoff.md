@@ -31,7 +31,7 @@ which records Governance's accepted position.
 | `autoSynthetic` | **invalid in a produced handoff**; Governance derives it via `Evidence.effective` (taint closure) | ✓ "SDD never emits `autoSynthetic` (computed-only)… Governance's taint closure derives [it]" |
 | `stale` | underlying declared state **+** a `staleEvidence` diagnostic (Governance-owned freshness) | ✓ "`stale` maps to the underlying declared state **plus** a `staleEvidence` diagnostic" |
 | `governedReferences[*]` | optional routing **enrichment**; Governance MAY ignore (F016 snapshot is primary) | ✓ "`governedReferences[*]` are **optional routing enrichment**; Governance MAY ignore" |
-| `readiness.*` (`shipDisposition`, `verificationReadiness`, counts, `blockingDiagnosticIds`, `perViewState`) | **advisory declared inputs** to a Governance decision, never an enforcement verdict | ✓ "Merge-boundary readiness … are **advisory declared inputs** … never an enforcement verdict" |
+| `readiness.*` (`shipDisposition`, `verificationReadiness`, counts, `blockingDiagnosticIds`, `perViewState`) | a **first-class gate-registry entry** — blocking when the disposition is non-shippable **or** `blockingDiagnosticIds` is non-empty, advisory otherwise; participates in selection/severity/roll-up like any other gate | ✓ ADR 0002 (updated by F081): "become a **first-class gate-registry entry** (F018)" — supersedes the original "advisory declared inputs" wording (FR-009/FR-015) |
 | unknown `contractVersion` **major** | version-mismatch finding, never a silent misread (pin v1.x) | ✓ "A consumer that does not recognize the handoff's `contractVersion` **major** MUST report a version-mismatch finding" |
 
 **Mapping-drift guard (SC-008).** Every row above carries an explicit
@@ -52,11 +52,15 @@ distort taint closure at the boundary.
 
 ## Scope: what ships here, and what does not
 
-> **No consumer code ships in this repository (T022).** The
-> `governance-handoff.json` reader/parser, the `evidence.nodes` → `Evidence.build`
-> adapter, and the `governedReferences` → routing fold are **ADR 0002's queued
-> Governance-side work**, tracked for a future feature — none ships here. This
-> tutorial is explanatory and cross-referential only.
+> **The consumer now ships (F081).** As of `081-sdd-handoff-consumer`, the
+> `governance-handoff.json` reader/parser (`Reader.parse`), the `evidence.nodes` →
+> `Evidence.build` adapter (`Mapping`), and the readiness → gate projection
+> (`Readiness.toGate`) ship in `FS.GG.Governance.Adapters.SddHandoff`, and the
+> three verdict hosts (`route`/`ship`/`verify`) fold the derived gates into the
+> verdict — a produced handoff now drives a Governance verdict. ADR 0002's queue
+> items #1, #2, and #4 are resolved there. This tutorial documents the accepted
+> *mapping* (the contract Governance reads against); the running code lives in
+> F081, not here.
 
 > **Production wiring is sibling-owned (FR-013).** Wiring the template-provider
 > seam into a production `fsgg-sdd init` is owned by the sibling **`FS.GG.SDD`**

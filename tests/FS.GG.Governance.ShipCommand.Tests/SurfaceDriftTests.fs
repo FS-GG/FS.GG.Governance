@@ -100,6 +100,10 @@ let tests =
                   || name = "FS.GG.Governance.Findings"
                   || name = "FS.GG.Governance.Gates"
                   || name = "FS.GG.Governance.Route"
+                  // F081 (research D6): the SDD→Governance handoff CONSUMER — the ONE new Adapters.* edge each
+                  // verdict host gains so a produced handoff drives the verdict via the gate pipeline. A pure
+                  // value/fold leaf (Kernel/Config/Gates/Route only), keeping the graph acyclic.
+                  || name = "FS.GG.Governance.Adapters.SddHandoff"
                   || name = "FS.GG.Governance.Enforcement"
                   || name = "FS.GG.Governance.Ship"
                   || name = "FS.GG.Governance.AuditJson"
@@ -164,7 +168,9 @@ let tests =
                       || n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F081 (research D6): the SDD-handoff consumer is the ONE permitted Adapters.* edge;
+                      // every OTHER adapter stays forbidden on the verdict hosts.
+                      || (n.StartsWith "FS.GG.Governance.Adapters" && n <> "FS.GG.Governance.Adapters.SddHandoff")
                       // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the ship
                       // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
                       || n = "Spectre.Console")

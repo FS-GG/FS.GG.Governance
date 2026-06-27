@@ -69,7 +69,12 @@ module Interpreter =
           /// F070: sense generated-view currency for `repo`, returning the stale-view findings gated by the
           /// manifest's `currency-enforcement` dial. `realPorts` reuses the F057 refresh machinery; tests
           /// inject a deterministic port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`). `[]` ⇒ byte-identical.
-          SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list }
+          SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
+          /// F081: locate every `readiness/<id>/governance-handoff.json` under `repo` in stable `<id>`
+          /// order and read each one's raw JSON — the ONLY I/O the handoff consumer needs. Returns `[]`
+          /// when none present (the no-op path). `realPorts` reads the real filesystem; tests inject a
+          /// deterministic in-memory port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`).
+          Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

@@ -18,6 +18,8 @@ open FS.GG.Governance.Findings.Model       // findingIdToken
 open FS.GG.Governance.Gates               // Gates.buildRegistry
 open FS.GG.Governance.Gates.Model          // Gate, gateIdValue
 open FS.GG.Governance.Route               // Route.select
+open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
+open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile, Severity, Recognized, recognizeMode, recognizeProfile
 open FS.GG.Governance.Ship                // Ship.rollup
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
@@ -106,6 +108,7 @@ module Loop =
         | SenseProvenance
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
         | SenseViewCurrency of repo: string
+        | LoadHandoffs of repo: string
 
     type Msg =
         | Begin
@@ -118,6 +121,7 @@ module Loop =
         | GatesExecuted of (GateId * CommandRecord) list
         | ProvenanceSensed of environment: EnvironmentClass * builder: BuilderIdentity
         | ViewCurrencySensed of findings: CE.CurrencyFinding list
+        | HandoffsLoaded of Reader.HandoffRead list
         | Emitted
 
     type Diagnostic =
@@ -153,6 +157,7 @@ module Loop =
           CacheDecision: CacheDecisionReport option
           Audit: AuditSnapshot option
           ViewCurrencyFindings: CE.CurrencyFinding list
+          Handoffs: Reader.HandoffRead list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -311,6 +316,7 @@ module Loop =
               CacheDecision = None
               Audit = None
               ViewCurrencyFindings = []
+              Handoffs = []
               Diagnostics = []
               Exit = Success }
 
@@ -321,10 +327,14 @@ module Loop =
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely (research D4): set candidates here and go straight
         // to the catalog load — the faked git Ports is never consulted for a diff.
+        // F081: `LoadHandoffs` is FIRST so `HandoffsLoaded` folds (sets `Handoffs`) before the
+        // `Loaded(Valid)` rollup consumes them (the breadth-first driver processes a batch in order).
         | ExplicitPaths paths ->
-            { model with Candidates = Some paths }, [ SenseViewCurrency request.Repo; SenseProvenance; LoadCatalog request.Repo ]
+            { model with Candidates = Some paths },
+            [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; LoadCatalog request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
+        | DefaultRange ->
+            model, [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws (FR-004/FR-013) ──
 
@@ -651,7 +661,23 @@ module Loop =
                 let report = Routing.route facts candidates
                 let registry = Gates.buildRegistry facts
                 let findings = Findings.findUnknownGovernedPaths facts report
-                let result = Route.select registry report findings
+                let routed = Route.select registry report findings
+
+                // F081: union the handoff gates (derived from the located reads) into the routed selection
+                // BEFORE `Ship.rollup`, so a blocking declared evidence/readiness gate enforces via the SAME
+                // `deriveEffectiveSeverity` machinery as any other gate. Absent handoff ⇒ the fold is identity
+                // (no re-sort) ⇒ byte-identical ship.json (FR-001, SC-003).
+                let consumed = Consumer.consume model.Handoffs
+
+                let result =
+                    match consumed.Selected with
+                    | [] -> routed
+                    | extra ->
+                        { routed with
+                            SelectedGates =
+                                routed.SelectedGates @ extra
+                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+
                 let decision = Ship.rollup result model.Request.Mode model.Request.Profile
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
@@ -742,6 +768,9 @@ module Loop =
             // additive `generatedViews` projection happen in `projectExecuted`, which reads this field. Pure
             // state, no phase change. `[]` (unconfigured) ⇒ identity fold ⇒ byte-identical ship.json (FR-004).
             | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
+
+            // F081: store the located handoff reads (pure); they are consumed at the `Loaded(Valid)` fold.
+            | HandoffsLoaded reads -> { model with Handoffs = reads }, []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs

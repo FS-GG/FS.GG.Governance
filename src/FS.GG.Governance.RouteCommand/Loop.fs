@@ -16,6 +16,7 @@ open FS.GG.Governance.Gates               // Gates.buildRegistry, gateIdValue
 open FS.GG.Governance.Gates.Model         // Gate, GateId
 open FS.GG.Governance.Route               // Route.select
 open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate, SelectingPath, CostRollup
+open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume (handoff gates)
 open FS.GG.Governance.ProductSurfaces       // ProductSurfaces.classify (F23 — edge-side product-surface classification)
 open FS.GG.Governance.ProductSurfaces.Model  // ProductSurfaceReport, ProductClassification, TierAlternative
 open FS.GG.Governance.RouteJson           // RouteJson.ofRouteResult, schemaVersion
@@ -89,6 +90,7 @@ module Loop =
         | PersistStore of path: string * content: string
         | ExecuteGates of (GateId * GateCommand) list
         | EmitSummary of text: string * human: (ReportView.ReportView * string) option * explicitPlain: bool
+        | LoadHandoffs of repo: string
 
     type Msg =
         | Begin
@@ -99,6 +101,7 @@ module Loop =
         | Wrote of kind: ArtifactKind * result: Result<unit, string>
         | StorePersisted of Result<unit, string>
         | GatesExecuted of (GateId * CommandRecord) list
+        | HandoffsLoaded of Reader.HandoffRead list
         | Emitted
 
     type Diagnostic =
@@ -131,6 +134,7 @@ module Loop =
           CacheNotes: string list
           StoreDegraded: bool
           PersistAcked: bool
+          Handoffs: Reader.HandoffRead list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -252,15 +256,19 @@ module Loop =
               CacheNotes = []
               StoreDegraded = false
               PersistAcked = false
+              Handoffs = []
               Diagnostics = []
               Exit = Success }
 
+        // F081: `LoadHandoffs` is FIRST so `HandoffsLoaded` folds (sets `Handoffs`) before the
+        // `Loaded(Valid)` projection consumes them (the breadth-first driver processes a batch in order).
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely (research D4): set candidates here and go straight
         // to the catalog load — the faked git Ports is never consulted for a diff (US2 AS1).
-        | ExplicitPaths paths -> { model with Candidates = Some paths }, [ LoadCatalog request.Repo ]
+        | ExplicitPaths paths ->
+            { model with Candidates = Some paths }, [ LoadHandoffs request.Repo; LoadCatalog request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseScope request.Scope ]
+        | DefaultRange -> model, [ LoadHandoffs request.Repo; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws (FR-004/FR-013) ──
 
@@ -411,6 +419,9 @@ module Loop =
             match msg with
             | Begin -> model, []
 
+            // F081: store the located handoff reads (pure); consumed at the `Loaded(Valid)` projection.
+            | HandoffsLoaded reads -> { model with Handoffs = reads }, []
+
             | Sensed(Ok snapshot) ->
                 let candidates = snapshot.Changed |> List.map (fun c -> c.Path)
 
@@ -431,9 +442,26 @@ module Loop =
                 // senses (NO write is emitted here anymore — it waits for `tryProject`).
                 let candidates = model.Candidates |> Option.defaultValue []
                 let report = Routing.route facts candidates
-                let registry = Gates.buildRegistry facts
+                let registry0 = Gates.buildRegistry facts
                 let findings = Findings.findUnknownGovernedPaths facts report
-                let result = Route.select registry report findings
+                let routed = Route.select registry0 report findings
+
+                // F081: union the handoff gates into BOTH the registry (so they appear in gates.json and are
+                // severity-resolvable) and the route selection (so they appear in route.json's selected gates).
+                // Absent handoff ⇒ identity (no re-sort) ⇒ byte-identical gates.json/route.json (FR-001, SC-003).
+                let consumed = Consumer.consume model.Handoffs
+
+                let registry, result =
+                    match consumed.Gates, consumed.Selected with
+                    | [], [] -> registry0, routed
+                    | extraGates, extraSelected ->
+                        { registry0 with
+                            Gates = registry0.Gates @ extraGates |> List.sortBy (fun g -> gateIdValue g.Id) },
+                        { routed with
+                            SelectedGates =
+                                routed.SelectedGates @ extraSelected
+                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+
                 let gatesDoc = GatesJson.ofGateRegistry registry
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 

@@ -48,6 +48,8 @@
     <ProjectReference Include="../FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <!-- F081: the SDD→Governance handoff consumer (parse + map + readiness → gates folded before rollup) -->
+    <ProjectReference Include="../FS.GG.Governance.Adapters.SddHandoff/FS.GG.Governance.Adapters.SddHandoff.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />

@@ -25,6 +25,7 @@ open FS.GG.Governance.Snapshot.Model           // RepoSnapshot
 open FS.GG.Governance.Enforcement.Enforcement  // Profile
 open FS.GG.Governance.Ship.Model               // ShipDecision
 open FS.GG.Governance.Gates.Model              // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.Adapters.SddHandoff       // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
 open FS.GG.Governance.FreshnessKey.Model        // Revision (F046 — base/head from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
 open FS.GG.Governance.EvidenceReuse.Model       // ReuseStore (F046 — the read-only reuse store join input)
@@ -156,6 +157,9 @@ module Loop =
         /// version, decide currency, apply the manifest's `currency-enforcement` gate. Fed back as
         /// `ViewCurrencySensed`. `[]` (unconfigured / absent manifest) ⇒ byte-identical verify.json (FR-004).
         | SenseViewCurrency of repo: string
+        /// F081: locate + read every `readiness/<id>/governance-handoff.json` under `repo` (the impure edge).
+        /// Result fed back as `HandoffsLoaded`. `[]` (no handoff) ⇒ byte-identical verify (FR-001).
+        | LoadHandoffs of repo: string
 
     /// External results the interpreter feeds back into `update`. `FreshnessSensed`/`StoreLoaded` carry the
     /// F046 sense results; an `Error` on either DEGRADES (substitutes a safe default + a non-fatal currency
@@ -187,6 +191,9 @@ module Loop =
         /// them into the verdict (via the existing `deriveEffectiveSeverity` — no truth-table change) and
         /// projects them additively into verify.json's `generatedViews` array. `[]` ⇒ byte-identical (FR-004).
         | ViewCurrencySensed of findings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
+        /// F081: the raw located handoff reads (path + JSON), in stable `<id>` order. `update` parses + maps
+        /// them through `Consumer.consume` (PURE) and folds the derived gates into the verdict before rollup.
+        | HandoffsLoaded of FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
         | Emitted
 
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying NO
@@ -253,6 +260,10 @@ module Loop =
           /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
           /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).
           ViewCurrencyFindings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
+          /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
+          /// `Loaded(Valid)` fold — the derived handoff gates union into the selection before `Ship.rollup`
+          /// (at Verify) and before the empty-selection short-circuit. `[]` ⇒ byte-identical verify (FR-001).
+          Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 

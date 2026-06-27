@@ -53,27 +53,38 @@ change:
   ignore them and route from its own F016 snapshot facts. Accepted — they are
   cheap work-item→path provenance, not the primary routing source.
 - Merge-boundary readiness (`shipDisposition`, `verificationReadiness`,
-  `blockingDiagnosticIds`, counts, `perViewState`) are **advisory declared inputs**
-  to a Governance decision, never an enforcement verdict. Accepted — whether SDD
-  readiness becomes an F018 gate-registry entry or an F010 merge-fence condition is
-  a Governance-side decision (see queued work below).
+  `blockingDiagnosticIds`, counts, `perViewState`) becomes a **first-class
+  gate-registry entry** (F018) that participates in selection, severity
+  resolution, and roll-up like any other gate — blocking when the disposition is
+  non-shippable **or** `blockingDiagnosticIds` is non-empty, advisory otherwise.
+  **Superseded in part by F081** (`081-sdd-handoff-consumer`, queue item #4 below):
+  this row originally read "advisory declared inputs … never an enforcement
+  verdict" with the gate-vs-merge-fence choice left open; F081 resolves it in
+  favour of the **gate-registry binding** (FR-009/FR-015). No `contractVersion`
+  bump — only Governance's *consumption* posture changed; the document shape and
+  the `governance-handoff@1` registry entry are unchanged.
 
 ## Governance-side consumer work (queued — does not block SDD)
 
-Tracked for a future Governance feature; none blocks the SDD handoff feature:
+Tracked for a future Governance feature; none blocks the SDD handoff feature.
+**Items #1, #2, and #4 are RESOLVED by F081** (`081-sdd-handoff-consumer`), which
+ships the consumer (`FS.GG.Governance.Adapters.SddHandoff`):
 
-1. A reader/parser for `readiness/<id>/governance-handoff.json` (an F008-style
-   `ReadArtifact` + parse, parallel to F014's `.fsgg` loader), pinned to
-   `contractVersion` 1.x. A consumer that does not recognize the handoff's
-   `contractVersion` **major** MUST report a version-mismatch finding rather than
-   misread the document (Constitution VI/VIII).
-2. An SDD-native adapter mapping `evidence.nodes` + `dependencies` into
-   `Evidence.build` and running `Evidence.effective` (parallel to the F10 SpecKit
-   adapter over `TaskDependsOn`).
+1. **✅ Resolved (F081).** A reader/parser for
+   `readiness/<id>/governance-handoff.json` (`Reader.parse`), pinned to
+   `contractVersion` major 1.x — an unrecognized major yields a version-mismatch
+   diagnostic rather than a silent misread (Constitution VI/VIII).
+2. **✅ Resolved (F081).** A pure adapter (`Mapping`) maps `evidence.nodes` +
+   `dependencies` into `Evidence.build` and runs `Evidence.effective` for the
+   taint closure (parallel to the F10 SpecKit adapter over `TaskDependsOn`).
 3. Optional: fold `governedReferences` into `Routing.route` inputs, or ignore in
-   favour of F016 snapshot facts.
-4. A decision on whether SDD merge-boundary readiness becomes a gate-registry
-   entry (F018) or a merge-fence condition (F010).
+   favour of F016 snapshot facts. **(F081 uses them as optional `SelectingPath`
+   enrichment on the handoff gates when present; correctness is independent of
+   them — FR-010.)**
+4. **✅ Resolved (F081, FR-009/FR-015).** SDD merge-boundary readiness becomes a
+   **first-class gate-registry entry** (F018), NOT an F010 merge-fence condition —
+   it participates in selection, severity resolution, and roll-up like any other
+   gate (the Decision row above is updated to match).
 
 ## Versioning posture
 

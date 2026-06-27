@@ -272,7 +272,8 @@ let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) (req: Loo
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 /// Faked ports with explicit F046 sensing ports (for the US3 degrade probes).
 let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -287,7 +288,8 @@ let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 /// Faked ports whose ArtifactWriter fails for the given paths (the unwritable-output case).
 let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -302,7 +304,8 @@ let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Captu
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 
 /// Faked ports with an explicit execution port + sensing ports (for the US1/US2/US4 execution scenarios).
 let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) (req: Loop.RunRequest) : Interpreter.Ports =
@@ -317,7 +320,8 @@ let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSe
       RenderReport = noRichRender
       SenseEnvironment = fakeSenseEnvironment
       SenseBuilder = fakeSenseBuilder
-      SenseViewCurrency = fakeSenseViewCurrency }
+      SenseViewCurrency = fakeSenseViewCurrency
+      Handoffs = fun _ -> [] }
 let writtenAudit (cap: Capture) : (string * string) option =
     cap.Writes |> List.tryPick (fun (_, p, c) -> if p = "readiness/audit.json" then Some(p, c) else None)
 

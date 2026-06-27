@@ -108,7 +108,9 @@ let tests =
                       || n = "FS.GG.Governance.Kernel"
                       || n = "FS.GG.Governance.Host"
                       || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters"
+                      // F081 (research D6): the SDD-handoff consumer is the ONE permitted Adapters.* edge each
+                      // verdict host gains (so a produced handoff drives the verdict); other adapters stay forbidden.
+                      || (n.StartsWith "FS.GG.Governance.Adapters" && n <> "FS.GG.Governance.Adapters.SddHandoff")
                       // F27 wiring (063), FR-011/SC-007: Spectre stays confined to HumanRender — the verify host
                       // reaches rich rendering through HumanRender's emitStdout, never a direct reference.
                       || n = "Spectre.Console")

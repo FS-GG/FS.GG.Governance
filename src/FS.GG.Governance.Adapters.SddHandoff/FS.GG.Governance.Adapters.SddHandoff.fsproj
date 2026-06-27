@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- F081 SDD→Governance handoff CONSUMER (ADR-0002 queued work). A pure value/fold layer
+       that parses a produced `readiness/<id>/governance-handoff.json`, maps its declared
+       evidence through the kernel `Evidence` model (ADR-0002 row-for-row), and projects the
+       evidence AND merge-boundary readiness into typed `Gate`/`SelectedGate` registry entries
+       the three verdict hosts fold into `RouteResult.SelectedGates` before `Ship.rollup`
+       (research D3). It sits in the established `Adapters.*` family (D1).
+
+       It takes ProjectReferences ONLY on the kernel (`Evidence`), `Config`, `Gates`, and
+       `Route` libraries it maps onto (data-model §7) and adds ZERO PackageReference
+       (`System.Text.Json` is BCL; `Directory.Packages.props` unchanged — research D2,
+       FR-013/SC-006). It imports NO SDD source and references NO SDD assembly (SC-006).
+       It is PURE — values and total folds, no I/O, no Model/Msg/Effect, no interpreter
+       (the I/O of locating + reading handoff files crosses each host's existing MVU edge,
+       research D6). IsPackable=false inherited from Directory.Build.props. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Adapters.SddHandoff</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile order Model -> Reader -> Mapping -> Readiness -> Consumer (dependency order). -->
+    <Compile Include="Model.fsi" />
+    <Compile Include="Model.fs" />
+    <Compile Include="Reader.fsi" />
+    <Compile Include="Reader.fs" />
+    <Compile Include="Mapping.fsi" />
+    <Compile Include="Mapping.fs" />
+    <Compile Include="Readiness.fsi" />
+    <Compile Include="Readiness.fs" />
+    <Compile Include="Consumer.fsi" />
+    <Compile Include="Consumer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+  </ItemGroup>
+
+</Project>

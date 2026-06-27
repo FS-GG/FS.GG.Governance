@@ -55,7 +55,12 @@ module Interpreter =
           /// F27 wiring (063): render the report view richly to the terminal (the `Rich` path). `realPorts`
           /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
           /// inject a capturing renderer over a Spectre `TestConsole`. Plain/Json still go via `Out`.
-          RenderReport: ReportView.ReportView -> unit }
+          RenderReport: ReportView.ReportView -> unit
+          /// F081: locate every `readiness/<id>/governance-handoff.json` under `repo` in stable `<id>` order
+          /// and read each one's raw JSON — the ONLY I/O the handoff consumer needs. `[]` when none present
+          /// (the no-op path). `realPorts` reads the real filesystem; tests inject a deterministic port.
+          /// TOTAL & SAFE (catches its own exceptions ⇒ `[]`).
+          Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

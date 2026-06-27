@@ -2,6 +2,50 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
 docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most recently
+DELIVERED feature is specs/081-sdd-handoff-consumer/ (✅ DELIVERED): a Tier 1 feature shipping the
+SDD→Governance handoff CONSUMER (ADR-0002 queued work) so a produced
+`readiness/<id>/governance-handoff.json` actually drives `route`/`ship`/`verify` verdicts — the
+handoff is no longer inert. A new pure leaf library `FS.GG.Governance.Adapters.SddHandoff` (five
+`.fsi`-curated modules `Model`/`Reader`/`Mapping`/`Readiness`/`Consumer`; BCL `System.Text.Json`
+only, ZERO new package, NO SDD `ProjectReference` — SC-006, verified by a reflective hygiene
+guard): `Reader.parse` version-pins the contract major (1.x; an unknown major / malformed /
+missing-required / declared-`autoSynthetic` each ⇒ a DISTINCT typed `Diagnostic`, never a throw —
+the `autoSynthetic` token is its OWN `AutoSyntheticDeclared` cause, not generic `Malformed`);
+`Mapping` maps `evidence.nodes[].state` → `Kernel.EvidenceState` token-for-token row-for-row
+(ADR-0002), `deferred`/`accepted-deferral` → `Skipped` (FR-004), a `stale` node → underlying state
+PLUS a `StaleEvidence` diagnostic (FR-006), then `Evidence.build`+`Evidence.effective` for the
+taint closure (a `Real` node resting on `Synthetic` ⇒ `AutoSynthetic` ⇒ blocking-capable);
+`Readiness.toGate` projects `readiness.*` into a first-class `Gate` (`BlockOnShip` when the
+disposition is non-shippable OR `blockingDiagnosticIds` non-empty, else advisory `Warn`);
+`Consumer.consume` composes per-document into typed `Gate` + pre-selected `SelectedGate` entries
+(evidence + readiness + a blocking `integrity` gate for a bad document — NO mapped gate for that
+document, FR-011), aggregated in `<id>` then `GateId` order. **Research D3 pivot**: the verdict
+hosts form their verdict via the Config→Gates→Routing→Route→Ship pipeline, NOT the kernel `Adapter`
+rule catalogs, so the consumer integrates via GATES, not the kernel SPI. Each of the three host
+loops (`RouteCommand`/`ShipCommand`/`VerifyCommand`) gains the SAME additive MVU edge (research D6):
+an `Effect.LoadHandoffs`, a `Msg.HandoffsLoaded`, an `Interpreter.Ports.Handoffs: string ->
+Reader.HandoffRead list` port (locate `readiness/<id>/governance-handoff.json` in stable ordinal
+`<id>` order — the ONLY I/O; total+safe ⇒ `[]` on any error), and a pure post-`Route.select` fold
+that unions `Consumer.consume`'s gates into the registry + `RouteResult.SelectedGates` BEFORE
+`Ship.rollup` — GUARDED so absent handoff ⇒ identity fold ⇒ byte-identical output (FR-001, SC-003).
+`LoadHandoffs` is emitted FIRST in `init` so `HandoffsLoaded` folds before `Loaded(Valid)` (the
+breadth-first driver). ADR 0002 + the handoff tutorial moved with the code in lockstep (FR-014/
+FR-015 — queue item #4 resolved toward the gate binding; readiness row = "first-class
+gate-registry entry"). **Recorded deviations**: (1) the three host surface-drift hygiene guards
+were relaxed to PERMIT the one `Adapters.SddHandoff` edge while still forbidding every other
+adapter (+ kernel/host/cli) — the intended host→consumer edge (research D6); (2) diagnostics ride
+the integrity gate's description (one verdict mechanism, research D5), so no separate diagnostics
+channel was threaded into host `Model`s (keeps the no-op byte-identical). Verified: library
+31/31; RouteCommand 85/85 (handoff gates in gates.json/route.json + the real `Handoffs` port's
+stable `<id>` ordering & empty-repo `[]`), ShipCommand 101/101 (SC-001: satisfied⇒Pass vs
+failing⇒Fail with the blocking evidence gate in `Blockers`, through the REAL pipeline),
+VerifyCommand 81/81 (SC-005: a blocking readiness gate is verify-blocking under `Strict`), Host
+18/18 — all green; three host surface baselines re-blessed ADDITIVELY + the new library baseline;
+the absent-handoff no-op keeps every existing host golden byte-identical. (CLI 49/51: the 2 are
+the pre-existing `dotnet pack` local-feed MSBuild-node flake, out-of-scope.) Scope: 1 new library
+(10 files) + 1 new test project + additive edits to the three hosts (`Loop`/`Interpreter` `.fsi`+
+`.fs`) + their test wiring + ADR/tutorial + `.sln`; no production `src/` core touched. Unblocks
+Coordination board P3 (Governance actually fires, and the handoff is consumed). The prior
 DELIVERED feature is specs/079-reference-gate-set/ (✅ DELIVERED): a
 Tier 2 data+test+docs feature publishing a single curated, populated reference `.fsgg`
 gate set at `samples/sdd-reference-gate-set/.fsgg/` (full four-file project/policy/

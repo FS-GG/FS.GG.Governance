@@ -19,6 +19,8 @@ open FS.GG.Governance.Findings.Model       // findingIdToken
 open FS.GG.Governance.Gates               // Gates.buildRegistry
 open FS.GG.Governance.Gates.Model          // Gate, gateIdValue
 open FS.GG.Governance.Route               // Route.select
+open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
+open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Severity, Recognized, recognizeProfile
 open FS.GG.Governance.Ship                // Ship.rollup
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
@@ -114,6 +116,8 @@ module Loop =
         | SenseSurfaces of report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
         // F070: sense generated-view currency at the edge for `repo` (parse manifest, read provenance, sense).
         | SenseViewCurrency of repo: string
+        // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` (the impure edge).
+        | LoadHandoffs of repo: string
 
     type Msg =
         | Begin
@@ -130,6 +134,8 @@ module Loop =
         | SurfacesSensed of findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
         // F070: the deterministic stale-generated-view currency findings, folded into the verdict + projected.
         | ViewCurrencySensed of findings: CE.CurrencyFinding list
+        // F081: the raw located handoff reads, parsed + mapped through `Consumer.consume` (PURE) in update.
+        | HandoffsLoaded of Reader.HandoffRead list
         | Emitted
 
     type Diagnostic =
@@ -173,6 +179,9 @@ module Loop =
           SurfacesPending: bool
           // F070: the stale-generated-view currency findings sensed at the edge ([] until ViewCurrencySensed).
           ViewCurrencyFindings: CE.CurrencyFinding list
+          // F081: the located handoff reads, set by `HandoffsLoaded` ([] default). Consumed at the
+          // `Loaded(Valid)` fold (unioned into the selection before `Ship.rollup` at Verify). [] ⇒ identity.
+          Handoffs: Reader.HandoffRead list
           Diagnostics: Diagnostic list
           Exit: ExitDecision }
 
@@ -325,6 +334,7 @@ module Loop =
               SurfaceFindings = []
               SurfacesPending = false
               ViewCurrencyFindings = []
+              Handoffs = []
               Diagnostics = []
               Exit = Success }
 
@@ -337,11 +347,13 @@ module Loop =
         // 065 (US3): the declaration load + release-fact sense is serialized BEFORE the catalog load (the
         // preview must be ready when verify.json is projected). `SenseReleasePreview` ⇒ `ReleasePreviewSensed`
         // ⇒ `LoadCatalog`.
+        // F081: `LoadHandoffs` FIRST so `HandoffsLoaded` folds before the `Loaded(Valid)` rollup consumes it.
         | ExplicitPaths paths ->
             { model with Candidates = Some paths },
-            [ SenseViewCurrency request.Repo; SenseProvenance; SenseReleasePreview request.Repo ]
+            [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseReleasePreview request.Repo ]
         | Since _
-        | DefaultRange -> model, [ SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
+        | DefaultRange ->
+            model, [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
 
     // ── update — the whole composition; TOTAL, never throws ──
 
@@ -711,7 +723,23 @@ module Loop =
                 let report = Routing.route facts candidates
                 let registry = Gates.buildRegistry facts
                 let findings = Findings.findUnknownGovernedPaths facts report
-                let result = Route.select registry report findings
+                let routed = Route.select registry report findings
+
+                // F081: union the handoff gates into the routed selection BEFORE `Ship.rollup` (at Verify) AND
+                // before the empty-selection short-circuit, so a handoff-only product still verifies the declared
+                // evidence/readiness. A blocking gate (BlockOnShip) is verify-blocking under the Strict profile
+                // (research D5, SC-005). Absent handoff ⇒ identity fold (no re-sort) ⇒ byte-identical verify.json.
+                let consumed = Consumer.consume model.Handoffs
+
+                let result =
+                    match consumed.Selected with
+                    | [] -> routed
+                    | extra ->
+                        { routed with
+                            SelectedGates =
+                                routed.SelectedGates @ extra
+                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+
                 let decision = Ship.rollup result Verify model.Request.Profile
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
 
@@ -869,6 +897,9 @@ module Loop =
             // catalog/gate chain). Store them; both projection paths read `model.ViewCurrencyFindings`. Pure
             // state, no projection trigger. `[]` (unconfigured) ⇒ byte-identical verify.json (FR-004).
             | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
+
+            // F081: store the located handoff reads (pure); consumed at the `Loaded(Valid)` fold.
+            | HandoffsLoaded reads -> { model with Handoffs = reads }, []
 
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs
