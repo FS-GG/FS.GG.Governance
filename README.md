@@ -162,6 +162,25 @@ nothing — it establishes the stable gate identities the remaining Phase-2 rows
 route/audit JSON, `.fsgg/gates.json`) and Phase 5/11 consume. Phase-10 deferrals: gate-to-gate
 prerequisites + topological order, and a richer product-check derivation.
 
+## Building & testing
+
+Build and test the **whole solution** through the checked-in wrapper:
+
+```bash
+dotnet fsi build.fsx          # build all 162 projects of FS.GG.Governance.sln
+dotnet fsi build.fsx test     # run the full test suite (the delivery gate)
+```
+
+The wrapper exists because a plain `dotnet build FS.GG.Governance.sln` over-subscribes
+the build: with no shared F# compiler server, MSBuild's default one-node-per-core fan-out
+launches a `dotnet fsc` process per node across 162 projects and thrashes
+(`MSB6003`/`MSB6006`) instead of finishing. `build.fsx` bounds the MSBuild node count with
+an explicit, hardware-derived `-m:N` on the command line — the only place the bound is
+honored — turning a >20-minute failing build into ~33 s. `N` scales with the machine
+(`clamp(2, ceil(cores/4), 12)`), so it is faster on bigger hosts yet never over-subscribes;
+the wrapper prints the detected core count, the chosen `N`, and elapsed time on every run.
+Any `dotnet` arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Release --no-restore`).
+
 ## CLI
 
 Build and run from source:

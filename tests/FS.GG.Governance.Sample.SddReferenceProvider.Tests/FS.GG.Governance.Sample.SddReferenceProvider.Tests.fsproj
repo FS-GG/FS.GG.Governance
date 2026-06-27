@@ -17,6 +17,7 @@
     <Compile Include="Support.fs" />
     <Compile Include="WorkedExampleTests.fs" />
     <Compile Include="BoundedBuildTests.fs" />
+    <Compile Include="SolutionBuildWrapperTests.fs" />
     <Compile Include="FailurePathTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />

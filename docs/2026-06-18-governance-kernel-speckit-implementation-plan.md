@@ -18,8 +18,10 @@ through `specify → plan → tasks → implement` per the
 
 It is a roadmap (the plan that *generates* the per-feature `plan.md`s), not a
 substitute for them. Status as of 2026-06-18: F01-F12 are implemented and
-verified on `main` (`dotnet build FS.GG.Governance.sln`, `dotnet test
-FS.GG.Governance.sln`); F13 external validation remains. Status as of
+verified on `main` (the whole-solution build/test, run via the checked-in
+wrapper `dotnet fsi build.fsx` / `dotnet fsi build.fsx test`, which bounds
+MSBuild parallelism so the 162-project solution builds fast instead of
+thrashing — feature 080); F13 external validation remains. Status as of
 2026-06-19: the
 [governance capability design report](reports/2026-06-18-233718-fsgg-governance-capability-design.md)
 has been incorporated as the F14-F27 continuation covering the capability
