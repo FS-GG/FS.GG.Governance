@@ -26,6 +26,10 @@
 
   <ItemGroup>
     <PackageReference Include="YamlDotNet" />
+    <!-- Single source of truth for the supported `.fsgg` schema versions (FS.GG.Governance#14):
+         Schema.supportedVersionFor reads Fsgg.Schemas.{governance,policy,capabilities,tooling}Version
+         from this org-shared contract package rather than hardcoding the literals. -->
+    <PackageReference Include="FS.GG.Contracts" />
   </ItemGroup>
 
 </Project>

@@ -19,6 +19,16 @@
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
+  <!-- Cross-repo: the org-shared, SDD-owned typed source of truth for every `.fsgg` schema
+       shape and its version constant (FS-GG/.github#16; FS.GG.Governance#14). Consumed by
+       FS.GG.Governance.Config so the supported `.fsgg` schema versions (governance/policy/
+       capabilities/tooling) are single-sourced from the contract package instead of duplicated
+       as literals here. BCL-only (FSharp.Core); published to the private org GitHub Packages feed
+       (see nuget.config). Contract id: fsgg-contracts (registry/dependencies.yml). -->
+  <ItemGroup>
+    <PackageVersion Include="FS.GG.Contracts" Version="1.0.1" />
+  </ItemGroup>
+
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
        NEED: color-coded verdict banners, grouped width-resilient gate/finding/blocker tables, and
        an optional read-only report navigator (FR-005/FR-006/FR-009) — a correct, width-aware rich
