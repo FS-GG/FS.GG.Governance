@@ -16,7 +16,7 @@
        references) is our own code over the node tree, NOT YamlDotNet's lenient binding.
        The kernel/host stay BCL-only. OWNER: FS.GG.Governance.Config maintainer. -->
   <ItemGroup>
-    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <!-- Cross-repo: the org-shared, SDD-owned typed source of truth for every `.fsgg` schema
