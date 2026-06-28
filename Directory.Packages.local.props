@@ -16,7 +16,7 @@
        references) is our own code over the node tree, NOT YamlDotNet's lenient binding.
        The kernel/host stay BCL-only. OWNER: FS.GG.Governance.Config maintainer. -->
   <ItemGroup>
-    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
