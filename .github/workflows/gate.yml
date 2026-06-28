@@ -17,17 +17,18 @@ concurrency:
 
 permissions:
   contents: read
+  # Read the org GitHub Packages NuGet feed. FS.GG.Contracts is consumed by
+  # FS.GG.Governance.Config; FS.GG.* are not on nuget.org but on the org feed. The package is
+  # PUBLIC (owned by FS-GG/FS.GG.SDD), so the run-scoped GITHUB_TOKEN can read it cross-repo —
+  # no PAT/secret needed. (GitHub Packages NuGet still requires a token even for public
+  # packages, so the credential below is supplied; anonymous restore 401s.)
+  packages: read
 
-# Credentials for the `fsgg-github` source declared in nuget.config (env placeholders there).
-# FS.GG.Contracts is consumed by FS.GG.Governance.Config; FS.GG.* are NOT on nuget.org but on
-# the private org GitHub Packages feed. The package is OWNED by FS-GG/FS.GG.SDD, so the
-# run-scoped GITHUB_TOKEN of THIS repo cannot read it (cross-repo private package → 403). A
-# dedicated read:packages PAT, stored as the FSGG_PACKAGES_READ_TOKEN Actions secret, supplies
-# the access (same credential as the Renovate hostRule in .github/renovate.json). Username is
-# any non-empty value for GitHub Packages basic auth.
+# Credentials for the `fsgg-github` source declared in nuget.config (env placeholders there),
+# wired from the run-scoped token. Username can be any non-empty value for GitHub Packages.
 env:
   FSGG_PACKAGES_ACTOR: ${{ github.actor }}
-  FSGG_PACKAGES_READ_TOKEN: ${{ secrets.FSGG_PACKAGES_READ_TOKEN }}
+  FSGG_PACKAGES_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   gate:
