@@ -30,6 +30,39 @@ let tests =
               Expect.isTrue (d.Rules |> List.forall (fun r -> r.Surface = surfaceId)) "carry the declared surface"
           }
 
+          test "088: an OPTIONAL advisory apiCompatibility rule parses as an additive seventh rule" {
+              // The six required families plus a declared advisory ApiCompatibility rule (base blocking
+              // relaxed to Warn ⇒ advisory). Recognized + allowed; not required of other declarations.
+              let yml =
+                  releaseYmlAllBlocking.Replace(
+                      "expectations:\n",
+                      "  - kind: api-compatibility\n    severity: blocking\n    maturity: warn\nexpectations:\n"
+                  )
+
+              let d = okDecl yml
+              Expect.equal d.Rules.Length 7 "six required + one optional ApiCompatibility"
+
+              let ac = d.Rules |> List.find (fun r -> r.Kind = ApiCompatibility)
+              Expect.equal ac.Maturity Warn "declared advisory (base blocking relaxed to Warn)"
+              Expect.equal (Release.releaseRuleKindToken ac.Kind) "apiCompatibility" "recognized kind token"
+
+              // ApiCompatibility sorts LAST by the F053 composite key (ordinal 6).
+              Expect.equal (d.Rules |> List.last |> fun r -> r.Kind) ApiCompatibility "sorts last (ordinal 6)"
+          }
+
+          test "088: declaring api-compatibility TWICE is rejected (one each)" {
+              let yml =
+                  releaseYmlAllBlocking.Replace(
+                      "expectations:\n",
+                      "  - kind: api-compatibility\n    severity: blocking\n    maturity: warn\n"
+                      + "  - kind: api-compatibility\n    severity: blocking\n    maturity: warn\nexpectations:\n"
+                  )
+
+              match Declaration.parse (yml.Replace("\r\n", "\n").Split('\n') |> List.ofArray) with
+              | Error _ -> ()
+              | Ok _ -> failtest "expected a duplicate-family rejection"
+          }
+
           test "expectations and layout are read verbatim from the file (product-neutral)" {
               let d = okDecl releaseYmlAllBlocking
               Expect.equal d.Expectations.Surface surfaceId "surface"

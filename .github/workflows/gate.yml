@@ -107,3 +107,47 @@ jobs:
       # script to produce the .nupkg into a temp feed (no dependence on ~/.local/share/nuget-local).
       - name: Reference-gate-set guards (G1–G7 + packed-artifact)
         run: dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj -c Debug --no-build
+
+  # 088 Breaking-Change (API-Compat) gate — ADVISORY (spec 088, contracts/ci-gate.md). Packs every
+  # IsPackable=true FS.GG.Governance.* project, compares each against its baseline package on the feed via
+  # the SDK ApiCompat tool, and grades the per-package break signal × SemVer delta through the REAL pure
+  # library (pack-and-apicheck.fsx). Reports per-package coverage (Checked / NoBaselineYet / NotCovered) and
+  # any breaking-under-bump findings. ADVISORY: this job is NOT in branch-protection required checks and the
+  # detector NEVER reddens the build (D7) — the single enforcement point is the ApiCompatibility release
+  # rule's Maturity, promoted to BlockOnRelease (and this job to required checks) once SC-005 holds (US2).
+  # At rollout most packages resolve NoBaseline (research D5) — reported honestly, never hidden (FR-007).
+  api-compatibility-gate:
+    name: API compatibility gate (breaking-change → SemVer major) [advisory]
+    runs-on: ubuntu-latest
+    # Advisory: a non-zero here must never fail the PR while the gate is advisory.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Locked restore (repo convention) so a graph drift fails here too.
+      - name: Restore (locked)
+        run: dotnet restore FS.GG.Governance.sln --locked-mode
+
+      # The detector #r's the built leaf assemblies to GRADE through the real pure functions, so build first.
+      # Bounded via build.fsx (the 162-project solution thrashes under default parallelism).
+      - name: Build (bounded)
+        run: dotnet fsi build.fsx --no-restore
+
+      # Install the ApiCompat tool JOB-SCOPED (D6) — never in .config/dotnet-tools.json (drift-locked).
+      # Best-effort: if the tool is unavailable the detector is fail-safe (Indeterminate, never a clean pass).
+      - name: Install ApiCompat tool (job-scoped)
+        continue-on-error: true
+        run: dotnet tool install --global Microsoft.DotNet.ApiCompat.Tool || true
+
+      # Run the detector: pack Release + ApiCompat vs the feed baseline → ApiBreakSignal set + coverage.
+      # Exits 0 (advisory, D7); the rule renders the decision. The selftest proves the grading path first.
+      - name: Detect + grade (advisory)
+        run: |
+          dotnet fsi pack-and-apicheck.fsx --selftest
+          dotnet fsi pack-and-apicheck.fsx

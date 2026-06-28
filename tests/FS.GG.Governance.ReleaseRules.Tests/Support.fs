@@ -16,9 +16,16 @@ open FS.GG.Governance.ReleaseRules.Model
 
 // ── The closed enumerations (mirrors the source DUs) ──
 
-/// The six closed release rule kinds, in declaration order — for one-fixture-per-kind coverage.
+/// The seven closed release rule kinds, in declaration order — for one-fixture-per-kind coverage.
+/// 088: ApiCompatibility is the additive seventh case.
 let allKinds: ReleaseRuleKind list =
-    [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
+    [ VersionBump
+      PackageMetadata
+      TemplatePins
+      PublishPlan
+      TrustedPublishing
+      Provenance
+      ApiCompatibility ]
 
 /// Both base severities (the F023 lever a rule declares directly).
 let allSeverities: Severity list = [ Advisory; Blocking ]

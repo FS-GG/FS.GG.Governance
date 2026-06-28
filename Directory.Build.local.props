@@ -23,4 +23,17 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- 088 Breaking-Change (API-Compat) gate (spec 088, research D6/D7). The .NET SDK Package Validation /
+       ApiCompat settings live HERE (repo-owned, drift-exempt) — never in the org-synced Directory.Build.props,
+       Directory.Packages.props, or .config/dotnet-tools.json (D6, byte-identity drift-checked by gate.yml).
+       EnablePackageValidation is left OFF for the normal build (D7): Package Validation emits MSBuild ERRORS
+       by default, which would redden `dotnet build`/pack and split enforcement from the governance verdict.
+       The detector runs as a SEPARATE step (`pack-and-apicheck.fsx`, the I/O-edge sensor) that captures the
+       break signal as data; the single enforcement point is the ApiCompatibility release rule's Maturity
+       (advisory now → BlockOnRelease once SC-005 holds). The baseline feed is the local nuget-local folder
+       feed today (D5), later the org GitHub Packages feed (H4) — supplied to the detector, not hardcoded. -->
+  <PropertyGroup>
+    <EnablePackageValidation>false</EnablePackageValidation>
+  </PropertyGroup>
+
 </Project>

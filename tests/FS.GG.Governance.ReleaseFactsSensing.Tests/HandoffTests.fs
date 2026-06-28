@@ -25,9 +25,12 @@ let tests =
 
               Expect.equal findings.Length rules.Length "exactly one finding per declared rule (SC-001)"
 
+              // 088: ApiCompatibility is host-overlaid (deriveFacts emits it Unrecoverable ⇒ Violated by
+              // construction). All six repo-sensed families are Satisfied under all-met facts.
               Expect.isTrue
-                  (findings |> List.forall (fun f -> f.Outcome = Satisfied))
-                  "all-met facts ⇒ every finding Satisfied"
+                  (findings
+                   |> List.forall (fun f -> if f.Kind = ApiCompatibility then f.Outcome = Violated else f.Outcome = Satisfied))
+                  "all-met facts ⇒ every repo-sensed finding Satisfied; ApiCompatibility Violated (not yet overlaid)"
           }
 
           test "senseRelease.Facts (edge) feeds Release.evaluate unchanged ⇒ one finding per rule" {
@@ -52,5 +55,9 @@ let tests =
               let violatedKinds =
                   findings |> List.filter (fun f -> f.Outcome = Violated) |> List.map (fun f -> f.Kind) |> List.sort
 
-              Expect.equal violatedKinds (List.sort [ VersionBump; Provenance ]) "both the Unmet and Unrecoverable family are Violated"
+              // 088: ApiCompatibility is also Violated here (host-overlaid ⇒ Unrecoverable in deriveFacts).
+              Expect.equal
+                  violatedKinds
+                  (List.sort [ VersionBump; Provenance; ApiCompatibility ])
+                  "the Unmet, the Unrecoverable, and the host-overlaid ApiCompatibility family are all Violated"
           } ]

@@ -114,6 +114,10 @@ module Declaration =
         | "publishplan" -> Some PublishPlan
         | "trustedpublishing" -> Some TrustedPublishing
         | "provenance" -> Some Provenance
+        // 088: the additive ApiCompatibility family is RECOGNIZED so a release.yml may declare it (e.g. an
+        // advisory breaking-change rule), but it is NOT in the required `allFamilies` set below — declaring
+        // it is OPTIONAL, so existing six-family declarations keep parsing unchanged (additivity).
+        | "apicompatibility" -> Some ApiCompatibility
         | _ -> None
 
     let recognizeSeverity (raw: string) : Severity option =
@@ -183,8 +187,10 @@ module Declaration =
             match entries |> List.map (parseRule surface) |> sequenceResults with
             | Error e -> Error e
             | Ok rules ->
-                // Require exactly the six families, one each, so the verdict always covers six families
-                // (FR-013/SC-006). The ordering is normalized to the F053 stable composite key.
+                // Require exactly the six core families, one each, so the verdict always covers them
+                // (FR-013/SC-006). 088: ApiCompatibility is an OPTIONAL additive seventh family — recognized
+                // and allowed (at most once), but not required, so existing declarations are unchanged. The
+                // ordering is normalized to the F053 stable composite key.
                 let kinds = rules |> List.map (fun r -> r.Kind)
                 let missing = allFamilies |> List.filter (fun k -> not (List.contains k kinds))
                 let duplicated = kinds |> List.countBy id |> List.filter (fun (_, n) -> n > 1) |> List.map fst

@@ -61,6 +61,7 @@ module ReportView =
         | PublishPlan -> "publish-plan"
         | TrustedPublishing -> "trusted-publishing"
         | Provenance -> "provenance"
+        | ApiCompatibility -> "api-compatibility"
 
     let private factStateToken (state: FactState) =
         match state with

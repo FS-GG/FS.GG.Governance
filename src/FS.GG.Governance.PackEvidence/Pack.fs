@@ -196,3 +196,65 @@ module Pack =
                 [ VersionBump, stateOf versionOk
                   PackageMetadata, stateOf hasArtifact
                   Provenance, stateOf hasArtifact ]
+
+    // ── 088 Breaking-Change (API-Compat) gate (surface in Pack.fsi) ──
+
+    /// The numeric MAJOR segment of a version's core (build/pre-release stripped); a non-numeric or absent
+    /// first segment counts as 0. Reuses `splitMeta`; total, never throws.
+    let majorOf (v: string) : int64 =
+        let core, _ = splitMeta v
+
+        match core.Split('.') with
+        | [||] -> 0L
+        | parts ->
+            match Int64.TryParse parts.[0] with
+            | true, n -> n
+            | _ -> 0L
+
+    let versionDelta (baseline: string option) (packed: string option) : VersionDelta =
+        match packed, baseline with
+        | None, _ -> NoBaselineDelta
+        | Some _, None -> NoBaselineDelta
+        | Some p, Some b ->
+            match sign (compareVersions p b) with
+            | 1 -> if majorOf p > majorOf b then MajorBump else MinorOrPatchBump
+            | _ -> NoForwardChange // equal or downgrade — a break here is also under-bumped
+
+    let apiCompatibilityFact (signal: ApiBreakSignal) (delta: VersionDelta) : FactState option =
+        match signal with
+        | ApiBreakSignal.NoBreakingChanges -> Some Met
+        | ApiBreakSignal.BreakingChanges _ ->
+            match delta with
+            | MajorBump -> Some Met
+            | MinorOrPatchBump
+            | NoForwardChange
+            | NoBaselineDelta -> Some Unmet // breaking change not covered by a major bump
+        | ApiBreakSignal.NoBaseline -> Some Met // vacuous — never published (FR-009)
+        | ApiBreakSignal.Indeterminate _ -> Some Unrecoverable // fail-safe (FR-008)
+        | ApiBreakSignal.NotPackable -> None // not covered (FR-007)
+
+    let coverageOutcome (signal: ApiBreakSignal) (delta: VersionDelta) : ApiCompatCoverageOutcome =
+        match signal with
+        | ApiBreakSignal.NotPackable -> NotCovered "not a packable target"
+        | ApiBreakSignal.Indeterminate reason -> NotCovered(sprintf "API comparison indeterminate: %s" reason)
+        | ApiBreakSignal.NoBaseline -> NoBaselineYet
+        | ApiBreakSignal.NoBreakingChanges
+        | ApiBreakSignal.BreakingChanges _ ->
+            match apiCompatibilityFact signal delta with
+            | Some fact -> Checked fact
+            | None -> NotCovered "not covered"
+
+    let apiCompatCoverage (packages: (SurfaceId * ApiBreakSignal * VersionDelta) list) : ApiCompatCoverage list =
+        packages
+        |> List.map (fun (surface, signal, delta) ->
+            { Surface = surface
+              Outcome = coverageOutcome signal delta })
+        |> List.sortWith (fun a b -> String.CompareOrdinal(surfaceValue a.Surface, surfaceValue b.Surface))
+
+    let apiCompatibilityRollup (packages: (ApiBreakSignal * VersionDelta) list) : FactState =
+        let facts =
+            packages |> List.choose (fun (signal, delta) -> apiCompatibilityFact signal delta)
+
+        if facts |> List.contains Unrecoverable then Unrecoverable
+        elif facts |> List.contains Unmet then Unmet
+        else Met

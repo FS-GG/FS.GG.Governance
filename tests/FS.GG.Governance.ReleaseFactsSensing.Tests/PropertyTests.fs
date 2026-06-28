@@ -23,10 +23,10 @@ let private familyInputs (exp: ReleaseExpectations) (recovered: RecoveredEvidenc
 let tests =
     testList
         "PropertyTests"
-        [ testPropertyWithConfig fsCheckConfig "deriveFacts always yields exactly the six families"
+        [ testPropertyWithConfig fsCheckConfig "deriveFacts always yields exactly the seven families"
           <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
               let states = (Sensing.deriveFacts exp recovered).Facts.States
-              states.Count = 6
+              states.Count = 7
               && (states |> Map.toList |> List.map fst |> List.sort) = (Sensing.releaseFamilies |> List.sort)
 
           testPropertyWithConfig fsCheckConfig "every state is Met/Unmet/Unrecoverable"

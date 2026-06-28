@@ -12,6 +12,7 @@ namespace FS.GG.Governance.PackEvidence
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.CommandKind.Model
+open FS.GG.Governance.ReleaseRules.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -59,3 +60,79 @@ module Model =
         { Verdicts: PackVerdict list
           Runs: KindedCommandRun list
           NoPackableProjects: bool }
+
+    // ── 088 Breaking-Change (API-Compat) gate: pure, product-neutral break/verdict vocabulary ──
+    // These types carry the assembly/package comparison conclusion as DATA. No type carries raw `.nupkg`
+    // bytes, host paths, timestamps, or a process exit code — the ApiCompat sensor at the I/O edge produces
+    // these values; the pure core (`Pack.apiCompatibilityFact`) only grades them (data-model §2–§5).
+
+    /// 088: whether a detected break originates in THIS package's own surface (`Local`) or became public
+    /// only because an UPSTREAM package it re-exports changed (`Inherited` — FR-013, the transitive /
+    /// re-exported surface edge). Carried on each break so the projection can tell "I broke it" from "an
+    /// upstream change surfaced through me." `UpstreamSurface` names the upstream package by its declared id
+    /// (product-neutral — a `SurfaceId` value, never a hardcoded product name).
+    /// `RequireQualifiedAccess` because `Local` would otherwise collide with `EnvironmentClass.Local`
+    /// wherever both modules are opened — forcing `ApiBreakOrigin.Local` keeps both unions unambiguous.
+    [<RequireQualifiedAccess>]
+    type ApiBreakOrigin =
+        | Local
+        | Inherited of upstreamSurface: SurfaceId
+
+    /// 088: the category of ONE detected break, mirroring the ApiCompat categories surfaced. Closed; an
+    /// unrecognized category is carried verbatim as `OtherIncompatibility label`. Product-neutral text.
+    type ApiBreakKind =
+        | MemberRemoved
+        | MemberSignatureChanged
+        | TypeRemoved
+        | OtherIncompatibility of label: string
+
+    /// 088: ONE detected break — enough to name it in a finding (FR-003). `Member` is the removed/changed
+    /// public member as ApiCompat reports it; `Origin` distinguishes a local from an inherited break
+    /// (FR-013). Product-neutral text; no raw bytes, path, or exit code.
+    type ApiBreak =
+        { Member: string
+          Kind: ApiBreakKind
+          Origin: ApiBreakOrigin }
+
+    /// 088: what the assembly/package comparison concluded for ONE package, as DATA. Produced by the
+    /// ApiCompat sensor at the I/O edge; consumed by the pure verdict helper `Pack.apiCompatibilityFact`.
+    ///   • `NoBreakingChanges` — compared against a baseline, no breaking change.
+    ///   • `BreakingChanges`   — one or more detected breaks (non-empty by construction).
+    ///   • `NoBaseline`        — never published / baseline absent (FR-009) — distinct from a tool error.
+    ///   • `Indeterminate`     — feed unreachable / package unreadable / tool error (FR-008, fail-safe).
+    ///   • `NotPackable`       — not an `IsPackable` target; no fact emitted (reported `NotCovered`, FR-007).
+    /// `RequireQualifiedAccess` because two of its cases (`NoBaseline`, `NotPackable`) deliberately mirror
+    /// `VersionVerdict` case names — forcing `ApiBreakSignal.NoBaseline` keeps the two unions unambiguous in
+    /// `Pack.fs`, which references both, and leaves the existing `versionPolicy` code unchanged (T012).
+    [<RequireQualifiedAccess>]
+    type ApiBreakSignal =
+        | NoBreakingChanges
+        | BreakingChanges of breaks: ApiBreak list
+        | NoBaseline
+        | Indeterminate of reason: string
+        | NotPackable
+
+    /// 088: the semantic magnitude of packed-vs-baseline, derived from the existing `Pack.versionPolicy`
+    /// comparator. `NoForwardChange` = equal or downgrade (a break here is also under-bumped);
+    /// `NoBaselineDelta` = no baseline to compare.
+    type VersionDelta =
+        | MajorBump
+        | MinorOrPatchBump
+        | NoForwardChange
+        | NoBaselineDelta
+
+    /// 088: the explicit per-package coverage outcome so "not covered" / "not yet enforcing" is reported,
+    /// never silently clean (FR-007 / SC-001).
+    ///   • `Checked`       — a baseline existed and was compared; carries the governing `FactState`.
+    ///   • `NoBaselineYet` — vacuously `Met` but flagged as not-yet-enforcing (the common rollout case, D5).
+    ///   • `NotCovered`    — not packable / tool could not analyze (the reason is carried, FR-007).
+    type ApiCompatCoverageOutcome =
+        | Checked of fact: FactState
+        | NoBaselineYet
+        | NotCovered of reason: string
+
+    /// 088: one package's coverage row. The coverage list (sorted by `Surface`) feeds both the human/JSON
+    /// projection and SC-001's "100% covered-or-reported, zero silent passes."
+    type ApiCompatCoverage =
+        { Surface: SurfaceId
+          Outcome: ApiCompatCoverageOutcome }

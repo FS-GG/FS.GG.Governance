@@ -19,6 +19,7 @@ module Model =
         | PublishPlan
         | TrustedPublishing
         | Provenance
+        | ApiCompatibility
 
     type FactState =
         | Met

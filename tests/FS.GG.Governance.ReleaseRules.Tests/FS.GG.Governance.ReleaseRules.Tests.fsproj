@@ -21,6 +21,7 @@
     <Compile Include="RollupTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="EdgeCaseTests.fs" />
+    <Compile Include="ApiCompatibilityRuleTests.fs" />
     <Compile Include="PropertyTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />

@@ -19,7 +19,8 @@ let private isKnownFamily kind =
     | TemplatePins
     | PublishPlan
     | TrustedPublishing
-    | Provenance -> true
+    | Provenance
+    | ApiCompatibility -> true
 
 [<Tests>]
 let tests =

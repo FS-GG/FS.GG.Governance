@@ -138,6 +138,7 @@ TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
   [Method] Boolean Equals(ReleaseRuleKind, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsApiCompatibility()
   [Method] Boolean get_IsPackageMetadata()
   [Method] Boolean get_IsProvenance()
   [Method] Boolean get_IsPublishPlan()
@@ -150,6 +151,7 @@ TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] Int32 get_Tag()
+  [Method] ReleaseRuleKind get_ApiCompatibility()
   [Method] ReleaseRuleKind get_PackageMetadata()
   [Method] ReleaseRuleKind get_Provenance()
   [Method] ReleaseRuleKind get_PublishPlan()
@@ -158,6 +160,7 @@ TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
   [Method] ReleaseRuleKind get_VersionBump()
   [Method] System.String ToString()
   [NestedType] FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind+Tags
+  [Property] Boolean IsApiCompatibility
   [Property] Boolean IsPackageMetadata
   [Property] Boolean IsProvenance
   [Property] Boolean IsPublishPlan
@@ -165,6 +168,7 @@ TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
   [Property] Boolean IsTrustedPublishing
   [Property] Boolean IsVersionBump
   [Property] Int32 Tag
+  [Property] ReleaseRuleKind ApiCompatibility
   [Property] ReleaseRuleKind PackageMetadata
   [Property] ReleaseRuleKind Provenance
   [Property] ReleaseRuleKind PublishPlan
@@ -172,6 +176,7 @@ TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind
   [Property] ReleaseRuleKind TrustedPublishing
   [Property] ReleaseRuleKind VersionBump
 TYPE FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind+Tags
+  [Field] Int32 ApiCompatibility
   [Field] Int32 PackageMetadata
   [Field] Int32 Provenance
   [Field] Int32 PublishPlan

@@ -28,6 +28,7 @@ module Release =
         | PublishPlan -> "publishPlan"
         | TrustedPublishing -> "trustedPublishing"
         | Provenance -> "provenance"
+        | ApiCompatibility -> "apiCompatibility"
 
     let releaseRuleKindOrdinal (kind: ReleaseRuleKind) : int =
         match kind with
@@ -37,6 +38,7 @@ module Release =
         | PublishPlan -> 3
         | TrustedPublishing -> 4
         | Provenance -> 5
+        | ApiCompatibility -> 6
 
     let factFor (facts: ReleaseFacts) (kind: ReleaseRuleKind) : FactState =
         match Map.tryFind kind facts.States with

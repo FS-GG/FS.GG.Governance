@@ -7,8 +7,11 @@
 
 namespace FS.GG.Governance.ReleaseFactsSensing
 
+open System
+open FS.GG.Governance.Config.Model
 open FS.GG.Governance.ReleaseRules
 open FS.GG.Governance.ReleaseRules.Model
+open FS.GG.Governance.PackEvidence.Model
 open FS.GG.Governance.ReleaseFactsSensing.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -20,7 +23,8 @@ module Sensing =
           TemplatePins
           PublishPlan
           TrustedPublishing
-          Provenance ]
+          Provenance
+          ApiCompatibility ]
         |> List.sortBy Release.releaseRuleKindOrdinal
 
     // ── Deterministic ordering helpers (D7) — ordinal so order never depends on culture ──
@@ -127,14 +131,22 @@ module Sensing =
         let prState, prFact, prDiag =
             derivePosture Provenance expectations.RequiredProvenance recovered.Provenance
 
-        // Always all six families (FR-009) — Map.ofList over the fixed six (kind, state) pairs.
+        // 088: ApiCompatibility is sensed at the host detector overlay (cross-package worst-of, mirroring the
+        // F065 pack join), NOT from repo files — so deriveFacts emits its State Unrecoverable (fail-safe: an
+        // un-overlaid declared rule ⇒ Violated). It emits NO diagnostic: a diagnostic here would persist in
+        // the (un-overlaid) snapshot even after the host overlays a real verdict — misleading — and would
+        // drift every release.json. The host owns the ApiCompatibility evidence/finding entirely.
+        let acState = Unrecoverable
+
+        // Always all seven families (FR-009) — Map.ofList over the fixed seven (kind, state) pairs.
         let states =
             [ VersionBump, vState
               PackageMetadata, mState
               TemplatePins, piState
               PublishPlan, plState
               TrustedPublishing, tpState
-              Provenance, prState ]
+              Provenance, prState
+              ApiCompatibility, acState ]
             |> Map.ofList
 
         let diagnostics =
@@ -152,3 +164,100 @@ module Sensing =
               TrustedPublishing = tpFact
               Provenance = prFact
               Diagnostics = diagnostics } }
+
+    // ── 088 (T014): the pure ApiCompat-output parser (surface in Sensing.fsi). Total + fail-safe (FR-008). ──
+
+    /// The first `'…'`-quoted member name in a diagnostic line, else the trimmed line.
+    let extractQuoted (line: string) : string =
+        let i = line.IndexOf('\'')
+
+        if i >= 0 then
+            let j = line.IndexOf('\'', i + 1)
+            if j > i then line.Substring(i + 1, j - i - 1) else line.Trim()
+        else
+            line.Trim()
+
+    /// `local` (default) | `inherited:<surface>` — FR-013 attribution carried from the detector annotation.
+    let parseOrigin (token: string) : ApiBreakOrigin =
+        if token.StartsWith("inherited:", StringComparison.OrdinalIgnoreCase) then
+            ApiBreakOrigin.Inherited(SurfaceId(token.Substring("inherited:".Length)))
+        else
+            ApiBreakOrigin.Local
+
+    let parseKind (token: string) : ApiBreakKind =
+        match token.ToLowerInvariant() with
+        | "removed" -> MemberRemoved
+        | "signature" -> MemberSignatureChanged
+        | "type-removed" -> TypeRemoved
+        | other when other.StartsWith "other:" -> OtherIncompatibility(token.Substring(6))
+        | other -> OtherIncompatibility other
+
+    /// Recognize ONE break line — the normalized `BREAK <kind> <origin> <member…>` form OR a raw ApiCompat
+    /// `CPxxxx` diagnostic (CP0001 type removed, CP0002 member removed, CP0003–CP0008 signature/accessibility).
+    let parseBreakLine (line: string) : ApiBreak option =
+        let upper = line.ToUpperInvariant()
+
+        if upper.StartsWith "BREAK " then
+            let parts = line.Substring(6).Trim().Split([| ' ' |], 3)
+
+            if parts.Length >= 3 then
+                Some
+                    { Member = parts.[2]
+                      Kind = parseKind parts.[0]
+                      Origin = parseOrigin parts.[1] }
+            elif parts.Length = 2 then
+                Some
+                    { Member = ""
+                      Kind = parseKind parts.[0]
+                      Origin = parseOrigin parts.[1] }
+            else
+                None
+        elif upper.Contains "CP0001" then
+            Some { Member = extractQuoted line; Kind = TypeRemoved; Origin = ApiBreakOrigin.Local }
+        elif upper.Contains "CP0002" then
+            Some { Member = extractQuoted line; Kind = MemberRemoved; Origin = ApiBreakOrigin.Local }
+        elif [ "CP0003"; "CP0004"; "CP0005"; "CP0006"; "CP0007"; "CP0008" ] |> List.exists upper.Contains then
+            Some
+                { Member = extractQuoted line
+                  Kind = MemberSignatureChanged
+                  Origin = ApiBreakOrigin.Local }
+        else
+            None
+
+    let parseApiCompatOutput (output: string) : ApiBreakSignal =
+        let lines =
+            if String.IsNullOrEmpty output then
+                [||]
+            else
+                output.Replace("\r\n", "\n").Split('\n')
+                |> Array.map (fun l -> l.Trim())
+                |> Array.filter (fun l -> l <> "")
+
+        if Array.isEmpty lines then
+            ApiBreakSignal.Indeterminate "empty detector output" // fail-safe — NEVER NoBreakingChanges
+        else
+            let hasMarker (m: string) =
+                lines |> Array.exists (fun l -> l.ToUpperInvariant() = m)
+
+            // Exclusive control markers the detector emits for the non-comparison cases.
+            if hasMarker "NOTPACKABLE" then
+                ApiBreakSignal.NotPackable
+            elif hasMarker "NOBASELINE" then
+                ApiBreakSignal.NoBaseline
+            else
+                // Break lines are collected BEFORE the ERROR marker so a raw `error CPxxxx` line (a real break,
+                // not a tool error) is classified as a break, not as Indeterminate.
+                let breaks = lines |> Array.choose parseBreakLine |> Array.toList
+
+                if not (List.isEmpty breaks) then
+                    ApiBreakSignal.BreakingChanges breaks
+                else
+                    match lines |> Array.tryFind (fun l -> l.ToUpperInvariant().StartsWith "ERROR") with
+                    | Some e ->
+                        let reason = e.Substring(5).TrimStart(':', ' ')
+                        ApiBreakSignal.Indeterminate(if reason = "" then "detector error" else reason)
+                    | None ->
+                        if hasMarker "OK" || hasMarker "NOBREAKINGCHANGES" then
+                            ApiBreakSignal.NoBreakingChanges
+                        else
+                            ApiBreakSignal.Indeterminate "unrecognized detector output"

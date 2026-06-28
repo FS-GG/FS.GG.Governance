@@ -24,9 +24,9 @@ module Release =
     /// F017 `findingIdToken` / F014 `diagnosticIdToken`, used in finding reasons and any later JSON.
     val releaseRuleKindToken: kind: ReleaseRuleKind -> string
 
-    /// The intrinsic ordinal of a release rule kind (`VersionBump` 0 .. `Provenance` 5), in the order the
-    /// closed `ReleaseRuleKind` is declared. Total; exposed because it is the primary deterministic sort key
-    /// for findings (research D4).
+    /// The intrinsic ordinal of a release rule kind (`VersionBump` 0 .. `ApiCompatibility` 6), in the order
+    /// the closed `ReleaseRuleKind` is declared. Total; exposed because it is the primary deterministic sort
+    /// key for findings (research D4).
     val releaseRuleKindOrdinal: kind: ReleaseRuleKind -> int
 
     /// The provided `FactState` governing a rule kind: the value mapped to `kind` in `facts.States`, or

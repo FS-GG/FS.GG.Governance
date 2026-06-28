@@ -164,6 +164,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.PackEvidence": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )"
         }
       },

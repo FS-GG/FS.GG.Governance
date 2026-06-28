@@ -35,6 +35,10 @@
   <ItemGroup>
     <ProjectReference Include="../FS.GG.Governance.ReleaseRules/FS.GG.Governance.ReleaseRules.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <!-- 088 (T001 sensor-home): the ApiCompat output parse (parseApiCompatOutput) yields the PackEvidence
+         `ApiBreakSignal` vocabulary, so this leaf references PackEvidence (an FS.GG.Governance.* core, within
+         the dependency-scope guard's allow-list). Cycle-safe: PackEvidence does not reference this leaf. -->
+    <ProjectReference Include="../FS.GG.Governance.PackEvidence/FS.GG.Governance.PackEvidence.fsproj" />
   </ItemGroup>
 
 </Project>

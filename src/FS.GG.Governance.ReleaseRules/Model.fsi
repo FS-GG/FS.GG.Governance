@@ -33,6 +33,12 @@ module Model =
         | PublishPlan
         | TrustedPublishing
         | Provenance
+        /// 088 (ADDITIVE): is the version bump adequate for the breaking-change delta detected against the
+        /// last PUBLISHED package? A new case + a new `factFor`/sensing key, added without changing any
+        /// existing case's behavior or `factFor` key — the closed-set extension the doc-comment above
+        /// reserves. Its governing `FactState` comes from `PackEvidence.Pack.apiCompatibilityFact`
+        /// (break signal × semantic-version delta). `VersionBump` semantics are left unchanged.
+        | ApiCompatibility
 
     // ── The provided fact state for one rule kind (FR-005, research D3) ──
 

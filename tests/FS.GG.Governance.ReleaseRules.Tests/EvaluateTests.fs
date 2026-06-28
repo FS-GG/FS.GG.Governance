@@ -50,7 +50,7 @@ let tests =
               Expect.equal f.Maturity rule.Maturity "maturity equals the declared value"
           }
 
-          test "releaseRuleKindToken returns the exact six wire tokens" {
+          test "releaseRuleKindToken returns the exact seven wire tokens" {
               Expect.equal (Release.releaseRuleKindToken VersionBump) "versionBump" "versionBump token"
               Expect.equal (Release.releaseRuleKindToken PackageMetadata) "packageMetadata" "packageMetadata token"
               Expect.equal (Release.releaseRuleKindToken TemplatePins) "templatePins" "templatePins token"
@@ -60,10 +60,11 @@ let tests =
                   "trustedPublishing"
                   "trustedPublishing token"
               Expect.equal (Release.releaseRuleKindToken Provenance) "provenance" "provenance token"
+              Expect.equal (Release.releaseRuleKindToken ApiCompatibility) "apiCompatibility" "apiCompatibility token (088)"
           }
 
-          test "releaseRuleKindOrdinal returns 0..5 in the closed declaration order, all distinct" {
+          test "releaseRuleKindOrdinal returns 0..6 in the closed declaration order, all distinct" {
               let ordinals = allKinds |> List.map Release.releaseRuleKindOrdinal
-              Expect.equal ordinals [ 0; 1; 2; 3; 4; 5 ] "ordinals are 0..5 in declaration order"
-              Expect.equal (List.distinct ordinals).Length 6 "all six ordinals are distinct"
+              Expect.equal ordinals [ 0; 1; 2; 3; 4; 5; 6 ] "ordinals are 0..6 in declaration order"
+              Expect.equal (List.distinct ordinals).Length 7 "all seven ordinals are distinct"
           } ]

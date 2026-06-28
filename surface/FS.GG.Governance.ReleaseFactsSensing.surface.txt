@@ -292,6 +292,7 @@ TYPE FS.GG.Governance.ReleaseFactsSensing.ModelModule+VersionFact
   [Property] System.String Baseline
   [Property] System.String Observed
 TYPE FS.GG.Governance.ReleaseFactsSensing.SensingModule
+  [Method] ApiBreakSignal parseApiCompatOutput(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind] get_releaseFamilies()
   [Method] SensedRelease deriveFacts(ReleaseExpectations, RecoveredEvidence)
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRuleKind] releaseFamilies
