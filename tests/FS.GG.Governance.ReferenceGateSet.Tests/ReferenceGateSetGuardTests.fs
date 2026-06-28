@@ -21,8 +21,13 @@ open FS.GG.Governance.Enforcement
 // Resolve the repo root via the shared helper, point at the reference's `.fsgg` PARENT (the
 // loader appends `.fsgg/`), and load once through the real config edge for every assertion to share.
 
+// Default to the canonical reference dir; 086's pack gate may redirect this (to a temp-dir copy) via
+// FSGG_REFERENCE_GATE_SET_DIR so the SAME guard validates a candidate set before it is packed
+// (FR-004) — behavior-preserving: with the env var unset, this is exactly the canonical path.
 let private referenceDir =
-    Path.Combine(FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot, "samples", "sdd-reference-gate-set")
+    match System.Environment.GetEnvironmentVariable "FSGG_REFERENCE_GATE_SET_DIR" with
+    | null | "" -> Path.Combine(FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot, "samples", "sdd-reference-gate-set")
+    | dir -> dir
 
 let private validation = Loader.loadAndValidate referenceDir
 

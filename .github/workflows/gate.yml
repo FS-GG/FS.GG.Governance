@@ -74,3 +74,36 @@ jobs:
 
       - name: Drift check (managed files == source of truth)
         run: _org-build/scripts/sync-build-config.sh --check "$GITHUB_WORKSPACE"
+
+  # Reference-gate-set content package guard (spec 086, FS.GG.Governance#15). Runs the
+  # ReferenceGateSet.Tests project, which (a) freezes the bundle invariants (079 G1–G7) and
+  # (b) self-PRODUCES the real `.nupkg` via the checked-in pack-reference-gate-set.fsx — gated
+  # on those same G1–G7 — and asserts the CI-produced artifact is byte-identical to the on-disk
+  # samples (SC-002), content-only with no lib/ and no dependency group (SC-005), and
+  # schema-versioned to a deterministic, distinguishable value (SC-003). A SEPARATE job so a
+  # package-guard failure is a distinct signal, not serialized behind the build.
+  reference-gate-set-pack:
+    name: Reference gate set — pack guard (byte-identity + gated + versioned)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Locked restore the guard project (and its references) so a graph drift fails here too.
+      - name: Restore (locked)
+        run: dotnet restore tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj --locked-mode
+
+      # Build once so the package guard can run the pre-pack G1–G7 gate against the already-built
+      # assembly (the test sets FSGG_PACK_GATE_NO_BUILD so the nested gate uses --no-build).
+      - name: Build guard project
+        run: dotnet build tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj -c Debug --no-restore
+
+      # Runs the 079 G1–G7 guard AND the 086 package guard. The package guard shells the pack
+      # script to produce the .nupkg into a temp feed (no dependence on ~/.local/share/nuget-local).
+      - name: Reference-gate-set guards (G1–G7 + packed-artifact)
+        run: dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj -c Debug --no-build

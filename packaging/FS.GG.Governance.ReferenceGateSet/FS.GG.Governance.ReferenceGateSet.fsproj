@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 086: the content-only NuGet package that publishes the validated reference `.fsgg` gate set
+       (samples/sdd-reference-gate-set/.fsgg/) as one versioned source of truth for the Templates
+       overlay drift gate (Templates#14). It authors NO F# surface: no `Compile` items, no
+       `PackageReference`, no assembly (IncludeBuildOutput=false) and no dependency group
+       (SuppressDependenciesWhenPacking=true) — installing it imposes no governance runtime
+       dependency (FR-007/SC-005). The four YAML files are packed IN PLACE from the sample
+       directory (single source — no duplicated copy, FR-002/FR-003); a guard test
+       (tests/FS.GG.Governance.ReferenceGateSet.Tests) verifies the packed bytes are identical to
+       the on-disk samples. The package version is NOT set here — it is derived deterministically
+       from the four contained `schemaVersion` declarations and passed in by
+       pack-reference-gate-set.fsx (`-p:Version=…`); see that script and the version-rule ADR. -->
+  <PropertyGroup>
+    <PackageId>FS.GG.Governance.ReferenceGateSet</PackageId>
+    <IsPackable>true</IsPackable>
+    <Authors>FS-GG</Authors>
+    <Description>The validated FS.GG.Governance reference `.fsgg` gate set (governance.yml, policy.yml, capabilities.yml, tooling.yml) as a content-only package — one published, versioned source of truth for a consumer's overlay drift gate. Content-only: no assembly, no runtime dependency. Version is derived from the four contained schemaVersion declarations.</Description>
+    <PackageTags>fs-gg;governance;fsgg;reference-gate-set;content</PackageTags>
+
+    <!-- Content-only: no lib/<tfm>/ assembly and no dependency group in the .nupkg (FR-007). -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+
+    <!-- No F# source compiles here — this project carries content, not code. An empty F# compile
+         closure cannot produce an assembly, so short-circuit the build to the (suppressed) output:
+         pack needs the project to "build" but there is nothing to compile and nothing to emit. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoBuild>false</NoBuild>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+
+    <!-- A content package is framework-agnostic; pin a single contentFiles entry per file rather
+         than fanning out per-TFM, and silence the "no TFM-specific assets" pack warning. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <!-- The four reference files, packed IN PLACE from the canonical sample directory (single
+       source — FR-002/FR-003). PackagePath lands them at contentFiles/any/any/.fsgg/<file>, the
+       framework-agnostic, version-stable consumer location a drift gate compares against
+       (FR-005/FR-009). Pack="true" includes them; no <Compile>, so no assembly. -->
+  <ItemGroup>
+    <None Include="../../samples/sdd-reference-gate-set/.fsgg/*.yml"
+          Pack="true"
+          PackagePath="contentFiles/any/any/.fsgg/" />
+  </ItemGroup>
+
+</Project>
