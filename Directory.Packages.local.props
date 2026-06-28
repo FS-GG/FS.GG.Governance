@@ -1,0 +1,45 @@
+<Project>
+
+  <!-- Repo-owned PackageVersion overrides for FS.GG.Governance.
+       Imported LAST by the org-canonical Directory.Packages.props. This file holds ONLY
+       <ItemGroup>s of PackageVersion — the CPM property group lives in the canonical file,
+       and FSharp.Core is owned by the org baseline (do NOT re-declare it here: CPM raises
+       NU1504/NU1011 on a duplicate PackageVersion). NOT managed by the shared-build-config
+       sync; exempt from the drift check. Relocated here on adopting shared-build-config
+       (spec 085). The KERNEL itself takes NO package references (it stays BCL-only). -->
+
+  <!-- Runtime: YAML reader for the optional FS.GG.Governance.Config library (F014).
+       NEED: the four `.fsgg` files are authored in YAML; a correct reader is required
+       and hand-rolling the full YAML spec is out of proportion. SCOPE: parse-to-node
+       only (YamlStream/YamlNode), isolated to FS.GG.Governance.Config — every strictness
+       rule (unknown fields, duplicate ids, schemaVersion range, path escape, dangling
+       references) is our own code over the node tree, NOT YamlDotNet's lenient binding.
+       The kernel/host stay BCL-only. OWNER: FS.GG.Governance.Config maintainer. -->
+  <ItemGroup>
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
+       NEED: color-coded verdict banners, grouped width-resilient gate/finding/blocker tables, and
+       an optional read-only report navigator (FR-005/FR-006/FR-009) — a correct, width-aware rich
+       renderer is required and hand-rolling ANSI/table/reflow logic is out of proportion (the
+       YamlDotNet precedent). SCOPE: PackageReference'd by EXACTLY ONE project,
+       FS.GG.Governance.HumanRender, the sole CLI-host presentation library. It NEVER enters a pure
+       core, the *Json projections, or the pure FS.GG.Governance.HumanText library (FR-013, SC-007,
+       enforced by the dependency-boundary test). OWNER: CLI host maintainer. -->
+  <ItemGroup>
+    <PackageVersion Include="Spectre.Console" Version="0.57.1" />
+  </ItemGroup>
+
+  <!-- Test-only: Expecto + FsCheck (property-based order-independence) plus the
+       VSTest adapters that let `dotnet test` drive the Expecto runner. None of
+       these reach the kernel assembly. -->
+  <ItemGroup>
+    <PackageVersion Include="Expecto" Version="10.2.3" />
+    <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
+    <PackageVersion Include="FsCheck" Version="2.16.6" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
+  </ItemGroup>
+
+</Project>

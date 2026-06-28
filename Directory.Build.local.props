@@ -1,0 +1,26 @@
+<Project>
+
+  <!-- Repo-owned MSBuild overrides for FS.GG.Governance.
+       Imported LAST by the org-canonical Directory.Build.props (last-write-wins), so
+       everything here overrides the org defaults. This file is NOT managed by the
+       shared-build-config sync and is exempt from the drift check.
+       Source of truth for the canonical half: FS-GG/.github → dist/dotnet/. -->
+
+  <!-- Shared build settings for every project in the FS.GG.Governance solution.
+       F01 stood these up; every later feature reuses them (plan "Project Structure").
+       Relocated here from Directory.Build.props on adopting shared-build-config
+       (spec 085) because the org-canonical file carries only determinism, CPM, and the
+       lockfile-restore gate — every repo-specific property lives here instead. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarnOn>3390;1182</WarnOn>
+    <OtherFlags>$(OtherFlags) --nowarn:57</OtherFlags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- F01 does NOT pack (D7); packing arrives at F06. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>
