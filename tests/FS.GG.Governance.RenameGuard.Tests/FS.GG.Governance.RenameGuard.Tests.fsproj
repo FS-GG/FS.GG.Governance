@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 083: the governance-side fs-gg-ui rename guard (ADR-0003, cross-repo P5). A self-contained
+       Expecto regression guard that scans the git-tracked tree for legacy version-machinery
+       identifiers (fs-skia-ui-version / fs-skia-ui-bom / FsSkiaUiVersion / fs-skia-ui/v<n>),
+       proving zero remain today and failing loudly if any is reintroduced — while sparing the
+       legitimate historical-repository provenance prose (the predecessor EHotwagner/FS-Skia-UI
+       repo) in four documentary files. Real evidence (Principle V): the production scan reads the
+       REAL tracked tree; the red-path tests pass literal strings to the pure matcher. No new
+       public F# surface (Tier 2): no .fsi, no surface-area baseline.
+
+       Self-containment (FR-009): the guard needs NO production ProjectReference — it only reads
+       files and shells `git`. Its only reference is Tests.Common for RepositoryHelpers.repoRoot.
+
+       Test framework: Expecto + YoloDev (the repo-wide convention under central package
+       management). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="RenameGuardTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>
