@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "fs.gg.governance.jsontext": {
+        "type": "Project"
+      },
+      "fs.gg.governance.kernel": {
+        "type": "Project"
+      },
+      "fs.gg.governance.scaffold": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FSharp.Core": "[10.1.301, )"
+        }
+      },
+      "FSharp.Core": {
+        "type": "CentralTransitive",
+        "requested": "[10.1.301, )",
+        "resolved": "10.1.301",
+        "contentHash": "FwQFuqOA1+qQnFl6Vqg6piS83ZRuKJqXJQxOM52M5tNarT2XQ/pMvw8fOOlnhcOYvdZyje2PJ8rK/J64ZI729Q=="
+      }
+    }
+  }
+}
