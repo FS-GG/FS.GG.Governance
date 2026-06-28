@@ -49,7 +49,7 @@ let tests =
           test "a FileReader Error is surfaced, never swallowed (Principle VI)" {
               let erroringReader name =
                   match name with
-                  | "project.yml" -> Ok(Some minimalProject)
+                  | "governance.yml" -> Ok(Some minimalProject)
                   | "capabilities.yml" -> Ok(Some minimalCaps)
                   | "policy.yml" -> Error "permission denied"
                   | _ -> Ok None
@@ -61,12 +61,52 @@ let tests =
           test "an absent (Ok None) optional file with the same reader → Valid (contrast)" {
               let absentReader name =
                   match name with
-                  | "project.yml" -> Ok(Some minimalProject)
+                  | "governance.yml" -> Ok(Some minimalProject)
                   | "capabilities.yml" -> Ok(Some minimalCaps)
                   | _ -> Ok None
               match Schema.validate (Loader.readSource (GovernedPath ".") absentReader) with
               | Valid f -> Expect.isNone f.Policy "absent optional → None"
               | Invalid d -> failtestf "expected Valid, got %A" d
+          }
+
+          test "no fallback: project.yml present + governance.yml absent → Invalid, project.yml never consumed (C2, SC-004)" {
+              // The SDD-owned project.yml must NOT satisfy Governance's primary slot. The
+              // project.yml content is well-formed and WOULD load Valid if it were the slot the
+              // loader read — proving the result is driven by the absent governance.yml, not a
+              // silent fallback (ADR-0005 clean break, research D7). Fails before the slot switch.
+              let noFallbackReader name =
+                  match name with
+                  | "project.yml" -> Ok(Some minimalProject)
+                  | "capabilities.yml" -> Ok(Some minimalCaps)
+                  | _ -> Ok None // governance.yml is Ok None ⇒ primary slot absent
+              match Schema.validate (Loader.readSource (GovernedPath ".") noFallbackReader) with
+              | Invalid _ -> ()
+              | Valid _ -> failtest "an SDD project.yml must NOT satisfy the absent governance.yml primary slot (no fallback)"
+          }
+
+          test "both files present → Valid from governance.yml, project.yml never consumed (ADR-0005 steady state)" {
+              // Both slots populated, as in a real shared .fsgg/. The project.yml content is
+              // deliberately MALFORMED: if the loader ever consumed it the result would be
+              // Invalid. Valid here proves governance.yml is the only primary slot read.
+              let malformedProject = "schemaVersion: 1\nid:\ngovernedRoot\n  not: yaml: at: all"
+              let bothPresentReader name =
+                  match name with
+                  | "governance.yml" -> Ok(Some minimalProject)
+                  | "project.yml" -> Ok(Some malformedProject)
+                  | "capabilities.yml" -> Ok(Some minimalCaps)
+                  | _ -> Ok None
+              let governanceOnlyReader name =
+                  match name with
+                  | "governance.yml" -> Ok(Some minimalProject)
+                  | "capabilities.yml" -> Ok(Some minimalCaps)
+                  | _ -> Ok None
+              match Schema.validate (Loader.readSource (GovernedPath ".") bothPresentReader) with
+              | Valid both ->
+                  // identical facts to the governance-only case ⇒ project.yml contributed nothing
+                  match Schema.validate (Loader.readSource (GovernedPath ".") governanceOnlyReader) with
+                  | Valid only -> Expect.equal both only "governance.yml drives the facts; project.yml is inert"
+                  | Invalid d -> failtestf "governance-only baseline expected Valid, got %A" d
+              | Invalid d -> failtestf "governance.yml is well-formed; both-present must be Valid, got %A" d
           }
 
           test "host-path independence: same content under two absolute parents → identical Validation (I3)" {

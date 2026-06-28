@@ -94,7 +94,7 @@ The 2026-06-18 capability-design report is now incorporated into the implementat
 plan as F14-F27, with checkbox progress tracking for the protected ship gate,
 native SDD flow, generated views, surface checks, release gates, and provenance work.
 F14 adds the optional **`FS.GG.Governance.Config`** library: the source-of-truth schemas
-for the four versioned `.fsgg` files (`project.yml`, `policy.yml`, `capabilities.yml`,
+for the four versioned `.fsgg` files (`governance.yml`, `policy.yml`, `capabilities.yml`,
 `tooling.yml`). It parses them strictly (unknown fields, duplicate ids, `schemaVersion`
 range, path escapes, and dangling cross-references are all stable, located diagnostics),
 normalizes paths deterministically, classifies surfaces, and emits **typed, YAML-free,

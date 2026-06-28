@@ -38,7 +38,7 @@ let tests =
 
           test "in-bounds emission ⇒ ProbeCollisions over resolved ∪ reserved, no write yet" {
               let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// p"; "src/App/App.fsproj", "<p/>" ]
-              let model, _ = invoking p [ ".fsgg/project.yml" ]
+              let model, _ = invoking p [ ".fsgg/governance.yml" ]
 
               let emission = emissionOf [ "src/App/Program.fs", "// p"; "src/App/App.fsproj", "<p/>" ]
               let model2, effects2 = Loop.update (Loop.ProviderEmitted(Ok emission)) model
@@ -49,7 +49,7 @@ let tests =
               | [ Loop.ProbeCollisions paths ] ->
                   Expect.containsAll
                       paths
-                      [ "src/App/Program.fs"; "src/App/App.fsproj"; ".fsgg/project.yml" ]
+                      [ "src/App/Program.fs"; "src/App/App.fsproj"; ".fsgg/governance.yml" ]
                       "probes the emitted paths plus the reserved paths"
               | other -> failtestf "expected a single ProbeCollisions effect, got %A" other
           }

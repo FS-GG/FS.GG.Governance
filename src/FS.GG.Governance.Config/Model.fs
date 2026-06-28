@@ -72,7 +72,7 @@ module Model =
     type TemplateProfile = TemplateProfile of string
     type Baseline = Baseline of string
 
-    // ── project.yml ──
+    // ── governance.yml ──
 
     type ProjectFacts =
         { SchemaVersion: SchemaVersion

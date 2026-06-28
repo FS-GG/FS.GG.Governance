@@ -126,13 +126,13 @@ let tests =
                   // is passed as reserved, so the seam refuses if the provider's set intersects it. Here the
                   // provider emits a fresh path AND we reserve a path that exists ⇒ collision on the reserved.
                   Directory.CreateDirectory(Path.Combine(target, ".fsgg")) |> ignore
-                  File.WriteAllText(Path.Combine(target, ".fsgg/project.yml"), "id: x")
+                  File.WriteAllText(Path.Combine(target, ".fsgg/governance.yml"), "id: x")
 
                   let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// hello" ]
-                  let model = Interpreter.run (Interpreter.realPorts target) (runRequest target [ ".fsgg/project.yml" ] (Some p))
+                  let model = Interpreter.run (Interpreter.realPorts target) (runRequest target [ ".fsgg/governance.yml" ] (Some p))
 
                   match model.Manifest with
-                  | Some { Outcome = Refused(Collision paths) } -> Expect.contains paths ".fsgg/project.yml" "reserved existing path is a collision"
+                  | Some { Outcome = Refused(Collision paths) } -> Expect.contains paths ".fsgg/governance.yml" "reserved existing path is a collision"
                   | other -> failtestf "expected Refused(Collision) on the reserved path, got %A" other
 
                   Expect.isFalse (File.Exists(Path.Combine(target, "src/App/Program.fs"))) "nothing written")

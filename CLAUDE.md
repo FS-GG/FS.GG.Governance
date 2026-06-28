@@ -2,7 +2,21 @@
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the roadmap at
 docs/initial-implementation-plan.md. There is no IN-PROGRESS feature. The most recently
-DELIVERED feature is specs/081-sdd-handoff-consumer/ (✅ DELIVERED): a Tier 1 feature shipping the
+DELIVERED feature is specs/084-governance-yml-rename/ (✅ DELIVERED): a Tier 1 filename/slot rename
+switching the Governance config loader's primary `.fsgg` slot from the SDD-owned `project.yml` to
+its own `governance.yml` (ADR-0005 clean break — NO `project.yml` fallback, proven by a new
+no-fallback regression test that is Invalid/missing-primary when only `project.yml` is present and
+loads `Valid` from `governance.yml` when both coexist). It finished a half-done working-tree rename
+coherently: one loader constant (`Loader.fs` `slot "governance.yml"`) + comment-only `.fsi`/Model
+touches (`ProjectFacts`/`Source.Project` names RETAINED, FR-009, no surface-baseline re-bless — D3),
+36 pure primary-slot moves (34 config fixtures + golden-fixture + `samples/sdd-reference-gate-set`),
+~10 test-support/test helpers re-pointed, and the binding `README.md:97` Governance four-file
+enumeration → `governance.yml` (`docs/` SDD-owned/historical `project.yml` mentions left unchanged,
+FR-008). The registry (`FS-GG/.github`) already records ADR-0005's `surface: ".fsgg/governance.yml"`;
+roadmap item FS-GG/FS.GG.Governance#13 (contract-change) is the tracker. Verified: Config 61/61 (incl.
+the new no-fallback test), ReferenceGateSet 8/8, full `dotnet fsi build.fsx test` green across all
+projects (CLI 51/51, SurfaceChecks 18/18 with no re-bless), bounded build 20s. The prior DELIVERED
+feature is specs/081-sdd-handoff-consumer/ (✅ DELIVERED): a Tier 1 feature shipping the
 SDD→Governance handoff CONSUMER (ADR-0002 queued work) so a produced
 `readiness/<id>/governance-handoff.json` actually drives `route`/`ship`/`verify` verdicts — the
 handoff is no longer inert. A new pure leaf library `FS.GG.Governance.Adapters.SddHandoff` (five

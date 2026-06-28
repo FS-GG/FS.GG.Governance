@@ -28,7 +28,7 @@ MVP surface class.
 | `malformed-dangling-domain-ref` | `DanglingReference` | US2 AS5 (check → undeclared domain) |
 | `malformed-dangling-command-ref` | `DanglingReference` | cross-file (check → command, tooling absent) |
 | `malformed-dangling-default-profile` | `DanglingReference` | defaultProfile not a declared profile |
-| `malformed-empty-file` | `EmptyFile` | present-but-empty `project.yml` |
+| `malformed-empty-file` | `EmptyFile` | present-but-empty `governance.yml` |
 | `malformed-missing-required-file` | `MissingRequiredFile` | required `capabilities.yml` absent |
 
 ## surface-* → SurfaceClass

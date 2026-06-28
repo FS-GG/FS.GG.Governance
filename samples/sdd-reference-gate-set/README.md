@@ -16,7 +16,7 @@ substitution is the `<App>` placeholder in the `tooling.yml` command strings.
 
 | File | Schema | Purpose |
 |------|--------|---------|
-| `project.yml` | v1 | Project identity, the three governed `domains`, the `src` package surface, and refs to the sibling policy/capabilities files. |
+| `governance.yml` | v1 | Project identity, the three governed `domains`, the `src` package surface, and refs to the sibling policy/capabilities files. |
 | `capabilities.yml` | v2 | The `domains`, the `pathMap` (glob → domain), the `public-api` package surface, and the **three checks**. |
 | `policy.yml` | v1 | The profiles and the load-bearing `defaultProfile: light`, plus declared branch-policy / review-budget placeholders. |
 | `tooling.yml` | v1 | The three allow-listed commands each check binds to, the environment classes, and the `dotnet` external tool. |

@@ -35,7 +35,7 @@ let tests =
               try
                   // Seed a host-owned lifecycle file; the seam must not touch it.
                   Directory.CreateDirectory(Path.Combine(target, ".fsgg")) |> ignore
-                  let hostFile = Path.Combine(target, ".fsgg/project.yml")
+                  let hostFile = Path.Combine(target, ".fsgg/governance.yml")
                   File.WriteAllText(hostFile, "id: host-owned")
                   let before = filesUnder target
 

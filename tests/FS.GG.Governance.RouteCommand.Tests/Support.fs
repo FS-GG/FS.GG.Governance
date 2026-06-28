@@ -93,7 +93,7 @@ let writeFile = SnapshotHelpers.writeFile
 
 let productCatalog: Map<string, string> =
     Map
-        [ "project.yml", projectYml
+        [ "governance.yml", projectYml
           "capabilities.yml",
           yaml """
 schemaVersion: 2

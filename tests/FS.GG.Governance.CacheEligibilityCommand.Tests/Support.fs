@@ -116,7 +116,7 @@ environmentClasses:
 
 let validCatalog: Map<string, string> =
     Map
-        [ "project.yml", projectYml
+        [ "governance.yml", projectYml
           "capabilities.yml",
           yaml """
 schemaVersion: 2
@@ -161,7 +161,7 @@ checks:
           "tooling.yml", toolingYml ]
 
 let invalidCatalog: Map<string, string> =
-    Map [ "project.yml", yaml """
+    Map [ "governance.yml", yaml """
 schemaVersion: 999
 id: my-product
 governedRoot: .

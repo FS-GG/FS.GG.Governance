@@ -57,7 +57,7 @@ let private writeUnmetPublishPlan (dir: string) : unit =
 /// Materialize the combined fixture and run `body repo`, deleting it afterward.
 let private withMergeableRepo (writeSources: string -> unit) (body: string -> 'a) : 'a =
     withTempDir (fun dir ->
-        writeFile dir (Path.Combine(".fsgg", "project.yml")) projectYml
+        writeFile dir (Path.Combine(".fsgg", "governance.yml")) projectYml
         writeFile dir (Path.Combine(".fsgg", "capabilities.yml")) capabilitiesYml
         writeFile dir (Path.Combine(".fsgg", "policy.yml")) policyYml
         writeFile dir (Path.Combine(".fsgg", "tooling.yml")) toolingYml

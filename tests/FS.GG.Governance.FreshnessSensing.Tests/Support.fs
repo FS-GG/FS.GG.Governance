@@ -101,7 +101,7 @@ let withTempDir (body: TempRepo -> 'a) : 'a =
 
     try
         // A minimal rule-pack catalog (only the bytes matter to the SHA-256 sensor — no validation here).
-        writeFile dir ".fsgg/project.yml" "schemaVersion: 1\nid: my-product\n"
+        writeFile dir ".fsgg/governance.yml" "schemaVersion: 1\nid: my-product\n"
         writeFile dir ".fsgg/capabilities.yml" "schemaVersion: 1\nchecks: []\n"
         // A couple of covered-surface files under src/**.
         writeFile dir "src/Lib/A.fs" "module A\nlet v = 1\n"

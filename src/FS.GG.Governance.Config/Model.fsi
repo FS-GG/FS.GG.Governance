@@ -112,7 +112,7 @@ module Model =
     /// (meaningful on `PackageSurface`).
     type Baseline = Baseline of string
 
-    // ── project.yml ──
+    // ── governance.yml ──
 
     type ProjectFacts =
         { SchemaVersion: SchemaVersion

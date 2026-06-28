@@ -376,7 +376,7 @@ let surfaceE2EPorts (dir: string) (exec: ExecutionPort) (cap: Capture) : Interpr
 // finding; the gate exercises the executed projection path so the fold runs over a relocated decision.
 let surfaceCatalog: Map<string, string> =
     Map
-        [ "project.yml", projectYml
+        [ "governance.yml", projectYml
           "capabilities.yml",
           yaml """
 schemaVersion: 2
@@ -504,7 +504,7 @@ let syntheticSurfaceSense (findings: FS.GG.Governance.SurfaceChecks.Model.Surfac
 // ever shells a process), for the no-write / no-spawn proof (FR-012, T009b) and the absent-baseline case.
 let surfaceCatalogNoGates: Map<string, string> =
     Map
-        [ "project.yml", projectYml
+        [ "governance.yml", projectYml
           "capabilities.yml",
           yaml """
 schemaVersion: 2

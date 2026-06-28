@@ -85,7 +85,7 @@ environmentClasses:
     // under `src/**` routes to package-api ⇒ selects format(cheap) + build(medium).
     let validCatalog: Map<string, string> =
         Map
-            [ "project.yml", projectYml
+            [ "governance.yml", projectYml
               "capabilities.yml",
               yaml """
 schemaVersion: 2
@@ -132,7 +132,7 @@ checks:
     // A valid-but-empty catalog: two domains, no checks ⇒ an empty GateRegistry.
     let emptyCatalog: Map<string, string> =
         Map
-            [ "project.yml", projectYml
+            [ "governance.yml", projectYml
               "capabilities.yml",
               yaml """
 schemaVersion: 2
@@ -149,9 +149,9 @@ checks: []
               "policy.yml", policyYml
               "tooling.yml", toolingYml ]
 
-    // An invalid catalog: an unsupported schema version on project.yml ⇒ Invalid.
+    // An invalid catalog: an unsupported schema version on governance.yml ⇒ Invalid.
     let invalidCatalog: Map<string, string> =
-        Map [ "project.yml", yaml """
+        Map [ "governance.yml", yaml """
 schemaVersion: 999
 id: my-product
 governedRoot: .

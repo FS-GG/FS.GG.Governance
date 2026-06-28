@@ -31,13 +31,13 @@ module Loader =
             // than as an absent optional file — so an Error can never pass as `Valid`/`None`.
             | Error _ -> Present ""
         { Root = root
-          Project = slot "project.yml"
+          Project = slot "governance.yml"
           Policy = slot "policy.yml"
           Capabilities = slot "capabilities.yml"
           Tooling = slot "tooling.yml" }
 
     let loadAndValidate (fsggParentDir: string) : Validation =
         // Root is the in-memory normalization anchor only; it never enters TypedFacts (the
-        // emitted GovernedRoot comes from project.yml), so no absolute host path leaks.
+        // emitted GovernedRoot comes from governance.yml), so no absolute host path leaks.
         readSource (GovernedPath ".") (fileSystemReader fsggParentDir)
         |> Schema.validate
