@@ -19,6 +19,11 @@
 
   <ItemGroup>
     <Compile Include="ReferenceGateSetGuardTests.fs" />
+    <!-- 086: the published-artifact guard (byte-identity / content-only / gated / schema-versioned).
+         It shells the checked-in pack script to produce the REAL .nupkg; it adds NO project
+         reference to the packaging project (it asserts over the produced archive and the script's
+         emitted version), so the restore graph is unchanged (research D6). -->
+    <Compile Include="ReferenceGateSetPackageTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
