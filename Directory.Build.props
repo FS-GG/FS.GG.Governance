@@ -1,32 +1,44 @@
 <Project>
 
-  <!-- Shared build settings for every project in the FS.GG.Governance solution.
-       F01 stands this up; every later feature reuses it (plan "Project Structure"). -->
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarnOn>3390;1182</WarnOn>
-    <OtherFlags>$(OtherFlags) --nowarn:57</OtherFlags>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- F01 does NOT pack (D7); packing arrives at F06. -->
-    <IsPackable>false</IsPackable>
+  <!-- ════════════════════════════════════════════════════════════════════════════
+       FS-GG ORG-SHARED MSBuild PROPERTIES
+       Source of truth: FS-GG/.github → dist/dotnet/Directory.Build.props
+       Distributed by scripts/sync-build-config.sh. DO NOT EDIT in a consumer repo —
+       edits are overwritten on the next sync and fail the drift check (check mode).
+       Repo-specific properties (TargetFramework, package metadata, F# warning
+       promotions, fsdocs, …) go in Directory.Build.local.props, imported at the end
+       so a repo may override anything below (last definition wins).
+       Contract: lockfile-restore-enforcement + shared-build-config (registry/dependencies.yml).
+       ════════════════════════════════════════════════════════════════════════════ -->
+
+  <PropertyGroup Label="Determinism">
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
-  <PropertyGroup Label="Restore (211)">
-    <!-- FS-GG/.github#7 / Feature 211 parity: lock restore so the FsGgUiVersion-style
-         staleness bug class is structurally impossible rather than convention-enforced.
-         Lockfiles are committed (RestorePackagesWithLockFile); CI restores in locked mode
-         so any dependency-graph drift fails the build. RestoreLockedMode is gated on
-         GITHUB_ACTIONS AND an existing lockfile, so a fresh clone / first restore is never
-         blocked locally and bootstrap generates the lockfile instead of failing. -->
+  <PropertyGroup Label="Central Package Management">
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <PropertyGroup Label="lockfile-restore-enforcement">
+    <!-- Commit packages.lock.json and restore in locked mode in CI so any dependency-graph
+         drift (a stale or silently substituted FS.GG.UI.* version, or any transitive bump)
+         FAILS restore instead of resolving quietly. -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- UNIFIED GATE (H3 / .github#19, ADR-0006): gate on GITHUB_ACTIONS, NOT on
+         ContinuousIntegrationBuild. Rationale: some repos (SDD) force CIB=true
+         unconditionally for determinism, so a CIB gate fails-closed on a fresh local
+         clone; GITHUB_ACTIONS is the real CI signal present in every repo's workflow.
+         `And Exists(...lockfile)` lets a first restore bootstrap the lockfile instead
+         of blocking, so a brand-new project is never wedged. -->
     <RestoreLockedMode Condition="'$(GITHUB_ACTIONS)' == 'true' And Exists('$(MSBuildProjectDirectory)/packages.lock.json')">true</RestoreLockedMode>
-    <!-- Feature 211 (FR-004): silent version substitution (NU1603) and out-of-range
-         (NU1608) become errors. Restore-phase NU16xx are not reliably promoted by
-         TreatWarningsAsErrors, so promote them explicitly. -->
+    <!-- Restore-phase NU16xx are not reliably promoted by TreatWarningsAsErrors, so promote
+         silent substitution (NU1603) and out-of-range (NU1608) explicitly. -->
     <WarningsAsErrors>$(WarningsAsErrors);NU1603;NU1608</WarningsAsErrors>
   </PropertyGroup>
+
+  <!-- Repo-specific overrides. Keep this import LAST so a repo can override any org
+       default above (MSBuild property last-write-wins). -->
+  <Import Project="Directory.Build.local.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
 
 </Project>

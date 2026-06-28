@@ -46,3 +46,31 @@ jobs:
       # promoted to errors in Directory.Build.props.
       - name: Build (net10.0)
         run: dotnet build FS.GG.Governance.sln -c Debug --no-restore
+
+  # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The three
+  # managed build-config files (Directory.Build.props, Directory.Packages.props,
+  # .config/dotnet-tools.json) must stay byte-identical to the org source of truth in
+  # FS-GG/.github dist/dotnet/. This job checks out that repo and runs its drift check; a
+  # hand-edit to a managed file (or an un-re-synced org baseline bump) fails the job. Run as
+  # a SEPARATE job so a drift failure is a distinct signal, not serialized behind the build.
+  # FOLLOW-UP: replace this self-contained checkout with `uses: FS-GG/.github/.github/
+  # workflows/contract-coherence.yml@main` once .github#18 (the reusable workflow) lands.
+  build-config-drift:
+    name: Build-config drift check (shared-build-config)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      # Source of truth: scripts/ + dist/dotnet/ must land together (the script resolves its
+      # source as dirname(script)/../dist/dotnet). Track main — the live baseline — so an org
+      # bump shows up here as red until this repo re-syncs (intended coherence pressure).
+      - name: Checkout org build config (FS-GG/.github)
+        uses: actions/checkout@v4
+        with:
+          repository: FS-GG/.github
+          ref: main
+          path: _org-build
+
+      - name: Drift check (managed files == source of truth)
+        run: _org-build/scripts/sync-build-config.sh --check "$GITHUB_WORKSPACE"
