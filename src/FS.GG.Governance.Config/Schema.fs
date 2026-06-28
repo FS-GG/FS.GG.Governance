@@ -9,6 +9,7 @@ namespace FS.GG.Governance.Config
 open System
 open System.IO
 open YamlDotNet.RepresentationModel
+open Fsgg
 open FS.GG.Governance.Config.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -29,12 +30,17 @@ module Schema =
 
     // ── Supported versions (F23 D1: per-file) ──
 
+    // Single-sourced from the org-shared contract package `FS.GG.Contracts` (Fsgg.Schemas):
+    // the supported `.fsgg` schema version for each Governance-owned file is the version
+    // constant the contract declares — caps=2, governance/policy/tooling=1 — so the value
+    // lives in exactly one place across the org (FS.GG.Governance#14), not as a literal here.
+    // `Project` is the `governance.yml` file (renamed from project.yml), hence `governanceVersion`.
     let supportedVersionFor (file: FsggFile) : SchemaVersion =
         match file with
-        | Capabilities -> SchemaVersion 2
-        | Project
-        | Policy
-        | Tooling -> SchemaVersion 1
+        | Project -> SchemaVersion Schemas.governanceVersion
+        | Policy -> SchemaVersion Schemas.policyVersion
+        | Capabilities -> SchemaVersion Schemas.capabilitiesVersion
+        | Tooling -> SchemaVersion Schemas.toolingVersion
 
     /// The migration-guidance pointer named by an unsupported-`capabilities.yml` diagnostic (SC-006).
     /// A repo-relative doc path — never a host-absolute path (SC-002/SC-005).

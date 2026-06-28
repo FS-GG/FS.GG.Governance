@@ -55,12 +55,17 @@ let tests =
                   "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
           }
 
-          test "Config references only YamlDotNet + BCL + FSharp.Core (FR-016 scope guard)" {
+          test "Config references only YamlDotNet + FS.GG.Contracts + BCL + FSharp.Core (FR-016 scope guard)" {
               // No kernel/host/adapter/CLI dependency, and no git/CI/routing/gate/enforcement
               // package — the absence confirms no later-phase capability leaked into F014.
+              // FS.GG.Contracts is the ONE sanctioned cross-repo dependency (FS.GG.Governance#14):
+              // the org-shared, BCL-only typed source of truth for the `.fsgg` schema version
+              // constants. It carries no kernel/host/capability surface, so the isolation the
+              // guard protects is preserved (it depends only on FSharp.Core itself).
               let allowed (name: string) =
                   name = "FSharp.Core"
                   || name = "YamlDotNet"
+                  || name = "FS.GG.Contracts"
                   || name = "System.Private.CoreLib"
                   || name = "netstandard"
                   || name = "mscorlib"

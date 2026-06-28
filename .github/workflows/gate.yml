@@ -17,6 +17,17 @@ concurrency:
 
 permissions:
   contents: read
+  # Read the private org GitHub Packages NuGet feed (FS.GG.Contracts is consumed by
+  # FS.GG.Governance.Config; FS.GG.* are not on nuget.org). Symmetric to SDD's release
+  # workflow, which PUBLISHES with the run-scoped GITHUB_TOKEN (packages: write) — here we
+  # only READ, so packages: read. No PAT (FS-GG/.github#16 auto-update fabric).
+  packages: read
+
+# Credentials for the `fsgg-github` source declared in nuget.config (env placeholders there,
+# wired here from the run-scoped token). Username can be any non-empty value for GitHub Packages.
+env:
+  FSGG_PACKAGES_ACTOR: ${{ github.actor }}
+  FSGG_PACKAGES_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   gate:
