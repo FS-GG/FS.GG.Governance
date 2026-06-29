@@ -391,7 +391,10 @@ module Interpreter =
                     { Root = root
                       Supplied = facts
                       Change = change
-                      Artifacts = artifactsFor () }
+                      Artifacts = artifactsFor ()
+                      // The evidence command does not consume the SDD handoff (it reports declared/effective
+                      // evidence, not the route gate verdict); the handoff drives only `route` (Cli.resultForHost).
+                      Handoffs = [] }
         with ex ->
             Error ex.Message
 

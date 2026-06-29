@@ -39,7 +39,12 @@ type ProjectSnapshot =
     { Root: string
       Supplied: FactSet<ProjectFact>
       Change: ProjectChange
-      Artifacts: ArtifactRef list }
+      Artifacts: ArtifactRef list
+      /// F081 wiring: the raw SDD→Governance handoff documents located under `Root`
+      /// (`readiness/<id>/governance-handoff.json`), in stable `<id>` order; `[]` when none.
+      /// The `route` command folds these through `Adapters.SddHandoff.Consumer` into its gate
+      /// verdict so a produced handoff drives the exit code (blocks at `--mode gate`).
+      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
 /// Options for building the composed catalog and Host configuration.
 type ProjectOptions =
