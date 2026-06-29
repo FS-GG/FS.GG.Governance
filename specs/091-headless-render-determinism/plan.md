@@ -11,12 +11,23 @@ forced width across a matrix (200/80/40/20/10). They pass locally but fail in he
 so spec 089 excluded them from the publish `cli-tests` gate via `--filter "FullyQualifiedName!~WidthResilience"`
 — a coverage hole tracked by issue #32.
 
-Root cause: `RichRender` renders a `Table` with `TableBorder.Rounded` (Unicode box-drawing). The test's
-`plainConsole` helper pins `Ansi`, `ColorSystem`, `Out`, and `Profile.Width`, but **does not** pin the
-profile *capabilities* Spectre infers from the host — `Unicode`, `Encoding`/`Legacy console` — which
-change how unbreakable tokens (e.g. `src/**`-style globs, ~17–21 chars) and border glyphs are measured
-and wrapped. Different hosts infer different capabilities → different wrapping → the strict
-`line.Length <= width` assertion overflows at width 10/20 in CI only.
+Root cause (original hypothesis — **superseded**, see correction below): `RichRender` renders a `Table`
+with `TableBorder.Rounded` (Unicode box-drawing). The test's `plainConsole` helper pins `Ansi`,
+`ColorSystem`, `Out`, and `Profile.Width`, but **does not** pin the profile *capabilities* Spectre
+infers from the host — `Unicode`, `Encoding`/`Legacy console` — which change how unbreakable tokens
+(e.g. `src/**`-style globs, ~17–21 chars) and border glyphs are measured and wrapped.
+
+> **CORRECTED ROOT CAUSE (#34/#37, 2026-06-29).** The glyph-measurement hypothesis above was wrong.
+> A one-shot CI cell-vs-unit dump (run `28376202121`) proved the `Rounded` table renders an identical
+> **20 display cells on both hosts** — measurement was never host-dependent. The real cause is ANSI
+> suppression not holding: `AnsiConsole.Create` re-detects ANSI *after* `settings.Ansi <- AnsiSupport.No`,
+> and under **`GITHUB_ACTIONS=true`** Spectre force-enables it. The two `console.Write(Markup …)` lines
+> (title `[bold]`, exit-status `[dim]`) then leak SGR escapes (`ESC[1m … ESC[0m`) into the "plain"
+> output. The escapes are invisible but inflate `String.Length` (`exit status: blocked` 20 → 28),
+> tripping the per-line assertion at width 10/20 **on the GitHub Actions host only**. Reproduces locally
+> with `GITHUB_ACTIONS=true dotnet test`. Fix: force `Profile.Capabilities.Ansi <- false` +
+> `ColorSystem <- NoColors` *after* `Create` so `plainConsole` is genuinely ANSI-free everywhere.
+> Lever 2 (boundary-aware folding assertion) was retained and is correct, but was not what greened CI.
 
 Technical approach (both levers, per the spec's default):
 1. **Pin capabilities for determinism** — extend `plainConsole` (or add a dedicated deterministic console
