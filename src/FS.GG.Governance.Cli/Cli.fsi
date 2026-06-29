@@ -83,9 +83,12 @@ type BudgetState =
       Pending: string list
       BudgetExhausted: string list }
 
-/// Command-specific payload produced after the host run.
+/// Command-specific payload produced after the host run. The `route` payload carries the
+/// computed F07 `Route` AND the SDD→Governance handoff gates consumed from the snapshot
+/// (`Adapters.SddHandoff.Consumer`) — the latter drive the `GovernedBlocking` exit at
+/// `--mode gate` and are rendered for attribution (empty when no handoff is present).
 type CommandPayload =
-    | RoutePayload of Route
+    | RoutePayload of route: Route * handoffGates: FS.GG.Governance.Gates.Model.Gate list
     | ExplainPayload of Explanation list
     | ContractPayload of ContractEntry list
     | EvidencePayload of ProjectEvidenceReport

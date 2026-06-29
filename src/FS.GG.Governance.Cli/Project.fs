@@ -34,7 +34,8 @@ type ProjectSnapshot =
     { Root: string
       Supplied: FactSet<ProjectFact>
       Change: ProjectChange
-      Artifacts: ArtifactRef list }
+      Artifacts: ArtifactRef list
+      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
 type ProjectOptions =
     { Domains: Set<Domain>

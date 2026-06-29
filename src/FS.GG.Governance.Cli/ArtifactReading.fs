@@ -339,6 +339,34 @@ module ArtifactReading =
         |> List.distinct
         |> List.sortBy (fun artifact -> artifact.Kind + ":" + artifact.Key)
 
+    // F081 wiring: locate + read every `readiness/<id>/governance-handoff.json` under `root` in
+    // stable `<id>` order (mirrors `RouteCommand.Interpreter.realHandoffs`). The impure edge the
+    // handoff consumer needs; TOTAL & SAFE — a missing/unreadable `readiness/` tree degrades to `[]`
+    // (a byte-identical route), never a throw (Principle VI). `loadSnapshot` then carries these on the
+    // snapshot so the pure `Cli` route verdict can fold them through `Consumer.consume`.
+    let locateHandoffs (root: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
+        try
+            let readinessDir = Path.Combine(root, "readiness")
+
+            if not (Directory.Exists readinessDir) then
+                []
+            else
+                Directory.GetDirectories readinessDir
+                |> Array.sortBy Path.GetFileName
+                |> Array.choose (fun dir ->
+                    let file = Path.Combine(dir, "governance-handoff.json")
+
+                    if File.Exists file then
+                        Some
+                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
+                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
+                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
+                    else
+                        None)
+                |> Array.toList
+        with _ ->
+            []
+
     let loadSnapshot (request: RunRequest) =
         let root = Path.GetFullPath request.Root
 
@@ -365,6 +393,7 @@ module ArtifactReading =
                     { Root = root
                       Supplied = facts
                       Change = change
-                      Artifacts = artifactsFor request }
+                      Artifacts = artifactsFor request
+                      Handoffs = locateHandoffs root }
         with ex ->
             Error ex.Message

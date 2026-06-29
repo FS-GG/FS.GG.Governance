@@ -1,0 +1,221 @@
+name: publish
+
+# Repo-owned publisher for the consumer-bearing Governance CLI tool (spec 089, FS.GG.Governance#28).
+# Mirrors the org-canonical FS-GG/FS.GG.SDD/.github/workflows/release.yml, scoped to the SINGLE
+# FS.GG.Governance.Cli tool package (its PackAsTool closure bundles Adapters.SddHandoff.dll, so the
+# installed `fsgg-governance` enforces a produced governance-handoff.json). The other ~70 packable
+# FS.GG.Governance.* projects are OUT OF SCOPE here (that is the H4/088-adjacent org-feed baseline).
+#
+# THE CONTRACT for triggers + version resolution + gating + scope is
+# specs/089-publish-governance-cli/contracts/publish-workflow.md (+ cli-enforcement.md for the smoke).
+# Ordered jobs: resolve-version → cli-tests → enforcement-smoke (the green-by-omission guard, FR-008)
+# → publish. The push runs ONLY after the smoke proves the packed tool blocks a failing handoff, so a
+# consumer-less build can never reach the feed under the consumer-bearing version.
+
+on:
+  release:
+    types: [published]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Explicit version to publish (e.g. 1.1.0). Omit for a pack-only dry run (no push)."
+        type: string
+        required: false
+
+# A single tagged release fires BOTH `release: published` and `push: tags v*`. Serialize the paired
+# runs (cancel-in-progress: false) keyed on the version/tag so neither push is cancelled mid-flight;
+# the second run no-ops via --skip-duplicate.
+concurrency:
+  group: publish-${{ github.event.release.tag_name || github.ref_name }}
+  cancel-in-progress: false
+
+# Least privilege: the default token is read-only. Only the `publish` job below escalates to
+# packages: write. Restore/pack read the org feed (FS.GG.Contracts etc.) cross-repo with the
+# run-scoped token, exactly as gate.yml does.
+permissions:
+  contents: read
+  packages: read
+
+# Credentials for the `fsgg-github` source declared in nuget.config (env placeholders there), wired
+# from the run-scoped token. Username can be any non-empty value for GitHub Packages.
+env:
+  FSGG_PACKAGES_ACTOR: ${{ github.actor }}
+  FSGG_PACKAGES_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  # Source of truth is the EVALUATED CLI fsproj <Version> (msbuild -getProperty, not a grep). A
+  # version-bearing tag (v<semver>) MUST equal it; mismatch fails (no hardcoded version anywhere). A
+  # dry-run dispatch (no version input) packs but does not push (FR-007 fail-safe: never silently skip).
+  resolve-version:
+    name: Resolve version (CLI fsproj)
+    runs-on: ubuntu-latest
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      push: ${{ steps.ver.outputs.push }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Resolve version
+        id: ver
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          strip_v() { printf '%s' "${1#v}"; }
+
+          version="$(dotnet msbuild src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj -getProperty:Version)"
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          [ -n "$version" ] || { echo "::error::could not read <Version> from FS.GG.Governance.Cli.fsproj (build defect)."; exit 1; }
+
+          push=""
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "${INPUT_VERSION:-}" ]; then
+              req="$(strip_v "$INPUT_VERSION")"
+              if [ "$req" != "$version" ]; then
+                echo "::error::dispatch version input '$INPUT_VERSION' ($req) does not equal the fsproj <Version> ($version). The fsproj is the source of truth; reconcile before publishing."
+                exit 1
+              fi
+              push="true"
+            else
+              push="false"
+              echo "::notice::dry run — packing FS.GG.Governance.Cli $version but NOT pushing (manual dispatch with no version input)."
+            fi
+          else
+            # release: published OR push: tags v* — a real publish from the fsproj version.
+            tag="$RELEASE_TAG"; [ -z "$tag" ] && tag="$REF_NAME"
+            if printf '%s' "$tag" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+'; then
+              tag_version="$(strip_v "$tag")"
+              if [ "$tag_version" != "$version" ]; then
+                echo "::error::release tag '$tag' (version $tag_version) does not equal the FS.GG.Governance.Cli fsproj <Version> ($version). The fsproj is the source of truth; reconcile the tag or the fsproj before releasing."
+                exit 1
+              fi
+            fi
+            push="true"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "push=$push" >> "$GITHUB_OUTPUT"
+          echo "Resolved: version=$version push=$push (event=$EVENT_NAME)"
+
+  # Pre-publish gate #1: the CLI test suite (mirrors SDD's cli-tests). Locked restore so a graph drift
+  # fails here, not quietly downstream. `publish` does not start until this is green.
+  cli-tests:
+    name: CLI tests (publish gate)
+    runs-on: ubuntu-latest
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore (locked)
+        run: |
+          set -euo pipefail
+          if ! dotnet restore tests/FS.GG.Governance.Cli.Tests/FS.GG.Governance.Cli.Tests.fsproj --locked-mode; then
+            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
+            exit 1
+          fi
+
+      - name: Test (FS.GG.Governance.Cli)
+        run: dotnet test tests/FS.GG.Governance.Cli.Tests/FS.GG.Governance.Cli.Tests.fsproj -c Release --no-restore
+
+  # Pre-publish gate #2: the green-by-omission guard (FR-008, cli-enforcement.md). Packs the ACTUAL
+  # tool, installs it, and runs `fsgg-governance route --mode gate` against committed handoff fixtures —
+  # asserting exit 2 (failing) / 0 (passing) / 0 (light). A build whose packed tool does not enforce a
+  # failing handoff fails here and never reaches `publish`. This is REAL evidence, not a unit test.
+  enforcement-smoke:
+    name: Enforcement smoke (green-by-omission guard)
+    runs-on: ubuntu-latest
+    needs: [resolve-version, cli-tests]
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Pack + install + enforce (real evidence)
+        run: bash tests/cli-publish-smoke/run.sh
+
+  # Publish (LAST, gated). Only this job gains packages: write; the push uses the run-scoped
+  # GITHUB_TOKEN (no PAT). `needs: enforcement-smoke` makes the green-by-omission guard a hard
+  # pre-push gate. Single explicit project ⇒ single-package scope. --skip-duplicate makes a re-push of
+  # an already-published version an idempotent no-op (version immutability); any other push failure
+  # fails the run (FR-007 fail-safe). A dry-run dispatch (push=false) skips the push entirely.
+  publish:
+    name: Pack + publish FS.GG.Governance.Cli (fsgg-governance tool)
+    needs: [resolve-version, cli-tests, enforcement-smoke]
+    runs-on: ubuntu-latest
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore (locked)
+        run: |
+          set -euo pipefail
+          if ! dotnet restore src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj --locked-mode; then
+            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
+            exit 1
+          fi
+
+      # PackAsTool/ToolCommandName=fsgg-governance already on the fsproj; pack bundles the full runtime
+      # closure (incl. Adapters.SddHandoff.dll) so the installed tool enforces standalone. Version comes
+      # from the resolve-version job (the evaluated fsproj <Version>).
+      - name: Pack
+        run: |
+          set -euo pipefail
+          dotnet pack src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj -c Release \
+            -p:Version=${{ needs.resolve-version.outputs.version }} --no-restore -o artifacts/packages
+
+      # A green gate plus an empty pack MUST NOT report success (FR-007): fail loudly if the expected
+      # tool package was not produced.
+      - name: Assert the tool package was produced
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/packages/FS.GG.Governance.Cli.*.nupkg)
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "::error::pack produced no FS.GG.Governance.Cli.*.nupkg — the gates passed but there is no tool package to publish."
+            exit 1
+          fi
+          printf 'Packed: %s\n' "${packages[@]}"
+
+      # Push only when push==true (a dry run skips this entirely). --skip-duplicate makes a re-publish of
+      # an existing version an idempotent no-op success; any other push failure (auth/credential, network)
+      # fails the run before any partial/mislabeled artifact can result (FR-007).
+      - name: Push to the org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          dotnet nuget push "artifacts/packages/FS.GG.Governance.Cli.*.nupkg" \
+            --source https://nuget.pkg.github.com/FS-GG/index.json \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate

@@ -9,6 +9,10 @@ open FS.GG.Governance.Adapters.SpecKit
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CliRender =
 
+    // F081 wiring: gate vocabulary for rendering the consumed handoff gates on the route payload.
+    module GatesModel = FS.GG.Governance.Gates.Model
+    module ConfigModel = FS.GG.Governance.Config.Model
+
     let commandName command =
         match command with
         | RouteCommand -> "route"
@@ -89,9 +93,40 @@ module CliRender =
         let freshness = node.Freshness |> Option.map freshnessText |> Option.defaultValue "unknown"
         sprintf "- %s declared=%s effective=%s freshness=%s source=%s" node.Id declared effective freshness node.Source
 
+    // F081 wiring: render the SDD→Governance handoff gates folded onto the route payload.
+    let maturityToken (maturity: ConfigModel.Maturity) =
+        match maturity with
+        | ConfigModel.Observe -> "observe"
+        | ConfigModel.Warn -> "warn"
+        | ConfigModel.BlockOnPr -> "block-on-pr"
+        | ConfigModel.BlockOnShip -> "block-on-ship"
+        | ConfigModel.BlockOnRelease -> "block-on-release"
+
+    let maturityBlocks (maturity: ConfigModel.Maturity) =
+        match maturity with
+        | ConfigModel.BlockOnPr
+        | ConfigModel.BlockOnShip
+        | ConfigModel.BlockOnRelease -> true
+        | ConfigModel.Observe
+        | ConfigModel.Warn -> false
+
+    let handoffGateText (gate: GatesModel.Gate) =
+        sprintf "  - [%s] %s — %s" (maturityToken gate.Maturity) (GatesModel.gateIdValue gate.Id) gate.Description
+
+    let routeText (route: Route) (handoffGates: GatesModel.Gate list) =
+        let baseText = Route.renderRoute route
+
+        if List.isEmpty handoffGates then
+            baseText
+        else
+            [ yield baseText
+              yield sprintf "handoff (%d):" (List.length handoffGates)
+              yield! handoffGates |> List.map handoffGateText ]
+            |> String.concat "\n"
+
     let renderPayloadText (payload: CommandPayload) =
         match payload with
-        | RoutePayload route -> Route.renderRoute route
+        | RoutePayload (route, handoffGates) -> routeText route handoffGates
         | ExplainPayload explanations ->
             explanations
             |> List.mapi (fun i explanation -> renderExplanation (i + 1) explanation)
@@ -163,13 +198,22 @@ module CliRender =
         | Routine -> "{\"kind\":\"routine\"}"
         | Fenced name -> "{\"kind\":\"fenced\",\"name\":" + quote name + "}"
 
-    let routeJson (route: Route) =
+    let handoffGateJson (gate: GatesModel.Gate) =
+        "{"
+        + "\"id\":" + quote (GatesModel.gateIdValue gate.Id)
+        + ",\"maturity\":" + quote (maturityToken gate.Maturity)
+        + ",\"blocking\":" + (if maturityBlocks gate.Maturity then "true" else "false")
+        + ",\"description\":" + quote gate.Description
+        + "}"
+
+    let routeJson (route: Route) (handoffGates: GatesModel.Gate list) =
         "{"
         + "\"kind\":\"route\""
         + ",\"stakes\":" + stakesJson route.Stakes
         + ",\"reason\":" + quote route.Reason
         + ",\"blocking\":[" + (route.Blocking |> List.map contractEntryJson |> String.concat ",") + "]"
         + ",\"advisory\":[" + (route.Advisory |> List.map contractEntryJson |> String.concat ",") + "]"
+        + ",\"handoff\":[" + (handoffGates |> List.map handoffGateJson |> String.concat ",") + "]"
         + "}"
 
     let explanationJson (explanations: Explanation list) =
@@ -216,7 +260,7 @@ module CliRender =
 
     let payloadJson (payload: CommandPayload) =
         match payload with
-        | RoutePayload route -> routeJson route
+        | RoutePayload (route, handoffGates) -> routeJson route handoffGates
         | ExplainPayload explanations -> explanationJson explanations
         | ContractPayload contract -> contractJson contract
         | EvidencePayload report -> evidenceJson report

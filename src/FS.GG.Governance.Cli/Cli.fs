@@ -61,7 +61,7 @@ type BudgetState =
       BudgetExhausted: string list }
 
 type CommandPayload =
-    | RoutePayload of Route
+    | RoutePayload of route: Route * handoffGates: FS.GG.Governance.Gates.Model.Gate list
     | ExplainPayload of Explanation list
     | ContractPayload of ContractEntry list
     | EvidencePayload of ProjectEvidenceReport
@@ -108,6 +108,12 @@ type CliPorts =
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Cli =
+
+    // F081 wiring: reach the SDD→Governance handoff consumer + gate vocabulary via aliases so the
+    // `Maturity`/`Gate` names never collide with the Kernel/Host/SpecKit opens above.
+    open FS.GG.Governance.Adapters.SddHandoff
+    module GatesModel = FS.GG.Governance.Gates.Model
+    module ConfigModel = FS.GG.Governance.Config.Model
 
     let defaultJudge =
         { ModelId = "fsgg-governance-default"
@@ -378,9 +384,33 @@ module Cli =
         let composed = commandCatalog request
         composed.Catalog |> List.map (fun rule -> Check.explain host.Facts rule.Check)
 
-    let payloadFor (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) : CommandPayload =
+    // F081 wiring (the handoff verdict): consume every located `governance-handoff.json` into typed
+    // gates via the proven `Consumer.consume` (PURE & TOTAL — a bad document becomes a blocking
+    // integrity gate, never a throw). This is the SAME consumer ShipCommand/RouteCommand fold; the
+    // `route` command now folds it too so a produced handoff drives the verdict.
+    let handoffGatesOf (handoffs: Reader.HandoffRead list) : GatesModel.Gate list =
+        (Consumer.consume handoffs).Gates
+
+    // A handoff gate is block-capable when its declared maturity is a block level (the Consumer maps a
+    // failing/auto-synthetic effective evidence state — or a non-shippable readiness/bad document — to
+    // `BlockOnShip`; a satisfied handoff stays `Warn`/`Observe`). Total over the closed `Maturity` union.
+    let private gateBlocks (gate: GatesModel.Gate) : bool =
+        match gate.Maturity with
+        | ConfigModel.BlockOnPr
+        | ConfigModel.BlockOnShip
+        | ConfigModel.BlockOnRelease -> true
+        | ConfigModel.Observe
+        | ConfigModel.Warn -> false
+
+    // The handoff blocks the run ONLY at `--mode gate` (the strict merge boundary), mirroring the F07
+    // route rule that blocking gates are enforced only at `Gate` (Route.fs R-R3/R-R4). In light modes
+    // (`sandbox`/`inner`) a failing handoff is advisory ⇒ no block (cli-enforcement.md).
+    let handoffBlocking (mode: RunMode) (gates: GatesModel.Gate list) : bool =
+        mode = Gate && List.exists gateBlocks gates
+
+    let payloadFor (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) (handoffGates: GatesModel.Gate list) : CommandPayload =
         match request.Command with
-        | RouteCommand -> RoutePayload host.Route
+        | RouteCommand -> RoutePayload(host.Route, handoffGates)
         | ExplainCommand -> ExplainPayload(explanationsFor request host)
         | ContractCommand -> ContractPayload(Contract.ofRules (commandCatalog request).Catalog)
         | EvidenceCommand -> EvidencePayload(Project.evidenceReport host)
@@ -388,23 +418,43 @@ module Cli =
         // reach this one-shot payload path. If the pure MVU is driven with them directly (tests), fall back
         // to the route payload — a benign one-shot view, never an interactive loop.
         | WatchCommand
-        | TuiCommand -> RoutePayload host.Route
+        | TuiCommand -> RoutePayload(host.Route, handoffGates)
 
-    let exitFor (host: FS.GG.Governance.Host.Model<ProjectFact>) =
-        if hasBlockingFailure host.Route host.Facts then
+    // The route exit is `GovernedBlocking` when the F07 route has a blocking failure OR a consumed SDD
+    // handoff blocks at gate mode (FR-002/FR-003): a produced failing handoff is no longer ignored.
+    let exitFor (host: FS.GG.Governance.Host.Model<ProjectFact>) (handoffBlocks: bool) =
+        if hasBlockingFailure host.Route host.Facts || handoffBlocks then
             GovernedBlocking
         else
             Success
 
-    let resultForHost (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) (budget: BudgetState) : CommandResult =
-        let payload = payloadFor request host
+    let resultForHost
+        (request: RunRequest)
+        (host: FS.GG.Governance.Host.Model<ProjectFact>)
+        (budget: BudgetState)
+        (handoffs: Reader.HandoffRead list)
+        : CommandResult =
+        // The handoff verdict participates in the `route` exit only (the command whose contract is the
+        // produced-handoff gate; explain/contract/evidence do not consume it). The gates are still carried
+        // on the route payload for attribution even in light modes (where they do not block).
+        let handoffGates =
+            match request.Command with
+            | RouteCommand
+            | WatchCommand
+            | TuiCommand -> handoffGatesOf handoffs
+            | ExplainCommand
+            | ContractCommand
+            | EvidenceCommand -> []
+
+        let blocks = handoffBlocking request.Mode handoffGates
+        let payload = payloadFor request host handoffGates
         let failures = host.Failures
 
         { Request = Some request
           Payload = Some payload
           Budget = budget
           Failures = failures
-          Exit = exitFor host }
+          Exit = exitFor host blocks }
 
     let usageResult (errors: ParseError list) : CommandResult =
         { Request = None
@@ -479,7 +529,12 @@ module Cli =
             [ WriteOutput(request, result) ]
 
         | HostCompleted (host, budget), Some request ->
-            let result = resultForHost request host budget
+            // The handoff documents were located at snapshot time (the I/O edge); fold them into the
+            // route verdict here (pure). No snapshot ⇒ no handoffs (the host never ran without one).
+            let handoffs =
+                model.Snapshot |> Option.map (fun s -> s.Handoffs) |> Option.defaultValue []
+
+            let result = resultForHost request host budget handoffs
 
             { model with
                 Phase = RenderingOutput

@@ -18,7 +18,7 @@ let request =
 
 let result =
     { Request = Some request
-      Payload = Some(RoutePayload route)
+      Payload = Some(RoutePayload(route, []))
       Budget =
         { Requested = [ "b" ]
           CacheHits = []
