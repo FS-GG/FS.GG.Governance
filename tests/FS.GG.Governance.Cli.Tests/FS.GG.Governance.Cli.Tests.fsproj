@@ -28,6 +28,9 @@
     <Compile Include="HumanRenderSurfaceDriftTests.fs" />
     <!-- F27 wiring (063, US3/US4): the DISPATCHER's read-only watch/tui surfaces over a composed F19 view. -->
     <Compile Include="WatchTuiHostWiringTests.fs" />
+    <!-- 090: the profile-aware handoff-gate decision matrix (strict/light/absent/unrecognized
+         crossed with failing/satisfied at mode gate) driven through the public Cli MVU route-exit. -->
+    <Compile Include="ProfileAwareHandoffGateTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

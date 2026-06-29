@@ -35,7 +35,8 @@ type ProjectSnapshot =
       Supplied: FactSet<ProjectFact>
       Change: ProjectChange
       Artifacts: ArtifactRef list
-      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
+      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+      DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option }
 
 type ProjectOptions =
     { Domains: Set<Domain>

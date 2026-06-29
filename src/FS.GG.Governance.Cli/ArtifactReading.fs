@@ -367,6 +367,18 @@ module ArtifactReading =
         with _ ->
             []
 
+    // 090 wiring: read the product's declared `defaultProfile` at the Config-load edge. TOTAL &
+    // SAFE — an absent/invalid `.fsgg` (no policy, missing required files, dangling default) degrades
+    // to `None`, which the `route` exit resolves to `Strict` (the one-way fail-safe, FR-004). The pure
+    // `Cli` route verdict recognizes the carried id through `Enforcement.recognizeProfile`.
+    let locateDefaultProfile (root: string) : FS.GG.Governance.Config.Model.ProfileId option =
+        try
+            match FS.GG.Governance.Config.Loader.loadAndValidate root with
+            | FS.GG.Governance.Config.Model.Valid facts -> facts.Policy |> Option.map (fun p -> p.DefaultProfile)
+            | FS.GG.Governance.Config.Model.Invalid _ -> None
+        with _ ->
+            None
+
     let loadSnapshot (request: RunRequest) =
         let root = Path.GetFullPath request.Root
 
@@ -394,6 +406,7 @@ module ArtifactReading =
                       Supplied = facts
                       Change = change
                       Artifacts = artifactsFor request
-                      Handoffs = locateHandoffs root }
+                      Handoffs = locateHandoffs root
+                      DefaultProfile = locateDefaultProfile root }
         with ex ->
             Error ex.Message

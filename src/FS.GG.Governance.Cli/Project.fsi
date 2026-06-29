@@ -44,7 +44,13 @@ type ProjectSnapshot =
       /// (`readiness/<id>/governance-handoff.json`), in stable `<id>` order; `[]` when none.
       /// The `route` command folds these through `Adapters.SddHandoff.Consumer` into its gate
       /// verdict so a produced handoff drives the exit code (blocks at `--mode gate`).
-      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
+      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+      /// 090: the product's declared `.fsgg/policy.yml defaultProfile`, read at the Config-load
+      /// edge (`Config.Loader.loadAndValidate`); `None` when no policy is declared, the policy is
+      /// invalid, or `defaultProfile` is absent. The `route` exit resolves this through
+      /// `Enforcement.recognizeProfile` (absent / unrecognized → `Strict`, the one-way fail-safe)
+      /// so the handoff gate honors the active profile like every other gate.
+      DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option }
 
 /// Options for building the composed catalog and Host configuration.
 type ProjectOptions =

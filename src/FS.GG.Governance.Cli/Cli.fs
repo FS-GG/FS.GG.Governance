@@ -114,6 +114,9 @@ module Cli =
     open FS.GG.Governance.Adapters.SddHandoff
     module GatesModel = FS.GG.Governance.Gates.Model
     module ConfigModel = FS.GG.Governance.Config.Model
+    // 090: the canonical Phase-5 enforcement core — the SAME derivation `Ship.rollup` uses for every
+    // other gate. The handoff-gate blocking decision flows through it (no handoff-specific branch).
+    module Enforcement = FS.GG.Governance.Enforcement.Enforcement
 
     let defaultJudge =
         { ModelId = "fsgg-governance-default"
@@ -391,22 +394,62 @@ module Cli =
     let handoffGatesOf (handoffs: Reader.HandoffRead list) : GatesModel.Gate list =
         (Consumer.consume handoffs).Gates
 
-    // A handoff gate is block-capable when its declared maturity is a block level (the Consumer maps a
-    // failing/auto-synthetic effective evidence state — or a non-shippable readiness/bad document — to
-    // `BlockOnShip`; a satisfied handoff stays `Warn`/`Observe`). Total over the closed `Maturity` union.
-    let private gateBlocks (gate: GatesModel.Gate) : bool =
-        match gate.Maturity with
-        | ConfigModel.BlockOnPr
-        | ConfigModel.BlockOnShip
-        | ConfigModel.BlockOnRelease -> true
-        | ConfigModel.Observe
-        | ConfigModel.Warn -> false
+    // 090 (T007): map the route run mode to the enforcement run mode for the handoff-gate call. The
+    // strict-merge boundary `Gate` maps to the enforcement `Verify` ordinal (research D1): with a
+    // failing handoff at the `BlockOnShip` floor (ordinal 4), strict (tighten 1) pulls the floor to 3
+    // so a Verify-mode run blocks, while light (tighten 0) leaves it at 4 so the same run is advisory.
+    // `Sandbox`/`Inner` map below any blocking floor ⇒ a failing handoff stays advisory under every
+    // profile, preserving the 089 light-mode behavior (Invariant 3). Total over the 3 route cases.
+    let toEnforcementMode (mode: RunMode) : Enforcement.RunMode =
+        match mode with
+        | Sandbox -> Enforcement.Sandbox
+        | Inner -> Enforcement.Inner
+        | Gate -> Enforcement.Verify
 
-    // The handoff blocks the run ONLY at `--mode gate` (the strict merge boundary), mirroring the F07
-    // route rule that blocking gates are enforced only at `Gate` (Route.fs R-R3/R-R4). In light modes
-    // (`sandbox`/`inner`) a failing handoff is advisory ⇒ no block (cli-enforcement.md).
-    let handoffBlocking (mode: RunMode) (gates: GatesModel.Gate list) : bool =
-        mode = Gate && List.exists gateBlocks gates
+    // 090 (T008): resolve the active enforcement profile from the product's declared `defaultProfile`.
+    // Absent / missing / unrecognized → `Strict` — the ONE-WAY fail-safe (FR-004): the gate-blocking
+    // decision never relaxes by omission. This is deliberately STRICTER than the `Standard` default the
+    // cost-tier path (`ProductSurfaces`) uses; the two serve opposite fail-safe directions (research D2).
+    let resolveProfile (declared: ConfigModel.ProfileId option) : Enforcement.Profile =
+        match declared with
+        | Some(ConfigModel.ProfileId raw) ->
+            match Enforcement.recognizeProfile raw with
+            | Enforcement.Recognized profile -> profile
+            | Enforcement.Unrecognized _ -> Enforcement.Strict
+        | None -> Enforcement.Strict
+
+    // 090 (T009): build one consumed handoff gate's enforcement input EXACTLY as `Ship.gateToInput`
+    // does (research D3) — base `Blocking` iff the maturity is a block level, maturity/mode/profile
+    // carried verbatim. No handoff-specific branch: the gate flows through the generic core like every
+    // other gate. Total over the closed `Maturity` union (a future maturity is a compile error).
+    let handoffGateToInput (mode: Enforcement.RunMode) (profile: Enforcement.Profile) (gate: GatesModel.Gate) : Enforcement.EnforcementInput =
+        let baseSeverity =
+            match gate.Maturity with
+            | ConfigModel.Observe
+            | ConfigModel.Warn -> Enforcement.Advisory
+            | ConfigModel.BlockOnPr
+            | ConfigModel.BlockOnShip
+            | ConfigModel.BlockOnRelease -> Enforcement.Blocking
+
+        { BaseSeverity = baseSeverity
+          Maturity = gate.Maturity
+          Mode = mode
+          Profile = profile }
+
+    // 090 (T009/T010): derive each consumed handoff gate's effective severity through the canonical
+    // Phase-5 core parameterized by the active profile. The decisions carry the core's self-explaining
+    // `Reason`, so a `GovernedBlocking` exit stays attributable to the failing handoff (Invariant 6);
+    // the gates themselves are carried on the route payload for rendering.
+    let handoffDecisions (mode: RunMode) (profile: Enforcement.Profile) (gates: GatesModel.Gate list) : Enforcement.EnforcementDecision list =
+        let mapped = toEnforcementMode mode
+        gates |> List.map (fun gate -> Enforcement.deriveEffectiveSeverity (handoffGateToInput mapped profile gate))
+
+    // The run is blocked by the handoff channel iff ANY consumed gate derives `Blocking` under the
+    // active profile (Invariant 4: relaxing one gate never masks another that still blocks). A
+    // satisfied handoff (`Warn`) is withheld by the core under every profile, so it always passes.
+    let handoffBlocking (mode: RunMode) (profile: Enforcement.Profile) (gates: GatesModel.Gate list) : bool =
+        handoffDecisions mode profile gates
+        |> List.exists (fun decision -> decision.EffectiveSeverity = Enforcement.Blocking)
 
     let payloadFor (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) (handoffGates: GatesModel.Gate list) : CommandPayload =
         match request.Command with
@@ -433,6 +476,7 @@ module Cli =
         (host: FS.GG.Governance.Host.Model<ProjectFact>)
         (budget: BudgetState)
         (handoffs: Reader.HandoffRead list)
+        (declaredProfile: ConfigModel.ProfileId option)
         : CommandResult =
         // The handoff verdict participates in the `route` exit only (the command whose contract is the
         // produced-handoff gate; explain/contract/evidence do not consume it). The gates are still carried
@@ -446,7 +490,11 @@ module Cli =
             | ContractCommand
             | EvidenceCommand -> []
 
-        let blocks = handoffBlocking request.Mode handoffGates
+        // 090: the handoff gate honors the product's active policy profile (absent/unrecognized →
+        // Strict, the fail-safe) through the canonical enforcement core, instead of the old
+        // profile-blind `mode = Gate && gateBlocks` shortcut.
+        let profile = resolveProfile declaredProfile
+        let blocks = handoffBlocking request.Mode profile handoffGates
         let payload = payloadFor request host handoffGates
         let failures = host.Failures
 
@@ -534,7 +582,11 @@ module Cli =
             let handoffs =
                 model.Snapshot |> Option.map (fun s -> s.Handoffs) |> Option.defaultValue []
 
-            let result = resultForHost request host budget handoffs
+            // 090: the declared profile was read at the same snapshot (Config-load) edge; carry it
+            // into the pure route verdict. No snapshot ⇒ no profile ⇒ the fail-safe Strict default.
+            let declaredProfile = model.Snapshot |> Option.bind (fun s -> s.DefaultProfile)
+
+            let result = resultForHost request host budget handoffs declaredProfile
 
             { model with
                 Phase = RenderingOutput

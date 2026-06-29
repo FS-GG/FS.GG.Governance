@@ -22,6 +22,9 @@ TOOL_CMD="fsgg-governance"
 PKG_ID="FS.GG.Governance.Cli"
 FAIL_FIXTURE="$SCRIPT_DIR/fixtures/failing-handoff"
 PASS_FIXTURE="$SCRIPT_DIR/fixtures/passing-handoff"
+# 090: same failing handoff as FAIL_FIXTURE, but the product declares `.fsgg/policy.yml
+# defaultProfile: light` — the in-repo mirror of the FS.GG.Templates#25 red cell.
+LIGHT_FAIL_FIXTURE="$SCRIPT_DIR/fixtures/light-failing-handoff"
 
 fail() { echo "SMOKE FAIL: $*" >&2; exit 1; }
 note() { echo "[smoke] $*"; }
@@ -90,8 +93,12 @@ assert_exit() {
   note "OK ($label): exit $got"
 }
 
-assert_exit 2 "failing handoff + gate BLOCKS"      "$TOOL" route --root "$FAIL_FIXTURE" --mode gate
-assert_exit 0 "passing handoff + gate PASSES"      "$TOOL" route --root "$PASS_FIXTURE" --mode gate
-assert_exit 0 "failing handoff + light NO-BLOCK"   "$TOOL" route --root "$FAIL_FIXTURE" --mode inner
+assert_exit 2 "failing handoff + gate BLOCKS"        "$TOOL" route --root "$FAIL_FIXTURE" --mode gate
+assert_exit 0 "passing handoff + gate PASSES"        "$TOOL" route --root "$PASS_FIXTURE" --mode gate
+assert_exit 0 "failing handoff + light NO-BLOCK"     "$TOOL" route --root "$FAIL_FIXTURE" --mode inner
+# 090 (FR-006/SC-003): the profile-aware behavior. A failing handoff under `defaultProfile: light` is
+# advisory at `--mode gate` ⇒ exit 0. The profile-less FAIL_FIXTURE above still blocks (strict default),
+# so this assertion proves the profile — not a relaxed gate — flips the verdict.
+assert_exit 0 "light profile + failing + gate NO-BLOCK" "$TOOL" route --root "$LIGHT_FAIL_FIXTURE" --mode gate
 
-echo "SMOKE PASS: consumer-bearing $PKG_ID $VERSION enforces the handoff (gate blocks failing, passes passing, light does not block)."
+echo "SMOKE PASS: consumer-bearing $PKG_ID $VERSION enforces the handoff profile-aware (strict/absent gate blocks failing, passes passing, light & non-gate modes do not block)."
