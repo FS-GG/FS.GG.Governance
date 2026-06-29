@@ -64,12 +64,27 @@ module Support =
           Stderr = stderr }
 
     let runCli args =
-        let exe =
-            let unix = Path.Combine(repoRoot, "src", "FS.GG.Governance.Cli", "bin", "Debug", "net10.0", "FS.GG.Governance.Cli")
-            let windows = unix + ".exe"
-            if File.Exists unix then unix else windows
+        // Resolve the CLI host binary built in the SAME configuration as this test assembly. The test's
+        // own BaseDirectory is `.../bin/<Config>/<tfm>/`, and the ProjectReference'd CLI is built into the
+        // matching `src/.../bin/<Config>/net10.0/`. Preferring that config (then falling back, unix apphost
+        // then .exe) makes the spawn work under both `dotnet test` (Debug) and `dotnet test -c Release` —
+        // the prior hardcoded `bin/Debug` path failed under Release (e.g. publish.yml's cli-tests gate).
+        let cliBinDir config =
+            Path.Combine(repoRoot, "src", "FS.GG.Governance.Cli", "bin", config, "net10.0")
 
-        runProcess exe args
+        let configFromBase =
+            if AppContext.BaseDirectory.Replace('\\', '/').Contains "/bin/Release/" then "Release" else "Debug"
+
+        let candidates =
+            [ configFromBase; "Debug"; "Release" ]
+            |> List.distinct
+            |> List.collect (fun config ->
+                let unix = Path.Combine(cliBinDir config, "FS.GG.Governance.Cli")
+                [ unix; unix + ".exe" ])
+
+        match candidates |> List.tryFind File.Exists with
+        | Some exe -> runProcess exe args
+        | None -> failwithf "CLI host binary not found; looked in: %A" candidates
 
 [<Tests>]
 let tests =

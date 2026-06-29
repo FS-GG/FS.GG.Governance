@@ -10,14 +10,13 @@ open FS.GG.Governance.HumanRender
 // II). Reflection lives ONLY in this test. The committed baseline is the Tier-1 surface contract for
 // the second new library (RichRender.emit + the pure Watch/Tui MVU surface).
 
-let private humanRender =
-    Watch.debounceWindow |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.HumanRender"
-        | None -> false)
+// The HumanRender assembly, resolved directly from one of its public types. `typeof<_>.Assembly`
+// is the robust idiom (used by the sibling Cli SurfaceDriftTests): it is a real metadata reference
+// the compiler cannot elide, so the assembly is always resolvable regardless of test-host load
+// order. The prior `AppDomain.GetAssemblies() |> Array.find` relied on a `Watch.debounceWindow |>
+// ignore` force-load that gets optimized away, so the assembly was often not yet loaded and the
+// `Array.find` threw at module init — aborting the whole Expecto run for this project.
+let private humanRender = typeof<Watch.WatchModel>.Assembly
 
 let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
     match dir with
