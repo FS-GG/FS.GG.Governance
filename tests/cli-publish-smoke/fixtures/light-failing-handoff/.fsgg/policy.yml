@@ -1,0 +1,6 @@
+schemaVersion: 1
+defaultProfile: light
+profiles:
+  - light
+  - standard
+  - strict

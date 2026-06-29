@@ -394,7 +394,10 @@ module Interpreter =
                       Artifacts = artifactsFor ()
                       // The evidence command does not consume the SDD handoff (it reports declared/effective
                       // evidence, not the route gate verdict); the handoff drives only `route` (Cli.resultForHost).
-                      Handoffs = [] }
+                      Handoffs = []
+                      // 090: the policy profile is consulted only by the `route` gate verdict; the evidence
+                      // report does not enforce, so it carries no declared profile.
+                      DefaultProfile = None }
         with ex ->
             Error ex.Message
 

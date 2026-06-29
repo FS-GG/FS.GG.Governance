@@ -20,7 +20,8 @@ let snapshot =
       Supplied = []
       Change = { SpecKit = None; DesignSystem = None; Scope = [] }
       Artifacts = []
-      Handoffs = [] }
+      Handoffs = []
+      DefaultProfile = None }
 
 let hostModel: FS.GG.Governance.Host.Model<ProjectFact> =
     { Phase = FS.GG.Governance.Host.Phase.Quiescent

@@ -1,0 +1,20 @@
+{
+  "contractVersion": "1.0.0",
+  "schemaVersion": 1,
+  "evidence": {
+    "nodes": [
+      { "id": "build:lib", "state": "real" },
+      { "id": "test:unit", "state": "failed", "rationale": "unit suite red — same failing handoff as failing-handoff/, but this product declares the light profile" }
+    ],
+    "dependencies": [
+      ["test:unit", "build:lib"]
+    ]
+  },
+  "readiness": {
+    "shipDisposition": "blocked",
+    "verificationReadiness": "not-ready",
+    "blockingDiagnosticIds": ["test:unit"],
+    "counts": { "failed": 1, "real": 1 },
+    "perViewState": { "verify": "not-ready" }
+  }
+}
