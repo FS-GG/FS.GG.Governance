@@ -83,6 +83,13 @@ let plainConsole (width: int) : IAnsiConsole * StringWriter =
     console.Profile.Width <- width
     console.Profile.Capabilities.Unicode <- true
     console.Profile.Capabilities.Legacy <- false // see file-top #nowarn "44"
+    // `AnsiConsole.Create` re-detects ANSI from the host AFTER `settings.Ansi <- No`: under
+    // `GITHUB_ACTIONS=true` Spectre force-enables ANSI, so `Markup` writes leak SGR escapes (ESC[1m…)
+    // into the "plain" output and inflate String.Length on the CI host only (spec 091/#32 — the real
+    // headless divergence, not glyph measurement). Force the capability OFF post-create so the output
+    // is genuinely ANSI-free everywhere — restoring this builder's documented guarantee.
+    console.Profile.Capabilities.Ansi <- false
+    console.Profile.Capabilities.ColorSystem <- ColorSystem.NoColors
     console, (sw :> StringWriter)
 
 /// An IAnsiConsole that DOES emit ANSI color, for the rich-color assertion.
