@@ -1,16 +1,25 @@
 name: publish
 
-# Repo-owned publisher for the consumer-bearing Governance CLI tool (spec 089, FS.GG.Governance#28).
-# Mirrors the org-canonical FS-GG/FS.GG.SDD/.github/workflows/release.yml, scoped to the SINGLE
-# FS.GG.Governance.Cli tool package (its PackAsTool closure bundles Adapters.SddHandoff.dll, so the
-# installed `fsgg-governance` enforces a produced governance-handoff.json). The other ~70 packable
-# FS.GG.Governance.* projects are OUT OF SCOPE here (that is the H4/088-adjacent org-feed baseline).
+# Repo-owned publisher for the two publishable Governance artifacts: the consumer-bearing CLI tool
+# FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28) and the content-only FS.GG.Governance.
+# ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub Packages feed FIRST,
+# then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically, no re-pack
+# (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles Adapters.SddHandoff.dll so the
+# installed `fsgg-governance` enforces a produced governance-handoff.json standalone. The other ~70
+# packable FS.GG.Governance.* projects are OUT OF SCOPE here (H4/088-adjacent org-feed baseline).
 #
-# THE CONTRACT for triggers + version resolution + gating + scope is
-# specs/089-publish-governance-cli/contracts/publish-workflow.md (+ cli-enforcement.md for the smoke).
-# Ordered jobs: resolve-version → cli-tests → enforcement-smoke (the green-by-omission guard, FR-008)
-# → publish. The push runs ONLY after the smoke proves the packed tool blocks a failing handoff, so a
-# consumer-less build can never reach the feed under the consumer-bearing version.
+# THE CONTRACTS are specs/089-publish-governance-cli/contracts/publish-workflow.md (base: triggers +
+# version resolution + gating + CLI scope; + cli-enforcement.md for the smoke) and
+# specs/094-nuget-org-publish/contracts/publish-workflow-nuget-org.md (the nuget.org leg + the
+# reference-gate-set publish job).
+# CLI jobs, ordered: resolve-version → cli-tests → enforcement-smoke (the green-by-omission guard,
+# FR-008) → publish (org feed → nuget.org). The push runs ONLY after the smoke proves the packed tool
+# blocks a failing handoff, so a consumer-less build can never reach the feed under the consumer-bearing
+# version. The reference gate set publishes from its own job (publish-reference-gate-set), self-gated on
+# the G1–G7 byte-identity guard inside pack-reference-gate-set.fsx before either push. Trusted
+# Publishing login + push live in THIS file (never a reusable workflow — the nuget.org trust policy is
+# registered against FS.GG.Governance/publish.yml; NuGet/login#6, ADR-0013). A dry-run dispatch (no
+# version input) packs both packages but pushes to no feed; a missing trust policy 401s and fails loud.
 
 on:
   release:
@@ -175,7 +184,9 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write   # ADR-0013: mint the GitHub OIDC token for nuget.org Trusted Publishing
+      # 094: nuget.org push authenticates via Trusted Publishing (OIDC) — NuGet/login mints a
+      # short-lived key from the run's id-token; no NUGET_ORG_API_KEY is stored (ADR-0013).
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -227,22 +238,101 @@ jobs:
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --skip-duplicate
 
-      # Dual-publish the BYTE-IDENTICAL tool package to public nuget.org (ADR-0012 §1–§5) via Trusted
-      # Publishing / OIDC (ADR-0013 — no stored key). Runs AFTER the org-feed push (gated ordering,
-      # ADR-0012 §4): if that step fails the job stops before this one. NuGet/login mints a single-use
-      # key from the org's Trusted Publishing policy (fs-gg-governance-publish, bound to this publish.yml);
-      # until the policy exists it 401s and fails the release loud. Same .nupkg — no re-pack (§3).
-      - name: NuGet login (OIDC → short-lived nuget.org key)
-        if: needs.resolve-version.outputs.push == 'true'
+      # 094: mint a short-lived nuget.org key via Trusted Publishing (OIDC). No stored push secret —
+      # login + push MUST live in THIS workflow file (never a reusable workflow — NuGet/login#6): the
+      # trust policy is registered against FS.GG.Governance/publish.yml. A missing/mismatched policy
+      # makes this step 401 and fails the run (fail-closed, FR-006). Runs only on a real publish so a
+      # dry-run never mints a key or pushes. The profile falls back to the hardcoded owner if the
+      # secret is absent (ADR-0013).
+      - name: Trusted Publishing login (nuget.org)
         id: nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
         uses: NuGet/login@v1
         with:
           user: ${{ secrets.NUGET_USER || 'Paradigma11' }}
-      - name: Push to nuget.org (public)
+
+      # Push the SAME already-packed .nupkg to nuget.org (no re-pack — byte-identical, ADR-0012 §3),
+      # AFTER the org-feed push (org-feed-first, ADR-0012 §4). --skip-duplicate makes a re-publish of
+      # an existing version an idempotent no-op (FR-007). Dry-run skips it (push=false).
+      - name: Push to nuget.org (Trusted Publishing)
         if: needs.resolve-version.outputs.push == 'true'
         run: |
           set -euo pipefail
           dotnet nuget push "artifacts/packages/FS.GG.Governance.Cli.*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+
+  # 094: publish the content-only FS.GG.Governance.ReferenceGateSet to BOTH feeds. Unlike the CLI, this
+  # package had NO feed-publish path before (gate.yml only packed it into a throwaway temp feed to guard
+  # byte-identity) — this job establishes it. It shares `push` (dry-run flag) from resolve-version, but
+  # its VERSION is schema-derived by pack-reference-gate-set.fsx (ADR-0007), not the CLI <Version>. The
+  # pack script self-runs the G1–G7 guard and refuses to pack when red — the hard pre-push gate (FR-004).
+  publish-reference-gate-set:
+    name: Pack + publish FS.GG.Governance.ReferenceGateSet (content-only)
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      # Trusted Publishing (OIDC) — same rationale as the CLI publish job (ADR-0013).
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Pack via the single canonical packer, reused as-is (Principle III). It runs the G1–G7
+      # reference-set guard first and refuses to pack when red, so the shipped artifact is provably
+      # the validated artifact (FR-004). The derived version comes from the four schemaVersion
+      # declarations — no version is passed in here.
+      - name: Pack (self-gated on G1–G7)
+        run: dotnet fsi pack-reference-gate-set.fsx --output artifacts/packages
+
+      # A green gate plus an empty pack MUST NOT report success (FR-007): fail loudly if the expected
+      # content package was not produced (mirrors the CLI job's assert-produced guard).
+      - name: Assert the gate-set package was produced
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/packages/FS.GG.Governance.ReferenceGateSet.*.nupkg)
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "::error::pack produced no FS.GG.Governance.ReferenceGateSet.*.nupkg — the G1–G7 guard passed but there is no content package to publish."
+            exit 1
+          fi
+          printf 'Packed: %s\n' "${packages[@]}"
+
+      # Org feed FIRST (org-feed-first, ADR-0012 §4). --skip-duplicate ⇒ idempotent re-publish
+      # (FR-007). Dry-run (push=false) skips it.
+      - name: Push to the org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          dotnet nuget push "artifacts/packages/FS.GG.Governance.ReferenceGateSet.*.nupkg" \
+            --source https://nuget.pkg.github.com/FS-GG/index.json \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      # Trusted Publishing login for nuget.org — same fail-closed contract as the CLI job.
+      - name: Trusted Publishing login (nuget.org)
+        id: nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || 'Paradigma11' }}
+
+      # Push the SAME already-packed .nupkg to nuget.org (byte-identical, no re-pack — ADR-0012 §3),
+      # after the org-feed push. --skip-duplicate ⇒ idempotent. Dry-run skips it.
+      - name: Push to nuget.org (Trusted Publishing)
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          dotnet nuget push "artifacts/packages/FS.GG.Governance.ReferenceGateSet.*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate

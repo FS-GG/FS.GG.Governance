@@ -36,4 +36,31 @@
     <EnablePackageValidation>false</EnablePackageValidation>
   </PropertyGroup>
 
+  <!-- 094 nuget.org listing metadata (ADR-0012 §5). Shared, identity-level fields for the two
+       publishable Governance packages (FS.GG.Governance.Cli, FS.GG.Governance.ReferenceGateSet).
+       Repo-owned and drift-exempt — this file is NOT synced, so listing metadata belongs here, never
+       in the org-synced Directory.Build.props / Directory.Packages.props (spec 088 D6; metadata
+       contract "Placement rules"). These are pack-time-only properties: the ~70 IsPackable=false
+       projects never pack, so they ignore them (no NU5046 icon-missing warning — the packable
+       projects each add the matching `<None Pack="true">` icon item in their .fsproj). Package-
+       specific fields (Description, PackageTags, PackageReadmeFile + the README/icon Pack items)
+       live in each .fsproj. License is MIT per the repo LICENSE (Copyright (c) 2026 EHotwagner).
+
+       SCOPING NOTE (corrects the 094 metadata contract's premise): the ~70 other
+       FS.GG.Governance.* projects are IsPackable=TRUE, not false — the api-breaking-change gate
+       (gate.yml → pack-and-apicheck.fsx) packs every one of them against its org-feed baseline.
+       So only FILE-INDEPENDENT identity fields are safe to share here (license/repo/project URL/
+       authors change nuspec metadata but need no packaged file). `PackageIcon` is deliberately NOT
+       shared: it requires a matching `<None Include=icon Pack=true>` item, and a global PackageIcon
+       would make all 70 baseline packs fail NU5046 ("icon file does not exist in the package").
+       PackageIcon therefore lives in each of the two publishable .fsproj files, next to the icon
+       Pack item — same reason PackageReadmeFile is per-.fsproj. -->
+  <PropertyGroup>
+    <Authors>FS-GG</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/FS-GG/FS.GG.Governance</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FS-GG/FS.GG.Governance</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
 </Project>
