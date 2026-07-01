@@ -8,7 +8,26 @@
     <ToolCommandName>fsgg-governance</ToolCommandName>
     <PackageId>FS.GG.Governance.Cli</PackageId>
     <IsPackable>true</IsPackable>
+
+    <!-- 094 nuget.org listing metadata (ADR-0012 §5). Package-specific fields; the shared identity
+         fields (Authors, license, repository/project URL, icon) come from Directory.Build.local.props.
+         PackageReadmeFile names the packed README; the <None> items below pack it and the icon at the
+         package root. PackAsTool/ToolCommandName above are unchanged. -->
+    <Description>The FS.GG.Governance CLI (`fsgg-governance`): a .NET global tool that enforces the SDD governance handoff — routing a produced governance-handoff.json through the gate and blocking a failing handoff (exit 2). Its packed closure bundles the enforcement adapter, so the installed tool enforces standalone.</Description>
+    <PackageTags>fs-gg;governance;fsgg;sdd;cli;dotnet-tool;gate</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- PackageIcon is per-.fsproj (NOT shared in local.props): it needs the matching <None> icon
+         item below, and a global PackageIcon would break the 70 IsPackable=true baseline packs in
+         gate.yml with NU5046. See Directory.Build.local.props scoping note. -->
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+
+  <!-- Pack the root README and the shared icon at the package root so PackageReadmeFile / PackageIcon
+       (the latter from Directory.Build.local.props) resolve on the nuget.org listing (094). -->
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../../packaging/assets/icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Project.fsi" />

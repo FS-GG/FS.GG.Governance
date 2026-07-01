@@ -18,6 +18,16 @@
     <Description>The validated FS.GG.Governance reference `.fsgg` gate set (governance.yml, policy.yml, capabilities.yml, tooling.yml) as a content-only package — one published, versioned source of truth for a consumer's overlay drift gate. Content-only: no assembly, no runtime dependency. Version is derived from the four contained schemaVersion declarations.</Description>
     <PackageTags>fs-gg;governance;fsgg;reference-gate-set;content</PackageTags>
 
+    <!-- 094 nuget.org listing metadata (ADR-0012 §5). Authors/Description/PackageTags are already
+         present above; the shared identity fields (license, repository/project URL, icon) come from
+         Directory.Build.local.props. Only the package-specific PackageReadmeFile is added here; the
+         README/icon <None> items below pack it at the package root. These are additive package-root
+         files — they do NOT reintroduce an assembly or a dependency group (invariant below).
+         PackageIcon is per-.fsproj (not shared in local.props) — see the scoping note there: a global
+         PackageIcon would break the 70 IsPackable=true baseline packs in gate.yml with NU5046. -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+
     <!-- Content-only: no lib/<tfm>/ assembly and no dependency group in the .nupkg (FR-007). -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
@@ -43,6 +53,15 @@
     <None Include="../../samples/sdd-reference-gate-set/.fsgg/*.yml"
           Pack="true"
           PackagePath="contentFiles/any/any/.fsgg/" />
+  </ItemGroup>
+
+  <!-- 094: pack the root README and the shared icon at the package root for the nuget.org listing
+       (PackageReadmeFile / PackageIcon). These are additive package-root files only — they add no
+       assembly and no dependency group, so the content-only invariant (and the G1–G7 byte-identity
+       guard over the .fsgg content) is preserved. -->
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../../packaging/assets/icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
