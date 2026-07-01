@@ -175,6 +175,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write   # ADR-0013: mint the GitHub OIDC token for nuget.org Trusted Publishing
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -224,4 +225,24 @@ jobs:
           dotnet nuget push "artifacts/packages/FS.GG.Governance.Cli.*.nupkg" \
             --source https://nuget.pkg.github.com/FS-GG/index.json \
             --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      # Dual-publish the BYTE-IDENTICAL tool package to public nuget.org (ADR-0012 §1–§5) via Trusted
+      # Publishing / OIDC (ADR-0013 — no stored key). Runs AFTER the org-feed push (gated ordering,
+      # ADR-0012 §4): if that step fails the job stops before this one. NuGet/login mints a single-use
+      # key from the org's Trusted Publishing policy (fs-gg-governance-publish, bound to this publish.yml);
+      # until the policy exists it 401s and fails the release loud. Same .nupkg — no re-pack (§3).
+      - name: NuGet login (OIDC → short-lived nuget.org key)
+        if: needs.resolve-version.outputs.push == 'true'
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || 'Paradigma11' }}
+      - name: Push to nuget.org (public)
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          dotnet nuget push "artifacts/packages/FS.GG.Governance.Cli.*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
             --skip-duplicate
