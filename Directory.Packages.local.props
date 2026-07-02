@@ -26,7 +26,7 @@
        as literals here. BCL-only (FSharp.Core); published to the private org GitHub Packages feed
        (see nuget.config). Contract id: fsgg-contracts (registry/dependencies.yml). -->
   <ItemGroup>
-    <PackageVersion Include="FS.GG.Contracts" Version="1.0.1" />
+    <PackageVersion Include="FS.GG.Contracts" Version="1.4.0" />
   </ItemGroup>
 
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
