@@ -227,3 +227,41 @@ module CommandHost =
 
             (selectedGates |> List.map (fun g -> g, classify g)), inputsMap, budgetReport
         | _ -> [], Map.empty, CacheDecisionReport []
+
+    // ── host-loop combinators (F2 second-extraction pass — genuinely-shared pure forms) ──
+
+    // Reify any exception from a Result-returning impure call into `Error e.Message`. A PURE combinator over
+    // the thunk (the I/O lives inside `call`); shared verbatim by every command host's persistence/sense edge.
+    let guard (call: unit -> Result<'a, string>) : Result<'a, string> =
+        try
+            call ()
+        with e ->
+            Error e.Message
+
+    // The generic MVU drive loop: map each effect to a message via `step`, fold `update` over the messages
+    // accumulating new effects, and recurse until no effects remain or `isDone model`. Byte-identical to each
+    // host's hand-copied `drive`; parameterized over the host's done-predicate / effect→msg step / update so
+    // the leaf depends on NO host Model/Effect type. Pure (the impure step lives in the caller-supplied `step`).
+    let rec drive
+        (isDone: 'model -> bool)
+        (step: 'effect -> 'msg)
+        (update: 'msg -> 'model -> 'model * 'effect list)
+        (model: 'model)
+        (effects: 'effect list)
+        : 'model =
+        if isDone model then
+            model
+        else
+            match effects with
+            | [] -> model
+            | _ ->
+                let model2, newEffects =
+                    effects
+                    |> List.map step
+                    |> List.fold
+                        (fun (m, acc) msg ->
+                            let m2, e2 = update msg m
+                            m2, acc @ e2)
+                        (model, [])
+
+                drive isDone step update model2 newEffects
