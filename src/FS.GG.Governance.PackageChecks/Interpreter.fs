@@ -204,7 +204,15 @@ module Interpreter =
 
         let transcripts =
             match safe (fun () -> port.ListTranscripts source) with
-            | Error _ -> []
+            // FAIL-CLOSED (FR-012): an unreadable transcripts directory must NOT collapse to `[]` — that
+            // reads as "no transcripts declared", so a package verify would pass exactly when the evidence
+            // could not be gathered. Reify it as a synthetic Unlocatable transcript so the pure pack raises
+            // a Blocking input-state finding (the same treatment as a per-transcript TranscriptUnlocatable /
+            // a BaselineUnreadable), never a fabricated pass.
+            | Error e ->
+                [ { ExampleId = "<transcripts>"
+                    Source = source
+                    Outcome = TranscriptUnlocatable e } ]
             | Ok paths ->
                 paths
                 |> List.map (fun p ->

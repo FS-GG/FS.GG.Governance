@@ -1,4 +1,5 @@
 TYPE FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule
+  [Method] CurrencyFinding manifestUnreadableFinding(System.String)
   [Method] EnforcementDecision decisionOf(CurrencyFinding, RunMode, Profile)
   [Method] EnforcementInput enforcementInputOf(CurrencyFinding, RunMode, Profile)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding] findingsOf(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.RefreshJson.RefreshModelModule+ViewDecision])

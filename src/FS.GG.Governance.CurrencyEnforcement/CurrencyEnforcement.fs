@@ -90,6 +90,19 @@ module CurrencyEnforcement =
                 | WouldRegenerate drifted -> finding (SourceDrift drifted)
                 | StaleUnresolved reason -> finding (Undeterminable reason))
 
+    // A refresh.yml that is PRESENT but cannot be read or parsed yields no dial (Maturity) — yet it must
+    // NEVER silently pass (FR-008): dropping it lets a configured currency-enforcement dial vanish. This is
+    // the fail-closed finding the sensing edge emits for that case. `Undeterminable`/`Blocking` mirror the
+    // per-view unresolved path; the Maturity is the STRICTEST dial (`BlockOnPr`) because the configured value
+    // is unknowable when the file can't be read — a corrupt manifest must block from PR onward until fixed,
+    // rather than be trusted at an also-unknowable severity. Not gated by `findingsOf` (which needs a dial).
+    let manifestUnreadableFinding (reason: string) : CurrencyFinding =
+        { ViewId = ".fsgg/refresh.yml"
+          Kind = Other "refresh-manifest"
+          Cause = Undeterminable reason
+          BaseSeverity = Blocking
+          Maturity = BlockOnPr }
+
     let enforcementInputOf (finding: CurrencyFinding) (mode: RunMode) (profile: Profile) : EnforcementInput =
         { BaseSeverity = finding.BaseSeverity
           Maturity = finding.Maturity

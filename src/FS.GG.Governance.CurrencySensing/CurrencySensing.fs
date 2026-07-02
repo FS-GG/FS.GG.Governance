@@ -172,14 +172,21 @@ module CurrencySensing =
         | Error e -> Error e
 
     let senseRepo (repo: string) : CE.CurrencyFinding list =
-        try
-            let refreshYml = Path.Combine(repo, ".fsgg", "refresh.yml")
+        let refreshYml = Path.Combine(repo, ".fsgg", "refresh.yml")
 
-            if not (File.Exists refreshYml) then
-                []
-            else
+        // FAIL-CLOSED (M-ADPT): distinguish an ABSENT manifest — legitimately no currency governance, `[]` —
+        // from a PRESENT-but-unreadable/unparseable one. The old `try ... with _ -> []` (plus `parseManifest`
+        // returning `None`) collapsed the second case into the first, so a configured `currency-enforcement`
+        // dial vanished silently and verify/ship passed exactly when the manifest could not be read. A present
+        // manifest that cannot be read/parsed now emits ONE Blocking/Undeterminable finding instead of `[]`.
+        if not (File.Exists refreshYml) then
+            []
+        else
+            try
                 match parseManifest (File.ReadAllLines refreshYml |> List.ofArray) with
-                | None -> []
+                // `parseManifest` returns `None` ONLY for a present-but-malformed document (a parse throw or a
+                // non-mapping root); a validly-EMPTY document yields `Some(None, [])` ⇒ the normal empty path.
+                | None -> [ CE.manifestUnreadableFinding "refresh.yml is present but is not a valid YAML mapping" ]
                 | Some(dial, entries) ->
                     let lockMap = readLock repo
 
@@ -190,5 +197,6 @@ module CurrencySensing =
                             CE.decideCurrency entry recorded (senseEntry repo entry))
 
                     CE.findingsOf dial decisions
-        with _ ->
-            []
+            with ex ->
+                // A read/IO failure on a PRESENT manifest is fail-closed, never swallowed to `[]`.
+                [ CE.manifestUnreadableFinding (sprintf "refresh.yml is present but could not be read: %s" ex.Message) ]

@@ -59,6 +59,13 @@ module CurrencyEnforcement =
     /// declared manifest order. TOTAL.
     val findingsOf: maturity: Maturity option -> views: ViewDecision list -> CurrencyFinding list
 
+    /// The fail-closed finding for a `refresh.yml` that is PRESENT but unreadable/unparseable: `Undeterminable`
+    /// (carrying the read/parse `reason`), `BaseSeverity = Blocking`, at the STRICTEST maturity (`BlockOnPr`)
+    /// so a corrupt manifest blocks from PR onward. The configured dial is unknowable when the file cannot be
+    /// read, so this is NOT gated by `findingsOf` — it must never silently pass (FR-008). Emitted by the
+    /// CurrencySensing edge (which distinguishes an ABSENT manifest, `[]`, from a present-but-unreadable one).
+    val manifestUnreadableFinding: reason: string -> CurrencyFinding
+
     /// Build the F023 rollup input for a finding under a run mode + profile (reuses F023 verbatim — NO
     /// truth-table logic here). Mirrors `SurfaceChecks.Model.enforcementInputOf` exactly.
     val enforcementInputOf: finding: CurrencyFinding -> mode: RunMode -> profile: Profile -> EnforcementInput

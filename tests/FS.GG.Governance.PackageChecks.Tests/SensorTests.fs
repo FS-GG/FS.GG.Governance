@@ -120,4 +120,24 @@ let tests =
                   match outcome with
                   | TranscriptUnlocatable _ -> ()
                   | other -> failtestf "expected TranscriptUnlocatable, got %A" other)
+          }
+
+          test "an unreadable transcripts directory ⇒ a reified Unlocatable fact, never a silent empty pass (FR-012)" {
+              withTempRepo (fun repo ->
+                  writeSurface repo
+                  File.WriteAllText(Path.Combine(repo, "src", "Foo.fsi.baseline"), fsiText)
+                  let baseReal = realPort repo
+                  // A `ListTranscripts` Error (an unreadable/denied transcripts dir) must NOT collapse to `[]`
+                  // (which reads as "no transcripts declared", so verify would pass exactly when the evidence
+                  // could not be gathered). It is reified as an Unlocatable transcript ⇒ the pure pack blocks.
+                  let port =
+                      { baseReal with
+                          ListTranscripts = fun _ -> Error "transcripts dir denied" }
+
+                  let facts = Interpreter.sensePackage port req
+                  Expect.isNonEmpty facts.Transcripts "an unreadable transcripts dir is reified, not silently empty"
+
+                  match (List.head facts.Transcripts).Outcome with
+                  | TranscriptUnlocatable e -> Expect.stringContains e "denied" "carries the read-failure detail"
+                  | other -> failtestf "expected TranscriptUnlocatable, got %A" other)
           } ]

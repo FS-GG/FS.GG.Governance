@@ -107,4 +107,21 @@ let tests =
 
           test "an absent refresh.yml ⇒ no finding (byte-identity)" {
               withTempRepo (fun dir -> Expect.equal (senseRepo dir) [] "no manifest ⇒ no findings")
+          }
+
+          test "a present-but-unparseable refresh.yml ⇒ one Blocking Undeterminable finding, never a silent pass (M-ADPT)" {
+              withTempRepo (fun dir ->
+                  // The manifest EXISTS but its root is not a YAML mapping (a bare scalar). The old fail-open
+                  // swallowed this to `[]`, silently dropping any configured dial; it must now block.
+                  writeRel dir ".fsgg/refresh.yml" "just-a-scalar-not-a-mapping\n"
+
+                  match senseRepo dir with
+                  | [ f ] ->
+                      Expect.equal f.BaseSeverity Blocking "a present-but-unreadable manifest still blocks"
+                      Expect.equal f.Maturity BlockOnPr "fail-closed at the strictest dial (configured value unknowable)"
+
+                      match f.Cause with
+                      | Undeterminable _ -> ()
+                      | other -> failtestf "expected Undeterminable, got %A" other
+                  | other -> failtestf "expected exactly one blocking finding, got %A" other)
           } ]
