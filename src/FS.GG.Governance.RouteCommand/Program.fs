@@ -58,11 +58,14 @@ let main argv =
             with e ->
                 Watch.InputUnreadable e.Message
 
-        let shouldStop () =
-            Console.KeyAvailable && Console.ReadKey(true).Key = ConsoleKey.Q
-
-        Watch.run request.Repo mode (fun () -> sw.ElapsedMilliseconds) reRender shouldStop
-        Loop.exitCode Loop.Success
+        // Stop on `q`; the shared `safeKeyPoll` also stops cleanly (never crashes) when stdin is
+        // redirected / no console is attached. A nonexistent repo makes the watcher fail to construct
+        // ⇒ `InputUnreadable` ⇒ input-unavailable exit (3), never a crash (H3 / #47).
+        match Watch.run request.Repo mode (fun () -> sw.ElapsedMilliseconds) reRender Watch.safeKeyPoll with
+        | Watch.InputUnreadable reason ->
+            eprintfn "fsgg route [watch]: %s" reason
+            Loop.exitCode Loop.InputUnavailable
+        | _ -> Loop.exitCode Loop.Success
 
     | Ok request ->
         let ports = Interpreter.realPorts request.Repo

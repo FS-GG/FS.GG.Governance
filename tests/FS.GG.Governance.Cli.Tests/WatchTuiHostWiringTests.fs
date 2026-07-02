@@ -91,4 +91,16 @@ let tests =
                   | None -> failtest "no view composed"
 
                   Expect.isFalse (File.Exists(Path.Combine(dir, "readiness", "route.json"))) "watch compose writes no contract artifact")
+          }
+
+          test "headless (H3 / #47): the dispatcher's `runWatch` over a nonexistent root fails to arm the watcher and exits input-unavailable (66), never crashing" {
+              // The FileSystemWatcher cannot be constructed for a missing root, so `Watch.run` returns
+              // `InputUnreadable` BEFORE the poll loop consults the console. `runWatch` maps that to the CLI's
+              // input-unavailable exit (66). Deterministic regardless of the test host's stdin state, while
+              // exercising the real dispatcher watch entry (shared `safeKeyPoll` stop-poll) end-to-end.
+              let missing = Path.Combine(Path.GetTempPath(), "fsgg-cli-watch-missing-" + Guid.NewGuid().ToString("N"))
+
+              match Cli.parse [ "watch"; "--root"; missing ] with
+              | Ok request -> Expect.equal (Program.runWatch request) 66 "a nonexistent watch root ⇒ InputUnavailable exit (66), not a FileSystemWatcher crash"
+              | Error e -> failtestf "parse failed: %A" e
           } ]

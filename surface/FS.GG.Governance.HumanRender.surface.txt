@@ -104,10 +104,11 @@ TYPE FS.GG.Governance.HumanRender.TuiModule+TuiMsg+Tags
   [Field] Int32 MoveUp
   [Field] Int32 Quit
 TYPE FS.GG.Governance.HumanRender.WatchModule
+  [Method] Boolean safeKeyPoll()
   [Method] Int64 get_debounceWindow()
   [Method] System.Tuple`2[FS.GG.Governance.HumanRender.WatchModule+WatchModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.WatchModule+WatchEffect]] init(System.String, RenderMode)
   [Method] System.Tuple`2[FS.GG.Governance.HumanRender.WatchModule+WatchModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.HumanRender.WatchModule+WatchEffect]] update(WatchMsg, WatchModel)
-  [Method] Void run(System.String, RenderMode, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Int64], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.RenderModeModule+RenderMode,FS.GG.Governance.HumanRender.WatchModule+WatchSignal]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Boolean])
+  [Method] WatchSignal run(System.String, RenderMode, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Int64], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.RenderModeModule+RenderMode,FS.GG.Governance.HumanRender.WatchModule+WatchSignal]], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,System.Boolean])
   [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchEffect
   [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchModel
   [NestedType] FS.GG.Governance.HumanRender.WatchModule+WatchMsg
