@@ -59,6 +59,43 @@ jobs:
       - name: Build (net10.0)
         run: dotnet build FS.GG.Governance.sln -c Debug --no-restore
 
+  # Full test suite (review 2026-07-02 H1, FS.GG.Governance#45). Before this job the ONLY tests
+  # run in CI were ReferenceGateSet.Tests (below) and Cli.Tests (publish.yml, publish events only);
+  # the other ~85 test projects (~5,000 assertions) never ran, so a regression in any core module
+  # merged green as long as it compiled. This job restores locked, then runs the whole suite via
+  # build.fsx — which bounds MSBuild node count (-m:N) so the 162-project solution does not thrash
+  # under default parallelism (spec 080). A SEPARATE job so a test failure is a distinct signal, not
+  # serialized behind the build gate. `dotnet test` builds first (no --no-build), so a compile break
+  # still fails here too. Explicit timeout-minutes so a hung test cannot burn the default 6h.
+  test:
+    name: Full test suite (dotnet fsi build.fsx test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # Locked restore is the single enforcement point (mirrors the gate job). --locked-mode forces
+      # RestoreLockedMode so a dependency-graph drift fails here too, before any test builds.
+      - name: Restore (locked)
+        run: |
+          set -euo pipefail
+          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
+            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
+            exit 1
+          fi
+
+      # build.fsx bounds MSBuild parallelism (-m:N) so the 162-project solution builds+tests without
+      # the thread/heap over-subscription that fails a default `dotnet test` (spec 080). --no-restore:
+      # restore already happened above (exactly once).
+      - name: Test (whole solution)
+        run: dotnet fsi build.fsx test -c Debug --no-restore
+
   # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The three
   # managed build-config files (Directory.Build.props, Directory.Packages.props,
   # .config/dotnet-tools.json) must stay byte-identical to the org source of truth in
