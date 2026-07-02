@@ -107,6 +107,13 @@ module DesignSystem =
     /// where design artifacts meet the otherwise domain-neutral algebra. Total and injective.
     val toRef: artifact: DesignArtifactRef -> ArtifactRef
 
+    /// (M-ADPT-2) Wrap an agent-review check to DECLARE the artifacts the judge reviews, so their sensed
+    /// content enters the F04 cache key (`Check.reads` drives its artifact half) and a changed reviewed
+    /// artifact re-opens the review instead of reusing a stale verdict. The injected atom always reports
+    /// `Met` (the neutral element of `All`), so it changes the check's `reads`/`hash` but NOT its evaluated
+    /// verdict, and — still carrying the guarded `Opaque` — the check stays non-reified. Total.
+    val reviewing: artifacts: DesignArtifactRef list -> check: Check<DesignSystemFact> -> Check<DesignSystemFact>
+
     /// (Component 1, identity) The sole authority on `DesignSystemFact` identity the kernel
     /// folds with (F01 `FixedPoint.evaluate`). Keyed by the ENTITY a fact is about —
     /// `PolicySelected` by a fixed key (one selected policy), `MeasurementState` by

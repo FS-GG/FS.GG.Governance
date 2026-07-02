@@ -106,13 +106,21 @@ module Catalog =
     // ── AgentReviewed, ADVISORY (FR-007/FR-008) — `Opaque`, so they can NEVER be
     //    `Deterministic`; they REPORT via their `Question` (the agent's prompt) and never
     //    resolve to a deterministic `Pass`/`Fail`. ──
+    //
+    // M-ADPT-2: each judgement DECLARES the artifacts its judge inspects via `DesignSystem.reviewing`, so a
+    // changed reviewed artifact re-opens the review instead of reusing a stale verdict (`Check.reads` feeds
+    // the F04 cache key's artifact half). `RenderedCapture` (`rendered-capture.json`) is the common subject —
+    // every visual-quality judgement is made against the rendered output — with the relevant spec added for
+    // the structural checks (intent → `InteractionStateSpec`, page pattern → `PagePatternSpec`). The design
+    // language is a flat surface with no dedicated artifact for motion/colour/elevation, so those review the
+    // rendered capture alone (a defensible mapping until per-quality artifacts exist — see review #50).
 
     let renderedMatchesIntent: CheckRule<DesignSystemFact> =
         mkRule
             "rendered-matches-intent"
             AgentReviewed
             { Document = "design-system"; Section = "rendered-intent" }
-            (judgement "rendered-matches-intent")
+            (DesignSystem.reviewing [ RenderedCapture; InteractionStateSpec ] (judgement "rendered-matches-intent"))
         |> CheckRule.asking "Does the rendered control match the spec intent? List divergences."
 
     let fourValues: CheckRule<DesignSystemFact> =
@@ -120,7 +128,7 @@ module Catalog =
             "four-values"
             AgentReviewed
             { Document = "design-system"; Section = "four-values" }
-            (judgement "four-values")
+            (DesignSystem.reviewing [ RenderedCapture ] (judgement "four-values"))
         |> CheckRule.asking "Are the four values — natural/certain/meaningful/growing — honoured?"
 
     let pagePatternCorrect: CheckRule<DesignSystemFact> =
@@ -128,7 +136,7 @@ module Catalog =
             "page-pattern"
             AgentReviewed
             { Document = "design-system"; Section = "page-pattern" }
-            (judgement "page-pattern")
+            (DesignSystem.reviewing [ PagePatternSpec; RenderedCapture ] (judgement "page-pattern"))
         |> CheckRule.asking "Is the page pattern correct for this composition?"
 
     let colourInformational: CheckRule<DesignSystemFact> =
@@ -136,7 +144,7 @@ module Catalog =
             "colour-informational"
             AgentReviewed
             { Document = "design-system"; Section = "colour" }
-            (judgement "colour-informational")
+            (DesignSystem.reviewing [ RenderedCapture ] (judgement "colour-informational"))
         |> CheckRule.asking "Does colour carry information here, or is it decoration?"
 
     let motionRestraint: CheckRule<DesignSystemFact> =
@@ -144,7 +152,7 @@ module Catalog =
             "motion-restraint"
             AgentReviewed
             { Document = "design-system"; Section = "motion" }
-            (judgement "motion-restraint")
+            (DesignSystem.reviewing [ RenderedCapture ] (judgement "motion-restraint"))
         |> CheckRule.asking "Is motion used with restraint?"
 
     let elevationLayering: CheckRule<DesignSystemFact> =
@@ -152,7 +160,7 @@ module Catalog =
             "elevation-layering"
             AgentReviewed
             { Document = "design-system"; Section = "elevation" }
-            (judgement "elevation-layering")
+            (DesignSystem.reviewing [ RenderedCapture ] (judgement "elevation-layering"))
         |> CheckRule.asking "Is elevation/overlay layering correct?"
 
     // ── HumanOnly, BLOCKING (FR-007) — a person decides; `toRule` escalates and never

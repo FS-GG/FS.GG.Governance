@@ -176,13 +176,30 @@ let tests =
                   "surfaceMatches g c ≠ surfaceMatches c g (positional args)"
           }
 
-          test "V5 two structurally-equal Opaque judgement rules produce the same agent-review cache key" {
+          test "V5 two structurally-equal judgement rules produce the same agent-review cache key" {
               let r = Catalog.colourInformational
-              // A structurally-equal Opaque (same name) — its hash is its name only (F03).
-              let twin: Check<DesignSystemFact> = Opaque("colour-informational", fun _ -> Unknown "requires judgement")
+              // A structurally-equal twin — built the SAME way (M-ADPT-2: the reviewed artifact is now part of
+              // the check, so the twin must declare it too): same reviewed artifact + Opaque name + prompt.
+              let twin =
+                  DesignSystem.reviewing [ RenderedCapture ] (Opaque("colour-informational", fun _ -> Unknown "requires judgement"))
 
-              let key1 = CheckRule.cacheKey judge (Check.hash r.Check) [] r.Question
-              let key2 = CheckRule.cacheKey judge (Check.hash twin) [] (Some "Does colour carry information here, or is it decoration?")
+              // The real key derivation folds the reviewed-artifact hashes in; equal reads ⇒ equal key.
+              let artHash (_: ArtifactRef) = "content-hash"
+              let key1 = CheckRule.cacheKey judge (Check.hash r.Check) (Check.reads r.Check |> List.map artHash) r.Question
 
-              Expect.equal key1 key2 "identical Opaque name + judge + prompt ⇒ identical cache key (no spurious re-review)"
+              let key2 =
+                  CheckRule.cacheKey judge (Check.hash twin) (Check.reads twin |> List.map artHash) (Some "Does colour carry information here, or is it decoration?")
+
+              Expect.equal key1 key2 "identical reviewed artifacts + Opaque name + judge + prompt ⇒ identical cache key (no spurious re-review)"
+          }
+
+          test "V5b changing a reviewed artifact's content hash moves the agent-review key (M-ADPT-2)" {
+              let r = Catalog.renderedMatchesIntent
+              let renderedRef = DesignSystem.toRef RenderedCapture
+              let baseHash (_: ArtifactRef) = "h0"
+              let changed (ref: ArtifactRef) = if ref = renderedRef then "h-CHANGED" else "h0"
+              let k0 = CheckRule.cacheKey judge (Check.hash r.Check) (Check.reads r.Check |> List.map baseHash) r.Question
+              let k1 = CheckRule.cacheKey judge (Check.hash r.Check) (Check.reads r.Check |> List.map changed) r.Question
+              Expect.notEqual k1 k0 "a changed rendered-capture.json must re-open the review"
+              Expect.contains (Check.reads r.Check) renderedRef "the rule declares rendered-capture as reviewed"
           } ]

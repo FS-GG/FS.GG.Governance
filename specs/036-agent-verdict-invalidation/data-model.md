@@ -90,9 +90,14 @@ inputGroup : ReviewInput -> IdentityGroup     // total; the table below
 > declaring the reviewed artifacts (`plan`↔`spec`, `tasks`↔`plan`) as `Check.reads`; the Host loop senses
 > their content, and the composition-root bridge (`Cli/Project.fs`) folds each content hash in — so "reviewed
 > artifact changed" is now the *same* event in both the F04 key and this F036 group. The DesignSystem adapter
-> is **not yet** converted (its judgement rules name qualities, not concrete artifacts; `motion-restraint` has
-> no artifact ref), so its agent rules still declare no reads and remain in the pre-fix state — tracked under
-> review item #50 / M-ADPT-2.
+> is converted the same way via `DesignSystem.reviewing [...]`: its judgement rules name design *qualities*
+> rather than one artifact, so — the design language being a flat surface — each reviews `RenderedCapture`
+> (`rendered-capture.json`, the common subject) plus the relevant spec for the structural checks
+> (`rendered-matches-intent` → `InteractionStateSpec`, `page-pattern` → `PagePatternSpec`). Adding
+> per-quality artifacts later would only refine that mapping, not change the mechanism. The remaining honesty
+> gap is the adapter-local `Bridge.ArtifactHash = ""` stubs, which are dead on the CLI path (superseded by the
+> composition-root bridge) and would need a content-bearing fact case to be made real — tracked under review
+> item #50 / M-ADPT-2.
 
 ## Key entity — `InvalidationCause` (the no-hide explanation)
 

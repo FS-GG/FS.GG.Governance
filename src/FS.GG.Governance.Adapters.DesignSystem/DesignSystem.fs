@@ -62,6 +62,21 @@ module DesignSystem =
     let toRef (artifact: DesignArtifactRef) : ArtifactRef =
         { Kind = "design"; Key = Naming.artifactName artifact }
 
+    /// (M-ADPT-2) Declare, for an agent-review check, the artifacts the judge actually reviews, so their
+    /// SENSED CONTENT enters the F04 agent-review cache key (`Check.reads` drives its artifact half). Without
+    /// this a `judgement` over a bare `Opaque` declares NO reads, so a changed `rendered-capture.json`
+    /// produces the SAME key and a stale `Reviewed` verdict is reused. The injected atom always reports `Met`
+    /// — the neutral element of `All` — so it changes the check's declared `reads`/`hash` but NEVER its
+    /// evaluated verdict, and (still carrying the `Opaque`) the check stays non-reified ⇒ `AgentReviewed`.
+    let reviewing (artifacts: DesignArtifactRef list) (check: Check<DesignSystemFact>) : Check<DesignSystemFact> =
+        let readsAtom =
+            { Name = "reviews-artifacts"
+              Reads = artifacts |> List.map toRef
+              Args = artifacts |> List.map (Naming.artifactName >> LiteralArg)
+              Eval = fun _ -> Met }
+
+        All [ Atom readsAtom; check ]
+
     let identify (fact: DesignSystemFact) : FactId =
         match fact with
         // value-distinguishing facts key by full value …
@@ -76,6 +91,14 @@ module DesignSystem =
         // … and the governance embed keys by its outcome.
         | DesignGov o -> FactId("gov:" + Naming.govKey o)
 
+    // M-ADPT-2: `ArtifactHash` is a no-op HERE because on the real (CLI) path the composition root supplies
+    // the content-sensing bridge (`Cli/Project.fs` `Project.bridge`, which hashes the `ArtifactContentFact`
+    // the Host loop senses) — this adapter-local bridge is only lifted for its `Rules`/`Embed`/`Project`,
+    // never its `ArtifactHash` (see `Composition.lift`). The stale-verdict window (M-ADPT-2) is closed by the
+    // judgement rules DECLARING their reviewed artifacts via `reviewing` (above): that puts the reviewed
+    // `rendered-capture.json`/spec into `Check.reads`, so the loop senses their content and the real bridge
+    // folds their hashes into the cache key. A content-bearing `DesignSystemFact` case would be needed only to
+    // make THIS standalone stub honest too.
     let bridge (judge: JudgeId) : Bridge<DesignSystemFact> =
         { Judge = judge
           ArtifactHash = fun _ _ -> ""

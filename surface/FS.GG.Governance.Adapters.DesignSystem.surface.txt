@@ -174,6 +174,7 @@ TYPE FS.GG.Governance.Adapters.DesignSystem.DesignSystemModule
   [Method] FS.GG.Governance.Kernel.Bridge`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] bridge(FS.GG.Governance.Kernel.JudgeId)
   [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] contrastMeets(System.String, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
   [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] get_evidenceMeasured()
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] reviewing(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef], FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact])
   [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] surfaceMatches(FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
   [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] surfaceObserved(System.String, FS.GG.Governance.Adapters.DesignSystem.DesignArtifactRef)
   [Method] FS.GG.Governance.Kernel.FactId identify(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact)
