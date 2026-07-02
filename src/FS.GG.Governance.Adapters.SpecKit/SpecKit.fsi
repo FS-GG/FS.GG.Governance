@@ -146,6 +146,13 @@ module SpecKit =
     /// distinguish `whenPhase Plan` from `whenPhase Tasks`. Total.
     val whenPhase: required: Phase -> check: Check<SpecKitFact> -> Check<SpecKitFact>
 
+    /// (M-ADPT-2) Wrap an agent-review check to DECLARE the artifacts the judge reviews, so their sensed
+    /// content enters the F04 cache key (`Check.reads` drives its artifact half) and a changed reviewed
+    /// artifact re-opens the review instead of reusing a stale verdict. The injected atom always reports
+    /// `Met` (the neutral element of `All`), so it changes the check's `reads`/`hash` but NOT its evaluated
+    /// verdict, and — still carrying the guarded `Opaque` — the check stays non-reified. Total.
+    val reviewing: artifacts: SpecKitArtifact list -> check: Check<SpecKitFact> -> Check<SpecKitFact>
+
     /// (Component 3) The declared atomic predicates the rule catalog composes (F03 `Probe`)
     /// — the Spec Kit probe vocabulary, carried for the contract and for testing; the
     /// `Catalog` rules' checks are authoritative for evaluation (research D2). Total.

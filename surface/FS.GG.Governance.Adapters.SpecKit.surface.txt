@@ -255,6 +255,7 @@ TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitFact+TaskState
 TYPE FS.GG.Governance.Adapters.SpecKit.SpecKitModule
   [Method] FS.GG.Governance.Kernel.ArtifactRef toRef(FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact)
   [Method] FS.GG.Governance.Kernel.Bridge`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] bridge(FS.GG.Governance.Kernel.JudgeId)
+  [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] reviewing(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact], FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact])
   [Method] FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] whenPhase(FS.GG.Governance.Adapters.SpecKit.Phase, FS.GG.Governance.Kernel.Check`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact])
   [Method] FS.GG.Governance.Kernel.FactId identify(FS.GG.Governance.Adapters.SpecKit.SpecKitFact)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Probe`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact]] get_probes()

@@ -141,6 +141,13 @@ module SpecKit =
         // … and the governance embed keys by its outcome.
         | SpecKitGov o -> FactId("gov:" + Naming.govKey o)
 
+    // M-ADPT-2: `ArtifactHash` is a no-op HERE because on the real (CLI) path the composition root supplies
+    // the content-sensing bridge (`Cli/Project.fs` `Project.bridge`, which hashes the `ArtifactContentFact`
+    // the Host loop senses) — this adapter-local bridge is only lifted for its `Rules`/`Embed`/`Project`,
+    // never its `ArtifactHash` (see `Composition.lift`). The stale-verdict window (M-ADPT-2) is closed by the
+    // rules now DECLARING their reviewed artifacts via `reviewing` (above): that puts `plan.md`/`spec.md` into
+    // `Check.reads`, so the loop senses their content and the real bridge folds their hashes into the cache
+    // key. A content-bearing `SpecKitFact` case would be needed only to make THIS standalone stub honest too.
     let bridge (judge: JudgeId) : Bridge<SpecKitFact> =
         { Judge = judge
           ArtifactHash = fun _ _ -> ""
@@ -152,6 +159,22 @@ module SpecKit =
 
     let whenPhase (required: Phase) (check: Check<SpecKitFact>) : Check<SpecKitFact> =
         Implies(Atom(phaseAtLeast required), check)
+
+    /// (M-ADPT-2) Declare, for an agent-review check, the artifacts the judge actually reviews, so their
+    /// SENSED CONTENT enters the F04 agent-review cache key (`Check.reads` drives its artifact half). Without
+    /// this a `plan-satisfies-spec` review over an `Opaque` judgement declares NO reads, so a changed
+    /// `plan.md`/`spec.md` produces the SAME key and a stale `Reviewed` verdict is reused. The injected atom
+    /// always reports `Met` — the neutral element of `All` — so it changes the check's declared `reads`/`hash`
+    /// but NEVER its evaluated verdict: the guarded `Opaque` judgement stays the sole driver of the outcome
+    /// (and, still carrying an `Opaque`, the check stays non-reified ⇒ `AgentReviewed`, not `Deterministic`).
+    let reviewing (artifacts: SpecKitArtifact list) (check: Check<SpecKitFact>) : Check<SpecKitFact> =
+        let readsAtom =
+            { Name = "reviews-artifacts"
+              Reads = artifacts |> List.map toRef
+              Args = artifacts |> List.map (Naming.artifactName >> LiteralArg)
+              Eval = fun _ -> Met }
+
+        All [ Atom readsAtom; check ]
 
     let probes: Probe<SpecKitFact> list =
         [ phaseAtLeast Phase.Constitution

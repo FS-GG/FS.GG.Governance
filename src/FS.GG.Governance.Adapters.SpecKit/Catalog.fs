@@ -241,7 +241,11 @@ module Catalog =
             "plan-satisfies-spec"
             AgentReviewed
             { Document = "plan"; Section = "coverage" }
-            (SpecKit.whenPhase Phase.Plan (Opaque("plan-satisfies-spec", fun _ -> Unknown "judgement")))
+            (SpecKit.whenPhase
+                Phase.Plan
+                (SpecKit.reviewing
+                    [ SpecKitArtifact.Plan; SpecKitArtifact.Spec ]
+                    (Opaque("plan-satisfies-spec", fun _ -> Unknown "judgement"))))
         |> CheckRule.asking "Does plan.md address every requirement in spec.md? List gaps."
 
     let tasksCompleteOrdered: CheckRule<SpecKitFact> =
@@ -249,7 +253,11 @@ module Catalog =
             "tasks-complete-ordered"
             AgentReviewed
             { Document = "tasks"; Section = "completeness" }
-            (SpecKit.whenPhase Phase.Tasks (Opaque("tasks-complete-ordered", fun _ -> Unknown "judgement")))
+            (SpecKit.whenPhase
+                Phase.Tasks
+                (SpecKit.reviewing
+                    [ SpecKitArtifact.Tasks; SpecKitArtifact.Plan ]
+                    (Opaque("tasks-complete-ordered", fun _ -> Unknown "judgement"))))
         |> CheckRule.asking "Are the tasks complete and ordered for the plan?"
 
     let featureInScope: CheckRule<SpecKitFact> =

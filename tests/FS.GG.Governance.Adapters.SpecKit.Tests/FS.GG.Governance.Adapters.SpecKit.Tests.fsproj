@@ -14,6 +14,7 @@
     <Compile Include="ExampleAdapters.fs" />
     <Compile Include="SpecKitTests.fs" />
     <Compile Include="CatalogTests.fs" />
+    <Compile Include="ReviewedArtifactsTests.fs" />
     <Compile Include="LiftTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />

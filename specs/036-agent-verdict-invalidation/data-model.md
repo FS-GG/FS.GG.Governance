@@ -81,6 +81,19 @@ inputGroup : ReviewInput -> IdentityGroup     // total; the table below
 > `inputGroup` is total over all seven cases even though `CheckHashInput` cannot appear inside an `InputsChanged`
 > diff (it is the work key, equal by construction for the chosen prior entry — research D5).
 
+> **Implementation note (M-ADPT-2, 2026-07-02 review).** `ReviewedArtifactsInput` is only real if the F04
+> in-run cache key (`CheckRule.cacheKey`, whose artifact half is `Check.reads check |> map ArtifactHash`)
+> actually carries the reviewed artifacts — otherwise a changed `plan.md` leaves both the F04 key AND this
+> `CheckArtifactIdentity` group unmoved, and a stale verdict is reused. An `AgentReviewed` rule over a bare
+> `Opaque` judgement declares **no** reads, so its artifact half was empty. The SpecKit adapter now closes the
+> split: `plan-satisfies-spec` / `tasks-complete-ordered` wrap their `Opaque` in `SpecKit.reviewing [...]`,
+> declaring the reviewed artifacts (`plan`↔`spec`, `tasks`↔`plan`) as `Check.reads`; the Host loop senses
+> their content, and the composition-root bridge (`Cli/Project.fs`) folds each content hash in — so "reviewed
+> artifact changed" is now the *same* event in both the F04 key and this F036 group. The DesignSystem adapter
+> is **not yet** converted (its judgement rules name qualities, not concrete artifacts; `motion-restraint` has
+> no artifact ref), so its agent rules still declare no reads and remain in the pre-fix state — tracked under
+> review item #50 / M-ADPT-2.
+
 ## Key entity — `InvalidationCause` (the no-hide explanation)
 
 Why no cached verdict served — always present and locatable (FR-006, Principle VI).
