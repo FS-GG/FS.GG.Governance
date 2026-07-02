@@ -62,6 +62,7 @@
   <ItemGroup>
     <!-- 073: the shared closed-enum token helpers (pure JsonTokens leaf; module-qualified calls). -->
     <ProjectReference Include="../FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.AttestationJson/FS.GG.Governance.AttestationJson.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -12,6 +12,7 @@ open FS.GG.Governance.FreshnessKey.Model     // ArtifactHash
 open FS.GG.Governance.Ship.Model             // Verdict (Pass/Fail)
 open FS.GG.Governance.PackEvidence.Model      // PackEvidenceSet / PackVerdict / VersionVerdict / PackOutcome
 open FS.GG.Governance.Attestation.Model       // AttestationSummary
+open FS.GG.Governance.AttestationJson         // schemaVersion / complianceToken — the canonical attestation tokens
 open FS.GG.Governance.ReleaseReport.Model     // VerifyReleasePreview
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -132,9 +133,9 @@ module ReleaseReadiness =
     let writeAttestationRef (w: Utf8JsonWriter) (attestation: AttestationSummary) =
         w.WritePropertyName "attestation"
         w.WriteStartObject()
-        w.WriteString("schemaVersion", "fsgg.attestation/v1")
+        w.WriteString("schemaVersion", AttestationJson.schemaVersion)
         w.WriteString("identity", attestation.Identity)
-        w.WriteString("compliance", "compatible-shape-not-formal-compliance")
+        w.WriteString("compliance", AttestationJson.complianceToken)
         w.WriteNumber("subjectCount", List.length attestation.Subjects)
         w.WriteEndObject()
 

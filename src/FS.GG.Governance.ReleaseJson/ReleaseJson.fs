@@ -9,6 +9,7 @@ open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.ReleaseRules.Model
+open FS.GG.Governance.AttestationJson // schemaVersion / complianceToken — the canonical attestation tokens
 open FS.GG.Governance.ReleaseRules
 open FS.GG.Governance.ReleaseFactsSensing.Model
 open FS.GG.Governance.PackEvidence.Model
@@ -282,9 +283,9 @@ module ReleaseJson =
         | None -> w.WriteNullValue()
         | Some a ->
             w.WriteStartObject()
-            w.WriteString("schemaVersion", "fsgg.attestation/v1")
+            w.WriteString("schemaVersion", AttestationJson.schemaVersion)
             w.WriteString("identity", a.Identity)
-            w.WriteString("compliance", "compatible-shape-not-formal-compliance")
+            w.WriteString("compliance", AttestationJson.complianceToken)
             w.WriteNumber("subjectCount", List.length a.Subjects)
             w.WriteEndObject()
 

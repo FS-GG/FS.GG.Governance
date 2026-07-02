@@ -37,6 +37,12 @@ module JsonTokens =
         | Advisory -> "advisory"
         | Blocking -> "blocking"
 
+    // DIVERGENCE — DO NOT UNIFY: this JSON-wire spelling `localOrCi` (camelCase) deliberately DIFFERS from the
+    // store/config-wire spelling `local-or-ci` (kebab) emitted by `EvidenceReuseStore.environmentToken` /
+    // `Config.Schema` and read back by `FreshnessSensing.parseEnv`. The strings DIVERGE, so folding the two
+    // `environmentToken`s into one would change bytes and break the evidence-reuse-store round-trip at runtime
+    // — exactly like the `dispositionToken`/`verdictToken` divergences in VerifyJson.Core. The camelCase
+    // spelling is pinned by JsonTokensTests; the kebab spelling by EvidenceReuseStore RoundTripTests.
     let environmentToken (env: EnvironmentClass) : string =
         match env with
         | Local -> "local"

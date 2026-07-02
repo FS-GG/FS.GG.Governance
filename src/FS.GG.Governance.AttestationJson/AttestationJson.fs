@@ -29,7 +29,9 @@ module AttestationJson =
 
     let schemaVersion = "fsgg.attestation/v1"
 
-    let private complianceToken = "compatible-shape-not-formal-compliance"
+    // Public (M-JSON-1): the ReleaseJson and VerifyJson `attestation` reference embeds reference this instead
+    // of hard-coding the literal, so a v2 bump cannot silently strand those two projections.
+    let complianceToken = "compatible-shape-not-formal-compliance"
 
     let private complianceNote =
         "SLSA/in-toto-shaped, reproducible metadata; NOT a claim of formal SLSA-level or in-toto attestation conformance."

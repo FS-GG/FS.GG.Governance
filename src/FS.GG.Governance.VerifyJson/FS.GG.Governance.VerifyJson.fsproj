@@ -85,6 +85,7 @@
   <ItemGroup>
     <!-- 073: the shared sub-object/map writers (pure JsonWriters leaf; module-qualified calls). -->
     <ProjectReference Include="../FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.AttestationJson/FS.GG.Governance.AttestationJson.fsproj" />
   </ItemGroup>
 
 </Project>

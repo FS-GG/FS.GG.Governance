@@ -31,6 +31,11 @@ module EvidenceReuseStore =
 
     /// The EXHAUSTIVE inverse of the F046 reader's `parseEnv`, with NO wildcard (research D6): a future
     /// `EnvironmentClass` case is a compile error here, never a silently mis-tokened field.
+    /// DIVERGENCE — DO NOT UNIFY: this store-wire spelling `local-or-ci` (kebab) deliberately DIFFERS from the
+    /// JSON-wire `localOrCi` (camelCase) emitted by `JsonTokens.environmentToken`. The strings DIVERGE, so
+    /// folding the two into one shared `environmentToken` would change bytes and break the store round-trip
+    /// (`readBack ∘ serialise`) at runtime — the divergence is guarded by RoundTripTests, not a literal
+    /// assertion (cf. the `dispositionToken`/`verdictToken` divergences in VerifyJson.Core).
     let environmentToken (env: EnvironmentClass) : string =
         match env with
         | Local -> "local"

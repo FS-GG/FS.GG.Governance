@@ -19,6 +19,12 @@ let tests =
               Expect.stringContains json "\"schemaVersion\":\"fsgg.attestation/v1\"" ""
           }
 
+          test "complianceToken is the canonical compatible-shape marker (M-JSON-1: referenced by Release/Verify embeds)" {
+              Expect.equal AttestationJson.complianceToken "compatible-shape-not-formal-compliance" ""
+              let json = AttestationJson.ofAttestation baseSummary
+              Expect.stringContains json ("\"compliance\":\"" + AttestationJson.complianceToken + "\"") ""
+          }
+
           test "fixed field order: schemaVersion < compliance < complianceNote < identity < builder < subjects < materials < invocation" {
               let json = AttestationJson.ofAttestation baseSummary
               let order =

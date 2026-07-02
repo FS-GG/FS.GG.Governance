@@ -1,4 +1,6 @@
 TYPE FS.GG.Governance.AttestationJson.AttestationJsonModule
+  [Method] System.String get_complianceToken()
   [Method] System.String get_schemaVersion()
   [Method] System.String ofAttestation(AttestationSummary)
+  [Property] System.String complianceToken
   [Property] System.String schemaVersion

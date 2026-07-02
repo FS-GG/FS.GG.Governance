@@ -15,6 +15,11 @@ module AttestationJson =
     /// "fsgg.attestation/v1". Fixed; never derived from clock/env/input.
     val schemaVersion: string
 
+    /// "compatible-shape-not-formal-compliance" — the `compliance` marker embedded in an attestation
+    /// reference. Exposed (M-JSON-1) so the ReleaseJson / VerifyJson `attestation` references cite it instead
+    /// of hard-coding the literal; a schema/token bump then updates every embed site through this one binding.
+    val complianceToken: string
+
     /// Project the attestation summary to deterministic JSON. Identical input -> byte-identical text; differs
     /// only when a reproducible input changes. Wall-clock duration is emitted ONLY as clearly-sensed metadata
     /// (durationNanos inside each invocation run) that never affects the document's `identity` field.
