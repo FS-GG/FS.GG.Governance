@@ -193,6 +193,45 @@ covering the full route → verify → ship → release lifecycle:
 `route`, `evidence`, and `cache-eligibility` are packed and installable as .NET tools;
 the others currently run from source.
 
+### Exit codes
+
+The two lineages use **two different exit-code families** — the same integer can mean
+different things, so read them against the right column.
+
+**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/`refresh`/
+`evidence`/`cache-eligibility`), via `CommandHost.ExitDecision`:
+
+| Code | Meaning |
+|---|---|
+| `0` | success |
+| `1` | governed **blocking** verdict (the gate/verdict said no) |
+| `2` | usage error (bad flags/arguments) |
+| `3` | input unavailable (a required input could not be read) |
+| `4` | tool error (an internal/IO failure while running) |
+
+**`fsgg-governance`** (the kernel-era dispatcher, `src/FS.GG.Governance.Cli`) remaps onto
+BSD **sysexits**:
+
+| Code | Meaning |
+|---|---|
+| `0` | success |
+| `2` | governed-blocking verdict |
+| `64` | usage error (`EX_USAGE`) |
+| `66` | input unavailable (`EX_NOINPUT`) |
+| `70` | tool error (`EX_SOFTWARE`) |
+
+⚠️ **`2` diverges between the families**: it is a *governed-blocking* verdict from
+`fsgg-governance`, but a *usage error* from every `fsgg` verb host (whose blocking verdict
+is `1`). Scripts that branch on exit codes must know which tool they invoked.
+
+**Store / freshness read failure policy.** A store/freshness *write* failure is always a
+**tool error** (`4` verb-host / `70` dispatcher), never a blocking verdict — a failed
+persist must not masquerade as a governed "no" (`ShipCommand`/`VerifyCommand` FR-009). A
+store/freshness *read* failure is **not** a failure exit: the store is treated as empty and
+the verdict is recomputed (recompute-by-default). One known, still-unaligned divergence
+(review M-CLI-6): on an *unreadable* store `route`/`ship`/`verify` degrade to `0` + a note,
+whereas `cache-eligibility` currently exits `4` — documented here pending alignment.
+
 ## Cross-repo contracts
 
 Governance participates in the org [contract & compatibility registry](https://github.com/FS-GG/.github)

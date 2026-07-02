@@ -555,15 +555,6 @@ module Loop =
 
     // ── render (research D7) — the deterministic summary, separate from the persisted artifacts ──
 
-    and costToken (c: Cost) : string =
-        match c with
-        | Cheap -> "cheap"
-        | Medium -> "medium"
-        | High -> "high"
-        | Exhaustive -> "exhaustive"
-
-    and pathValue (GovernedPath p) = p
-
     and jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
 
     // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
@@ -621,35 +612,15 @@ module Loop =
         | None -> None
 
     and renderJson (model: Model) : string =
-        match model.Result with
+        // "Json is contract" (M-CLI-5): `--json` stdout IS the persisted `route.json` artifact
+        // (`RouteJson.ofRouteResultWithProductSurfaces`, schemaVersion `fsgg.route/v2`) byte-for-byte — the
+        // exact document written to `RouteOut` — mirroring ship/verify/refresh, not a bespoke schema-less
+        // summary. This also stops leaking the host output paths (excluded from artifacts by FR-012).
+        match model.RouteDoc with
+        | Some doc -> doc
         | None ->
             let errs = model.Diagnostics |> List.map (fun d -> jstr d.Message) |> String.concat ","
             sprintf "{\"errors\":[%s]}" errs
-        | Some result ->
-            let gates =
-                result.SelectedGates
-                |> List.map (fun sg ->
-                    let paths = sg.SelectingPaths |> List.map (fun sp -> jstr (pathValue sp.Path)) |> String.concat ","
-                    sprintf "{\"id\":%s,\"cost\":%s,\"paths\":[%s]}" (jstr (gateIdValue sg.Gate.Id)) (jstr (costToken sg.Gate.Cost)) paths)
-                |> String.concat ","
-
-            let findings =
-                result.Findings.Findings
-                |> List.map (fun f -> sprintf "{\"path\":%s,\"message\":%s}" (jstr (pathValue f.Path)) (jstr f.Message))
-                |> String.concat ","
-
-            let c = result.Cost
-
-            sprintf
-                "{\"selected\":[%s],\"cost\":{\"cheap\":%d,\"medium\":%d,\"high\":%d,\"exhaustive\":%d},\"findings\":[%s],\"wrote\":{\"gates\":%s,\"route\":%s}}"
-                gates
-                c.Cheap
-                c.Medium
-                c.High
-                c.Exhaustive
-                findings
-                (jstr model.Request.GatesOut)
-                (jstr model.Request.RouteOut)
 
     and render (model: Model) (format: OutputFormat) : string =
         match format with

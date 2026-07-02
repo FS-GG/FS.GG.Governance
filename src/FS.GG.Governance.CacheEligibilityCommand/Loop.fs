@@ -466,6 +466,11 @@ module Loop =
             | Some report -> EmitSummary(renderHuman model, Some(ReportView.viewOfCacheEligibilityReport report, operationalLines model), model.Request.ExplicitPlain)
             | None -> EmitSummary(renderHuman model, None, model.Request.ExplicitPlain)
 
+    // "Json is contract" (M-CLI-5): unlike route/ship/verify — whose `--json` stdout IS a single persisted
+    // artifact byte-for-byte — cache-eligibility persists TWO schema-versioned artifacts (`cache-eligibility.json`
+    // = reusable/mustRecompute, and the `unresolved` sidecar). This stdout is a DELIBERATE combined summary over
+    // both, so rather than silently diverging as a schema-less blob it is STAMPED with its own `schemaVersion`
+    // and documented here; each underlying document remains available as its own persisted artifact.
     and renderJson (model: Model) : string =
         match model.Resolution with
         | None ->
@@ -498,7 +503,7 @@ module Loop =
                 |> String.concat ","
 
             sprintf
-                "{\"reusable\":[%s],\"mustRecompute\":[%s],\"unresolved\":[%s],\"wrote\":{\"cache\":%s,\"unresolved\":%s}}"
+                "{\"schemaVersion\":\"fsgg.cache-eligibility-summary/v1\",\"reusable\":[%s],\"mustRecompute\":[%s],\"unresolved\":[%s],\"wrote\":{\"cache\":%s,\"unresolved\":%s}}"
                 reusable
                 recompute
                 unresolved
