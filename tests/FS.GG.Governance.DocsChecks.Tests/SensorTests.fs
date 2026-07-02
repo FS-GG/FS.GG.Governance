@@ -69,4 +69,36 @@ let tests =
                   let facts = Interpreter.senseDocs (Interpreter.realPort repo) req
                   Expect.isNonEmpty facts.Unreadable "missing source recorded"
                   Expect.isEmpty facts.Links "no fabricated links")
+          }
+
+          test "a link escaping to a sibling dir prefixed by the repo name dangles, never a fabricated pass (FR-016)" {
+              withTempRepo (fun repo ->
+                  // Sibling directory whose name STARTS WITH the repo dir name (`<repo>-sibling`), holding a
+                  // real file. A bare `StartsWith repoRoot` boundary would resolve `../<sibling>/secret.md`
+                  // as "inside" — fabricating a pass against a file OUTSIDE the standalone product. The
+                  // trailing-separator guard must dangle it.
+                  let sibling = repo + "-sibling"
+                  Directory.CreateDirectory sibling |> ignore
+
+                  try
+                      File.WriteAllText(Path.Combine(sibling, "secret.md"), "# outside the product\n")
+                      let siblingName = Path.GetFileName sibling
+
+                      File.WriteAllText(
+                          Path.Combine(repo, "docs", "guide.md"),
+                          sprintf "# Guide\nSee [Escape](../%s/secret.md).\n" siblingName
+                      )
+
+                      let facts = Interpreter.senseDocs (Interpreter.realPort repo) req
+
+                      let dangling =
+                          facts.Links |> List.filter (fun l -> match l.Outcome with | LinkDangling _ -> true | _ -> false)
+
+                      Expect.hasLength dangling 1 "the escaping sibling link dangles, not a fabricated pass"
+                      Expect.equal (List.head dangling).Target (sprintf "../%s/secret.md" siblingName) "names the escaping target"
+                  finally
+                      try
+                          Directory.Delete(sibling, true)
+                      with _ ->
+                          ())
           } ]

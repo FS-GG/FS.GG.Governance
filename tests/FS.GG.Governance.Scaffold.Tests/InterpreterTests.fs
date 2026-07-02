@@ -99,6 +99,23 @@ let tests =
                   Expect.isEmpty (filesUnder target) "no partial tree")
           }
 
+          test "Synthetic provider: a mid-batch rename clash rolls back the in-flight temp too — ZERO residue (SC-005)" {
+              withTemp (fun target ->
+                  // A provider emitting the SAME target-relative path twice: the first write renames into
+                  // place; the second's atomic rename fails (the target now exists, overwrite:false), so the
+                  // batch aborts WITH a `.tmp-<guid>` already written for the second file. Rollback must delete
+                  // that in-flight temp as well as the renamed file — leaving no partial tree AND no orphan temp.
+                  let p = fakeProvider "fixture.lib" [ "dup.fs", "// first"; "dup.fs", "// second" ]
+                  let model = Interpreter.run (Interpreter.realPorts target) (runRequest target [] (Some p))
+
+                  match model.Manifest with
+                  | Some { Outcome = Refused(ProviderErrored _) } -> ()
+                  | other -> failtestf "expected Refused(ProviderErrored) from the rename clash, got %A" other
+
+                  // filesUnder enumerates EVERY file, so a leaked `dup.fs.tmp-<guid>` would show here.
+                  Expect.isEmpty (filesUnder target) "no partial tree and no orphan .tmp residue")
+          }
+
           test "Synthetic provider: re-running over an already-scaffolded target reports Collision and writes nothing new" {
               withTemp (fun target ->
                   let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// hello"; "README.md", "# hi" ]

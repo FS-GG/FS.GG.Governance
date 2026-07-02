@@ -92,8 +92,11 @@ module Interpreter =
                     | Ok pc -> Some pc
                     | Error _ -> None)
 
-            // Track what we created so we can roll back on a mid-batch failure.
+            // Track what we created so we can roll back on a mid-batch failure: the files already renamed
+            // into place, PLUS the single in-flight temp that was written but not yet renamed (a failure
+            // between WriteAllText and Move — e.g. the target already exists — otherwise leaks a `.tmp-<guid>`).
             let written = System.Collections.Generic.List<string>()
+            let mutable inFlight: string option = None
 
             try
                 for (full, contents) in pairs do
@@ -103,13 +106,24 @@ module Interpreter =
                     | dir -> Directory.CreateDirectory dir |> ignore
 
                     let tmp = full + ".tmp-" + Guid.NewGuid().ToString("N")
+                    inFlight <- Some tmp
                     File.WriteAllText(tmp, contents)
                     File.Move(tmp, full, false)
+                    inFlight <- None
                     written.Add full
 
                 Ok()
             with e ->
-                // Roll back: remove every file this batch created so no partial tree survives.
+                // Roll back so no partial tree survives (SC-005): first the in-flight temp (present only if
+                // the failure landed between its write and its rename), then every renamed file.
+                match inFlight with
+                | Some tmp ->
+                    try
+                        File.Delete tmp
+                    with _ ->
+                        ()
+                | None -> ()
+
                 for created in written do
                     try
                         File.Delete created

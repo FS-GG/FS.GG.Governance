@@ -60,7 +60,18 @@ module Interpreter =
         else
             let rootFull = Path.GetFullPath repo
             let combined = Path.GetFullPath(Path.Combine(repo, pathPart))
-            combined.StartsWith rootFull && File.Exists combined
+
+            // Compare against the root WITH a trailing separator so a sibling prefixed by the root name
+            // (e.g. `../<repoName>-sibling/file.md`) does NOT count as inside (FR-016 — mirrors the
+            // Scaffold.Interpreter.resolveUnder guard). Without this, `StartsWith rootFull` fabricates a
+            // pass against a file outside the standalone product.
+            let rootWithSep =
+                if rootFull.EndsWith(string Path.DirectorySeparatorChar) then
+                    rootFull
+                else
+                    rootFull + string Path.DirectorySeparatorChar
+
+            combined.StartsWith rootWithSep && File.Exists combined
 
     // A symbol/anchor resolves when its token appears (whole-word) in any committed `.fsi` under the repo.
     let resolveSymbol (repo: string) (symbol: string) : bool =
