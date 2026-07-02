@@ -177,6 +177,7 @@ module Model =
         | PathEscapesRoot
         | DanglingReference
         | EmptyFile
+        | UnreadableFile
         | MissingRequiredFile
 
     type Diagnostic =
@@ -205,6 +206,7 @@ module Model =
         | PathEscapesRoot -> "pathEscapesRoot"
         | DanglingReference -> "danglingReference"
         | EmptyFile -> "emptyFile"
+        | UnreadableFile -> "unreadableFile"
         | MissingRequiredFile -> "missingRequiredFile"
 
     // Total, deterministic: every SurfaceClass maps to its YAML `kind` token. A new case is a

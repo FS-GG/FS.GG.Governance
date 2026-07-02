@@ -87,6 +87,36 @@ let tests =
               Expect.equal d.Expectations.RequiredProvenance None "criterion absent"
           }
 
+          test "a present-but-malformed list criterion (a scalar where a sequence was declared) is rejected, never a silent None (M-ADPT)" {
+              // The old parser degraded a wrong-SHAPED criterion to `None` — indistinguishable from ABSENT
+              // (the case above) — silently dropping a declared criterion (violates 'never partial facts').
+              let yml =
+                  releaseYmlAllBlocking.Replace("  requiredMetadataFields: [authors, license]\n", "  requiredMetadataFields: notalist\n")
+
+              Expect.isTrue (isErr yml) "a scalar where a sequence was declared is malformed, not absent"
+          }
+
+          test "a present-but-malformed expectedPins (a scalar where a mapping was declared) is rejected (M-ADPT)" {
+              let yml =
+                  releaseYmlAllBlocking.Replace("  expectedPins:\n    base: \"9.0.0\"\n", "  expectedPins: notamapping\n")
+
+              Expect.isTrue (isErr yml) "a scalar where a mapping was declared is malformed, not absent"
+          }
+
+          test "a present-but-non-mapping expectations section is rejected, not read as absent (M-ADPT)" {
+              let block =
+                  "expectations:\n"
+                  + "  versionBaseline: \"1.2.0\"\n"
+                  + "  requiredMetadataFields: [authors, license]\n"
+                  + "  expectedPins:\n    base: \"9.0.0\"\n"
+                  + "  requiredPublishPosture: [plan-present]\n"
+                  + "  requiredTrustedPublishing: [oidc]\n"
+                  + "  requiredProvenance: [attestation]\n"
+
+              let yml = releaseYmlAllBlocking.Replace(block, "expectations: just-a-scalar\n")
+              Expect.isTrue (isErr yml) "a scalar expectations section is malformed, not silently absent"
+          }
+
           test "a missing family is a malformed declaration" {
               let yml =
                   releaseYmlAllBlocking.Replace(

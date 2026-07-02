@@ -242,6 +242,10 @@ module Model =
         | PathEscapesRoot
         | DanglingReference
         | EmptyFile
+        /// A PRESENT `.fsgg` file whose bytes could not be READ (an I/O error at the Loader edge), distinct
+        /// from `EmptyFile` (present but blank). Carries the underlying read error in its message so the
+        /// failure is diagnosable and never masquerades as an empty file or an absent optional file.
+        | UnreadableFile
         | MissingRequiredFile
 
     /// A stable-id, located, explained record of why a declaration was rejected (FR-013).

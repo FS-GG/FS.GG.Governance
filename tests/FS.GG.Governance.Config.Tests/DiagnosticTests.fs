@@ -12,7 +12,8 @@ let private diagsOf name =
     | Invalid d -> d
     | Valid _ -> failtestf "expected Invalid for %s, got Valid" name
 
-let private isFileLevel id = id = EmptyFile || id = MissingRequiredFile
+let private isFileLevel id =
+    id = EmptyFile || id = UnreadableFile || id = MissingRequiredFile
 
 // One malformed fixture per DiagnosticId (T009 / fixtures/README.md).
 let private cases =

@@ -20,6 +20,7 @@ module Schema =
     type FileSlot =
         | Absent
         | Present of content: string
+        | Unreadable of error: string
 
     type RawSource =
         { Root: GovernedPath
@@ -695,6 +696,7 @@ module Schema =
         let handleRequired file slot (parser: YamlMappingNode -> Result<'f, Diagnostic list>) : Result<'f, Diagnostic list> =
             match slot with
             | Absent -> Error [ diag MissingRequiredFile file None None None "this required `.fsgg` file is absent" ]
+            | Unreadable err -> Error [ diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err) ]
             | Present content when isWhitespace content -> Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
             | Present content ->
                 match loadRoot content with
@@ -704,6 +706,9 @@ module Schema =
         let handleOptional file slot (parser: YamlMappingNode -> Result<'f, Diagnostic list>) : Result<'f option, Diagnostic list> =
             match slot with
             | Absent -> Ok None
+            // A present-but-unreadable optional file must FAIL, never degrade to `None` (an absent optional) —
+            // a genuine read error is surfaced with its cause, distinct from `EmptyFile` (Principle VI).
+            | Unreadable err -> Error [ diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err) ]
             | Present content when isWhitespace content -> Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
             | Present content ->
                 match loadRoot content with

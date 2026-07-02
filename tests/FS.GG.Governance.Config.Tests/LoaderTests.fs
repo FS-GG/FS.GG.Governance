@@ -58,6 +58,23 @@ let tests =
               | Valid _ -> failtest "a read Error on the optional policy.yml must not pass as Valid/None"
           }
 
+          test "a read Error becomes a DISTINCT UnreadableFile diagnostic that preserves the cause (not EmptyFile)" {
+              // The old edge mapped a read failure to `Present ""` ⇒ an `EmptyFile` diagnostic with the actual
+              // error DISCARDED. It must now be the distinct `UnreadableFile` id, carrying the read cause.
+              let erroringReader name =
+                  match name with
+                  | "governance.yml" -> Ok(Some minimalProject)
+                  | "capabilities.yml" -> Ok(Some minimalCaps)
+                  | "policy.yml" -> Error "permission denied"
+                  | _ -> Ok None
+              match Schema.validate (Loader.readSource (GovernedPath ".") erroringReader) with
+              | Valid _ -> failtest "a read Error must not pass as Valid/None"
+              | Invalid ds ->
+                  let d = ds |> List.find (fun x -> x.File = Policy)
+                  Expect.equal d.Id UnreadableFile "distinct UnreadableFile id, not EmptyFile"
+                  Expect.stringContains d.Message "permission denied" "preserves the discarded read error"
+          }
+
           test "an absent (Ok None) optional file with the same reader → Valid (contrast)" {
               let absentReader name =
                   match name with

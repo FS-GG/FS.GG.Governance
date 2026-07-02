@@ -27,15 +27,18 @@ module Schema =
 
     // ── Input value (produced by the Loader edge) ──
 
-    /// One of the four file slots: ABSENT (the file was not on disk) or PRESENT with its raw
-    /// textual content. The required/optional decision (research D4) is applied by `validate`,
-    /// NOT by this type — so an absent OPTIONAL file is fine, an absent REQUIRED file yields
-    /// `MissingRequiredFile`, and a PRESENT empty/whitespace file yields `EmptyFile`
-    /// (FR-015, spec edge cases). `Present` keeps the raw text only as transient input; it
-    /// never reaches the typed facts (SC-005).
+    /// One of the four file slots: ABSENT (the file was not on disk), PRESENT with its raw
+    /// textual content, or UNREADABLE (present on disk but its bytes could not be read — an I/O
+    /// error at the Loader edge, carrying the cause). The required/optional decision (research D4)
+    /// is applied by `validate`, NOT by this type — so an absent OPTIONAL file is fine, an absent
+    /// REQUIRED file yields `MissingRequiredFile`, a PRESENT empty/whitespace file yields
+    /// `EmptyFile`, and an UNREADABLE file (required OR optional) yields `UnreadableFile` — never
+    /// swallowed to `Absent`/`None` nor mistaken for `EmptyFile` (FR-015, Principle VI). `Present`
+    /// keeps the raw text only as transient input; it never reaches the typed facts (SC-005).
     type FileSlot =
         | Absent
         | Present of content: string
+        | Unreadable of error: string
 
     /// The unparsed-but-located input to the pure core: the governed-root anchor plus the four
     /// file slots. Built by `Loader.load`; consumed by `validate`.

@@ -202,27 +202,85 @@ module Declaration =
                 else
                     Ok(rules |> List.sortBy (fun r -> Release.releaseRuleKindOrdinal r.Kind, (let (SurfaceId s) = r.Surface in s)))
 
-    let parseExpectations (surface: SurfaceId) (root: YamlMappingNode) : ReleaseExpectations =
-        // The whole section is optional; every family criterion is optional (an absent criterion ⇒ that
-        // family senses `Unrecoverable`, the allowed edge). All values come from the file (FR-014).
-        let exp = childByKey root "expectations" |> Option.bind asMapping
+    let parseExpectations (surface: SurfaceId) (root: YamlMappingNode) : Result<ReleaseExpectations, string> =
+        // The whole section is optional, and every criterion within it is optional (an ABSENT criterion ⇒
+        // that family senses `Unrecoverable`, the allowed edge). But a criterion (or the section) that is
+        // PRESENT with the wrong SHAPE is MALFORMED, not absent — it must surface as `Error`, never silently
+        // degrade to `None`. `None` is indistinguishable from "not declared" and would drop a declared
+        // criterion, violating this file's "never partial facts" header. Mirrors `parseMatrix`/`parsePackables`
+        // (Ok None ⇒ absent, Error ⇒ present-but-malformed). All values come from the file (FR-014).
+        let empty =
+            { Surface = surface
+              VersionBaseline = None
+              RequiredMetadataFields = None
+              ExpectedPins = None
+              RequiredPublishPosture = None
+              RequiredTrustedPublishing = None
+              RequiredProvenance = None }
 
-        let listField name =
-            exp |> Option.bind (fun m -> childByKey m name) |> Option.bind scalarList
+        match childByKey root "expectations" with
+        | None -> Ok empty
+        | Some node ->
+            match asMapping node with
+            | None -> Error "release.yml 'expectations' must be a mapping"
+            | Some m ->
+                // Each helper: an ABSENT key ⇒ Ok None (the allowed edge); a PRESENT node of the wrong shape
+                // ⇒ Error (malformed, never a silent None).
+                let scalarCriterion name : Result<string option, string> =
+                    match childByKey m name with
+                    | None -> Ok None
+                    | Some n ->
+                        match asScalar n with
+                        | Some s -> Ok(Some s)
+                        | None -> Error(sprintf "release.yml 'expectations.%s' must be a scalar" name)
 
-        let pinsField =
-            exp
-            |> Option.bind (fun m -> childByKey m "expectedPins")
-            |> Option.bind asMapping
-            |> Option.map (fun m -> scalarPairs m |> Map.ofList)
+                let listCriterion name : Result<string list option, string> =
+                    match childByKey m name with
+                    | None -> Ok None
+                    | Some n ->
+                        match scalarList n with
+                        | Some xs -> Ok(Some xs)
+                        | None -> Error(sprintf "release.yml 'expectations.%s' must be a sequence of scalars" name)
 
-        { Surface = surface
-          VersionBaseline = exp |> Option.bind (fun m -> scalarField m "versionBaseline")
-          RequiredMetadataFields = listField "requiredMetadataFields"
-          ExpectedPins = pinsField
-          RequiredPublishPosture = listField "requiredPublishPosture"
-          RequiredTrustedPublishing = listField "requiredTrustedPublishing"
-          RequiredProvenance = listField "requiredProvenance" }
+                let pinsCriterion: Result<Map<string, string> option, string> =
+                    match childByKey m "expectedPins" with
+                    | None -> Ok None
+                    | Some n ->
+                        match asMapping n with
+                        | Some pm -> Ok(Some(scalarPairs pm |> Map.ofList))
+                        | None -> Error "release.yml 'expectations.expectedPins' must be a scalar→scalar mapping"
+
+                match scalarCriterion "versionBaseline" with
+                | Error e -> Error e
+                | Ok versionBaseline ->
+
+                match listCriterion "requiredMetadataFields" with
+                | Error e -> Error e
+                | Ok requiredMetadataFields ->
+
+                match pinsCriterion with
+                | Error e -> Error e
+                | Ok expectedPins ->
+
+                match listCriterion "requiredPublishPosture" with
+                | Error e -> Error e
+                | Ok requiredPublishPosture ->
+
+                match listCriterion "requiredTrustedPublishing" with
+                | Error e -> Error e
+                | Ok requiredTrustedPublishing ->
+
+                match listCriterion "requiredProvenance" with
+                | Error e -> Error e
+                | Ok requiredProvenance ->
+                    Ok
+                        { Surface = surface
+                          VersionBaseline = versionBaseline
+                          RequiredMetadataFields = requiredMetadataFields
+                          ExpectedPins = expectedPins
+                          RequiredPublishPosture = requiredPublishPosture
+                          RequiredTrustedPublishing = requiredTrustedPublishing
+                          RequiredProvenance = requiredProvenance }
 
     let parseLayout (root: YamlMappingNode) : Result<SourceLayout, string> =
         match childByKey root "layout" |> Option.bind asMapping with
@@ -361,11 +419,14 @@ module Declaration =
                                 match parseMatrix root with
                                 | Error e -> Error e
                                 | Ok matrix ->
-                                    Ok
-                                        { Rules = rules
-                                          Expectations = parseExpectations surface root
-                                          Layout = layout
-                                          PackableProjects = packables
-                                          Matrix = matrix }
+                                    match parseExpectations surface root with
+                                    | Error e -> Error e
+                                    | Ok expectations ->
+                                        Ok
+                                            { Rules = rules
+                                              Expectations = expectations
+                                              Layout = layout
+                                              PackableProjects = packables
+                                              Matrix = matrix }
 
         result |> Result.mapError (fun reason -> { Reason = reason })

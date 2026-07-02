@@ -247,6 +247,7 @@ TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId
   [Method] Boolean get_IsMissingSchemaVersion()
   [Method] Boolean get_IsPathEscapesRoot()
   [Method] Boolean get_IsUnknownField()
+  [Method] Boolean get_IsUnreadableFile()
   [Method] Boolean get_IsUnsupportedSchemaVersion()
   [Method] DiagnosticId get_DanglingReference()
   [Method] DiagnosticId get_DuplicateId()
@@ -258,6 +259,7 @@ TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId
   [Method] DiagnosticId get_MissingSchemaVersion()
   [Method] DiagnosticId get_PathEscapesRoot()
   [Method] DiagnosticId get_UnknownField()
+  [Method] DiagnosticId get_UnreadableFile()
   [Method] DiagnosticId get_UnsupportedSchemaVersion()
   [Method] Int32 CompareTo(DiagnosticId)
   [Method] Int32 CompareTo(System.Object)
@@ -277,6 +279,7 @@ TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId
   [Property] Boolean IsMissingSchemaVersion
   [Property] Boolean IsPathEscapesRoot
   [Property] Boolean IsUnknownField
+  [Property] Boolean IsUnreadableFile
   [Property] Boolean IsUnsupportedSchemaVersion
   [Property] DiagnosticId DanglingReference
   [Property] DiagnosticId DuplicateId
@@ -288,6 +291,7 @@ TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId
   [Property] DiagnosticId MissingSchemaVersion
   [Property] DiagnosticId PathEscapesRoot
   [Property] DiagnosticId UnknownField
+  [Property] DiagnosticId UnreadableFile
   [Property] DiagnosticId UnsupportedSchemaVersion
   [Property] Int32 Tag
 TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId+Tags
@@ -301,6 +305,7 @@ TYPE FS.GG.Governance.Config.ModelModule+DiagnosticId+Tags
   [Field] Int32 MissingSchemaVersion
   [Field] Int32 PathEscapesRoot
   [Field] Int32 UnknownField
+  [Field] Int32 UnreadableFile
   [Field] Int32 UnsupportedSchemaVersion
 TYPE FS.GG.Governance.Config.ModelModule+DomainId
   [Method] Boolean Equals(DomainId)
@@ -905,7 +910,9 @@ TYPE FS.GG.Governance.Config.SchemaModule+FileSlot
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
   [Method] Boolean get_IsAbsent()
   [Method] Boolean get_IsPresent()
+  [Method] Boolean get_IsUnreadable()
   [Method] FileSlot NewPresent(System.String)
+  [Method] FileSlot NewUnreadable(System.String)
   [Method] FileSlot get_Absent()
   [Method] Int32 CompareTo(FileSlot)
   [Method] Int32 CompareTo(System.Object)
@@ -916,8 +923,10 @@ TYPE FS.GG.Governance.Config.SchemaModule+FileSlot
   [Method] System.String ToString()
   [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot+Present
   [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot+Tags
+  [NestedType] FS.GG.Governance.Config.SchemaModule+FileSlot+Unreadable
   [Property] Boolean IsAbsent
   [Property] Boolean IsPresent
+  [Property] Boolean IsUnreadable
   [Property] FileSlot Absent
   [Property] Int32 Tag
 TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Present
@@ -926,6 +935,10 @@ TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Present
 TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Tags
   [Field] Int32 Absent
   [Field] Int32 Present
+  [Field] Int32 Unreadable
+TYPE FS.GG.Governance.Config.SchemaModule+FileSlot+Unreadable
+  [Method] System.String get_error()
+  [Property] System.String error
 TYPE FS.GG.Governance.Config.SchemaModule+RawSource
   [Constructor] Void .ctor(GovernedPath, FileSlot, FileSlot, FileSlot, FileSlot)
   [Method] Boolean Equals(RawSource)

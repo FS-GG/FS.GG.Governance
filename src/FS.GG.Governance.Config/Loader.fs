@@ -26,10 +26,11 @@ module Loader =
             match reader name with
             | Ok(Some content) -> Present content
             | Ok None -> Absent
-            // A genuine read failure is surfaced, never swallowed (Principle VI): an
-            // unreadable slot is treated as the file FAILING validation (EmptyFile) rather
-            // than as an absent optional file — so an Error can never pass as `Valid`/`None`.
-            | Error _ -> Present ""
+            // A genuine read failure is surfaced with its CAUSE, never swallowed (Principle VI): an
+            // unreadable slot yields `Unreadable`, which `validate` maps to the distinct `UnreadableFile`
+            // diagnostic — so an Error can never pass as `Valid`/`None`, and is no longer mis-reported as an
+            // `EmptyFile` with the underlying error discarded.
+            | Error e -> Unreadable e
         { Root = root
           Project = slot "governance.yml"
           Policy = slot "policy.yml"
