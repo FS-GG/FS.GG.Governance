@@ -12,8 +12,12 @@ open FS.GG.Governance.Sample.SddReferenceProvider.Tests.Support
 // CORE baselines are byte-identical to their committed form — the SC-006 no-delta guard proving the
 // generic seam gained no provider knowledge (contract R6, quickstart Scenario 5).
 
-/// Locate a loaded assembly by simple name. Touching `SddReferenceProvider.providerId` (and the worked
-/// example's use of `ScaffoldManifestJson.ofManifest`) guarantees all three are loaded.
+/// Locate an assembly by simple name. Touching `SddReferenceProvider.providerId` forces the sample
+/// provider load; the two generic-core assemblies are ProjectReferences (their `.dll` sits beside this
+/// test in the output dir), so when nothing has JIT-touched them yet we force-load by display name from
+/// the app base rather than depend on test ordering. (Before this the guard assumed a prior test had
+/// touched `ScaffoldManifestJson.ofManifest` — true locally, but on CI this ran first and threw
+/// "assembly not loaded"; H1 exposed it once the suite finally ran in CI.)
 let private assemblyByName (name: string) : Assembly =
     SddReferenceProvider.providerId |> ignore
 
@@ -21,7 +25,11 @@ let private assemblyByName (name: string) : Assembly =
     |> Array.tryFind (fun a -> a.GetName().Name = name)
     |> function
         | Some a -> a
-        | None -> failwithf "assembly not loaded: %s" name
+        | None ->
+            try
+                Assembly.Load(AssemblyName name)
+            with ex ->
+                failwithf "assembly not loaded and could not be force-loaded: %s (%s)" name ex.Message
 
 let private renderSurface (asm: Assembly) =
     let memberFlags =

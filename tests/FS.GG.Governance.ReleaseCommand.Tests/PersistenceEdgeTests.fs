@@ -83,7 +83,17 @@ let goldenTests =
                         Loop.ReleaseOut = outPath
                         Loop.AttestationOut = Path.Combine(tmp, "readiness", "attestation.json") }
 
-                  let model = Interpreter.run { Interpreter.realPorts tmp with Out = ignore } request
+                  // Pin the sensed environment so the byte-identity golden is environment-independent:
+                  // the attestation identity embeds `env` (Local→"local", Ci→"ci"), sensed from the `CI`
+                  // env var. The golden is blessed `local`, so without pinning this test can only pass off
+                  // CI — which is exactly why it was green locally yet failed the moment the suite first ran
+                  // in CI (H1). Overriding the injected port keeps the golden a pure function of the fixture.
+                  let ports =
+                      { Interpreter.realPorts tmp with
+                          Out = ignore
+                          SenseEnvironment = fun () -> FS.GG.Governance.Config.Model.Local }
+
+                  let model = Interpreter.run ports request
                   Expect.equal model.Exit Loop.Success "the empty-additive product releases clean"
 
                   // No packable projects ⇒ no `dotnet pack` is run here (the empty-v2 contract).
