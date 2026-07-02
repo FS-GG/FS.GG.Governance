@@ -103,7 +103,9 @@ module Loop =
                 | "human" -> loop { acc with Format = Human } rest
                 | "json" -> loop { acc with Format = Json } rest
                 | other -> Error(BadFormat other)
-            | "--plain" :: rest -> loop { acc with ExplicitPlain = true; Format = Human } rest
+            // M-CLI-7: `--plain` is an ADDITIVE ANSI-free signal — it composes with `--format` without changing
+            // it (the `Json` branch still wins), matching the `Cli.fs` convention. It never overrides `--format json`.
+            | "--plain" :: rest -> loop { acc with ExplicitPlain = true } rest
             | ("--repo" | "--out" | "--format") :: [] -> Error(MissingValue(List.head args))
             | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
             | other :: _ -> Error(UnknownFlag other)

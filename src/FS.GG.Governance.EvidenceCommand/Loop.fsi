@@ -23,9 +23,10 @@ open FS.GG.Governance.EvidenceJson // EvidenceDocument
 module Loop =
 
     /// Summary output format (the host affordance). `--format json` selects `Json` (the contracted
-    /// `evidence.json` bytes on stdout); default `Human`; `--plain` forces `Human`. The JSON document is the
-    /// contracted artifact and is ALWAYS written regardless of format. The human view exposes no field the JSON
-    /// document lacks and carries no verdict / exit-code / timestamp / path.
+    /// `evidence.json` bytes on stdout); default `Human`. `--plain` is an additive ANSI-free signal that
+    /// composes with `--format` WITHOUT changing it (the `Json` branch still wins; M-CLI-7). The JSON document
+    /// is the contracted artifact and is ALWAYS written regardless of format. The human view exposes no field
+    /// the JSON document lacks and carries no verdict / exit-code / timestamp / path.
     type OutputFormat =
         | Human
         | Json

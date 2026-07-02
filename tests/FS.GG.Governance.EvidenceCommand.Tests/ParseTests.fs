@@ -36,10 +36,10 @@ let tests =
               | Error e -> failtestf "expected Ok, got %A" e
           }
 
-          test "--plain is accepted and forces Human even after --format json" {
+          test "--plain is additive and does not override --format json (M-CLI-7)" {
               match Loop.parse [ "--format"; "json"; "--plain" ] with
               | Ok req ->
-                  Expect.equal req.Format Loop.Human "plain forces Human"
+                  Expect.equal req.Format Loop.Json "plain composes with --format json (Json still wins)"
                   Expect.isTrue req.ExplicitPlain "plain flag set"
               | Error e -> failtestf "expected Ok, got %A" e
           }
