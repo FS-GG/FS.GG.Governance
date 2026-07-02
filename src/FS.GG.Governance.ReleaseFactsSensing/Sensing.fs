@@ -43,23 +43,10 @@ module Sensing =
     let unrecoverableReason (kind: ReleaseRuleKind) (reason: string) : string =
         sprintf "%s evidence unrecoverable: %s" (Release.releaseRuleKindToken kind) reason
 
-    // ── The one family that needs an ordering: a small total dotted-numeric version compare (D6) ──
-    // Each dotted segment is parsed as a non-negative integer (a non-numeric segment counts as 0), the two
-    // segment lists are zero-padded to equal length, then compared lexicographically. Total — never throws.
-    let compareVersions (a: string) (b: string) : int =
-        let parts (v: string) =
-            v.Split('.')
-            |> Array.map (fun p ->
-                match System.Int32.TryParse p with
-                | true, n -> n
-                | _ -> 0)
-            |> List.ofArray
-
-        let pa = parts a
-        let pb = parts b
-        let n = max (List.length pa) (List.length pb)
-        let pad xs = xs @ List.replicate (n - List.length xs) 0
-        compare (pad pa) (pad pb)
+    // ── The one family that needs an ordering: the single shared semantic-version comparator (review
+    // M-ADPT-1). Previously a private dotted-numeric compare lived here and disagreed with PackEvidence on
+    // pre-releases (`2.0.0-alpha.1` vs `2.0.0`); both now go through `SemVer` so the VersionBump verdict
+    // cannot diverge from the pack verdict feeding the same family. Total — never throws.
 
     // ── Per-family derivation: each yields (state, snapshot fact option, diagnostic option) — D6 ──
     // The shared D6 shape: an absent expectation OR an `Error` recovery ⇒ `Unrecoverable`/`None`/diagnostic
@@ -73,7 +60,7 @@ module Sensing =
             Unrecoverable, None, Some { Family = VersionBump; Reason = unrecoverableReason VersionBump reason }
         | Some baseline, Ok ev ->
             let fact = { Observed = ev.Declared; Baseline = baseline }
-            let satisfied = compareVersions ev.Declared baseline > 0
+            let satisfied = SemVer.compareVersions ev.Declared baseline > 0
             (if satisfied then Met else Unmet), Some fact, None
 
     let deriveMetadata (exp: ReleaseExpectations) (recovered: RecoveredEvidence) =

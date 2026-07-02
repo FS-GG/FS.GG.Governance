@@ -1,4 +1,5 @@
 TYPE FS.GG.Governance.ReleaseCommand.InterpreterModule
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] chooseSurfaceArtifact(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] Model run(Ports, RunRequest)
   [Method] Msg step(Ports, Effect)
   [Method] Ports realPorts(System.String)

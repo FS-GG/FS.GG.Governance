@@ -19,6 +19,7 @@ open FS.GG.Governance.GateExecution.Model           // ExecutionPort
 open FS.GG.Governance.CommandRecord.Model            // ExitCode
 open FS.GG.Governance.CommandKind.Model             // KindedCommandRun, CommandKind.Pack
 open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackArtifact, NoArtifactReason
+open FS.GG.Governance.ReleaseRules                  // SemVer (single shared comparator, M-ADPT-1/M-CLI-4)
 open FS.GG.Governance.Snapshot.Model                // CommitId, SnapshotOptions, DiffRange
 open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
 open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
@@ -100,13 +101,34 @@ module Interpreter =
         let m = Regex.Match(stem, @"\d+\.\d+(\.\d+)?([-+].*)?$")
         if m.Success then m.Value else stem
 
+    // M-CLI-4: choose THIS surface's nupkg out of a shared-feed listing. Keep only exact
+    // `<packageId>.<version>.nupkg` entries — an exact-id match rejects a sibling like
+    // `<packageId>.Extras.1.2.3.nupkg` that a `<packageId>.*` glob would otherwise catch — then take the
+    // HIGHEST semantic version via the single shared `SemVer` comparator. Pure and deterministic (FR-011):
+    // the selection never consults wall-clock mtime. Returns the chosen file NAME (the caller resolves it
+    // under the feed dir).
+    let chooseSurfaceArtifact (packageId: string) (fileNames: string list) : string option =
+        fileNames
+        |> List.filter (fun name -> name = packageId + "." + versionFromNupkg name + ".nupkg")
+        |> List.sortWith (fun a b -> SemVer.compareVersions (versionFromNupkg b) (versionFromNupkg a))
+        |> List.tryHead
+
     // The real pack-output reader: a non-zero exit ⇒ `PackFailed` (sentinel recorded); otherwise locate the
     // produced `.nupkg` under the constitution's pack-output dir, read its version + compute its
     // `ArtifactHash`. An unreadable / absent artifact ⇒ `PackedNoArtifact` (input signal, never a throw).
     // The artifact PATH is normalized to the bare filename so the attestation/release bytes are
     // machine-independent (FR-011).
+    //
+    // M-CLI-4: the shared `~/.local/share/nuget-local` feed accumulates every package's nupkgs, so the reader
+    // MUST isolate THIS surface's artifact — `SurfaceId` doubles as the NuGet PackageId (a nupkg is named
+    // `<PackageId>.<version>.nupkg`). We name-filter by the package id (exact, not a sibling-prefix match) and
+    // pick the HIGHEST semantic version via the single shared `SemVer` comparator — a deterministic selection
+    // (FR-011), never wall-clock mtime. In the normal forward-release path this is the just-packed artifact;
+    // fully disambiguating a same-package downgrade against a stale higher version in the shared feed would
+    // require a before/after listing diff around the pack run (out of scope here).
     let packReadReal (surface: SurfaceId) (run: KindedCommandRun) : PackOutcome =
         let (ExitCode code) = run.Record.Reproducible.ExitCode
+        let (SurfaceId packageId) = surface
 
         if code <> 0 then
             PackFailed(surface, code, run)
@@ -123,20 +145,21 @@ module Interpreter =
                 if not (Directory.Exists dir) then
                     PackedNoArtifact(surface, NoArtifactEmitted, run)
                 else
-                    match
-                        Directory.GetFiles(dir, "*.nupkg")
-                        |> Array.sortByDescending File.GetLastWriteTimeUtc
-                        |> Array.tryHead
-                    with
-                    | None -> PackedNoArtifact(surface, NoArtifactEmitted, run)
-                    | Some path ->
-                        use sha = SHA256.Create()
-                        let digest = File.ReadAllBytes path |> sha.ComputeHash |> Convert.ToHexString
+                    let names =
+                        Directory.GetFiles(dir, packageId + ".*.nupkg")
+                        |> Array.choose (fun p ->
+                            match Path.GetFileName p with
+                            | null -> None
+                            | name -> Some name)
+                        |> List.ofArray
 
-                        let fileName =
-                            match Path.GetFileName path with
-                            | null -> path
-                            | f -> f
+                    match chooseSurfaceArtifact packageId names with
+                    | None -> PackedNoArtifact(surface, NoArtifactEmitted, run)
+                    | Some fileName ->
+                        use sha = SHA256.Create()
+
+                        let digest =
+                            Path.Combine(dir, fileName) |> File.ReadAllBytes |> sha.ComputeHash |> Convert.ToHexString
 
                         Packed(
                             { Surface = surface

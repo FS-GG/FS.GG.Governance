@@ -30,6 +30,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="SemVer.fsi" />
+    <Compile Include="SemVer.fs" />
     <Compile Include="Model.fsi" />
     <Compile Include="Model.fs" />
     <Compile Include="Release.fsi" />

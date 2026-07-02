@@ -49,6 +49,13 @@ module Interpreter =
           Write: ArtifactWriter
           Out: OutputSink }
 
+    /// M-CLI-4: choose THIS surface's `.nupkg` out of a shared-feed file listing (the shared
+    /// `~/.local/share/nuget-local` accumulates every package's artifacts). `SurfaceId` doubles as the NuGet
+    /// PackageId, so keep only exact `<packageId>.<version>.nupkg` names (rejecting a sibling-prefixed package
+    /// the `<packageId>.*` glob would catch) and return the HIGHEST semantic version — a PURE, DETERMINISTIC
+    /// selection (FR-011), never wall-clock mtime. `None` when no artifact matches. Exposed for testing.
+    val chooseSurfaceArtifact: packageId: string -> fileNames: string list -> string option
+
     /// Build the REAL ports for a repository working directory: the reused F014 reader + F054 sense + atomic
     /// writer + console sink, PLUS the real F51 execution port, a real pack-output reader (locating the
     /// produced `.nupkg` under the constitution's pack-output dir and computing its `ArtifactHash`), the

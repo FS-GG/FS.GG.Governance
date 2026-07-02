@@ -215,3 +215,6 @@ TYPE FS.GG.Governance.ReleaseRules.ReleaseModule
   [Method] ReleaseDecision evaluateRelease(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseRule], ReleaseFacts)
   [Method] ReleaseDecision rollup(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ReleaseRules.ModelModule+ReleaseFinding])
   [Method] System.String releaseRuleKindToken(ReleaseRuleKind)
+TYPE FS.GG.Governance.ReleaseRules.SemVerModule
+  [Method] Int32 compareVersions(System.String, System.String)
+  [Method] System.Tuple`2[System.String,Microsoft.FSharp.Core.FSharpOption`1[System.String]] splitMeta(System.String)

@@ -1,8 +1,9 @@
 // Curated public signature contract for the packed-evidence operations (F26, P1).
 //
 // This .fsi is the SOLE declaration of the module's public surface (Constitution Principle II). The matching
-// Pack.fs carries NO access modifiers; the semantic-version comparator and the per-outcome reason/verdict
-// helpers are ABSENT here (private by omission). All operations are PURE, TOTAL, DETERMINISTIC (FR-010): no
+// Pack.fs carries NO access modifiers; the per-outcome reason/verdict helpers are ABSENT here (private by
+// omission) and the semantic-version comparator now lives in the shared `SemVer` module (ReleaseRules,
+// review M-ADPT-1). All operations are PURE, TOTAL, DETERMINISTIC (FR-010): no
 // clock/filesystem/git/process access, never throw, byte-identical for identical inputs regardless of input
 // order.
 

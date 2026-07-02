@@ -27,6 +27,7 @@
     <Compile Include="SafeFailureTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="RealPackTests.fs" />
+    <Compile Include="ArtifactSelectionTests.fs" />
     <Compile Include="MergeableTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
