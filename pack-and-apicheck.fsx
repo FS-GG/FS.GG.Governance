@@ -82,9 +82,13 @@ let runDotnet (args: string list) : int * string =
     psi.RedirectStandardError <- true
     psi.WorkingDirectory <- repoRoot
     let proc = Process.Start psi
-    let out = proc.StandardOutput.ReadToEnd()
-    let err = proc.StandardError.ReadToEnd()
+    // Drain both pipes CONCURRENTLY (start the reads before waiting) so a large write to one can never
+    // block dotnet on the other — the classic pipe-buffer deadlock a sequential ReadToEnd pair invites.
+    let outTask = proc.StandardOutput.ReadToEndAsync()
+    let errTask = proc.StandardError.ReadToEndAsync()
     proc.WaitForExit()
+    let out = outTask.Result
+    let err = errTask.Result
     proc.ExitCode, out + "\n" + err
 
 // ── Baseline resolution on the folder feed ──
