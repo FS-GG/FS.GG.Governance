@@ -22,6 +22,7 @@ open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackArtifact
 open FS.GG.Governance.Snapshot.Model                // CommitId, SnapshotOptions, DiffRange
 open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
 open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
+open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -42,12 +43,6 @@ module Interpreter =
           Out: OutputSink }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error`.
-    let guard (call: unit -> Result<'a, string>) : Result<'a, string> =
-        try
-            call ()
-        with e ->
-            Error e.Message
-
     // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename.
     let writeAtomic (path: string) (content: string) : Result<unit, string> =
         try
@@ -187,7 +182,7 @@ module Interpreter =
         | Loop.SenseProvenance ->
             Loop.ProvenanceSensed(ports.SenseHead(), ports.SenseEnvironment(), ports.SenseBuilder())
 
-        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
 
         | Loop.EmitSummary text ->
             ports.Out text
@@ -211,22 +206,4 @@ module Interpreter =
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request
 
-        let rec drive (model: Loop.Model) (effects: Loop.Effect list) : Loop.Model =
-            if model.Phase = Loop.Done then
-                model
-            else
-                match effects with
-                | [] -> model
-                | _ ->
-                    let model2, newEffects =
-                        effects
-                        |> List.map (step ports)
-                        |> List.fold
-                            (fun (m, acc) msg ->
-                                let m2, e2 = Loop.update msg m
-                                m2, acc @ e2)
-                            (model, [])
-
-                    drive model2 newEffects
-
-        drive m0 eff0
+        CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0

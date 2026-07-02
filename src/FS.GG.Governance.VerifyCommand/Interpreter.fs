@@ -18,6 +18,7 @@ open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnap
 open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness, loadStore, realSensor, realStoreReader (F046)
 open FS.GG.Governance.HumanText              // RenderMode (selectMode), ReportView (F27 wiring 063)
 open FS.GG.Governance.HumanRender            // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
+open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: CurrencyFinding (the port's result)
 module CS = FS.GG.Governance.CurrencySensing.CurrencySensing         // F070: the shared edge sensing (senseRepo)
@@ -56,12 +57,6 @@ module Interpreter =
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the interpreter
     // never throws out of itself.
-    let guard (call: unit -> Result<'a, string>) : Result<'a, string> =
-        try
-            call ()
-        with e ->
-            Error e.Message
-
     // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename
     // over the target — a failed write leaves NO partial/truncated file.
     let writeAtomic (path: string) (content: string) : Result<unit, string> =
@@ -128,11 +123,11 @@ module Interpreter =
             // F046: read-only store load (absent ⇒ empty); a malformed store DEGRADES in `update`.
             Loop.StoreLoaded(FreshnessSensing.loadStore ports.Store path)
 
-        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
 
         // F048: reuse the existing atomic `writeAtomic` (temp + rename) for the store write — a failed write
         // leaves no partial file and is reified to the NON-FATAL `StorePersisted`.
-        | Loop.PersistStore(path, content) -> Loop.StorePersisted(guard (fun () -> ports.Write path content))
+        | Loop.PersistStore(path, content) -> Loop.StorePersisted(CommandHost.guard (fun () -> ports.Write path content))
 
         // F052: run each requested must-recompute command-gate ONCE through the injected F051 port, assembling
         // its F032 `CommandRecord` via the merged `senseExecution`. Records come back in request order, tagged
@@ -338,22 +333,4 @@ module Interpreter =
 
         // Drive init → update* to Done: execute every requested Effect via `step`, feed each result Msg back
         // into the pure `update`, accumulate new effects, repeat. Stops at Done or quiescence. NEVER throws.
-        let rec drive (model: Loop.Model) (effects: Loop.Effect list) : Loop.Model =
-            if model.Phase = Loop.Done then
-                model
-            else
-                match effects with
-                | [] -> model
-                | _ ->
-                    let model2, newEffects =
-                        effects
-                        |> List.map (step ports)
-                        |> List.fold
-                            (fun (m, acc) msg ->
-                                let m2, e2 = Loop.update msg m
-                                m2, acc @ e2)
-                            (model, [])
-
-                    drive model2 newEffects
-
-        drive m0 eff0
+        CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0

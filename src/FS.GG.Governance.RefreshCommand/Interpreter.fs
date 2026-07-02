@@ -23,6 +23,7 @@ open FS.GG.Governance.FreshnessKey.Model             // ArtifactHash, GeneratorV
 open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationEntry
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
+open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -37,12 +38,6 @@ module Interpreter =
           Out: string -> unit }
 
     // ── shared helpers (hidden — absent from Interpreter.fsi) ──
-
-    let guard (call: unit -> Result<'a, string>) : Result<'a, string> =
-        try
-            call ()
-        with e ->
-            Error e.Message
 
     /// A non-null string from a `JsonElement.GetString()` (Nullable=enable safe).
     let str (e: JsonElement) : string =
@@ -237,7 +232,7 @@ module Interpreter =
 
             Loop.ManifestLoaded loaded
 
-        | Loop.SenseSource entry -> Loop.Sensed(entry.ViewId, guard (fun () -> ports.Sense entry))
+        | Loop.SenseSource entry -> Loop.Sensed(entry.ViewId, CommandHost.guard (fun () -> ports.Sense entry))
 
         | Loop.ReadRecorded viewId ->
             let recorded =
@@ -248,11 +243,11 @@ module Interpreter =
 
             Loop.RecordedRead(viewId, recorded)
 
-        | Loop.RegenerateView entry -> Loop.Regenerated'(entry.ViewId, guard (fun () -> ports.Generate entry))
+        | Loop.RegenerateView entry -> Loop.Regenerated'(entry.ViewId, CommandHost.guard (fun () -> ports.Generate entry))
 
-        | Loop.RecordProvenance(viewId, provenance) -> Loop.ProvenanceWritten(guard (fun () -> ports.WriteProv viewId provenance))
+        | Loop.RecordProvenance(viewId, provenance) -> Loop.ProvenanceWritten(CommandHost.guard (fun () -> ports.WriteProv viewId provenance))
 
-        | Loop.WriteArtifact(path, content) -> Loop.Wrote(guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(path, content) -> Loop.Wrote(CommandHost.guard (fun () -> ports.Write path content))
 
         | Loop.EmitSummary text ->
             ports.Out text
@@ -270,22 +265,4 @@ module Interpreter =
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request
 
-        let rec drive (model: Loop.Model) (effects: Loop.Effect list) : Loop.Model =
-            if model.Phase = Loop.Done then
-                model
-            else
-                match effects with
-                | [] -> model
-                | _ ->
-                    let model2, newEffects =
-                        effects
-                        |> List.map (step ports)
-                        |> List.fold
-                            (fun (m, acc) msg ->
-                                let m2, e2 = Loop.update msg m
-                                m2, acc @ e2)
-                            (model, [])
-
-                    drive model2 newEffects
-
-        drive m0 eff0
+        CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0

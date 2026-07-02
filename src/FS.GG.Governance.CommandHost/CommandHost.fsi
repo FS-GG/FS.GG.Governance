@@ -108,3 +108,19 @@ module CommandHost =
         tooling: ToolingFacts option ->
         repo: string ->
             (Gate * GateClassification) list * Map<string, FreshnessInputs> * CacheDecisionReport
+
+    // ---- host-loop combinators (F2 second-extraction pass) ----
+
+    /// Reify any exception from a Result-returning impure call into `Error e.Message` (shared host edge guard).
+    val guard: call: (unit -> Result<'a, string>) -> Result<'a, string>
+
+    /// Generic MVU drive loop shared by every command host: map each effect to a message via `step`, fold
+    /// `update` accumulating new effects, and recurse until no effects remain or `isDone model`. Byte-identical
+    /// to each host's hand-copied `drive`; parameterized so the leaf takes no host Model/Effect type.
+    val drive:
+        isDone: ('model -> bool) ->
+        step: ('effect -> 'msg) ->
+        update: ('msg -> 'model -> 'model * 'effect list) ->
+        model: 'model ->
+        effects: 'effect list ->
+            'model
