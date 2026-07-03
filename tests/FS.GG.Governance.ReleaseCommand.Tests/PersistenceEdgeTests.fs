@@ -83,7 +83,16 @@ let goldenTests =
                         Loop.ReleaseOut = outPath
                         Loop.AttestationOut = Path.Combine(tmp, "readiness", "attestation.json") }
 
-                  let model = Interpreter.run { Interpreter.realPorts tmp with Out = ignore } request
+                  // Pin the environment class so this byte-identity golden is HERMETIC: `realPorts` senses
+                  // it from the ambient `CI` env var (Local off-CI, Ci on the runner), which would otherwise
+                  // leak into the attestation `env=` segment and break byte-identity on CI. The golden was
+                  // blessed with `env=…local`, so pin Local. (Surfaced by 102 when the suite first ran in CI.)
+                  let ports =
+                      { Interpreter.realPorts tmp with
+                          Out = ignore
+                          SenseEnvironment = fun () -> FS.GG.Governance.Config.Model.EnvironmentClass.Local }
+
+                  let model = Interpreter.run ports request
                   Expect.equal model.Exit Loop.Success "the empty-additive product releases clean"
 
                   // No packable projects ⇒ no `dotnet pack` is run here (the empty-v2 contract).
