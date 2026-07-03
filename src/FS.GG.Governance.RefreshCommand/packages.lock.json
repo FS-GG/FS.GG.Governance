@@ -14,6 +14,15 @@
         "resolved": "18.1.0",
         "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       },
+      "fs.gg.governance.adapters.sddhandoff": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.agentreviewkey": {
         "type": "Project",
         "dependencies": {
@@ -30,6 +39,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -103,6 +113,13 @@
           "FS.GG.Governance.CommandRecord": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.findings": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Routing": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.freshnesskey": {
         "type": "Project",
         "dependencies": {
@@ -140,6 +157,9 @@
       "fs.gg.governance.jsontext": {
         "type": "Project"
       },
+      "fs.gg.governance.kernel": {
+        "type": "Project"
+      },
       "fs.gg.governance.provenance": {
         "type": "Project",
         "dependencies": {
@@ -155,6 +175,20 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FSharp.Core": "[10.1.301, )"
+        }
+      },
+      "fs.gg.governance.route": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Findings": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Routing": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routing": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )"
         }
       },
       "fs.gg.governance.snapshot": {

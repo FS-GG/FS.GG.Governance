@@ -39,24 +39,6 @@ module Interpreter =
           // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable <id> order.
           Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
 
-    // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
-    // interpreter never throws out of itself (FR-010/FR-013, the Host.Interpreter discipline).
-    // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically
-    // rename over the target — a failed write leaves NO partial/truncated file (research D9, FR-010).
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with e ->
-            Error e.Message
-
     let step (ports: Ports) (effect: Loop.Effect) : Loop.Msg =
         match effect with
         | Loop.SenseScope scope ->
@@ -66,38 +48,9 @@ module Interpreter =
                 | Loop.ExplicitPaths _
                 | Loop.DefaultRange -> { Since = None; Base = None; Head = None }
 
-            let result =
-                try
-                    let snap = FS.GG.Governance.Snapshot.Interpreter.senseSnapshot ports.Git options
-                    // senseSnapshot NEVER throws; a failure surfaces as a SensingDiagnostic. Any
-                    // sensing diagnostic (not-a-repo, unknown-ref, git-unavailable) ⇒ InputUnavailable.
-                    match snap.Diagnostics with
-                    | [] -> Ok snap
-                    | ds ->
-                        ds
-                        |> List.map (fun d -> sprintf "%s: %s" (sensingDiagnosticIdToken d.Id) d.Message)
-                        |> String.concat "; "
-                        |> Error
-                with e ->
-                    Error e.Message
+            Loop.Sensed(CommandHost.senseSnapshotResult ports.Git options)
 
-            Loop.Sensed result
-
-        | Loop.LoadCatalog _ ->
-            // The reader is pre-bound to the repo's `.fsgg` in realPorts; mirror Loader.loadAndValidate
-            // (read the four files through ports.Files, then the pure Schema.validate). readSource +
-            // validate do not throw, but a misbehaving reader could — reify that to an Invalid catalog.
-            let validation =
-                try
-                    Loader.readSource (GovernedPath ".") ports.Files |> Schema.validate
-                with e ->
-                    Invalid
-                        [ { Id = MissingRequiredFile
-                            File = Project
-                            Locator = { Field = None; Id = None; Line = None }
-                            Message = "catalog read failed: " + e.Message } ]
-
-            Loop.Loaded validation
+        | Loop.LoadCatalog _ -> Loop.Loaded(CommandHost.loadCatalogValidation ports.Files)
 
         | Loop.SenseFreshness(gates, baseHead) ->
             // F046: assemble SensedFacts at the shared sensing edge; an Error here DEGRADES in `update`.
@@ -143,43 +96,17 @@ module Interpreter =
 
         | Loop.LoadHandoffs repo -> Loop.HandoffsLoaded(ports.Handoffs repo)
 
-    // F081: the real handoff-location port — locate every `readiness/<id>/governance-handoff.json` under
-    // `repo` in stable `<id>` (ordinal) order and read its raw JSON. TOTAL & SAFE (any error / absent
-    // `readiness/` ⇒ `[]`, never a throw).
-    let realHandoffs (repo: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
-        try
-            let readinessDir = Path.Combine(repo, "readiness")
-
-            if not (Directory.Exists readinessDir) then
-                []
-            else
-                Directory.GetDirectories readinessDir
-                |> Array.sortWith (fun a b -> String.CompareOrdinal(Path.GetFileName a, Path.GetFileName b))
-                |> Array.choose (fun dir ->
-                    let file = Path.Combine(dir, "governance-handoff.json")
-
-                    if File.Exists file then
-                        Some
-                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
-                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
-                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
-                    else
-                        None)
-                |> Array.toList
-        with _ ->
-            []
-
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo
           Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
           Freshness = FreshnessSensing.realSensor repo
           Store = FreshnessSensing.realStoreReader
-          Write = writeAtomic
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text
           Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
           SenseCapability = Capability.senseCapability
           RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
-          Handoffs = realHandoffs }
+          Handoffs = CommandHost.realHandoffs }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

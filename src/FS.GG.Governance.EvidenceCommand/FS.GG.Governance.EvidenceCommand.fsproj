@@ -46,6 +46,7 @@
     <ProjectReference Include="../FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
     <!-- The F12 sensing + evidence-report fold -->
     <ProjectReference Include="../FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />

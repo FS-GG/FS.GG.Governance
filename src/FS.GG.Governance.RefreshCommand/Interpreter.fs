@@ -184,22 +184,6 @@ module Interpreter =
         | Some(srcs, gen, _out) -> Some(srcs |> List.map ArtifactHash, GeneratorVersion gen)
         | None -> None
 
-    /// The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename
-    /// over the target — a failed write leaves NO partial/truncated file (FR-013).
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with e ->
-            Error e.Message
-
     let writeProv (repo: string) (viewId: string) (provenance: ArtifactHash list * GeneratorVersion * ArtifactHash) : Result<unit, string> =
         try
             let digests, generator, output = provenance
@@ -208,7 +192,7 @@ module Interpreter =
             let srcs = digests |> List.map (fun (ArtifactHash h) -> h)
             let path = lockPath repo
             let updated = Map.add viewId (srcs, gen, out) (readLock path)
-            writeAtomic path (renderLock updated)
+            CommandHost.writeAtomic path (renderLock updated)
         with e ->
             Error e.Message
 
@@ -259,7 +243,7 @@ module Interpreter =
           ReadProv = readProv repo
           Generate = generateEntry repo
           WriteProv = writeProv repo
-          Write = writeAtomic
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =

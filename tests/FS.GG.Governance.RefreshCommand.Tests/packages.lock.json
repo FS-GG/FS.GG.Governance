@@ -134,6 +134,15 @@
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
       },
+      "fs.gg.governance.adapters.sddhandoff": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.agentreviewkey": {
         "type": "Project",
         "dependencies": {
@@ -161,6 +170,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -310,6 +320,9 @@
         }
       },
       "fs.gg.governance.jsontext": {
+        "type": "Project"
+      },
+      "fs.gg.governance.kernel": {
         "type": "Project"
       },
       "fs.gg.governance.packevidence": {
