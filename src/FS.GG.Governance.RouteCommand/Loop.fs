@@ -191,16 +191,18 @@ module Loop =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
             | [] -> Ok acc
-            | "--repo" :: v :: more -> go { acc with Repo = Some v } more
-            | "--repo" :: [] -> Error(MissingValue "--repo")
-            | "--since" :: v :: more -> go { acc with Since = Some v } more
-            | "--since" :: [] -> Error(MissingValue "--since")
-            | "--gates-out" :: v :: more -> go { acc with GatesOut = Some v } more
-            | "--gates-out" :: [] -> Error(MissingValue "--gates-out")
-            | "--route-out" :: v :: more -> go { acc with RouteOut = Some v } more
-            | "--route-out" :: [] -> Error(MissingValue "--route-out")
-            | "--store" :: v :: more -> go { acc with Store = Some v } more
-            | "--store" :: [] -> Error(MissingValue "--store")
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as MissingValue rather than
+            // silently swallowing the following flag (mirrors the `takePaths` guard above).
+            | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
+            | "--repo" :: _ -> Error(MissingValue "--repo")
+            | "--since" :: v :: more when not (v.StartsWith "--") -> go { acc with Since = Some v } more
+            | "--since" :: _ -> Error(MissingValue "--since")
+            | "--gates-out" :: v :: more when not (v.StartsWith "--") -> go { acc with GatesOut = Some v } more
+            | "--gates-out" :: _ -> Error(MissingValue "--gates-out")
+            | "--route-out" :: v :: more when not (v.StartsWith "--") -> go { acc with RouteOut = Some v } more
+            | "--route-out" :: _ -> Error(MissingValue "--route-out")
+            | "--store" :: v :: more when not (v.StartsWith "--") -> go { acc with Store = Some v } more
+            | "--store" :: _ -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
             | "--plain" :: more -> go { acc with Plain = true } more
             | "--watch" :: more -> go { acc with Watch = true } more

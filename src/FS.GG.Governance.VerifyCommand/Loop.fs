@@ -242,20 +242,22 @@ module Loop =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
             | [] -> Ok acc
-            | "--repo" :: v :: more -> go { acc with Repo = Some v } more
-            | "--repo" :: [] -> Error(MissingValue "--repo")
-            | "--since" :: v :: more -> go { acc with Since = Some v } more
-            | "--since" :: [] -> Error(MissingValue "--since")
-            | "--profile" :: v :: more -> go { acc with Profile = Some v } more
-            | "--profile" :: [] -> Error(MissingValue "--profile")
-            | "--verify-out" :: v :: more -> go { acc with VerifyOut = Some v } more
-            | "--verify-out" :: [] -> Error(MissingValue "--verify-out")
-            | "--cost-budget-out" :: v :: more -> go { acc with CostBudgetOut = Some v } more
-            | "--cost-budget-out" :: [] -> Error(MissingValue "--cost-budget-out")
-            | "--provenance-out" :: v :: more -> go { acc with ProvenanceOut = Some v } more
-            | "--provenance-out" :: [] -> Error(MissingValue "--provenance-out")
-            | "--store" :: v :: more -> go { acc with Store = Some v } more
-            | "--store" :: [] -> Error(MissingValue "--store")
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as MissingValue rather than
+            // silently swallowing the following flag (mirrors the `takePaths` guard).
+            | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
+            | "--repo" :: _ -> Error(MissingValue "--repo")
+            | "--since" :: v :: more when not (v.StartsWith "--") -> go { acc with Since = Some v } more
+            | "--since" :: _ -> Error(MissingValue "--since")
+            | "--profile" :: v :: more when not (v.StartsWith "--") -> go { acc with Profile = Some v } more
+            | "--profile" :: _ -> Error(MissingValue "--profile")
+            | "--verify-out" :: v :: more when not (v.StartsWith "--") -> go { acc with VerifyOut = Some v } more
+            | "--verify-out" :: _ -> Error(MissingValue "--verify-out")
+            | "--cost-budget-out" :: v :: more when not (v.StartsWith "--") -> go { acc with CostBudgetOut = Some v } more
+            | "--cost-budget-out" :: _ -> Error(MissingValue "--cost-budget-out")
+            | "--provenance-out" :: v :: more when not (v.StartsWith "--") -> go { acc with ProvenanceOut = Some v } more
+            | "--provenance-out" :: _ -> Error(MissingValue "--provenance-out")
+            | "--store" :: v :: more when not (v.StartsWith "--") -> go { acc with Store = Some v } more
+            | "--store" :: _ -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
             | "--plain" :: more -> go { acc with Plain = true } more
             | "--persist-store" :: more -> go { acc with Persist = true } more

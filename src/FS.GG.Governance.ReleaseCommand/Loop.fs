@@ -138,14 +138,16 @@ module Loop =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
             | [] -> Ok acc
-            | "--repo" :: v :: more -> go { acc with Repo = Some v } more
-            | "--repo" :: [] -> Error { Message = "missing value for flag: --repo" }
-            | "--format" :: v :: more -> go { acc with Format = Some v } more
-            | "--format" :: [] -> Error { Message = "missing value for flag: --format" }
-            | "--out" :: v :: more -> go { acc with Out = Some v } more
-            | "--out" :: [] -> Error { Message = "missing value for flag: --out" }
-            | "--attestation-out" :: v :: more -> go { acc with AttestationOut = Some v } more
-            | "--attestation-out" :: [] -> Error { Message = "missing value for flag: --attestation-out" }
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as missing rather than
+            // silently swallowing the following flag.
+            | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
+            | "--repo" :: _ -> Error { Message = "missing value for flag: --repo" }
+            | "--format" :: v :: more when not (v.StartsWith "--") -> go { acc with Format = Some v } more
+            | "--format" :: _ -> Error { Message = "missing value for flag: --format" }
+            | "--out" :: v :: more when not (v.StartsWith "--") -> go { acc with Out = Some v } more
+            | "--out" :: _ -> Error { Message = "missing value for flag: --out" }
+            | "--attestation-out" :: v :: more when not (v.StartsWith "--") -> go { acc with AttestationOut = Some v } more
+            | "--attestation-out" :: _ -> Error { Message = "missing value for flag: --attestation-out" }
             | other :: _ -> Error { Message = "unknown argument: " + other }
 
         match go emptyAcc argv with
