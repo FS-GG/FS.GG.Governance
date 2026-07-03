@@ -113,39 +113,78 @@ let private feedVersions (feed: string) : Map<string, string list> =
                 Map.add id (ver :: prev) acc)
             Map.empty
 
-/// Highest feed version of `id` strictly below `packed`, by the library's own semantic comparator (via
-/// versionDelta: a baseline candidate is valid iff packed-vs-candidate is a forward change).
+/// `hi` is strictly ahead of `lo` under the library's own semantic comparator (reused via versionDelta: a
+/// forward delta lo→hi means lo < hi). Equal or downgrade ⇒ false. TOTAL, deterministic.
+let private isAhead (lo: string) (hi: string) : bool =
+    match Pack.versionDelta (Some lo) (Some hi) with
+    | MajorBump
+    | MinorOrPatchBump -> true
+    | NoForwardChange
+    | NoBaselineDelta -> false
+
+/// Highest feed version of `id` strictly below `packed` — the "last published" baseline (data-model D1).
+/// Candidates are those strictly below `packed` (a forward delta candidate→packed); of those we keep the
+/// MAXIMUM by the same order. A max-fold, not a sort — versionDelta is a valid-forward predicate, not a
+/// three-way comparator (it can't return 0 for equal inputs), so feeding it to List.sortWith is undefined;
+/// the fold only ever asks "is best still behind this candidate?". Absent ⇒ None (NoBaseline, FR-009).
 let private baselineFor (feed: Map<string, string list>) (id: string) (packed: string) : string option =
-    Map.tryFind id feed
-    |> Option.defaultValue []
-    |> List.filter (fun cand ->
-        match Pack.versionDelta (Some cand) (Some packed) with
-        | MajorBump
-        | MinorOrPatchBump -> true
-        | NoForwardChange
-        | NoBaselineDelta -> false)
-    // pick the highest such candidate (the most recent published baseline below packed)
-    |> List.sortWith (fun a b ->
-        match Pack.versionDelta (Some a) (Some b) with
-        | MajorBump
-        | MinorOrPatchBump -> 1
-        | _ -> -1)
-    |> List.tryLast
+    match
+        Map.tryFind id feed
+        |> Option.defaultValue []
+        |> List.filter (fun cand -> isAhead cand packed)
+    with
+    | [] -> None
+    | candidates -> candidates |> List.reduce (fun best cand -> if isAhead best cand then cand else best) |> Some
 
 // ── ApiCompat invocation (fail-safe) ──
-// Runs the SDK ApiCompat tool against the baseline package. If the tool is unavailable or errors, returns an
-// `ERROR …` marker line so the parser yields `Indeterminate` (NEVER a clean pass). The normalized marker
-// protocol the parser consumes: NOBASELINE / NOTPACKABLE / ERROR <reason> / OK / BREAK …
-let private apiCompatOutput (baselineNupkg: string) (packedNupkg: string) : string =
-    // The ApiCompat global tool: `apicompat package --baseline <old> <new>`. Job-scoped install in CI.
-    let exit, out = runDotnet [ "tool"; "run"; "apicompat"; "--"; "package"; "--baseline-package"; baselineNupkg; packedNupkg ]
-    if exit = 0 && (out.Trim() = "" || out.ToUpperInvariant().Contains "NO BREAKING") then
-        "OK"
-    elif out.ToUpperInvariant().Contains "CP0" then
+// Runs the SDK ApiCompat tool by its OWN executable name so it resolves off PATH (the job-scoped
+// `dotnet tool install --tool-path …` / `--global` install CI performs) — NOT `dotnet tool run apicompat`,
+// which resolves ONLY a LOCAL `.config/dotnet-tools.json` manifest we deliberately don't carry (it is
+// drift-locked). Using `dotnet tool run` is why every package graded Indeterminate and `Checked:met` was
+// unreachable (M-CI-1). TOTAL: a missing executable throws inside Process.Start; we catch it and surface a
+// non-zero exit so the caller maps it to the `ERROR …` marker (Indeterminate — never a clean pass).
+let private runApiCompat (args: string list) : int * string =
+    try
+        let psi = ProcessStartInfo("apicompat")
+        args |> List.iter psi.ArgumentList.Add
+        psi.UseShellExecute <- false
+        psi.RedirectStandardOutput <- true
+        psi.RedirectStandardError <- true
+        psi.WorkingDirectory <- repoRoot
+        use proc = Process.Start psi
+        // Drain both pipes concurrently (see runDotnet) so a large diagnostics dump can't deadlock.
+        let outTask = proc.StandardOutput.ReadToEndAsync()
+        let errTask = proc.StandardError.ReadToEndAsync()
+        proc.WaitForExit()
+        proc.ExitCode, outTask.Result + "\n" + errTask.Result
+    with ex ->
+        127, sprintf "%s: %s" (ex.GetType().Name) ex.Message
+
+/// PURE: normalize a raw apicompat (exitCode, combined-stdout+stderr) result into the marker protocol the
+/// parser consumes (OK / raw CPxxxx / ERROR …). The tool exits 0 in BOTH the clean and the breaking case, so
+/// the OUTPUT text — not the exit code — carries the verdict. A missing tool / unexpected output ⇒ `ERROR …`
+/// so the parser yields `Indeterminate` (NEVER a clean pass, FR-008). Selftested against the tool's real
+/// clean-run and breaking strings.
+let private normalizeApiCompat (exit: int) (out: string) : string =
+    let upper = out.ToUpperInvariant()
+
+    if upper.Contains "CP0" then
         out // raw ApiCompat CPxxxx diagnostics — the parser recognizes them as breaks
+    elif exit = 0 && upper.Contains "WITHOUT FINDING ANY BREAKING CHANGES" then
+        // The tool's real clean-run banner ("APICompat ran successfully without finding any breaking
+        // changes."). The prior `NO BREAKING` match never fired on it, so clean runs fell through to
+        // Indeterminate and `Checked:met` was unreachable (M-CI-1).
+        "OK"
     else
-        // Tool missing / unexpected output ⇒ Indeterminate (fail-safe), naming the reason.
         sprintf "ERROR apicompat unavailable or inconclusive (exit %d)" exit
+
+// Runs the SDK ApiCompat tool against the baseline package, then normalizes its output to the marker protocol
+// the parser consumes: NOBASELINE / NOTPACKABLE / ERROR <reason> / OK / BREAK / raw CPxxxx.
+let private apiCompatOutput (baselineNupkg: string) (packedNupkg: string) : string =
+    // `apicompat package <new> --baseline-package <old>` — `--baseline-package` alone drives the baseline
+    // comparison (no `--run-api-compat` needed; that flag is for a package's own cross-TFM assets).
+    let exit, out = runApiCompat [ "package"; packedNupkg; "--baseline-package"; baselineNupkg ]
+    normalizeApiCompat exit out
 
 // ── Per-package sensing ──
 type PackageResult =
@@ -297,6 +336,49 @@ let private runSelftest () : int =
     let pf = Sensing.parseApiCompatOutput "" = ApiBreakSignal.Indeterminate "empty detector output"
     ok <- ok && pf
     printfn "  %s  parser empty ⇒ Indeterminate (fail-safe)" (if pf then "PASS" else "FAIL")
+
+    // M-CI-2: baselineFor picks the HIGHEST feed version strictly below packed (multi-candidate choice).
+    // The old sortWith+tryLast returned the SMALLEST — e.g. it would have picked 1.0.0 below, not 1.2.0.
+    let feedFixture = Map.ofList [ ("Pkg", [ "1.0.0"; "1.2.0"; "1.1.0"; "2.0.0"; "1.2.0" ]) ]
+
+    let baselineCases =
+        [ "1.5.0", Some "1.2.0" // candidates below: 1.0.0/1.1.0/1.2.0 ⇒ highest 1.2.0
+          "2.0.0", Some "1.2.0" // 2.0.0 not strictly below itself ⇒ highest below is 1.2.0
+          "3.0.0", Some "2.0.0" // candidates below include 2.0.0 ⇒ highest 2.0.0
+          "1.0.0", None ] // nothing strictly below 1.0.0 ⇒ NoBaseline
+
+    for (packed, expected) in baselineCases do
+        let actual = baselineFor feedFixture "Pkg" packed
+        let pass = actual = expected
+        ok <- ok && pass
+        printfn "  %s  baselineFor below %s ⇒ %A (expected %A)" (if pass then "PASS" else "FAIL") packed actual expected
+
+    // M-CI-1: the tool's REAL clean-run and breaking strings normalize + parse to the right signal, so a
+    // clean run reaches NoBreakingChanges (⇒ Checked:met) and a break reaches BreakingChanges.
+    let cleanBanner = "APICompat ran successfully without finding any breaking changes."
+
+    let breakBanner =
+        "API compatibility errors ...:\nCP0003: lib/net10.0/X.dll assembly version ...\nAPI breaking changes found."
+
+    let normCases =
+        [ "clean-run ⇒ NoBreakingChanges", Sensing.parseApiCompatOutput (normalizeApiCompat 0 cleanBanner), ApiBreakSignal.NoBreakingChanges
+          "missing tool ⇒ Indeterminate", Sensing.parseApiCompatOutput (normalizeApiCompat 127 "Win32Exception: apicompat not found"), ApiBreakSignal.Indeterminate "apicompat unavailable or inconclusive (exit 127)" ]
+
+    for (name, actual, expected) in normCases do
+        let pass = actual = expected
+        ok <- ok && pass
+        printfn "  %s  %s" (if pass then "PASS" else "FAIL") name
+
+    let breakSignal = Sensing.parseApiCompatOutput (normalizeApiCompat 0 breakBanner)
+
+    let breakPass =
+        match breakSignal with
+        | ApiBreakSignal.BreakingChanges bs -> not (List.isEmpty bs)
+        | _ -> false
+
+    ok <- ok && breakPass
+    printfn "  %s  breaking-run ⇒ BreakingChanges" (if breakPass then "PASS" else "FAIL")
+
     if ok then 0 else 1
 
 // ── Main ──
