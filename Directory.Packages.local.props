@@ -38,7 +38,7 @@
        core, the *Json projections, or the pure FS.GG.Governance.HumanText library (FR-013, SC-007,
        enforced by the dependency-boundary test). OWNER: CLI host maintainer. -->
   <ItemGroup>
-    <PackageVersion Include="Spectre.Console" Version="0.57.1" />
+    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
   </ItemGroup>
 
   <!-- Test-only: Expecto + FsCheck (property-based order-independence) plus the
