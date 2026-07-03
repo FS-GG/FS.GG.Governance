@@ -27,8 +27,8 @@ An operator invokes the governance CLI with argument shapes and flag combination
 **Acceptance Scenarios**:
 
 1. **Given** any host that takes an option expecting a value (e.g. `--repo`), **When** the operator writes `--repo --json` (forgetting the value), **Then** the host rejects it with a clear error instead of silently consuming `--json` as the value of `--repo` (fixes M-CLI-3).
-2. **Given** a command that supports both `--plain` and `--format json`, **When** the operator passes `--format json --plain`, **Then** JSON is emitted (the explicit format wins) rather than `--plain` overriding it (fixes M-CLI-7).
-3. **Given** a command that emits a handoff/reference set whose order is observable, **When** it is run twice on the same inputs, **Then** the ordering is identical and matches the single canonical sort — no host emits a divergently-sorted copy (fixes the `realHandoffs` sort drift).
+2. **Given** EvidenceCommand accepts `--plain`, **When** the operator passes `--plain` (with or without `--format json`), **Then** the flag behaves per the documented additive-ANSI-free convention rather than being parsed-then-ignored: `--format json` still wins, and because Evidence emits no ANSI the flag is a documented harmless no-op instead of a silently dead field (resolves M-CLI-7). Explicit format always wins over `--plain` across every host (verified, not regressed).
+3. **Given** the handoff/reference set order is observable, **When** any host or the Cli artifact reader assembles it, **Then** all call sites share one canonical `String.CompareOrdinal` sort — removing the lone `Array.sortBy` copy in `Cli/ArtifactReading` whose ordering is equivalent today but not visibly ordinal-guaranteed (converges the `realHandoffs` drift; output is unchanged).
 4. **Given** the `Wrote(Ok)` success projection, **When** it is rendered from any host, **Then** the wording/shape is identical across hosts (fixes the F15 micro-drift).
 5. **Given** a target already in a `Done` state, **When** a command that must be inert on `Done` is invoked, **Then** it makes no mutation and reports the no-op (adds the F13 Done-inertness guard).
 
@@ -75,8 +75,8 @@ A contributor reading any two hosts finds the same vocabulary and exit-decision 
 ### Functional Requirements
 
 - **FR-001**: The system MUST reject an option value that is a `--`-prefixed token where a value is expected, with a clear error, uniformly across all command hosts (M-CLI-3).
-- **FR-002**: When both an explicit output format (`--format json`) and `--plain` are supplied, the system MUST honor the explicit format; `--plain` MUST NOT override it (M-CLI-7).
-- **FR-003**: The system MUST assemble and emit handoff/reference sets using a single canonical sort shared by every host; no host may retain a divergently-sorted copy.
+- **FR-002**: `--plain` MUST behave uniformly as an additive ANSI-free signal that never overrides an explicit `--format json`; in a host that emits no ANSI (Evidence) it MUST be a documented no-op rather than a parsed-but-unconsumed dead field (M-CLI-7). The already-correct precedence in the other hosts MUST NOT regress.
+- **FR-003**: Handoff/reference-set ordering MUST come from a single canonical `String.CompareOrdinal` sort shared by every host and the Cli artifact reader; the lone `Array.sortBy` copy MUST be removed. This is a textual/robustness convergence — the emitted order is unchanged.
 - **FR-004**: The `Wrote(Ok)` success projection MUST render identically regardless of the emitting host (F15).
 - **FR-005**: Commands that must be inert on a `Done` target MUST perform no mutation and MUST report the no-op (F13).
 - **FR-006**: Each of `writeAtomic`, `realHandoffs`, `senseEnvironmentReal`, `senseBuilderReal`, and the snapshot/catalog `step` prefix MUST have exactly one shared implementation invoked by all hosts; per-host duplicate definitions MUST be removed.
@@ -97,7 +97,7 @@ A contributor reading any two hosts finds the same vocabulary and exit-decision 
 
 ### Measurable Outcomes
 
-- **SC-001**: The five enumerated correctness defects (M-CLI-3, M-CLI-7, the `realHandoffs` sort drift, F15, F13) each have a test that is RED before the fix and GREEN after, exercised through the real command surface.
+- **SC-001**: The correctness defects each have a test that is RED before the fix and GREEN after, exercised through the real command surface: M-CLI-3 (argv `--value` swallowing) across every host; M-CLI-7 (Evidence `--plain` no longer a dead field); F15 (`Wrote(Ok)` pre/post-update model divergence); F13 (Evidence Done-inertness). The `realHandoffs` convergence is proven by an unchanged-output test plus a single-definition check (it is not an observable-behavior fix today).
 - **SC-002**: Net source lines removed is on the order of 600–800 (the review's estimate), verified by the branch diff; no compensating duplication is reintroduced elsewhere.
 - **SC-003**: After the change, a repo-wide search finds exactly one definition of each consolidated helper (`writeAtomic`, `realHandoffs`, `senseEnvironmentReal`, `senseBuilderReal`, snapshot/catalog `step` prefix) reachable by all hosts.
 - **SC-004**: `EvidenceCommand/Interpreter.fs` no longer contains a copy of `ArtifactReading`; its length drops by roughly the size of the removed copy (~325 lines).
