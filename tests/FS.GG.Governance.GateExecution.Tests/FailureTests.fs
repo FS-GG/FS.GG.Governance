@@ -56,4 +56,18 @@ let tests =
                   Expect.equal record.Reproducible.ExitCode Interpreter.timeoutExitCode "reified as timeoutExitCode"
                   // Returned in a bounded time — comfortably under the script's 30s sleep (not the full overrun).
                   Expect.isLessThan sw.Elapsed.TotalSeconds 15.0 "returns bounded, never the full overrun / hang")
+          }
+
+          // (4) clean exit + a pipe-holding background child does NOT hang the port (M-CORE-2 / H2) ─────────
+          test "real port: a clean exit whose backgrounded child keeps the pipes open still returns bounded" {
+              withTempDir (fun dir ->
+                  let fx = pipeHoldingChildFixture dir // exits 0 at once; a backgrounded `sleep 30` holds fd 1/2
+                  let sw = Stopwatch.StartNew()
+                  let record = Interpreter.senseExecution Interpreter.realPort fx.Command
+                  sw.Stop()
+
+                  // The gate itself exited 0 within its timeout — this is the CLEAN-exit path, not a timeout.
+                  Expect.equal record.Reproducible.ExitCode (ExitCode 0) "the gate's clean exit code is recorded"
+                  // The never-EOF streams must not stall the drain: bounded (~5s), never the child's 30s sleep.
+                  Expect.isLessThan sw.Elapsed.TotalSeconds 15.0 "clean-exit drain is bounded, never hangs on the child")
           } ]

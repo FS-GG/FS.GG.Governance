@@ -44,6 +44,14 @@ module Interpreter =
     // edge-internal detail and never reaches the snapshot facts.
     let private gitUnavailableMarker = "git-unavailable"
 
+    // Safety ceilings so the sensor NEVER hangs (the file header's contract). A read-only git command
+    // returns quickly; these are generous backstops, not the normal path. `gitProcessTimeoutMs` bounds
+    // the wait for git itself to exit; `gitDrainTimeoutMs` bounds the post-exit wait for the two async
+    // reads to finish, so a pipe-inheriting background child that keeps a stream open can never wedge us
+    // (M-CORE-2, mirrors the GateExecution port).
+    let private gitProcessTimeoutMs = 120_000
+    let private gitDrainTimeoutMs = 5_000
+
     /// The exact READ-ONLY argv (after `git`) for each command (git-sensing.md §1). No mutating
     /// subcommand is representable — read-only by construction (FR-006).
     let private argv (cmd: GitCommand) : string list =
@@ -75,15 +83,38 @@ module Interpreter =
             match System.Diagnostics.Process.Start psi with
             | null -> Error(gitUnavailableMarker + ": git process did not start")
             | proc ->
-                let stdout = proc.StandardOutput.ReadToEnd()
-                let stderr = proc.StandardError.ReadToEnd()
-                proc.WaitForExit()
+                use proc = proc
+                // Drain BOTH streams CONCURRENTLY (each on its own async read) so a large write to one
+                // pipe can never block git on the other — the classic pipe-buffer deadlock this file's
+                // header promises we never hit (e.g. autocrlf warnings flooding stderr past 64 KB).
+                let outTask = proc.StandardOutput.ReadToEndAsync()
+                let errTask = proc.StandardError.ReadToEndAsync()
 
-                if proc.ExitCode = 0 then
-                    Ok stdout
+                if not (proc.WaitForExit gitProcessTimeoutMs) then
+                    (try proc.Kill true with _ -> ())
+                    Error(sprintf "%s: git '%s' exceeded %d ms and was terminated" gitUnavailableMarker cmd.Token gitProcessTimeoutMs)
                 else
-                    let reason = stderr.Trim()
-                    Error(if reason <> "" then reason else sprintf "git exited with code %d" proc.ExitCode)
+                    // git exited; the reads should reach EOF momentarily. Wait BOUNDED so an orphaned
+                    // pipe-holder cannot hang us, then read a task's result only if it actually completed.
+                    (try
+                        System.Threading.Tasks.Task.WaitAll(
+                            [| (outTask :> System.Threading.Tasks.Task); (errTask :> System.Threading.Tasks.Task) |],
+                            gitDrainTimeoutMs)
+                        |> ignore
+                     with _ ->
+                         ())
+
+                    let resultOf (t: System.Threading.Tasks.Task<string>) =
+                        if t.IsCompletedSuccessfully then t.Result else ""
+
+                    let stdout = resultOf outTask
+                    let stderr = resultOf errTask
+
+                    if proc.ExitCode = 0 then
+                        Ok stdout
+                    else
+                        let reason = stderr.Trim()
+                        Error(if reason <> "" then reason else sprintf "git exited with code %d" proc.ExitCode)
         with ex ->
             Error(gitUnavailableMarker + ": " + ex.Message)
 

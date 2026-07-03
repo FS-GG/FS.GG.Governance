@@ -68,6 +68,13 @@ module Interpreter =
         applyEnv psi command.Environment
         psi
 
+    // Read a drained buffer ONLY once its copy task has completed. Calling `MemoryStream.ToArray()` while
+    // its `CopyToAsync` is still writing is a data race (M-CORE-2); if the bounded drain wait timed out the
+    // task is still in flight, so we yield the empty partial rather than race. On any normal exit the copy
+    // has finished and we get the full bytes.
+    let drainedBytes (copyTask: Task) (buf: MemoryStream) : byte[] =
+        if copyTask.IsCompleted then buf.ToArray() else [||]
+
     let realPort: ExecutionPort =
         fun command ->
             let (TimeoutLimit seconds) = command.Timeout
@@ -99,17 +106,18 @@ module Interpreter =
                     let waitMs = if seconds <= 0 then 0 else seconds * 1000
 
                     if proc.WaitForExit waitMs then
-                        // Clean / within-limit exit: ensure the streams are fully drained, then capture the
-                        // real integer exit code and the elapsed duration.
+                        // Clean / within-limit exit: drain BOUNDED too (M-CORE-2) — a gate that spawned a
+                        // pipe-inheriting background child holding the streams open must not hang the port
+                        // forever. Then capture the real integer exit code and the elapsed duration.
                         (try
-                            Task.WaitAll [| outTask; errTask |]
+                            Task.WaitAll([| outTask; errTask |], 5000) |> ignore
                          with _ ->
                              ())
 
                         proc.WaitForExit() // ensure ExitCode is available
 
-                        { Stdout = stdoutBuf.ToArray()
-                          Stderr = stderrBuf.ToArray()
+                        { Stdout = drainedBytes outTask stdoutBuf
+                          Stderr = drainedBytes errTask stderrBuf
                           ExitCode = ExitCode proc.ExitCode
                           Duration = nanos () }
                     else
@@ -122,8 +130,8 @@ module Interpreter =
                          with _ ->
                              ())
 
-                        { Stdout = stdoutBuf.ToArray()
-                          Stderr = stderrBuf.ToArray()
+                        { Stdout = drainedBytes outTask stdoutBuf
+                          Stderr = drainedBytes errTask stderrBuf
                           ExitCode = timeoutExitCode
                           Duration = nanos () }
             with ex ->

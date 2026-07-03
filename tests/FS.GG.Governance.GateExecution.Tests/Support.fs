@@ -128,6 +128,18 @@ let timeoutFixture (dir: string) : ScriptFixture =
       ExpectedStderr = [||]
       ExpectedExit = 124 }
 
+/// A gate that exits 0 PROMPTLY but leaves a backgrounded child (`sleep`) holding the redirected pipes open
+/// (the child inherits fd 1/2, so the write ends never close until it ends). The main process's clean exit
+/// must NOT make the port block on the never-EOF streams (M-CORE-2 / H2): the post-exit drain is BOUNDED, so
+/// the port returns well before the child ends. Partial capture is best-effort here (like the timeout case),
+/// so the matching test asserts the bound + clean exit, not the bytes.
+let pipeHoldingChildFixture (dir: string) : ScriptFixture =
+    let body = "printf '%s' 'stdout-content'\nprintf '%s' 'stderr-detail' 1>&2\nsleep 30 &\nexit 0\n"
+    { Command = scriptCommand dir body 30
+      ExpectedStdout = [||]
+      ExpectedStderr = [||]
+      ExpectedExit = 0 }
+
 /// An empty gate: no output at all, exits 0 (the empty-bytes digest is an ordinary value, SC-008).
 let emptyFixture (dir: string) : ScriptFixture =
     let body = "exit 0\n"
