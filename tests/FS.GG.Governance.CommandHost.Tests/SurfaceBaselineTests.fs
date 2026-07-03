@@ -24,10 +24,11 @@ let tests =
         "SurfaceDrift"
         [ SurfaceDrift.surfaceTest "CommandHost" "FS.GG.Governance.CommandHost" commandHostAsm
 
-          test "CommandHost takes no host/Cli/Command/edge reference (scope guard — pure leaf)" {
-              // The leaf references only the domain-type owners whose values it walks. It must NOT reach the
-              // impure host capability: no `Host`, no `Cli`, and no `*Command` host (which own the
-              // filesystem/git/process interpreters). It sits BELOW the command hosts and ABOVE the domain owners.
+          test "CommandHost takes no host/Cli/Command reference (scope guard)" {
+              // The leaf references the domain-type owners whose values it walks plus the edge owners its
+              // shared host leaves delegate to (Snapshot/Config interpreters, the SddHandoff reader — #49).
+              // It must NOT reach the ORCHESTRATION host capability: no `Host`, no `Cli`, and no `*Command`
+              // host (which own the command loops). It sits BELOW the command hosts and ABOVE the domain owners.
               let forbidden (n: string) =
                   n = "FS.GG.Governance.Host"
                   || n = "FS.GG.Governance.Cli"
