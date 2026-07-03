@@ -160,14 +160,10 @@ let emptyEvidenceReport: CacheEligibilityReport = CacheEligibility.evaluate [] E
 let mixedOutcomes: (GateId * GateOutcome) list =
     [ GateId "build:ship",
       { GateId = GateId "build:ship"
-        Disposition = Reused
-        ExitCode = Some(ExitCode 0)
-        Passed = Some true }
+        Disposition = Reused(ExitCode 0, true) }
       GateId "build:rel",
       { GateId = GateId "build:rel"
-        Disposition = Executed
-        ExitCode = Some(ExitCode 1)
-        Passed = Some false } ]
+        Disposition = Executed(ExitCode 1, false) } ]
 
 // ── release fixture (real F26 assemble; mirrors ReleaseReport.Tests.Support) ──
 

@@ -4,6 +4,7 @@ open Expecto
 open FS.GG.Governance.JsonTokens
 open FS.GG.Governance.Config.Model              // Cost, Maturity, EnvironmentClass
 open FS.GG.Governance.GateRun.Model             // GateDisposition
+open FS.GG.Governance.CommandRecord.Model        // ExitCode (disposition payload)
 open FS.GG.Governance.Enforcement.Enforcement   // Severity, Profile
 open FS.GG.Governance.Ship.Model                // ExitCodeBasis
 
@@ -44,8 +45,8 @@ let tests =
           }
 
           test "dispositionToken emits the verbatim disposition strings (camelCase notExecuted)" {
-              Expect.equal (JsonTokens.dispositionToken Executed) "executed" "Executed"
-              Expect.equal (JsonTokens.dispositionToken Reused) "reused" "Reused"
+              Expect.equal (JsonTokens.dispositionToken (Executed(ExitCode 0, true))) "executed" "Executed"
+              Expect.equal (JsonTokens.dispositionToken (Reused(ExitCode 0, true))) "reused" "Reused"
               Expect.equal (JsonTokens.dispositionToken NotExecuted) "notExecuted" "NotExecuted"
           }
 

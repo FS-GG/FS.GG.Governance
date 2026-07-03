@@ -7,7 +7,7 @@ change (all shrink the legal-value set except the one intentional widen, C6).
 
 | # | Module (`.fsi`) | Change | Direction | PR |
 |---|---|---|---|---|
-| C1 | `GateRun/Model.fsi` | `GateOutcome` record + `GateDisposition` DU → `GateOutcome { GateId; Result }` + new `GateResult` DU | **shrink** (illegal state removed) | US1 |
+| C1 | `GateRun/Model.fsi` | `GateDisposition.Executed`/`.Reused` gain `(ExitCode, bool)` payload; `GateOutcome` drops its `ExitCode`/`Passed` optionals (keeps `{ GateId; Disposition }`); add `isPassing` | **shrink** (illegal exit-less-Executed removed) | US1 |
 | C2 | `GateRun/Plan.fsi` | `commandFor : … -> GateCommand option` → `… -> Result<GateCommand, NoCommand>` + new `NoCommand` DU | **refine** (option → typed result) | US1 |
 | C3 | `Snapshot/Snapshot.fsi` | `RawSensing.RepoOk: bool` → `RawSensing.RepoState: RepoState` + new `RepoState` DU; `assemble` doc updated | **refine** (bool → 3-state) | US2 |
 | C4 | `Calibration/Model.fsi` | `ComparisonSample` loses `Agreement` field | **shrink** | US2 |
@@ -16,10 +16,12 @@ change (all shrink the legal-value set except the one intentional widen, C6).
 
 ## Per-delta acceptance
 
-- **C1 (`GateResult`)**: after the reshape, constructing an executed outcome without an exit code
-  MUST fail to compile (the type has no such shape). The `disposition`/`exitCode`/`passed` JSON and
-  the human "executed/reused/not-executed … passed/failed" strings MUST be byte-identical to `main`
-  for every real gate outcome. Baseline: only `GateRun/Model` moves.
+- **C1 (`GateDisposition` payload)**: after the reshape, constructing an `Executed`/`Reused` outcome
+  without an exit code MUST fail to compile (the case demands `(ExitCode, bool)`). The
+  `disposition`/`exitCode`/`passed` JSON and the human "executed/reused/not-executed … passed/failed"
+  strings MUST be byte-identical to `main` for every real gate outcome. `JsonTokens.dispositionToken`
+  keeps its `GateDisposition -> string` signature (body-only change). Baseline: only `GateRun/Model`
+  moves.
 - **C2 (`NoCommand`)**: `commandFor` MUST return a distinct case for each of the three current
   `None` sites; at least one caller (diagnostic path) MUST surface the reason. Baseline: only
   `GateRun/Plan` moves.

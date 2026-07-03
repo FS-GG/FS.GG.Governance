@@ -200,9 +200,7 @@ let private applyDeferrals (deferred: Set<string>) (outcomes: (GateId * GateOutc
         if Set.contains (gateIdValue gid) deferred then
             gid,
             { GateId = gid
-              Disposition = NotExecuted
-              ExitCode = None
-              Passed = None }
+              Disposition = NotExecuted }
         else
             gid, o)
 
@@ -217,7 +215,7 @@ let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (ca
 
     let passedIds =
         outcomes
-        |> List.choose (fun (gid, o) -> if o.Passed = Some true then Some gid else None)
+        |> List.choose (fun (gid, o) -> if isPassing o.Disposition then Some gid else None)
         |> Set.ofList
 
     Loop.applyExecution passedIds decision, outcomes
@@ -399,9 +397,10 @@ let expectedGrownStoreAt (repoRoot: string) (port: ExecutionPort) (sensor: Fresh
         selectedGates
         |> List.fold
             (fun s g ->
-                match tooling |> Option.bind (fun t -> Plan.commandFor repoRoot t g) with
-                | None -> s
-                | Some cmd ->
+                match tooling |> Option.map (fun t -> Plan.commandFor repoRoot t g) with
+                | None
+                | Some(Error _) -> s
+                | Some(Ok cmd) ->
                     let reused =
                         match Map.tryFind (gateIdValue g.Id) verdictMap with
                         | Some(Reusable r) -> (Plan.priorExitOf r).IsSome

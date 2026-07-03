@@ -362,27 +362,19 @@ module Loop =
                                 let code = record.Reproducible.ExitCode
 
                                 { GateId = g.Id
-                                  Disposition = Executed
-                                  ExitCode = Some code
-                                  Passed = Some(Plan.passed code) }
+                                  Disposition = Executed(code, Plan.passed code) }
                             | None ->
                                 { GateId = g.Id
-                                  Disposition = NotExecuted
-                                  ExitCode = None
-                                  Passed = None }
+                                  Disposition = NotExecuted }
                         | CommandHost.ToReuse code ->
                             { GateId = g.Id
-                              Disposition = Reused
-                              ExitCode = Some code
-                              Passed = Some(Plan.passed code) }
+                              Disposition = Reused(code, Plan.passed code) }
                         // `Deferred` is unreachable for Route (BudgetFold = None); map it exactly as a
                         // non-executed gate (identical to `NoCommand`) so the plan stays byte-identical.
                         | CommandHost.Deferred _
                         | CommandHost.NoCommand ->
                             { GateId = g.Id
-                              Disposition = NotExecuted
-                              ExitCode = None
-                              Passed = None }
+                              Disposition = NotExecuted }
 
                     g.Id, outcome)
 

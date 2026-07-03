@@ -195,14 +195,14 @@ module CommandHost =
                 | None -> Map.empty, CacheDecisionReport []
 
             let classify (gate: Gate) : GateClassification =
-                let cmdOpt =
+                let resolved =
                     match tooling with
                     | Some tooling -> Plan.commandFor repo tooling gate
-                    | None -> None
+                    | None -> Error Plan.NoPrerequisite // no tooling loaded ⇒ nothing to run
 
-                match cmdOpt with
-                | None -> NoCommand
-                | Some cmd ->
+                match resolved with
+                | Error _ -> NoCommand
+                | Ok cmd ->
                     let baseClass =
                         match Map.tryFind (gateIdValue gate.Id) verdictMap with
                         | Some(Reusable ref) ->

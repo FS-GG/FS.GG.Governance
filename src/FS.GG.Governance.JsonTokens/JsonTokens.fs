@@ -52,8 +52,8 @@ module JsonTokens =
 
     let dispositionToken (disposition: GateDisposition) : string =
         match disposition with
-        | Executed -> "executed"
-        | Reused -> "reused"
+        | Executed _ -> "executed"
+        | Reused _ -> "reused"
         | NotExecuted -> "notExecuted"
 
     let basisToken (basis: ExitCodeBasis) : string =

@@ -216,9 +216,10 @@ let expectedGrownStoreAt (repoRoot: string) (port: ExecutionPort) (sensor: Fresh
         selectedGates
         |> List.fold
             (fun s g ->
-                match tooling |> Option.bind (fun t -> Plan.commandFor repoRoot t g) with
-                | None -> s
-                | Some cmd ->
+                match tooling |> Option.map (fun t -> Plan.commandFor repoRoot t g) with
+                | None
+                | Some(Error _) -> s
+                | Some(Ok cmd) ->
                     let reused =
                         match Map.tryFind (gateIdValue g.Id) verdictMap with
                         | Some(Reusable r) -> (Plan.priorExitOf r).IsSome

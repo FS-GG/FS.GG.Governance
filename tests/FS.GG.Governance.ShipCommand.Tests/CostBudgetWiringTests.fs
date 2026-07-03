@@ -56,13 +56,18 @@ let tests =
               let model, cap = runLevers gitSrcChange Inner Standard
 
               match outcomeFor model "package-api:format" with
-              | Some o -> Expect.equal o.Disposition Executed "the cheap in-budget gate runs"
+              | Some o ->
+                  Expect.isTrue
+                      (match o.Disposition with
+                       | Executed _ -> true
+                       | _ -> false)
+                      "the cheap in-budget gate runs"
               | None -> failtest "expected a format outcome"
 
               match outcomeFor model "package-api:build" with
               | Some o ->
                   Expect.equal o.Disposition NotExecuted "the over-budget medium gate is deferred, not executed"
-                  Expect.notEqual o.Passed (Some true) "a deferred gate is NEVER reported as passed (SC-002)"
+                  Expect.isFalse (isPassing o.Disposition) "a deferred gate is NEVER reported as passed (SC-002)"
               | None -> failtest "expected a build outcome (recorded, not dropped)"
 
               match writtenCostBudget cap with
@@ -83,7 +88,12 @@ let tests =
 
               let gate = List.head gates
               let tooling = (factsOf validCatalog).Tooling
-              let cmd = tooling |> Option.bind (fun t -> Plan.commandFor "." t gate) |> Option.get
+              let cmd =
+                  tooling
+                  |> Option.map (fun t -> Plan.commandFor "." t gate)
+                  |> function
+                      | Some(Ok c) -> c
+                      | other -> failtestf "expected a resolvable command for the gate, got %A" other
               let baseRecord = FS.GG.Governance.GateExecution.Interpreter.senseExecution (fakeExecPortExiting 0) cmd
               let run1 = { Kind = Loop.kindOf gate; Record = baseRecord }
               let run2 = { Kind = Loop.kindOf gate; Record = { baseRecord with Duration = SensedDuration 999L } }

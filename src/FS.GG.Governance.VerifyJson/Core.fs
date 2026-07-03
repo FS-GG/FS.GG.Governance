@@ -42,8 +42,8 @@ module Core =
     // D4 flagged this Disposition divergence — caught by the byte-identity gate; FR-009).
     let dispositionToken (disposition: GateDisposition) : string =
         match disposition with
-        | Executed -> "executed"
-        | Reused -> "reused"
+        | Executed _ -> "executed"
+        | Reused _ -> "reused"
         | NotExecuted -> "not-executed"
 
     // ── the `cause` VALUE — a bare string for `NoPriorEvidence`, a tagged object for `InputsChanged`
@@ -107,13 +107,14 @@ module Core =
             w.WriteStartObject()
             w.WriteString("disposition", dispositionToken o.Disposition)
 
-            match o.ExitCode with
-            | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
-            | None -> w.WriteNull("exitCode")
-
-            match o.Passed with
-            | Some passed -> w.WriteBoolean("passed", passed)
-            | None -> w.WriteNull("passed")
+            match o.Disposition with
+            | Executed(ExitCode code, passed)
+            | Reused(ExitCode code, passed) ->
+                w.WriteNumber("exitCode", code)
+                w.WriteBoolean("passed", passed)
+            | NotExecuted ->
+                w.WriteNull("exitCode")
+                w.WriteNull("passed")
 
             w.WriteEndObject()
         | None -> w.WriteNullValue()

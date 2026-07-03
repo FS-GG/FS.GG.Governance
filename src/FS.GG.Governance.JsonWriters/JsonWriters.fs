@@ -54,12 +54,11 @@ module JsonWriters =
         w.WriteStartObject()
         w.WriteString("disposition", JsonTokens.dispositionToken outcome.Disposition)
 
-        match outcome.ExitCode with
-        | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
-        | None -> ()
-
-        match outcome.Passed with
-        | Some passed -> w.WriteBoolean("passed", passed)
-        | None -> ()
+        match outcome.Disposition with
+        | Executed(ExitCode code, passed)
+        | Reused(ExitCode code, passed) ->
+            w.WriteNumber("exitCode", code)
+            w.WriteBoolean("passed", passed)
+        | NotExecuted -> ()
 
         w.WriteEndObject()

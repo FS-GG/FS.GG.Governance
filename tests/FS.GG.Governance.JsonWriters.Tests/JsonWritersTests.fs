@@ -36,9 +36,7 @@ let tests =
           test "writeExecution emits disposition/exitCode/passed for an executed gate" {
               let outcome =
                   { GateId = GateId "g1"
-                    Disposition = Executed
-                    ExitCode = Some(ExitCode 0)
-                    Passed = Some true }
+                    Disposition = Executed(ExitCode 0, true) }
 
               let actual = render (fun w -> JsonWriters.writeExecution w outcome)
               Expect.equal actual """{"disposition":"executed","exitCode":0,"passed":true}""" "executed"
@@ -47,9 +45,7 @@ let tests =
           test "writeExecution omits exitCode/passed for a not-executed gate (camelCase notExecuted)" {
               let outcome =
                   { GateId = GateId "g1"
-                    Disposition = NotExecuted
-                    ExitCode = None
-                    Passed = None }
+                    Disposition = NotExecuted }
 
               let actual = render (fun w -> JsonWriters.writeExecution w outcome)
               Expect.equal actual """{"disposition":"notExecuted"}""" "notExecuted omits fields"
@@ -58,15 +54,11 @@ let tests =
           test "outcomeByGate keys by gate-id string, first-by-list-order-wins" {
               let a =
                   { GateId = GateId "g1"
-                    Disposition = Executed
-                    ExitCode = Some(ExitCode 0)
-                    Passed = Some true }
+                    Disposition = Executed(ExitCode 0, true) }
 
               let b =
                   { GateId = GateId "g1"
-                    Disposition = NotExecuted
-                    ExitCode = None
-                    Passed = None }
+                    Disposition = NotExecuted }
 
               let m = JsonWriters.outcomeByGate [ (GateId "g1", a); (GateId "g1", b) ]
               Expect.equal (Map.find "g1" m) a "first entry by list order wins"

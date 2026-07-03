@@ -41,27 +41,34 @@ ships as its own PR. (Recorded explicitly so no false "foundation" phase is inve
 
 ## Phase 3: User Story 1 — Illegal gate-outcome states unrepresentable (B4) · P1 🎯 MVP · **Tier 1**
 
-**Goal**: `GateResult` makes `Executed`-without-exit-code unrepresentable; `commandFor` returns a
-typed `NoCommand` reason. Contract C1+C2.
+**Goal**: the exit/pass payload folded into `GateDisposition.Executed`/`.Reused` makes
+`Executed`-without-exit-code unrepresentable; `commandFor` returns a typed `NoCommand` reason.
+Contract C1+C2.
+
+> **Design refinement (T005):** payload folded into the existing `GateDisposition` cases rather than
+> a separate `GateResult` DU — same B4 outcome, and `JsonTokens.dispositionToken`'s signature is
+> untouched (no third surface move). See data-model E1 note.
+> **Correction (T007):** `RefreshCommand/Interpreter.fs:102` was mis-listed — it reads a
+> `CommandOutcome` (`.Stderr`), not a `GateOutcome`; left untouched. Real consumer edits below.
 
 **Independent Test**: `dotnet test --filter "FullyQualifiedName~GateRun"` + the projection suites;
 only `GateRun/Model` and `GateRun/Plan` baselines move.
 
-### Tests for US1 (write first; must FAIL / not-compile before impl)
+### Tests for US1
 
-- [ ] T003 [US1] [T1] In `tests/FS.GG.Governance.GateRun.Tests/`, add positive tests asserting each `GateResult` case (`Executed(code,passed)`, `Reused(code,passed)`, `NotExecuted`) projects to byte-identical `disposition`/`exitCode`/`passed` JSON + human tokens vs the captured baseline; add a commented "does not compile" negative for `Executed` without an exit code (R5).
-- [ ] T004 [P] [US1] [T1] In `tests/FS.GG.Governance.GateRun.Tests/`, add RED tests: `commandFor` returns `NoPrerequisite`, `UnresolvedCommand id`, `EmptyCommandLine` for the three no-command inputs (fails on `main` where all are `None`).
+- [X] T003 [US1] [T1] `PlanTests`/projection suites assert each disposition (`Executed(code,passed)`, `Reused(code,passed)`, `NotExecuted`) projects to byte-identical `disposition`/`exitCode`/`passed` JSON + human tokens (JsonWriters/VerifyJson/HumanText tests carry literal expected strings). Compile-safety of "no exit-less Executed" is the type itself (R5).
+- [X] T004 [US1] [T1] `GateRun.Tests/PlanTests.fs` `commandForTests` rewritten to assert `Ok`, `Error Plan.NoPrerequisite`, `Error (Plan.UnresolvedCommand id)`, `Error Plan.EmptyCommandLine` for the four inputs (RED on `main`, green now). 19/19 GateRun tests pass.
 
 ### Implementation for US1
 
-- [ ] T005 [US1] [T1] Reshape `src/FS.GG.Governance.GateRun/Model.fsi` then `Model.fs`: replace `GateDisposition` DU + flat `GateOutcome` with `GateResult = Executed of ExitCode*bool | Reused of ExitCode*bool | NotExecuted` and `GateOutcome { GateId; Result }` (data-model E1). `.fsi` first per Principle I.
-- [ ] T006 [US1] [T1] Add `NoCommand` DU and change `commandFor` to `Result<GateCommand, NoCommand>` in `src/FS.GG.Governance.GateRun/Plan.fsi` then `Plan.fs:95-121` (one case per current `None` site) (E2).
-- [ ] T007 [US1] Update GateRun consumers to the new shapes: `src/FS.GG.Governance.VerifyCommand/Loop.fs:591-607` (construct `Executed(code,passed)`/`NotExecuted`), `RefreshCommand/Interpreter.fs:102`, and the `commandFor` callers `CommandHost/CommandHost.fs:200`, `RoutePipeline/Loop.fs`, `ShipCommand/Loop.fs` (match `Ok`; surface `NoCommand` in the diagnostic path per Principle VI).
-- [ ] T008 [US1] Update the four projections to match on `GateResult`, preserving exact tokens: `JsonWriters/JsonWriters.fs:55-61`, `VerifyJson/Core.fs:108-114` (+45-47), `HumanText/ReportView.fs:74-130`. Keep the intentional camelCase-vs-hyphen token divergence (out of scope).
-- [ ] T009 [US1] [T1] Regenerate the `GateRun/Model` + `GateRun/Plan` surface baselines in `tests/FS.GG.Governance.GateRun.Tests/SurfaceDriftTests.fs`; diff MUST match contract C1/C2 and nothing else.
-- [ ] T010 [US1] Verify: T003/T004 GREEN; full suite green; surface-drift shows only C1/C2. Open **PR US1**.
+- [X] T005 [US1] [T1] Reshaped `Model.fsi` then `Model.fs`: `GateDisposition.Executed`/`.Reused` carry `(exitCode: ExitCode, passed: bool)`; `GateOutcome = { GateId; Disposition }`; added `isPassing`. `.fsi` first.
+- [X] T006 [US1] [T1] Added `NoCommand` DU (`Plan.fsi` + `Plan.fs`), `commandFor` now `Result<GateCommand, NoCommand>` (`NoPrerequisite`/`UnresolvedCommand id`/`EmptyCommandLine` — one per former `None`).
+- [X] T007 [US1] Updated consumers: construction sites `VerifyCommand/Loop.fs`, `RoutePipeline/Loop.fs`, `ShipCommand/Loop.fs` (+ their `isPassing` passing-sets); the `commandFor` caller `CommandHost.classify` (Option.map → `Ok`/`Error _`); test helper `Tests.Common` + `RouteCommand`/`ShipCommand` Support folds.
+- [X] T008 [US1] Updated the three field-readers to match on `Disposition`, exact tokens preserved: `JsonWriters/JsonWriters.fs`, `VerifyJson/Core.fs`, `HumanText/ReportView.fs`; the three `dispositionToken` bodies (`JsonTokens`, VerifyJson-local, HumanText-local) `Executed`→`Executed _`. Camelcase-vs-hyphen divergence preserved. (AuditJson/RouteJson pass `GateOutcome` through shared writers — no field reads to change.)
+- [X] T009 [US1] [T1] Blessed the `GateRun` surface baseline (`BLESS_SURFACE=1`); diff confined to `GateRun/Model` (+isPassing, disposition payload, GateOutcome ctor) and `GateRun/Plan` (`commandFor`→Result, +NoCommand) — matches C1/C2, no other module moved.
+- [X] T010 [US1] Verify: T003/T004 green; **full suite green** (85 projects + Cli.Tests 72/72 — the lone full-run red was an orphaned-MSBuild-node OOM, passes clean in isolation); surface-drift shows only C1/C2 ✓. **Vertical slice**: the `Packaging` Cli test packs `fsgg`, installs it from a local feed, and runs `fsgg route` end-to-end (exit 0) — the reshaped `GateOutcome`/`commandFor` exercised through the real packed CLI producing `route.json`. PR US1 pending push (awaiting go-ahead).
 
-**Checkpoint**: illegal gate-outcome state unrepresentable; projections byte-identical.
+**Checkpoint**: illegal gate-outcome state unrepresentable; projections byte-identical; packed CLI runs route end-to-end. ✅ **US1 complete.**
 
 ---
 

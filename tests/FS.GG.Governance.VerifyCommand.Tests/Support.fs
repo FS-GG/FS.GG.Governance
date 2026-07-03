@@ -167,9 +167,7 @@ let private applyDeferrals (deferred: Set<string>) (outcomes: (GateId * GateOutc
         if Set.contains (gateIdValue gid) deferred then
             gid,
             { GateId = gid
-              Disposition = NotExecuted
-              ExitCode = None
-              Passed = None }
+              Disposition = NotExecuted }
         else
             gid, o)
 
@@ -181,7 +179,7 @@ let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (ca
 
     let passedIds =
         outcomes
-        |> List.choose (fun (gid, o) -> if o.Passed = Some true then Some gid else None)
+        |> List.choose (fun (gid, o) -> if isPassing o.Disposition then Some gid else None)
         |> Set.ofList
 
     Loop.applyExecution passedIds decision, outcomes

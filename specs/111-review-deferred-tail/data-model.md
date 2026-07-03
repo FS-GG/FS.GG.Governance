@@ -5,9 +5,16 @@ The "entities" here are the **types that change shape** (Tier-1) and the **dupli
 
 ## Types that change shape (Tier-1)
 
-### E1 — `GateOutcome` / `GateDisposition` → `GateResult` (B4)
+### E1 — `GateOutcome` / `GateDisposition` reshape (B4)
 
 `FS.GG.Governance.GateRun/Model.fs` + `Model.fsi`
+
+> **Design refinement (adopted at implementation).** The spec sketched a *separate* `GateResult`
+> DU with `GateOutcome { GateId; Result }`. Implementation folded the exit/pass payload **directly
+> into the `GateDisposition` cases** instead — one type, no parallel vocabulary, and it leaves
+> `JsonTokens.dispositionToken`'s public signature (`GateDisposition -> string`) untouched (its body
+> changes `Executed` → `Executed _` only — Tier-2, no third surface move). Same B4 outcome
+> (illegal state unrepresentable), strictly smaller blast radius.
 
 **Before** (illegal state representable):
 ```fsharp
@@ -19,19 +26,22 @@ type GateOutcome =
       Passed: bool option }         // could be None while Disposition = Executed
 ```
 
-**After** (payload lives in the case; illegal state unrepresentable):
+**After** (payload lives on the two cases that have one; illegal state unrepresentable):
 ```fsharp
-type GateResult =
+type GateDisposition =
     | Executed of exitCode: ExitCode * passed: bool
     | Reused   of exitCode: ExitCode * passed: bool
     | NotExecuted
-type GateOutcome = { GateId: GateId; Result: GateResult }
+type GateOutcome = { GateId: GateId; Disposition: GateDisposition }
+
+val isPassing: disposition: GateDisposition -> bool   // Executed/Reused ⇒ passed; NotExecuted ⇒ false
 ```
 
 - **Invariant gained**: an executed/reused outcome *always* carries an exit code and pass/fail; a
   not-executed outcome carries neither. No `option` to misuse.
 - **Projection mapping** (must stay byte-identical): every reader replaces the
-  `Disposition`/`ExitCode`/`Passed` triple-match with one `match outcome.Result`:
+  `ExitCode`/`Passed` optional-match with one `match outcome.Disposition` (the disposition token is
+  still `dispositionToken outcome.Disposition`):
   - `JsonWriters.fs:55-61`, `VerifyJson/Core.fs:108-114` — emit the same `disposition` token +
     optional `exitCode`/`passed` fields (NotExecuted ⇒ omit, matching today's `None`).
   - `HumanText/ReportView.fs:74-130` — same "executed/reused/not-executed" + passed text.
