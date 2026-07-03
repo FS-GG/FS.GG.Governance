@@ -144,13 +144,13 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ## Phase 7: User Story 5 — Dead code removed (C1a/C1b) · P3 · Tier 2
 
-**Goal**: remove the unreachable DocsChecks example path and the write-only `SurfacesPending`.
+**Goal**: remove the write-only `SurfacesPending`. **C1a re-deferred** (see below).
 
-**Independent Test**: `dotnet test --filter "FullyQualifiedName~DocsChecks|VerifyCommand"`; grep clean.
+**Independent Test**: `dotnet test --filter "FullyQualifiedName~VerifyCommand"`; grep clean.
 
-- [ ] T034 [P] [US5] C1a: remove `exampleFindings` (`src/FS.GG.Governance.DocsChecks/DocsChecks.fs:61-70`) and its call in `evaluate` (`:78-81`); remove the now-dead `ExampleOutcome`/`ExampleFact`/`Examples` vocabulary from `DocsChecks/Model.fs` + `Model.fsi` and the `Examples = []` producers (`Interpreter.fs:110,139`) + the `.fsi:28` note. DocsChecks output byte-identical.
-- [ ] T035 [P] [US5] C1b: remove `SurfacesPending` from `src/FS.GG.Governance.VerifyCommand/Loop.fs:179` + `Loop.fsi:258` and its four writes (`:337,776,784,898`); confirm the readiness gate no longer references it (it never read it). `verify.json` unchanged.
-- [ ] T036 [US5] Verify: DocsChecks + VerifyCommand suites green byte-identical; `grep -rn "ExampleFact\|exampleFindings\|SurfacesPending" src` → none. Open **PR US5**.
+- [-] T034 [US5] C1a — **RE-DEFERRED on #83 with rationale.** The `exampleFindings` path is *production-unreachable* (`senseDocs` hardcodes `Examples = []`) but it is NOT dead code: `Interpreter.fsi:28` documents it as a **reviewer-supplied `ExampleFact` extension point** ("automated example-freshness judgement is out of scope … supplied by a reviewer"), and `AdvisoryBoundaryTests` (feature T050) intentionally exercises it, asserting the `docs.example-freshness` Advisory-vs-Blocking severity boundary. Removing the vocabulary would delete a designed extension and real Advisory-boundary coverage — disproportionate and unsound for a "dead-code" finding. Left in place; annotate #83.
+- [X] T035 [US5] C1b: removed `SurfacesPending` from `VerifyCommand/Loop.fsi` + `Loop.fs` and its four writes (init + 2× `true` + 1× `false`). Confirmed **zero reads** repo-wide (`grep .SurfacesPending` → none) — the readiness gate never consulted it. Shrinks the `VerifyCommand/Loop` surface (dead-field removal).
+- [X] T036 [US5] VerifyCommand suite: 84/84 behavioral pass; the sole drift failure was the intended surface shrink — blessed, diff confined to the `Loop` `.ctor` (−1 bool) + `SurfacesPending` property/getter. `grep SurfacesPending src` → none. Full-suite confirmation running.
 
 ---
 

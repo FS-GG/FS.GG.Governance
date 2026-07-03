@@ -174,9 +174,8 @@ module Loop =
           ReleaseSensed: SensedRelease option
           ReleasePreview: VerifyReleasePreview option
           ReleaseMatrix: MatrixPlan option
-          // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed) + the readiness flag.
+          // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed).
           SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
-          SurfacesPending: bool
           // F070: the stale-generated-view currency findings sensed at the edge ([] until ViewCurrencySensed).
           ViewCurrencyFindings: CE.CurrencyFinding list
           // F081: the located handoff reads, set by `HandoffsLoaded` ([] default). Consumed at the
@@ -334,7 +333,6 @@ module Loop =
               ReleasePreview = None
               ReleaseMatrix = None
               SurfaceFindings = []
-              SurfacesPending = false
               ViewCurrencyFindings = []
               Handoffs = []
               Diagnostics = []
@@ -762,16 +760,14 @@ module Loop =
                         Phase = Selected
                         Decision = Some decision
                         SelectedGates = []
-                        Tooling = facts.Tooling
-                        SurfacesPending = true },
+                        Tooling = facts.Tooling },
                     [ SenseSurfaces productReport ]
                 else
                     { model with
                         Phase = Selected
                         Decision = Some decision
                         SelectedGates = selectedGates
-                        Tooling = facts.Tooling
-                        SurfacesPending = true },
+                        Tooling = facts.Tooling },
                     // SenseSurfaces FIRST so `SurfacesSensed` is folded before `StoreLoaded` triggers
                     // `tryExecute` ⇒ `ExecuteGates` ⇒ `GatesExecuted` ⇒ `projectExecuted` (which reads the
                     // already-populated `model.SurfaceFindings`).
@@ -882,9 +878,7 @@ module Loop =
             // the now-populated `model.SurfaceFindings`. `findings = []` ⇒ byte-identical verify.json (FR-004).
             | SurfacesSensed surfaceFindings ->
                 let model =
-                    { model with
-                        SurfaceFindings = surfaceFindings
-                        SurfacesPending = false }
+                    { model with SurfaceFindings = surfaceFindings }
 
                 if List.isEmpty model.SelectedGates then
                     projectEmpty model
