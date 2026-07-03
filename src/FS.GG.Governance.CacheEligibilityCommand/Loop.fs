@@ -171,16 +171,18 @@ module Loop =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
             match rest with
             | [] -> Ok acc
-            | "--repo" :: v :: more -> go { acc with Repo = Some v } more
-            | "--repo" :: [] -> Error(MissingValue "--repo")
-            | "--since" :: v :: more -> go { acc with Since = Some v } more
-            | "--since" :: [] -> Error(MissingValue "--since")
-            | "--store" :: v :: more -> go { acc with Store = Some v } more
-            | "--store" :: [] -> Error(MissingValue "--store")
-            | "--out" :: v :: more -> go { acc with Out = Some v } more
-            | "--out" :: [] -> Error(MissingValue "--out")
-            | "--format" :: v :: more -> go { acc with Format = Some v } more
-            | "--format" :: [] -> Error(MissingValue "--format")
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as MissingValue rather than
+            // silently swallowing the following flag (mirrors the `takePaths` guard).
+            | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
+            | "--repo" :: _ -> Error(MissingValue "--repo")
+            | "--since" :: v :: more when not (v.StartsWith "--") -> go { acc with Since = Some v } more
+            | "--since" :: _ -> Error(MissingValue "--since")
+            | "--store" :: v :: more when not (v.StartsWith "--") -> go { acc with Store = Some v } more
+            | "--store" :: _ -> Error(MissingValue "--store")
+            | "--out" :: v :: more when not (v.StartsWith "--") -> go { acc with Out = Some v } more
+            | "--out" :: _ -> Error(MissingValue "--out")
+            | "--format" :: v :: more when not (v.StartsWith "--") -> go { acc with Format = Some v } more
+            | "--format" :: _ -> Error(MissingValue "--format")
             | "--plain" :: more -> go { acc with Plain = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more

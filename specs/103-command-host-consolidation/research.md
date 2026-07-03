@@ -94,6 +94,19 @@ All findings below are from a read-only survey of the current `main`-based branc
 
 **Rationale**: makes post-decision messages provably inert (Principle VI, FR-013 as siblings document it); RED→GREEN test: feed a post-`Done` Msg, assert `model, []`.
 
+## D9 — Design corrections discovered at implementation start (amends D1)
+
+Reading `CommandHost.fsi`/`.fsproj` at implementation time corrected two D1 assumptions:
+
+- **The impure leaves do NOT go in `CommandHost`.** That project is charted "Pure and total; no I/O" and does not reference `Adapters.SddHandoff` (which `realHandoffs` needs via `SddHandoff.Reader.HandoffRead`). Putting I/O there would violate its own charter and grow its dependency set. Per issue #49's wording ("shared impure **sibling** leaf"), the impure helpers (`writeAtomic`, `realHandoffs`, `senseEnvironmentReal`, `senseBuilderReal`) go in a **new sibling project** `FS.GG.Governance.CommandHost.Io` that references `CommandHost` + `Config` + `Provenance` + `Adapters.SddHandoff`, which the seven hosts then reference. This is Phase B-sized infra, so it moves out of the "zero-surface" Phase A.
+- **Drop the snapshot/catalog step-arm consolidation.** The shared `SenseScope`/`LoadCatalog` arms are typed over each host's `Loop.Effect`/`Loop.Msg`; `CommandHost`'s own scope note deliberately keeps per-host `Effect`/`Msg`-parameterized helpers local (a shared form needs generics/SRTP — Constitution III). Consolidating them would fight that recorded decision for marginal gain; leave the arms local.
+- **`requireValue` (argv guard) is pure** (string-list processing) and correctly belongs in the pure `CommandHost` module.
+
+**Revised phase boundaries** (supersedes plan.md's A/B/C for execution):
+- **Phase A (bug fixes, pure, zero new surface risk):** pure `requireValue` in `CommandHost` → applied across the 7 `Loop.fs` parsers + `Cli.requireValue` (M-CLI-3); F13 Evidence Done-guard; F15 Ship `Wrote(Ok)` alignment; M-CLI-7 Evidence `--plain` no-op; align the `Cli/ArtifactReading` handoff sort to `String.CompareOrdinal` (realHandoffs textual convergence). → PR A.
+- **Phase B (impure sibling leaf):** new `CommandHost.Io` project; relocate `writeAtomic`/`realHandoffs`/`senseEnvironmentReal`/`senseBuilderReal`; rewire the 7 hosts; delete local copies. → PR B.
+- **Phase C (Tier-1 surface):** EvidenceCommand ArtifactReading dedup (widen `ArtifactReading.fsi`) + `ExitDecision` consolidation + F9 vocabulary. → PR C.
+
 ## Cross-cutting decisions
 
 - **Phasing** (A: Tier-2 leaves+fixes → B: ArtifactReading → C: ExitDecision+F9): isolates surface risk and lets a time-box stop after A/B with real value banked. See plan.md Structure Decision.

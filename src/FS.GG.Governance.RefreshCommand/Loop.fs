@@ -124,14 +124,16 @@ module Loop =
             match rest with
             | [] -> Ok acc
             | "--dry-run" :: more -> go { acc with DryRun = true } more
-            | "--repo" :: v :: more -> go { acc with Repo = Some v } more
-            | "--repo" :: [] -> Error { Message = "missing value for flag: --repo" }
-            | "--view-kind" :: v :: more -> go { acc with ViewKind = Some v } more
-            | "--view-kind" :: [] -> Error { Message = "missing value for flag: --view-kind" }
-            | "--view" :: v :: more -> go { acc with View = Some v } more
-            | "--view" :: [] -> Error { Message = "missing value for flag: --view" }
-            | "--refresh-out" :: v :: more -> go { acc with RefreshOut = Some v } more
-            | "--refresh-out" :: [] -> Error { Message = "missing value for flag: --refresh-out" }
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as missing rather than
+            // silently swallowing the following flag.
+            | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
+            | "--repo" :: _ -> Error { Message = "missing value for flag: --repo" }
+            | "--view-kind" :: v :: more when not (v.StartsWith "--") -> go { acc with ViewKind = Some v } more
+            | "--view-kind" :: _ -> Error { Message = "missing value for flag: --view-kind" }
+            | "--view" :: v :: more when not (v.StartsWith "--") -> go { acc with View = Some v } more
+            | "--view" :: _ -> Error { Message = "missing value for flag: --view" }
+            | "--refresh-out" :: v :: more when not (v.StartsWith "--") -> go { acc with RefreshOut = Some v } more
+            | "--refresh-out" :: _ -> Error { Message = "missing value for flag: --refresh-out" }
             | "--text" :: more -> go { acc with Format = Some "text" } more
             | "--json" :: more -> go { acc with Format = Some "json" } more
             | "--text-and-json" :: more -> go { acc with Format = Some "text-and-json" } more

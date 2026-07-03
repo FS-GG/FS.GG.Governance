@@ -93,3 +93,21 @@ let tests =
           test "--store with no value ⇒ a UsageError VALUE, never a throw" {
               Expect.equal (parse [ "route"; "--store" ]) (Error(Loop.MissingValue "--store")) "missing --store value is a value"
           } ]
+
+// M-CLI-3 (#49): a `--`-prefixed token following a value-option is NOT its value — the parser must reject it
+// as MissingValue instead of silently swallowing the following flag (`--repo --json` used to set repo="--json").
+[<Tests>]
+let argvValueGuard =
+    testList
+        "ArgvValueGuard-MCLI3"
+        [ test "--repo followed by a flag ⇒ MissingValue, the flag is not swallowed" {
+              Expect.equal (parse [ "route"; "--repo"; "--json" ]) (Error(Loop.MissingValue "--repo")) "flag not swallowed as --repo value"
+          }
+
+          test "--repo with a real value then --json still parses; JSON mode is set" {
+              match parse [ "route"; "--repo"; "acme/x"; "--json" ] with
+              | Ok req ->
+                  Expect.equal req.Repo "acme/x" "repo value bound"
+                  Expect.equal req.Format Loop.Json "trailing --json still selects JSON mode"
+              | Error e -> failtestf "expected Ok, got Error %A" e
+          } ]

@@ -96,17 +96,21 @@ module Loop =
         let rec loop (acc: Acc) (args: string list) : Result<Acc, UsageError> =
             match args with
             | [] -> Ok acc
-            | "--repo" :: value :: rest -> loop { acc with Repo = value } rest
-            | "--out" :: value :: rest -> loop { acc with Out = Some value } rest
-            | "--format" :: value :: rest ->
+            // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as MissingValue rather than
+            // silently swallowing the following flag.
+            | "--repo" :: value :: rest when not (value.StartsWith "--") -> loop { acc with Repo = value } rest
+            | "--out" :: value :: rest when not (value.StartsWith "--") -> loop { acc with Out = Some value } rest
+            | "--format" :: value :: rest when not (value.StartsWith "--") ->
                 match value with
                 | "human" -> loop { acc with Format = Human } rest
                 | "json" -> loop { acc with Format = Json } rest
                 | other -> Error(BadFormat other)
-            // M-CLI-7: `--plain` is an ADDITIVE ANSI-free signal — it composes with `--format` without changing
-            // it (the `Json` branch still wins), matching the `Cli.fs` convention. It never overrides `--format json`.
+            // M-CLI-7 (#49): `--plain` is an ADDITIVE ANSI-free signal that never overrides `--format` (the
+            // `Json` branch still wins). EvidenceCommand emits no ANSI, so it is an accepted, documented no-op
+            // here — see the usage text and `render`; `ExplicitPlain` is intentionally not consumed.
             | "--plain" :: rest -> loop { acc with ExplicitPlain = true } rest
-            | ("--repo" | "--out" | "--format") :: [] -> Error(MissingValue(List.head args))
+            // Missing value: empty rest OR a `--`-prefixed next token (the guarded arms above declined it).
+            | ("--repo" | "--out" | "--format") :: _ -> Error(MissingValue(List.head args))
             | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
             | other :: _ -> Error(UnknownFlag other)
 
@@ -187,6 +191,10 @@ module Loop =
 
     let rec update (msg: Msg) (model: Model) : Model * Effect list =
         match msg with
+        // F13 (#49): once the pipeline has decided (Done), every further reified Msg is inert — matches the
+        // guard every sibling host (Route/Ship/Verify) documents. Without this, a duplicate Wrote/Reported
+        // after Done would re-mutate Phase and re-schedule effects.
+        | _ when model.Phase = Done -> model, []
         | Begin -> model, [ SenseReport model.Request.Repo ]
 
         | Reported(Error(InputMissing reason)) ->

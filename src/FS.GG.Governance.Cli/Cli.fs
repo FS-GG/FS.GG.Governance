@@ -193,8 +193,10 @@ module Cli =
 
     let requireValue option rest onValue (acc: ParseAcc) =
         match rest with
-        | [] -> addError (MissingOptionValue option) acc, []
-        | value :: tail -> onValue value acc, tail
+        // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — treat as missing rather than swallowing
+        // the following flag as this option's value.
+        | value :: tail when not ((value: string).StartsWith "--") -> onValue value acc, tail
+        | _ -> addError (MissingOptionValue option) acc, rest
 
     let isInvalidRoot (value: string) =
         String.IsNullOrWhiteSpace value || value.IndexOf('\u0000') >= 0
