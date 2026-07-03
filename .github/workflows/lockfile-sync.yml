@@ -15,7 +15,8 @@ on:
     branches: [main]
 
 permissions:
-  contents: read   # the App token inside the reusable workflow performs the write
+  contents: read   # the App token inside the reusable workflow performs the git write
+  packages: read   # so the reusable workflow's GITHUB_TOKEN can restore FS.GG.Contracts from the org feed
 
 jobs:
   sync:
