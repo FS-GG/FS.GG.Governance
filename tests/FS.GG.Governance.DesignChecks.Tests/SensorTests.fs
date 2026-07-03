@@ -64,4 +64,21 @@ let tests =
                   File.WriteAllText(Path.Combine(repo, "design", "surface.txt"), "token: color.primary\n")
                   let facts = Interpreter.senseDesign (Interpreter.realPort repo layout) req
                   Expect.isNonEmpty facts.CatalogUnavailable "absent catalogs recorded")
+          }
+
+          test "a THROWING catalog port degrades to CatalogUnavailable, never escapes senseDesign (#56/B13)" {
+              // Every one of the four catalog reads throws. Before the fix only ReadDescriptor was wrapped
+              // in `safe`, so a throw from any of these escaped senseDesign (violating its never-throws
+              // contract). All four must now be caught and recorded, and the call must return normally.
+              let throwingPort: Interpreter.DesignPort =
+                  { ReadDescriptor = fun _ -> Ok "token: color.primary\ncapture: home.png\ncontrol: Button\n"
+                    ReadTokenCatalog = fun () -> failwith "boom-token"
+                    ReadCaptureCatalog = fun () -> failwith "boom-capture"
+                    ReadControlCatalog = fun () -> failwith "boom-control"
+                    ReadContrastCatalog = fun () -> failwith "boom-contrast" }
+
+              let facts = Interpreter.senseDesign throwingPort req
+              Expect.equal (List.length facts.CatalogUnavailable) 4 "all four throwing catalogs recorded"
+              Expect.isEmpty facts.Tokens "no fabricated token resolution under a throwing catalog"
+              Expect.isEmpty facts.Contrasts "no fabricated contrast under a throwing catalog"
           } ]

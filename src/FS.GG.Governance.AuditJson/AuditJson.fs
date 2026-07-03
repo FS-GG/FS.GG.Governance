@@ -227,23 +227,23 @@ module AuditJson =
 
     // ── the public entry point ──
 
-    let ofShipDecision
+    // F070: the ship.json/audit.json emitter. Walks the already-ordered `ShipDecision` once, writing the
+    // top-level object in the FIXED order schemaVersion → verdict → exitCodeBasis → blockers → warnings →
+    // passing → cacheEligibilityEvaluated → (generatedViews when non-empty). The verdict/basis are carried
+    // VERBATIM from the decision value — never recomputed from the item sections (FR-002), never mapped to a
+    // numeric process exit code (FR-003). Each section is emitted in its existing composite order, re-sorting
+    // NOTHING (FR-007). PURE and TOTAL: the empty/clean decision yields three present, empty arrays with
+    // verdict:"pass" / exitCodeBasis:"clean" and the cache section present — a valid success (FR-008/FR-009).
+    //
+    // F045: the cache verdict is matched per GATE item by `GateId`. `lookup` is built once — `None` ⇒ every
+    // gate item `notEvaluated`; `Some report` ⇒ the first-by-report-order verdict map. The top-level
+    // `cacheEligibilityEvaluated` flag is `false` for `None`, `true` for `Some _` (FR-012).
+    let ofShipDecisionWithGeneratedViews
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
+        (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
         : string =
-        // One linear walk of the already-ordered `ShipDecision`, writing the top-level object in the
-        // FIXED order schemaVersion → verdict → exitCodeBasis → blockers → warnings → passing →
-        // cacheEligibilityEvaluated. The verdict/basis are carried VERBATIM from the decision value —
-        // never recomputed from the item sections (FR-002), never mapped to a numeric process exit code
-        // (FR-003). Each section is emitted in its existing composite order, re-sorting NOTHING (FR-007).
-        // PURE and TOTAL: the empty/clean decision yields three present, empty arrays with verdict:"pass"
-        // / exitCodeBasis:"clean" and the cache section present — a valid success (FR-008/FR-009).
-        //
-        // F045: the cache verdict is matched per GATE item by `GateId`. `lookup` is built once — `None`
-        // ⇒ every gate item `notEvaluated`; `Some report` ⇒ the first-by-report-order verdict map. The
-        // top-level `cacheEligibilityEvaluated` flag is `false` for `None`, `true` for `Some _` (the
-        // always-present section that survives the empty/clean decision — FR-012).
         let lookup: GateId -> CacheEligibilityVerdict option =
             match cache with
             | None -> fun _ -> None
@@ -264,35 +264,14 @@ module AuditJson =
             writeSection w lookup execLookup "warnings" decision.Warnings
             writeSection w lookup execLookup "passing" decision.Passing
             w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
+            writeGeneratedViews w generatedViews
             w.WriteEndObject())
 
-    // F070: the additive ship.json/audit.json overload carrying the stale-generated-view currency findings.
-    // Identical body to `ofShipDecision` plus the `generatedViews` array (omitted when empty). The existing
-    // `ofShipDecision` is untouched (FR-010); with no findings this is byte-identical to it (FR-004).
-    let ofShipDecisionWithGeneratedViews
+    // The no-generated-views entry point. Delegates to the overload with an empty view list — `writeGeneratedViews`
+    // omits the array when empty, so this is byte-identical to the former hand-copied body (#56/A5, FR-013).
+    let ofShipDecision
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
-        (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
         : string =
-        let lookup: GateId -> CacheEligibilityVerdict option =
-            match cache with
-            | None -> fun _ -> None
-            | Some report ->
-                let byGate = JsonWriters.verdictByGate report
-                fun gateId -> Map.tryFind (gateIdValue gateId) byGate
-
-        let execByGate = JsonWriters.outcomeByGate execution
-        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
-
-        JsonText.writeToString (fun w ->
-            w.WriteStartObject()
-            w.WriteString("schemaVersion", schemaVersion)
-            w.WriteString("verdict", verdictToken decision.Verdict)
-            w.WriteString("exitCodeBasis", JsonTokens.basisToken decision.ExitCodeBasis)
-            writeSection w lookup execLookup "blockers" decision.Blockers
-            writeSection w lookup execLookup "warnings" decision.Warnings
-            writeSection w lookup execLookup "passing" decision.Passing
-            w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
-            writeGeneratedViews w generatedViews
-            w.WriteEndObject())
+        ofShipDecisionWithGeneratedViews decision cache execution []

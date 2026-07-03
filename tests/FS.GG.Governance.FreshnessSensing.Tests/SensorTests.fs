@@ -82,6 +82,27 @@ let tests =
               | Ok _ -> failtest "a throwing accessor must surface as Error, never a fabricated SensedFacts"
           }
 
+          test "covered-artifact hashes are rename-sensitive: identical content at a different path ⇒ different hash (#56/B11)" {
+              // A pure content hash could not tell a moved file from an unchanged one. Two repos hold the SAME
+              // bytes at different `src/**` paths; the covered-artifact hash must differ (the relative path is
+              // part of the length-prefixed pre-image). Before the fix both hashed the content alone and matched.
+              let write (root: string) (sub: string) (file: string) =
+                  let dir = System.IO.Path.Combine(root, sub)
+                  System.IO.Directory.CreateDirectory dir |> ignore
+                  System.IO.File.WriteAllText(System.IO.Path.Combine(dir, file), "identical-artifact-bytes")
+
+              withBareDir (fun d1 ->
+                  withBareDir (fun d2 ->
+                      write d1 "src" "alpha.fs"
+                      write d2 "src" "beta.fs"
+                      let g = gateWith "build" "tests" (Some dotnetCmd)
+                      let h1 = (FreshnessSensing.realSensor d1).SenseCoveredArtifacts g
+                      let h2 = (FreshnessSensing.realSensor d2).SenseCoveredArtifacts g
+                      Expect.isSome h1 "d1 senses a covered hash"
+                      Expect.isSome h2 "d2 senses a covered hash"
+                      Expect.notEqual h1 h2 "same content at a different path ⇒ different covered-artifact hash"))
+          }
+
           test "an unsensed command version ⇒ the command key is ABSENT (never fabricated)" {
               // A sensor that senses everything EXCEPT the command version: the assembled facts must NOT carry
               // the command key (absent = not sensed), so the gate resolves unresolved on command version.

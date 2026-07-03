@@ -24,6 +24,7 @@ module Model =
         | MirrorInSync
         | MirrorMissing of mirror: string
         | MirrorDrifted of mirror: string * detail: string
+        | MirrorUnreadable of mirror: string * detail: string
 
     type SkillFacts =
         { SkillId: string

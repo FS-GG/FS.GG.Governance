@@ -197,7 +197,9 @@ module Core =
             match item.Id with
             | GateItem g -> Some(gateIdValue g)
             | FindingItem _ -> None)
-        |> List.fold (fun acc g -> if List.contains g acc then acc else acc @ [ g ]) []
+        // First-occurrence-preserving dedup in O(n) (#56/C1f) — List.distinct keeps input order, so this is
+        // byte-identical to the previous O(n²) `List.contains`/append fold.
+        |> List.distinct
 
     let writeCurrency (w: Utf8JsonWriter) (decision: ShipDecision) (cache: CacheEligibilityReport option) =
         let entries =
