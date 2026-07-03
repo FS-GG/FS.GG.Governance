@@ -14,12 +14,13 @@
       },
       "Expecto.FsCheck": {
         "type": "Direct",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "97ZwoxLIvxyG0fU806nvFbW2uMQFTqi2wpCfPfKasySfIpdf41zERtRiUSZtp1q8fY3uK9mN42dmJsUcL2IrcA==",
+        "requested": "[11.1.0, )",
+        "resolved": "11.1.0",
+        "contentHash": "DLX1YSS+7TwlhSG/6lPqa7Ijwe7msri2BIbVVRXms+C3I7wYTDAvyx56so7X2McqnlhljF06FIm0W2AlYtQFEQ==",
         "dependencies": {
-          "Expecto": "10.2.3",
-          "FsCheck": "[2.16.5, 3.0.0)"
+          "Expecto": "11.1.0",
+          "FSharp.Core": "7.0.200",
+          "FsCheck": "3.0.0"
         }
       },
       "FsCheck": {
@@ -494,7 +495,7 @@
         "type": "Project",
         "dependencies": {
           "Expecto": "[10.2.3, )",
-          "Expecto.FsCheck": "[10.2.3, )",
+          "Expecto.FsCheck": "[11.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.Findings": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
