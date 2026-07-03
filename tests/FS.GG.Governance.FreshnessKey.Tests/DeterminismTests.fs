@@ -87,7 +87,7 @@ let tests =
           <| fun (x: FreshnessInputs) ->
               let permGen = samePermutationOf x.CoveredArtifacts
               // sample one permutation deterministically per input via FsCheck's Gen.
-              let perm = FsCheck.Gen.sample 0 1 permGen |> List.head
+              let perm = FsCheck.FSharp.Gen.sampleWithSize 0 1 permGen |> Seq.head
               let permuted = { x with CoveredArtifacts = perm }
               FreshnessKey.value (FreshnessKey.compute x) = FreshnessKey.value (FreshnessKey.compute permuted)
 

@@ -5,6 +5,7 @@ open System.IO
 open System.Text.Json
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.EvidenceReuse

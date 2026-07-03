@@ -45,6 +45,6 @@ let tests =
 
           testPropertyWithConfig fscheckConfig "any same-set permutation of the candidate's covered artifacts ⇒ identical decision (SC-002)"
           <| fun (c: FreshnessInputs) (s: ReuseStore) ->
-              let perm = FsCheck.Gen.sample 0 1 (samePermutationOf c.CoveredArtifacts) |> List.head
+              let perm = FsCheck.FSharp.Gen.sampleWithSize 0 1 (samePermutationOf c.CoveredArtifacts) |> Seq.head
               let permuted = { c with CoveredArtifacts = perm }
               EvidenceReuse.decide permuted s = EvidenceReuse.decide c s ]

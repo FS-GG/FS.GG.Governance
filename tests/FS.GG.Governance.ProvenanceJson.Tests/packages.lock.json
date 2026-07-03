@@ -4,31 +4,32 @@
     "net10.0": {
       "Expecto": {
         "type": "Direct",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "mwGOvtkKfMwakKeONwWYy5RgnO7Ijx/THt50GHh8mkSPySVOW/BsOppHzNwby45uaO6X0IKpqS76BrlYgOqcIg==",
+        "requested": "[11.1.0, )",
+        "resolved": "11.1.0",
+        "contentHash": "Bigdu4FzlS0wsS4jUADCSfAM8oiXr9ghswxvYha7ge66QN8VnUjOke38AaU2Qg3nS0lE73NKt+4QEWlaGxILLg==",
         "dependencies": {
           "FSharp.Core": "7.0.200",
-          "Mono.Cecil": "[0.11.4, 1.0.0)"
+          "Mono.Cecil": "[0.11.6, 1.0.0)"
         }
       },
       "Expecto.FsCheck": {
         "type": "Direct",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "97ZwoxLIvxyG0fU806nvFbW2uMQFTqi2wpCfPfKasySfIpdf41zERtRiUSZtp1q8fY3uK9mN42dmJsUcL2IrcA==",
+        "requested": "[11.1.0, )",
+        "resolved": "11.1.0",
+        "contentHash": "DLX1YSS+7TwlhSG/6lPqa7Ijwe7msri2BIbVVRXms+C3I7wYTDAvyx56so7X2McqnlhljF06FIm0W2AlYtQFEQ==",
         "dependencies": {
-          "Expecto": "10.2.3",
-          "FsCheck": "[2.16.5, 3.0.0)"
+          "Expecto": "11.1.0",
+          "FSharp.Core": "7.0.200",
+          "FsCheck": "3.0.0"
         }
       },
       "FsCheck": {
         "type": "Direct",
-        "requested": "[2.16.6, )",
-        "resolved": "2.16.6",
-        "contentHash": "8yQlt7HgoigIXIoe7ZouNh551rypxp4WtQnqBlpB9a7gf4IkpdMSnEzsnJS/gFmeNtIf9hEJ37celeCq/6FuHA==",
+        "requested": "[3.3.3, )",
+        "resolved": "3.3.3",
+        "contentHash": "FtJSNzekCwoVTJPLZwK2In1cr9PhIo6WAX/RSM7BL/jQERgnO0111+hdcN14pcog9BByJmqehBrMbjjKpHZULg==",
         "dependencies": {
-          "FSharp.Core": "4.2.3"
+          "FSharp.Core": "5.0.2"
         }
       },
       "Microsoft.NET.Test.Sdk": {
@@ -126,8 +127,8 @@
       },
       "Mono.Cecil": {
         "type": "Transitive",
-        "resolved": "0.11.4",
-        "contentHash": "IC1h5g0NeJGHIUgzM1P82ld57knhP0IcQfrYITDPXlNpMYGUrsG5TxuaWTjaeqDNQMBDNZkB8L0rBnwsY6JHuQ=="
+        "resolved": "0.11.6",
+        "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -375,7 +376,7 @@
       "fs.gg.governance.tests.common": {
         "type": "Project",
         "dependencies": {
-          "Expecto": "[10.2.3, )",
+          "Expecto": "[11.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",

@@ -2,6 +2,7 @@ module FS.GG.Governance.ReviewRecord.Tests.SensedBoundaryTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.SensedMetadata.Model
 open FS.GG.Governance.ReviewRecord
 open FS.GG.Governance.ReviewRecord.Model

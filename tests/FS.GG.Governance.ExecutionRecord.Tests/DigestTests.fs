@@ -2,6 +2,7 @@ module FS.GG.Governance.ExecutionRecord.Tests.DigestTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.CommandRecord.Model
 open FS.GG.Governance.ExecutionRecord
 open FS.GG.Governance.ExecutionRecord.Tests.Support

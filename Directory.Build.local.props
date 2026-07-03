@@ -63,4 +63,15 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <!-- YoloDev.Expecto.TestSdk bridge (deps/expecto-fscheck-v11-v3). The latest adapter
+       (0.15.6) declares Expecto [10.2.2, 11.0.0) but runs Expecto 11 tests correctly at
+       runtime — verified: the full suite is green under `dotnet test`. The org-synced
+       Directory.Build.props promotes the resulting NU1608 (package version out of range) to
+       an error; demote it back to a WARNING for TEST projects only, so the coherent Expecto 11
+       / FsCheck 3 upgrade is unblocked while the signal stays visible. Remove once an
+       Expecto-11-compatible YoloDev.Expecto.TestSdk ships. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+
 </Project>

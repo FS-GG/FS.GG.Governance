@@ -2,6 +2,7 @@ module FS.GG.Governance.CostBudget.Tests.DeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.FreshnessKey.Model

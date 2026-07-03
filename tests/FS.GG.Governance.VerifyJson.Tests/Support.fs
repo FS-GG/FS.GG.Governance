@@ -5,6 +5,7 @@ open System.IO
 open System.Text.Json
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
@@ -194,8 +195,8 @@ let genRoute: Gen<RouteResult> =
     gen {
         let! nGates = Gen.choose (0, 4)
         let! nFindings = Gen.choose (0, 4)
-        let! gates = Gen.collect genSelectedGate [ 1..nGates ]
-        let! findings = Gen.collect genFinding [ 1..nFindings ]
+        let! gates = Gen.collectToList genSelectedGate [ 1..nGates ]
+        let! findings = Gen.collectToList genFinding [ 1..nFindings ]
         return mkRoute gates findings
     }
 

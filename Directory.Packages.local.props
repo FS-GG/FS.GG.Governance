@@ -45,9 +45,9 @@
        VSTest adapters that let `dotnet test` drive the Expecto runner. None of
        these reach the kernel assembly. -->
   <ItemGroup>
-    <PackageVersion Include="Expecto" Version="10.2.3" />
-    <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
-    <PackageVersion Include="FsCheck" Version="2.16.6" />
+    <PackageVersion Include="Expecto" Version="11.1.0" />
+    <PackageVersion Include="Expecto.FsCheck" Version="11.1.0" />
+    <PackageVersion Include="FsCheck" Version="3.3.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
   </ItemGroup>
