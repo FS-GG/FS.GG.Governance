@@ -76,7 +76,7 @@ existing `build.fsx`).
 - [X] T007 [P] [US2] Rendered-job inspection: `grep -n -A20 'full-test-suite:' .github/workflows/gate.yml`
   shows exact name, `timeout-minutes: 30`, the cache block, locked restore, and the `build.fsx test`
   invocation — not a raw unbounded `dotnet test`. (FR-004/FR-005/SC-003)
-- [ ] T008 [US2] Cache-warm (observed on CI after the PR opens): the job's second run with unchanged
+- [X] T008 [US2] Cache-warm (observed on CI after the PR opens): the job's second run with unchanged
   lockfiles reports a NuGet cache hit / faster restore in the "Set up .NET" step. (FR-006/SC-005)
 
 ---
