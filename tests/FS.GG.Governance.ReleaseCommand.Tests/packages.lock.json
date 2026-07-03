@@ -500,6 +500,7 @@
       "fs.gg.governance.releasejson": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.AttestationJson": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FS.GG.Governance.JsonTokens": "[0.1.0, )",
