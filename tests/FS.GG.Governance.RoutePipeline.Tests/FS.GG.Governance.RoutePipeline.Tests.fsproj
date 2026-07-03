@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 100 (M-ARCH-2): the surface-drift + dependency-hygiene invariants for the route pipeline. These
+       RE-HOMED from FS.GG.Governance.RouteCommand.Tests when Loop/Interpreter moved into the RoutePipeline
+       library: this project now owns the public Loop+Interpreter surface and the real dependency closure,
+       so the two invariants ("surface is exactly Loop+Interpreter" and "references only the eight cores +
+       BCL + FSharp.Core, no kernel/host/cli/adapters-except-SddHandoff/Spectre") live here now. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.RoutePipeline/FS.GG.Governance.RoutePipeline.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>

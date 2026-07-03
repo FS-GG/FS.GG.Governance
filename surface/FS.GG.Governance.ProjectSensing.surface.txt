@@ -1,0 +1,222 @@
+TYPE FS.GG.Governance.Cli.Domain
+  [Method] Boolean Equals(FS.GG.Governance.Cli.Domain)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.Domain, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDesignSystemDomain()
+  [Method] Boolean get_IsSpecKitDomain()
+  [Method] FS.GG.Governance.Cli.Domain get_DesignSystemDomain()
+  [Method] FS.GG.Governance.Cli.Domain get_SpecKitDomain()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.Domain)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Cli.Domain+Tags
+  [Property] Boolean IsDesignSystemDomain
+  [Property] Boolean IsSpecKitDomain
+  [Property] FS.GG.Governance.Cli.Domain DesignSystemDomain
+  [Property] FS.GG.Governance.Cli.Domain SpecKitDomain
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Cli.Domain+Tags
+  [Field] Int32 DesignSystemDomain
+  [Field] Int32 SpecKitDomain
+TYPE FS.GG.Governance.Cli.EvidenceNodeReport
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.Freshness], System.String)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.EvidenceNodeReport)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.EvidenceNodeReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.EvidenceNodeReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState] get_Declared()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState] get_Effective()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.Freshness] get_Freshness()
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Method] System.String get_Source()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState] Declared
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.EvidenceState] Effective
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.Freshness] Freshness
+  [Property] System.String Id
+  [Property] System.String Source
+TYPE FS.GG.Governance.Cli.ProjectChange
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectChange)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectChange, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ProjectChange)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Scope()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange] get_DesignSystem()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange] get_SpecKit()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Scope
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange] DesignSystem
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange] SpecKit
+TYPE FS.GG.Governance.Cli.ProjectEvidenceReport
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Cli.EvidenceNodeReport], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure])
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectEvidenceReport)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectEvidenceReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ProjectEvidenceReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Cli.EvidenceNodeReport] get_Nodes()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure] get_Disclosures()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure] get_Failures()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] get_Dependencies()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Cli.EvidenceNodeReport] Nodes
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Disclosure] Disclosures
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Host.Failure] Failures
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Dependencies
+TYPE FS.GG.Governance.Cli.ProjectFact
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectFact)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectFact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsArtifactContentFact()
+  [Method] Boolean get_IsDesignSystemProjectFact()
+  [Method] Boolean get_IsEvidenceDependencyFact()
+  [Method] Boolean get_IsEvidenceStateFact()
+  [Method] Boolean get_IsFreshnessFact()
+  [Method] Boolean get_IsGovernanceFact()
+  [Method] Boolean get_IsSpecKitProjectFact()
+  [Method] FS.GG.Governance.Cli.ProjectFact NewArtifactContentFact(FS.GG.Governance.Kernel.ArtifactRef, System.String, System.String)
+  [Method] FS.GG.Governance.Cli.ProjectFact NewDesignSystemProjectFact(FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact)
+  [Method] FS.GG.Governance.Cli.ProjectFact NewEvidenceDependencyFact(System.String, System.String)
+  [Method] FS.GG.Governance.Cli.ProjectFact NewEvidenceStateFact(System.String, FS.GG.Governance.Kernel.EvidenceState)
+  [Method] FS.GG.Governance.Cli.ProjectFact NewFreshnessFact(System.String, Int64, Microsoft.FSharp.Collections.FSharpList`1[System.Int64])
+  [Method] FS.GG.Governance.Cli.ProjectFact NewGovernanceFact(FS.GG.Governance.Kernel.RuleOutcome)
+  [Method] FS.GG.Governance.Cli.ProjectFact NewSpecKitProjectFact(FS.GG.Governance.Adapters.SpecKit.SpecKitFact)
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ProjectFact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+ArtifactContentFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+DesignSystemProjectFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+EvidenceDependencyFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+EvidenceStateFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+FreshnessFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+GovernanceFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+SpecKitProjectFact
+  [NestedType] FS.GG.Governance.Cli.ProjectFact+Tags
+  [Property] Boolean IsArtifactContentFact
+  [Property] Boolean IsDesignSystemProjectFact
+  [Property] Boolean IsEvidenceDependencyFact
+  [Property] Boolean IsEvidenceStateFact
+  [Property] Boolean IsFreshnessFact
+  [Property] Boolean IsGovernanceFact
+  [Property] Boolean IsSpecKitProjectFact
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Cli.ProjectFact+ArtifactContentFact
+  [Method] FS.GG.Governance.Kernel.ArtifactRef get_artifact()
+  [Method] System.String get_content()
+  [Method] System.String get_hash()
+  [Property] FS.GG.Governance.Kernel.ArtifactRef artifact
+  [Property] System.String content
+  [Property] System.String hash
+TYPE FS.GG.Governance.Cli.ProjectFact+DesignSystemProjectFact
+  [Method] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact get_Item()
+  [Property] FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact Item
+TYPE FS.GG.Governance.Cli.ProjectFact+EvidenceDependencyFact
+  [Method] System.String get_dependency()
+  [Method] System.String get_dependent()
+  [Property] System.String dependency
+  [Property] System.String dependent
+TYPE FS.GG.Governance.Cli.ProjectFact+EvidenceStateFact
+  [Method] FS.GG.Governance.Kernel.EvidenceState get_state()
+  [Method] System.String get_node()
+  [Property] FS.GG.Governance.Kernel.EvidenceState state
+  [Property] System.String node
+TYPE FS.GG.Governance.Cli.ProjectFact+FreshnessFact
+  [Method] Int64 get_recorded()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Int64] get_covered()
+  [Method] System.String get_node()
+  [Property] Int64 recorded
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Int64] covered
+  [Property] System.String node
+TYPE FS.GG.Governance.Cli.ProjectFact+GovernanceFact
+  [Method] FS.GG.Governance.Kernel.RuleOutcome get_Item()
+  [Property] FS.GG.Governance.Kernel.RuleOutcome Item
+TYPE FS.GG.Governance.Cli.ProjectFact+SpecKitProjectFact
+  [Method] FS.GG.Governance.Adapters.SpecKit.SpecKitFact get_Item()
+  [Property] FS.GG.Governance.Adapters.SpecKit.SpecKitFact Item
+TYPE FS.GG.Governance.Cli.ProjectFact+Tags
+  [Field] Int32 ArtifactContentFact
+  [Field] Int32 DesignSystemProjectFact
+  [Field] Int32 EvidenceDependencyFact
+  [Field] Int32 EvidenceStateFact
+  [Field] Int32 FreshnessFact
+  [Field] Int32 GovernanceFact
+  [Field] Int32 SpecKitProjectFact
+TYPE FS.GG.Governance.Cli.ProjectModule
+  [Method] FS.GG.Governance.Adapters.Spi.Composed`2[FS.GG.Governance.Cli.ProjectFact,FS.GG.Governance.Cli.ProjectChange] compose(FS.GG.Governance.Cli.ProjectOptions)
+  [Method] FS.GG.Governance.Cli.ProjectEvidenceReport evidenceReport(FS.GG.Governance.Host.Model`1[FS.GG.Governance.Cli.ProjectFact])
+  [Method] FS.GG.Governance.Cli.ProjectFact senseArtifact(FS.GG.Governance.Kernel.ArtifactRef, System.String)
+  [Method] FS.GG.Governance.Host.LoopConfig`2[FS.GG.Governance.Cli.ProjectChange,FS.GG.Governance.Cli.ProjectFact] toLoopConfig(FS.GG.Governance.Cli.ProjectOptions, FS.GG.Governance.Kernel.RunMode, FS.GG.Governance.Cli.ProjectSnapshot)
+  [Method] FS.GG.Governance.Kernel.Bridge`1[FS.GG.Governance.Cli.ProjectFact] bridge(FS.GG.Governance.Kernel.JudgeId)
+  [Method] FS.GG.Governance.Kernel.FactId identify(FS.GG.Governance.Cli.ProjectFact)
+  [Method] FS.GG.Governance.Kernel.JudgeId get_defaultJudge()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.DesignSystem.DesignSystemFact] |DesignSystemProject|_|(FS.GG.Governance.Cli.ProjectFact)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SpecKit.SpecKitFact] |SpecKitProject|_|(FS.GG.Governance.Cli.ProjectFact)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] readContent(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[FS.GG.Governance.Cli.ProjectFact]], FS.GG.Governance.Kernel.ArtifactRef)
+  [Property] FS.GG.Governance.Kernel.JudgeId defaultJudge
+TYPE FS.GG.Governance.Cli.ProjectOptions
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain], FS.GG.Governance.Kernel.JudgeId, FS.GG.Governance.Adapters.SpecKit.ConstitutionDial)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectOptions)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectOptions, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Adapters.SpecKit.ConstitutionDial get_SpecKitDial()
+  [Method] FS.GG.Governance.Kernel.JudgeId get_Judge()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ProjectOptions)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain] get_Domains()
+  [Method] System.String ToString()
+  [Property] FS.GG.Governance.Adapters.SpecKit.ConstitutionDial SpecKitDial
+  [Property] FS.GG.Governance.Kernel.JudgeId Judge
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain] Domains
+TYPE FS.GG.Governance.Cli.ProjectSnapshot
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[FS.GG.Governance.Cli.ProjectFact]], FS.GG.Governance.Cli.ProjectChange, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ProfileId])
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectSnapshot)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectSnapshot, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FS.GG.Governance.Cli.ProjectChange get_Change()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ProjectSnapshot)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] get_Handoffs()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] get_Artifacts()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[FS.GG.Governance.Cli.ProjectFact]] get_Supplied()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ProfileId] get_DefaultProfile()
+  [Method] System.String ToString()
+  [Method] System.String get_Root()
+  [Property] FS.GG.Governance.Cli.ProjectChange Change
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] Handoffs
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] Artifacts
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[FS.GG.Governance.Cli.ProjectFact]] Supplied
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ProfileId] DefaultProfile
+  [Property] System.String Root

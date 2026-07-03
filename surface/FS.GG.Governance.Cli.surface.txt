@@ -1,12 +1,4 @@
 namespace FS.GG.Governance.Cli
-type Domain
-type ProjectFact
-type ProjectChange
-type ProjectSnapshot
-type ProjectOptions
-type EvidenceNodeReport
-type ProjectEvidenceReport
-module Project
 type CommandKind
 type OutputFormat
 type ReviewBudget

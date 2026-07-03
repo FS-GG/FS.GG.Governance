@@ -319,6 +319,33 @@
           "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.routepipeline": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
+          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
+          "FS.GG.Governance.CommandHost": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.EvidenceCapture": "[0.1.0, )",
+          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
+          "FS.GG.Governance.EvidenceReuseStore": "[0.1.0, )",
+          "FS.GG.Governance.Findings": "[0.1.0, )",
+          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
+          "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
+          "FS.GG.Governance.FreshnessSensing": "[1.0.0, )",
+          "FS.GG.Governance.GateExecution": "[0.1.0, )",
+          "FS.GG.Governance.GateRun": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.GatesJson": "[0.1.0, )",
+          "FS.GG.Governance.HumanRender": "[0.1.0, )",
+          "FS.GG.Governance.HumanText": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )",
+          "FS.GG.Governance.RouteJson": "[0.1.0, )",
+          "FS.GG.Governance.Routing": "[0.1.0, )",
+          "FS.GG.Governance.Snapshot": "[0.1.0, )",
+          "FSharp.Core": "[10.1.301, )"
+        }
+      },
       "fs.gg.governance.routing": {
         "type": "Project",
         "dependencies": {

@@ -39,6 +39,14 @@
           "FS.GG.Governance.Provenance": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.attestationjson": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Attestation": "[0.1.0, )",
+          "FS.GG.Governance.JsonText": "[0.1.0, )",
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.cacheeligibility": {
         "type": "Project",
         "dependencies": {
@@ -443,6 +451,7 @@
       "fs.gg.governance.verifyjson": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.AttestationJson": "[0.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CurrencyEnforcement": "[0.1.0, )",
           "FS.GG.Governance.Enforcement": "[0.1.0, )",

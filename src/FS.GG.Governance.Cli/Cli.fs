@@ -118,9 +118,9 @@ module Cli =
     // other gate. The handoff-gate blocking decision flows through it (no handoff-specific branch).
     module Enforcement = FS.GG.Governance.Enforcement.Enforcement
 
-    let defaultJudge =
-        { ModelId = "fsgg-governance-default"
-          Version = "2026-06" }
+    // 100 (M-ARCH-2): `defaultJudge` moved to the Project module (ProjectSensing library); referenced
+    // as `Project.defaultJudge` below. Kept out of the Cli exe so EvidenceCommand can consume it without
+    // referencing this executable.
 
     let emptyBudget =
         { Requested = []
@@ -209,8 +209,8 @@ module Cli =
               ReviewBudget = CacheOnly
               ReviewStore = None
               OutputPath = None
-              JudgeModel = defaultJudge.ModelId
-              JudgeVersion = defaultJudge.Version
+              JudgeModel = Project.defaultJudge.ModelId
+              JudgeVersion = Project.defaultJudge.Version
               ExplicitPlain = false
               Errors = [] }
 

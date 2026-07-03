@@ -17,9 +17,9 @@
 
        It reuses VERBATIM, via project references: F053 `ReleaseRules` (`evaluateRelease`), F054
        `ReleaseFactsSensing` (`senseRelease`/`realPort`), F014 `Config` (`Loader.FileReader`/
-       `fileSystemReader`, `SurfaceId`/`Severity`/`Maturity`), and the new `ReleaseJson` projection. It
-       adds YamlDotNet (already pinned, already used by F014 `Config`) for the row-local release.yml
-       parse — NO new package. The only new impure primitives are a `System.IO` write (the
+       `fileSystemReader`, `SurfaceId`/`Severity`/`Maturity`), and the new `ReleaseJson` projection. The
+       release.yml parse is delegated to `ReleaseDeclaration` (the YAML owner) via project reference —
+       this row declares NO direct YamlDotNet reference (100/M-ARCH-1). The only new impure primitives are a `System.IO` write (the
        ArtifactWriter port) and `Environment.Exit` at the Program edge — both BCL. Reaches NO network.
 
        IsPackable=false this slice: no central `fsgg` dispatcher exists or is introduced (research D1),
@@ -40,7 +40,6 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
-    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
 
   <ItemGroup>

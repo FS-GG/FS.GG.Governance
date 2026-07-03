@@ -9,16 +9,12 @@ open FS.GG.Governance.Cli.Tests.ParserTests.Support
 let baseline =
     Path.Combine(repoRoot, "surface", "FS.GG.Governance.Cli.surface.txt")
 
+// 100 (M-ARCH-2): the F12 `Project` composition root + its coproduct types (Domain / ProjectFact /
+// ProjectChange / ProjectSnapshot / ProjectOptions / EvidenceNodeReport / ProjectEvidenceReport) moved
+// to the FS.GG.Governance.ProjectSensing library (still the FS.GG.Governance.Cli namespace); their
+// surface is now guarded by FS.GG.Governance.ProjectSensing.Tests. This list is the Cli EXECUTABLE surface.
 let generatedSurface =
     [ "namespace FS.GG.Governance.Cli"
-      "type Domain"
-      "type ProjectFact"
-      "type ProjectChange"
-      "type ProjectSnapshot"
-      "type ProjectOptions"
-      "type EvidenceNodeReport"
-      "type ProjectEvidenceReport"
-      "module Project"
       "type CommandKind"
       "type OutputFormat"
       "type ReviewBudget"

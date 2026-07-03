@@ -142,10 +142,6 @@ type CliPorts =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Cli =
 
-    /// Default judge identity used when no explicit `--judge-model`/`--judge-version` is
-    /// supplied. The identity is folded into F04 agent-review cache keys.
-    val defaultJudge: JudgeId
-
     /// Parse argv into a normalized run request. Performs no filesystem I/O.
     val parse: argv: string list -> Result<RunRequest, ParseError list>
 

@@ -358,7 +358,7 @@ module Interpreter =
 
     let optionsFor () : ProjectOptions =
         { Domains = Set.ofList [ SpecKitDomain; DesignSystemDomain ]
-          Judge = Cli.defaultJudge
+          Judge = Project.defaultJudge
           SpecKitDial = Catalog.defaultDial }
 
     let artifactsFor () =

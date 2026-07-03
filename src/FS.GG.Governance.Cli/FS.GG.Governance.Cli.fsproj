@@ -30,8 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Project.fsi" />
-    <Compile Include="Project.fs" />
     <Compile Include="Cli.fsi" />
     <Compile Include="Cli.fs" />
     <Compile Include="CliRender.fsi" />
@@ -48,6 +46,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 100 (M-ARCH-2): the F12 Project composition root moved to this internal library; Cli references
+         it here and its `Project.*` / ProjectFact / defaultJudge uses (same namespace) are unchanged. -->
+    <ProjectReference Include="../FS.GG.Governance.ProjectSensing/FS.GG.Governance.ProjectSensing.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
@@ -59,9 +60,11 @@
     <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.HumanRender/FS.GG.Governance.HumanRender.fsproj" />
     <!-- F27 wiring (063, US3/US4): the dispatcher COMPOSES a real F19 RouteResult by reusing the
-         RouteCommand pipeline (Interpreter.run + Loop.humanView) over the repo root, then projects it to a
-         ReportView for the read-only watch/tui navigators. No JSON contract is touched. -->
-    <ProjectReference Include="../FS.GG.Governance.RouteCommand/FS.GG.Governance.RouteCommand.fsproj" />
+         route pipeline (FS.GG.Governance.RouteCommand.Interpreter.run + Loop.humanView) over the repo root,
+         then projects it to a ReportView for the read-only watch/tui navigators. No JSON contract is touched.
+         100 (M-ARCH-2): references RoutePipeline (the extracted library) instead of the RouteCommand exe, so
+         no executable references another executable. The fully-qualified Interpreter/Loop uses are unchanged. -->
+    <ProjectReference Include="../FS.GG.Governance.RoutePipeline/FS.GG.Governance.RoutePipeline.fsproj" />
   </ItemGroup>
 
 </Project>

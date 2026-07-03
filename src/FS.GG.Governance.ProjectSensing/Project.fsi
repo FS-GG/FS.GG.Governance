@@ -76,6 +76,11 @@ type ProjectEvidenceReport =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Project =
 
+    /// Default judge identity used when no explicit `--judge-model`/`--judge-version` is supplied.
+    /// The identity is folded into F04 agent-review cache keys. Relocated here from the `Cli` module
+    /// (100/M-ARCH-2) so both the CLI and the EvidenceCommand tool consume it without an exe→exe edge.
+    val defaultJudge: JudgeId
+
     /// Prism used by F09 lift: recover a Spec Kit fact from the project coproduct.
     val (|SpecKitProject|_|): fact: ProjectFact -> SpecKitFact option
 

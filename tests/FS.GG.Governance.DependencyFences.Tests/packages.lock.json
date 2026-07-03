@@ -12,25 +12,6 @@
           "Mono.Cecil": "[0.11.4, 1.0.0)"
         }
       },
-      "Expecto.FsCheck": {
-        "type": "Direct",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "97ZwoxLIvxyG0fU806nvFbW2uMQFTqi2wpCfPfKasySfIpdf41zERtRiUSZtp1q8fY3uK9mN42dmJsUcL2IrcA==",
-        "dependencies": {
-          "Expecto": "10.2.3",
-          "FsCheck": "[2.16.5, 3.0.0)"
-        }
-      },
-      "FsCheck": {
-        "type": "Direct",
-        "requested": "[2.16.6, )",
-        "resolved": "2.16.6",
-        "contentHash": "8yQlt7HgoigIXIoe7ZouNh551rypxp4WtQnqBlpB9a7gf4IkpdMSnEzsnJS/gFmeNtIf9hEJ37celeCq/6FuHA==",
-        "dependencies": {
-          "FSharp.Core": "4.2.3"
-        }
-      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[18.6.0, )",
@@ -134,26 +115,6 @@
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
       },
-      "Spectre.Console.Ansi": {
-        "type": "Transitive",
-        "resolved": "0.57.1",
-        "contentHash": "IFlXdGXOGD4XCK5ybZsXgQo7PE0ZE/pt9YFFWo2cECTipS8DrViLFazx+K00/A+fY1PlHYt1Vqwrjfod4EEckw=="
-      },
-      "fs.gg.governance.adapters.sddhandoff": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Kernel": "[0.1.1, )",
-          "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.agentreviewkey": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )"
-        }
-      },
       "fs.gg.governance.attestation": {
         "type": "Project",
         "dependencies": {
@@ -165,52 +126,11 @@
           "FS.GG.Governance.Provenance": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.attestationjson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Attestation": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.auditjson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CurrencyEnforcement": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
-          "FS.GG.Governance.RefreshJson": "[0.1.0, )",
-          "FS.GG.Governance.RuleIdentity": "[0.1.0, )",
-          "FS.GG.Governance.Ship": "[0.1.0, )"
-        }
-      },
       "fs.gg.governance.cacheeligibility": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.commandhost": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CommandKind": "[0.1.0, )",
-          "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.CostBudget": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuseStore": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
-          "FS.GG.Governance.GateExecution": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Provenance": "[0.1.0, )",
-          "FS.GG.Governance.Snapshot": "[0.1.0, )"
         }
       },
       "fs.gg.governance.commandkind": {
@@ -230,50 +150,6 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Contracts": "[1.0.1, )",
-          "YamlDotNet": "[16.3.0, )"
-        }
-      },
-      "fs.gg.governance.costbudget": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.AgentReviewKey": "[0.1.0, )",
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.Gates": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.costbudgetjson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CostBudget": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.JsonWriters": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.currencyenforcement": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.RefreshJson": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.currencysensing": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.CurrencyEnforcement": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.RefreshJson": "[0.1.0, )",
           "YamlDotNet": "[16.3.0, )"
         }
       },
@@ -361,14 +237,6 @@
           "FS.GG.Governance.Config": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.humanrender": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.HumanText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )",
-          "Spectre.Console": "[0.57.1, )"
-        }
-      },
       "fs.gg.governance.humantext": {
         "type": "Project",
         "dependencies": {
@@ -386,30 +254,6 @@
         }
       },
       "fs.gg.governance.jsontext": {
-        "type": "Project"
-      },
-      "fs.gg.governance.jsontokens": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.Ship": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.jsonwriters": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.kernel": {
         "type": "Project"
       },
       "fs.gg.governance.packevidence": {
@@ -430,83 +274,12 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.provenancejson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CommandKind": "[0.1.0, )",
-          "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.Provenance": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.refreshjson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )"
-        }
-      },
-      "fs.gg.governance.releasecommand": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Attestation": "[0.1.0, )",
-          "FS.GG.Governance.AttestationJson": "[0.1.0, )",
-          "FS.GG.Governance.CommandHost": "[0.1.0, )",
-          "FS.GG.Governance.CommandKind": "[0.1.0, )",
-          "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.CostBudget": "[0.1.0, )",
-          "FS.GG.Governance.ExecutionRecord": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.GateExecution": "[0.1.0, )",
-          "FS.GG.Governance.PackEvidence": "[0.1.0, )",
-          "FS.GG.Governance.Provenance": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseDeclaration": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseJson": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseReport": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
-          "FS.GG.Governance.Snapshot": "[0.1.0, )",
-          "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )"
-        }
-      },
-      "fs.gg.governance.releasedeclaration": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.GateExecution": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
-          "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )",
-          "YamlDotNet": "[16.3.0, )"
-        }
-      },
       "fs.gg.governance.releasefactssensing": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.PackEvidence": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.releasejson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.AttestationJson": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseReport": "[0.1.0, )",
-          "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )"
         }
       },
       "fs.gg.governance.releasereport": {
@@ -548,49 +321,11 @@
           "FS.GG.Governance.Config": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.ruleidentity": {
-        "type": "Project"
-      },
       "fs.gg.governance.ship": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.shipcommand": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
-          "FS.GG.Governance.AuditJson": "[0.1.0, )",
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CommandHost": "[0.1.0, )",
-          "FS.GG.Governance.CommandKind": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.CostBudget": "[0.1.0, )",
-          "FS.GG.Governance.CostBudgetJson": "[0.1.0, )",
-          "FS.GG.Governance.CurrencyEnforcement": "[0.1.0, )",
-          "FS.GG.Governance.CurrencySensing": "[0.1.0, )",
-          "FS.GG.Governance.Enforcement": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceCapture": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
-          "FS.GG.Governance.EvidenceReuseStore": "[0.1.0, )",
-          "FS.GG.Governance.Findings": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessSensing": "[1.0.0, )",
-          "FS.GG.Governance.GateExecution": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.HumanRender": "[0.1.0, )",
-          "FS.GG.Governance.HumanText": "[0.1.0, )",
-          "FS.GG.Governance.Provenance": "[0.1.0, )",
-          "FS.GG.Governance.ProvenanceJson": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )",
-          "FS.GG.Governance.Routing": "[0.1.0, )",
-          "FS.GG.Governance.Ship": "[0.1.0, )",
-          "FS.GG.Governance.Snapshot": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )"
         }
       },
       "fs.gg.governance.snapshot": {
@@ -623,13 +358,6 @@
           "FS.GG.Governance.Snapshot": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.validationmatrix": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.CostBudget": "[0.1.0, )"
-        }
-      },
       "FS.GG.Contracts": {
         "type": "CentralTransitive",
         "requested": "[1.0.1, )",
@@ -644,15 +372,6 @@
         "requested": "[10.1.301, )",
         "resolved": "10.1.301",
         "contentHash": "excLf2zM/qUB3WhRUfI0xvOOaPwcRAEdYT/BXe9eiTKySnWVuIKMQTf5+6ETy5nsb1dpLp1s2j2yAM/XcRgFMg=="
-      },
-      "Spectre.Console": {
-        "type": "CentralTransitive",
-        "requested": "[0.57.1, )",
-        "resolved": "0.57.1",
-        "contentHash": "h/B0CJLR5Ba8yq+iVjjZR9JXMS+8a1syHmHhyZ6w5m8rHDWLGOlaKAhzJanHJL62rZxynLeVOx+43MKvskJ1lA==",
-        "dependencies": {
-          "Spectre.Console.Ansi": "0.57.1"
-        }
       },
       "YamlDotNet": {
         "type": "CentralTransitive",
