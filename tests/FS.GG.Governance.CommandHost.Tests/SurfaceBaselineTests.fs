@@ -10,7 +10,7 @@ open FS.GG.Governance.CommandHost
 
 // Touch a public member to force the library assembly to load, then locate it by name.
 let private commandHostAsm =
-    CommandHost.exitCode CommandHost.Success |> ignore
+    CommandHost.under "." "x" |> ignore
 
     System.AppDomain.CurrentDomain.GetAssemblies()
     |> Array.find (fun a ->

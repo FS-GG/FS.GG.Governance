@@ -32,18 +32,9 @@ open FS.GG.Governance.Provenance.Model        // BuilderIdentity
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CommandHost =
 
-    // ---- exit classification (research D2, FR-005) ----
-
-    /// Canonical process-level exit classification (superset, with the optional blocked path).
-    type ExitDecision =
-        | Success
-        | Blocked
-        | UsageError'
-        | InputUnavailable
-        | ToolError
-
-    /// Total exit-code mapping: Success->0, Blocked->1, UsageError'->2, InputUnavailable->3, ToolError->4.
-    val exitCode: decision: ExitDecision -> int
+    // ---- exit classification: REMOVED (#49, F2) ----
+    // The canonical `ExitDecision`/`exitCode` were dead (zero product consumers) and no single host matched
+    // the superset shape (some hosts carry `Blocked`, some don't). Deleted per issue #49.
 
     // ---- gate classification (research D3, FR-005) ----
 
