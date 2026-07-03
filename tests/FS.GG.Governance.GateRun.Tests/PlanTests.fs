@@ -2,6 +2,7 @@ module FS.GG.Governance.GateRun.Tests.PlanTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.CommandRecord.Model
 open FS.GG.Governance.EvidenceReuse.Model

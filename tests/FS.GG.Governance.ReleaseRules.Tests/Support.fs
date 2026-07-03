@@ -4,6 +4,7 @@ open System
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.ReleaseRules.Model
@@ -87,7 +88,7 @@ let private genRule (i: int) : Gen<ReleaseRule> =
 let genRules: Gen<ReleaseRule list> =
     gen {
         let! n = Gen.choose (0, 6)
-        return! Gen.collect genRule [ 1..n ]
+        return! Gen.collectToList genRule [ 1..n ]
     }
 
 /// A real `ReleaseFacts`: a random subset of kinds each mapped to a random `FactState` (absent kinds
@@ -102,7 +103,7 @@ let genFacts: Gen<ReleaseFacts> =
                     let! state = elements allFactStates
                     return if include' then Some(k, state) else None
                 })
-            |> Gen.sequence
+            |> Gen.sequenceToList
 
         return { States = pairs |> List.choose id |> Map.ofList }
     }

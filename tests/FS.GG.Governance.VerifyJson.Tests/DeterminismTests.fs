@@ -2,6 +2,7 @@ module FS.GG.Governance.VerifyJson.Tests.DeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.VerifyJson
 open FS.GG.Governance.VerifyJson.Tests.Support

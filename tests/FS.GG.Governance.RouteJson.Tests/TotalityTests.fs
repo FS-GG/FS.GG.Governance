@@ -3,6 +3,7 @@ module FS.GG.Governance.RouteJson.Tests.TotalityTests
 open System.Text.Json
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Route.Model
 open FS.GG.Governance.RouteJson

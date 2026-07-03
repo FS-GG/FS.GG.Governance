@@ -3,6 +3,7 @@ module FS.GG.Governance.PromptIsolation.Tests.RenderFenceTests
 open System.Text
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.AgentReviewKey.Model
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.PromptIsolation

@@ -5,6 +5,7 @@ open System.IO
 open System.Text
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.CommandRecord.Model
@@ -202,7 +203,7 @@ let differentInputs: FreshnessInputs = { inputs "build:tests" with Head = Revisi
 // ── (5) FsCheck generators (real values, no mocks) ──
 
 let private genBytes: Gen<byte[]> =
-    Gen.sized (fun n -> Gen.listOfLength (max 0 (n % 64)) Arb.generate<byte> |> Gen.map List.toArray)
+    Gen.sized (fun n -> Gen.listOfLength (max 0 (n % 64)) (ArbMap.defaults |> ArbMap.generate<byte>) |> Gen.map List.toArray)
 
 let private shortStringGen: Gen<string> =
     Gen.elements [ ""; "a"; "/bin/echo"; "/bin/sh"; "alpha"; "beta"; "/tmp"; "héllo"; "x:y=z" ]

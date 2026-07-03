@@ -2,6 +2,7 @@ module FS.GG.Governance.Calibration.Tests.NecessaryNotSufficientTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Calibration
 open FS.GG.Governance.Calibration.Model
 open FS.GG.Governance.Calibration.Tests.Support

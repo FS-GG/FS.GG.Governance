@@ -49,6 +49,6 @@ let tests =
           testPropertyWithConfig fscheckConfig "shuffled/duplicated artifacts preserve the key (set semantics)"
           <| fun (inputs: AgentReviewInputs) ->
               let permGen = samePermutationOf inputs.ReviewedArtifacts
-              let permuted = FsCheck.Gen.sample 0 1 permGen |> List.head
+              let permuted = FsCheck.FSharp.Gen.sampleWithSize 0 1 permGen |> Seq.head
               let other = { inputs with ReviewedArtifacts = permuted }
               AgentReviewKey.compute inputs = AgentReviewKey.compute other ]

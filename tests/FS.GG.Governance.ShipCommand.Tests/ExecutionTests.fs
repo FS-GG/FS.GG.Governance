@@ -3,6 +3,7 @@ module FS.GG.Governance.ShipCommand.Tests.ExecutionTests
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model

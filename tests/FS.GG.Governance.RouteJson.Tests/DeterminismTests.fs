@@ -3,6 +3,7 @@ module FS.GG.Governance.RouteJson.Tests.DeterminismTests
 open System
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Route.Model

@@ -2,6 +2,7 @@ module FS.GG.Governance.PromptIsolation.Tests.BoundedCaptureTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.PromptIsolation.Model
 open FS.GG.Governance.PromptIsolation.Tests.Support
