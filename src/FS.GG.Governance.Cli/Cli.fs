@@ -6,39 +6,16 @@ open FS.GG.Governance.Kernel
 open FS.GG.Governance.Host
 open FS.GG.Governance.Adapters.SpecKit
 
-type CommandKind =
-    | RouteCommand
-    | ExplainCommand
-    | ContractCommand
-    | EvidenceCommand
-    | WatchCommand
-    | TuiCommand
-
-type OutputFormat =
-    | Text
-    | Json
-
-type ReviewBudget =
-    | CacheOnly
-    | FreshReviews of count: int
-
-type RunRequest =
-    { Root: string
-      Command: CommandKind
-      Mode: RunMode
-      Format: OutputFormat
-      Scope: string list
-      Domains: Set<Domain>
-      ReviewBudget: ReviewBudget
-      ReviewStore: string option
-      OutputPath: string option
-      Judge: JudgeId
-      ExplicitPlain: bool }
+// 100 (M-ARCH-2): CommandKind/OutputFormat/ReviewBudget/RunRequest moved to the ProjectSensing
+// library (Request.fs, same FS.GG.Governance.Cli namespace) so the ArtifactReading sensing edge can
+// live beside them in a library and be reused by EvidenceCommand without referencing this exe. Every
+// reference below is unchanged.
 
 type ParseError =
     | MissingCommand
     | UnknownCommand of string
     | UnknownOption of string
+    | UnexpectedArgument of string
     | MissingOptionValue of string
     | InvalidMode of string
     | InvalidFormat of string
@@ -193,8 +170,10 @@ module Cli =
 
     let requireValue option rest onValue (acc: ParseAcc) =
         match rest with
-        | [] -> addError (MissingOptionValue option) acc, []
-        | value :: tail -> onValue value acc, tail
+        // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — treat as missing rather than swallowing
+        // the following flag as this option's value.
+        | value :: tail when not ((value: string).StartsWith "--") -> onValue value acc, tail
+        | _ -> addError (MissingOptionValue option) acc, rest
 
     let isInvalidRoot (value: string) =
         String.IsNullOrWhiteSpace value || value.IndexOf('\u0000') >= 0
@@ -311,7 +290,7 @@ module Cli =
                 loop acc tail
             | option :: tail when option.StartsWith("--", StringComparison.Ordinal) ->
                 loop (addError (UnknownOption option) acc) tail
-            | extra :: tail -> loop (addError (UnknownOption extra) acc) tail
+            | extra :: tail -> loop (addError (UnexpectedArgument extra) acc) tail
 
         let acc: ParseAcc = loop initial args
 

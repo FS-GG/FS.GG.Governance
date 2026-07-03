@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

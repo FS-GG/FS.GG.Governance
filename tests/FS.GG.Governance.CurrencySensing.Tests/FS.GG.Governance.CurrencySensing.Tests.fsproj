@@ -29,6 +29,8 @@
     <ProjectReference Include="../../src/FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.FreshnessKey/FS.GG.Governance.FreshnessKey.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <!-- 101 (M-CI-3): the shared SurfaceDrift helper for the consolidated surface-drift check. -->
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

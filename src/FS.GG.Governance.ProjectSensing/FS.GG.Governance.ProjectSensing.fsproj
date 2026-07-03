@@ -17,6 +17,12 @@
   <ItemGroup>
     <Compile Include="Project.fsi" />
     <Compile Include="Project.fs" />
+    <!-- 100 (M-ARCH-2): the run-request vocabulary + the ArtifactReading sensing edge, relocated from the
+         Cli exe so EvidenceCommand reuses them (single-source sensing, #49/#70) without an exe→exe ref. -->
+    <Compile Include="Request.fsi" />
+    <Compile Include="Request.fs" />
+    <Compile Include="ArtifactReading.fsi" />
+    <Compile Include="ArtifactReading.fs" />
   </ItemGroup>
 
   <ItemGroup>

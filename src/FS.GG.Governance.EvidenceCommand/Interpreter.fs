@@ -18,6 +18,7 @@ open FS.GG.Governance.Kernel
 open FS.GG.Governance.Adapters.SpecKit
 open FS.GG.Governance.Adapters.DesignSystem
 open FS.GG.Governance.Cli
+open FS.GG.Governance.CommandHost         // 049: shared host edge leaf (writeAtomic)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -28,384 +29,45 @@ module Interpreter =
           Write: string -> string -> Result<unit, string>
           Out: string -> unit }
 
-    // ── F12 project sensing (replicated verbatim from the Cli composition root; same call-sequence) ──
+    // ── project sensing: reuse ArtifactReading (single source; #49 removed the ~325-line copy). 100
+    //    (M-ARCH-2): ArtifactReading + the RunRequest vocabulary now live in the ProjectSensing library
+    //    (same FS.GG.Governance.Cli namespace), so this tool consumes them without referencing the Cli exe. ──
 
-    let fullPath (path: string) = Path.GetFullPath path
-
-    let fact (value: ProjectFact) : FactAssertion<ProjectFact> =
-        { Id = Project.identify value
-          Value = value
-          Provenance = [] }
-
-    let tryReadAllText (path: string) =
-        try
-            if File.Exists path then Ok(File.ReadAllText path) else Error("missing " + path)
-        with ex ->
-            Error ex.Message
-
-    let readJson (path: string) =
-        try
-            if File.Exists path then
-                use doc = JsonDocument.Parse(File.ReadAllText path)
-                Some(doc.RootElement.Clone())
-            else
-                None
-        with _ ->
-            None
-
-    let stringProperty (name: string) (element: JsonElement) =
-        match element.TryGetProperty(name) with
-        | true, value -> value.GetString() |> Option.ofObj
-        | _ -> None
-
-    let activeFeatureDirectory (root: string) =
-        if File.Exists(Path.Combine(root, "tasks.md")) || File.Exists(Path.Combine(root, "spec.md")) then
-            root
-        else
-            let fromFeatureJson =
-                readJson (Path.Combine(root, ".specify", "feature.json"))
-                |> Option.bind (stringProperty "feature_directory")
-                |> Option.map (fun relative -> Path.Combine(root, relative))
-
-            match fromFeatureJson with
-            | Some dir when Directory.Exists dir -> dir
-            | _ ->
-                let specs = Path.Combine(root, "specs")
-
-                if Directory.Exists(Path.Combine(specs, "012-cli")) then
-                    Path.Combine(specs, "012-cli")
-                elif Directory.Exists specs then
-                    Directory.EnumerateDirectories specs |> Seq.sort |> Seq.tryLast |> Option.defaultValue root
-                else
-                    root
-
-    let specKitArtifactPath (root: string) (featureDir: string) (key: string) =
-        match key with
-        | "constitution" -> Path.Combine(root, ".specify", "memory", "constitution.md")
-        | "spec" -> Path.Combine(featureDir, "spec.md")
-        | "plan" -> Path.Combine(featureDir, "plan.md")
-        | "research" -> Path.Combine(featureDir, "research.md")
-        | "data-model" -> Path.Combine(featureDir, "data-model.md")
-        | "contracts" -> Path.Combine(featureDir, "contracts")
-        | "quickstart" -> Path.Combine(featureDir, "quickstart.md")
-        | "tasks" -> Path.Combine(featureDir, "tasks.md")
-        | "task-deps" -> Path.Combine(featureDir, "tasks.deps.yml")
-        | _ -> Path.Combine(featureDir, key)
-
-    let designFileName (key: string) =
-        match key with
-        | "token-document" -> "token-document.json"
-        | "generated-token-surface" -> "generated-token-surface.json"
-        | "rendered-capture" -> "rendered-capture.json"
-        | "interaction-state-spec" -> "interaction-state-spec.json"
-        | "page-pattern-spec" -> "page-pattern-spec.json"
-        | other -> other + ".json"
-
-    let designBase (root: string) =
-        let nested = Path.Combine(root, "design-system")
-        if Directory.Exists nested then nested else root
-
-    let designArtifactPath (root: string) (key: string) =
-        Path.Combine(designBase root, designFileName key)
-
-    let readArtifact (root: string) (artifact: ArtifactRef) =
-        let featureDir = activeFeatureDirectory root
-
-        let path =
-            match artifact.Kind with
-            | "speckit" -> specKitArtifactPath root featureDir artifact.Key
-            | "design" -> designArtifactPath root artifact.Key
-            | _ -> Path.Combine(root, artifact.Kind, artifact.Key)
-
-        try
-            if Directory.Exists path then
-                Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
-                |> Seq.sort
-                |> Seq.map (fun file -> "### " + Path.GetRelativePath(root, file) + "\n" + File.ReadAllText file)
-                |> String.concat "\n"
-                |> Ok
-            elif File.Exists path then
-                Ok(File.ReadAllText path)
-            else
-                Error("missing " + path)
-        with ex ->
-            Error ex.Message
-
-    let phaseFromText (text: string) =
-        match text.Trim().ToLowerInvariant() with
-        | "constitution" -> Phase.Constitution
-        | "specify" -> Phase.Specify
-        | "clarify" -> Phase.Clarify
-        | "plan" -> Phase.Plan
-        | "tasks" -> Phase.Tasks
-        | "analyze" -> Phase.Analyze
-        | "implement" -> Phase.Implement
-        | "merge" -> Phase.Merge
-        | _ -> Phase.Implement
-
-    let phaseFor (root: string) (featureDir: string) =
-        let explicit = Path.Combine(root, ".governance-phase")
-
-        if File.Exists explicit then
-            File.ReadAllText explicit |> phaseFromText
-        else
-            match Path.GetFileName(featureDir) |> Option.ofObj with
-            | Some name when name.Contains("merge", StringComparison.OrdinalIgnoreCase) -> Phase.Merge
-            | _ -> Phase.Implement
-
-    let specKitArtifactOfKey (key: string) =
-        match key with
-        | "constitution" -> SpecKitArtifact.Constitution
-        | "spec" -> SpecKitArtifact.Spec
-        | "plan" -> SpecKitArtifact.Plan
-        | "research" -> SpecKitArtifact.Research
-        | "data-model" -> SpecKitArtifact.DataModel
-        | "contracts" -> SpecKitArtifact.Contracts
-        | "quickstart" -> SpecKitArtifact.Quickstart
-        | "tasks" -> SpecKitArtifact.Tasks
-        | "task-deps" -> SpecKitArtifact.TaskDeps
-        | _ -> SpecKitArtifact.Tasks
-
-    let artifactPresent (root: string) (featureDir: string) (key: string) =
-        let path = specKitArtifactPath root featureDir key
-        File.Exists path || Directory.Exists path
-
-    let taskStateFromMarker (marker: string) =
-        match marker with
-        | "X"
-        | "x" -> Real
-        | "-" -> Skipped
-        | "S"
-        | "s" -> Synthetic
-        | _ -> Pending
-
-    let taskStatesFrom (content: string) =
-        Regex.Matches(content, @"-\s+\[(?<mark>[ XxSs\-])\]\s+(?<id>T\d+)")
-        |> Seq.cast<Match>
-        |> Seq.map (fun m -> m.Groups["id"].Value, taskStateFromMarker m.Groups["mark"].Value)
-        |> Seq.distinct
-        |> Seq.toList
-
-    let taskDependenciesFrom (content: string) =
-        let arrows =
-            Regex.Matches(content, @"(?<a>T\d+)\s*->\s*(?<b>T\d+)")
-            |> Seq.cast<Match>
-            |> Seq.map (fun m -> m.Groups["a"].Value, m.Groups["b"].Value)
-            |> Seq.toList
-
-        let yaml =
-            Regex.Matches(content, @"(?m)^\s*(?<a>T\d+)\s*:\s*\[?(?<deps>[T\d,\s]+)\]?\s*$")
-            |> Seq.cast<Match>
-            |> Seq.collect (fun m ->
-                let a = m.Groups["a"].Value
-
-                m.Groups["deps"].Value.Split([| ','; ' ' |], StringSplitOptions.RemoveEmptyEntries)
-                |> Seq.filter (fun dep -> dep.StartsWith("T", StringComparison.Ordinal))
-                |> Seq.map (fun dep -> a, dep))
-            |> Seq.toList
-
-        arrows @ yaml |> List.distinct |> List.sort
-
-    let constitutionFilled (root: string) =
-        let path = Path.Combine(root, ".specify", "memory", "constitution.md")
-
-        if File.Exists path then
-            let text = File.ReadAllText path
-
-            not (
-                text.Contains("[NEEDS", StringComparison.OrdinalIgnoreCase)
-                || text.Contains("TODO", StringComparison.OrdinalIgnoreCase)
-            )
-        else
-            true
-
-    let specKitFacts (root: string) =
-        let featureDir = activeFeatureDirectory root
-        let phase = phaseFor root featureDir
-
-        let artifactKeys =
-            [ "constitution"; "spec"; "plan"; "research"; "data-model"; "contracts"; "quickstart"; "tasks"; "task-deps" ]
-
-        let taskText =
-            [ Path.Combine(featureDir, "tasks.md"); Path.Combine(root, "tasks.md") ]
-            |> List.tryPick (fun path ->
-                match tryReadAllText path with
-                | Ok text -> Some text
-                | Error _ -> None)
-            |> Option.defaultValue ""
-
-        let depsText =
-            [ Path.Combine(featureDir, "tasks.deps.yml"); Path.Combine(root, "tasks.deps.yml") ]
-            |> List.tryPick (fun path ->
-                match tryReadAllText path with
-                | Ok text -> Some text
-                | Error _ -> None)
-            |> Option.defaultValue ""
-
-        let states = taskStatesFrom taskText
-        let deps = taskDependenciesFrom depsText
-
-        let surfaces =
-            artifactKeys
-            |> List.filter (artifactPresent root featureDir)
-            |> List.map specKitArtifactOfKey
-            |> Set.ofList
-
-        let facts =
-            [ yield SpecKitProjectFact(SpecKitFact.PhaseReached phase)
-
-              for key in artifactKeys do
-                  if artifactPresent root featureDir key then
-                      yield SpecKitProjectFact(SpecKitFact.ArtifactPresent(specKitArtifactOfKey key))
-
-              if File.Exists(Path.Combine(root, ".specify", "memory", "constitution.md")) then
-                  yield SpecKitProjectFact(SpecKitFact.ConstitutionArea("constitution", constitutionFilled root))
-
-              for taskId, state in states do
-                  yield SpecKitProjectFact(SpecKitFact.TaskState(taskId, state))
-
-              for dependent, dependency in deps do
-                  yield SpecKitProjectFact(SpecKitFact.TaskDependsOn(dependent, dependency)) ]
-
-        facts, { Phase = phase; Surfaces = surfaces }
-
-    let stateOfName (name: string) =
-        match name.ToLowerInvariant() with
-        | "pending" -> Some Pending
-        | "real" -> Some Real
-        | "synthetic" -> Some Synthetic
-        | "failed" -> Some Failed
-        | "skipped" -> Some Skipped
-        | _ -> None
-
-    let designFactsFromFile (subject: DesignArtifactRef) (path: string) =
-        match readJson path with
-        | None -> []
-        | Some root ->
-            [ yield DesignSystemProjectFact(DesignSystemFact.ArtifactPresent subject)
-
-              match root.TryGetProperty("observations") with
-              | true, observations ->
-                  for observation in observations.EnumerateObject() do
-                      yield
-                          DesignSystemProjectFact(
-                              DesignSystemFact.SurfaceObservation(observation.Name, subject, observation.Value.GetBoolean())
-                          )
-              | _ -> ()
-
-              match root.TryGetProperty("measurements") with
-              | true, measurements ->
-                  for measurement in measurements.EnumerateArray() do
-                      let id = stringProperty "id" measurement
-                      let state = stringProperty "state" measurement |> Option.bind stateOfName
-
-                      match id, state with
-                      | Some id, Some state -> yield DesignSystemProjectFact(DesignSystemFact.MeasurementState(id, state))
-                      | _ -> ()
-              | _ -> ()
-
-              match root.TryGetProperty("verdictRestsOn") with
-              | true, verdicts ->
-                  for verdict in verdicts.EnumerateArray() do
-                      match stringProperty "verdict" verdict, stringProperty "measurement" verdict with
-                      | Some v, Some m -> yield DesignSystemProjectFact(DesignSystemFact.VerdictRestsOn(v, m))
-                      | _ -> ()
-              | _ -> () ]
-
-    let designFacts (root: string) =
-        let baseDir = designBase root
-        let policyPath = Path.Combine(baseDir, "policy.json")
-
-        let policyFacts =
-            match readJson policyPath with
-            | None -> []
-            | Some policy ->
-                [ match stringProperty "policy" policy with
-                  | Some value -> yield DesignSystemProjectFact(DesignSystemFact.PolicySelected value)
-                  | None -> ()
-
-                  match policy.TryGetProperty("designRules") with
-                  | true, rules ->
-                      for rule in rules.EnumerateArray() do
-                          match rule.GetString() |> Option.ofObj with
-                          | None -> ()
-                          | Some value -> yield DesignSystemProjectFact(DesignSystemFact.DesignRule value)
-                  | _ -> () ]
-
-        let artifactFiles =
-            [ TokenDocument, "token-document.json"
-              GeneratedTokenSurface, "generated-token-surface.json"
-              RenderedCapture, "rendered-capture.json"
-              InteractionStateSpec, "interaction-state-spec.json"
-              PagePatternSpec, "page-pattern-spec.json" ]
-
-        let facts =
-            [ yield! policyFacts
-
-              for artifact, file in artifactFiles do
-                  let path = Path.Combine(baseDir, file)
-
-                  if File.Exists path then
-                      yield! designFactsFromFile artifact path ]
-
-        let surfaces =
-            [ for artifact, file in artifactFiles do
-                  if File.Exists(Path.Combine(baseDir, file)) then
-                      artifact ]
-            |> Set.ofList
-
-        facts, { Surfaces = surfaces }
+    // The domains + judge the evidence report senses over. Evidence reports declared/effective evidence, so its
+    // snapshot deliberately carries NO SDD handoff and NO declared profile (those drive only `route`).
+    let private evidenceDomains = Set.ofList [ SpecKitDomain; DesignSystemDomain ]
 
     let optionsFor () : ProjectOptions =
-        { Domains = Set.ofList [ SpecKitDomain; DesignSystemDomain ]
+        { Domains = evidenceDomains
           Judge = Project.defaultJudge
           SpecKitDial = Catalog.defaultDial }
 
-    let artifactsFor () =
-        let composed = Project.compose (optionsFor ())
-
-        composed.Catalog
-        |> List.collect (fun rule -> Check.reads rule.Check)
-        |> List.distinct
-        |> List.sortBy (fun artifact -> artifact.Kind + ":" + artifact.Key)
+    // A RunRequest shaped for `ArtifactReading.loadSnapshot`: it consults only Root/Scope/Domains/Judge; the
+    // remaining fields are inert here and take neutral defaults.
+    let private senseRequest (rawRoot: string) : RunRequest =
+        { Root = rawRoot
+          Command = CommandKind.EvidenceCommand
+          Mode = Inner
+          Format = OutputFormat.Text
+          Scope = []
+          Domains = evidenceDomains
+          ReviewBudget = ReviewBudget.CacheOnly
+          ReviewStore = None
+          OutputPath = None
+          Judge = Project.defaultJudge
+          ExplicitPlain = false }
 
     let loadSnapshot (rawRoot: string) : Result<ProjectSnapshot, string> =
-        let root = fullPath rawRoot
-
-        try
-            if not (Directory.Exists root) then
-                Error("root does not exist or is not a directory: " + root)
-            else
-                let specFacts, specChange = specKitFacts root
-                let designFacts, designChange = designFacts root
-
-                let facts: FactSet<ProjectFact> =
-                    [ yield! specFacts; yield! designFacts ] |> List.map fact
-
-                let change: ProjectChange =
-                    { SpecKit = Some specChange
-                      DesignSystem = if List.isEmpty designFacts then None else Some designChange
-                      Scope = [] }
-
-                Ok
-                    { Root = root
-                      Supplied = facts
-                      Change = change
-                      Artifacts = artifactsFor ()
-                      // The evidence command does not consume the SDD handoff (it reports declared/effective
-                      // evidence, not the route gate verdict); the handoff drives only `route` (Cli.resultForHost).
-                      Handoffs = []
-                      // 090: the policy profile is consulted only by the `route` gate verdict; the evidence
-                      // report does not enforce, so it carries no declared profile.
-                      DefaultProfile = None }
-        with ex ->
-            Error ex.Message
+        // Reuse the Cli reader (identical spec-kit/design fact sensing), then clear the two fields Evidence
+        // deliberately omits: the SDD handoff and the declared profile (both route-only concerns).
+        ArtifactReading.loadSnapshot (senseRequest rawRoot)
+        |> Result.map (fun snapshot -> { snapshot with Handoffs = []; DefaultProfile = None })
 
     // ── drive the Host loop (cache-only, zero fresh-review budget ⇒ deterministic) ──
 
     let private stepHostEffect (root: string) (effect: FS.GG.Governance.Host.Effect) : FS.GG.Governance.Host.Msg<ProjectFact> list =
         match effect with
-        | FS.GG.Governance.Host.ReadArtifact artifact -> [ FS.GG.Governance.Host.Msg.Sensed(artifact, readArtifact root artifact) ]
+        | FS.GG.Governance.Host.ReadArtifact artifact -> [ FS.GG.Governance.Host.Msg.Sensed(artifact, ArtifactReading.readArtifact root artifact) ]
         | FS.GG.Governance.Host.LoadReview key -> [ FS.GG.Governance.Host.Msg.Loaded(key, Ok None) ]
         | FS.GG.Governance.Host.DispatchReview _ -> []
         | FS.GG.Governance.Host.RecordVerdict review -> [ FS.GG.Governance.Host.Msg.Recorded(review.Key, Ok()) ]
@@ -443,22 +105,6 @@ module Interpreter =
         with ex ->
             Error(Loop.ToolFault ex.Message)
 
-    // ── atomic write (temp+rename: a failed write leaves NO partial file) ──
-
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with ex ->
-            Error ex.Message
-
     // ── ports / step / run ──
 
     // `repo` is accepted to mirror the sibling hosts' `realPorts repo` shape; the repository is actually
@@ -467,7 +113,7 @@ module Interpreter =
         ignore repo
 
         { SenseReport = senseReport
-          Write = writeAtomic
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 
     let guard (call: unit -> Result<'a, string>) : Result<'a, string> =

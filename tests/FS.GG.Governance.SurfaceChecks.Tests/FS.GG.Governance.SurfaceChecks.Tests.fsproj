@@ -41,6 +41,8 @@
     <ProjectReference Include="../../src/FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+    <!-- 101 (M-CI-3): the shared SurfaceDrift helper for the consolidated surface-drift check. -->
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -34,8 +34,6 @@
     <Compile Include="Cli.fs" />
     <Compile Include="CliRender.fsi" />
     <Compile Include="CliRender.fs" />
-    <Compile Include="ArtifactReading.fsi" />
-    <Compile Include="ArtifactReading.fs" />
     <Compile Include="ReviewStore.fsi" />
     <Compile Include="ReviewStore.fs" />
     <Compile Include="Program.fs" />

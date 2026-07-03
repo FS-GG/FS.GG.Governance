@@ -1,8 +1,12 @@
 TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [Method] AuditSnapshot buildSnapshot(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+DiffRange], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun])
+  [Method] BuilderIdentity senseBuilderReal()
   [Method] CommandKind kindOf(Gate)
-  [Method] Int32 exitCode(ExitDecision)
+  [Method] EnvironmentClass senseEnvironmentReal()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] realHandoffs(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] kindedRunsOf(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]])
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String] senseSnapshotResult(FS.GG.Governance.Snapshot.Ports, SnapshotOptions)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] writeAtomic(System.String, System.String)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[a,System.String] guard[a](Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[a,System.String]])
   [Method] Revision revOfCommit(CommitId)
   [Method] SensedFacts get_emptySensedFacts()
@@ -11,9 +15,9 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [Method] System.String under(System.String, System.String)
   [Method] System.Tuple`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision],Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision]] baseHeadOf(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+DiffRange])
   [Method] System.Tuple`3[Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+Gate,FS.GG.Governance.CommandHost.CommandHostModule+GateClassification]],Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.FreshnessKey.ModelModule+FreshnessInputs],FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport] executionPlan(ExecutionPlanParams, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessResolution.ModelModule+SensedFacts], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ToolingFacts], System.String)
+  [Method] Validation loadCatalogValidation(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]])
   [Method] model drive[model,effect,msg](Microsoft.FSharp.Core.FSharpFunc`2[model,System.Boolean], Microsoft.FSharp.Core.FSharpFunc`2[effect,msg], Microsoft.FSharp.Core.FSharpFunc`2[msg,Microsoft.FSharp.Core.FSharpFunc`2[model,System.Tuple`2[model,Microsoft.FSharp.Collections.FSharpList`1[effect]]]], model, Microsoft.FSharp.Collections.FSharpList`1[effect])
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
-  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ExitDecision
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+GateClassification
   [Property] SensedFacts emptySensedFacts
 TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
@@ -21,46 +25,6 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
   [Method] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict],System.Tuple`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CostBudget.ModelModule+BudgetReason],FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport]]] get_BudgetFold()
   [Method] System.String ToString()
   [Property] Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict],System.Tuple`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CostBudget.ModelModule+BudgetReason],FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport]]] BudgetFold
-TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExitDecision
-  [Method] Boolean Equals(ExitDecision)
-  [Method] Boolean Equals(ExitDecision, System.Collections.IEqualityComparer)
-  [Method] Boolean Equals(System.Object)
-  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
-  [Method] Boolean get_IsBlocked()
-  [Method] Boolean get_IsInputUnavailable()
-  [Method] Boolean get_IsSuccess()
-  [Method] Boolean get_IsToolError()
-  [Method] Boolean get_IsUsageError'()
-  [Method] ExitDecision get_Blocked()
-  [Method] ExitDecision get_InputUnavailable()
-  [Method] ExitDecision get_Success()
-  [Method] ExitDecision get_ToolError()
-  [Method] ExitDecision get_UsageError'()
-  [Method] Int32 CompareTo(ExitDecision)
-  [Method] Int32 CompareTo(System.Object)
-  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
-  [Method] Int32 GetHashCode()
-  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
-  [Method] Int32 get_Tag()
-  [Method] System.String ToString()
-  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ExitDecision+Tags
-  [Property] Boolean IsBlocked
-  [Property] Boolean IsInputUnavailable
-  [Property] Boolean IsSuccess
-  [Property] Boolean IsToolError
-  [Property] Boolean IsUsageError'
-  [Property] ExitDecision Blocked
-  [Property] ExitDecision InputUnavailable
-  [Property] ExitDecision Success
-  [Property] ExitDecision ToolError
-  [Property] ExitDecision UsageError'
-  [Property] Int32 Tag
-TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExitDecision+Tags
-  [Field] Int32 Blocked
-  [Field] Int32 InputUnavailable
-  [Field] Int32 Success
-  [Field] Int32 ToolError
-  [Field] Int32 UsageError'
 TYPE FS.GG.Governance.CommandHost.CommandHostModule+GateClassification
   [Method] Boolean Equals(GateClassification)
   [Method] Boolean Equals(GateClassification, System.Collections.IEqualityComparer)

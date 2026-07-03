@@ -61,7 +61,7 @@ module Program =
             | LoadReview key ->
                 let budget = budget |> markRequested key
 
-                match ReviewStore.loadReview request snapshot key with
+                match ReviewStore.loadReview request key with
                 | Ok (Some review) -> budget |> markHit key, [ FS.GG.Governance.Host.Msg.Loaded(key, Ok(Some review)) ]
                 | Ok None -> budget |> markMiss key, [ FS.GG.Governance.Host.Msg.Loaded(key, Ok None) ]
                 | Error reason -> budget, [ FS.GG.Governance.Host.Msg.Loaded(key, Error reason) ]
@@ -71,17 +71,13 @@ module Program =
                 if List.length budget.FreshDispatches < limit then
                     let budget = budget |> markFresh key
 
-                    let reason =
-                        if snapshot.Root.Contains("review-dispatch-failed", StringComparison.OrdinalIgnoreCase) then
-                            "review dispatch failed by fixture"
-                        else
-                            "fresh agent dispatch is not configured for this CLI run"
+                    let reason = "fresh agent dispatch is not configured for this CLI run"
 
                     budget |> markPending key, [ FS.GG.Governance.Host.Msg.Reviewed(key, Error reason) ]
                 else
                     budget |> markPending key |> markExhausted key, []
             | RecordVerdict review ->
-                budget, [ FS.GG.Governance.Host.Msg.Recorded(review.Key, ReviewStore.saveReview request snapshot review) ]
+                budget, [ FS.GG.Governance.Host.Msg.Recorded(review.Key, ReviewStore.saveReview request review) ]
             | EmitOutput _ -> budget, []
 
         let rec drive (model: FS.GG.Governance.Host.Model<ProjectFact>) effects (budget: BudgetState) =
@@ -181,14 +177,12 @@ module Program =
             with e ->
                 Watch.InputUnreadable e.Message
 
-        let shouldStop () =
-            try
-                Console.KeyAvailable && Console.ReadKey(true).Key = ConsoleKey.Q
-            with _ ->
-                false
-
-        Watch.run root mode (fun () -> sw.ElapsedMilliseconds) reRender shouldStop
-        Cli.exitCode Success
+        // Stop on `q`; the shared `safeKeyPoll` also stops cleanly (never crashes) when stdin is
+        // redirected / no console is attached. A nonexistent root makes the watcher fail to construct
+        // ⇒ `InputUnreadable` ⇒ input-unavailable exit (66), never a crash (H3 / #47).
+        match Watch.run root mode (fun () -> sw.ElapsedMilliseconds) reRender Watch.safeKeyPoll with
+        | Watch.InputUnreadable reason -> Cli.exitCode (InputUnavailable reason)
+        | _ -> Cli.exitCode Success
 
     /// Plain-text TUI draw (Spectre stays confined to HumanRender, so the navigator cursor is rendered as
     /// plain text at the edge): the selection path plus the full report projection.

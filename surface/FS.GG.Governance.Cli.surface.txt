@@ -1,8 +1,4 @@
 namespace FS.GG.Governance.Cli
-type CommandKind
-type OutputFormat
-type ReviewBudget
-type RunRequest
 type ParseError
 type ExitDecision
 type BudgetState
@@ -15,5 +11,4 @@ type Effect
 type CliPorts
 module Cli
 module CliRender
-module ArtifactReading
 module ReviewStore

@@ -1,3 +1,52 @@
+TYPE FS.GG.Governance.Cli.ArtifactReadingModule
+  [Method] FS.GG.Governance.Cli.ProjectOptions optionsFor(FS.GG.Governance.Cli.RunRequest)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Cli.ProjectSnapshot,System.String] loadSnapshot(FS.GG.Governance.Cli.RunRequest)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] readArtifact(System.String, FS.GG.Governance.Kernel.ArtifactRef)
+TYPE FS.GG.Governance.Cli.CommandKind
+  [Method] Boolean Equals(FS.GG.Governance.Cli.CommandKind)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.CommandKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsContractCommand()
+  [Method] Boolean get_IsEvidenceCommand()
+  [Method] Boolean get_IsExplainCommand()
+  [Method] Boolean get_IsRouteCommand()
+  [Method] Boolean get_IsTuiCommand()
+  [Method] Boolean get_IsWatchCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_ContractCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_EvidenceCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_ExplainCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_RouteCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_TuiCommand()
+  [Method] FS.GG.Governance.Cli.CommandKind get_WatchCommand()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.CommandKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Cli.CommandKind+Tags
+  [Property] Boolean IsContractCommand
+  [Property] Boolean IsEvidenceCommand
+  [Property] Boolean IsExplainCommand
+  [Property] Boolean IsRouteCommand
+  [Property] Boolean IsTuiCommand
+  [Property] Boolean IsWatchCommand
+  [Property] FS.GG.Governance.Cli.CommandKind ContractCommand
+  [Property] FS.GG.Governance.Cli.CommandKind EvidenceCommand
+  [Property] FS.GG.Governance.Cli.CommandKind ExplainCommand
+  [Property] FS.GG.Governance.Cli.CommandKind RouteCommand
+  [Property] FS.GG.Governance.Cli.CommandKind TuiCommand
+  [Property] FS.GG.Governance.Cli.CommandKind WatchCommand
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Cli.CommandKind+Tags
+  [Field] Int32 ContractCommand
+  [Field] Int32 EvidenceCommand
+  [Field] Int32 ExplainCommand
+  [Field] Int32 RouteCommand
+  [Field] Int32 TuiCommand
+  [Field] Int32 WatchCommand
 TYPE FS.GG.Governance.Cli.Domain
   [Method] Boolean Equals(FS.GG.Governance.Cli.Domain)
   [Method] Boolean Equals(FS.GG.Governance.Cli.Domain, System.Collections.IEqualityComparer)
@@ -45,6 +94,31 @@ TYPE FS.GG.Governance.Cli.EvidenceNodeReport
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Kernel.Freshness] Freshness
   [Property] System.String Id
   [Property] System.String Source
+TYPE FS.GG.Governance.Cli.OutputFormat
+  [Method] Boolean Equals(FS.GG.Governance.Cli.OutputFormat)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.OutputFormat, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsJson()
+  [Method] Boolean get_IsText()
+  [Method] FS.GG.Governance.Cli.OutputFormat get_Json()
+  [Method] FS.GG.Governance.Cli.OutputFormat get_Text()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.OutputFormat)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Cli.OutputFormat+Tags
+  [Property] Boolean IsJson
+  [Property] Boolean IsText
+  [Property] FS.GG.Governance.Cli.OutputFormat Json
+  [Property] FS.GG.Governance.Cli.OutputFormat Text
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Cli.OutputFormat+Tags
+  [Field] Int32 Json
+  [Field] Int32 Text
 TYPE FS.GG.Governance.Cli.ProjectChange
   [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SpecKit.SpecKitChange], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.DesignSystem.DesignChange], Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] Boolean Equals(FS.GG.Governance.Cli.ProjectChange)
@@ -219,4 +293,66 @@ TYPE FS.GG.Governance.Cli.ProjectSnapshot
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.ArtifactRef] Artifacts
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.FactAssertion`1[FS.GG.Governance.Cli.ProjectFact]] Supplied
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+ProfileId] DefaultProfile
+  [Property] System.String Root
+TYPE FS.GG.Governance.Cli.ReviewBudget
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ReviewBudget)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.ReviewBudget, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCacheOnly()
+  [Method] Boolean get_IsFreshReviews()
+  [Method] FS.GG.Governance.Cli.ReviewBudget NewFreshReviews(Int32)
+  [Method] FS.GG.Governance.Cli.ReviewBudget get_CacheOnly()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.ReviewBudget)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Cli.ReviewBudget+FreshReviews
+  [NestedType] FS.GG.Governance.Cli.ReviewBudget+Tags
+  [Property] Boolean IsCacheOnly
+  [Property] Boolean IsFreshReviews
+  [Property] FS.GG.Governance.Cli.ReviewBudget CacheOnly
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Cli.ReviewBudget+FreshReviews
+  [Method] Int32 get_count()
+  [Property] Int32 count
+TYPE FS.GG.Governance.Cli.ReviewBudget+Tags
+  [Field] Int32 CacheOnly
+  [Field] Int32 FreshReviews
+TYPE FS.GG.Governance.Cli.RunRequest
+  [Constructor] Void .ctor(System.String, FS.GG.Governance.Cli.CommandKind, FS.GG.Governance.Kernel.RunMode, FS.GG.Governance.Cli.OutputFormat, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain], FS.GG.Governance.Cli.ReviewBudget, Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], FS.GG.Governance.Kernel.JudgeId, Boolean)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.RunRequest)
+  [Method] Boolean Equals(FS.GG.Governance.Cli.RunRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExplicitPlain()
+  [Method] FS.GG.Governance.Cli.CommandKind get_Command()
+  [Method] FS.GG.Governance.Cli.OutputFormat get_Format()
+  [Method] FS.GG.Governance.Cli.ReviewBudget get_ReviewBudget()
+  [Method] FS.GG.Governance.Kernel.JudgeId get_Judge()
+  [Method] FS.GG.Governance.Kernel.RunMode get_Mode()
+  [Method] Int32 CompareTo(FS.GG.Governance.Cli.RunRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Scope()
+  [Method] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain] get_Domains()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_OutputPath()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_ReviewStore()
+  [Method] System.String ToString()
+  [Method] System.String get_Root()
+  [Property] Boolean ExplicitPlain
+  [Property] FS.GG.Governance.Cli.CommandKind Command
+  [Property] FS.GG.Governance.Cli.OutputFormat Format
+  [Property] FS.GG.Governance.Cli.ReviewBudget ReviewBudget
+  [Property] FS.GG.Governance.Kernel.JudgeId Judge
+  [Property] FS.GG.Governance.Kernel.RunMode Mode
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Scope
+  [Property] Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Cli.Domain] Domains
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] OutputPath
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] ReviewStore
   [Property] System.String Root

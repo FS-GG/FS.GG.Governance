@@ -90,6 +90,26 @@ let tests =
                   Expect.isFalse (File.Exists(Path.Combine(dir, ".fsgg", "gates.json"))) "no gates.json written by the read-only re-render")
           }
 
+          test "headless (H3 / #47): `route --watch` over a nonexistent repo fails to arm the watcher and exits input-unavailable (3), never crashing" {
+              // The FileSystemWatcher cannot be constructed for a missing root, so `Watch.run` returns
+              // `InputUnreadable` BEFORE the poll loop — no `Console.KeyAvailable` is consulted. That makes
+              // this deterministic regardless of whether the test host's stdin is redirected, while still
+              // exercising the real `route --watch` entry (shared `safeKeyPoll` stop-poll) end-to-end.
+              let missing = Path.Combine(Path.GetTempPath(), "fsgg-watch-missing-" + System.Guid.NewGuid().ToString("N"))
+              let code = Program.main [| "route"; "--repo"; missing; "--watch" |]
+              Expect.equal code 3 "a nonexistent watch root ⇒ InputUnavailable exit (3), not a FileSystemWatcher crash"
+          }
+
+          test "headless (H3 / #47): the shared `safeKeyPoll` swallows an unreadable console (redirected stdin) instead of throwing" {
+              // Under `dotnet test` stdin is redirected ⇒ `Console.KeyAvailable`/`ReadKey` throw
+              // InvalidOperationException. `safeKeyPoll` must be TOTAL — swallow it and signal stop — so the
+              // watch loop exits cleanly rather than propagating the H3 crash. (Under an interactive console
+              // with no key pending it short-circuits to `false`; either way it never throws.)
+              let mutable threw = false
+              try Watch.safeKeyPoll () |> ignore with _ -> threw <- true
+              Expect.isFalse threw "safeKeyPoll never propagates a console exception"
+          }
+
           test "safe failure: a transiently-unreadable/malformed tree yields InputUnreadable, no crash, no fabricated report (FR-010)" {
               // A directory with a malformed catalog ⇒ the evaluation degrades to no report ⇒ InputUnreadable,
               // never a throw and never a fabricated view.

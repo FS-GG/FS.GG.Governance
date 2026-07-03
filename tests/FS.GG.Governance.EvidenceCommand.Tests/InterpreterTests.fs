@@ -52,3 +52,19 @@ let tests =
               | Loop.Wrote(Error _) -> ()
               | other -> failtestf "expected Wrote (Error _), got %A" other
           } ]
+
+// F13 (#49): once the pipeline has decided (Phase = Done), every further reified Msg must be inert — matching
+// the guard Route/Ship/Verify document. Before the fix, a post-Done `Wrote(Ok())` re-mutated Phase to
+// Persisted and re-scheduled an EmitSummary effect.
+[<Tests>]
+let doneInertness =
+    testList
+        "DoneInertness-F13"
+        [ test "update is inert once Phase = Done — no mutation, no effects" {
+              let req = requestWith "out.json" Loop.Json
+              let model0, _ = Loop.init req
+              let doneModel = { model0 with Phase = Loop.Done; Exit = Loop.Success }
+
+              Expect.equal (Loop.update (Loop.Wrote(Ok())) doneModel) (doneModel, []) "Wrote(Ok) after Done is inert"
+              Expect.equal (Loop.update (Loop.Reported(Ok(report [] []))) doneModel) (doneModel, []) "Reported after Done is inert"
+          } ]

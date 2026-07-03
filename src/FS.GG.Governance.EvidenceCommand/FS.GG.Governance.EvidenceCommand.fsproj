@@ -44,8 +44,11 @@
   <ItemGroup>
     <!-- The pure projection leaf -->
     <ProjectReference Include="../FS.GG.Governance.EvidenceJson/FS.GG.Governance.EvidenceJson.fsproj" />
-    <!-- The F12 sensing + evidence-report fold -->
+    <!-- The F12 sensing + evidence-report fold. 100 (M-ARCH-2): reference the ProjectSensing library
+         (Project + RunRequest + ArtifactReading, same FS.GG.Governance.Cli namespace) instead of the Cli
+         exe, so no executable references another executable while keeping #49/#70's single-source sensing. -->
     <ProjectReference Include="../FS.GG.Governance.ProjectSensing/FS.GG.Governance.ProjectSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />

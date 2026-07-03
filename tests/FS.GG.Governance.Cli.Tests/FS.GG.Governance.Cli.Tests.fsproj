@@ -31,6 +31,7 @@
     <!-- 090: the profile-aware handoff-gate decision matrix (strict/light/absent/unrecognized
          crossed with failing/satisfied at mode gate) driven through the public Cli MVU route-exit. -->
     <Compile Include="ProfileAwareHandoffGateTests.fs" />
+    <Compile Include="ReviewStoreTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -59,6 +60,8 @@
          real compose path (Constitution V). Expecto scans only this entry assembly, so its tests do not
          double-run. The reference also brings RouteCommand for the compose call. -->
     <ProjectReference Include="../FS.GG.Governance.RouteCommand.Tests/FS.GG.Governance.RouteCommand.Tests.fsproj" />
+    <!-- 101 (M-CI-3): the shared SurfaceDrift helper backing HumanRenderSurfaceDriftTests. -->
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

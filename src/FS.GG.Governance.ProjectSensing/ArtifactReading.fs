@@ -254,10 +254,6 @@ module ArtifactReading =
         | Some root ->
             [ yield DesignSystemProjectFact(DesignSystemFact.ArtifactPresent subject)
 
-              match root.TryGetProperty("present") with
-              | true, present when not (present.GetBoolean()) -> ()
-              | _ -> ()
-
               match root.TryGetProperty("observations") with
               | true, observations ->
                   for observation in observations.EnumerateObject() do
@@ -352,7 +348,10 @@ module ArtifactReading =
                 []
             else
                 Directory.GetDirectories readinessDir
-                |> Array.sortBy Path.GetFileName
+                // #49 (D3): spell out the ordinal sort so the guarantee is visible and identical to the
+                // host `realHandoffs` copies (`Array.sortBy` on a string key is ordinal today, but not
+                // self-evidently so — a maintainer could port it to a culture-sensitive form).
+                |> Array.sortWith (fun a b -> String.CompareOrdinal(Path.GetFileName a, Path.GetFileName b))
                 |> Array.choose (fun dir ->
                     let file = Path.Combine(dir, "governance-handoff.json")
 

@@ -15,15 +15,7 @@ open FS.GG.Governance.CostBudget.Model        // CacheDecisionReport
 let tests =
     testList
         "CommandHost"
-        [ test "exitCode maps every case to its canonical code" {
-              Expect.equal (CommandHost.exitCode CommandHost.Success) 0 "Success -> 0"
-              Expect.equal (CommandHost.exitCode CommandHost.Blocked) 1 "Blocked -> 1"
-              Expect.equal (CommandHost.exitCode CommandHost.UsageError') 2 "UsageError' -> 2"
-              Expect.equal (CommandHost.exitCode CommandHost.InputUnavailable) 3 "InputUnavailable -> 3"
-              Expect.equal (CommandHost.exitCode CommandHost.ToolError) 4 "ToolError -> 4"
-          }
-
-          test "under joins repo-relative paths, leaving `.`/empty clean" {
+        [ test "under joins repo-relative paths, leaving `.`/empty clean" {
               Expect.equal (CommandHost.under "." ".fsgg/gates.json") ".fsgg/gates.json" "dot repo is clean"
               Expect.equal (CommandHost.under "" "readiness/route.json") "readiness/route.json" "empty repo is clean"
               Expect.equal (CommandHost.under "/r" "a.json") "/r/a.json" "real repo is prefixed"

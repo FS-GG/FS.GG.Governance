@@ -2,6 +2,21 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "Expecto": {
+        "type": "Direct",
+        "requested": "[10.2.3, )",
+        "resolved": "10.2.3",
+        "contentHash": "mwGOvtkKfMwakKeONwWYy5RgnO7Ijx/THt50GHh8mkSPySVOW/BsOppHzNwby45uaO6X0IKpqS76BrlYgOqcIg==",
+        "dependencies": {
+          "FSharp.Core": "7.0.200",
+          "Mono.Cecil": "[0.11.4, 1.0.0)"
+        }
+      },
+      "Mono.Cecil": {
+        "type": "Transitive",
+        "resolved": "0.11.4",
+        "contentHash": "IC1h5g0NeJGHIUgzM1P82ld57knhP0IcQfrYITDPXlNpMYGUrsG5TxuaWTjaeqDNQMBDNZkB8L0rBnwsY6JHuQ=="
+      },
       "fs.gg.governance.attestation": {
         "type": "Project",
         "dependencies": {
@@ -36,8 +51,8 @@
       "fs.gg.governance.config": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Contracts": "[1.0.1, )",
-          "YamlDotNet": "[16.3.0, )"
+          "FS.GG.Contracts": "[1.4.0, )",
+          "YamlDotNet": "[18.1.0, )"
         }
       },
       "fs.gg.governance.enforcement": {
@@ -223,9 +238,9 @@
       },
       "FS.GG.Contracts": {
         "type": "CentralTransitive",
-        "requested": "[1.0.1, )",
-        "resolved": "1.0.1",
-        "contentHash": "TEvAY8h28+b6hGJv2NQypTLXlz/H1SXPadtAuKbXyZZjMCPHYvnrPzmB4MjaxyvLX/abH9MqvvxDsrhhlBL5+Q==",
+        "requested": "[1.4.0, )",
+        "resolved": "1.4.0",
+        "contentHash": "iq1uWFlkADsM7F6L34HIekJHhI2mHeO77k1lm97KcJlZGi5/JJPO05HodY0jLoOk17v9hxaZuy3hvNgoEdzCnA==",
         "dependencies": {
           "FSharp.Core": "10.1.301"
         }
@@ -238,9 +253,9 @@
       },
       "YamlDotNet": {
         "type": "CentralTransitive",
-        "requested": "[16.3.0, )",
-        "resolved": "16.3.0",
-        "contentHash": "SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA=="
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       }
     }
   }

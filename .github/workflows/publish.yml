@@ -52,6 +52,9 @@ permissions:
 env:
   FSGG_PACKAGES_ACTOR: ${{ github.actor }}
   FSGG_PACKAGES_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # 101 (low): the nuget.org Trusted-Publishing fallback user, declared ONCE and referenced by both
+  # publish jobs (previously hardcoded in two separate places). secrets.NUGET_USER still overrides it.
+  NUGET_FALLBACK_USER: Paradigma11
 
 jobs:
   # Source of truth is the EVALUATED CLI fsproj <Version> (msbuild -getProperty, not a grep). A
@@ -60,18 +63,22 @@ jobs:
   resolve-version:
     name: Resolve version (CLI fsproj)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.repository == 'FS-GG/FS.GG.Governance'
     outputs:
       version: ${{ steps.ver.outputs.version }}
       push: ${{ steps.ver.outputs.push }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Resolve version
         id: ver
@@ -110,6 +117,11 @@ jobs:
                 echo "::error::release tag '$tag' (version $tag_version) does not equal the FS.GG.Governance.Cli fsproj <Version> ($version). The fsproj is the source of truth; reconcile the tag or the fsproj before releasing."
                 exit 1
               fi
+            else
+              # 101 (M-CI-4): a v* tag that is NOT a semantic version (e.g. vNext) must NOT fall through to a
+              # push with an unchecked label. Fail closed — the fsproj <Version> is the sole source of truth.
+              echo "::error::release tag '$tag' is not a semantic version; it cannot be reconciled against the FS.GG.Governance.Cli fsproj <Version> ($version). Retag with v<major>.<minor>.<patch> (matching the fsproj) before releasing."
+              exit 1
             fi
             push="true"
           fi
@@ -123,15 +135,19 @@ jobs:
   cli-tests:
     name: CLI tests (publish gate)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     if: github.repository == 'FS-GG/FS.GG.Governance'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Restore (locked)
         run: |
@@ -157,16 +173,20 @@ jobs:
   enforcement-smoke:
     name: Enforcement smoke (green-by-omission guard)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [resolve-version, cli-tests]
     if: github.repository == 'FS-GG/FS.GG.Governance'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Pack + install + enforce (real evidence)
         run: bash tests/cli-publish-smoke/run.sh
@@ -180,6 +200,7 @@ jobs:
     name: Pack + publish FS.GG.Governance.Cli (fsgg-governance tool)
     needs: [resolve-version, cli-tests, enforcement-smoke]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: github.repository == 'FS-GG/FS.GG.Governance'
     permissions:
       contents: read
@@ -189,12 +210,15 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Restore (locked)
         run: |
@@ -249,7 +273,7 @@ jobs:
         if: needs.resolve-version.outputs.push == 'true'
         uses: NuGet/login@v1
         with:
-          user: ${{ secrets.NUGET_USER || 'Paradigma11' }}
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
 
       # Push the SAME already-packed .nupkg to nuget.org (no re-pack — byte-identical, ADR-0012 §3),
       # AFTER the org-feed push (org-feed-first, ADR-0012 §4). --skip-duplicate makes a re-publish of
@@ -272,6 +296,7 @@ jobs:
     name: Pack + publish FS.GG.Governance.ReferenceGateSet (content-only)
     needs: [resolve-version]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: github.repository == 'FS-GG/FS.GG.Governance'
     permissions:
       contents: read
@@ -280,12 +305,15 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Pack via the single canonical packer, reused as-is (Principle III). It runs the G1–G7
       # reference-set guard first and refuses to pack when red, so the shipped artifact is provably
@@ -324,7 +352,7 @@ jobs:
         if: needs.resolve-version.outputs.push == 'true'
         uses: NuGet/login@v1
         with:
-          user: ${{ secrets.NUGET_USER || 'Paradigma11' }}
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
 
       # Push the SAME already-packed .nupkg to nuget.org (byte-identical, no re-pack — ADR-0012 §3),
       # after the org-feed push. --skip-duplicate ⇒ idempotent. Dry-run skips it.

@@ -1,15 +1,13 @@
 module FS.GG.Governance.SensedMetadata.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.SensedMetadata
 open FS.GG.Governance.SensedMetadata.Model
-open FS.GG.Governance.SensedMetadata.Tests.Support
 
-// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1). Reflection lives
-// ONLY in these tests, never in the library.
+// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1). The surface-equality
+// check now runs via the shared SurfaceDrift helper (101/M-CI-3); the exports-shape and scope/forbidden-set
+// guards stay inline. Reflection lives in the helper and in these guards, never in the library.
 
 // Touch a member of each public module to force the library assembly to load, then locate it by name.
 let private sensedAsm =
@@ -21,49 +19,11 @@ let private sensedAsm =
         | Some n -> n = "FS.GG.Governance.SensedMetadata"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.SensedMetadata.surface.txt")
-
-/// Render the assembly's public surface to canonical, sorted text. Any change to the public surface
-/// changes this text and trips the baseline assertion.
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "SensedMetadata public surface equals the committed baseline" {
-              let actual = renderSurface sensedAsm
-
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "SensedMetadata" "FS.GG.Governance.SensedMetadata" sensedAsm
 
           test "the public surface is exactly the two modules (Model + SensedMetadata), nothing else" {
               let typeNames =

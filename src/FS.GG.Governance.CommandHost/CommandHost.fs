@@ -3,10 +3,14 @@ namespace FS.GG.Governance.CommandHost
 // The 075 (Phase B) pure command-host skeleton leaf. Each member is the genuinely-shared body the MVU
 // command Loop.fs hosts used to hand-copy. The exit/gate classifications are canonical SUPERSETS (the
 // optional `Blocked`/`Deferred` paths folded in); the model-reading helpers are DECOMPOSED into the fields
-// they read so the leaf depends on NO host Model/Effect. No clock/host/filesystem/git/process/network;
-// output byte-identical to today's per-host copies. No visibility modifiers — the surface is CommandHost.fsi
-// (Principle II).
+// they read so the leaf depends on NO host Model/Effect. The pure skeleton stays clock/process/network-free;
+// output byte-identical to today's per-host copies. The trailing "host edge I/O leaves" section (#49,
+// second-extraction pass) is the ONE exception — genuinely-shared impure host edges (atomic write, readiness
+// discovery, env/builder sensing, the snapshot/catalog step-arm realizations) that every host used to
+// hand-copy; they live here in the host layer (never the domain core). No visibility modifiers — the surface
+// is CommandHost.fsi (Principle II).
 
+open System.IO
 open FS.GG.Governance.Config.Model            // Diagnostic, diagnosticIdToken, ToolingFacts, Environment, LocalOrCi
 open FS.GG.Governance.Snapshot.Model          // CommitId, DiffRange
 open FS.GG.Governance.FreshnessKey.Model      // Revision, RuleHash, GeneratorVersion, FreshnessInputs, CommandId
@@ -28,22 +32,9 @@ open FS.GG.Governance.Provenance.Model        // BuilderIdentity
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CommandHost =
 
-    // ── exit classification (research D2, FR-005) — canonical SUPERSET DU + total mapping ──
-
-    type ExitDecision =
-        | Success
-        | Blocked
-        | UsageError'
-        | InputUnavailable
-        | ToolError
-
-    let exitCode (decision: ExitDecision) : int =
-        match decision with
-        | Success -> 0
-        | Blocked -> 1
-        | UsageError' -> 2
-        | InputUnavailable -> 3
-        | ToolError -> 4
+    // NOTE (#49, F2): the canonical `ExitDecision`/`exitCode` were removed — they were dead (zero product
+    // consumers) and each host owns a genuinely-shaped exit DU (some carry `Blocked`, some don't), so a shared
+    // superset here fit none of them. Deleted per issue #49 ("adopt OR delete if truly dead").
 
     // ── gate classification (research D3, FR-005) — canonical SUPERSET DU (with `Deferred`) ──
 
@@ -265,3 +256,95 @@ module CommandHost =
                         (model, [])
 
                 drive isDone step update model2 newEffects
+
+    // ── host edge I/O leaves (#49 second-extraction pass) — the shared impure host edges every command
+    // host used to hand-copy. These live in the host layer, above the domain core (which stays FS/git-free).
+
+    // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename
+    // over the target — a failed write leaves NO partial/truncated file (research D9, FR-010). Reifies any
+    // exception to `Error` so the interpreter edge never throws out of itself.
+    let writeAtomic (path: string) (content: string) : Result<unit, string> =
+        try
+            match Path.GetDirectoryName path with
+            | null
+            | "" -> ()
+            | dir -> Directory.CreateDirectory dir |> ignore
+
+            let tmp = path + ".tmp-" + System.Guid.NewGuid().ToString("N")
+            File.WriteAllText(tmp, content)
+            File.Move(tmp, path, true)
+            Ok()
+        with e ->
+            Error e.Message
+
+    // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable ordinal <id>
+    // order. A missing readiness dir (or any IO failure) yields `[]`. The ordinal sort is spelled out so the
+    // ordering guarantee is visible and identical to the former per-host copies + the Cli mirror (#49, D3).
+    let realHandoffs (repo: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
+        try
+            let readinessDir = Path.Combine(repo, "readiness")
+
+            if not (Directory.Exists readinessDir) then
+                []
+            else
+                Directory.GetDirectories readinessDir
+                |> Array.sortWith (fun a b -> System.String.CompareOrdinal(Path.GetFileName a, Path.GetFileName b))
+                |> Array.choose (fun dir ->
+                    let file = Path.Combine(dir, "governance-handoff.json")
+
+                    if File.Exists file then
+                        Some
+                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
+                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
+                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
+                    else
+                        None)
+                |> Array.toList
+        with _ ->
+            []
+
+    // Sense the runner environment from the `CI` variable: set ⇒ `Ci`, unset/empty ⇒ `Local`. Fully qualified
+    // to avoid the `Ci` clash with `Snapshot.Model.CiEnvironment` in scope here (#49, D1).
+    let senseEnvironmentReal () : FS.GG.Governance.Config.Model.EnvironmentClass =
+        match System.Environment.GetEnvironmentVariable "CI" with
+        | null
+        | "" -> FS.GG.Governance.Config.Model.Local
+        | _ -> FS.GG.Governance.Config.Model.Ci
+
+    let senseBuilderReal () : FS.GG.Governance.Provenance.Model.BuilderIdentity =
+        FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg"
+
+    // Shared realization of the `SenseScope` step arm: sense a snapshot for `options` against `git`, mapping
+    // any sensing diagnostic (or thrown exception) to a single `Error` string. senseSnapshot NEVER throws; a
+    // failure surfaces as a SensingDiagnostic (not-a-repo, unknown-ref, git-unavailable) ⇒ InputUnavailable.
+    // The host wraps this `Result` in its own `Sensed` msg, so `step`'s signature is unchanged.
+    let senseSnapshotResult
+        (git: FS.GG.Governance.Snapshot.Ports)
+        (options: SnapshotOptions)
+        : Result<RepoSnapshot, string> =
+        try
+            let snap = FS.GG.Governance.Snapshot.Interpreter.senseSnapshot git options
+
+            match snap.Diagnostics with
+            | [] -> Ok snap
+            | ds ->
+                ds
+                |> List.map (fun d -> sprintf "%s: %s" (sensingDiagnosticIdToken d.Id) d.Message)
+                |> String.concat "; "
+                |> Error
+        with e ->
+            Error e.Message
+
+    // Shared realization of the `LoadCatalog` step arm: read the repo's `.fsgg` sources through `files` and
+    // apply the pure `Schema.validate` (mirrors Loader.loadAndValidate); a misbehaving reader's exception is
+    // reified to an `Invalid` catalog. The host wraps this in its own `Loaded` msg.
+    let loadCatalogValidation (files: FS.GG.Governance.Config.Loader.FileReader) : Validation =
+        try
+            FS.GG.Governance.Config.Loader.readSource (GovernedPath ".") files
+            |> FS.GG.Governance.Config.Schema.validate
+        with e ->
+            Invalid
+                [ { Id = MissingRequiredFile
+                    File = Project
+                    Locator = { Field = None; Id = None; Line = None }
+                    Message = "catalog read failed: " + e.Message } ]

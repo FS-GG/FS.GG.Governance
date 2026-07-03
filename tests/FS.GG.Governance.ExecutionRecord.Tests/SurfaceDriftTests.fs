@@ -1,14 +1,12 @@
 module FS.GG.Governance.ExecutionRecord.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.ExecutionRecord
 open FS.GG.Governance.ExecutionRecord.Tests.Support
 
-// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II). Reflection lives ONLY in
-// these tests, never in the library.
+// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
+// SurfaceDrift helper (101/M-CI-3).
 
 // ExecutionRecord exports only the module (no public types). Touch a member to force the library assembly to
 // load, then locate it by name among the loaded assemblies.
@@ -21,49 +19,11 @@ let private executionRecord =
         | Some n -> n = "FS.GG.Governance.ExecutionRecord"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.ExecutionRecord.surface.txt")
-
-/// Render the assembly's public surface to canonical, sorted text. Any change to the public surface changes
-/// this text and trips the baseline assertion.
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "ExecutionRecord public surface equals the committed baseline" {
-              let actual = renderSurface executionRecord
-
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "ExecutionRecord" "FS.GG.Governance.ExecutionRecord" executionRecord
 
           test "the public surface is exactly the ExecutionRecord module, nothing private" {
               let typeNames =
@@ -80,54 +40,7 @@ let tests =
                   "ExecutionRecord module is public"
           }
 
-          test "ExecutionRecord references only the CommandRecord transitive graph + BCL + FSharp.Core (scope guard)" {
-              // One-way dependency: ExecutionRecord -> CommandRecord -> Config. No EvidenceCapture/EvidenceReuse/
-              // FreshnessKey/FreshnessSensing/EvidenceReuseStore/CacheEligibility/host/adapter/CLI edge and no new
-              // third-party package — the test project's F049/F030/F029 references are deliberately excluded (this
-              // inspects the PRODUCTION assembly, not the test assembly).
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "FS.GG.Governance.CommandRecord"
-                  || name = "FS.GG.Governance.Config"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  || name.StartsWith "System."
-
-              let offending =
-                  executionRecord.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
-
-              Expect.isEmpty
-                  offending
-                  (sprintf "ExecutionRecord must depend on the CommandRecord graph/BCL/FSharp.Core only; found: %A" offending)
-
-              // Specifically NOT the capture bridge, the reuse store, the reader, the sibling projections, or any
-              // host/adapter/CLI.
-              let forbidden =
-                  executionRecord.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (fun n ->
-                      n = "FS.GG.Governance.EvidenceCapture"
-                      || n = "FS.GG.Governance.EvidenceReuse"
-                      || n = "FS.GG.Governance.FreshnessKey"
-                      || n = "FS.GG.Governance.FreshnessSensing"
-                      || n = "FS.GG.Governance.EvidenceReuseStore"
-                      || n = "FS.GG.Governance.CacheEligibility"
-                      || n = "FS.GG.Governance.CacheEligibilityJson"
-                      || n = "FS.GG.Governance.RouteJson"
-                      || n = "FS.GG.Governance.AuditJson"
-                      || n = "FS.GG.Governance.Enforcement"
-                      || n = "FS.GG.Governance.Ship"
-                      || n = "FS.GG.Governance.Snapshot"
-                      || n = "FS.GG.Governance.Routing"
-                      || n = "FS.GG.Governance.Findings"
-                      || n = "FS.GG.Governance.Host"
-                      || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
-
-              Expect.isEmpty
-                  forbidden
-                  (sprintf "ExecutionRecord must not reference EvidenceCapture/EvidenceReuse/FreshnessKey/host/adapters/CLI; found: %A" forbidden)
-          } ]
+          SurfaceDrift.referencesOnly
+              "ExecutionRecord"
+              (fun n -> n = "FS.GG.Governance.CommandRecord" || n = "FS.GG.Governance.Config")
+              executionRecord ]
