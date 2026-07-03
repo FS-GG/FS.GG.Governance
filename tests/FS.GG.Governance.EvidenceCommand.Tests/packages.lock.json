@@ -207,6 +207,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -274,6 +275,7 @@
           "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
           "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
           "FS.GG.Governance.Cli": "[1.2.0, )",
+          "FS.GG.Governance.CommandHost": "[0.1.0, )",
           "FS.GG.Governance.EvidenceJson": "[0.1.0, )",
           "FS.GG.Governance.Host": "[1.0.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",

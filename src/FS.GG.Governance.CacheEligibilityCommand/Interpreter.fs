@@ -49,24 +49,6 @@ module Interpreter =
 
     // ── safety helpers (mirror RouteCommand) ──
 
-    // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the interpreter
-    // never throws out of itself (FR-010/FR-013).
-    // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename
-    // over the target — a failed write leaves NO partial/truncated file (FR-010).
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with e ->
-            Error e.Message
-
     // ── real BCL-crypto freshness sensing (the only genuinely new sensing) ──
 
     let sha256Hex (bytes: byte[]) : string =
@@ -223,34 +205,9 @@ module Interpreter =
                 | Loop.ExplicitPaths _
                 | Loop.DefaultRange -> { Since = None; Base = None; Head = None }
 
-            let result =
-                try
-                    let snap = FS.GG.Governance.Snapshot.Interpreter.senseSnapshot ports.Git options
-                    // senseSnapshot NEVER throws; a failure surfaces as a SensingDiagnostic ⇒ InputUnavailable.
-                    match snap.Diagnostics with
-                    | [] -> Ok snap
-                    | ds ->
-                        ds
-                        |> List.map (fun d -> sprintf "%s: %s" (sensingDiagnosticIdToken d.Id) d.Message)
-                        |> String.concat "; "
-                        |> Error
-                with e ->
-                    Error e.Message
+            Loop.Sensed(CommandHost.senseSnapshotResult ports.Git options)
 
-            Loop.Sensed result
-
-        | Loop.LoadCatalog _ ->
-            let validation =
-                try
-                    Loader.readSource (GovernedPath ".") ports.Files |> Schema.validate
-                with e ->
-                    Invalid
-                        [ { Id = MissingRequiredFile
-                            File = Project
-                            Locator = { Field = None; Id = None; Line = None }
-                            Message = "catalog read failed: " + e.Message } ]
-
-            Loop.Loaded validation
+        | Loop.LoadCatalog _ -> Loop.Loaded(CommandHost.loadCatalogValidation ports.Files)
 
         | Loop.SenseFreshness(gates, (baseOpt, headOpt)) ->
             // Assemble SensedFacts from base/head (passed through from RepoSnapshot.Range) + the
@@ -343,7 +300,7 @@ module Interpreter =
           Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
           Freshness = sensor
           Store = realStoreReader
-          Write = writeAtomic
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text
           SenseCapability = Capability.senseCapability
           RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view "" }
