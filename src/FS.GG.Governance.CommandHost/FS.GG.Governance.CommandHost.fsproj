@@ -19,7 +19,16 @@
        never depends on a host Model.
 
        Placed BELOW the command hosts and ABOVE the domain-type owners whose values it walks; NOT under
-       Kernel/Host/Cli. Pure and total; no I/O; no MVU ceremony of its own (Principle IV). -->
+       Kernel/Host/Cli. No MVU ceremony of its own (Principle IV).
+
+       PURITY (ADR-0007, #74): the 075/Phase-B skeleton is pure and total. The trailing "host edge I/O
+       leaves" section (#49 second-extraction pass, consolidated in 2fcb1ba) is a DELIBERATE, charted
+       exception: the genuinely-shared impure host edges (`writeAtomic`, `realHandoffs`, `senseEnvironmentReal`,
+       `senseBuilderReal`) that all seven hosts used to hand-copy. They live here in the HOST layer — never
+       the domain core — because their type-owner projects (Adapters.SddHandoff, Provenance) are chartered
+       PURE and cannot host filesystem/env I/O without violating their own contracts (push-down rejected,
+       ADR-0007). This project therefore intentionally owns a small, enumerated impure surface; a future
+       split into a `.Io` sibling is possible but deferred (marginal benefit; lockfile/offline cost). -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.CommandHost</RootNamespace>
     <Version>0.1.0</Version>
