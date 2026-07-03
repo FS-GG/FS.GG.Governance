@@ -28,22 +28,9 @@ open FS.GG.Governance.Provenance.Model        // BuilderIdentity
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CommandHost =
 
-    // ── exit classification (research D2, FR-005) — canonical SUPERSET DU + total mapping ──
-
-    type ExitDecision =
-        | Success
-        | Blocked
-        | UsageError'
-        | InputUnavailable
-        | ToolError
-
-    let exitCode (decision: ExitDecision) : int =
-        match decision with
-        | Success -> 0
-        | Blocked -> 1
-        | UsageError' -> 2
-        | InputUnavailable -> 3
-        | ToolError -> 4
+    // NOTE (#49, F2): the canonical `ExitDecision`/`exitCode` were removed — they were dead (zero product
+    // consumers) and each host owns a genuinely-shaped exit DU (some carry `Blocked`, some don't), so a shared
+    // superset here fit none of them. Deleted per issue #49 ("adopt OR delete if truly dead").
 
     // ── gate classification (research D3, FR-005) — canonical SUPERSET DU (with `Deferred`) ──
 
