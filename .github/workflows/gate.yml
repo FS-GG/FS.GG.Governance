@@ -10,6 +10,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # On-demand runs (e.g. to re-check API compatibility without a new commit). The advisory
+  # api-compatibility-gate job is otherwise per-PR — see its scheduling note below (M-CI-3).
+  workflow_dispatch:
 
 concurrency:
   group: gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -34,14 +37,19 @@ jobs:
   gate:
     name: Deterministic gate (locked restore + build)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore is the single enforcement point. RestoreLockedMode is set in
       # Directory.Build.props when GITHUB_ACTIONS=true and a lockfile exists; --locked-mode
@@ -59,6 +67,49 @@ jobs:
       - name: Build (net10.0)
         run: dotnet build FS.GG.Governance.sln -c Debug --no-restore
 
+  # 102 / H1 (#45): the gate above builds but never TESTED — before this job only 2 of the 83 test
+  # projects ran anywhere in CI (ReferenceGateSet.Tests here, Cli.Tests in publish.yml on publish only),
+  # so a logic regression in any of the other 81 merged green as long as it compiled. Run the WHOLE
+  # Expecto suite on every PR via build.fsx (bounded -m:N, spec 080 — the 162-project graph thrashes
+  # under default parallelism). SEPARATE job so a test failure is a distinct signal, not serialized
+  # behind the build gate.
+  #
+  # NAME IS A CONTRACT: it must equal the required status-check context already registered in the
+  # "main branch protection" ruleset (id 18430843). A typo → the required check never reports → every
+  # PR blocks on a perpetually-pending check. Do not rename without updating the ruleset in lockstep.
+  full-test-suite:
+    name: Full test suite (dotnet fsi build.fsx test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          # Warm the NuGet restore from the committed lockfiles. A lockfile change misses the cache and
+          # re-restores; --locked-mode below still validates the graph (FR-003/FR-006).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      # Single enforcement point: locked restore against the committed packages.lock.json (mirrors the
+      # `gate` job) so a graph drift fails here too, with one clear place pointing at the regenerate cmd.
+      - name: Restore (locked)
+        run: |
+          set -euo pipefail
+          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
+            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
+            exit 1
+          fi
+
+      # Whole suite via the bounded entrypoint (spec 080): `test` builds then runs EVERY test project in
+      # the solution. --no-restore keeps the locked restore above as the single restore; no --no-build
+      # because build.fsx test builds as part of the run. A red assertion fails the job (no retries).
+      - name: Test (full suite, bounded)
+        run: dotnet fsi build.fsx test -c Debug --no-restore
+
   # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The three
   # managed build-config files (Directory.Build.props, Directory.Packages.props,
   # .config/dotnet-tools.json) must stay byte-identical to the org source of truth in
@@ -70,15 +121,16 @@ jobs:
   build-config-drift:
     name: Build-config drift check (shared-build-config)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout this repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Source of truth: scripts/ + dist/dotnet/ must land together (the script resolves its
       # source as dirname(script)/../dist/dotnet). Track main — the live baseline — so an org
       # bump shows up here as red until this repo re-syncs (intended coherence pressure).
       - name: Checkout org build config (FS-GG/.github)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: FS-GG/.github
           ref: main
@@ -97,14 +149,19 @@ jobs:
   reference-gate-set-pack:
     name: Reference gate set — pack guard (byte-identity + gated + versioned)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore the guard project (and its references) so a graph drift fails here too.
       - name: Restore (locked)
@@ -128,19 +185,28 @@ jobs:
   # detector NEVER reddens the build (D7) — the single enforcement point is the ApiCompatibility release
   # rule's Maturity, promoted to BlockOnRelease (and this job to required checks) once SC-005 holds (US2).
   # At rollout most packages resolve NoBaseline (research D5) — reported honestly, never hidden (FR-007).
+  # SCHEDULING (M-CI-3, revisited): kept PER-PR now that the detector produces real signal — apicompat
+  # resolves off PATH and the clean-run banner grades Checked:met (M-CI-1), so an API break surfaces on the
+  # PR that introduces it (where the signal is worth the packing cost). It stays advisory + continue-on-error
+  # (never blocks / serializes the required checks) and is also runnable on demand via workflow_dispatch.
   api-compatibility-gate:
     name: API compatibility gate (breaking-change → SemVer major) [advisory]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Advisory: a non-zero here must never fail the PR while the gate is advisory.
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore (repo convention) so a graph drift fails here too.
       - name: Restore (locked)
@@ -151,11 +217,16 @@ jobs:
       - name: Build (bounded)
         run: dotnet fsi build.fsx --no-restore
 
-      # Install the ApiCompat tool JOB-SCOPED (D6) — never in .config/dotnet-tools.json (drift-locked).
-      # Best-effort: if the tool is unavailable the detector is fail-safe (Indeterminate, never a clean pass).
-      - name: Install ApiCompat tool (job-scoped)
+      # Install the ApiCompat tool JOB-SCOPED (D6) — never in .config/dotnet-tools.json (drift-locked) — to an
+      # explicit --tool-path we prepend to PATH, so the detector resolves the `apicompat` EXECUTABLE directly
+      # (NOT `dotnet tool run apicompat`, which resolves only a local manifest we don't carry). Without an
+      # on-PATH `apicompat` every package graded Indeterminate and Checked:met was unreachable (M-CI-1).
+      # Advisory: a failed install still leaves the detector fail-safe (Indeterminate, never a clean pass).
+      - name: Install ApiCompat tool (job-scoped, on PATH)
         continue-on-error: true
-        run: dotnet tool install --global Microsoft.DotNet.ApiCompat.Tool || true
+        run: |
+          dotnet tool install --tool-path "$RUNNER_TEMP/apicompat-tool" Microsoft.DotNet.ApiCompat.Tool
+          echo "$RUNNER_TEMP/apicompat-tool" >> "$GITHUB_PATH"
 
       # Run the detector: pack Release + ApiCompat vs the feed baseline → ApiBreakSignal set + coverage.
       # Exits 0 (advisory, D7); the rule renders the decision. The selftest proves the grading path first.

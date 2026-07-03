@@ -1,19 +1,14 @@
 module FS.GG.Governance.RouteJson.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
-open FS.GG.Governance.Route.Model
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.RouteJson
-open FS.GG.Governance.RouteJson.Tests.Support
 
-// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II). Reflection lives
-// ONLY in these tests, never in the library.
+// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
+// SurfaceDrift helper (101/M-CI-3). The "exactly one module" leak guard stays inline.
 
-// RouteJson exports only the module (no public types), and wrapping its function in a delegate would
-// capture a closure compiled into THIS test assembly. So touch a member to force the library assembly
-// to load, then locate it by name among the loaded assemblies.
+// RouteJson exports only the module (no public types). Touch a member to force the library assembly to
+// load, then locate it by name among the loaded assemblies.
 let private routeJson =
     RouteJson.schemaVersion |> ignore
 
@@ -23,49 +18,11 @@ let private routeJson =
         | Some n -> n = "FS.GG.Governance.RouteJson"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.RouteJson.surface.txt")
-
-/// Render the assembly's public surface to canonical, sorted text. Any change to the public surface
-/// changes this text and trips the baseline assertion.
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "RouteJson public surface equals the committed baseline" {
-              let actual = renderSurface routeJson
-
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "RouteJson" "FS.GG.Governance.RouteJson" routeJson
 
           test "the public surface is exactly the RouteJson module, nothing private" {
               let typeNames =
@@ -79,64 +36,28 @@ let tests =
               Expect.isTrue (typeNames |> Array.exists (fun n -> n.Contains "FS.GG.Governance.RouteJson.RouteJsonModule")) "RouteJson module is public"
           }
 
-          test "RouteJson references only the Route transitive graph + BCL + FSharp.Core (FR-015 scope guard)" {
-              // No kernel/host/adapter/Snapshot/CLI dependency, and no new third-party package — the
-              // absence confirms serialization is the shared-framework System.Text.Json and no
-              // later-phase capability leaked in. Gates/Routing/Findings/Config arrive transitively
-              // via Route.
-              // The one-way graph is RouteJson -> Route -> {Gates, Routing, Findings} -> Config: the
-              // library project-references only Route, but its IL references the transitive Governance
-              // types it manipulates (RouteResult embeds Gate/FreshnessKey/FindingReport/GovernedPath).
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "FS.GG.Governance.Route"
-                  || name = "FS.GG.Governance.Gates"
-                  || name = "FS.GG.Governance.Routing"
-                  || name = "FS.GG.Governance.Findings"
-                  || name = "FS.GG.Governance.Config"
-                  // F045: F041 CacheEligibility (the embed) + its transitive F030/F029 token graph.
-                  || name = "FS.GG.Governance.CacheEligibility"
-                  || name = "FS.GG.Governance.EvidenceReuse"
-                  || name = "FS.GG.Governance.FreshnessKey"
-                  // F23: ProductSurfaces (the additive productSurfaces embed via ofRouteResultWithProductSurfaces).
-                  || name = "FS.GG.Governance.ProductSurfaces"
-                  // F052: GateRun (the per-gate execution embed) + its transitive F051/F032 graph.
-                  || name = "FS.GG.Governance.GateRun"
-                  || name = "FS.GG.Governance.GateExecution"
-                  || name = "FS.GG.Governance.ExecutionRecord"
-                  || name = "FS.GG.Governance.CommandRecord"
-                  // 068: the dependency-free RuleIdentity leaf (the additive per-finding ruleId source).
-                  || name = "FS.GG.Governance.RuleIdentity"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  // 073: the dependency-free JsonText leaf (the shared deterministic-emit helper writeToString).
-                  || name = "FS.GG.Governance.JsonText"
-                  // 073: the pure JsonWriters leaf (the shared sub-object/map writers).
-                  || name = "FS.GG.Governance.JsonWriters"
-                  // 073: the pure JsonTokens leaf (the shared closed-enum token helpers).
-                  || name = "FS.GG.Governance.JsonTokens"
-                  || name.StartsWith "System."
-
-              let offending =
-                  routeJson.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
-
-              Expect.isEmpty
-                  offending
-                  (sprintf "RouteJson must depend on Route/BCL/FSharp.Core only; found: %A" offending)
-
-              // Specifically: NOT the kernel/host/adapters/Snapshot/CLI — no later-phase capability.
-              let forbidden =
-                  routeJson.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (fun n ->
-                      n = "FS.GG.Governance.Kernel"
-                      || n = "FS.GG.Governance.Host"
-                      || n = "FS.GG.Governance.Snapshot"
-                      || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
-
-              Expect.isEmpty forbidden (sprintf "RouteJson must not reference kernel/host/adapters/Snapshot/CLI; found: %A" forbidden)
-          } ]
+          // FR-015 scope guard: the one-way graph is RouteJson -> Route -> {Gates, Routing, Findings} ->
+          // Config, plus the F045 CacheEligibility embed, the F23 ProductSurfaces embed, the F052 GateRun
+          // embed, the 068 RuleIdentity leaf, and the 073 Json* leaves. No kernel/host/adapter/Snapshot/
+          // CLI dependency, no new third-party package.
+          SurfaceDrift.referencesOnly
+              "RouteJson"
+              (fun n ->
+                  n = "FS.GG.Governance.Route"
+                  || n = "FS.GG.Governance.Gates"
+                  || n = "FS.GG.Governance.Routing"
+                  || n = "FS.GG.Governance.Findings"
+                  || n = "FS.GG.Governance.Config"
+                  || n = "FS.GG.Governance.CacheEligibility"
+                  || n = "FS.GG.Governance.EvidenceReuse"
+                  || n = "FS.GG.Governance.FreshnessKey"
+                  || n = "FS.GG.Governance.ProductSurfaces"
+                  || n = "FS.GG.Governance.GateRun"
+                  || n = "FS.GG.Governance.GateExecution"
+                  || n = "FS.GG.Governance.ExecutionRecord"
+                  || n = "FS.GG.Governance.CommandRecord"
+                  || n = "FS.GG.Governance.RuleIdentity"
+                  || n = "FS.GG.Governance.JsonText"
+                  || n = "FS.GG.Governance.JsonWriters"
+                  || n = "FS.GG.Governance.JsonTokens")
+              routeJson ]

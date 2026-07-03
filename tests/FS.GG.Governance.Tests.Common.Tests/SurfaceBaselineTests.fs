@@ -1,14 +1,12 @@
 module FS.GG.Governance.Tests.Common.Tests.SurfaceBaselineTests
 
-open System
 open System.IO
-open System.Reflection
 open Expecto
 open FS.GG.Governance.Tests.Common
 
-// Reflective API surface-drift + the FR-008 scope-guard for the 074 shared test-support library
-// (Principle II). Reflection lives ONLY in these tests, never in the library. The baseline is blessed via
-// BLESS_SURFACE=1 dotnet test, matching the sibling leaf-test convention (e.g. JsonText.Tests).
+// Reflective API surface-drift + the FR-008 scope-guard for the 074/101 shared test-support library
+// (Principle II). The surface check now runs through the shared `SurfaceDrift` helper this library
+// exposes (dogfooding — 101/M-CI-3); the FR-008 scope guard is bespoke and stays local.
 
 let private repoRoot = RepositoryHelpers.repoRoot
 
@@ -22,47 +20,11 @@ let private testsCommonAsm =
         | Some n -> n = "FS.GG.Governance.Tests.Common"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.Tests.Common.surface.txt")
-
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "Tests.Common public surface equals the committed baseline" {
-              let actual = renderSurface testsCommonAsm
-
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "Tests.Common" "FS.GG.Governance.Tests.Common" testsCommonAsm
 
           test "no src/*.fsproj references FS.GG.Governance.Tests.Common (FR-008 scope guard)" {
               // The library is TEST-ONLY: it lives under tests/, is IsPackable=false, and MUST NOT enter the

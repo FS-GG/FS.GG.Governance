@@ -12,8 +12,11 @@ open FS.GG.Governance.Sample.SddReferenceProvider.Tests.Support
 // CORE baselines are byte-identical to their committed form — the SC-006 no-delta guard proving the
 // generic seam gained no provider knowledge (contract R6, quickstart Scenario 5).
 
-/// Locate a loaded assembly by simple name. Touching `SddReferenceProvider.providerId` (and the worked
-/// example's use of `ScaffoldManifestJson.ofManifest`) guarantees all three are loaded.
+/// Locate an assembly by simple name. Touching `SddReferenceProvider.providerId` nudges the provider graph
+/// to load, but .NET loads referenced assemblies LAZILY — a referenced-but-not-yet-executed assembly (e.g.
+/// `ScaffoldManifestJson` on a fresh CI process) may not be in `GetAssemblies()` yet. So fall back to an
+/// explicit `Assembly.Load` by simple name (the DLL is in this test's output dir via the project reference).
+/// (Surfaced by 102 when the suite first ran in CI: the ambient load set differs from a warm local run.)
 let private assemblyByName (name: string) : Assembly =
     SddReferenceProvider.providerId |> ignore
 
@@ -21,7 +24,7 @@ let private assemblyByName (name: string) : Assembly =
     |> Array.tryFind (fun a -> a.GetName().Name = name)
     |> function
         | Some a -> a
-        | None -> failwithf "assembly not loaded: %s" name
+        | None -> Assembly.Load name
 
 let private renderSurface (asm: Assembly) =
     let memberFlags =

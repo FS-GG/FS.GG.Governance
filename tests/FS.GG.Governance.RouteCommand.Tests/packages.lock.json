@@ -497,6 +497,7 @@
       "fs.gg.governance.tests.common": {
         "type": "Project",
         "dependencies": {
+          "Expecto": "[10.2.3, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",

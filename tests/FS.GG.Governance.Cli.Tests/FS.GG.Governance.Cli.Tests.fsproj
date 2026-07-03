@@ -59,6 +59,8 @@
          real compose path (Constitution V). Expecto scans only this entry assembly, so its tests do not
          double-run. The reference also brings RouteCommand for the compose call. -->
     <ProjectReference Include="../FS.GG.Governance.RouteCommand.Tests/FS.GG.Governance.RouteCommand.Tests.fsproj" />
+    <!-- 101 (M-CI-3): the shared SurfaceDrift helper backing HumanRenderSurfaceDriftTests. -->
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -106,3 +106,29 @@ module SnapshotHelpers =
     val git: dir: string -> args: string list -> string
     /// Write `content` to `dir/relPath`, creating parent directories.
     val writeFile: dir: string -> relPath: string -> content: string -> unit
+
+/// 101 (M-CI-3): the single shared surface-drift check. One reflective public-surface projection plus
+/// the baseline-equality test with the `BLESS_SURFACE=1` bless path, replacing ~80 per-project copies
+/// (74 `SurfaceDriftTests.fs` + 6 `SurfaceBaselineTests.fs` + 1 `HumanRenderSurfaceDriftTests.fs`).
+/// Reflection lives here and in the thin call-sites only — never in a product project (Principle II).
+module SurfaceDrift =
+
+    open System.Reflection
+    open Expecto
+
+    /// Canonical reflective projection of an assembly's public surface — byte-identical to the
+    /// projection every committed `surface/*.surface.txt` baseline was blessed against.
+    val renderSurface: asm: Assembly -> string
+
+    /// Baseline-equality test: compare `renderSurface asm` (normalised) to
+    /// `surface/<baselineName>.surface.txt` (repo root via `RepositoryHelpers.repoRoot`).
+    /// `BLESS_SURFACE=1` (re)writes the baseline. `label` prefixes the test title.
+    val surfaceTest: label: string -> baselineName: string -> asm: Assembly -> Test
+
+    /// Scope guard: every referenced-assembly name of `asm` is BCL / FSharp.Core or satisfies
+    /// `allowed`; otherwise the test fails listing the offenders.
+    val referencesOnly: label: string -> allowed: (string -> bool) -> asm: Assembly -> Test
+
+    /// Direction guard: no assembly in `upstream` references `asm` (e.g. kernel/Spi must not
+    /// reference an adapter — dependency direction adapter -> Spi -> kernel).
+    val noInboundReferences: label: string -> upstream: Assembly list -> asm: Assembly -> Test
