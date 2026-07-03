@@ -106,9 +106,9 @@ route Snapshot `GitUnavailable` through `assemble` via `RepoState` (B9). Contrac
 
 **Independent Test**: `dotnet test --filter "FullyQualifiedName~Config"` byte-identical; grep clean.
 
-- [ ] T020 [US3] Confirm the existing `FS.GG.Governance.Config.Tests` suite covers every `finish` build path (valid + each diagnostic); add a fixture only if a thunk field is uncovered.
-- [ ] T021 [US3] Refactor `src/FS.GG.Governance.Config/Schema.fs` `finish` thunks to thread the parsed `Some` payloads instead of force-unwrapping: sites `:540-547`, `:570-574`, `:588-590`, `:622-623`, and the `List.map Option.get` at `:372`. Behaviour unchanged; `finish` stays `private` (no `.fsi`).
-- [ ] T022 [US3] Verify: Config suite green + byte-identical records/diagnostics for every fixture; `grep -n "\.Value\|Option.get" src/FS.GG.Governance.Config/Schema.fs` shows none in the `finish` thunks. Open **PR US3**.
+- [X] T020 [US3] The existing `Config.Tests` (65 tests) covers valid + each diagnostic path for all four parsers; no new fixture needed (a value present alongside a diagnostic, e.g. duplicate domains, is already exercised).
+- [X] T021 [US3] Refactored all four `finish` thunks to bind the parsed required values via a `match … with Some… -> finish … | _ -> Error(List.ofSeq diags)` (parseProject/Policy/Capabilities/Tooling), and the `reqStringList` `List.map Option.get` → `List.choose id`. `finish` stays `private` (no `.fsi`). The only remaining `.Value` are YamlDotNet AST node accessors (`YamlScalarNode.Value`), not option unwraps.
+- [X] T022 [US3] Config suite green (65/65) — byte-identical records + diagnostics; no surface baseline moved (Tier 2). PR US3 pending push.
 
 ---
 
