@@ -30,10 +30,10 @@
 
 **⚠️ Blocks Phase 3.** These add the shared surface every host will call. Tier-1 only for the *new* `CommandHost.fsi` vals (baseline updated here); everything downstream is Tier-2.
 
-- [ ] T006 [US2] Add the shared impure leaves to `src/FS.GG.Governance.CommandHost/CommandHost.fs` with matching `val`s in `CommandHost.fsi`: `writeAtomic`, `realHandoffs` (canonical `String.CompareOrdinal` sort), `senseEnvironmentReal` (keep `EnvironmentClass` unqualified per D1 clash-avoidance), `senseBuilderReal`. Signatures per contracts/shared-leaves.md §A.
-- [ ] T007 [US2] Add the shared snapshot/catalog step-arm helper to `CommandHost.fs`/`.fsi` (a function `step` will call for the `SenseScope`/`LoadCatalog` arms) — designed so no host `step` signature changes (contracts §A invariant).
-- [ ] T008 [US1] Add the shared argv value-guard `requireValue` (rejects a `--`-prefixed next token) to `src/FS.GG.Governance.CommandHost/CommandHost.fs`/`.fsi`, parameterized over each host's missing-value error (contracts §B).
-- [ ] T009 [US2] Update the `CommandHost` surface-drift baseline to include the new `val`s from T006–T008. Confirm no OTHER baseline changes (the 9 `step` baselines stay untouched).
+- [X] T006 [US2] Added the shared impure leaves to `CommandHost.fs` + `val`s in `.fsi`: `writeAtomic`, `realHandoffs` (spelled-out `String.CompareOrdinal` sort), `senseEnvironmentReal` (fully-qualified `Config.Model` cases per D1 clash-avoidance), `senseBuilderReal`. Added a `CommandHost → Adapters.SddHandoff` ProjectReference (acyclic; SddHandoff refs only Kernel/Config/Gates/Route). CommandHost builds clean.
+- [X] T007 [US2] Added the snapshot/catalog step-arm realizations as `senseSnapshotResult` (git+options → `Result<RepoSnapshot,string>`) and `loadCatalogValidation` (FileReader → `Validation`). Each host wraps the result in its own `Sensed`/`Loaded` msg, so no host `step` signature changed (SurfaceDrift host baselines unchanged — verified).
+- [-] T008 [US1] Already merged in Phase A PR #69 (argv value-guard). Not re-done this pass.
+- [X] T009 [US2] Blessed the `CommandHost` surface baseline (`BLESS_SURFACE=1`): diff is +6 `val`s only (`writeAtomic`/`realHandoffs`/`senseEnvironmentReal`/`senseBuilderReal`/`senseSnapshotResult`/`loadCatalogValidation`). No other baseline changed; the scope-guard test (no Host/Cli/*Command ref) stays green.
 
 **Checkpoint**: `CommandHost` builds; new shared surface is baselined; nothing downstream rewired yet.
 
@@ -43,20 +43,20 @@
 
 **Goal**: Delete per-host leaf copies, route parsers through the guard, land F13/F15/M-CLI-7. Surface baselines (except the CommandHost additions from Phase 2) MUST stay unchanged.
 
-- [ ] T010 [P] [US2] RouteCommand: delete local `writeAtomic`/`realHandoffs`, call `CommandHost.*`; extract the snapshot/catalog `step` arms to `CommandHost.stepSnapshotArms`. `src/FS.GG.Governance.RouteCommand/Interpreter.fs`.
-- [ ] T011 [P] [US2] ShipCommand: delete local `writeAtomic`/`realHandoffs`/`senseEnvironmentReal`/`senseBuilderReal`, call `CommandHost.*`; extract step arms. `src/FS.GG.Governance.ShipCommand/Interpreter.fs`.
-- [ ] T012 [P] [US2] VerifyCommand: same as Ship. `src/FS.GG.Governance.VerifyCommand/Interpreter.fs`.
-- [ ] T013 [P] [US2] ReleaseCommand: delete local `writeAtomic`/`senseEnvironmentReal`/`senseBuilderReal`, call `CommandHost.*` (verify the `EnvironmentClass` qualification survives). `src/FS.GG.Governance.ReleaseCommand/Interpreter.fs`.
-- [ ] T014 [P] [US2] RefreshCommand: delete local `writeAtomic`, call `CommandHost.writeAtomic`. `src/FS.GG.Governance.RefreshCommand/Interpreter.fs`.
-- [ ] T015 [P] [US2] CacheEligibilityCommand: delete local `writeAtomic`, call `CommandHost.writeAtomic`; extract step arms. `src/FS.GG.Governance.CacheEligibilityCommand/Interpreter.fs`.
-- [ ] T016 [P] [US2] EvidenceCommand: delete local `writeAtomic`, call `CommandHost.writeAtomic` (ArtifactReading copy handled in Phase B). `src/FS.GG.Governance.EvidenceCommand/Interpreter.fs`.
-- [ ] T017 [US1] Align `realHandoffs` at the Cli mirror: replace `Array.sortBy Path.GetFileName` in `src/FS.GG.Governance.Cli/ArtifactReading.fs` (`locateHandoffs`) with the shared `CommandHost.realHandoffs` (or its `String.CompareOrdinal` sort). Output must be identical (D3).
+- [X] T010 [P] [US2] RouteCommand: deleted local `writeAtomic`/`realHandoffs`, call `CommandHost.*`; both step arms now call `CommandHost.senseSnapshotResult`/`loadCatalogValidation`. Built in isolation (green) as the template.
+- [X] T011 [P] [US2] ShipCommand: deleted local `writeAtomic`/`realHandoffs`/`senseEnvironmentReal`/`senseBuilderReal`, call `CommandHost.*`; step arms rewired.
+- [X] T012 [P] [US2] VerifyCommand: same as Ship (sense*/writeAtomic/realHandoffs deleted; step arms rewired).
+- [X] T013 [P] [US2] ReleaseCommand: deleted local `writeAtomic`/`senseEnvironmentReal`/`senseBuilderReal`, call `CommandHost.*`. `CommandHost.senseEnvironmentReal` returns the same `Config.Model.EnvironmentClass` Release opens — types line up.
+- [X] T014 [P] [US2] RefreshCommand: deleted local `writeAtomic`; both the `realPorts` field and the direct `writeProv` call site now use `CommandHost.writeAtomic`.
+- [X] T015 [P] [US2] CacheEligibilityCommand: deleted local `writeAtomic`; step arms rewired to `CommandHost.*`.
+- [X] T016 [P] [US2] EvidenceCommand: deleted local `writeAtomic` (the `with ex` outlier), added `CommandHost` ProjectReference + `open`, call `CommandHost.writeAtomic`.
+- [-] T017 [US1] No-op: `Cli/ArtifactReading.locateHandoffs` already uses the spelled-out `String.CompareOrdinal` sort (the D3 alignment landed in an earlier PR). Not routed through `CommandHost.realHandoffs` — Cli sits below CommandHost in layering and adding the ref would invert it; output is already identical (the "or its `String.CompareOrdinal` sort" branch of the task).
 - [ ] T018 [US1] Apply the shared value-guard on every single-value option arm across all seven `Loop.fs` parsers (`RouteCommand`/`ShipCommand`/`VerifyCommand`/`ReleaseCommand`/`RefreshCommand`/`EvidenceCommand`/`CacheEligibilityCommand`) — makes T002 GREEN. Each host keeps its own missing-value error DU via the guard's `onMissing` param.
 - [ ] T019 [US1] Apply the same guard to `Cli.requireValue` in `src/FS.GG.Governance.Cli/Cli.fs:194`.
 - [ ] T020 [US1] F15: change ShipCommand's `Wrote(Ok())` arm to bind the post-update model before `emitEffect` (match Verify) — makes T004 GREEN. `src/FS.GG.Governance.ShipCommand/Loop.fs` (~739).
 - [ ] T021 [US1] M-CLI-7: make EvidenceCommand's `--plain` a documented inert no-op — drop the unused `ExplicitPlain` field plumbing if it drives nothing, and document the no-op in usage/help; do NOT change the (already-correct) JSON precedence. Makes T005 GREEN. `src/FS.GG.Governance.EvidenceCommand/Loop.fs`.
 - [ ] T022 [US1] F13: prepend `if model.Phase = Done then model, []` to EvidenceCommand's `update` — makes T003 GREEN. `src/FS.GG.Governance.EvidenceCommand/Loop.fs:188`.
-- [ ] T023 [US2] Run `dotnet fsi build.fsx test --no-restore`. Full suite + SurfaceDrift green; confirm the single-definition greps (quickstart Story 2) show 1 def each for the four leaves. Commit Phase A.
+- [X] T023 [US2] Full `dotnet fsi build.fsx test` green (exit 0; 83 test DLLs pass, 0 failures). Single-definition greps confirm exactly 1 def each in `CommandHost` for all six leaves (`writeAtomic`/`realHandoffs`/`senseEnvironmentReal`/`senseBuilderReal`/`senseSnapshotResult`/`loadCatalogValidation`). Net src change: −246 lines (374 del / 128 ins across 8 `.fs`). Note: T018–T022 (M-CLI-3/F13/F15/M-CLI-7 behavior fixes) already merged in PR #69; this pass is the leaf-consolidation remainder of Phase A.
 
 **Checkpoint (MVP+):** M-CLI-3/F13/F15/M-CLI-7 fixed, leaves consolidated, zero unintended surface delta. Real value is banked; a time-box may stop here.
 

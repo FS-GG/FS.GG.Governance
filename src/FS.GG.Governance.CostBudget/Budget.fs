@@ -64,7 +64,8 @@ module Budget =
     let budgetFor (profile: Profile) (mode: RunMode) : CostBudget =
         { Ceiling = min (profileCeiling profile) (modeCeiling mode) }
 
-    let fits (budget: CostBudget) (cost: Cost) : bool = cost <= budget.Ceiling
+    let fits (budget: CostBudget) (cost: Cost) : bool =
+        costRank cost <= costRank budget.Ceiling
 
     let decide (budget: CostBudget) (mode: RunMode) (candidates: CandidateCost list) : CacheDecisionReport =
         candidates

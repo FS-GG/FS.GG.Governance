@@ -48,9 +48,9 @@ module RouteExplain =
         registry.Gates
         |> List.filter (fun g ->
             g.Domain = h.Domain
-            && g.Cost < h.Cost
+            && costRank g.Cost < costRank h.Cost
             && permitsLocal g.FreshnessKey.Environment)
-        |> List.sortBy (fun g -> g.Cost, gateIdValue g.Id)
+        |> List.sortBy (fun g -> costRank g.Cost, gateIdValue g.Id)
         |> List.tryHead
         |> function
             | Some g -> CheaperLocalAlternative g
@@ -60,7 +60,7 @@ module RouteExplain =
         let findings =
             route.SelectedGates
             // One finding per selected gate at/above the threshold; none below (FR-004, §1).
-            |> List.filter (fun sg -> sg.Gate.Cost >= highCostThreshold)
+            |> List.filter (fun sg -> costRank sg.Gate.Cost >= costRank highCostThreshold)
             // Duplicate selected-gate entries (same gate) collapse — dup-invariance (FR-008).
             |> List.distinctBy (fun sg -> sg.Gate.Id)
             |> List.map (fun sg ->

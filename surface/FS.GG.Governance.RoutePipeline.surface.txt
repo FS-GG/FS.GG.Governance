@@ -542,7 +542,3 @@ TYPE FS.GG.Governance.RouteCommand.LoopModule+UsageError+Tags
 TYPE FS.GG.Governance.RouteCommand.LoopModule+UsageError+UnknownFlag
   [Method] System.String get_Item()
   [Property] System.String Item
-TYPE FS.GG.Governance.RouteCommand.Program
-  [Method] Int32 main(System.String[])
-  [Method] System.String categoryToken(ExitDecision)
-  [Method] System.String usageMessage(UsageError)

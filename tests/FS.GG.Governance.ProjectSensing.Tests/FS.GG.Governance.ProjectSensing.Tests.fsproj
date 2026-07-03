@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 100 (M-ARCH-2): surface-drift + dependency-hygiene for the FS.GG.Governance.ProjectSensing library,
+       which now owns the F12 `Project` composition root (moved out of the Cli executable). Guards that the
+       Project coproduct surface is stable and that this library sits BELOW the command executables (it must
+       not reference Cli/EvidenceCommand/etc.). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.ProjectSensing/FS.GG.Governance.ProjectSensing.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>

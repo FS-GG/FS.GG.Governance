@@ -30,7 +30,6 @@
     <Compile Include="HumanTextParityTests.fs" />
     <Compile Include="RenderModeDispatchTests.fs" />
     <Compile Include="WatchHostTests.fs" />
-    <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="HandoffRouteWiringTests.fs" />
     <Compile Include="GovernedRefRoutingTests.fs" />
     <Compile Include="Main.fs" />

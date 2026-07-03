@@ -2,6 +2,7 @@ module FS.GG.Governance.ReviewRecord.Tests.NoBytesTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.PromptIsolation.Model
 open FS.GG.Governance.ReviewRecord.Model
 open FS.GG.Governance.ReviewRecord.Tests.Support

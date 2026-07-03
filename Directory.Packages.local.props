@@ -16,7 +16,7 @@
        references) is our own code over the node tree, NOT YamlDotNet's lenient binding.
        The kernel/host stay BCL-only. OWNER: FS.GG.Governance.Config maintainer. -->
   <ItemGroup>
-    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <!-- Cross-repo: the org-shared, SDD-owned typed source of truth for every `.fsgg` schema
@@ -45,9 +45,9 @@
        VSTest adapters that let `dotnet test` drive the Expecto runner. None of
        these reach the kernel assembly. -->
   <ItemGroup>
-    <PackageVersion Include="Expecto" Version="10.2.3" />
-    <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
-    <PackageVersion Include="FsCheck" Version="2.16.6" />
+    <PackageVersion Include="Expecto" Version="11.1.0" />
+    <PackageVersion Include="Expecto.FsCheck" Version="11.1.0" />
+    <PackageVersion Include="FsCheck" Version="3.3.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
     <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
   </ItemGroup>

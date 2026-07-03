@@ -3,9 +3,12 @@
 // This .fsi is the SOLE declaration of the module's public surface (Constitution Principle II); the matching
 // CommandHost.fs carries NO access modifiers. Drafted .fsi-first (Principle I).
 //
-// Pure, total host-skeleton helpers shared by the MVU command Loop.fs hosts. No I/O; the leaf sits BELOW the
-// hosts and ABOVE the domain-type owners whose values it walks. Output is byte-identical to today's per-host
-// copies (feature 075 acceptance gate: every command/projection golden unchanged).
+// Host-skeleton helpers shared by the MVU command Loop.fs hosts. The skeleton members are pure; the leaf sits
+// BELOW the hosts and ABOVE the domain-type owners whose values it walks. Output is byte-identical to today's
+// per-host copies (feature 075 acceptance gate: every command/projection golden unchanged). The trailing
+// "host edge I/O leaves" section (#49) is the sole impure part — genuinely-shared host edges (atomic write,
+// readiness discovery, env/builder sensing, snapshot/catalog step-arm realizations) relocated from the hosts;
+// they live in the host layer, never the domain core. This placement is ratified in ADR-0007 (#74).
 //
 // SCOPE NOTE (FR-008): only genuinely-shared, type-honest members live here. `fail`/`tryExecute`/
 // `awaitingPersist` are parameterized by a per-host `Model`/`Effect` record and stay LOCAL (a shared form
@@ -115,3 +118,30 @@ module CommandHost =
         model: 'model ->
         effects: 'effect list ->
             'model
+
+    // ---- host edge I/O leaves (#49 second-extraction pass) ----
+
+    /// Atomic artifact write: create parent dirs, write to a unique temp sibling, atomically rename over the
+    /// target — a failed write leaves NO partial file. Reifies any exception to `Error`. (7 host copies.)
+    val writeAtomic: path: string -> content: string -> Result<unit, string>
+
+    /// Locate + read every readiness/<id>/governance-handoff.json under `repo`, in stable ordinal <id> order.
+    /// A missing readiness dir (or any IO error) yields `[]`. (3 host copies + the Cli mirror sort, D3.)
+    val realHandoffs: repo: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+
+    /// Sense the runner environment from the `CI` variable: set ⇒ `Ci`, unset/empty ⇒ `Local`. (3 copies.)
+    val senseEnvironmentReal: unit -> EnvironmentClass
+
+    /// The real builder identity (`fsgg`). (3 copies.)
+    val senseBuilderReal: unit -> BuilderIdentity
+
+    /// Shared realization of the `SenseScope` step arm: sense a snapshot for `options` against `git`, mapping
+    /// any sensing diagnostic (or thrown exception) to a single `Error`. The host wraps the result in its own
+    /// `Sensed` msg — `step`'s (ports -> effect -> msg) signature is unchanged. (4 host copies.)
+    val senseSnapshotResult:
+        git: FS.GG.Governance.Snapshot.Ports -> options: SnapshotOptions -> Result<RepoSnapshot, string>
+
+    /// Shared realization of the `LoadCatalog` step arm: read the `.fsgg` sources through `files` and apply the
+    /// pure `Schema.validate`, reifying a misbehaving reader's exception to an `Invalid` catalog. The host wraps
+    /// the result in its own `Loaded` msg. (4 host copies.)
+    val loadCatalogValidation: files: FS.GG.Governance.Config.Loader.FileReader -> Validation

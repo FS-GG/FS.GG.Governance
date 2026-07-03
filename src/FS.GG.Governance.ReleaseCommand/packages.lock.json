@@ -8,11 +8,14 @@
         "resolved": "10.1.301",
         "contentHash": "excLf2zM/qUB3WhRUfI0xvOOaPwcRAEdYT/BXe9eiTKySnWVuIKMQTf5+6ETy5nsb1dpLp1s2j2yAM/XcRgFMg=="
       },
-      "YamlDotNet": {
-        "type": "Direct",
-        "requested": "[16.3.0, )",
-        "resolved": "16.3.0",
-        "contentHash": "SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA=="
+      "fs.gg.governance.adapters.sddhandoff": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
       },
       "fs.gg.governance.agentreviewkey": {
         "type": "Project",
@@ -49,6 +52,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -82,7 +86,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Contracts": "[1.4.0, )",
-          "YamlDotNet": "[16.3.0, )"
+          "YamlDotNet": "[18.1.0, )"
         }
       },
       "fs.gg.governance.costbudget": {
@@ -175,6 +179,9 @@
           "FS.GG.Governance.Ship": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.kernel": {
+        "type": "Project"
+      },
       "fs.gg.governance.packevidence": {
         "type": "Project",
         "dependencies": {
@@ -204,7 +211,7 @@
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
           "FSharp.Core": "[10.1.301, )",
-          "YamlDotNet": "[16.3.0, )"
+          "YamlDotNet": "[18.1.0, )"
         }
       },
       "fs.gg.governance.releasefactssensing": {
@@ -288,6 +295,12 @@
         "dependencies": {
           "FSharp.Core": "10.1.301"
         }
+      },
+      "YamlDotNet": {
+        "type": "CentralTransitive",
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       }
     }
   }

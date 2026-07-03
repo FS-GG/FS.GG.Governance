@@ -3,6 +3,7 @@ module FS.GG.Governance.RouteExplain.Tests.Support
 open System
 open System.IO
 open FsCheck
+open FsCheck.FSharp
 open Expecto
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Gates.Model

@@ -18,6 +18,7 @@ open FS.GG.Governance.Kernel
 open FS.GG.Governance.Adapters.SpecKit
 open FS.GG.Governance.Adapters.DesignSystem
 open FS.GG.Governance.Cli
+open FS.GG.Governance.CommandHost         // 049: shared host edge leaf (writeAtomic)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -28,7 +29,9 @@ module Interpreter =
           Write: string -> string -> Result<unit, string>
           Out: string -> unit }
 
-    // ── project sensing: reuse Cli.ArtifactReading (single source; #49 removed the ~325-line copy) ──
+    // ── project sensing: reuse ArtifactReading (single source; #49 removed the ~325-line copy). 100
+    //    (M-ARCH-2): ArtifactReading + the RunRequest vocabulary now live in the ProjectSensing library
+    //    (same FS.GG.Governance.Cli namespace), so this tool consumes them without referencing the Cli exe. ──
 
     // The domains + judge the evidence report senses over. Evidence reports declared/effective evidence, so its
     // snapshot deliberately carries NO SDD handoff and NO declared profile (those drive only `route`).
@@ -36,7 +39,7 @@ module Interpreter =
 
     let optionsFor () : ProjectOptions =
         { Domains = evidenceDomains
-          Judge = Cli.defaultJudge
+          Judge = Project.defaultJudge
           SpecKitDial = Catalog.defaultDial }
 
     // A RunRequest shaped for `ArtifactReading.loadSnapshot`: it consults only Root/Scope/Domains/Judge; the
@@ -51,7 +54,7 @@ module Interpreter =
           ReviewBudget = ReviewBudget.CacheOnly
           ReviewStore = None
           OutputPath = None
-          Judge = Cli.defaultJudge
+          Judge = Project.defaultJudge
           ExplicitPlain = false }
 
     let loadSnapshot (rawRoot: string) : Result<ProjectSnapshot, string> =
@@ -102,22 +105,6 @@ module Interpreter =
         with ex ->
             Error(Loop.ToolFault ex.Message)
 
-    // ── atomic write (temp+rename: a failed write leaves NO partial file) ──
-
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with ex ->
-            Error ex.Message
-
     // ── ports / step / run ──
 
     // `repo` is accepted to mirror the sibling hosts' `realPorts repo` shape; the repository is actually
@@ -126,7 +113,7 @@ module Interpreter =
         ignore repo
 
         { SenseReport = senseReport
-          Write = writeAtomic
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 
     let guard (call: unit -> Result<'a, string>) : Result<'a, string> =

@@ -2,6 +2,7 @@ module FS.GG.Governance.AdvisoryPromotion.Tests.AdvisoryDefaultTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.AdvisoryPromotion
 open FS.GG.Governance.AdvisoryPromotion.Model

@@ -67,6 +67,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -100,7 +101,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Contracts": "[1.4.0, )",
-          "YamlDotNet": "[16.3.0, )"
+          "YamlDotNet": "[18.1.0, )"
         }
       },
       "fs.gg.governance.costbudget": {
@@ -281,6 +282,19 @@
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.projectsensing": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )",
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Host": "[1.0.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FSharp.Core": "[10.1.301, )"
+        }
+      },
       "fs.gg.governance.provenance": {
         "type": "Project",
         "dependencies": {
@@ -323,7 +337,27 @@
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.routecommand": {
+      "fs.gg.governance.routeexplain": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routejson": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
+          "FS.GG.Governance.GateRun": "[0.1.0, )",
+          "FS.GG.Governance.JsonText": "[0.1.0, )",
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
+          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )",
+          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routepipeline": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
@@ -348,26 +382,6 @@
           "FS.GG.Governance.Routing": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
           "FSharp.Core": "[10.1.301, )"
-        }
-      },
-      "fs.gg.governance.routeexplain": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.routejson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
-          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )",
-          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
         }
       },
       "fs.gg.governance.routing": {
@@ -412,9 +426,9 @@
       },
       "YamlDotNet": {
         "type": "CentralTransitive",
-        "requested": "[16.3.0, )",
-        "resolved": "16.3.0",
-        "contentHash": "SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA=="
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       }
     }
   }

@@ -2,6 +2,7 @@ module FS.GG.Governance.GateRun.Tests.PlanTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.CommandRecord.Model
 open FS.GG.Governance.EvidenceReuse.Model
@@ -65,6 +66,19 @@ let lexTests =
               Expect.equal (Plan.lexCommandLine "") None "empty"
               Expect.equal (Plan.lexCommandLine "   " ) None "spaces"
               Expect.equal (Plan.lexCommandLine "\t \n") None "mixed whitespace"
+          }
+
+          test "an unterminated quote ⇒ None (never a silently-accepted truncated argv, #56/B4)" {
+              // A single or double quote left open at end-of-input is malformed; accepting it would let a
+              // truncated command line lex into a bogus argv. Both must reject.
+              Expect.equal (Plan.lexCommandLine "echo 'hello") None "unterminated single quote"
+              Expect.equal (Plan.lexCommandLine "echo \"hello") None "unterminated double quote"
+              Expect.equal (Plan.lexCommandLine "tool --flag 'a b") None "unterminated quote mid-line"
+              // A properly-closed quote next to the same content still lexes (guards against over-rejection).
+              Expect.equal
+                  (Plan.lexCommandLine "echo 'hello'")
+                  (Some(Executable "echo", [ Argument "hello" ]))
+                  "closed single quote still lexes"
           }
 
           test "no shell features: glob/pipe/var/redirect are literal token characters" {

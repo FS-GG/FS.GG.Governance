@@ -150,15 +150,17 @@ module Reader =
 
                                         let rationale = tryProp nodeEl "rationale" |> Option.bind asString
 
-                                        Ok(
-                                            ns
-                                            @ [ { Id = id; State = state; Stale = stale; Rationale = rationale } ]
-                                        )))
+                                        // Prepend (O(1)) and reverse once after the fold (#56/C1f) instead of
+                                        // `ns @ [node]` per element, which was O(n²). Order is restored below.
+                                        Ok({ Id = id; State = state; Stale = stale; Rationale = rationale } :: ns)))
                     (Ok [])
 
             match parsedNodes with
             | Error d -> Error d
-            | Ok nodes ->
+            | Ok nodesReversed ->
+
+            // Restore source order once (#56/C1f): the fold above prepended for O(n) accumulation.
+            let nodes = List.rev nodesReversed
 
             // evidence.dependencies (optional array of 2-tuples).
             let deps =

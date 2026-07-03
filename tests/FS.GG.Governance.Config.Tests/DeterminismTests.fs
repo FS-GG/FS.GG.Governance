@@ -2,6 +2,7 @@ module FS.GG.Governance.Config.Tests.DeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Config.Schema
 open FS.GG.Governance.Config.Tests.Support

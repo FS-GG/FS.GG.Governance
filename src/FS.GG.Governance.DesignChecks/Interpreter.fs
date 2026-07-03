@@ -113,7 +113,10 @@ module Interpreter =
                 [], [], []
 
         let resolveSet (read: unit -> Result<Set<string>, string>) (mk: string -> ResolveOutcome -> 'a) (refs: string list) (label: string) : 'a list =
-            match read () with
+            // `safe` wraps the port read so a throwing catalog port degrades to a sensed error instead of
+            // escaping `senseDesign` (its never-throws contract, #56/B13) — previously only ReadDescriptor
+            // was guarded, leaving four of the five port calls able to escape.
+            match safe read with
             | Ok set -> refs |> List.map (fun r -> mk r (if Set.contains r set then Resolves else Absent r))
             | Error e ->
                 unavailable <- sprintf "%s catalog: %s" label e :: unavailable
@@ -129,7 +132,7 @@ module Interpreter =
             resolveSet port.ReadControlCatalog (fun c o -> { Control = c; Outcome = o }) refControls "control"
 
         let contrasts =
-            match port.ReadContrastCatalog() with
+            match safe (fun () -> port.ReadContrastCatalog()) with
             | Ok m ->
                 m
                 |> Map.toList

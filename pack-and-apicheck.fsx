@@ -33,18 +33,8 @@ let scriptDir = __SOURCE_DIRECTORY__
 let repoRoot = scriptDir
 
 // ── #r the REAL built leaves so grading uses the actual pure functions (no re-implementation) ──
-let private binOf (proj: string) =
-    Path.Combine(repoRoot, "src", proj, "bin", "Debug", "net10.0", proj + ".dll")
-
-[ "FS.GG.Governance.Config"
-  "FS.GG.Governance.ReleaseRules"
-  "FS.GG.Governance.PackEvidence"
-  "FS.GG.Governance.ReleaseFactsSensing" ]
-|> List.iter (fun p ->
-    let dll = binOf p
-    if File.Exists dll then
-        printfn "#r %s" dll)
-
+// (#56/C1d removed a dead pre-loop that only `printfn`'d the same four paths — the literal `#r`
+//  directives below are what actually load the leaves; the loop had no effect on resolution.)
 #r "src/FS.GG.Governance.Config/bin/Debug/net10.0/FS.GG.Governance.Config.dll"
 #r "src/FS.GG.Governance.ReleaseRules/bin/Debug/net10.0/FS.GG.Governance.ReleaseRules.dll"
 #r "src/FS.GG.Governance.PackEvidence/bin/Debug/net10.0/FS.GG.Governance.PackEvidence.dll"

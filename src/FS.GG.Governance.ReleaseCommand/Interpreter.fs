@@ -43,35 +43,10 @@ module Interpreter =
           Write: ArtifactWriter
           Out: OutputSink }
 
-    // Run a port call, converting BOTH an `Error` and a thrown exception into `Error`.
-    // The real persistence port: create parent dirs, write to a unique temp sibling, then atomically rename.
-    let writeAtomic (path: string) (content: string) : Result<unit, string> =
-        try
-            match Path.GetDirectoryName path with
-            | null
-            | "" -> ()
-            | dir -> Directory.CreateDirectory dir |> ignore
-
-            let tmp = path + ".tmp-" + Guid.NewGuid().ToString("N")
-            File.WriteAllText(tmp, content)
-            File.Move(tmp, path, true)
-            Ok()
-        with e ->
-            Error e.Message
-
     let declError (reason: string) : Result<Declaration.ReleaseDeclaration, Declaration.DeclError> =
         Error { Reason = reason }
 
     // ── 065 real edge senses (normalized — no username/host/clock leaks into the attestation) ──
-
-    let senseEnvironmentReal () : EnvironmentClass =
-        // Qualify the cases: `Ci` also names a `Snapshot.Model.CiEnvironment` case.
-        match Environment.GetEnvironmentVariable "CI" with
-        | null
-        | "" -> EnvironmentClass.Local
-        | _ -> EnvironmentClass.Ci
-
-    let senseBuilderReal () : BuilderIdentity = BuilderIdentity "fsgg"
 
     // The F016 head revision (the release attests a product state, not a diff range). An absent/unavailable
     // range degrades to a deterministic empty sentinel — never a throw, never a fabricated commit.
@@ -221,9 +196,9 @@ module Interpreter =
           Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
           PackRead = packReadReal
           SenseHead = senseHeadReal repo
-          SenseEnvironment = senseEnvironmentReal
-          SenseBuilder = senseBuilderReal
-          Write = writeAtomic
+          SenseEnvironment = CommandHost.senseEnvironmentReal
+          SenseBuilder = CommandHost.senseBuilderReal
+          Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =

@@ -26,6 +26,9 @@ module Plan =
         let sb = System.Text.StringBuilder()
         let mutable i = 0
         let mutable inToken = false
+        // A quote left open at end-of-input is malformed (FR-008, #56/B4): accepting it silently would
+        // let a truncated command line lex into a bogus argv. Track it and reject the whole line.
+        let mutable malformed = false
         let n = commandLine.Length
 
         let flush () =
@@ -50,6 +53,7 @@ module Plan =
                     i <- i + 1
 
                 if i < n then i <- i + 1 // skip closing quote
+                else malformed <- true // unterminated single quote
             elif c = '"' then
                 // Double quotes: a backslash escapes the next character; everything else literal until close.
                 inToken <- true
@@ -64,6 +68,7 @@ module Plan =
                         i <- i + 1
 
                 if i < n then i <- i + 1 // skip closing quote
+                else malformed <- true // unterminated double quote
             elif c = '\\' then
                 // A bare backslash escapes the next character (a trailing backslash is dropped).
                 inToken <- true
@@ -80,9 +85,12 @@ module Plan =
 
         flush ()
 
-        match List.ofSeq tokens with
-        | [] -> None
-        | exe :: args -> Some(Executable exe, args |> List.map Argument)
+        if malformed then
+            None
+        else
+            match List.ofSeq tokens with
+            | [] -> None
+            | exe :: args -> Some(Executable exe, args |> List.map Argument)
 
     let commandFor (repoRoot: string) (tooling: ToolingFacts) (gate: Gate) : GateCommand option =
         // The declared command id is the gate's `RequiresCommand` prerequisite (F018); resolve it against the

@@ -23,6 +23,32 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- 109 Centralized VersionPrefix (spec 109-version-prefix-centralize, closes #63; deferred low
+       tail of #53 / epic #44). The single, intentional version source for every project that does NOT
+       pin an explicit <Version>. Before this, ~104 version-less .fsproj files fell back to MSBuild's
+       silent default VersionPrefix of 1.0.0 — an unowned number nobody chose, sitting on shipping tools.
+       0.1.0 is the repo's established baseline (the ~66 explicitly-versioned libraries already pin it),
+       so centralizing it here makes the version-less projects match the dominant intentional line.
+
+       Why this does NOT regress either published package (the whole point of #63's acceptance):
+         · CLI (fsgg-governance): pins <Version>1.2.0</Version> explicitly, which wins over VersionPrefix
+           (MSBuild precedence). publish.yml reads that fsproj <Version> as the sole source of truth →
+           published version stays 1.2.0, untouched.
+         · ReferenceGateSet: its published version is schemaVersion-derived and injected at pack time via
+           `pack-reference-gate-set.fsx -p:Version=…`, which overrides both Version and VersionPrefix →
+           the centralized default is inert for the packed artifact (its build-time prop reads 0.1.0, but
+           that value is never packed).
+       The three PackAsTool commands fsgg / fsgg-evidence / fsgg-cache-eligibility move 1.0.0 → 0.1.0 by
+       intent (they are UNPUBLISHED — out of publish.yml scope, no feed baseline before or after), aligning
+       them to the repo's 0.1.x line. This is the recorded correction (FR-004), not a regression.
+
+       Lives HERE (repo-owned, imported last, drift-exempt) — NEVER in the org-synced Directory.Build.props,
+       which the shared-build-config sync would overwrite. Do not "fix" this into a higher number: raising
+       it would silently move every version-less project's build version above the intentional 0.1.x line. -->
+  <PropertyGroup Label="Centralized version baseline (109)">
+    <VersionPrefix>0.1.0</VersionPrefix>
+  </PropertyGroup>
+
   <!-- 088 Breaking-Change (API-Compat) gate (spec 088, research D6/D7). The .NET SDK Package Validation /
        ApiCompat settings live HERE (repo-owned, drift-exempt) — never in the org-synced Directory.Build.props,
        Directory.Packages.props, or .config/dotnet-tools.json (D6, byte-identity drift-checked by gate.yml).
@@ -61,6 +87,17 @@
     <PackageProjectUrl>https://github.com/FS-GG/FS.GG.Governance</PackageProjectUrl>
     <RepositoryUrl>https://github.com/FS-GG/FS.GG.Governance</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <!-- YoloDev.Expecto.TestSdk bridge (deps/expecto-fscheck-v11-v3). The latest adapter
+       (0.15.6) declares Expecto [10.2.2, 11.0.0) but runs Expecto 11 tests correctly at
+       runtime — verified: the full suite is green under `dotnet test`. The org-synced
+       Directory.Build.props promotes the resulting NU1608 (package version out of range) to
+       an error; demote it back to a WARNING for TEST projects only, so the coherent Expecto 11
+       / FsCheck 3 upgrade is unblocked while the signal stays visible. Remove once an
+       Expecto-11-compatible YoloDev.Expecto.TestSdk ships. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
 </Project>

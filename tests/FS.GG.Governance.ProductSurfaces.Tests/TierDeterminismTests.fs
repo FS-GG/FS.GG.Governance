@@ -2,6 +2,7 @@ module FS.GG.Governance.ProductSurfaces.Tests.TierDeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Routing
 open FS.GG.Governance.ProductSurfaces

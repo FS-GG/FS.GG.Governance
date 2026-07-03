@@ -52,7 +52,7 @@ let tests =
               Expect.isFalse (hasReason (view 0)) "regenerated ⇒ no reason"
               Expect.isFalse (hasReason (view 1)) "current ⇒ no reason"
               Expect.isTrue (hasReason (view 2)) "stale-unresolved ⇒ reason"
-              Expect.stringContains (view(2).GetProperty("reason").GetString()) "source not found" "names why"
+              Expect.stringContains (nonNull (view(2).GetProperty("reason").GetString())) "source not found" "names why"
           }
 
           test "each view carries id/kind/output verbatim" {

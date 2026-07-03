@@ -31,6 +31,6 @@
 
 ## Notes
 
-- This is a **reconciliation** spec: an audit found 4/5 of #52 already merged to `main`. The one open item (M-JSON-2) is resolved by ADR 0007 (ratify per-projection writer duplication), not by new code.
+- This is a **reconciliation** spec: an audit found 4/5 of #52 already merged to `main`. The one open item (M-JSON-2) is resolved by ADR 0008 (ratify per-projection writer duplication), not by new code.
 - **Open decision recorded for the user**: M-JSON-2 could instead be resolved by *extracting* the writers (option A). This spec/ADR takes the ratify path (option B), following the ADR-0006 precedent for intentional-divergence findings. Reversible if the user prefers extraction.
 - Docs-only / Tier 2: no `.fsi` or surface-baseline change.

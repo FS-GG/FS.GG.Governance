@@ -5,6 +5,7 @@ open System.IO
 open System.Text
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.CommandRecord.Model
@@ -171,6 +172,13 @@ let largeFixture (dir: string) : ScriptFixture =
       ExpectedStderr = [||]
       ExpectedExit = 0 }
 
+/// A fast command (`/bin/echo`) carrying a HUGE `TimeoutLimit` (`Int32.MaxValue` seconds). Under the old
+/// wait math `seconds * 1000` overflowed int32 to a NEGATIVE wait, which `WaitForExit` rejected — the throw
+/// was then misreported as a `startFailure` while the started process leaked (#56/B3). Used to prove the
+/// clamp: the command still runs promptly and records its real exit code (0).
+let hugeTimeoutFastCommand () : GateCommand =
+    Build.command (executable = "/bin/echo", arguments = [ Argument "ok" ], timeout = System.Int32.MaxValue)
+
 /// A GateCommand naming a GUARANTEED-MISSING executable — the start-failure case (no script, no dir state).
 let missingExecutableCommand () : GateCommand =
     { Executable = Executable "/nonexistent/fsgg-definitely-not-a-real-binary-xyz"
@@ -202,7 +210,7 @@ let differentInputs: FreshnessInputs = { inputs "build:tests" with Head = Revisi
 // ── (5) FsCheck generators (real values, no mocks) ──
 
 let private genBytes: Gen<byte[]> =
-    Gen.sized (fun n -> Gen.listOfLength (max 0 (n % 64)) Arb.generate<byte> |> Gen.map List.toArray)
+    Gen.sized (fun n -> Gen.listOfLength (max 0 (n % 64)) (ArbMap.defaults |> ArbMap.generate<byte>) |> Gen.map List.toArray)
 
 let private shortStringGen: Gen<string> =
     Gen.elements [ ""; "a"; "/bin/echo"; "/bin/sh"; "alpha"; "beta"; "/tmp"; "héllo"; "x:y=z" ]

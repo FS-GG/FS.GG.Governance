@@ -2,6 +2,7 @@ module FS.GG.Governance.RuleIdentity.Tests.RuleIdentityTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.RuleIdentity
 
 // Unit tests for the 068 leaf (T006): each constructor produces its source-prefixed token; the five

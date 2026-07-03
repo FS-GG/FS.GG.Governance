@@ -4,6 +4,7 @@ open System
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.CommandRecord.Model
 open FS.GG.Governance.SensedMetadata
 open FS.GG.Governance.SensedMetadata.Model

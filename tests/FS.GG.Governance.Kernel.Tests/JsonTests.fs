@@ -3,6 +3,7 @@ module FS.GG.Governance.Kernel.Tests.JsonTests
 open System.Text.Json
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 open FS.GG.Governance.Kernel.Check // operators .&, .|, ==> and not'
 
@@ -85,7 +86,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 200
         arbitrary = [ typeof<ExplArb> ]
-        replay = Some(1234, 5678) } // fixed seed → reproducible
+        replay = Some(1234UL, 5679UL, None) } // fixed seed → reproducible
 
 [<Tests>]
 let tests =

@@ -1,16 +1,4 @@
 namespace FS.GG.Governance.Cli
-type Domain
-type ProjectFact
-type ProjectChange
-type ProjectSnapshot
-type ProjectOptions
-type EvidenceNodeReport
-type ProjectEvidenceReport
-module Project
-type CommandKind
-type OutputFormat
-type ReviewBudget
-type RunRequest
 type ParseError
 type ExitDecision
 type BudgetState
@@ -23,5 +11,4 @@ type Effect
 type CliPorts
 module Cli
 module CliRender
-module ArtifactReading
 module ReviewStore
