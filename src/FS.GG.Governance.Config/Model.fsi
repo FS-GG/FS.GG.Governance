@@ -272,6 +272,11 @@ module Model =
     /// gets a token (the closed-set discipline, D2). Mirrors the `Schema` parse mapping.
     val surfaceClassToken: cls: SurfaceClass -> string
 
+    /// The rank of a `Cost` in its closed cheap→expensive order, 1 (`Cheap`) .. 4 (`Exhaustive`).
+    /// Comparisons go through this so ordering is invariant to DU case declaration order (#56/B1).
+    /// Deterministic and total.
+    val costRank: cost: Cost -> int
+
     /// The rank of a `GeneratedProductTier` in its closed order, 1 (`StructuralScan`) .. 5
     /// (`ReleaseValidation`). Deterministic and total (D4).
     val generatedProductTierRank: tier: GeneratedProductTier -> int

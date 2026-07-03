@@ -225,6 +225,17 @@ module Model =
         | SampleAppSurface -> "sampleApp"
         | GeneratedProductRoot -> "generatedProduct"
 
+    // The closed cheap→expensive order Cheap < Medium < High < Exhaustive, made EXPLICIT so a comparison
+    // no longer rides the DU declaration order (#56/B1) — reordering the `Cost` cases would otherwise
+    // silently invert "cheaper". Mirrors `generatedProductTierRank`. Total; a new case is a compile error
+    // here until it is ranked.
+    let costRank (cost: Cost) : int =
+        match cost with
+        | Cheap -> 1
+        | Medium -> 2
+        | High -> 3
+        | Exhaustive -> 4
+
     // The closed order StructuralScan < RestoreBuild < FocusedTests < FullVerify < ReleaseValidation.
     let generatedProductTierRank (tier: GeneratedProductTier) : int =
         match tier with

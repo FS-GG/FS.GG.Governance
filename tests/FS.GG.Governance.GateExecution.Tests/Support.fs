@@ -172,6 +172,13 @@ let largeFixture (dir: string) : ScriptFixture =
       ExpectedStderr = [||]
       ExpectedExit = 0 }
 
+/// A fast command (`/bin/echo`) carrying a HUGE `TimeoutLimit` (`Int32.MaxValue` seconds). Under the old
+/// wait math `seconds * 1000` overflowed int32 to a NEGATIVE wait, which `WaitForExit` rejected — the throw
+/// was then misreported as a `startFailure` while the started process leaked (#56/B3). Used to prove the
+/// clamp: the command still runs promptly and records its real exit code (0).
+let hugeTimeoutFastCommand () : GateCommand =
+    Build.command (executable = "/bin/echo", arguments = [ Argument "ok" ], timeout = System.Int32.MaxValue)
+
 /// A GateCommand naming a GUARANTEED-MISSING executable — the start-failure case (no script, no dir state).
 let missingExecutableCommand () : GateCommand =
     { Executable = Executable "/nonexistent/fsgg-definitely-not-a-real-binary-xyz"

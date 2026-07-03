@@ -102,8 +102,17 @@ module Interpreter =
                     let errTask = proc.StandardError.BaseStream.CopyToAsync stderrBuf
 
                     // Wait for exit BOUNDED by the timeout (seconds). A non-positive limit waits zero — an
-                    // applied timeout that terminates immediately.
-                    let waitMs = if seconds <= 0 then 0 else seconds * 1000
+                    // applied timeout that terminates immediately. A very large limit (seconds > ~2.1M) would
+                    // overflow `seconds * 1000` in int32 to a NEGATIVE wait, which WaitForExit rejects — the
+                    // throw was then reified as a bogus start failure while the ALREADY-STARTED process leaked
+                    // (#56/B3). Compute in int64 and clamp to Int32.MaxValue (~24.8 days) so the wait is never
+                    // negative and the overrun branch (which kills the tree) stays reachable.
+                    let waitMs =
+                        if seconds <= 0 then
+                            0
+                        else
+                            let ms = int64 seconds * 1000L
+                            if ms > int64 System.Int32.MaxValue then System.Int32.MaxValue else int ms
 
                     if proc.WaitForExit waitMs then
                         // Clean / within-limit exit: drain BOUNDED too (M-CORE-2) — a gate that spawned a

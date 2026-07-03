@@ -26,6 +26,13 @@ module Interpreter =
         | null -> ""
         | d -> d
 
+    // A claimed path escapes its bounds if it is rooted or contains a `..` PATH SEGMENT. A substring test
+    // (`Contains ".."`) over-rejects legitimate filenames like `notes..md` (#56/B12); split on both
+    // separators and match a whole segment equal to `..`.
+    let escapesBounds (claimed: string) : bool =
+        Path.IsPathRooted claimed
+        || claimed.Split([| '/'; '\\' |]) |> Array.exists (fun seg -> seg = "..")
+
     let readManifest (repo: string) (path: GovernedPath) : Result<string, string> =
         let (GovernedPath rel) = path
         let full = Path.Combine(repo, rel)
@@ -110,7 +117,7 @@ module Interpreter =
             let pathFacts =
                 paths
                 |> List.map (fun claimed ->
-                    if claimed.Contains ".." || Path.IsPathRooted claimed then
+                    if escapesBounds claimed then
                         { Claimed = claimed
                           Outcome = PathEscapesBounds claimed }
                     else
@@ -153,7 +160,10 @@ module Interpreter =
                             MirrorDrifted(m, "mirror content differs from the manifest")
                     | Error e ->
                         unreadable <- e :: unreadable
-                        NoMirrorDeclared
+                        // A DECLARED mirror that could not be read is `MirrorUnreadable`, never `NoMirrorDeclared`
+                        // (#56/B12) — the error is also recorded in `Unreadable`, but the disposition must not
+                        // claim the mirror was absent.
+                        MirrorUnreadable(m, e)
 
             { SkillId = skillId
               PathContract = pathFacts

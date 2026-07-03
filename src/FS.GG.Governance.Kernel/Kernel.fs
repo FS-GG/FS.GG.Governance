@@ -68,7 +68,13 @@ module FixedPoint =
         let mutable rounds = 0
         let mutable changed = true
 
-        while changed do
+        // Fuel guard (#56/B2): every productive round commits ≥1 NEW fact (candidates keep only ids not
+        // already `known`), so `known` grows each round and `rounds` can never exceed `known.Count` for a
+        // well-formed monotone rule set. Bounding the loop by that live invariant hardens the totality the
+        // kernel promises elsewhere: a pathological rule that produced without growing `known` would spin
+        // forever otherwise. The bound is UNREACHABLE for correct inputs (rounds ≤ known.Count always), so
+        // it never changes an existing result.
+        while changed && rounds <= known.Count do
             // (2) Apply EVERY rule to the SAME immutable snapshot; a fact derived this
             // round is invisible to other rules until the next round (D1).
             let current = snapshot ()

@@ -39,6 +39,24 @@ module FreshnessSensing =
         use sha = SHA256.Create()
         sha.ComputeHash bytes |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
 
+    // Injective concatenation of byte segments: each segment is preceded by its big-endian 4-byte length,
+    // so a reader (and the hash) can never confuse where one segment ends and the next begins. This is the
+    // same length-prefix discipline FreshnessKey/Provenance use to keep their pre-images prefix-free (#56/B11):
+    // without it, `(name="ab",content="c")` and `(name="a",content="bc")` share a pre-image and collide onto
+    // one RuleHash cache slot.
+    let lenPrefixed (segments: byte[] list) : byte[] =
+        use ms = new MemoryStream()
+
+        for s in segments do
+            let len = s.Length
+            ms.WriteByte(byte (len >>> 24))
+            ms.WriteByte(byte (len >>> 16))
+            ms.WriteByte(byte (len >>> 8))
+            ms.WriteByte(byte len)
+            ms.Write(s, 0, s.Length)
+
+        ms.ToArray()
+
     // The rule-pack hash: a SHA-256 over the repo's `.fsgg/*.yml` catalog bytes (filename + content, sorted),
     // so it is content-addressed and working-directory independent. `None` when no catalog is present.
     let senseCatalogHash (repo: string) : string option =
@@ -59,16 +77,22 @@ module FreshnessSensing =
                     | null -> Array.empty<byte>
                     | n -> Encoding.UTF8.GetBytes n
 
-                let bytes =
+                // Length-prefix EACH (name, content) so the flattened stream stays injective across files
+                // (#56/B11) — a colliding name/content split can no longer forge the same catalog hash.
+                let segments =
                     files
-                    |> Array.collect (fun f -> Array.append (nameBytes f) (File.ReadAllBytes f))
+                    |> Array.collect (fun f -> [| nameBytes f; File.ReadAllBytes f |])
+                    |> Array.toList
 
-                Some(sha256Hex bytes)
+                Some(sha256Hex (lenPrefixed segments))
 
-    // The covered-artifact hashes: a content SHA-256 per file under the repo's `src/**` package surface,
-    // ordinal-sorted. MVP scope — every gate shares the repo surface; finer PER-GATE scoping is a documented
-    // later refinement. Content-addressed ⇒ working-directory independent. A missing `src/` ⇒ `[]`
-    // (sensed-empty, a legitimate resolved value — L4), distinct from the `None` an unsensable surface yields.
+    // The covered-artifact hashes: a SHA-256 per file under the repo's `src/**` package surface,
+    // ordinal-sorted, over the repo-RELATIVE path AND the content (both length-prefixed). MVP scope — every
+    // gate shares the repo surface; finer PER-GATE scoping is a documented later refinement. Hashing the
+    // relative path keeps it working-directory independent (the path is relative to `repo`, not absolute)
+    // while making a rename/move with identical content observable (#56/B11) — a pure content hash could not
+    // tell a moved file from an unchanged one. A missing `src/` ⇒ `[]` (sensed-empty, a legitimate resolved
+    // value — L4), distinct from the `None` an unsensable surface yields.
     let senseSrcHashes (repo: string) : ArtifactHash list =
         let srcDir = Path.Combine(repo, "src")
 
@@ -77,7 +101,10 @@ module FreshnessSensing =
         else
             Directory.GetFiles(srcDir, "*", SearchOption.AllDirectories)
             |> Array.sortWith (fun a b -> String.CompareOrdinal(a, b))
-            |> Array.map (fun f -> ArtifactHash(sha256Hex (File.ReadAllBytes f)))
+            |> Array.map (fun f ->
+                let rel = Path.GetRelativePath(repo, f).Replace('\\', '/')
+                let preImage = lenPrefixed [ Encoding.UTF8.GetBytes rel; File.ReadAllBytes f ]
+                ArtifactHash(sha256Hex preImage))
             |> Array.toList
 
     let toolVersion () : string =

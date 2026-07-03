@@ -4,6 +4,7 @@ TYPE FS.GG.Governance.Config.LoaderModule
   [Method] Validation loadAndValidate(System.String)
 TYPE FS.GG.Governance.Config.ModelModule
   [Method] GovernedPath normalizePath(System.String)
+  [Method] Int32 costRank(Cost)
   [Method] Int32 generatedProductTierRank(GeneratedProductTier)
   [Method] System.String diagnosticIdToken(DiagnosticId)
   [Method] System.String generatedProductTierToken(GeneratedProductTier)

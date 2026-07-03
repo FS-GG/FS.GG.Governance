@@ -25,6 +25,7 @@ TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome
   [Method] Boolean get_IsMirrorDrifted()
   [Method] Boolean get_IsMirrorInSync()
   [Method] Boolean get_IsMirrorMissing()
+  [Method] Boolean get_IsMirrorUnreadable()
   [Method] Boolean get_IsNoMirrorDeclared()
   [Method] Int32 CompareTo(MirrorOutcome)
   [Method] Int32 CompareTo(System.Object)
@@ -34,15 +35,18 @@ TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome
   [Method] Int32 get_Tag()
   [Method] MirrorOutcome NewMirrorDrifted(System.String, System.String)
   [Method] MirrorOutcome NewMirrorMissing(System.String)
+  [Method] MirrorOutcome NewMirrorUnreadable(System.String, System.String)
   [Method] MirrorOutcome get_MirrorInSync()
   [Method] MirrorOutcome get_NoMirrorDeclared()
   [Method] System.String ToString()
   [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorDrifted
   [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorMissing
+  [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorUnreadable
   [NestedType] FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+Tags
   [Property] Boolean IsMirrorDrifted
   [Property] Boolean IsMirrorInSync
   [Property] Boolean IsMirrorMissing
+  [Property] Boolean IsMirrorUnreadable
   [Property] Boolean IsNoMirrorDeclared
   [Property] Int32 Tag
   [Property] MirrorOutcome MirrorInSync
@@ -55,10 +59,16 @@ TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorDrifted
 TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorMissing
   [Method] System.String get_mirror()
   [Property] System.String mirror
+TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+MirrorUnreadable
+  [Method] System.String get_detail()
+  [Method] System.String get_mirror()
+  [Property] System.String detail
+  [Property] System.String mirror
 TYPE FS.GG.Governance.SkillChecks.ModelModule+MirrorOutcome+Tags
   [Field] Int32 MirrorDrifted
   [Field] Int32 MirrorInSync
   [Field] Int32 MirrorMissing
+  [Field] Int32 MirrorUnreadable
   [Field] Int32 NoMirrorDeclared
 TYPE FS.GG.Governance.SkillChecks.ModelModule+PathContractFact
   [Constructor] Void .ctor(System.String, PathContractOutcome)

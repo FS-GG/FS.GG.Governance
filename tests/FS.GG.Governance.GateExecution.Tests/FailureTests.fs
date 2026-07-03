@@ -58,6 +58,19 @@ let tests =
                   Expect.isLessThan sw.Elapsed.TotalSeconds 15.0 "returns bounded, never the full overrun / hang")
           }
 
+          // (3b) a very large TimeoutLimit must not overflow into a bogus start failure (#56/B3) ────────────
+          test "real port: a huge TimeoutLimit runs the fast command and records its real exit (no overflow start-failure)" {
+              // `TimeoutLimit(Int32.MaxValue)` made `seconds * 1000` overflow int32 to a negative wait; the old
+              // code threw and reified startFailureExitCode (leaking the started process). The clamp keeps the
+              // wait non-negative, so /bin/echo completes and records ExitCode 0.
+              let record = Interpreter.senseExecution Interpreter.realPort (hugeTimeoutFastCommand ())
+              Expect.equal record.Reproducible.ExitCode (ExitCode 0) "echo exits 0 under a huge timeout"
+              Expect.notEqual
+                  record.Reproducible.ExitCode
+                  Interpreter.startFailureExitCode
+                  "a huge timeout is NOT misreported as a start failure"
+          }
+
           // (4) clean exit + a pipe-holding background child does NOT hang the port (M-CORE-2 / H2) ─────────
           test "real port: a clean exit whose backgrounded child keeps the pipes open still returns bounded" {
               withTempDir (fun dir ->

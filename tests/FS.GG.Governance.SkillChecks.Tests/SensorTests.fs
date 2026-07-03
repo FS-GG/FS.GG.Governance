@@ -81,4 +81,33 @@ let tests =
                   // No SKILL.md written.
                   let facts = Interpreter.senseSkill (Interpreter.realPort repo) req
                   Expect.isNonEmpty facts.Unreadable "missing manifest recorded")
+          }
+
+          test "a `..` INSIDE a filename is not a bounds escape (#56/B12)" {
+              withTempRepo (fun repo ->
+                  // `notes..md` contains ".." as a substring but not as a path SEGMENT — it must resolve
+                  // normally, unlike `../escape`. The old `Contains ".."` check over-rejected it.
+                  writeManifest repo "path: notes..md\npath: ../escape\n"
+                  File.WriteAllText(Path.Combine(repo, skillRel, "notes..md"), "x")
+                  let facts = Interpreter.senseSkill (Interpreter.realPort repo) req
+                  let outcomes = facts.PathContract |> List.map (fun p -> p.Outcome)
+                  Expect.contains outcomes (PathHolds) "notes..md holds (not an escape)"
+                  Expect.contains outcomes (PathEscapesBounds "../escape") "../escape still escapes")
+          }
+
+          test "a declared mirror that cannot be read ⇒ MirrorUnreadable, not NoMirrorDeclared (#56/B12)" {
+              // A mirror IS declared but the port errors reading it. The disposition must say so — mislabelling
+              // it `NoMirrorDeclared` (the old behaviour) would claim no mirror was declared at all.
+              let port: Interpreter.SkillPort =
+                  { ReadManifest = fun _ -> Ok "mirror: m.md\n"
+                    ResolvePath = fun _ -> Ok true
+                    ReadMirror = fun _ -> Error "mirror read exploded" }
+
+              let facts = Interpreter.senseSkill port req
+
+              match facts.Mirror with
+              | MirrorUnreadable("m.md", detail) -> Expect.stringContains detail "exploded" "carries the read error"
+              | other -> failtestf "expected MirrorUnreadable, got %A" other
+
+              Expect.isNonEmpty facts.Unreadable "the read error is also recorded in Unreadable"
           } ]
