@@ -5,9 +5,11 @@ namespace FS.GG.Governance.CommandHost
 // optional `Blocked`/`Deferred` paths folded in); the model-reading helpers are DECOMPOSED into the fields
 // they read so the leaf depends on NO host Model/Effect. The pure skeleton stays clock/process/network-free;
 // output byte-identical to today's per-host copies. The trailing "host edge I/O leaves" section (#49,
-// second-extraction pass) is the ONE exception — genuinely-shared impure host edges (atomic write, readiness
-// discovery, env/builder sensing, the snapshot/catalog step-arm realizations) that every host used to
-// hand-copy; they live here in the host layer (never the domain core). No visibility modifiers — the surface
+// second-extraction pass, consolidated in 2fcb1ba) is the ONE exception — genuinely-shared impure host edges
+// (atomic write, readiness discovery, env/builder sensing, the snapshot/catalog step-arm realizations) that
+// every host used to hand-copy; they live here in the host layer (never the domain core). This placement is
+// ratified in ADR-0007 (#74): the type-owner projects are chartered pure and cannot host the I/O. No
+// visibility modifiers — the surface
 // is CommandHost.fsi (Principle II).
 
 open System.IO

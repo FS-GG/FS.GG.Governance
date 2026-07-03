@@ -8,7 +8,7 @@
 // per-host copies (feature 075 acceptance gate: every command/projection golden unchanged). The trailing
 // "host edge I/O leaves" section (#49) is the sole impure part — genuinely-shared host edges (atomic write,
 // readiness discovery, env/builder sensing, snapshot/catalog step-arm realizations) relocated from the hosts;
-// they live in the host layer, never the domain core.
+// they live in the host layer, never the domain core. This placement is ratified in ADR-0007 (#74).
 //
 // SCOPE NOTE (FR-008): only genuinely-shared, type-honest members live here. `fail`/`tryExecute`/
 // `awaitingPersist` are parameterized by a per-host `Model`/`Effect` record and stay LOCAL (a shared form
