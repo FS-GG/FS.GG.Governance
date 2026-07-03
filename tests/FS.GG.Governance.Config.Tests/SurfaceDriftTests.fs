@@ -1,80 +1,20 @@
 module FS.GG.Governance.Config.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.Config.Model
-open FS.GG.Governance.Config.Tests.Support
 
-// Reflective API surface-drift + dependency-hygiene checks (Principle II, research D1).
-// Reflection lives ONLY in these tests, never in the library.
+// Reflective API surface-drift + dependency-hygiene checks (Principle II, research D1), now via the shared
+// SurfaceDrift helper (101/M-CI-3). FS.GG.Contracts is the ONE sanctioned cross-repo dependency
+// (FS.GG.Governance#14): the org-shared, BCL-only typed source of truth for the `.fsgg` schema version
+// constants — it carries no kernel/host/capability surface, so the isolation the guard protects is preserved.
 
 let private config = typeof<DiagnosticId>.Assembly
-
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.Config.surface.txt")
-
-/// Render the assembly's public surface to canonical, sorted text. Any change to the public
-/// surface changes this text and trips the baseline assertion.
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
 
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "Config public surface equals the committed baseline" {
-              let actual = renderSurface config
+        [ SurfaceDrift.surfaceTest "Config" "FS.GG.Governance.Config" config
 
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
-
-          test "Config references only YamlDotNet + FS.GG.Contracts + BCL + FSharp.Core (FR-016 scope guard)" {
-              // No kernel/host/adapter/CLI dependency, and no git/CI/routing/gate/enforcement
-              // package — the absence confirms no later-phase capability leaked into F014.
-              // FS.GG.Contracts is the ONE sanctioned cross-repo dependency (FS.GG.Governance#14):
-              // the org-shared, BCL-only typed source of truth for the `.fsgg` schema version
-              // constants. It carries no kernel/host/capability surface, so the isolation the
-              // guard protects is preserved (it depends only on FSharp.Core itself).
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "YamlDotNet"
-                  || name = "FS.GG.Contracts"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  || name.StartsWith "System."
-
-              let offending =
-                  config.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
-
-              Expect.isEmpty offending (sprintf "Config must depend on YamlDotNet/BCL/FSharp.Core only; found: %A" offending)
-          } ]
+          SurfaceDrift.referencesOnly "Config" (fun n -> n = "YamlDotNet" || n = "FS.GG.Contracts") config ]

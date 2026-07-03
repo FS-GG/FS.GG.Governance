@@ -23,6 +23,14 @@
     <Compile Include="TestsCommon.fs" />
   </ItemGroup>
 
+  <!-- 101 (M-CI-3): the shared SurfaceDrift helper returns Expecto `Test` values, so this test-only
+       (IsPackable=false) support library now references Expecto. Version omitted — Central Package
+       Management supplies it from the org-baseline Directory.Packages.props (unchanged). This adds NO
+       dependency to any product project. -->
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />

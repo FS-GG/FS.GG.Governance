@@ -1,11 +1,10 @@
 module FS.GG.Governance.ProvenanceJson.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.ProvenanceJson
-open FS.GG.Governance.ProvenanceJson.Tests.Support
+
+// Reflective API surface-drift check (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3).
 
 let private asm =
     ProvenanceJson.schemaVersion |> ignore
@@ -16,36 +15,8 @@ let private asm =
         | Some n -> n = "FS.GG.Governance.ProvenanceJson"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.ProvenanceJson.surface.txt")
-
-let private renderSurface (a: Assembly) =
-    let memberFlags =
-        BindingFlags.Public ||| BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.DeclaredOnly
-
-    a.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "ProvenanceJson public surface equals the committed baseline" {
-              let actual = renderSurface asm
-
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-              Expect.equal (normalize actual) (normalize baseline) "public surface drifted — bless with BLESS_SURFACE=1"
-          } ]
+        [ SurfaceDrift.surfaceTest "ProvenanceJson" "FS.GG.Governance.ProvenanceJson" asm ]
