@@ -39,6 +39,7 @@ type ParseError =
     | MissingCommand
     | UnknownCommand of string
     | UnknownOption of string
+    | UnexpectedArgument of string
     | MissingOptionValue of string
     | InvalidMode of string
     | InvalidFormat of string
@@ -313,7 +314,7 @@ module Cli =
                 loop acc tail
             | option :: tail when option.StartsWith("--", StringComparison.Ordinal) ->
                 loop (addError (UnknownOption option) acc) tail
-            | extra :: tail -> loop (addError (UnknownOption extra) acc) tail
+            | extra :: tail -> loop (addError (UnexpectedArgument extra) acc) tail
 
         let acc: ParseAcc = loop initial args
 

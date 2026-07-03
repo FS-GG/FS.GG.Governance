@@ -144,4 +144,19 @@ let tests =
                   Expect.contains errors (InvalidReviewBudget "-1") "budget"
                   Expect.contains errors (InvalidFormat "xml") "format"
               | Ok request -> failtestf "unexpected request: %A" request
+          }
+
+          test "a stray positional argument is an unexpected argument, not an unknown option (#55 F14)" {
+              match Cli.parse [ "route"; "stray" ] with
+              | Error errors ->
+                  Expect.contains errors (UnexpectedArgument "stray") "stray positional is UnexpectedArgument"
+                  Expect.isFalse (List.contains (UnknownOption "stray") errors) "not misreported as UnknownOption"
+              | Ok request -> failtestf "unexpected request: %A" request
+          }
+
+          test "missing-command help enumerates every dispatchable subcommand incl. watch/tui (#55 F12)" {
+              let help = CliRender.renderParseError MissingCommand
+
+              for cmd in [ "route"; "explain"; "contract"; "evidence"; "watch"; "tui" ] do
+                  Expect.stringContains help cmd (sprintf "help lists '%s'" cmd)
           } ]
