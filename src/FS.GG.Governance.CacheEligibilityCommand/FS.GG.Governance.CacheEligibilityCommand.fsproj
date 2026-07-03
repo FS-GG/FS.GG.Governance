@@ -23,7 +23,7 @@
     <RootNamespace>FS.GG.Governance.CacheEligibilityCommand</RootNamespace>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>fsgg</ToolCommandName>
+    <ToolCommandName>fsgg-cache-eligibility</ToolCommandName>
     <PackageId>FS.GG.Governance.CacheEligibilityCommand</PackageId>
     <IsPackable>true</IsPackable>
   </PropertyGroup>

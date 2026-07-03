@@ -430,6 +430,33 @@
       "fs.gg.governance.routecommand": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Governance.RoutePipeline": "[1.0.0, )",
+          "FSharp.Core": "[10.1.301, )"
+        }
+      },
+      "fs.gg.governance.routeexplain": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routejson": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
+          "FS.GG.Governance.GateRun": "[0.1.0, )",
+          "FS.GG.Governance.JsonText": "[0.1.0, )",
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
+          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )",
+          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routepipeline": {
+        "type": "Project",
+        "dependencies": {
           "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandHost": "[0.1.0, )",
@@ -452,26 +479,6 @@
           "FS.GG.Governance.Routing": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
           "FSharp.Core": "[10.1.301, )"
-        }
-      },
-      "fs.gg.governance.routeexplain": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.routejson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
-          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )",
-          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
         }
       },
       "fs.gg.governance.routing": {

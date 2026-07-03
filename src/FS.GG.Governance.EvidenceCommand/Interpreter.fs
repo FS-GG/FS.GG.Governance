@@ -29,7 +29,9 @@ module Interpreter =
           Write: string -> string -> Result<unit, string>
           Out: string -> unit }
 
-    // ── project sensing: reuse Cli.ArtifactReading (single source; #49 removed the ~325-line copy) ──
+    // ── project sensing: reuse ArtifactReading (single source; #49 removed the ~325-line copy). 100
+    //    (M-ARCH-2): ArtifactReading + the RunRequest vocabulary now live in the ProjectSensing library
+    //    (same FS.GG.Governance.Cli namespace), so this tool consumes them without referencing the Cli exe. ──
 
     // The domains + judge the evidence report senses over. Evidence reports declared/effective evidence, so its
     // snapshot deliberately carries NO SDD handoff and NO declared profile (those drive only `route`).
@@ -37,7 +39,7 @@ module Interpreter =
 
     let optionsFor () : ProjectOptions =
         { Domains = evidenceDomains
-          Judge = Cli.defaultJudge
+          Judge = Project.defaultJudge
           SpecKitDial = Catalog.defaultDial }
 
     // A RunRequest shaped for `ArtifactReading.loadSnapshot`: it consults only Root/Scope/Domains/Judge; the
@@ -52,7 +54,7 @@ module Interpreter =
           ReviewBudget = ReviewBudget.CacheOnly
           ReviewStore = None
           OutputPath = None
-          Judge = Cli.defaultJudge
+          Judge = Project.defaultJudge
           ExplicitPlain = false }
 
     let loadSnapshot (rawRoot: string) : Result<ProjectSnapshot, string> =

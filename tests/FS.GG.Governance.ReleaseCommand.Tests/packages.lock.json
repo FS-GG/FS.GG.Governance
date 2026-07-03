@@ -473,8 +473,7 @@
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.301, )",
-          "YamlDotNet": "[18.1.0, )"
+          "FSharp.Core": "[10.1.301, )"
         }
       },
       "fs.gg.governance.releasedeclaration": {

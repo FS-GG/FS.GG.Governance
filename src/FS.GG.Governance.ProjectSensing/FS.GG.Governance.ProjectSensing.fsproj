@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 100 (M-ARCH-2): the F12 concrete project composition root, extracted OUT of the
+       FS.GG.Governance.Cli executable so the `EvidenceCommand` tool no longer references the `Cli` exe
+       (no exe references another exe). This internal library owns the `Project` module and its coproduct
+       types (ProjectFact/ProjectSnapshot/ProjectOptions/ProjectEvidenceReport/…) — verbatim, same
+       `FS.GG.Governance.Cli` namespace, so every `Project.*` / `ProjectEvidenceReport` reference in Cli
+       AND EvidenceCommand is unchanged. The `defaultJudge` identity (formerly `Cli.defaultJudge`) moves
+       here too, since both Cli and EvidenceCommand consume it.
+
+       IsPackable=false: internal library, never a NuGet tool — no PackageId commitment (ADR-0003). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Cli</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Project.fsi" />
+    <Compile Include="Project.fs" />
+    <!-- 100 (M-ARCH-2): the run-request vocabulary + the ArtifactReading sensing edge, relocated from the
+         Cli exe so EvidenceCommand reuses them (single-source sensing, #49/#70) without an exe→exe ref. -->
+    <Compile Include="Request.fsi" />
+    <Compile Include="Request.fs" />
+    <Compile Include="ArtifactReading.fsi" />
+    <Compile Include="ArtifactReading.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+    <!-- ProjectSnapshot.DefaultProfile : Config.Model.ProfileId option (090) -->
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <!-- ProjectSnapshot.Handoffs : Adapters.SddHandoff.Reader.HandoffRead list (F081) -->
+    <ProjectReference Include="../FS.GG.Governance.Adapters.SddHandoff/FS.GG.Governance.Adapters.SddHandoff.fsproj" />
+  </ItemGroup>
+
+</Project>

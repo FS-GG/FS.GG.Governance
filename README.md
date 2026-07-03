@@ -114,7 +114,7 @@ Adapters
   Adapters.SddHandoff         consumes SDD's governance-handoff@1 readiness document
 
 Capability platform (paths → domains → gates), each a pure core behind an I/O sensor
-  Config       strict YAML → typed facts for the four .fsgg files (YamlDotNet isolated here)
+  Config       strict YAML → typed facts for the four .fsgg files (a YamlDotNet owner — see the YAML note)
   Routing      paths → capability domains, deterministic glob precedence
   Snapshot     read-only git/CI → typed repository snapshot
   Findings     unknown governed / protected-boundary path findings
@@ -137,13 +137,23 @@ Command edges (executables)   Cli · RouteCommand · ShipCommand · VerifyComman
 Each host command follows the same Elmish/MVU shape: a pure `Loop`, an injected,
 fakeable-port `Interpreter`, and a thin `Program`.
 
+> **Edge-tier reference convention.** Command/edge-tier executables are composition roots,
+> so they legitimately carry broad `ProjectReference` lists — e.g. `VerifyCommand` declares
+> 43 references (32 transitively reachable). That breadth is by design at the edge and is
+> *not* drift; the dependency fences guarded by `FS.GG.Governance.DependencyFences.Tests`
+> constrain the *kinds* of edges that matter (no executable may reference another executable;
+> YAML parsing stays with its owners), not the raw reference count of a leaf command.
+
 ## The `.fsgg` configuration model
 
 `FS.GG.Governance.Config` parses four versioned `.fsgg/*.yml` files **strictly**
 (unknown fields, duplicate ids, `schemaVersion` range, path escapes, and dangling
 cross-references are all stable, located diagnostics), normalizes paths
 deterministically, and emits **typed, YAML-free, product-neutral facts** — it never
-routes, senses git/CI, or enforces. YamlDotNet is an isolated internal detail.
+routes, senses git/CI, or enforces. YamlDotNet parsing is confined to four owners —
+`Config` (the four `.fsgg` files), `CurrencySensing` (currency manifests),
+`ReleaseDeclaration` (`release.yml`), and `RefreshCommand` (refresh-declaration YAML) — a
+fence guarded by `FS.GG.Governance.DependencyFences.Tests` so the set cannot drift silently.
 
 | File | Owner | Declares |
 |---|---|---|
@@ -191,7 +201,10 @@ covering the full route → verify → ship → release lifecycle:
 | `fsgg cache-eligibility` | cache-eligibility verdict |
 
 `route`, `evidence`, and `cache-eligibility` are packed and installable as .NET tools;
-the others currently run from source.
+the others currently run from source. Until the single-tool multiplexer lands, they
+install under **distinct** command names so two of them never collide — `route` owns the
+bare `fsgg` command, `evidence` installs as `fsgg-evidence`, and `cache-eligibility` as
+`fsgg-cache-eligibility` (100/M-ARCH-3, guarded by `FS.GG.Governance.DependencyFences.Tests`).
 
 ### Exit codes
 

@@ -59,6 +59,12 @@ type ProjectEvidenceReport =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Project =
 
+    // 100 (M-ARCH-2): relocated verbatim from the `Cli` module so EvidenceCommand consumes it here
+    // (breaking EvidenceCommand → Cli). The identity string is unchanged.
+    let defaultJudge =
+        { ModelId = "fsgg-governance-default"
+          Version = "2026-06" }
+
     let (|SpecKitProject|_|) (fact: ProjectFact) =
         match fact with
         | SpecKitProjectFact f -> Some f

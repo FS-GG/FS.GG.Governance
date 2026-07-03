@@ -201,7 +201,8 @@
           "FS.GG.Governance.HumanRender": "[0.1.0, )",
           "FS.GG.Governance.HumanText": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
-          "FS.GG.Governance.RouteCommand": "[1.0.0, )",
+          "FS.GG.Governance.ProjectSensing": "[1.0.0, )",
+          "FS.GG.Governance.RoutePipeline": "[1.0.0, )",
           "FSharp.Core": "[10.1.301, )"
         }
       },
@@ -275,11 +276,11 @@
         "dependencies": {
           "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
           "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
-          "FS.GG.Governance.Cli": "[1.2.0, )",
           "FS.GG.Governance.CommandHost": "[0.1.0, )",
           "FS.GG.Governance.EvidenceJson": "[0.1.0, )",
           "FS.GG.Governance.Host": "[1.0.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FS.GG.Governance.ProjectSensing": "[1.0.0, )",
           "FSharp.Core": "[10.1.301, )"
         }
       },
@@ -446,6 +447,19 @@
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.projectsensing": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )",
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Host": "[1.0.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FSharp.Core": "[10.1.301, )"
+        }
+      },
       "fs.gg.governance.provenance": {
         "type": "Project",
         "dependencies": {
@@ -488,7 +502,27 @@
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
-      "fs.gg.governance.routecommand": {
+      "fs.gg.governance.routeexplain": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routejson": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
+          "FS.GG.Governance.GateRun": "[0.1.0, )",
+          "FS.GG.Governance.JsonText": "[0.1.0, )",
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
+          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )",
+          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routepipeline": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
@@ -513,26 +547,6 @@
           "FS.GG.Governance.Routing": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
           "FSharp.Core": "[10.1.301, )"
-        }
-      },
-      "fs.gg.governance.routeexplain": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.routejson": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.GateRun": "[0.1.0, )",
-          "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
-          "FS.GG.Governance.JsonWriters": "[0.1.0, )",
-          "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )",
-          "FS.GG.Governance.RuleIdentity": "[0.1.0, )"
         }
       },
       "fs.gg.governance.routing": {

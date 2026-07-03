@@ -6,34 +6,10 @@ open FS.GG.Governance.Kernel
 open FS.GG.Governance.Host
 open FS.GG.Governance.Adapters.SpecKit
 
-type CommandKind =
-    | RouteCommand
-    | ExplainCommand
-    | ContractCommand
-    | EvidenceCommand
-    | WatchCommand
-    | TuiCommand
-
-type OutputFormat =
-    | Text
-    | Json
-
-type ReviewBudget =
-    | CacheOnly
-    | FreshReviews of count: int
-
-type RunRequest =
-    { Root: string
-      Command: CommandKind
-      Mode: RunMode
-      Format: OutputFormat
-      Scope: string list
-      Domains: Set<Domain>
-      ReviewBudget: ReviewBudget
-      ReviewStore: string option
-      OutputPath: string option
-      Judge: JudgeId
-      ExplicitPlain: bool }
+// 100 (M-ARCH-2): CommandKind/OutputFormat/ReviewBudget/RunRequest moved to the ProjectSensing
+// library (Request.fs, same FS.GG.Governance.Cli namespace) so the ArtifactReading sensing edge can
+// live beside them in a library and be reused by EvidenceCommand without referencing this exe. Every
+// reference below is unchanged.
 
 type ParseError =
     | MissingCommand
@@ -119,9 +95,9 @@ module Cli =
     // other gate. The handoff-gate blocking decision flows through it (no handoff-specific branch).
     module Enforcement = FS.GG.Governance.Enforcement.Enforcement
 
-    let defaultJudge =
-        { ModelId = "fsgg-governance-default"
-          Version = "2026-06" }
+    // 100 (M-ARCH-2): `defaultJudge` moved to the Project module (ProjectSensing library); referenced
+    // as `Project.defaultJudge` below. Kept out of the Cli exe so EvidenceCommand can consume it without
+    // referencing this executable.
 
     let emptyBudget =
         { Requested = []
@@ -212,8 +188,8 @@ module Cli =
               ReviewBudget = CacheOnly
               ReviewStore = None
               OutputPath = None
-              JudgeModel = defaultJudge.ModelId
-              JudgeVersion = defaultJudge.Version
+              JudgeModel = Project.defaultJudge.ModelId
+              JudgeVersion = Project.defaultJudge.Version
               ExplicitPlain = false
               Errors = [] }
 

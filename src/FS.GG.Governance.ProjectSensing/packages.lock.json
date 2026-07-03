@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "FSharp.Core": {
+        "type": "Direct",
+        "requested": "[10.1.301, )",
+        "resolved": "10.1.301",
+        "contentHash": "excLf2zM/qUB3WhRUfI0xvOOaPwcRAEdYT/BXe9eiTKySnWVuIKMQTf5+6ETy5nsb1dpLp1s2j2yAM/XcRgFMg=="
+      },
+      "fs.gg.governance.adapters.designsystem": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+        }
+      },
+      "fs.gg.governance.adapters.sddhandoff": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.adapters.speckit": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+        }
+      },
+      "fs.gg.governance.adapters.spi": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Kernel": "[0.1.1, )"
+        }
+      },
+      "fs.gg.governance.config": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Contracts": "[1.4.0, )",
+          "YamlDotNet": "[18.1.0, )"
+        }
+      },
+      "fs.gg.governance.findings": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Routing": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.gates": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.host": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Kernel": "[0.1.1, )"
+        }
+      },
+      "fs.gg.governance.kernel": {
+        "type": "Project"
+      },
+      "fs.gg.governance.route": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Findings": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Routing": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.routing": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )"
+        }
+      },
+      "FS.GG.Contracts": {
+        "type": "CentralTransitive",
+        "requested": "[1.4.0, )",
+        "resolved": "1.4.0",
+        "contentHash": "iq1uWFlkADsM7F6L34HIekJHhI2mHeO77k1lm97KcJlZGi5/JJPO05HodY0jLoOk17v9hxaZuy3hvNgoEdzCnA==",
+        "dependencies": {
+          "FSharp.Core": "10.1.301"
+        }
+      },
+      "YamlDotNet": {
+        "type": "CentralTransitive",
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
+      }
+    }
+  }
+}
