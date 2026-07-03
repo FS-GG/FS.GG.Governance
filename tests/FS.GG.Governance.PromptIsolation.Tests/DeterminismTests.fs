@@ -2,6 +2,7 @@ module FS.GG.Governance.PromptIsolation.Tests.DeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.AgentReviewKey.Model
 open FS.GG.Governance.PromptIsolation
 open FS.GG.Governance.PromptIsolation.Model

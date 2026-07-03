@@ -2,6 +2,7 @@ module FS.GG.Governance.Kernel.Tests.CheckRuleTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 
 // Semantic tests for the CheckTier arbitration model & the Rule bridge (F04), written
@@ -76,7 +77,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
         arbitrary = [ typeof<CkArb> ]
-        replay = Some(1234, 5678) } // fixed seed → reproducible (cf. F01/F02/F03)
+        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible (cf. F01/F02/F03)
 
 [<Tests>]
 let tests =

@@ -2,6 +2,7 @@ module FS.GG.Governance.ReviewRecord.Tests.CaptureTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.PromptIsolation.Model
 open FS.GG.Governance.AgentReviewKey.Model
 open FS.GG.Governance.FreshnessKey.Model

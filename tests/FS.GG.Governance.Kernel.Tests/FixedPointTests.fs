@@ -55,7 +55,7 @@ let private shuffle (seed: int) (xs: 'a list) =
 let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 200
-        replay = Some(1234, 5678) } // fixed seed → reproducible (D5, V7)
+        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible (D5, V7)
 
 [<Tests>]
 let tests =

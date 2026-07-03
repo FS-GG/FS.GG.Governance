@@ -2,6 +2,7 @@ module FS.GG.Governance.Kernel.Tests.VerdictTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 
 // Semantic tests for the three-valued Kleene verdict algebra (F02), written against
@@ -21,7 +22,7 @@ let private isUncertain = function Uncertain _ -> true | _ -> false
 let private genVerdict : Gen<Verdict> =
     let genReason =
         Gen.oneof
-            [ Arb.generate<string> |> Gen.map (fun s -> if isNull s then "" else s)
+            [ (ArbMap.defaults |> ArbMap.generate<string>) |> Gen.map (fun s -> if System.String.IsNullOrEmpty s then "" else s)
               Gen.elements [ "a"; "z"; "m"; "a; z"; "spacing"; "tone; spacing" ] ]
     Gen.oneof
         [ Gen.constant Pass
@@ -37,7 +38,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
         arbitrary = [ typeof<VerdictArb> ]
-        replay = Some(1234, 5678) } // fixed seed → reproducible (cf. F01 V7)
+        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible (cf. F01 V7)
 
 // Deterministic shuffle by a seed (no wall-clock / ambient randomness).
 let private shuffle (seed: int) (xs: 'a list) =

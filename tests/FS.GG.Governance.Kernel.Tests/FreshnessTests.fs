@@ -2,6 +2,7 @@ module FS.GG.Governance.Kernel.Tests.FreshnessTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 
 // ── Evidence freshness (F06 · US3) — V37–V38 ──
@@ -15,7 +16,7 @@ open FS.GG.Governance.Kernel
 let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
-        replay = Some(1234, 5678) } // fixed seed → reproducible
+        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible
 
 [<Tests>]
 let tests =

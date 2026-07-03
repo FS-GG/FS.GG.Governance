@@ -2,6 +2,7 @@ module FS.GG.Governance.Kernel.Tests.CheckTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 open FS.GG.Governance.Kernel.Check
 
@@ -94,7 +95,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
         arbitrary = [ typeof<CheckArb> ]
-        replay = Some(1234, 5678) } // fixed seed → reproducible (cf. F01/F02)
+        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible (cf. F01/F02)
 
 [<Tests>]
 let tests =

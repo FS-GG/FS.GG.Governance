@@ -4,6 +4,7 @@ open System
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.CommandRecord
 open FS.GG.Governance.CommandRecord.Model

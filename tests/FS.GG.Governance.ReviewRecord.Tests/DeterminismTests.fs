@@ -4,6 +4,7 @@ open System
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.ReviewRecord
 open FS.GG.Governance.ReviewRecord.Model
 open FS.GG.Governance.ReviewRecord.Tests.Support

@@ -4,6 +4,7 @@ open System
 open System.IO
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.AdvisoryPromotion
 open FS.GG.Governance.AdvisoryPromotion.Model

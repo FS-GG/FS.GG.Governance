@@ -2,6 +2,7 @@ module FS.GG.Governance.Kernel.Tests.RouteTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Kernel
 
 // ── The light routing layer (F07 · 007-routing-severity-modes) — V40–V47 ──
@@ -53,7 +54,7 @@ let private allModes = [ Sandbox; Inner; Gate ]
 let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
-        replay = Some(4242, 2424) } // fixed seed → reproducible (cf. F02 V6)
+        replay = Some(4242UL, 2424UL, None) } // fixed seed → reproducible (cf. F02 V6)
 
 [<Tests>]
 let tests =

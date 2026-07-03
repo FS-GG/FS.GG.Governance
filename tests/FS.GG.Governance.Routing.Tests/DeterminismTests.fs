@@ -2,6 +2,7 @@ module FS.GG.Governance.Routing.Tests.DeterminismTests
 
 open Expecto
 open FsCheck
+open FsCheck.FSharp
 open FS.GG.Governance.Routing
 open FS.GG.Governance.Routing.Tests.Support
 
