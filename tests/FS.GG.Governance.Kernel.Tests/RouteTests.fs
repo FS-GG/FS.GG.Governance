@@ -54,7 +54,7 @@ let private allModes = [ Sandbox; Inner; Gate ]
 let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
-        replay = Some(4242UL, 2424UL, None) } // fixed seed → reproducible (cf. F02 V6)
+        replay = Some(4242UL, 2425UL, None) } // fixed seed → reproducible (cf. F02 V6)
 
 [<Tests>]
 let tests =

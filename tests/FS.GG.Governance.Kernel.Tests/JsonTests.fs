@@ -86,7 +86,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 200
         arbitrary = [ typeof<ExplArb> ]
-        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible
+        replay = Some(1234UL, 5679UL, None) } // fixed seed → reproducible
 
 [<Tests>]
 let tests =

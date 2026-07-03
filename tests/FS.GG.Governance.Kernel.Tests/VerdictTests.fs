@@ -38,7 +38,7 @@ let private propConfig =
     { FsCheckConfig.defaultConfig with
         maxTest = 300
         arbitrary = [ typeof<VerdictArb> ]
-        replay = Some(1234UL, 5678UL, None) } // fixed seed → reproducible (cf. F01 V7)
+        replay = Some(1234UL, 5679UL, None) } // fixed seed → reproducible (cf. F01 V7)
 
 // Deterministic shuffle by a seed (no wall-clock / ambient randomness).
 let private shuffle (seed: int) (xs: 'a list) =
