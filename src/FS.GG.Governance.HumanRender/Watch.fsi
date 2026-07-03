@@ -53,13 +53,21 @@ module Watch =
     /// The pure debounce transition (TOTAL, no I/O).
     val update: msg: WatchMsg -> model: WatchModel -> WatchModel * WatchEffect list
 
+    /// Headless-safe interactive stop-poll: `true` when the user pressed `q`, OR when the console is
+    /// unreadable (stdin redirected / no console — `KeyAvailable`/`ReadKey` throw). It NEVER throws, so
+    /// `--watch` in a pipe/CI stops cleanly instead of crashing. Shared by both watch hosts (H3 / #47).
+    val safeKeyPoll: unit -> bool
+
     /// The interpreter edge: sense filesystem changes under `root` (FileSystemWatcher), drive the
     /// pure `update`, and run each `ReRender` through the injected, read-only re-render callback.
-    /// Blocks until `shouldStop` returns true. NO contract is written.
+    /// Blocks until `shouldStop` returns true, then returns the last settled signal. A `root` whose
+    /// watcher cannot be constructed (nonexistent/unreadable) returns `InputUnreadable` without ever
+    /// entering the loop — the host maps it to its input-unavailable exit code (3 / 66). NO contract
+    /// is written.
     val run:
         root: string ->
         mode: RenderMode.RenderMode ->
         clock: (unit -> int64) ->
         reRender: (string -> RenderMode.RenderMode -> WatchSignal) ->
         shouldStop: (unit -> bool) ->
-            unit
+            WatchSignal
