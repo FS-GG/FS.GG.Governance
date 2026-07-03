@@ -1,16 +1,15 @@
 module FS.GG.Governance.CacheEligibilityCommand.Tests.SurfaceDriftTests
 
 open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.CacheEligibilityCommand
-open FS.GG.Governance.CacheEligibilityCommand.Tests.Support
 
-// T026/T027 (Principle II, C6) — reflective API surface-drift baseline + dependency/scope-hygiene guard.
-// Reflection lives ONLY in these tests. The public surface is exactly the `Loop` + `Interpreter` modules
-// (the two `.fsi` contracts); the dependency boundary is the F022 selection cores + the cache cores (+
-// transitive FreshnessKey) + BCL + FSharp.Core — and NO RouteJson/GatesJson/AuditJson/RouteCommand (C6).
+// T026/T027 (Principle II, C6) — reflective API surface-drift baseline + dependency/scope-hygiene guard,
+// now via the shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in
+// the host. The public surface is exactly the `Loop` + `Interpreter` modules (the two `.fsi` contracts);
+// the dependency boundary is the F022 selection cores + the cache cores (+ transitive FreshnessKey) — and
+// NO RouteJson/GatesJson/AuditJson/RouteCommand (C6).
 
 let private commandAsm =
     Loop.exitCode Loop.Success |> ignore
@@ -21,46 +20,11 @@ let private commandAsm =
         | Some n -> n = "FS.GG.Governance.CacheEligibilityCommand"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.CacheEligibilityCommand.surface.txt")
-
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "CacheEligibilityCommand public surface equals the committed baseline" {
-              let actual = renderSurface commandAsm
-
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "CacheEligibilityCommand" "FS.GG.Governance.CacheEligibilityCommand" commandAsm
 
           test "the public API surface is exactly the Loop + Interpreter modules (plus the Exe entry)" {
               let typeNames = commandAsm.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
@@ -86,56 +50,21 @@ let tests =
               Expect.isEmpty unexpected (sprintf "only Loop/Interpreter (+ Program entry) are public; found extra: %A" unexpected)
           }
 
-          test "references only the F022 selection + cache cores (+ transitive) + BCL — no RouteJson/GatesJson/AuditJson/RouteCommand (C6)" {
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "FS.GG.Governance.Config"
-                  || name = "FS.GG.Governance.Snapshot"
-                  || name = "FS.GG.Governance.Routing"
-                  || name = "FS.GG.Governance.Findings"
-                  || name = "FS.GG.Governance.Gates"
-                  || name = "FS.GG.Governance.Route"
-                  || name = "FS.GG.Governance.FreshnessKey"
-                  || name = "FS.GG.Governance.FreshnessResolution"
-                  || name = "FS.GG.Governance.CacheEligibility"
-                  || name = "FS.GG.Governance.CacheEligibilityJson"
-                  || name = "FS.GG.Governance.EvidenceReuse"
-                  // F27 wiring (063): the plain human projection (HumanText.ofCacheEligibilityReport) over the
-                  // SAME CacheEligibilityReport the cache-eligibility.json path serializes. Not Spectre.
-                  || name = "FS.GG.Governance.HumanText"
-                  // F27 wiring (063) US2: the rich render + capability sensing at the edge. Spectre is referenced
-                  // by HumanRender ONLY — the cache host reaches it through RichRender.emitStdout/senseCapability,
-                  // never a direct Spectre reference (the forbidden check below still guards that).
-                  || name = "FS.GG.Governance.HumanRender"
-                  // 075 (Phase B): the shared pure command-host skeleton leaf — under/revOfCommit/baseHeadOf.
-                  || name = "FS.GG.Governance.CommandHost"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  || name.StartsWith "System."
-
-              let offending =
-                  commandAsm.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
-
-              Expect.isEmpty offending (sprintf "must depend on the selection/cache cores + BCL/FSharp.Core only; found: %A" offending)
-
-              let forbidden =
-                  commandAsm.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (fun n ->
-                      n = "FS.GG.Governance.RouteJson"
-                      || n = "FS.GG.Governance.GatesJson"
-                      || n = "FS.GG.Governance.AuditJson"
-                      || n = "FS.GG.Governance.RouteCommand"
-                      || n = "FS.GG.Governance.Kernel"
-                      || n = "FS.GG.Governance.Host"
-                      || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters"
-                      // F27 wiring (063) US2, FR-011/SC-007: Spectre stays confined to HumanRender — the cache
-                      // host reaches rich rendering through HumanRender's emitStdout, never a direct reference.
-                      || n = "Spectre.Console")
-
-              Expect.isEmpty forbidden (sprintf "must not reference route/audit json, RouteCommand, kernel/host/cli/adapters; found: %A" forbidden)
-          } ]
+          SurfaceDrift.referencesOnly
+              "CacheEligibilityCommand"
+              (fun n ->
+                  n = "FS.GG.Governance.Config"
+                  || n = "FS.GG.Governance.Snapshot"
+                  || n = "FS.GG.Governance.Routing"
+                  || n = "FS.GG.Governance.Findings"
+                  || n = "FS.GG.Governance.Gates"
+                  || n = "FS.GG.Governance.Route"
+                  || n = "FS.GG.Governance.FreshnessKey"
+                  || n = "FS.GG.Governance.FreshnessResolution"
+                  || n = "FS.GG.Governance.CacheEligibility"
+                  || n = "FS.GG.Governance.CacheEligibilityJson"
+                  || n = "FS.GG.Governance.EvidenceReuse"
+                  || n = "FS.GG.Governance.HumanText"
+                  || n = "FS.GG.Governance.HumanRender"
+                  || n = "FS.GG.Governance.CommandHost")
+              commandAsm ]

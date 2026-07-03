@@ -1,16 +1,12 @@
 module FS.GG.Governance.VerifyJson.Tests.SurfaceDriftTests
 
 open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.VerifyJson
-open FS.GG.Governance.VerifyJson.Tests.Support
 
-// Reflective API surface-drift check (Principle II). Reflection lives ONLY in these tests, never in the
-// library. The public surface is exactly the `VerifyJson` module (the one `.fsi` contract). There is NO
-// external surface generator — this test IS the renderer; the committed baseline is produced by running it
-// once (BLESS_SURFACE=1).
+// Reflective API surface-drift check (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3).
+// The public surface is exactly the `VerifyJson` module (the one `.fsi` contract).
 
 let private verifyJson =
     VerifyJson.schemaVersion |> ignore
@@ -21,43 +17,8 @@ let private verifyJson =
         | Some n -> n = "FS.GG.Governance.VerifyJson"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.VerifyJson.surface.txt")
-
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "VerifyJson public surface equals the committed baseline" {
-              let actual = renderSurface verifyJson
-
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          } ]
+        [ SurfaceDrift.surfaceTest "VerifyJson" "FS.GG.Governance.VerifyJson" verifyJson ]

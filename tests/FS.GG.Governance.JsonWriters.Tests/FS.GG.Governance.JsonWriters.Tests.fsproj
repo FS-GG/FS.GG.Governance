@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 
 </Project>

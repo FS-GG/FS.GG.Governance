@@ -34,6 +34,7 @@ jobs:
   gate:
     name: Deterministic gate (locked restore + build)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +43,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore is the single enforcement point. RestoreLockedMode is set in
       # Directory.Build.props when GITHUB_ACTIONS=true and a lockfile exists; --locked-mode
@@ -70,6 +75,7 @@ jobs:
   build-config-drift:
     name: Build-config drift check (shared-build-config)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout this repo
         uses: actions/checkout@v4
@@ -97,6 +103,7 @@ jobs:
   reference-gate-set-pack:
     name: Reference gate set — pack guard (byte-identity + gated + versioned)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -105,6 +112,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore the guard project (and its references) so a graph drift fails here too.
       - name: Restore (locked)
@@ -131,6 +142,7 @@ jobs:
   api-compatibility-gate:
     name: API compatibility gate (breaking-change → SemVer major) [advisory]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # Advisory: a non-zero here must never fail the PR while the gate is advisory.
     continue-on-error: true
     steps:
@@ -141,6 +153,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
+          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       # Locked restore (repo convention) so a graph drift fails here too.
       - name: Restore (locked)

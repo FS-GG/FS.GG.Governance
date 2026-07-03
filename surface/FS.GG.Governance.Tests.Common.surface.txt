@@ -76,3 +76,8 @@ TYPE FS.GG.Governance.Tests.Common.SnapshotHelpers
   [Method] System.Tuple`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision],Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.FreshnessKey.ModelModule+Revision]] baseHeadOfSnap(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot])
   [Method] Void writeFile(System.String, System.String, System.String)
   [Property] SnapshotOptions defaultOpts
+TYPE FS.GG.Governance.Tests.Common.SurfaceDrift
+  [Method] Expecto.Test noInboundReferences(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.Reflection.Assembly], System.Reflection.Assembly)
+  [Method] Expecto.Test referencesOnly(System.String, Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean], System.Reflection.Assembly)
+  [Method] Expecto.Test surfaceTest(System.String, System.String, System.Reflection.Assembly)
+  [Method] System.String renderSurface(System.Reflection.Assembly)

@@ -1,14 +1,11 @@
 module FS.GG.Governance.AuditJson.Tests.SurfaceDriftTests
 
-open System
-open System.IO
-open System.Reflection
 open Expecto
+open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.AuditJson
-open FS.GG.Governance.AuditJson.Tests.Support
 
-// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II). Reflection lives
-// ONLY in these tests, never in the library.
+// Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
+// SurfaceDrift helper (101/M-CI-3). The "exactly one module" leak guard stays inline.
 
 // AuditJson exports only the module (no public types). Touch a member to force the library assembly to
 // load, then locate it by name among the loaded assemblies.
@@ -21,49 +18,11 @@ let private auditJson =
         | Some n -> n = "FS.GG.Governance.AuditJson"
         | None -> false)
 
-let private baselinePath =
-    Path.Combine(repoRoot, "surface", "FS.GG.Governance.AuditJson.surface.txt")
-
-/// Render the assembly's public surface to canonical, sorted text. Any change to the public surface
-/// changes this text and trips the baseline assertion.
-let private renderSurface (asm: Assembly) =
-    let memberFlags =
-        BindingFlags.Public
-        ||| BindingFlags.Instance
-        ||| BindingFlags.Static
-        ||| BindingFlags.DeclaredOnly
-
-    asm.GetExportedTypes()
-    |> Array.sortBy (fun t -> t.FullName)
-    |> Array.map (fun t ->
-        let members =
-            t.GetMembers(memberFlags)
-            |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
-            |> Array.sort
-
-        String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
-    |> String.concat "\n"
-
-let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
-
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ test "AuditJson public surface equals the committed baseline" {
-              let actual = renderSurface auditJson
-
-              // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
-
-              let baseline = File.ReadAllText baselinePath
-
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+        [ SurfaceDrift.surfaceTest "AuditJson" "FS.GG.Governance.AuditJson" auditJson
 
           test "the public surface is exactly the AuditJson module, nothing private" {
               let typeNames =
@@ -79,72 +38,31 @@ let tests =
                   "AuditJson module is public"
           }
 
-          test "AuditJson references only the Ship + CacheEligibility transitive graph + BCL + FSharp.Core (FR-014 scope guard)" {
-              // One-way dependency: AuditJson -> Ship -> Enforcement/Route/Config/Gates/Findings/Kernel.
-              // No host/adapter/CLI edge and no new third-party package — the absence confirms
-              // serialization is the shared-framework System.Text.Json and no later-phase capability
-              // leaked in. F045 adds ONE project reference — F041 CacheEligibility — for the embedded
-              // cache-eligibility verdict; EvidenceReuse/FreshnessKey arrive transitively through it (the
-              // F042 CacheEligibilityJson precedent). Still no third-party package, host, or CLI.
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "FS.GG.Governance.Ship"
-                  || name = "FS.GG.Governance.Enforcement"
-                  || name = "FS.GG.Governance.Route"
-                  || name = "FS.GG.Governance.Config"
-                  || name = "FS.GG.Governance.Gates"
-                  || name = "FS.GG.Governance.Findings"
-                  || name = "FS.GG.Governance.Kernel"
-                  // F045: F041 CacheEligibility (the embed) + its transitive F030/F029 token graph.
-                  || name = "FS.GG.Governance.CacheEligibility"
-                  || name = "FS.GG.Governance.EvidenceReuse"
-                  || name = "FS.GG.Governance.FreshnessKey"
-                  // F052: GateRun (the per-gate execution embed) + its transitive F051/F032 graph.
-                  || name = "FS.GG.Governance.GateRun"
-                  || name = "FS.GG.Governance.GateExecution"
-                  || name = "FS.GG.Governance.ExecutionRecord"
-                  || name = "FS.GG.Governance.CommandRecord"
-                  // 068: the dependency-free RuleIdentity leaf (the additive per-finding ruleId source).
-                  || name = "FS.GG.Governance.RuleIdentity"
-                  // F070: the additive `generatedViews` overload references the pure CurrencyEnforcement leaf
-                  // (CurrencyFinding) + RefreshJson (RefreshModel.viewKindToken). Both cores. No host reference.
-                  || name = "FS.GG.Governance.CurrencyEnforcement"
-                  || name = "FS.GG.Governance.RefreshJson"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  // 073: the dependency-free JsonText leaf (the shared deterministic-emit helper writeToString).
-                  || name = "FS.GG.Governance.JsonText"
-                  // 073: the pure JsonWriters leaf (the shared sub-object/map writers).
-                  || name = "FS.GG.Governance.JsonWriters"
-                  // 073: the pure JsonTokens leaf (the shared closed-enum token helpers).
-                  || name = "FS.GG.Governance.JsonTokens"
-                  || name.StartsWith "System."
-
-              let offending =
-                  auditJson.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
-
-              Expect.isEmpty
-                  offending
-                  (sprintf "AuditJson must depend on the Ship graph/BCL/FSharp.Core only; found: %A" offending)
-
-              // Specifically: NOT the host/adapters/Snapshot/Routing/RouteJson/GatesJson/RouteCommand/CLI.
-              let forbidden =
-                  auditJson.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (fun n ->
-                      n = "FS.GG.Governance.Host"
-                      || n = "FS.GG.Governance.Snapshot"
-                      || n = "FS.GG.Governance.Routing"
-                      || n = "FS.GG.Governance.RouteJson"
-                      || n = "FS.GG.Governance.GatesJson"
-                      || n = "FS.GG.Governance.RouteCommand"
-                      || n = "FS.GG.Governance.Cli"
-                      || n.StartsWith "FS.GG.Governance.Adapters")
-
-              Expect.isEmpty
-                  forbidden
-                  (sprintf "AuditJson must not reference host/adapters/Snapshot/Routing/RouteJson/GatesJson/RouteCommand/CLI; found: %A" forbidden)
-          } ]
+          // FR-014 scope guard: One-way dependency AuditJson -> Ship -> Enforcement/Route/Config/Gates/
+          // Findings/Kernel, plus the F045 CacheEligibility embed, the F052 GateRun embed, the 068
+          // RuleIdentity leaf, the F070 CurrencyEnforcement/RefreshJson edges, and the 073 Json* leaves.
+          // No host/adapter/CLI edge and no new third-party package.
+          SurfaceDrift.referencesOnly
+              "AuditJson"
+              (fun n ->
+                  n = "FS.GG.Governance.Ship"
+                  || n = "FS.GG.Governance.Enforcement"
+                  || n = "FS.GG.Governance.Route"
+                  || n = "FS.GG.Governance.Config"
+                  || n = "FS.GG.Governance.Gates"
+                  || n = "FS.GG.Governance.Findings"
+                  || n = "FS.GG.Governance.Kernel"
+                  || n = "FS.GG.Governance.CacheEligibility"
+                  || n = "FS.GG.Governance.EvidenceReuse"
+                  || n = "FS.GG.Governance.FreshnessKey"
+                  || n = "FS.GG.Governance.GateRun"
+                  || n = "FS.GG.Governance.GateExecution"
+                  || n = "FS.GG.Governance.ExecutionRecord"
+                  || n = "FS.GG.Governance.CommandRecord"
+                  || n = "FS.GG.Governance.RuleIdentity"
+                  || n = "FS.GG.Governance.CurrencyEnforcement"
+                  || n = "FS.GG.Governance.RefreshJson"
+                  || n = "FS.GG.Governance.JsonText"
+                  || n = "FS.GG.Governance.JsonWriters"
+                  || n = "FS.GG.Governance.JsonTokens")
+              auditJson ]

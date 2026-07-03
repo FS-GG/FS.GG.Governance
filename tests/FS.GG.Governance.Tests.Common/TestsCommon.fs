@@ -371,3 +371,86 @@ module SnapshotHelpers =
         | null -> ()
         | parent -> Directory.CreateDirectory parent |> ignore
         File.WriteAllText(full, content)
+
+// 101 (M-CI-3): the shared surface-drift check behind the curated `.fsi`. Lifted VERBATIM from the
+// ~80 per-project copies (the three renderer variants differed only cosmetically — flags on one line
+// vs four, `a` vs `asm` — the RENDERED output was byte-identical, so one `renderSurface` reproduces
+// every committed baseline). Visibility lives in the `.fsi` (Principle II) — NO access modifiers here;
+// `normalize` is private by omission from the signature, not by keyword.
+module SurfaceDrift =
+
+    open System
+    open System.IO
+    open System.Reflection
+    open Expecto
+
+    let renderSurface (asm: Assembly) : string =
+        let memberFlags =
+            BindingFlags.Public
+            ||| BindingFlags.Instance
+            ||| BindingFlags.Static
+            ||| BindingFlags.DeclaredOnly
+
+        asm.GetExportedTypes()
+        |> Array.sortBy (fun t -> t.FullName)
+        |> Array.map (fun t ->
+            let members =
+                t.GetMembers(memberFlags)
+                |> Array.map (fun m -> sprintf "  [%A] %s" m.MemberType (m.ToString()))
+                |> Array.sort
+
+            String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
+        |> String.concat "\n"
+
+    let normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
+
+    let surfaceTest (label: string) (baselineName: string) (asm: Assembly) : Test =
+        test $"{label} public surface equals the committed baseline" {
+            let baselinePath =
+                Path.Combine(RepositoryHelpers.repoRoot, "surface", baselineName + ".surface.txt")
+
+            let actual = renderSurface asm
+
+            // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
+            if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
+                File.WriteAllText(baselinePath, actual + "\n")
+
+            let baseline = File.ReadAllText baselinePath
+
+            Expect.equal
+                (normalize actual)
+                (normalize baseline)
+                $"{label} public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
+        }
+
+    let referencesOnly (label: string) (allowed: string -> bool) (asm: Assembly) : Test =
+        test $"{label} references only its allowed set + BCL + FSharp.Core" {
+            let isAllowed (name: string) =
+                name = "FSharp.Core"
+                || name = "System.Private.CoreLib"
+                || name = "netstandard"
+                || name = "mscorlib"
+                || name.StartsWith "System."
+                || allowed name
+
+            let offending =
+                asm.GetReferencedAssemblies()
+                |> Array.choose (fun a -> Option.ofObj a.Name)
+                |> Array.filter (isAllowed >> not)
+
+            Expect.isEmpty offending (sprintf "%s must reference only its allowed set; found: %A" label offending)
+        }
+
+    let noInboundReferences (label: string) (upstream: Assembly list) (asm: Assembly) : Test =
+        test $"{label} has no inbound references from its upstream (dependency direction preserved)" {
+            let thisName = asm.GetName().Name |> Option.ofObj |> Option.defaultValue ""
+
+            let references (up: Assembly) =
+                up.GetReferencedAssemblies()
+                |> Array.choose (fun a -> Option.ofObj a.Name)
+                |> Array.exists (fun n -> n = thisName)
+
+            for up in upstream do
+                let upName = up.GetName().Name |> Option.ofObj |> Option.defaultValue "?"
+                Expect.isFalse (references up) (sprintf "%s: %s must not reference %s" label upName thisName)
+        }
