@@ -254,10 +254,6 @@ module ArtifactReading =
         | Some root ->
             [ yield DesignSystemProjectFact(DesignSystemFact.ArtifactPresent subject)
 
-              match root.TryGetProperty("present") with
-              | true, present when not (present.GetBoolean()) -> ()
-              | _ -> ()
-
               match root.TryGetProperty("observations") with
               | true, observations ->
                   for observation in observations.EnumerateObject() do

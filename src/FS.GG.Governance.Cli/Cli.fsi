@@ -58,6 +58,9 @@ type ParseError =
     | MissingCommand
     | UnknownCommand of string
     | UnknownOption of string
+    /// A stray positional token (does not start with `--`). Distinct from `UnknownOption`
+    /// so the error names the actual problem — an unexpected argument, not a bad flag.
+    | UnexpectedArgument of string
     | MissingOptionValue of string
     | InvalidMode of string
     | InvalidFormat of string

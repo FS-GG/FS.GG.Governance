@@ -31,6 +31,7 @@
     <!-- 090: the profile-aware handoff-gate decision matrix (strict/light/absent/unrecognized
          crossed with failing/satisfied at mode gate) driven through the public Cli MVU route-exit. -->
     <Compile Include="ProfileAwareHandoffGateTests.fs" />
+    <Compile Include="ReviewStoreTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
