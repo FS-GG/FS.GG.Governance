@@ -406,6 +406,7 @@ TYPE FS.GG.Governance.Snapshot.SnapshotModule
   [Method] ResolutionPlan planResolution(SnapshotOptions)
   [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RangeForm
   [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RepoState
   [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+ResolutionPlan
 TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm
   [Method] Boolean Equals(RangeForm)
@@ -446,12 +447,11 @@ TYPE FS.GG.Governance.Snapshot.SnapshotModule+RangeForm+Tags
   [Field] Int32 Default
   [Field] Int32 Since
 TYPE FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
-  [Constructor] Void .ctor(Boolean, Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest], ResolutionPlan)
+  [Constructor] Void .ctor(RepoState, Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest], ResolutionPlan)
   [Method] Boolean Equals(RawSensing)
   [Method] Boolean Equals(RawSensing, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
-  [Method] Boolean get_RepoOk()
   [Method] Int32 CompareTo(RawSensing)
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -465,9 +465,9 @@ TYPE FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
   [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_BranchRaw()
   [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_DiffRaw()
   [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] get_StatusRaw()
+  [Method] RepoState get_RepoState()
   [Method] ResolutionPlan get_Plan()
   [Method] System.String ToString()
-  [Property] Boolean RepoOk
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Snapshot.ModelModule+CommandRunDigest] Digests
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+CiContext] RawCi
   [Property] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+CommitId,System.String] BaseResolved
@@ -476,7 +476,38 @@ TYPE FS.GG.Governance.Snapshot.SnapshotModule+RawSensing
   [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] BranchRaw
   [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] DiffRaw
   [Property] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] StatusRaw
+  [Property] RepoState RepoState
   [Property] ResolutionPlan Plan
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RepoState
+  [Method] Boolean Equals(RepoState)
+  [Method] Boolean Equals(RepoState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGitAbsent()
+  [Method] Boolean get_IsNotAWorkTree()
+  [Method] Boolean get_IsWorkTree()
+  [Method] Int32 CompareTo(RepoState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] RepoState get_GitAbsent()
+  [Method] RepoState get_NotAWorkTree()
+  [Method] RepoState get_WorkTree()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Snapshot.SnapshotModule+RepoState+Tags
+  [Property] Boolean IsGitAbsent
+  [Property] Boolean IsNotAWorkTree
+  [Property] Boolean IsWorkTree
+  [Property] Int32 Tag
+  [Property] RepoState GitAbsent
+  [Property] RepoState NotAWorkTree
+  [Property] RepoState WorkTree
+TYPE FS.GG.Governance.Snapshot.SnapshotModule+RepoState+Tags
+  [Field] Int32 GitAbsent
+  [Field] Int32 NotAWorkTree
+  [Field] Int32 WorkTree
 TYPE FS.GG.Governance.Snapshot.SnapshotModule+ResolutionPlan
   [Constructor] Void .ctor(RangeForm, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Snapshot.ModelModule+GitRef], Boolean)
   [Method] Boolean Equals(ResolutionPlan)

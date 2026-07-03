@@ -78,14 +78,16 @@ val commandFor : repoRoot -> tooling -> gate -> Result<GateCommand, NoCommand>
 
 **After**:
 ```fsharp
-type RepoState = Ok | NotARepository | GitUnavailable
+type RepoState = WorkTree | NotAWorkTree | GitAbsent   // named to avoid Result.Ok + DiagnosticId collisions
 // RawSensing.RepoOk: bool  →  RawSensing.RepoState: RepoState
 ```
-- `assemble` (`Snapshot.fs:212`) branches on `RepoState`: `NotARepository`/`GitUnavailable` each
-  emit their matching `DiagnosticId` (`Model.fs:71-73`) with `Range=None`, empty sets,
-  `sortDigests raw.Digests`. The `Ok` path is unchanged.
-- Interpreter (`Interpreter.fs:186-198`) deletes the hand-rolled record and calls
-  `Snapshot.assemble { raw with RepoState = GitUnavailable }`.
+- `assemble` branches on `RepoState`: a shared `repoCheckFailure id message` helper emits
+  `NotAWorkTree → NotARepository` / `GitAbsent → GitUnavailable` (`DiagnosticId`, `Model.fs:71-73`)
+  with `Range=None`, empty sets, `sortDigests raw.Digests`. The `WorkTree` path is the unchanged
+  full assembly.
+- Interpreter deletes the hand-rolled `GitUnavailable` record (and its now-dead local `sortDigests`)
+  and calls `Snapshot.assemble { … RepoState = Snapshot.GitAbsent }`, mirroring the not-a-work-tree
+  path. Byte-identical output (same diagnostic id/op/message, digest order).
 
 ### E4 — `ComparisonSample` (B6)
 
@@ -93,8 +95,10 @@ type RepoState = Ok | NotARepository | GitUnavailable
 
 **Before**: `{ JudgeVerdict; HumanVerdict; Agreement: AgreementClassification }`
 **After**: `{ JudgeVerdict; HumanVerdict }` — the unread `Agreement` field removed. `decide`
-(`Calibration.fs:29-49`) is untouched (never read it). `AgreementClassification` stays (still used
-by `CalibrationEvidence.ObservedAgreement`).
+(`Calibration.fs:29-49`) is untouched (it reads only the sample count + `evidence.ObservedAgreement`,
+never `sample.Agreement`). **Correction to the earlier note:** `ObservedAgreement` is
+`AgreementLevel`, *not* `AgreementClassification` — so removing the field leaves
+`AgreementClassification` (`Agreeing`/`Disagreeing`) entirely dead; it is removed in the same PR.
 
 ### E5 — `decideMatrix` signature (B7)
 

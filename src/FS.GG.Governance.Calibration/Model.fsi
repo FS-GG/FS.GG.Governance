@@ -21,13 +21,6 @@ open FS.GG.Governance.ReviewRecord.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
 
-    /// The CLOSED two-value outcome of ONE judge-vs-human comparison — the only thing `decide` consumes from a
-    /// sample (FR-002, FR-007). The model's own self-reported confidence is NOT a case (FR-002, SC-001):
-    /// calibration is human comparison, never self-assessment.
-    type AgreementClassification =
-        | Agreeing
-        | Disagreeing
-
     /// The per-judge calibration scope (FR-009 SHOULD, research D3). Reuses the F035 identity tokens verbatim.
     /// Calibration is per judge identity, not global: evidence under one model id / version / reviewer-prompt
     /// hash does not calibrate a different identity. This core RECORDS the scope (no-hide / audit) and trusts
@@ -39,12 +32,12 @@ module Model =
 
     /// One judge-vs-human comparison (FR-002, research D3/D4). Pairs the agent reviewer's verdict with a
     /// human's verdict on the same item (reusing F038 `RecordedVerdict` for both, opaque — never parsed,
-    /// interpreted, compared, re-scored, or dereferenced, FR-007) and carries the already-classified
-    /// `Agreement` — the consumed fact.
+    /// interpreted, compared, re-scored, or dereferenced, FR-007). `decide` consumes only the sample COUNT and
+    /// the evidence-level `ObservedAgreement` aggregate — never a per-sample classification (111/B6: the former
+    /// `Agreement` field and its `AgreementClassification` type were unread and are removed).
     type ComparisonSample =
         { JudgeVerdict: RecordedVerdict
-          HumanVerdict: RecordedVerdict
-          Agreement: AgreementClassification }
+          HumanVerdict: RecordedVerdict }
 
     /// A comparison-sample count (observed-derived or threshold-minimum). Single-case newtype preserving
     /// type-distinctness from `AgreementLevel` (a swapped count/level is a compile error). Supplied as data —

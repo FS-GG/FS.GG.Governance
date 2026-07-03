@@ -79,22 +79,24 @@ route Snapshot `GitUnavailable` through `assemble` via `RepoState` (B9). Contrac
 
 **Independent Test**: `dotnet test --filter "FullyQualifiedName~Snapshot|Calibration|ValidationMatrix"`; only those three baselines move.
 
+> **Corrections during US2:** (a) `RepoState` cases named `WorkTree | NotAWorkTree | GitAbsent` — `Ok` collides with `Result.Ok` and `NotARepository`/`GitUnavailable` collide with the `DiagnosticId` cases. (b) B6: `ObservedAgreement` is `AgreementLevel`, not `AgreementClassification`, so dropping the field leaves `AgreementClassification` dead — removed too (not "stays"). (c) removed the interpreter's now-dead local `sortDigests`.
+
 ### Tests for US2
 
-- [ ] T011 [P] [US2] [T1] `tests/FS.GG.Governance.Snapshot.Tests/`: assert a `GitUnavailable` snapshot built via `assemble { raw with RepoState = GitUnavailable }` equals the current hand-rolled record field-for-field (diagnostic id/op/message, `Range=None`, empty sets, digest order).
-- [ ] T012 [P] [US2] [T1] `tests/FS.GG.Governance.Calibration.Tests/`: assert `decide` output is byte-identical across every fixture after `Agreement` is dropped.
-- [ ] T013 [P] [US2] [T1] `tests/FS.GG.Governance.ValidationMatrix.Tests/`: assert `decideMatrix` `MatrixPlan` output is identical without the `boundary` argument.
+- [X] T011 [US2] [T1] `AssembleTests.fs`: added `only GitUnavailable (assemble { baseRaw with RepoState = Snapshot.GitAbsent })` alongside the existing `NotARepository` case; the interpreter's git-unavailable path is exercised by the existing SensingTests (all Snapshot tests byte-identical, 38/38).
+- [X] T012 [US2] [T1] `Calibration.Tests`: `decide` output byte-identical across all fixtures (27/27); sample builders/generators updated to the 2-field `ComparisonSample`.
+- [X] T013 [US2] [T1] `ValidationMatrix.Tests`: `decideMatrix` `MatrixPlan` output identical without `boundary` (7/7); all test callers dropped the arg.
 
 ### Implementation for US2
 
-- [ ] T014 [US2] [T1] B9: replace `RawSensing.RepoOk: bool` with `RepoState = Ok | NotARepository | GitUnavailable` in `src/FS.GG.Governance.Snapshot/Snapshot.fsi` then `Snapshot.fs:70-80`; branch `assemble` (`Snapshot.fs:212`) on `RepoState`, emitting the matching `DiagnosticId` (E3).
-- [ ] T015 [US2] B9: delete the hand-rolled record in `src/FS.GG.Governance.Snapshot/Interpreter.fs:186-198`; call `Snapshot.assemble { raw with RepoState = GitUnavailable }` (mirror the sibling not-a-work-tree path `:206-210`). Update the two other `RawSensing` construction sites (`:211`, `:245`) to `RepoState`.
-- [ ] T016 [P] [US2] [T1] B6: remove `Agreement` from `ComparisonSample` in `src/FS.GG.Governance.Calibration/Model.fsi:44-47` then `Model.fs:24-27`; fix any sample constructors in tests. `AgreementClassification` stays.
-- [ ] T017 [P] [US2] [T1] B7: drop the `boundary` parameter from `src/FS.GG.Governance.ValidationMatrix/Matrix.fsi:20-24` then `Matrix.fs:14-27` (remove `ignore boundary`); update all callers.
-- [ ] T018 [US2] [T1] Regenerate the `Snapshot/Snapshot`, `Calibration/Model`, `ValidationMatrix/Matrix` baselines; diff MUST match C3/C4/C5 only.
-- [ ] T019 [US2] Verify: T011–T013 GREEN; full suite green; surface-drift shows only C3/C4/C5. Open **PR US2**.
+- [X] T014 [US2] [T1] B9: replaced `RawSensing.RepoOk: bool` with `RepoState = WorkTree | NotAWorkTree | GitAbsent` (`Snapshot.fsi` then `Snapshot.fs`); `assemble` branches on `RepoState` via a shared `repoCheckFailure id message` helper emitting the matching `DiagnosticId`.
+- [X] T015 [US2] B9: deleted the interpreter's hand-rolled `GitUnavailable` record + dead local `sortDigests`; routes through `Snapshot.assemble { … RepoState = Snapshot.GitAbsent }`. All three `RawSensing` sites use `RepoState`.
+- [X] T016 [US2] [T1] B6: removed `Agreement` from `ComparisonSample` and the now-dead `AgreementClassification` DU (`Model.fsi`/`Model.fs`); updated the test sample builders/generators.
+- [X] T017 [US2] [T1] B7: dropped the `boundary` parameter from `decideMatrix` (`Matrix.fsi` then `Matrix.fs`, removed `ignore boundary`); updated both src callers (VerifyCommand, ReleaseCommand) and all ValidationMatrix test callers. `MatrixBoundary` type itself retained.
+- [X] T018 [US2] [T1] Blessed the three baselines; diff confined to `Snapshot` (RepoOk→RepoState + RepoState DU), `Calibration/Model` (−Agreement, −AgreementClassification), `ValidationMatrix/Matrix` (−boundary) — matches C3/C4/C5, no other module moved.
+- [ ] T019 [US2] Verify: T011–T013 green; **full suite green (running)**; surface-drift shows only C3/C4/C5 ✓. Then open **PR US2**.
 
-**Checkpoint**: three surfaces state only what they use; outputs byte-identical.
+**Checkpoint**: three surfaces state only what they use; outputs byte-identical (affected suites green). ⏳ full-suite confirmation pending.
 
 ---
 

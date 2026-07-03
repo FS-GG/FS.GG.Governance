@@ -7,7 +7,6 @@ TYPE FS.GG.Governance.Calibration.CalibrationModule
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Calibration.ModelModule+CalibrationReason] calibrationReason(CalibrationDecision)
   [Method] SampleCount observedSampleCount(CalibrationEvidence)
 TYPE FS.GG.Governance.Calibration.ModelModule
-  [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementClassification
   [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementLevel
   [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationDecision
   [NestedType] FS.GG.Governance.Calibration.ModelModule+CalibrationEvidence
@@ -17,31 +16,6 @@ TYPE FS.GG.Governance.Calibration.ModelModule
   [NestedType] FS.GG.Governance.Calibration.ModelModule+ComparisonSample
   [NestedType] FS.GG.Governance.Calibration.ModelModule+JudgeIdentity
   [NestedType] FS.GG.Governance.Calibration.ModelModule+SampleCount
-TYPE FS.GG.Governance.Calibration.ModelModule+AgreementClassification
-  [Method] AgreementClassification get_Agreeing()
-  [Method] AgreementClassification get_Disagreeing()
-  [Method] Boolean Equals(AgreementClassification)
-  [Method] Boolean Equals(AgreementClassification, System.Collections.IEqualityComparer)
-  [Method] Boolean Equals(System.Object)
-  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
-  [Method] Boolean get_IsAgreeing()
-  [Method] Boolean get_IsDisagreeing()
-  [Method] Int32 CompareTo(AgreementClassification)
-  [Method] Int32 CompareTo(System.Object)
-  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
-  [Method] Int32 GetHashCode()
-  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
-  [Method] Int32 get_Tag()
-  [Method] System.String ToString()
-  [NestedType] FS.GG.Governance.Calibration.ModelModule+AgreementClassification+Tags
-  [Property] AgreementClassification Agreeing
-  [Property] AgreementClassification Disagreeing
-  [Property] Boolean IsAgreeing
-  [Property] Boolean IsDisagreeing
-  [Property] Int32 Tag
-TYPE FS.GG.Governance.Calibration.ModelModule+AgreementClassification+Tags
-  [Field] Int32 Agreeing
-  [Field] Int32 Disagreeing
 TYPE FS.GG.Governance.Calibration.ModelModule+AgreementLevel
   [Method] AgreementLevel NewAgreementLevel(Int32)
   [Method] Boolean Equals(AgreementLevel)
@@ -184,8 +158,7 @@ TYPE FS.GG.Governance.Calibration.ModelModule+CalibrationThresholds
   [Property] AgreementLevel MinimumAgreement
   [Property] SampleCount MinimumSamples
 TYPE FS.GG.Governance.Calibration.ModelModule+ComparisonSample
-  [Constructor] Void .ctor(RecordedVerdict, RecordedVerdict, AgreementClassification)
-  [Method] AgreementClassification get_Agreement()
+  [Constructor] Void .ctor(RecordedVerdict, RecordedVerdict)
   [Method] Boolean Equals(ComparisonSample)
   [Method] Boolean Equals(ComparisonSample, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -198,7 +171,6 @@ TYPE FS.GG.Governance.Calibration.ModelModule+ComparisonSample
   [Method] RecordedVerdict get_HumanVerdict()
   [Method] RecordedVerdict get_JudgeVerdict()
   [Method] System.String ToString()
-  [Property] AgreementClassification Agreement
   [Property] RecordedVerdict HumanVerdict
   [Property] RecordedVerdict JudgeVerdict
 TYPE FS.GG.Governance.Calibration.ModelModule+JudgeIdentity

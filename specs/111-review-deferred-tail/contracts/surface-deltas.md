@@ -10,7 +10,7 @@ change (all shrink the legal-value set except the one intentional widen, C6).
 | C1 | `GateRun/Model.fsi` | `GateDisposition.Executed`/`.Reused` gain `(ExitCode, bool)` payload; `GateOutcome` drops its `ExitCode`/`Passed` optionals (keeps `{ GateId; Disposition }`); add `isPassing` | **shrink** (illegal exit-less-Executed removed) | US1 |
 | C2 | `GateRun/Plan.fsi` | `commandFor : … -> GateCommand option` → `… -> Result<GateCommand, NoCommand>` + new `NoCommand` DU | **refine** (option → typed result) | US1 |
 | C3 | `Snapshot/Snapshot.fsi` | `RawSensing.RepoOk: bool` → `RawSensing.RepoState: RepoState` + new `RepoState` DU; `assemble` doc updated | **refine** (bool → 3-state) | US2 |
-| C4 | `Calibration/Model.fsi` | `ComparisonSample` loses `Agreement` field | **shrink** | US2 |
+| C4 | `Calibration/Model.fsi` | `ComparisonSample` loses `Agreement` field; the now-dead `AgreementClassification` DU is removed too (it was used only by that field — `ObservedAgreement` is `AgreementLevel`, unaffected) | **shrink** | US2 |
 | C5 | `ValidationMatrix/Matrix.fsi` | `decideMatrix` loses `boundary` parameter | **shrink** | US2 |
 | C6 | `Kernel/Verdict.fsi` | **add** `val combineReasons : …` (promote existing private fn) | **widen** (intentional, A6) | US4 |
 
@@ -31,7 +31,9 @@ change (all shrink the legal-value set except the one intentional widen, C6).
   empty working tree, same digest order). Baseline: only `Snapshot/Snapshot` (and `Interpreter` is a
   `.fs`-only edit) move.
 - **C4 (`Agreement` drop)**: the calibration `decide` output MUST be identical for every fixture;
-  the field is provably unread. Baseline: only `Calibration/Model` moves.
+  the field is provably unread (`decide` reads only the sample count and the evidence-level
+  `ObservedAgreement`). Removing the field leaves `AgreementClassification` dead, so it is removed in
+  the same PR. Baseline: only `Calibration/Model` moves.
 - **C5 (`boundary` drop)**: `decideMatrix`'s `MatrixPlan` output MUST be identical; all callers drop
   the argument. Baseline: only `ValidationMatrix/Matrix` moves.
 - **C6 (`combineReasons` export)**: `Route.stakesOf` MUST produce byte-identical stakes strings via

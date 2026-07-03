@@ -12,10 +12,6 @@ open FS.GG.Governance.ReviewRecord.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
 
-    type AgreementClassification =
-        | Agreeing
-        | Disagreeing
-
     type JudgeIdentity =
         { Model: ModelId
           ModelVersion: ModelVersion
@@ -23,8 +19,7 @@ module Model =
 
     type ComparisonSample =
         { JudgeVerdict: RecordedVerdict
-          HumanVerdict: RecordedVerdict
-          Agreement: AgreementClassification }
+          HumanVerdict: RecordedVerdict }
 
     type SampleCount = SampleCount of int
 

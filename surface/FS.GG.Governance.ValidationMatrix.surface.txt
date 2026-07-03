@@ -1,5 +1,5 @@
 TYPE FS.GG.Governance.ValidationMatrix.MatrixModule
-  [Method] MatrixPlan decideMatrix(CostBudget, MatrixBoundary, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix])
+  [Method] MatrixPlan decideMatrix(CostBudget, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix])
 TYPE FS.GG.Governance.ValidationMatrix.ModelModule
   [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+DeferReason
   [NestedType] FS.GG.Governance.ValidationMatrix.ModelModule+ExhaustiveMatrix
