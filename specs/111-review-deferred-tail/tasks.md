@@ -174,9 +174,9 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 **Independent Test**: `ls docs/decisions/README.md`; a reader can find both rationales in-repo.
 
-- [ ] T040 [P] [US7] C2f: add a `<!-- -->` comment to `src/FS.GG.Governance.VerifyCommand/FS.GG.Governance.VerifyCommand.fsproj` explaining the full-surface-host convention (43 declared / ~32 transitively reachable; a top-of-tree host wires its surface explicitly). Prune nothing.
-- [ ] T041 [P] [US7] C2g: create `docs/decisions/README.md` indexing 0001–0008 and cross-linking `docs/adr/README.md`; resolve the "0012/0013 stubs" ask by pointing at the org ADR-0012/0013 rather than minting local numbers.
-- [ ] T042 [US7] Verify: index lists every local decision; VerifyCommand still builds. Open **PR US7**.
+- [X] T040 [US7] C2f: added an XML comment to `VerifyCommand.fsproj` documenting the full-surface-host convention (~43 declared / ~32 transitively reachable; a top-of-tree host wires its surface explicitly, the fence suite guards wrong edges). Nothing pruned; build green.
+- [X] T041 [US7] C2g: created `docs/decisions/README.md` indexing the eight local records (0001–0008) with real titles, and cross-linking `docs/adr/README.md`. Resolved the "0012/0013 stubs" ask by **pointing at the org ADRs** (they live in `FS-GG/.github` and are a *distinct* series from the local 0001–0008) rather than minting colliding local numbers — the index calls out the two-series distinction explicitly.
+- [X] T042 [US7] Index lists every local decision; VerifyCommand builds. PR US7 pending push.
 
 ---
 
