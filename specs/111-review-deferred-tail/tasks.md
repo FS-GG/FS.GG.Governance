@@ -128,9 +128,11 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ### A4 — four JSON writer pairs → JsonWriters (commit 2)
 
-- [ ] T026 [P] [US4] Move `writeFreshnessKey`/`writePrerequisite`, `writeCacheEligibility`, `writeGeneratedView(s)`, and an attestation-ref writer taking `AttestationSummary option` into `src/FS.GG.Governance.JsonWriters/JsonWriters.fs` (+ `.fsi` if exported); delete the copies at GatesJson `:42,58`, RouteJson `:61,77,120`, AuditJson `:99,194,216`, VerifyJson/GeneratedViews `:23,45`, VerifyJson/ReleaseReadiness `:133`, ReleaseJson `:280`.
-- [ ] T027 [US4] Add `JsonWriters` `<ProjectReference>` to GatesJson and ReleaseJson `.fsproj` (RouteJson/AuditJson/VerifyJson already reference it).
-- [ ] T028 [US4] Verify every projection emits byte-identical JSON (RouteJson/AuditJson/GatesJson/ReleaseJson/VerifyJson suites green); fence suite green.
+> **Layering discovery:** only 2 of the 4 pairs are fence-sound. `writeFreshnessKey`/`writePrerequisite` and `writeCacheEligibility` need only `Config` (a base module) → hoisted. `writeGeneratedView(s)` needs `RefreshJson` and the attestation-ref writer needs `AttestationJson` — both **projection-layer** modules that sit *above* `JsonWriters`; hosting them there would invert the writer→projection layering (a fence-unsound edge). Re-deferred (c)+(d) on #83 (FR-009).
+
+- [X] T026 [US4] Hoisted `writeFreshnessKey`, `writePrerequisite`, `writeCacheEligibility` into `JsonWriters` (+ `.fsi`); deleted the copies at GatesJson (freshnessKey/prerequisite), RouteJson (all three), AuditJson (cacheEligibility). **(c) `writeGeneratedView(s)` and (d) `writeAttestationRef` RE-DEFERRED** — they require JsonWriters→RefreshJson / →AttestationJson (projection-layer), inverting the layering; the sound fix first relocates `viewKindToken`/`schemaVersion`/`complianceToken` to a lower shared home, a broader refactor out of scope.
+- [X] T027 [US4] Added `Config` `<ProjectReference>` to `JsonWriters.fsproj` (for `CheckId`/`DomainId`/`CommandId`) and `JsonWriters` to `GatesJson.fsproj` (RouteJson/AuditJson already referenced it). Updated GatesJson's per-project reference allow-list.
+- [X] T028 [US4] RouteJson (52), AuditJson (45), GatesJson (25) suites byte-identical; **DependencyFences green** (new JsonWriters→Config + GatesJson→JsonWriters edges sound); JsonWriters surface blessed (+3 writers). Full-suite confirmation running.
 
 ### A6 — cross-project dedup (commit 3; C6 export)
 

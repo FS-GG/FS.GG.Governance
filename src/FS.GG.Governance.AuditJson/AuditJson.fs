@@ -84,32 +84,9 @@ module AuditJson =
         w.WriteString("reason", d.Reason)
         w.WriteEndObject()
 
-    // ── F045: the embedded cache-eligibility verdict (the reused F042 vocabulary + one new case) ──
-    // The IDENTITY/token renderers are REUSED VERBATIM from public upstream — `referenceValue` (F030),
-    // `categoryToken` (F029), `gateIdValue` (F018) — exactly as F042's `CacheEligibilityJson.fs` and the
-    // sibling F045 `RouteJson.fs`. Each `match` is EXHAUSTIVE over the closed DU with NO wildcard, so a
-    // future F041 verdict/cause case is a compile error here, never a silently mis-tokened field. The
-    // render NEVER dereferences the opaque evidence reference, computes no key/hash/decision (FR-010/11).
-
-    /// The per-gate `cacheEligibility` verdict object — field order `kind`, then payload. `Some (Reusable
-    /// ref)` ⇒ `{ kind:"reusable", evidence:<referenceValue ref> }` (only the opaque reference verbatim,
-    /// never parsed/dereferenced — FR-011). `Some (MustRecompute cause)` ⇒ `{ kind:"mustRecompute",
-    /// cause:<cause-object> }` (always a cause, no `evidence` field — FR-009). `None` (no matching report
-    /// entry, or `cache = None`) ⇒ `{ kind:"notEvaluated" }` — NEVER rendered as `reusable` (FR-005).
-    let writeCacheEligibility (w: Utf8JsonWriter) (verdict: CacheEligibilityVerdict option) =
-        w.WriteStartObject()
-
-        match verdict with
-        | Some(Reusable ref) ->
-            w.WriteString("kind", "reusable")
-            w.WriteString("evidence", EvidenceReuse.referenceValue ref)
-        | Some(MustRecompute cause) ->
-            w.WriteString("kind", "mustRecompute")
-            w.WritePropertyName "cause"
-            JsonWriters.writeCause w cause
-        | None -> w.WriteString("kind", "notEvaluated")
-
-        w.WriteEndObject()
+    // ── F045: the per-gate `cacheEligibility` verdict object is written via
+    //    `JsonWriters.writeCacheEligibility` (111/A4 — the byte-identical Audit/Route copy now lives in the
+    //    shared writer leaf; it never dereferences the opaque evidence reference, FR-010/11). ──
 
     // ── F052: the embedded per-gate execution outcome (additive, default-empty ⇒ output unchanged) ──
 
@@ -155,7 +132,7 @@ module AuditJson =
         match item.Id with
         | GateItem g ->
             w.WritePropertyName "cacheEligibility"
-            writeCacheEligibility w (lookup g)
+            JsonWriters.writeCacheEligibility w (lookup g)
         | FindingItem _ -> ()
 
         // F052: only GATE items carry the execution outcome (matched by GateId), beside cacheEligibility.

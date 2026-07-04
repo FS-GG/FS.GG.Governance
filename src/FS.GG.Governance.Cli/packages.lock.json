@@ -16,7 +16,7 @@
       "fs.gg.governance.adapters.designsystem": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.sddhandoff": {
@@ -31,7 +31,7 @@
       "fs.gg.governance.adapters.speckit": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.spi": {
@@ -67,7 +67,7 @@
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
@@ -205,7 +205,8 @@
         "dependencies": {
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )"
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.JsonWriters": "[0.1.0, )"
         }
       },
       "fs.gg.governance.host": {
@@ -255,6 +256,7 @@
         "dependencies": {
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
@@ -285,12 +287,12 @@
       "fs.gg.governance.projectsensing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.DesignSystem": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.SpecKit": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Host": "[1.0.0, )",
+          "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FSharp.Core": "[10.1.301, )"
         }
@@ -360,7 +362,7 @@
       "fs.gg.governance.routepipeline": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandHost": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
@@ -370,7 +372,7 @@
           "FS.GG.Governance.Findings": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessSensing": "[1.0.0, )",
+          "FS.GG.Governance.FreshnessSensing": "[0.1.0, )",
           "FS.GG.Governance.GateExecution": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",

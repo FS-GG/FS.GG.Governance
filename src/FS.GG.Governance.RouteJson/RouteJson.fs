@@ -55,31 +55,6 @@ module RouteJson =
 
     // ── sub-object writers (hidden) — each emits its documented field order verbatim ──
 
-    /// `freshnessKey` — field order `check`, `domain`, `cost`, `environment`, `command`. Carried key
-    /// INPUTS only — never a cache verdict (FR-014). `command` is the `CommandId` string when `Some`,
-    /// JSON `null` when `None`.
-    let writeFreshnessKey (w: Utf8JsonWriter) (key: FreshnessKey) =
-        w.WriteStartObject()
-        let (CheckId check) = key.Check
-        w.WriteString("check", check)
-        let (DomainId domain) = key.Domain
-        w.WriteString("domain", domain)
-        w.WriteString("cost", JsonTokens.costToken key.Cost)
-        w.WriteString("environment", JsonTokens.environmentToken key.Environment)
-
-        match key.Command with
-        | Some(CommandId c) -> w.WriteString("command", c)
-        | None -> w.WriteNull "command"
-
-        w.WriteEndObject()
-
-    /// One prerequisite: `RequiresCommand c` → `{ "requiresCommand": "<commandId>" }`.
-    let writePrerequisite (w: Utf8JsonWriter) (prereq: GatePrerequisite) =
-        w.WriteStartObject()
-        let (RequiresCommand(CommandId c)) = prereq
-        w.WriteString("requiresCommand", c)
-        w.WriteEndObject()
-
     /// One selecting path: `{ "path", "matchedGlob" }`, both declared `GovernedPath`s verbatim.
     let writeSelectingPath (w: Utf8JsonWriter) (sp: SelectingPath) =
         w.WriteStartObject()
@@ -105,32 +80,8 @@ module RouteJson =
         w.WriteString("message", f.Message)
         w.WriteEndObject()
 
-    // ── F045: the embedded cache-eligibility verdict (the reused F042 vocabulary + one new case) ──
-    // The IDENTITY/token renderers are REUSED VERBATIM from public upstream — `referenceValue` (F030),
-    // `categoryToken` (F029), `gateIdValue` (F018) — exactly as F042's `CacheEligibilityJson.fs`. Each
-    // `match` is EXHAUSTIVE over the closed DU with NO wildcard, so a future F041 verdict/cause case is a
-    // compile error here, never a silently mis-tokened field. The render NEVER dereferences the opaque
-    // evidence reference, computes no key/hash/decision, and resolves nothing (FR-010, FR-011).
-
-    /// The per-gate `cacheEligibility` verdict object — field order `kind`, then payload. `Some (Reusable
-    /// ref)` ⇒ `{ kind:"reusable", evidence:<referenceValue ref> }` (only the opaque reference verbatim,
-    /// never parsed/dereferenced — FR-011). `Some (MustRecompute cause)` ⇒ `{ kind:"mustRecompute",
-    /// cause:<cause-object> }` (always a cause, no `evidence` field — FR-009). `None` (no matching report
-    /// entry, or `cache = None`) ⇒ `{ kind:"notEvaluated" }` — NEVER rendered as `reusable` (FR-005).
-    let writeCacheEligibility (w: Utf8JsonWriter) (verdict: CacheEligibilityVerdict option) =
-        w.WriteStartObject()
-
-        match verdict with
-        | Some(Reusable ref) ->
-            w.WriteString("kind", "reusable")
-            w.WriteString("evidence", EvidenceReuse.referenceValue ref)
-        | Some(MustRecompute cause) ->
-            w.WriteString("kind", "mustRecompute")
-            w.WritePropertyName "cause"
-            JsonWriters.writeCause w cause
-        | None -> w.WriteString("kind", "notEvaluated")
-
-        w.WriteEndObject()
+    // ── F045: the embedded cache-eligibility verdict is written via `JsonWriters.writeCacheEligibility`
+    //    (111/A4 — the byte-identical Audit/Route copy now lives in the shared writer leaf). ──
 
     // ── F052: the embedded per-gate execution outcome (additive, default-empty ⇒ output unchanged) ──
 
@@ -166,11 +117,11 @@ module RouteJson =
         w.WritePropertyName "prerequisites"
         w.WriteStartArray()
         for prereq in gate.Prerequisites do
-            writePrerequisite w prereq
+            JsonWriters.writePrerequisite w prereq
         w.WriteEndArray()
 
         w.WritePropertyName "freshnessKey"
-        writeFreshnessKey w gate.FreshnessKey
+        JsonWriters.writeFreshnessKey w gate.FreshnessKey
 
         w.WritePropertyName "selectingPaths"
         w.WriteStartArray()
@@ -180,7 +131,7 @@ module RouteJson =
 
         // F045: the per-gate cache-eligibility verdict, matched by GateId, as the entry's last field.
         w.WritePropertyName "cacheEligibility"
-        writeCacheEligibility w (lookup gate.Id)
+        JsonWriters.writeCacheEligibility w (lookup gate.Id)
 
         // F052: the per-gate execution outcome, matched by GateId, beside cacheEligibility. Written ONLY
         // when an outcome is supplied for this gate; absent (default-empty) ⇒ byte-identical to F045 (D6).

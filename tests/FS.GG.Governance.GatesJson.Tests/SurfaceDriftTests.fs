@@ -45,5 +45,6 @@ let tests =
                   n = "FS.GG.Governance.Gates"
                   || n = "FS.GG.Governance.Config"
                   || n = "FS.GG.Governance.JsonText"
-                  || n = "FS.GG.Governance.JsonTokens")
+                  || n = "FS.GG.Governance.JsonTokens"
+                  || n = "FS.GG.Governance.JsonWriters") // 111/A4: shared freshnessKey/prerequisite writers
               gatesJson ]
