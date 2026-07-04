@@ -58,7 +58,7 @@ module Findings =
         | SyntheticTaint -> sprintf "gate %s: evidence is synthetic, not from a real run" g
         | NoEvidence -> sprintf "gate %s: no prior evidence to reuse" g
 
-    let private advisory (gate: GateId) (kind: CostFindingKind) : CostFinding =
+    let advisory (gate: GateId) (kind: CostFindingKind) : CostFinding =
         { Gate = gate
           Kind = kind
           BaseSeverity = Advisory
@@ -67,7 +67,7 @@ module Findings =
     /// The cause-based finding (if any) for one entry: a `Stale` for a changed freshness dimension (whether
     /// the gate recomputed or was over-budget), a `NoEvidence` for a recompute that had nothing to reuse, and
     /// nothing for a clean `Reuse` (synthetic taint is handled separately and is independent of the cause).
-    let private causeFinding (entry: CacheDecisionEntry) : CostFinding option =
+    let causeFinding (entry: CacheDecisionEntry) : CostFinding option =
         match entry.Decision with
         | Recompute(InputsChanged cats) -> Some(advisory entry.Gate (Stale cats))
         | Recompute NoPriorEvidence -> Some(advisory entry.Gate NoEvidence)

@@ -33,24 +33,24 @@ module AttestationJson =
     // of hard-coding the literal, so a v2 bump cannot silently strand those two projections.
     let complianceToken = "compatible-shape-not-formal-compliance"
 
-    let private complianceNote =
+    let complianceNote =
         "SLSA/in-toto-shaped, reproducible metadata; NOT a claim of formal SLSA-level or in-toto attestation conformance."
 
     // ── internal writer plumbing + value/token helpers (hidden — absent from AttestationJson.fsi) ──
 
-    let private revisionValue (Revision s) = s
-    let private ruleHashValue (RuleHash s) = s
-    let private generatorVersionValue (GeneratorVersion s) = s
-    let private artifactValue (ArtifactHash s) = s
-    let private builderValue (BuilderIdentity s) = s
-    let private exitCodeValue (ExitCode i) = i
-    let private durationNanos (SensedDuration n) = n
+    let revisionValue (Revision s) = s
+    let ruleHashValue (RuleHash s) = s
+    let generatorVersionValue (GeneratorVersion s) = s
+    let artifactValue (ArtifactHash s) = s
+    let builderValue (BuilderIdentity s) = s
+    let exitCodeValue (ExitCode i) = i
+    let durationNanos (SensedDuration n) = n
 
-    let private complianceMarkerToken (marker: ComplianceMarker) : string =
+    let complianceMarkerToken (marker: ComplianceMarker) : string =
         match marker with
         | CompatibleShapeNotFormalCompliance -> complianceToken
 
-    let private writeSubject (w: Utf8JsonWriter) (s: AttestationSubject) =
+    let writeSubject (w: Utf8JsonWriter) (s: AttestationSubject) =
         w.WriteStartObject()
         w.WriteString("name", s.Name)
         w.WriteString("version", s.Version)
@@ -59,7 +59,7 @@ module AttestationJson =
 
     /// One command run — field order `kind`, `identity`, `exitCode`, `durationNanos`. `identity` reuses the
     /// F032 identity verbatim (via Audit.runIdentity); `durationNanos` is sensed metadata, never identity.
-    let private writeRun (w: Utf8JsonWriter) (run: KindedCommandRun) =
+    let writeRun (w: Utf8JsonWriter) (run: KindedCommandRun) =
         w.WriteStartObject()
         w.WriteString("kind", Audit.kindToken run.Kind)
         w.WriteString("identity", Audit.runIdentity run)

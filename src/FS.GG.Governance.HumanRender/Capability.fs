@@ -12,11 +12,11 @@ open FS.GG.Governance.HumanText
 module Capability =
 
     // stdout attached to a console (interactive) iff it is NOT redirected/piped to a file or pipe.
-    let private senseTty () : bool =
+    let senseTty () : bool =
         try not Console.IsOutputRedirected with _ -> false
 
     // NO_COLOR is honored when SET TO ANY non-empty value (the de-facto convention).
-    let private senseNoColor () : bool =
+    let senseNoColor () : bool =
         match Environment.GetEnvironmentVariable "NO_COLOR" with
         | null -> false
         | "" -> false
@@ -25,7 +25,7 @@ module Capability =
     // The terminal column count when a console is attached; `None` when unknown (redirected/no console,
     // or a zero/negative width) so a safe default is chosen at render time — width is NOT part of the
     // mode decision.
-    let private senseWidth () : int option =
+    let senseWidth () : int option =
         try
             let w = Console.WindowWidth
             if w > 0 then Some w else None

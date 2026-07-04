@@ -20,35 +20,35 @@ open FS.GG.Governance.Findings.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Findings =
 
-    let private pathStr (GovernedPath s) = s
-    let private sidStr (SurfaceId s) = s
+    let pathStr (GovernedPath s) = s
+    let sidStr (SurfaceId s) = s
 
     // ── Surface membership: the segment-prefix relation (T011, precedence.md §"Surface membership") ──
 
     /// Split a normalized path into its meaningful segments: split on '/', drop empty and `.`
     /// segments. The same pure splitting F015's `inRoot` used — decided on the normalized
     /// `GovernedPath` form only, never raw or host paths (FR-014).
-    let private segments (GovernedPath s) =
+    let segments (GovernedPath s) =
         s.Split('/') |> Array.filter (fun seg -> seg <> "" && seg <> ".")
 
     /// A candidate path *p* is within a single declared surface path *s* iff *s*'s segments are a
     /// (segment-wise) prefix of *p*'s segments — i.e. *p* equals or is a descendant of *s*. The
     /// same relation F015 used for the governed root, reproduced locally (research D3). It does
     /// NOT re-derive the governed root; it trusts the routing outcome.
-    let private isWithin (surfacePath: GovernedPath) (candidate: GovernedPath) =
+    let isWithin (surfacePath: GovernedPath) (candidate: GovernedPath) =
         let r = segments surfacePath
         let p = segments candidate
         r.Length <= p.Length && Array.forall2 (=) r p.[0 .. r.Length - 1]
 
     /// A candidate path is within a surface iff it is within ANY of the surface's declared paths.
     /// A surface with an empty `Paths` list matches nothing (`List.exists` over `[]`).
-    let private withinSurface (surface: Surface) (candidate: GovernedPath) =
+    let withinSurface (surface: Surface) (candidate: GovernedPath) =
         surface.Paths |> List.exists (fun sp -> isWithin sp candidate)
 
     /// The ordinal-first `SurfaceId` among a non-empty set of matching surfaces (the documented
     /// tiebreak; independent of authoring order). Compares by `String.CompareOrdinal` on the
     /// underlying string.
-    let private ordinalFirstId (surfaces: Surface list) =
+    let ordinalFirstId (surfaces: Surface list) =
         surfaces
         |> List.map (fun s -> s.Id)
         |> List.sortWith (fun a b -> System.String.CompareOrdinal(sidStr a, sidStr b))
@@ -60,12 +60,12 @@ module Findings =
     // surface plus the precedence that applied. No raw YAML, host path, timestamp, or product
     // vocabulary beyond declared ids.
 
-    let private ordinaryMessage (path: GovernedPath) =
+    let ordinaryMessage (path: GovernedPath) =
         sprintf
             "Path '%s' is inside the governed root but no capability glob classified it and no declared surface covers it. Declare a path-map glob that matches it, mark the region routine, or classify the surface."
             (pathStr path)
 
-    let private protectedMessage (path: GovernedPath) (protectedId: SurfaceId) (routineId: SurfaceId option) =
+    let protectedMessage (path: GovernedPath) (protectedId: SurfaceId) (routineId: SurfaceId option) =
         let head =
             sprintf
                 "Path '%s' is inside the protected surface '%s' but no capability glob classified it. Declare a path-map glob that matches it or classify the surface."
@@ -85,7 +85,7 @@ module Findings =
     /// Classify one `UnmatchedInRoot` candidate path against the declared surfaces by the
     /// `Protected > Routine > Ordinary` ladder. Returns `None` when the path is routine-suppressed
     /// (and not protected); otherwise `Some` finding. Pure and total.
-    let private classifyUnmatched
+    let classifyUnmatched
         (protectedSurfaces: Surface list)
         (routineSurfaces: Surface list)
         (path: GovernedPath)
@@ -131,14 +131,14 @@ module Findings =
     /// unambiguous: `Routing.route` is a pure function of the path, so every duplicate in a
     /// path-group carries an identical `RoutingResult`; `List.groupBy` preserves first-occurrence
     /// order and the choice is value-immaterial, so permutation-invariance holds.
-    let private dedupRoutings (routings: PathRouting list) =
+    let dedupRoutings (routings: PathRouting list) =
         routings
         |> List.groupBy (fun r -> pathStr r.Path)
         |> List.map (fun (_, group) -> List.head group)
 
     /// Sort findings by normalized path (ordinal) then finding-id token (ordinal) — the defensive
     /// secondary key, since two findings can never share a path after dedup (FR-009, SC-004).
-    let private sortFindings (findings: UnknownGovernedPathFinding list) =
+    let sortFindings (findings: UnknownGovernedPathFinding list) =
         findings
         |> List.sortWith (fun a b ->
             let byPath = System.String.CompareOrdinal(pathStr a.Path, pathStr b.Path)
@@ -156,7 +156,7 @@ module Findings =
     /// placed under a governed root with no path-map glob is never a silent pass. The four non-protected
     /// product kinds (`docs`/`skill`/`design`/`sampleApp`) and the inert MVP classes stay ordinary. Closed
     /// match, no wildcard — a future `SurfaceClass` case is a compile error here until it is placed.
-    let private isEscalatingBoundary (cls: SurfaceClass) : bool =
+    let isEscalatingBoundary (cls: SurfaceClass) : bool =
         match cls with
         | ProtectedSurface
         | PackageSurface

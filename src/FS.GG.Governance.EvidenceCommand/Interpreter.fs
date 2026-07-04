@@ -11,7 +11,6 @@
 namespace FS.GG.Governance.EvidenceCommand
 
 open System
-open System.IO
 open System.Text.Json
 open System.Text.RegularExpressions
 open FS.GG.Governance.Kernel
