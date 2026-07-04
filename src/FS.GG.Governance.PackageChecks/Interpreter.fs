@@ -184,26 +184,20 @@ module Interpreter =
         let source = request.Path
 
         // Reify any thrown exception as `Error` so the sensor never crashes (FR-012).
-        let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
-            try
-                read ()
-            with ex ->
-                Error(sprintf "read threw: %s" ex.Message)
-
         let baseline =
-            match safe (fun () -> port.RegenerateSurface source) with
+            match SC.safe (fun () -> port.RegenerateSurface source) with
             | Error e -> BaselineUnreadable e
             | Ok generated ->
-                match safe (fun () -> port.ReadBaseline source) with
+                match SC.safe (fun () -> port.ReadBaseline source) with
                 | Error e -> BaselineUnreadable e
                 | Ok None ->
-                    match safe (fun () -> port.WriteBaseline source generated) with
+                    match SC.safe (fun () -> port.WriteBaseline source generated) with
                     | Error e -> BaselineUnreadable e
                     | Ok() -> BaselineAbsent generated
                 | Ok(Some committed) -> diffBaseline committed generated
 
         let transcripts =
-            match safe (fun () -> port.ListTranscripts source) with
+            match SC.safe (fun () -> port.ListTranscripts source) with
             // FAIL-CLOSED (FR-012): an unreadable transcripts directory must NOT collapse to `[]` — that
             // reads as "no transcripts declared", so a package verify would pass exactly when the evidence
             // could not be gathered. Reify it as a synthetic Unlocatable transcript so the pure pack raises
@@ -220,7 +214,7 @@ module Interpreter =
                     let exampleId = fileStem ps
 
                     let outcome =
-                        match safe (fun () -> port.RunTranscript p) with
+                        match SC.safe (fun () -> port.RunTranscript p) with
                         | Ok o -> o
                         | Error e -> TranscriptUnlocatable e
 

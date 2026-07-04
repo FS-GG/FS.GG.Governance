@@ -398,7 +398,7 @@
           "FS.GG.Governance.Findings": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessSensing": "[1.0.0, )",
+          "FS.GG.Governance.FreshnessSensing": "[0.1.0, )",
           "FS.GG.Governance.GateExecution": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",

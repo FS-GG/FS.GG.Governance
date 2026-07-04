@@ -32,7 +32,7 @@ module Gates =
     /// is a `ToolingFacts option`: an absent `tooling.yml` (`None`) yields an empty index, so every
     /// command lookup falls back to `defaultTimeout`. Maps each `CommandSpec.Id → CommandSpec.Timeout`
     /// so per-check timeout resolution is a single O(1) lookup (O(commands) to build the index).
-    let private timeoutIndex (facts: TypedFacts) : Map<CommandId, TimeoutLimit> =
+    let timeoutIndex (facts: TypedFacts) : Map<CommandId, TimeoutLimit> =
         facts.Tooling
         |> Option.map (fun t -> t.Commands)
         |> Option.defaultValue []
@@ -42,7 +42,7 @@ module Gates =
     /// The stable, INJECTIVE gate id of a check: `GateId "<domain>:<checkId>"`. Injective over
     /// distinct checks because F014 guarantees check ids are unique catalog-wide and the domain
     /// qualifies them (FR-003/FR-005). Deterministic — never positional, time-derived, or random.
-    let private gateIdOf (check: Check) : GateId =
+    let gateIdOf (check: Check) : GateId =
         let (DomainId d) = check.Domain
         let (CheckId c) = check.Id
         GateId(sprintf "%s:%s" d c)
@@ -50,7 +50,7 @@ module Gates =
     /// A human-readable purpose composed from the declared ids ONLY — no raw YAML, host paths,
     /// timestamps, or product vocabulary beyond the declared check/domain ids (FR-004, SC-004).
     /// Deterministic for identical input.
-    let private describe (check: Check) : string =
+    let describe (check: Check) : string =
         let (DomainId d) = check.Domain
         let (CheckId c) = check.Id
         sprintf "Capability check '%s' in domain '%s'" c d
@@ -58,7 +58,7 @@ module Gates =
     /// The bounded timeout of a check: the referenced command's declared timeout when that command
     /// is in the index, else `defaultTimeout` — including when the check is command-less or
     /// `Tooling = None` (empty index) (FR-010, research D9). Always bounded; never enforced.
-    let private timeoutOf (index: Map<CommandId, TimeoutLimit>) (check: Check) : TimeoutLimit =
+    let timeoutOf (index: Map<CommandId, TimeoutLimit>) (check: Check) : TimeoutLimit =
         match check.Command with
         | Some c ->
             match Map.tryFind c index with
@@ -73,7 +73,7 @@ module Gates =
     /// ids. Maturity is carried VERBATIM (no blocking/advisory translation — that is Phase 5);
     /// `ProductCheck` is the MVP environment heuristic; `FreshnessKey` carries the declared identity
     /// inputs a later freshness/cache step will hash, evaluated by nothing here.
-    let private projectCheck (index: Map<CommandId, TimeoutLimit>) (check: Check) : Gate =
+    let projectCheck (index: Map<CommandId, TimeoutLimit>) (check: Check) : Gate =
         { Id = gateIdOf check
           Domain = check.Domain
           Description = describe check

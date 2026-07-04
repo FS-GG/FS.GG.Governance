@@ -18,7 +18,7 @@ module Report =
 
     // ── precondition projection (hidden — absent from Report.fsi) ──
 
-    let private stateToken (state: FactState) : string =
+    let stateToken (state: FactState) : string =
         match state with
         | Met -> "met"
         | Unmet -> "unmet"
@@ -26,14 +26,14 @@ module Report =
 
     /// The self-explaining, product-neutral reason naming the family + basis, enriched by the matching
     /// sensing diagnostic when one is present.
-    let private preconditionReason (sensed: SensedRelease) (kind: ReleaseRuleKind) (state: FactState) : string =
+    let preconditionReason (sensed: SensedRelease) (kind: ReleaseRuleKind) (state: FactState) : string =
         let token = Release.releaseRuleKindToken kind
 
         match sensed.Snapshot.Diagnostics |> List.tryFind (fun d -> d.Family = kind) with
         | Some d -> sprintf "%s: %s (%s)" token (stateToken state) d.Reason
         | None -> sprintf "%s: %s" token (stateToken state)
 
-    let private preconditionsOf (sensed: SensedRelease) : PreconditionEvidence list =
+    let preconditionsOf (sensed: SensedRelease) : PreconditionEvidence list =
         sensed.Facts.States
         |> Map.toList
         |> List.sortBy (fun (kind, _) -> Release.releaseRuleKindOrdinal kind)

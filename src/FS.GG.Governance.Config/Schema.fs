@@ -369,7 +369,9 @@ module Schema =
                 let items = seq.Children |> List.ofSeq
                 let parsed = items |> List.map scalarValue
                 if parsed |> List.forall (function Some v -> v.Trim() <> "" | None -> false) then
-                    Some(parsed |> List.map Option.get)
+                    // Every element is Some here (the guard just proved it); `choose id` unwraps them totally,
+                    // with no `Option.get` force-unwrap (111/B5).
+                    Some(parsed |> List.choose id)
                 else
                     items
                     |> List.iteri (fun i c ->
@@ -537,14 +539,20 @@ module Schema =
             | Some _ -> reqPathList diags m Project "packageSurfaces"
         let policyRef = optPath diags m Project "policyRef"
         let capabilitiesRef = optPath diags m Project "capabilitiesRef"
-        finish diags (fun () ->
-            { SchemaVersion = sv.Value
-              Id = id.Value
-              Domains = domains.Value |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
-              GovernedRoot = governedRoot.Value
-              PackageSurfaces = packageSurfaces.Value |> sortByKey (fun (GovernedPath p) -> p)
-              PolicyRef = policyRef
-              CapabilitiesRef = capabilitiesRef })
+        // Thread the parsed required values (bound by the match) instead of force-unwrapping with `.Value`
+        // (111/B5). `finish` still gates on `diags.Count = 0`, so a value present alongside a diagnostic (e.g.
+        // duplicate domains) is still an Error — the invariant is unchanged, the `.Value` is gone.
+        match sv, id, governedRoot, domains, packageSurfaces with
+        | Some sv, Some id, Some governedRoot, Some domains, Some packageSurfaces ->
+            finish diags (fun () ->
+                { SchemaVersion = sv
+                  Id = id
+                  Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
+                  GovernedRoot = governedRoot
+                  PackageSurfaces = packageSurfaces |> sortByKey (fun (GovernedPath p) -> p)
+                  PolicyRef = policyRef
+                  CapabilitiesRef = capabilitiesRef })
+        | _ -> Error(List.ofSeq diags)
 
     let private parsePolicy (m: YamlMappingNode) : Result<PolicyFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
@@ -567,12 +575,15 @@ module Schema =
             |> Option.bind (fun rm ->
                 diags.AddRange(unknownFields rm (set [ "maxReviews" ]) Policy)
                 reqInt diags rm Policy "maxReviews" |> Option.map (fun n -> { MaxReviews = n }))
-        finish diags (fun () ->
-            { SchemaVersion = sv.Value
-              Profiles = profiles.Value |> List.map ProfileId |> sortByKey (fun (ProfileId p) -> p)
-              DefaultProfile = defaultProfile.Value
-              BranchPolicy = branchPolicy
-              ReviewBudget = reviewBudget })
+        match sv, profiles, defaultProfile with
+        | Some sv, Some profiles, Some defaultProfile ->
+            finish diags (fun () ->
+                { SchemaVersion = sv
+                  Profiles = profiles |> List.map ProfileId |> sortByKey (fun (ProfileId p) -> p)
+                  DefaultProfile = defaultProfile
+                  BranchPolicy = branchPolicy
+                  ReviewBudget = reviewBudget })
+        | _ -> Error(List.ofSeq diags)
 
     let private parseCapabilities (m: YamlMappingNode) : Result<CapabilityFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
@@ -585,12 +596,15 @@ module Schema =
         checkDuplicates diags Capabilities "surfaces" (surfaces |> List.map (fun s -> let (SurfaceId i) = s.Id in i))
         let checks = optMappingSeq diags m Capabilities "checks" |> List.choose (parseCheck diags)
         checkDuplicates diags Capabilities "checks" (checks |> List.map (fun c -> let (CheckId i) = c.Id in i))
-        finish diags (fun () ->
-            { SchemaVersion = sv.Value
-              Domains = domains.Value |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
-              PathMap = pathMap |> sortByKey (fun e -> let (GovernedPath g) = e.Glob in g)
-              Surfaces = surfaces |> sortByKey (fun s -> let (SurfaceId i) = s.Id in i)
-              Checks = checks |> sortByKey (fun c -> let (CheckId i) = c.Id in i) })
+        match sv, domains with
+        | Some sv, Some domains ->
+            finish diags (fun () ->
+                { SchemaVersion = sv
+                  Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
+                  PathMap = pathMap |> sortByKey (fun e -> let (GovernedPath g) = e.Glob in g)
+                  Surfaces = surfaces |> sortByKey (fun s -> let (SurfaceId i) = s.Id in i)
+                  Checks = checks |> sortByKey (fun c -> let (CheckId i) = c.Id in i) })
+        | _ -> Error(List.ofSeq diags)
 
     let private parseTooling (m: YamlMappingNode) : Result<ToolingFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
@@ -619,11 +633,14 @@ module Schema =
                 addMalformed diags Tooling "environmentClasses" node "field 'environmentClasses' must be a list"
                 []
         let externalTools = optMappingSeq diags m Tooling "externalTools" |> List.choose (parseExternalTool diags)
-        finish diags (fun () ->
-            { SchemaVersion = sv.Value
-              Commands = commands |> sortByKey (fun c -> let (CommandId i) = c.Id in i)
-              EnvironmentClasses = environmentClasses |> List.distinct |> sortByKey environmentToken
-              ExternalTools = externalTools |> sortByKey (fun t -> t.Tool) })
+        match sv with
+        | Some sv ->
+            finish diags (fun () ->
+                { SchemaVersion = sv
+                  Commands = commands |> sortByKey (fun c -> let (CommandId i) = c.Id in i)
+                  EnvironmentClasses = environmentClasses |> List.distinct |> sortByKey environmentToken
+                  ExternalTools = externalTools |> sortByKey (fun t -> t.Tool) })
+        | None -> Error(List.ofSeq diags)
 
     // ── Cross-reference resolution (FR-009) ──
 

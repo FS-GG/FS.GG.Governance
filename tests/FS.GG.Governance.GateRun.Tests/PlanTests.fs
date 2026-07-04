@@ -107,19 +107,20 @@ let lexTests =
                   let line = String.concat " " clean
                   Plan.lexCommandLine line = Some(Executable exe, args |> List.map Argument) ]
 
-// ── (2) commandFor — declared spec → GateCommand; None on no-command / unresolved / empty-lex ──
+// ── (2) commandFor — declared spec → Ok GateCommand; a TYPED NoCommand reason otherwise (111/B4, C2).
+//        The three no-command modes are now DISTINGUISHABLE (was a single collapsing `None`). ──
 
 [<Tests>]
 let commandForTests =
     testList
         "Plan.commandFor"
-        [ test "a gate with a resolvable RequiresCommand ⇒ Some with declared inputs verbatim" {
+        [ test "a gate with a resolvable RequiresCommand ⇒ Ok with declared inputs verbatim" {
               let tooling = toolingOf [ commandSpec "dotnet-test" "dotnet test --no-build" ]
               let gate = gateWithCommand "tests" "dotnet-test"
 
               match Plan.commandFor "/repo" tooling gate with
-              | None -> failtest "expected Some command"
-              | Some cmd ->
+              | Error e -> failtestf "expected Ok command, got Error %A" e
+              | Ok cmd ->
                   Expect.equal cmd.Executable (Executable "dotnet") "executable from lex"
                   Expect.equal cmd.Arguments [ Argument "test"; Argument "--no-build" ] "ordered args from lex"
                   Expect.equal cmd.WorkingDirectory (WorkingDirectory "/repo") "cwd = repoRoot"
@@ -128,19 +129,31 @@ let commandForTests =
                   Expect.equal cmd.CapturedOutput NoCapturedOutput "no captured-output target"
           }
 
-          test "a gate with NO RequiresCommand prerequisite ⇒ None" {
+          test "a gate with NO RequiresCommand prerequisite ⇒ Error NoPrerequisite" {
               let tooling = toolingOf [ commandSpec "dotnet-test" "dotnet test" ]
-              Expect.equal (Plan.commandFor "/repo" tooling (gateWithoutCommand "tests")) None "no command ⇒ None"
+
+              Expect.equal
+                  (Plan.commandFor "/repo" tooling (gateWithoutCommand "tests"))
+                  (Error Plan.NoPrerequisite)
+                  "no prerequisite ⇒ its own typed reason"
           }
 
-          test "a RequiresCommand that resolves to no CommandSpec ⇒ None" {
+          test "a RequiresCommand that resolves to no CommandSpec ⇒ Error (UnresolvedCommand id)" {
               let tooling = toolingOf [ commandSpec "other" "dotnet test" ]
-              Expect.equal (Plan.commandFor "/repo" tooling (gateWithCommand "tests" "dotnet-test")) None "unresolved ⇒ None"
+
+              Expect.equal
+                  (Plan.commandFor "/repo" tooling (gateWithCommand "tests" "dotnet-test"))
+                  (Error(Plan.UnresolvedCommand(CommandId "dotnet-test")))
+                  "unresolved id ⇒ a distinct reason that NAMES the missing command id"
           }
 
-          test "a command line that lexes to nothing ⇒ None" {
+          test "a command line that lexes to nothing ⇒ Error EmptyCommandLine" {
               let tooling = toolingOf [ commandSpec "blank" "   " ]
-              Expect.equal (Plan.commandFor "/repo" tooling (gateWithCommand "tests" "blank")) None "empty lex ⇒ None"
+
+              Expect.equal
+                  (Plan.commandFor "/repo" tooling (gateWithCommand "tests" "blank"))
+                  (Error Plan.EmptyCommandLine)
+                  "empty lex ⇒ its own typed reason"
           } ]
 
 // ── (3) priorExitOf — round-trip against a REAL referenceOf of a senseExecution record ──

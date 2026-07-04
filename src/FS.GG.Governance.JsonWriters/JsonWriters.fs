@@ -7,11 +7,13 @@ namespace FS.GG.Governance.JsonWriters
 // modifiers — the surface is JsonWriters.fsi (Principle II).
 
 open System.Text.Json
-open FS.GG.Governance.Gates.Model              // gateIdValue, GateId
+open FS.GG.Governance.Config.Model             // CheckId, DomainId, CommandId (freshness-key / prerequisite)
+open FS.GG.Governance.Gates.Model              // gateIdValue, GateId, GatePrerequisite (RequiresCommand)
 open FS.GG.Governance.GateRun.Model            // GateOutcome
 open FS.GG.Governance.CommandRecord.Model      // ExitCode
+open FS.GG.Governance.EvidenceReuse            // referenceValue
 open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause (NoPriorEvidence, InputsChanged)
-open FS.GG.Governance.FreshnessKey.Model       // categoryToken
+open FS.GG.Governance.FreshnessKey.Model       // categoryToken, FreshnessKey
 open FS.GG.Governance.CacheEligibility         // entries
 open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, CacheEligibilityVerdict, entry fields
 open FS.GG.Governance.JsonTokens               // dispositionToken (module-qualified)
@@ -54,12 +56,52 @@ module JsonWriters =
         w.WriteStartObject()
         w.WriteString("disposition", JsonTokens.dispositionToken outcome.Disposition)
 
-        match outcome.ExitCode with
-        | Some(ExitCode code) -> w.WriteNumber("exitCode", code)
-        | None -> ()
+        match outcome.Disposition with
+        | Executed(ExitCode code, passed)
+        | Reused(ExitCode code, passed) ->
+            w.WriteNumber("exitCode", code)
+            w.WriteBoolean("passed", passed)
+        | NotExecuted -> ()
 
-        match outcome.Passed with
-        | Some passed -> w.WriteBoolean("passed", passed)
-        | None -> ()
+        w.WriteEndObject()
+
+    // 111/A4: the freshness-key / prerequisite / cache-eligibility sub-objects — byte-identical copies the
+    // Gates/Route/Audit projections used to hand-hold. (The generated-view and attestation-ref writers are
+    // NOT hoisted here: they need RefreshJson / AttestationJson — higher projection layers — which would
+    // invert the writer→projection layering; left local, re-deferred on #83.)
+
+    let writeFreshnessKey (w: Utf8JsonWriter) (key: FreshnessKey) =
+        w.WriteStartObject()
+        let (CheckId check) = key.Check
+        w.WriteString("check", check)
+        let (DomainId domain) = key.Domain
+        w.WriteString("domain", domain)
+        w.WriteString("cost", JsonTokens.costToken key.Cost)
+        w.WriteString("environment", JsonTokens.environmentToken key.Environment)
+
+        match key.Command with
+        | Some(CommandId c) -> w.WriteString("command", c)
+        | None -> w.WriteNull "command"
+
+        w.WriteEndObject()
+
+    let writePrerequisite (w: Utf8JsonWriter) (prereq: GatePrerequisite) =
+        w.WriteStartObject()
+        let (RequiresCommand(CommandId c)) = prereq
+        w.WriteString("requiresCommand", c)
+        w.WriteEndObject()
+
+    let writeCacheEligibility (w: Utf8JsonWriter) (verdict: CacheEligibilityVerdict option) =
+        w.WriteStartObject()
+
+        match verdict with
+        | Some(Reusable ref) ->
+            w.WriteString("kind", "reusable")
+            w.WriteString("evidence", EvidenceReuse.referenceValue ref)
+        | Some(MustRecompute cause) ->
+            w.WriteString("kind", "mustRecompute")
+            w.WritePropertyName "cause"
+            writeCause w cause
+        | None -> w.WriteString("kind", "notEvaluated")
 
         w.WriteEndObject()

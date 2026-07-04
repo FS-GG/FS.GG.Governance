@@ -11,13 +11,9 @@ open FS.GG.Governance.ValidationMatrix.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Matrix =
 
-    let decideMatrix
-        (budget: CostBudget)
-        (boundary: MatrixBoundary)
-        (declared: ExhaustiveMatrix option)
-        : MatrixPlan =
-        ignore boundary // the budget already encodes the boundary's ceiling (Budget.fits is the gate)
-
+    let decideMatrix (budget: CostBudget) (declared: ExhaustiveMatrix option) : MatrixPlan =
+        // The budget already encodes the boundary's ceiling (Budget.fits is the gate), so the boundary label
+        // was never read — it is not a parameter (111/B7).
         match declared with
         | None -> NotDeclared
         | Some m ->

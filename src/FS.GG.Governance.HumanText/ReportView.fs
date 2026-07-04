@@ -71,8 +71,8 @@ module ReportView =
 
     let private dispositionToken (d: GateDisposition) =
         match d with
-        | Executed -> "executed"
-        | Reused -> "reused"
+        | Executed _ -> "executed"
+        | Reused _ -> "reused"
         | NotExecuted -> "not-executed"
 
     let private causeToken (cause: RecomputeCause) =
@@ -122,10 +122,12 @@ module ReportView =
 
     let private outcomeLeaf ((id, outcome): GateId * GateOutcome) =
         let passed =
-            match outcome.Passed with
-            | Some true -> "passed"
-            | Some false -> "failed"
-            | None -> "no-result"
+            match outcome.Disposition with
+            | Executed(_, true)
+            | Reused(_, true) -> "passed"
+            | Executed(_, false)
+            | Reused(_, false) -> "failed"
+            | NotExecuted -> "no-result"
 
         Leaf(gateIdValue id, Some(sprintf "%s — %s" (dispositionToken outcome.Disposition) passed))
 

@@ -48,6 +48,15 @@
     <PackageReference Include="FSharp.Core" />
   </ItemGroup>
 
+  <!--
+    Convention (111/C2f): `verify` is the top-of-tree HOST that composes the full route→ship→verify
+    pipeline, so it wires its whole surface EXPLICITLY — ~43 ProjectReferences, of which ~32 are
+    transitively reachable and the rest are direct dependencies of the host's own wiring/projection
+    code. This over-declaration is intentional and is NOT pruned: a host declaring its complete
+    surface is clearer and more robust to refactors than one relying on transitive flow (a pruned
+    reference silently breaks when an intermediate drops its own dependency). The dependency-fence
+    suite is the guard against a genuinely wrong edge, not a minimal-reference count.
+  -->
   <ItemGroup>
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Snapshot/FS.GG.Governance.Snapshot.fsproj" />

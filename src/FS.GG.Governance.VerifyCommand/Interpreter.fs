@@ -11,7 +11,6 @@
 namespace FS.GG.Governance.VerifyCommand
 
 open System
-open System.IO
 open FS.GG.Governance.Config              // Loader, Schema
 open FS.GG.Governance.Config.Model         // GovernedPath, Validation, Invalid, Diagnostic, Locator, DiagnosticId
 open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken

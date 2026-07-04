@@ -12,12 +12,16 @@ open FS.GG.Governance.CommandRecord.Model     // ExitCode
 module Model =
 
     type GateDisposition =
-        | Executed
-        | Reused
+        | Executed of exitCode: ExitCode * passed: bool
+        | Reused of exitCode: ExitCode * passed: bool
         | NotExecuted
 
     type GateOutcome =
         { GateId: GateId
-          Disposition: GateDisposition
-          ExitCode: ExitCode option
-          Passed: bool option }
+          Disposition: GateDisposition }
+
+    let isPassing (disposition: GateDisposition) : bool =
+        match disposition with
+        | Executed(_, passed)
+        | Reused(_, passed) -> passed
+        | NotExecuted -> false

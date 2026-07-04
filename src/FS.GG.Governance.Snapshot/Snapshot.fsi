@@ -54,13 +54,24 @@ module Snapshot =
 
     // ── Raw sensing intermediate (filled by the edge, consumed here) ──
 
+    /// What `RepoCheck` established about the target before any range/diff sensing (111/B9). Both the
+    /// not-a-work-tree and git-unavailable outcomes now flow through `assemble` (not a hand-rolled record at
+    /// the edge), so the empty-snapshot shape + digest sort are owned by the one pure assembler.
+    ///   • `WorkTree`     — a git work tree; the full assembly runs.
+    ///   • `NotAWorkTree` — `RepoCheck` said this is not a work tree ⇒ a `NotARepository` diagnostic.
+    ///   • `GitAbsent`    — the git binary is unavailable ⇒ a `GitUnavailable` diagnostic.
+    type RepoState =
+        | WorkTree
+        | NotAWorkTree
+        | GitAbsent
+
     /// Every sensed git result as raw text or an error reason — the pure boundary input the edge
     /// (`Interpreter.senseSnapshot`) fills and `assemble` consumes (research D4). Keeping the raw
     /// `-z` output here (not pre-parsed) is what makes porcelain parsing a PURE, literal-fixture-
     /// tested function rather than repo-only impure logic.
     type RawSensing =
-        { /// `false` ⇒ `RepoCheck` said this is not a work tree ⇒ `NotARepository` (FR-008).
-          RepoOk: bool
+        { /// what `RepoCheck` established: work tree, not-a-work-tree, or git-unavailable (FR-008).
+          RepoState: RepoState
           /// resolved base/head/merge-base commit ids, or an error reason (unknown ref, etc.).
           BaseResolved: Result<CommitId, string>
           HeadResolved: Result<CommitId, string>
@@ -85,7 +96,8 @@ module Snapshot =
     /// (FR-009, SC-002/SC-003).
     ///
     /// Behavior (FR-001..FR-012):
-    ///   • `RepoOk = false` ⇒ a `NotARepository` diagnostic; `Range = None`; empty path sets.
+    ///   • `RepoState = NotAWorkTree` ⇒ a `NotARepository` diagnostic; `GitAbsent` ⇒ a `GitUnavailable`
+    ///     diagnostic; either way `Range = None` and empty path sets.
     ///   • Each `Error` in `BaseResolved`/`HeadResolved`/`MergeBaseResolved` ⇒ the matching
     ///     `UnknownRef`/`GitCommandFailed` diagnostic and `Range = None` (FR-008); all three `Ok`
     ///     ⇒ `Some { Base; Head; MergeBase }`.

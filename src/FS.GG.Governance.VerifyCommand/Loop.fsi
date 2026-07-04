@@ -253,9 +253,6 @@ module Loop =
           /// the existing `deriveEffectiveSeverity` (no truth-table change — FR-007) and projected additively
           /// into `verify.json`'s `surfaceChecks` section (omitted when `[]` — FR-004).
           SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
-          /// 067: `true` once `SenseSurfaces` is emitted, `false` on `SurfacesSensed` — joins the readiness
-          /// gate so `verify.json` is projected only after the surface checks (like the release preview) land.
-          SurfacesPending: bool
           /// F070: the stale-generated-view currency findings sensed at the edge (`[]` until `ViewCurrencySensed`;
           /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
           /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).

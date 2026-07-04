@@ -367,7 +367,7 @@ module Loop =
             let snapshot = buildSnapshot model decl pack
             let attestation = Attestation.summarize snapshot pack
             let report = Report.assemble decision sensed pack attestation
-            let matrix = Matrix.decideMatrix (Budget.budgetFor Profile.Release RunMode.Release) ScheduledOrRelease decl.Matrix
+            let matrix = Matrix.decideMatrix (Budget.budgetFor Profile.Release RunMode.Release) decl.Matrix
             let releaseDoc = ReleaseJson.ofReleaseReport report
             let attestationDoc = AttestationJson.ofAttestation report.Attestation
 

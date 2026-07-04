@@ -20,6 +20,7 @@ open FS.GG.Governance.Gates.Model
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // 111/A4: the shared freshnessKey/prerequisite sub-object writers
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GatesJson =
@@ -36,30 +37,9 @@ module GatesJson =
 
     // ── sub-object writers (hidden) — each emits its documented field order verbatim ──
 
-    /// `freshnessKey` — field order `check`, `domain`, `cost`, `environment`, `command`. Carried key
-    /// INPUTS only — never a cache verdict (FR-014). `command` is the `CommandId` string when `Some`,
-    /// JSON `null` when `None`.
-    let writeFreshnessKey (w: Utf8JsonWriter) (key: FreshnessKey) =
-        w.WriteStartObject()
-        let (CheckId check) = key.Check
-        w.WriteString("check", check)
-        let (DomainId domain) = key.Domain
-        w.WriteString("domain", domain)
-        w.WriteString("cost", JsonTokens.costToken key.Cost)
-        w.WriteString("environment", JsonTokens.environmentToken key.Environment)
-
-        match key.Command with
-        | Some(CommandId c) -> w.WriteString("command", c)
-        | None -> w.WriteNull "command"
-
-        w.WriteEndObject()
-
-    /// One prerequisite: `RequiresCommand c` → `{ "requiresCommand": "<commandId>" }`.
-    let writePrerequisite (w: Utf8JsonWriter) (prereq: GatePrerequisite) =
-        w.WriteStartObject()
-        let (RequiresCommand(CommandId c)) = prereq
-        w.WriteString("requiresCommand", c)
-        w.WriteEndObject()
+    // `freshnessKey` and `prerequisite` sub-objects are written via `JsonWriters.writeFreshnessKey` /
+    // `JsonWriters.writePrerequisite` (111/A4 — the byte-identical Gates/Route copies now live in the
+    // shared writer leaf).
 
     /// One gate — the documented field order (contracts/gates-json-document.md). Carries the F018
     /// `Gate` VERBATIM (FR-002); `id` via `Gates.gateIdValue`, never re-parsed (FR-010); `cost`/
@@ -84,11 +64,11 @@ module GatesJson =
         w.WritePropertyName "prerequisites"
         w.WriteStartArray()
         for prereq in gate.Prerequisites do
-            writePrerequisite w prereq
+            JsonWriters.writePrerequisite w prereq
         w.WriteEndArray()
 
         w.WritePropertyName "freshnessKey"
-        writeFreshnessKey w gate.FreshnessKey
+        JsonWriters.writeFreshnessKey w gate.FreshnessKey
 
         w.WriteEndObject()
 

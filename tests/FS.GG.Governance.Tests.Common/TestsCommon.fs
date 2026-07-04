@@ -307,20 +307,17 @@ module SnapshotHelpers =
         selectedGates
         |> List.map (fun g ->
             let outcome =
-                match tooling |> Option.bind (fun t -> Plan.commandFor "." t g) with
-                | Some cmd ->
+                match tooling |> Option.map (fun t -> Plan.commandFor "." t g) with
+                | Some(Ok cmd) ->
                     let record = FS.GG.Governance.GateExecution.Interpreter.senseExecution port cmd
                     let code = record.Reproducible.ExitCode
 
                     { GateId = g.Id
-                      Disposition = Executed
-                      ExitCode = Some code
-                      Passed = Some(Plan.passed code) }
+                      Disposition = Executed(code, Plan.passed code) }
+                | Some(Error _)
                 | None ->
                     { GateId = g.Id
-                      Disposition = NotExecuted
-                      ExitCode = None
-                      Passed = None }
+                      Disposition = NotExecuted }
 
             g.Id, outcome)
 

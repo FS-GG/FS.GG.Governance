@@ -28,13 +28,24 @@ module Plan =
     /// only. `None` for an empty / all-whitespace line (a degenerate declared command — D1).
     val lexCommandLine: commandLine: string -> (Executable * Argument list) option
 
-    /// Derive the command-to-run for a gate from its DECLARED command spec (FR-002), or `None` when the gate
-    /// has no `RequiresCommand` prerequisite, the `CommandId` resolves to no `CommandSpec`, or the command
-    /// line lexes to nothing — in which case the gate is `NotExecuted` (FR-005). The working directory is the
-    /// governed `repoRoot`; the environment delta is EMPTY (the declared `EnvironmentClass` is a where-it-runs
-    /// declaration, not an env mutation — no ambient-env leak, FR-002); the timeout is the declared
-    /// `CommandSpec.Timeout` verbatim; the captured-output target is `NoCapturedOutput`.
-    val commandFor: repoRoot: string -> tooling: ToolingFacts -> gate: Gate -> GateCommand option
+    /// Why a gate resolved to NO command-to-run — a typed reason instead of a bare `None`, so a caller can tell
+    /// a genuine "the gate declares no command" from a misconfiguration (Principle VI: distinguish a defect
+    /// from missing input). Each case is exactly one of the three former `None` outcomes of `commandFor`.
+    ///   • `NoPrerequisite`         — the gate has no `RequiresCommand` prerequisite (it declares no command;
+    ///                                the gate is `NotExecuted` — FR-005).
+    ///   • `UnresolvedCommand id`   — the `RequiresCommand` `CommandId` resolves to no loaded `CommandSpec`.
+    ///   • `EmptyCommandLine`       — the declared command line lexes to nothing (a degenerate command).
+    type NoCommand =
+        | NoPrerequisite
+        | UnresolvedCommand of CommandId
+        | EmptyCommandLine
+
+    /// Derive the command-to-run for a gate from its DECLARED command spec (FR-002), or `Error` with the typed
+    /// `NoCommand` reason (see above) — in every `Error` case the gate is `NotExecuted` (FR-005). The working
+    /// directory is the governed `repoRoot`; the environment delta is EMPTY (the declared `EnvironmentClass` is
+    /// a where-it-runs declaration, not an env mutation — no ambient-env leak, FR-002); the timeout is the
+    /// declared `CommandSpec.Timeout` verbatim; the captured-output target is `NoCapturedOutput`.
+    val commandFor: repoRoot: string -> tooling: ToolingFacts -> gate: Gate -> Result<GateCommand, NoCommand>
 
     /// Recover a reusable gate's prior `ExitCode` from its stored `EvidenceRef` — the F032 canonical-identity
     /// string (F049 `referenceOf`) embeds the exit code as the documented `exit=1<len>:<value>` segment (see

@@ -11,7 +11,6 @@
 namespace FS.GG.Governance.EvidenceCommand
 
 open System
-open System.IO
 open System.Text.Json
 open System.Text.RegularExpressions
 open FS.GG.Governance.Kernel
@@ -116,12 +115,6 @@ module Interpreter =
           Write = CommandHost.writeAtomic
           Out = fun text -> Console.Out.WriteLine text }
 
-    let guard (call: unit -> Result<'a, string>) : Result<'a, string> =
-        try
-            call ()
-        with e ->
-            Error e.Message
-
     let step (ports: Ports) (effect: Loop.Effect) : Loop.Msg =
         match effect with
         | Loop.SenseReport repo ->
@@ -132,30 +125,14 @@ module Interpreter =
                     Error(Loop.ToolFault e.Message)
 
             Loop.Reported result
-        | Loop.WriteArtifact(path, content) -> Loop.Wrote(guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(path, content) -> Loop.Wrote(CommandHost.guard (fun () -> ports.Write path content))
         | Loop.EmitSummary text ->
             ports.Out text
             Loop.Emitted
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request
-
-        let rec drive (model: Loop.Model) (effects: Loop.Effect list) : Loop.Model =
-            if model.Phase = Loop.Done then
-                model
-            else
-                match effects with
-                | [] -> model
-                | _ ->
-                    let model2, newEffects =
-                        effects
-                        |> List.map (step ports)
-                        |> List.fold
-                            (fun (m, acc) msg ->
-                                let m2, e2 = Loop.update msg m
-                                m2, acc @ e2)
-                            (model, [])
-
-                    drive model2 newEffects
-
-        drive m0 eff0
+        // 111/A1: the generic MVU loop is the shared `CommandHost.drive` (byte-identical to the former local
+        // copy). The separate `runHost` loop above stays local — it fans one effect to a MESSAGE LIST
+        // (`List.collect`) with no done-predicate, which the single-msg `CommandHost.drive` does not model.
+        CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0

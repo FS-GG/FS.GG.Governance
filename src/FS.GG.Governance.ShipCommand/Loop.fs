@@ -540,31 +540,21 @@ module Loop =
                                 let code = record.Reproducible.ExitCode
 
                                 { GateId = g.Id
-                                  Disposition = Executed
-                                  ExitCode = Some code
-                                  Passed = Some(Plan.passed code) }
+                                  Disposition = Executed(code, Plan.passed code) }
                             | None ->
                                 { GateId = g.Id
-                                  Disposition = NotExecuted
-                                  ExitCode = None
-                                  Passed = None }
+                                  Disposition = NotExecuted }
                         | CommandHost.ToReuse code ->
                             { GateId = g.Id
-                              Disposition = Reused
-                              ExitCode = Some code
-                              Passed = Some(Plan.passed code) }
+                              Disposition = Reused(code, Plan.passed code) }
                         // A deferred (over-budget) gate is NOT executed and NOT reused — recorded NotExecuted so
                         // it is structurally excluded from the passed set (never coerced to pass — SC-002).
                         | CommandHost.Deferred _ ->
                             { GateId = g.Id
-                              Disposition = NotExecuted
-                              ExitCode = None
-                              Passed = None }
+                              Disposition = NotExecuted }
                         | CommandHost.NoCommand ->
                             { GateId = g.Id
-                              Disposition = NotExecuted
-                              ExitCode = None
-                              Passed = None }
+                              Disposition = NotExecuted }
 
                     g.Id, outcome)
 
@@ -572,7 +562,7 @@ module Loop =
             // recomputed. A failing or no-command gate is never in this set, so it keeps its rollup treatment.
             let passedGateIds =
                 outcomes
-                |> List.choose (fun (gid, o) -> if o.Passed = Some true then Some gid else None)
+                |> List.choose (fun (gid, o) -> if isPassing o.Disposition then Some gid else None)
                 |> Set.ofList
 
             let relocated = applyExecution passedGateIds decision

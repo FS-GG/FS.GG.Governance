@@ -96,7 +96,8 @@ let tests =
                   Expect.isNotEmpty d.Operation "carries an operation token"
                   Expect.isNotEmpty d.Message "carries a fix-hint message"
 
-              only NotARepository (Snapshot.assemble { baseRaw with RepoOk = false })
+              only NotARepository (Snapshot.assemble { baseRaw with RepoState = Snapshot.NotAWorkTree })
+              only GitUnavailable (Snapshot.assemble { baseRaw with RepoState = Snapshot.GitAbsent })
               only UnknownRef (Snapshot.assemble { baseRaw with BaseResolved = Error "no such ref" })
               only GitCommandFailed (Snapshot.assemble { baseRaw with MergeBaseResolved = Error "no merge base" })
               only UnreadableWorkingTree (Snapshot.assemble { baseRaw with StatusRaw = Error "permission denied" })
@@ -123,7 +124,7 @@ let tests =
 
           test "empty-success and failure are structurally distinct (FR-011)" {
               let success = Snapshot.assemble { baseRaw with DiffRaw = Ok "" }
-              let failure = Snapshot.assemble { baseRaw with RepoOk = false }
+              let failure = Snapshot.assemble { baseRaw with RepoState = Snapshot.NotAWorkTree }
               Expect.isTrue (success.Diagnostics.IsEmpty && success.Range.IsSome) "success: no diagnostics, Some range"
               Expect.isTrue (not failure.Diagnostics.IsEmpty && failure.Range.IsNone) "failure: diagnostics, no range"
           } ]

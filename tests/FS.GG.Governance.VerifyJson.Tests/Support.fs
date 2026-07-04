@@ -156,23 +156,15 @@ let noPriorReport = reportOf [ candidate "build:ship" shipInputs ] EvidenceReuse
 
 // ── Real execution-outcome builders ──
 
-let outcome (gate: string) (disposition: GateDisposition) (exit: int option) : GateId * GateOutcome =
-    GateId gate,
-    { GateId = GateId gate
-      Disposition = disposition
-      ExitCode = exit |> Option.map ExitCode
-      Passed = exit |> Option.map (fun c -> c = 0) }
+let outcome (gate: string) (disposition: GateDisposition) : GateId * GateOutcome =
+    GateId gate, { GateId = GateId gate; Disposition = disposition }
 
 /// Execution outcomes for richDecision's gates: build:ship reused-pass, build:rel executed-fail,
 /// docs:lint not-executed.
 let mixedOutcomes: (GateId * GateOutcome) list =
-    [ outcome "build:ship" Reused (Some 0)
-      outcome "build:rel" Executed (Some 1)
-      GateId "docs:lint",
-      { GateId = GateId "docs:lint"
-        Disposition = NotExecuted
-        ExitCode = None
-        Passed = None } ]
+    [ outcome "build:ship" (Reused(ExitCode 0, true))
+      outcome "build:rel" (Executed(ExitCode 1, false))
+      outcome "docs:lint" NotExecuted ]
 
 // ── FsCheck generators over the finite enumerations (real `RouteResult`s, real `rollup` at Verify) ──
 

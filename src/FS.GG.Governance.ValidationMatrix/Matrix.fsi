@@ -17,8 +17,4 @@ module Matrix =
     /// ceiling VERBATIM. None ⇒ NotDeclared (never an invented matrix, FR-009). Some m ⇒ RunNow m iff the
     /// budget admits m.Cost (the ceiling is the gate — a lower-cost matrix runs even at the inner loop), else
     /// Deferred (DeferredToScheduledBoundary (m.Name, m.Cost)). PURE, TOTAL.
-    val decideMatrix:
-        budget: CostBudget ->
-        boundary: MatrixBoundary ->
-        declared: ExhaustiveMatrix option ->
-            MatrixPlan
+    val decideMatrix: budget: CostBudget -> declared: ExhaustiveMatrix option -> MatrixPlan

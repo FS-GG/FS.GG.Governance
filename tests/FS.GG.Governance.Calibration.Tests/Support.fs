@@ -28,17 +28,17 @@ let judgeId (m: string) (v: string) (h: string) : JudgeIdentity =
 /// `decide` trusts the evidence is pre-filtered to one identity — research D3).
 let defaultJudge: JudgeIdentity = judgeId "gpt" "1" "h"
 
-/// One judge-vs-human comparison sample pairing literal F038 verdicts with an agreement classification.
-let sample (judge: string) (human: string) (agreement: AgreementClassification) : ComparisonSample =
+/// One judge-vs-human comparison sample pairing literal F038 verdicts (opaque — `decide` counts samples and
+/// reads the evidence-level ObservedAgreement, never a per-sample field).
+let sample (judge: string) (human: string) : ComparisonSample =
     { JudgeVerdict = RecordedVerdict judge
-      HumanVerdict = RecordedVerdict human
-      Agreement = agreement }
+      HumanVerdict = RecordedVerdict human }
 
-/// An agreeing sample (the judge and human reached the same verdict).
-let agreeingSample: ComparisonSample = sample "v" "v" Agreeing
+/// A sample where the judge and human reached the same verdict.
+let agreeingSample: ComparisonSample = sample "v" "v"
 
-/// A disagreeing sample (the judge and human differed).
-let disagreeingSample: ComparisonSample = sample "j" "h" Disagreeing
+/// A sample where the judge and human differed.
+let disagreeingSample: ComparisonSample = sample "j" "h"
 
 /// Assemble `CalibrationEvidence` from a sample list + a supplied observed agreement level, under the default
 /// scope.
@@ -95,8 +95,6 @@ let expectedCalibrated (t: CalibrationThresholds) (e: CalibrationEvidence) : boo
 
 // ── FsCheck generators (real values, no mocks) ──
 
-let private genAgreement: Gen<AgreementClassification> = Gen.elements [ Agreeing; Disagreeing ]
-
 // Verdict strings include empty, multi-byte, and structural values — every one a literal supplied token; the
 // verdicts are opaque and never interpreted, so any string is a valid sample.
 let private genVerdictString: Gen<string> =
@@ -106,12 +104,10 @@ let private genSample: Gen<ComparisonSample> =
     gen {
         let! j = genVerdictString
         let! h = genVerdictString
-        let! a = genAgreement
 
         return
             { JudgeVerdict = RecordedVerdict j
-              HumanVerdict = RecordedVerdict h
-              Agreement = a }
+              HumanVerdict = RecordedVerdict h }
     }
 
 // Sample lists span the empty list, singletons, and arbitrary length (totality + the no-single-sample floor).
@@ -167,7 +163,6 @@ let private genThresholds: Gen<CalibrationThresholds> =
     }
 
 type Generators =
-    static member AgreementClassification() : Arbitrary<AgreementClassification> = Arb.fromGen genAgreement
     static member ComparisonSample() : Arbitrary<ComparisonSample> = Arb.fromGen genSample
     static member SampleCount() : Arbitrary<SampleCount> = Arb.fromGen genSampleCount
     static member AgreementLevel() : Arbitrary<AgreementLevel> = Arb.fromGen genAgreementLevel

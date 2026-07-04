@@ -14,6 +14,11 @@ open FS.GG.Governance.GateExecution.Model        // GateCommand
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Plan =
 
+    type NoCommand =
+        | NoPrerequisite
+        | UnresolvedCommand of CommandId
+        | EmptyCommandLine
+
     // A small explicit single-pass character scanner: whitespace separates tokens; single quotes, double
     // quotes, and backslash escapes group/quote a token; NO shell features (no globbing, variable expansion,
     // pipes, or redirection — those characters are literal). Unexported (absent from Plan.fsi). The `mutable`
@@ -92,7 +97,7 @@ module Plan =
             | [] -> None
             | exe :: args -> Some(Executable exe, args |> List.map Argument)
 
-    let commandFor (repoRoot: string) (tooling: ToolingFacts) (gate: Gate) : GateCommand option =
+    let commandFor (repoRoot: string) (tooling: ToolingFacts) (gate: Gate) : Result<GateCommand, NoCommand> =
         // The declared command id is the gate's `RequiresCommand` prerequisite (F018); resolve it against the
         // loaded `tooling.Commands`, lex the declared command line, and assemble the GateCommand from DECLARED
         // inputs only (FR-002): repoRoot cwd, EMPTY env delta (the `EnvironmentClass` is a where-it-runs
@@ -104,15 +109,15 @@ module Plan =
                 | RequiresCommand c -> Some c)
 
         match commandId with
-        | None -> None
+        | None -> Error NoPrerequisite
         | Some id ->
             match tooling.Commands |> List.tryFind (fun spec -> spec.Id = id) with
-            | None -> None
+            | None -> Error(UnresolvedCommand id)
             | Some spec ->
                 match lexCommandLine spec.Command with
-                | None -> None
+                | None -> Error EmptyCommandLine
                 | Some(exe, args) ->
-                    Some
+                    Ok
                         { Executable = exe
                           Arguments = args
                           WorkingDirectory = WorkingDirectory repoRoot

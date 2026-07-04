@@ -1,5 +1,8 @@
 TYPE FS.GG.Governance.JsonWriters.JsonWritersModule
   [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict] verdictByGate(CacheEligibilityReport)
   [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.GateRun.ModelModule+GateOutcome] outcomeByGate(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.GateRun.ModelModule+GateOutcome]])
+  [Method] Void writeCacheEligibility(System.Text.Json.Utf8JsonWriter, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict])
   [Method] Void writeCause(System.Text.Json.Utf8JsonWriter, RecomputeCause)
   [Method] Void writeExecution(System.Text.Json.Utf8JsonWriter, GateOutcome)
+  [Method] Void writeFreshnessKey(System.Text.Json.Utf8JsonWriter, FreshnessKey)
+  [Method] Void writePrerequisite(System.Text.Json.Utf8JsonWriter, GatePrerequisite)

@@ -96,13 +96,7 @@ module Interpreter =
         let source = request.Path
         let (GovernedPath srcStr) = source
 
-        let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
-            try
-                read ()
-            with ex ->
-                Error(sprintf "read threw: %s" ex.Message)
-
-        match safe (fun () -> port.ReadSource source) with
+        match SC.safe (fun () -> port.ReadSource source) with
         | Error _ ->
             { Sources = [ source ]
               Links = []

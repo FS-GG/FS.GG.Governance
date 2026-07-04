@@ -96,13 +96,7 @@ module Interpreter =
         let (GovernedPath manifestRel) = request.Path
         let skillDir = dirOrEmpty manifestRel
 
-        let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
-            try
-                read ()
-            with ex ->
-                Error(sprintf "read threw: %s" ex.Message)
-
-        match safe (fun () -> port.ReadManifest request.Path) with
+        match SC.safe (fun () -> port.ReadManifest request.Path) with
         | Error e ->
             { SkillId = skillId
               PathContract = []
@@ -123,7 +117,7 @@ module Interpreter =
                     else
                         let combined = Path.Combine(skillDir, claimed)
 
-                        match safe (fun () -> port.ResolvePath combined) with
+                        match SC.safe (fun () -> port.ResolvePath combined) with
                         | Ok true ->
                             { Claimed = claimed
                               Outcome = PathHolds }
@@ -151,7 +145,7 @@ module Interpreter =
                 | Some m ->
                     let mirrorRel = Path.Combine(skillDir, m)
 
-                    match safe (fun () -> port.ReadMirror mirrorRel) with
+                    match SC.safe (fun () -> port.ReadMirror mirrorRel) with
                     | Ok None -> MirrorMissing m
                     | Ok(Some content) ->
                         if content.Trim() = text.Trim() then

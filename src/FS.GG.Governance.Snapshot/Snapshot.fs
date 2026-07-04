@@ -67,8 +67,13 @@ module Snapshot =
 
     // ── Raw sensing intermediate (filled by the edge, consumed here) ──
 
+    type RepoState =
+        | WorkTree
+        | NotAWorkTree
+        | GitAbsent
+
     type RawSensing =
-        { RepoOk: bool
+        { RepoState: RepoState
           BaseResolved: Result<CommitId, string>
           HeadResolved: Result<CommitId, string>
           MergeBaseResolved: Result<CommitId, string>
@@ -209,21 +214,26 @@ module Snapshot =
     let assemble (raw: RawSensing) : RepoSnapshot =
         let digests = sortDigests raw.Digests
 
-        if not raw.RepoOk then
-            // Not a work tree (FR-008): a single stable diagnostic, Range = None, empty path sets —
-            // structurally DISTINCT from an empty-but-successful snapshot (FR-011).
+        // A repo-check failure (not a work tree, or git unavailable) yields the SAME empty-snapshot shape —
+        // Range = None, empty path sets, one stable diagnostic — structurally DISTINCT from an empty-but-
+        // successful snapshot (FR-011). The two cases differ only in the diagnostic id + message (111/B9).
+        let repoCheckFailure (id: SensingDiagnosticId) (message: string) : RepoSnapshot =
             { Range = None
               Changed = []
               WorkingTree = emptyWorkingTree
               Branch = None
               Ci = raw.RawCi
               Digests = digests
-              Diagnostics =
-                [ diag
-                      NotARepository
-                      repoCheckOp
-                      "the target directory is not a git repository (or has no commits yet); run sensing inside a git work tree" ] }
-        else
+              Diagnostics = [ diag id repoCheckOp message ] }
+
+        match raw.RepoState with
+        | NotAWorkTree ->
+            repoCheckFailure
+                NotARepository
+                "the target directory is not a git repository (or has no commits yet); run sensing inside a git work tree"
+        | GitAbsent ->
+            repoCheckFailure GitUnavailable "git is not available on PATH; install git or add it to PATH, then re-run"
+        | WorkTree ->
 
             // Range resolution: each ref/merge-base Error becomes a diagnostic and forces Range=None
             // (FR-008); all three Ok ⇒ Some range.

@@ -180,22 +180,26 @@ module Interpreter =
         let ci = ports.Ci()
         let repoCheck = run RepoCheck
 
-        let sortDigests (ds: CommandRunDigest seq) =
-            ds |> Seq.sortWith (fun a b -> System.String.CompareOrdinal(a.Command, b.Command)) |> List.ofSeq
-
+        // Every branch now routes through `Snapshot.assemble`, which owns digest sorting (111/B9) — no local
+        // sort needed here.
         match repoCheck with
         | Error msg when msg.StartsWith gitUnavailableMarker ->
-            // git binary unavailable — GitUnavailable directly at the edge (FR-008, T042); never a throw.
-            { Range = None
-              Changed = []
-              WorkingTree = { Dirty = []; Untracked = [] }
-              Branch = None
-              Ci = ci
-              Digests = sortDigests digests
-              Diagnostics =
-                [ { Id = GitUnavailable
-                    Operation = RepoCheck.Token
-                    Message = "git is not available on PATH; install git or add it to PATH, then re-run" } ] }
+            // git binary unavailable — route through `assemble` (RepoState = GitAbsent) so the empty-snapshot
+            // shape + digest sort are owned by the one pure assembler, exactly like the not-a-work-tree path
+            // below (111/B9); never a throw. The skipped fields are ignored by assemble in this branch.
+            let skipped = Error "skipped: git is not available"
+
+            Snapshot.assemble
+                { RepoState = Snapshot.GitAbsent
+                  BaseResolved = skipped
+                  HeadResolved = skipped
+                  MergeBaseResolved = skipped
+                  DiffRaw = skipped
+                  StatusRaw = skipped
+                  BranchRaw = skipped
+                  RawCi = ci
+                  Digests = List.ofSeq digests
+                  Plan = plan }
         | _ ->
             let repoOk =
                 match repoCheck with
@@ -203,12 +207,12 @@ module Interpreter =
                 | Error _ -> false
 
             if not repoOk then
-                // Not a work tree: assemble maps RepoOk=false → NotARepository; the unrun commands are
+                // Not a work tree: assemble maps NotAWorkTree → NotARepository; the unrun commands are
                 // marked skipped (assemble ignores them in this branch).
                 let skipped = Error "skipped: target is not a git repository"
 
                 Snapshot.assemble
-                    { RepoOk = false
+                    { RepoState = Snapshot.NotAWorkTree
                       BaseResolved = skipped
                       HeadResolved = skipped
                       MergeBaseResolved = skipped
@@ -242,7 +246,7 @@ module Interpreter =
                 let branchRaw = run CurrentBranch
 
                 Snapshot.assemble
-                    { RepoOk = true
+                    { RepoState = Snapshot.WorkTree
                       BaseResolved = baseResolved
                       HeadResolved = headResolved
                       MergeBaseResolved = mergeBaseResolved

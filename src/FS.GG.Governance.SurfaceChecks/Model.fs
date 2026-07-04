@@ -63,3 +63,36 @@ module Model =
           Maturity = finding.Maturity
           Mode = mode
           Profile = profile }
+
+    // 111/A6: the shared finding-builder + read-guard the four *Checks packs used to hand-copy. `mkFinding`
+    // is parameterized by domain + maturity + source path (each pack keeps a one-line wrapper binding those);
+    // `safe` reifies BOTH an `Error` and a thrown exception into `Error`.
+
+    let mkFinding
+        (domain: CheckDomain)
+        (maturity: Maturity)
+        (request: SurfaceCheckRequest)
+        (source: GovernedPath)
+        (code: string)
+        (detail: string)
+        (severity: Severity)
+        (isInput: bool)
+        (message: string)
+        : SurfaceFinding =
+        let (GovernedPath raw) = source
+
+        { Domain = domain
+          Surface = request.Surface
+          Code = code
+          Location = { File = normalizePath raw; Detail = detail }
+          BaseSeverity = severity
+          Maturity = maturity
+          EvidenceTag = request.EvidenceTag
+          IsInputState = isInput
+          Message = message }
+
+    let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
+        try
+            read ()
+        with ex ->
+            Error(sprintf "read threw: %s" ex.Message)

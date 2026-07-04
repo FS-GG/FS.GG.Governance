@@ -14,21 +14,21 @@ let tests =
     testList
         "decideMatrix"
         [ test "declared Exhaustive matrix + inner-loop budget ⇒ Deferred (named, deterministic)" {
-              let plan = Matrix.decideMatrix innerLoopBudget InnerLoop (Some exhaustiveMatrix)
+              let plan = Matrix.decideMatrix innerLoopBudget (Some exhaustiveMatrix)
               Expect.equal plan (Deferred(DeferredToScheduledBoundary("pack-all-targets", Exhaustive))) ""
           }
 
           test "same matrix + scheduled/release budget ⇒ RunNow" {
-              let plan = Matrix.decideMatrix releaseBudget ScheduledOrRelease (Some exhaustiveMatrix)
+              let plan = Matrix.decideMatrix releaseBudget (Some exhaustiveMatrix)
               Expect.equal plan (RunNow exhaustiveMatrix) ""
           }
 
           test "a lower-cost matrix the inner-loop ceiling admits ⇒ RunNow even at InnerLoop (ceiling is the gate)" {
-              let plan = Matrix.decideMatrix innerLoopBudget InnerLoop (Some cheapMatrix)
+              let plan = Matrix.decideMatrix innerLoopBudget (Some cheapMatrix)
               Expect.equal plan (RunNow cheapMatrix) ""
           }
 
           test "None declared ⇒ NotDeclared at every boundary — never invented" {
-              Expect.equal (Matrix.decideMatrix innerLoopBudget InnerLoop None) NotDeclared ""
-              Expect.equal (Matrix.decideMatrix releaseBudget ScheduledOrRelease None) NotDeclared ""
+              Expect.equal (Matrix.decideMatrix innerLoopBudget None) NotDeclared ""
+              Expect.equal (Matrix.decideMatrix releaseBudget None) NotDeclared ""
           } ]
