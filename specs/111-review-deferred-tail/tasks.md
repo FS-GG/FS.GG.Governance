@@ -122,9 +122,9 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ### A1 — CommandHost.guard/drive (commit 1)
 
-- [ ] T023 [P] [US4] Replace EvidenceCommand's local `guard`/`drive` (`src/FS.GG.Governance.EvidenceCommand/Interpreter.fs:119,143`) with `CommandHost.guard`/`CommandHost.drive` (ref already present at `.fsproj:51`). Keep the separate `runHost` loop (`:80`) unless it maps cleanly.
-- [ ] T024 [US4] Replace Scaffold's local `guard`/`drive` (`src/FS.GG.Governance.Scaffold/Interpreter.fs:26,164`) with the shared ones; **add** a `CommandHost` `<ProjectReference>` to `FS.GG.Governance.Scaffold.fsproj` (new fence edge).
-- [ ] T025 [US4] Run `tests/FS.GG.Governance.DependencyFences.Tests` — the Scaffold→CommandHost edge MUST keep it green; EvidenceCommand/Scaffold behaviour tests green.
+- [X] T023 [US4] EvidenceCommand adopts `CommandHost.guard` (call site) and `CommandHost.drive` for its `run` loop (byte-identical to the deleted local copy; ref already present). The `runHost` loop stays local — it fans one effect to a *message list* (`List.collect`) with no done-predicate, which the single-msg `CommandHost.drive` does not model. Build + 35 tests green.
+- [-] T024 [US4] Scaffold — **RE-DEFERRED on #83 with rationale.** Adopting `CommandHost.guard`/`drive` would give the lightweight Scaffold provider (currently ONE dependency, `Kernel`) a transitive dependency on the entire ~15-project command-host layer (Config/Snapshot/GateRun/GateExecution/SddHandoff/…) purely for two *generic, dependency-free* combinators — a disproportionate, fence-unsound edge (FR-009). The sound fix is to relocate the generic `guard`/`drive` to a minimal shared leaf (e.g. Kernel), a broader refactor out of scope for this dedup story. Scaffold's local copies stay.
+- [X] T025 [US4] EvidenceCommand behaviour tests green (35/35); no new fence edge (EvidenceCommand already referenced CommandHost). Scaffold untouched ⇒ fence graph unchanged.
 
 ### A4 — four JSON writer pairs → JsonWriters (commit 2)
 
