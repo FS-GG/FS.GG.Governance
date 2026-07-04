@@ -107,21 +107,9 @@ let private provenanceAllowlist : string list =
 // the test dir (the guard's own scaffolding documenting/testing the ban), so it is excluded on the
 // identical rationale. Verified minimal: no OTHER tracked spec (older features) names the machinery
 // tokens, so coverage elsewhere is unaffected. Neither exclusion disables a pattern.
-//
-// THIRD CLASS — the vendored coordination kit (ADR-0019 / #90). FS.GG.Governance `receives:
-// coordination-kit`, so it holds a byte-identical mirror of the cross-repo-coordination skill,
-// owned canonically by FS-GG/.github and enforced byte-for-byte by the coordination-coherence gate.
-// That skill's SKILL.md currently carries the stale pre-rename id `fs-skia-ui-version` (ADR-0003
-// renamed it to `fs-gg-ui-version`; fixed at the source in FS-GG/.github#179). Governance cannot
-// edit the mirror without failing the coherence gate — the file is outside this repo's editorial
-// control BY DESIGN — so it is not this guard's to police: the guard governs Governance-AUTHORED
-// source, and the kit is `.github`-authored, guarded at its source. This exclusion is safe to drop
-// once .github#179 lands and the kit re-syncs clean (it is then merely redundant, not wrong).
 let private scanExclusions : string list =
     [ "tests/FS.GG.Governance.RenameGuard.Tests/" // the guard's own test source (red-path literals).
-      "specs/083-fs-gg-ui-rename-guard/" // the guard's own spec scaffolding (worked-example literals).
-      ".claude/skills/cross-repo-coordination/" // vendored .github-owned kit, byte-locked by the coherence gate (ADR-0019; #90).
-      ".agents/skills/cross-repo-coordination/" ] // the same kit, second agent-skill root.
+      "specs/083-fs-gg-ui-rename-guard/" ] // the guard's own spec scaffolding (worked-example literals).
 
 // ---------------------------------------------------------------------------------------------------
 // The PURE matcher (no I/O) — data-model §ScanResult.
