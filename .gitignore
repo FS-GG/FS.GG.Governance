@@ -33,14 +33,19 @@ coverage/
 
 # --- Evidence corpus policy (FS.GG.Governance) -------------------------------
 # This repo commits governance evidence AS THE AUDIT RECORD OF RECORD by design
-# — that is the repo's purpose. The durable-vs-transient boundary (per the SDD
-# transient-artifact taxonomy, FS-GG/FS.GG.SDD#110 / this repo #85) is:
+# — that is the repo's purpose. The durable-vs-transient boundary follows the
+# SDD transient-artifact taxonomy (ADR-0018; canonical doc: FS-GG/FS.GG.SDD
+# docs/reference/artifact-taxonomy.md), tracked here as #85 / FS.GG.SDD#110:
 #
 #   DURABLE — intentionally committed, do NOT gitignore:
 #     * surface-drift baselines (surface/**, *.txt) — these ARE the api-compat
 #       contract and the surface-drift gate's source of truth;
 #     * golden fixtures + snapshots (tests/**/goldens, **/snapshots) — pinned
 #       expected output the tests compare against;
+#     * cli-publish-smoke handoff fixtures (tests/**/fixtures/**/readiness/
+#       wi-*/governance-handoff.json) — pinned test INPUTS, not regenerable run
+#       output; kept committed. The root-anchored readiness/*/ role rule below
+#       does not match these nested fixture paths;
 #     * .fsgg/*.yml sample + fixture config (governance/policy/capabilities/
 #       tooling/release) — authored inputs, not run output;
 #     * SDD artifacts (specs/*/spec.md, plan.md, tasks.md, contracts, research).
@@ -49,7 +54,8 @@ coverage/
 #     * specs/<feature>/readiness/ — per-run readiness evidence (0 committed
 #       here; no per-feature re-inclusion whack-a-mole, unlike Rendering);
 #     * .fsgg/*.json — CLI-emitted run outputs (gates.json, evidence.json,
-#       evidence-reuse.json); the .fsgg *inputs* are .yml and stay committed.
+#       evidence-reuse.json); the .fsgg *inputs* are .yml and stay committed;
+#     * the SDD shared fragment's regenerable roles (see below).
 # -----------------------------------------------------------------------------
 
 # Per-feature readiness evidence is transient test output (written into
@@ -60,6 +66,21 @@ specs/*/readiness/
 # **/ so it matches whether the tool runs at the repo root or inside a
 # sample/fixture .fsgg/ dir.
 **/.fsgg/*.json
+
+# --- SDD shared transient-artifact fragment (ADR-0018) — adopted -------------
+# Convergence per FS.GG.SDD#110: the SDD lifecycle owns the durable-vs-
+# regenerable convention and publishes a shared fragment
+# (FS.GG.SDD docs/reference/artifact-taxonomy.md); existing repos adopt it by
+# copying its regenerable roles in. The generic build/tooling roles the
+# fragment lists (bin/ obj/ artifacts/ TestResults/) are already ignored at the
+# top of this file — added here are the roles not covered above. readiness/*/
+# is ROOT-ANCHORED: it ignores a root-level readiness/<id>/ (the SDD work-model
+# layout) and does NOT match this repo's specs/<feature>/readiness/ (ignored
+# above) or the durable tests/**/fixtures/**/readiness/ handoff fixtures.
+readiness/*/
+nuget-cache/
+.tmp/
+# -----------------------------------------------------------------------------
 
 # macOS / Linux cruft
 .DS_Store
