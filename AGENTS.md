@@ -1,6 +1,6 @@
 # FS.GG.Governance Agent Context
 
-FS.GG.Governance is the governance product for FS.GG (rule evaluation, evidence
+FS.GG.Governance is the governance component for FS.GG (rule evaluation, evidence
 freshness, routing, profiles, and gate enforcement). Use standard Spec Kit for
 all non-trivial work.
 

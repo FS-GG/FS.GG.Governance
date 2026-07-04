@@ -1,11 +1,11 @@
 # SDD → Governance handoff: connect readiness to the Governance loop
 
-**Audience**: an integrator connecting a scaffolded, SDD-governed product to the
+**Audience**: an integrator connecting a scaffolded, SDD-governed workspace to the
 Governance routing/evidence/enforcement loop. **Outcome (FR-007, SC-008)**: you can
 state exactly which `readiness/<id>/governance-handoff.json` fields Governance
 consumes and how each maps — matching the accepted contract row-for-row.
 
-This tutorial uses the product you scaffolded in
+This tutorial uses the workspace you scaffolded in
 [adopter-onboarding.md](./adopter-onboarding.md) as the worked subject. It is
 **explanatory only** — see the scope note at the end.
 
