@@ -115,6 +115,17 @@ evaluated in. The design is **order-independent by intent**, and most layers are
 confluent by construction; the residual hazards are a short, known list, each with
 a standard mitigation.
 
+Confluence here is **conditional, not unconditional**: it holds *inside* a bounded
+fragment — **function-free (add-only) rules, stratified negation, and no aggregation
+over derived facts**. These are the kernel's stated preconditions, documented on
+`FixedPoint.evaluate`: *"rules are monotonic (add-only); negated, aggregated, or
+recursively-negated facts are SUPPLIED from a lower stratum, never derived within this
+fixed point."* Step outside the fragment — derive an aggregate inside the fold, or
+negate through a cycle that cannot be stratified — and the least-fixed-point guarantee
+no longer applies. Those constructs are **forbidden**, not merely discouraged; the
+preconditions are documented rather than runtime-enforced, so the composition root is
+the surface that keeps the strata acyclic and aggregation-free.
+
 ### Confluent by construction
 
 - **Fixed-point derivation** is forward chaining with **monotonic** rules (rules
@@ -154,6 +165,37 @@ let result   = FixedPoint.evaluate identify rules supplied   // stratum 1 reads 
 (Note: `Check.Not` is *not* this hazard — it negates an evaluated sub-verdict,
 which is total and order-free. Only rule-level "is this fact absent?" tests are
 non-monotonic.)
+
+When a negation **cannot** be stratified — the negated fact is itself derived by a
+rule that (transitively) negation-checks it, a **cycle** — there is no confluent
+reading to recover, and stratification is not available as a mitigation. Such
+**recursive / non-stratifiable negation is forbidden**, outside the sound fragment
+entirely. The kernel does not reject it at runtime (the precondition is documented on
+`FixedPoint.evaluate`, not enforced); keeping the strata acyclic is the composition
+root's responsibility.
+
+### Hazard 1b — aggregation over derived facts
+
+Counting, summing, or taking a min/max **over facts derived in the same fixed point**
+is non-monotonic for the same reason negation is: the aggregate's value depends on how
+many facts have been derived so far, so a rule that fires on `count(...) >= k` is
+order-sensitive and has no unique least fixed point. The check algebra gives this hazard
+no foothold — there is **no aggregation node** (`Atom` / `All` / `Any` / `Not` /
+`Implies` / `Opaque` only), so an aggregate cannot be authored as a derived check at all.
+
+Where an aggregate genuinely is needed it is computed over **supplied, lower-stratum
+facts**, exactly the negation mitigation — the route gate set's deduped `union` and `max`
+tier fold over facts already present, never over facts the same round is still deriving:
+
+```fsharp
+let supplied = readEvidenceStore () @ phaseMachine.emit ()   // stratum 0 (facts)
+let tier     = supplied |> Seq.map tierOf |> Seq.fold max Advisory   // aggregate here
+let result   = FixedPoint.evaluate identify rules supplied           // stratum 1 reads it
+```
+
+Deriving an aggregate inside the fold and then thresholding or negation-checking it in
+the same round is **forbidden** — the `FixedPoint.evaluate` precondition, and the reason
+the algebra deliberately ships no aggregation combinator.
 
 ### Hazard 2 — provenance and reason order
 
@@ -223,11 +265,15 @@ coupling as `Implies` plus precedence, never as "run A then B."
 
 ### The constraint
 
-Two disciplines keep the whole system confluent: **keep the rule set stratified**
-(no negation over still-being-derived facts), and **canonicalize hashing and
-provenance for commutative nodes**. All *intended* ordering is quarantined in the
-phase [state machine](speckit-in-the-system.md), which is explicitly sequential and
-emits facts; the check algebra over those facts stays an order-free fold.
+Three disciplines keep the whole system confluent — and they are the kernel's stated
+preconditions (`FixedPoint.evaluate`), not aspirations: **keep the rule set stratified
+and the strata acyclic** (no negation over still-being-derived facts; a negation that
+cannot be stratified is forbidden), **never aggregate over derived facts** (count / sum /
+min / max only over supplied, lower-stratum facts — the check algebra ships no aggregation
+node to tempt otherwise), and **canonicalize hashing and provenance for commutative
+nodes**. All *intended* ordering is quarantined in the phase
+[state machine](speckit-in-the-system.md), which is explicitly sequential and emits facts;
+the check algebra over those facts stays an order-free fold.
 
 ## Taming lifting boilerplate
 
