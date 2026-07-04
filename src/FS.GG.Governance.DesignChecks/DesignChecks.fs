@@ -17,6 +17,7 @@ module DesignChecks =
     // Fixed pre-PR enforcement maturity (see PackageChecks.checkMaturity for the rationale).
     let checkMaturity = BlockOnPr
 
+    // 111/A6: delegates to the shared `SC.mkFinding`, binding this pack's domain + maturity + path-source.
     let mkFinding
         (request: SC.SurfaceCheckRequest)
         (code: string)
@@ -25,19 +26,7 @@ module DesignChecks =
         (isInput: bool)
         (message: string)
         : SC.SurfaceFinding =
-        let (GovernedPath raw) = request.Path
-
-        { Domain = SC.DesignDomain
-          Surface = request.Surface
-          Code = code
-          Location =
-            { File = normalizePath raw
-              Detail = detail }
-          BaseSeverity = severity
-          Maturity = checkMaturity
-          EvidenceTag = request.EvidenceTag
-          IsInputState = isInput
-          Message = message }
+        SC.mkFinding SC.DesignDomain checkMaturity request request.Path code detail severity isInput message
 
     let resolveFinding
         (request: SC.SurfaceCheckRequest)

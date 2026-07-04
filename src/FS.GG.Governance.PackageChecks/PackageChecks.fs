@@ -22,6 +22,7 @@ module PackageChecks =
 
     // Build one finding bound to the request's surface + declared evidence tag. `source` is re-normalized to
     // a repo-relative forward-slash GovernedPath (FR-010).
+    // 111/A6: delegates to the shared `SC.mkFinding`, binding this pack's domain + maturity + path-source.
     let mkFinding
         (request: SC.SurfaceCheckRequest)
         (code: string)
@@ -31,19 +32,7 @@ module PackageChecks =
         (isInput: bool)
         (message: string)
         : SC.SurfaceFinding =
-        let (GovernedPath raw) = source
-
-        { Domain = SC.PackageDomain
-          Surface = request.Surface
-          Code = code
-          Location =
-            { File = normalizePath raw
-              Detail = detail }
-          BaseSeverity = severity
-          Maturity = checkMaturity
-          EvidenceTag = request.EvidenceTag
-          IsInputState = isInput
-          Message = message }
+        SC.mkFinding SC.PackageDomain checkMaturity request source code detail severity isInput message
 
     let baselineFindings
         (request: SC.SurfaceCheckRequest)

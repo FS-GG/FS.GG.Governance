@@ -136,11 +136,11 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ### A6 — cross-project dedup (commit 3; C6 export)
 
-- [ ] T029 [US4] Hoist `mkFinding` (×4), `safe` (4 `*Checks`), `valuesFor` (×2) into `SurfaceChecks` with `domain`+`maturity` params — **REMAINING** (the substantive cross-project dedup; leave `ReleaseFactsSensing` `safe` local, no SurfaceChecks ref).
+- [X] T029 [US4] Hoisted `mkFinding` (×4) and `safe` (×4 packs) into `SurfaceChecks.Model` (already referenced by all four packs; has Config+Enforcement, so **no new fence edge**). Each pack keeps a one-line `mkFinding` wrapper binding its domain/maturity/path-source; the four local `safe` copies call `SC.safe`. Packs byte-identical (Design 12, Docs 14, Package 21, Skill 18); fence green; SurfaceChecks surface grew by `mkFinding`+`safe`. `ReleaseFactsSensing.safe` stays local (no SurfaceChecks ref) — re-deferred. **`valuesFor` (×2) RE-DEFERRED**: it closes over a local `lines` array, so hoisting needs a signature change + call-site rework across both packs — disproportionate to a 4-line helper (FR-009).
 - [X] T030 [US4] [T1] **C6 done**: exported `Verdict.combineReasons` (`Verdict.fsi`); `Route.stakesOf` now calls `Verdict.combineReasons (tripped |> List.map (fun f -> f.Name))` — byte-identical (Kernel 73, Routing 23 green). Kernel/Verdict baseline blessed; diff is exactly the one `combineReasons` export (contract C6).
 - [-] T031 [US4] `SddHandoff.buildGate` — **RE-DEFERRED on #83 with rationale.** The duplication is a *documented, deliberate* choice: `Consumer.fs` states "Mirrors `Readiness.buildGate` (kept local — the helper is hidden behind each `.fsi`)". Deduping requires exposing an internal gate-builder on a public `.fsi`, trading a small same-project dup for a widened surface — against the author's intent and the ADR-0008 "duplication is intentional" ethos.
-- [ ] T032 [US4] **Conditional** `sha256Hex` (×4) → fence-gated Kernel home — **REMAINING** (land iff the fence suite stays green, else re-defer per FR-009).
-- [ ] T033 [US4] Verify per landed piece. C6 full-suite green; T029/T032 remain.
+- [-] T032 [US4] `sha256Hex` (×4) — **RE-DEFERRED on #83 with rationale.** The four consumers (CacheEligibilityCommand/CurrencySensing/FreshnessSensing/RefreshCommand) share no hashing home and **none references Kernel**. A Kernel home adds four new project→Kernel couplings for a 4-line generic crypto helper that isn't Kernel-domain (rules/verdicts) — a domain-mismatched shoehorn; a dedicated shared hashing leaf would be a new project disproportionate to a Low finding (Complexity Tracking stays empty). Left duplicated (FR-009), consistent with the A1-Scaffold call.
+- [X] T033 [US4] Verified per landed piece: A1 (EvidenceCommand), A4 (3 writers), A6 C6 (combineReasons) + the mkFinding/safe hoist — all full-suite green, fence green, byte-identical. Re-deferred with rationale: A1-Scaffold, A4 (c)+(d), buildGate, valuesFor, sha256Hex, ReleaseFactsSensing-safe. **US4 complete** (landed sound dedup; disproportionate/fence-unsound edges honestly re-deferred).
 
 ---
 
@@ -188,10 +188,9 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 - [ ] T044 Tick every landed item on issue #83; annotate the **re-deferred** items with rationale (SC-004): C1a (tested reviewer-extension point), A1-Scaffold (disproportionate host-layer dep), A4 (c)+(d) (writer→projection layering inversion), A6 buildGate (documented intentional dup), A6-`safe`-ReleaseFactsSensing, and — pending — A6 `sha256Hex` (fence-gated).
 - [ ] T045 Flip board items #83 → Done and confirm epic #44 can close; update the Coordination board.
 
-### Remaining work (one focused follow-up)
+### Remaining work
 
-- [ ] **A6 SurfaceChecks hoist** — move `mkFinding` (×4), `safe` (×4 packs), `valuesFor` (×2) into `SurfaceChecks` (already referenced by all four packs; has Config + Enforcement, so no new fence edge). Design: a shared `SC.mkFinding domain maturity request source …` builder; each pack keeps a 1-line delegating wrapper binding its `domain`/`checkMaturity`/path-source. `ReleaseFactsSensing.safe` stays local (no SurfaceChecks ref). Multi-file (SurfaceChecks + 4 pack `.fs` + 4 pack `Interpreter.fs`) + a SurfaceChecks surface bless + fence validation.
-- [ ] **A6 `sha256Hex`** — fence-gated Kernel-home consolidation of the four copies (+ adjacent `digestPath` twins); land iff the fence suite stays green, else re-defer.
+**None** — every one of the 13 deferred findings is now either landed or honestly re-deferred with rationale on #83. All that's left is the close-out (T043–T045: annotate #83's checklist, flip the board) once the PRs are pushed and merged.
 
 ---
 

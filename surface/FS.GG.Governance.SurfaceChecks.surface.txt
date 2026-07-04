@@ -1,6 +1,8 @@
 TYPE FS.GG.Governance.SurfaceChecks.ModelModule
   [Method] EnforcementInput enforcementInputOf(SurfaceFinding, RunMode, Profile)
   [Method] Int32 checkDomainOrdinal(CheckDomain)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[a,System.String] safe[a](Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[a,System.String]])
+  [Method] SurfaceFinding mkFinding(CheckDomain, Maturity, SurfaceCheckRequest, GovernedPath, System.String, System.String, Severity, Boolean, System.String)
   [Method] System.String checkDomainToken(CheckDomain)
   [Method] System.String severityToken(Severity)
   [NestedType] FS.GG.Governance.SurfaceChecks.ModelModule+CheckDomain

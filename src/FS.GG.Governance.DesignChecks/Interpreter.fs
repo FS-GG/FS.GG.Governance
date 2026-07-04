@@ -99,14 +99,8 @@ module Interpreter =
     let senseDesign (port: DesignPort) (request: SC.SurfaceCheckRequest) : DesignFacts =
         let mutable unavailable = []
 
-        let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
-            try
-                read ()
-            with ex ->
-                Error(sprintf "read threw: %s" ex.Message)
-
         let refTokens, refCaptures, refControls =
-            match safe (fun () -> port.ReadDescriptor request.Path) with
+            match SC.safe (fun () -> port.ReadDescriptor request.Path) with
             | Ok text -> parseDescriptor text
             | Error e ->
                 unavailable <- sprintf "design surface descriptor: %s" e :: unavailable
@@ -116,7 +110,7 @@ module Interpreter =
             // `safe` wraps the port read so a throwing catalog port degrades to a sensed error instead of
             // escaping `senseDesign` (its never-throws contract, #56/B13) — previously only ReadDescriptor
             // was guarded, leaving four of the five port calls able to escape.
-            match safe read with
+            match SC.safe read with
             | Ok set -> refs |> List.map (fun r -> mk r (if Set.contains r set then Resolves else Absent r))
             | Error e ->
                 unavailable <- sprintf "%s catalog: %s" label e :: unavailable
@@ -132,7 +126,7 @@ module Interpreter =
             resolveSet port.ReadControlCatalog (fun c o -> { Control = c; Outcome = o }) refControls "control"
 
         let contrasts =
-            match safe (fun () -> port.ReadContrastCatalog()) with
+            match SC.safe (fun () -> port.ReadContrastCatalog()) with
             | Ok m ->
                 m
                 |> Map.toList

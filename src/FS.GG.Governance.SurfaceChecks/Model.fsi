@@ -70,3 +70,23 @@ module Model =
     /// Build the rollup input for a finding under a run mode + profile (reuses F023 verbatim — no
     /// truth-table logic here). The verdict is computed by the existing `deriveEffectiveSeverity`.
     val enforcementInputOf: finding: SurfaceFinding -> mode: RunMode -> profile: Profile -> EnforcementInput
+
+    /// Build one finding bound to `request`'s surface + declared evidence tag, for the given `domain` and
+    /// `maturity`. `source` is re-normalized to a repo-relative forward-slash `GovernedPath` (FR-010). The
+    /// shared body the four *Checks packs used to hand-copy (111/A6) — each keeps a one-line wrapper binding
+    /// its own domain / maturity / path-source.
+    val mkFinding:
+        domain: CheckDomain ->
+        maturity: Maturity ->
+        request: SurfaceCheckRequest ->
+        source: GovernedPath ->
+        code: string ->
+        detail: string ->
+        severity: Severity ->
+        isInput: bool ->
+        message: string ->
+            SurfaceFinding
+
+    /// Run a read, reifying BOTH an `Error` and a thrown exception into `Error` (`read threw: <msg>`) so a
+    /// sensor never throws out of itself. Shared by the *Checks sense edges (111/A6).
+    val safe: read: (unit -> Result<'a, string>) -> Result<'a, string>
