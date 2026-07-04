@@ -184,9 +184,14 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ## Phase 10: Close-out
 
-- [ ] T043 Confirm surface-drift moved for **only** C1–C6 across all merged PRs (SC-001); no other `SurfaceDriftTests` touched.
-- [ ] T044 Tick every landed item on issue #83; annotate any fence-blocked helper (e.g. `sha256Hex`) as re-deferred with rationale (SC-004).
+- [ ] T043 Confirm surface-drift moved for **only** the planned deltas across all merged PRs. Landed so far: C1 (GateRun/Model), C2 (GateRun/Plan), C3 (Snapshot), C4 (Calibration/Model), C5 (ValidationMatrix/Matrix), C6 (Kernel/Verdict), plus dead-code/dedup shrinks-or-grows on VerifyCommand/Loop (−SurfacesPending) and JsonWriters (+3 writers). No unplanned module moved.
+- [ ] T044 Tick every landed item on issue #83; annotate the **re-deferred** items with rationale (SC-004): C1a (tested reviewer-extension point), A1-Scaffold (disproportionate host-layer dep), A4 (c)+(d) (writer→projection layering inversion), A6 buildGate (documented intentional dup), A6-`safe`-ReleaseFactsSensing, and — pending — A6 `sha256Hex` (fence-gated).
 - [ ] T045 Flip board items #83 → Done and confirm epic #44 can close; update the Coordination board.
+
+### Remaining work (one focused follow-up)
+
+- [ ] **A6 SurfaceChecks hoist** — move `mkFinding` (×4), `safe` (×4 packs), `valuesFor` (×2) into `SurfaceChecks` (already referenced by all four packs; has Config + Enforcement, so no new fence edge). Design: a shared `SC.mkFinding domain maturity request source …` builder; each pack keeps a 1-line delegating wrapper binding its `domain`/`checkMaturity`/path-source. `ReleaseFactsSensing.safe` stays local (no SurfaceChecks ref). Multi-file (SurfaceChecks + 4 pack `.fs` + 4 pack `Interpreter.fs`) + a SurfaceChecks surface bless + fence validation.
+- [ ] **A6 `sha256Hex`** — fence-gated Kernel-home consolidation of the four copies (+ adjacent `digestPath` twins); land iff the fence suite stays green, else re-defer.
 
 ---
 
