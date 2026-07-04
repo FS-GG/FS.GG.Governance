@@ -41,17 +41,11 @@ module Route =
         match fences |> List.filter (fun f -> f.Trips change) with
         | [] -> Routine
         | tripped ->
-            // The carried name is a function of the SET of tripped fence names — reusing
-            // the F02 reason-combination convention (split on the reserved "; " separator
-            // dropping empties, de-duplicate, ordinal-sort, re-join). Hence it is identical
-            // under any permutation of `fences` (R-S2, closes hazard 5 / decision #4).
-            let name =
-                tripped
-                |> List.collect (fun f ->
-                    List.ofArray (f.Name.Split([| "; " |], System.StringSplitOptions.RemoveEmptyEntries)))
-                |> List.distinct
-                |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b))
-                |> String.concat "; "
+            // The carried name is a function of the SET of tripped fence names — reusing the F02
+            // reason-combination convention VERBATIM (`Verdict.combineReasons`, 111/A6): split on the
+            // reserved "; " separator dropping empties, de-duplicate, ordinal-sort, re-join. Hence it is
+            // identical under any permutation of `fences` (R-S2, closes hazard 5 / decision #4).
+            let name = Verdict.combineReasons (tripped |> List.map (fun f -> f.Name))
 
             Fenced name
 

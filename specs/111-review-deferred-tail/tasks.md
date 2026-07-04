@@ -136,11 +136,11 @@ projection/Kernel/Checks/SddHandoff suites; grep shows one definition per helper
 
 ### A6 — cross-project dedup (commit 3; C6 export)
 
-- [ ] T029 [P] [US4] Hoist `mkFinding` (×4: Design/Docs/Package/Skill `*.fs:19-25`), `safe` (the four `*Checks` `Interpreter.fs` copies), and `valuesFor` (DesignChecks `:91`, SkillChecks `:78`) into `src/FS.GG.Governance.SurfaceChecks/` with `domain` + `maturity` parameters; delete the leaf copies. **Leave `ReleaseFactsSensing/Interpreter.fs:102` `safe` local** (no SurfaceChecks ref) and note it on #83.
-- [ ] T030 [US4] [T1] C6: export `combineReasons` in `src/FS.GG.Governance.Kernel/Verdict.fsi`; replace the inlined split/distinct/sort/concat in `Route.stakesOf` (`Kernel/Route.fs:48-54`) with `Verdict.combineReasons (tripped |> List.map (fun f -> f.Name))`; regenerate the `Kernel/Verdict` baseline (contract C6 — the only widen).
-- [ ] T031 [P] [US4] Collapse `SddHandoff.buildGate` to one private definition in `src/FS.GG.Governance.Adapters.SddHandoff/` (keep Readiness `:35`, delete the mirror at Consumer `:41`, or vice-versa; thread `domain`).
-- [ ] T032 [US4] **Conditional** `sha256Hex`: attempt a single Kernel (or lowest-common) home for the four copies (CacheEligibilityCommand `:54`, CurrencySensing `:102`, FreshnessSensing `:38`, RefreshCommand `:48`) **and** their adjacent `digestPath` twins. Run the fence suite: **if green**, land it; **if it introduces a fence violation, revert and keep `sha256Hex` duplicated**, annotating #83 with the re-deferral rationale (FR-009).
-- [ ] T033 [US4] Verify: fence suite green; SurfaceChecks/Kernel/SddHandoff + affected Command/Sensing suites green; byte-identical outputs; grep shows one definition per landed helper. Open **PR US4** (or split commits into 3 PRs if review prefers).
+- [ ] T029 [US4] Hoist `mkFinding` (×4), `safe` (4 `*Checks`), `valuesFor` (×2) into `SurfaceChecks` with `domain`+`maturity` params — **REMAINING** (the substantive cross-project dedup; leave `ReleaseFactsSensing` `safe` local, no SurfaceChecks ref).
+- [X] T030 [US4] [T1] **C6 done**: exported `Verdict.combineReasons` (`Verdict.fsi`); `Route.stakesOf` now calls `Verdict.combineReasons (tripped |> List.map (fun f -> f.Name))` — byte-identical (Kernel 73, Routing 23 green). Kernel/Verdict baseline blessed; diff is exactly the one `combineReasons` export (contract C6).
+- [-] T031 [US4] `SddHandoff.buildGate` — **RE-DEFERRED on #83 with rationale.** The duplication is a *documented, deliberate* choice: `Consumer.fs` states "Mirrors `Readiness.buildGate` (kept local — the helper is hidden behind each `.fsi`)". Deduping requires exposing an internal gate-builder on a public `.fsi`, trading a small same-project dup for a widened surface — against the author's intent and the ADR-0008 "duplication is intentional" ethos.
+- [ ] T032 [US4] **Conditional** `sha256Hex` (×4) → fence-gated Kernel home — **REMAINING** (land iff the fence suite stays green, else re-defer per FR-009).
+- [ ] T033 [US4] Verify per landed piece. C6 full-suite green; T029/T032 remain.
 
 ---
 

@@ -42,6 +42,13 @@ module Verdict =
     /// (FR-006, US2). `Pass` contributes no reason.
     val all: verdicts: Verdict list -> Verdict
 
+    /// Combine a list of `"; "`-delimited reason strings into one order-, nesting-, and
+    /// duplication-independent reason: split each on the reserved `"; "` separator (dropping empties),
+    /// de-duplicate, ordinal-sort (culture-invariant, byte-stable), and re-join with `"; "`. Exported
+    /// (111/A6) so `Route.stakesOf` reuses this exact convention over tripped-fence names instead of
+    /// re-spelling the pipeline.
+    val combineReasons: reasons: string list -> string
+
     /// Disjunction — "at least one of these must hold". Kleene semantics (FR-003):
     ///   any `Pass`  ⇒ `Pass`  · else any `Uncertain` ⇒ `Uncertain` · else `Fail`.
     /// The empty list is the identity `Fail ""` (FR-009: nothing satisfied it; the

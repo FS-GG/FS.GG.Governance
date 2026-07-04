@@ -858,3 +858,4 @@ TYPE FS.GG.Governance.Kernel.VerdictModule
   [Method] FS.GG.Governance.Kernel.Verdict all(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Verdict])
   [Method] FS.GG.Governance.Kernel.Verdict any(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Kernel.Verdict])
   [Method] FS.GG.Governance.Kernel.Verdict negate(FS.GG.Governance.Kernel.Verdict)
+  [Method] System.String combineReasons(Microsoft.FSharp.Collections.FSharpList`1[System.String])
