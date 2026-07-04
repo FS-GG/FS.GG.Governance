@@ -1,9 +1,9 @@
-# Adopter onboarding: empty directory → buildable, governed product
+# Adopter onboarding: empty directory → buildable, governed workspace
 
 **Audience**: a newcomer adopting FS.GG.Governance who wants a runnable F#/.NET
-product scaffolded and placed under governance. **Outcome (SC-001)**: in under 15
+workspace scaffolded and placed under governance. **Outcome (SC-001)**: in under 15
 minutes, with no boilerplate to hand-write, you go from an empty directory to a
-product that `dotnet build`s and is ready for the Governance lifecycle.
+workspace that `dotnet build`s and is ready for the Governance lifecycle.
 
 > **Anchored, not rotting (FR-008).** The scaffold → build → manifest steps below
 > map 1:1 to assertions the worked-example test
@@ -26,7 +26,7 @@ and these tutorials. It is **not** a change to `fsgg-sdd init`.
 
 ## Layer ordering: lifecycle first, runtime second
 
-A governed product has two layers:
+A governed workspace has two layers:
 
 1. **Lifecycle governance skeleton** (`.fsgg/`, `work/`, `readiness/`) — authored
    by the sibling-owned `fsgg-sdd init`. In the worked example this is a disclosed
@@ -102,7 +102,7 @@ path, so it is attributable to the provider id + contract version alone.
 > (FR-005, SC-005). They are documented by their own features, not asserted by the
 > worked example.
 
-Once the runtime product builds, the governed lifecycle proceeds with the
+Once the runtime app builds, the governed lifecycle proceeds with the
 Governance commands shipped by prior features:
 
 - **Govern** — author/refresh the `.fsgg` policy and routing inputs. For a curated,
@@ -113,7 +113,7 @@ Governance commands shipped by prior features:
 - **Verify** — `fsgg verify` runs the product-surface checks (feature 067/F24).
 - **Ship** — `fsgg ship` evaluates the release rules against the gathered evidence.
 
-For how the scaffolded product's SDD readiness feeds the Governance loop, see
+For how the scaffolded workspace's SDD readiness feeds the Governance loop, see
 [sdd-governance-handoff.md](./sdd-governance-handoff.md). To author your **own**
 provider instead of the reference one, see
 [provider-author.md](./provider-author.md).
