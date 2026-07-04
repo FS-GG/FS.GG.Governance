@@ -118,7 +118,7 @@
       "fs.gg.governance.adapters.designsystem": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.sddhandoff": {
@@ -133,7 +133,7 @@
       "fs.gg.governance.adapters.speckit": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.spi": {
@@ -305,12 +305,12 @@
       "fs.gg.governance.projectsensing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.DesignSystem": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.SddHandoff": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.SpecKit": "[1.0.0, )",
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )",
+          "FS.GG.Governance.Adapters.DesignSystem": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.SpecKit": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
-          "FS.GG.Governance.Host": "[1.0.0, )",
+          "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FSharp.Core": "[10.1.301, )"
         }
@@ -397,7 +397,7 @@
           "FS.GG.Governance.Findings": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
-          "FS.GG.Governance.FreshnessSensing": "[1.0.0, )",
+          "FS.GG.Governance.FreshnessSensing": "[0.1.0, )",
           "FS.GG.Governance.GateExecution": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",

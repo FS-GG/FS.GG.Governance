@@ -11,7 +11,7 @@
       "fs.gg.governance.adapters.designsystem": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.sddhandoff": {
@@ -26,7 +26,7 @@
       "fs.gg.governance.adapters.speckit": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[1.0.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.spi": {
