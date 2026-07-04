@@ -31,9 +31,35 @@ coverage/
 # Spec Kit extension catalog cache (machine-local, transient)
 .specify/extensions/.cache/
 
+# --- Evidence corpus policy (FS.GG.Governance) -------------------------------
+# This repo commits governance evidence AS THE AUDIT RECORD OF RECORD by design
+# — that is the repo's purpose. The durable-vs-transient boundary (per the SDD
+# transient-artifact taxonomy, FS-GG/FS.GG.SDD#110 / this repo #85) is:
+#
+#   DURABLE — intentionally committed, do NOT gitignore:
+#     * surface-drift baselines (surface/**, *.txt) — these ARE the api-compat
+#       contract and the surface-drift gate's source of truth;
+#     * golden fixtures + snapshots (tests/**/goldens, **/snapshots) — pinned
+#       expected output the tests compare against;
+#     * .fsgg/*.yml sample + fixture config (governance/policy/capabilities/
+#       tooling/release) — authored inputs, not run output;
+#     * SDD artifacts (specs/*/spec.md, plan.md, tasks.md, contracts, research).
+#
+#   TRANSIENT — machine-regenerated per run, never committed (ignored below):
+#     * specs/<feature>/readiness/ — per-run readiness evidence (0 committed
+#       here; no per-feature re-inclusion whack-a-mole, unlike Rendering);
+#     * .fsgg/*.json — CLI-emitted run outputs (gates.json, evidence.json,
+#       evidence-reuse.json); the .fsgg *inputs* are .yml and stay committed.
+# -----------------------------------------------------------------------------
+
 # Per-feature readiness evidence is transient test output (written into
 # specs/<feature>/readiness/); regenerated on every run, never committed.
 specs/*/readiness/
+
+# CLI-emitted evidence run outputs (never committed; .fsgg/*.yml inputs are).
+# **/ so it matches whether the tool runs at the repo root or inside a
+# sample/fixture .fsgg/ dir.
+**/.fsgg/*.json
 
 # macOS / Linux cruft
 .DS_Store
