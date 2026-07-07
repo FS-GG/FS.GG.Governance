@@ -1,1 +1,3 @@
-{"feature_directory":"specs/111-review-deferred-tail"}
+{
+  "feature_directory": "specs/112-dry-run-gate"
+}

@@ -587,6 +587,7 @@
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.HumanRender": "[0.1.0, )",
           "FS.GG.Governance.HumanText": "[0.1.0, )",
+          "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FS.GG.Governance.Provenance": "[0.1.0, )",
           "FS.GG.Governance.ProvenanceJson": "[0.1.0, )",
           "FS.GG.Governance.Route": "[0.1.0, )",
