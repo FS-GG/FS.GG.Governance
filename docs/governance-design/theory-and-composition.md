@@ -301,18 +301,31 @@ it is one more algebra over the same `Check`.
 
 ## Prior art that validates the whole bet
 
-Shipping policy engines made the same core choices, which is the strongest
-external confirmation:
+Shipping policy engines made the same *architectural* choices — rules as data, a
+separate engine, deterministic combination — which is strong external confirmation
+of the **shape** of the design. The analogy is architectural, not domain-identical:
+these are **runtime allow/deny authorization** systems, whereas FS.GG governs
+**build/merge-time artifacts**. What carries over is that the encoding works at
+scale, not that we are solving the same problem.
 
-- **Cedar** (AWS authorization, OOPSLA 2024) reifies policies as data, evaluates
-  them with a separate engine, runs *multiple interpreters* (enforcement plus an
-  SMT analyser) over the same reified policies, and combines them deterministically
-  ("forbid trumps permit, default deny").
-- **OPA / Rego** is a declarative, Datalog-derived policy language that separates
-  *what* a query returns from *how* it executes.
+- **Cedar** (AWS authorization, OOPSLA 2024) is the strong validation: it reifies
+  policies as data, evaluates them with a separate engine, runs *multiple
+  interpreters* over the same reified policies (enforcement plus an SMT analyser —
+  Cedar Analysis, CVC5, open-sourced 2025), and combines them deterministically
+  ("forbid trumps permit, default deny"). That is the whole bet — reify, fold
+  several interpreters, combine deterministically — shipped and peer-reviewed.
+- **OPA / Rego** is a *partial* precedent. It confirms reifying rules as data and
+  separating *what* a query returns from *how* it executes, but it does **not**
+  carry the "multiple interpreters folded and deterministically combined" property
+  — that is specific to Cedar. OPA's decision logic is whatever a given policy
+  computes, so it validates the rules-as-data half of the design, not the
+  multi-interpreter fold.
 
-Both are direct prior art for "reify rules as data, fold several interpreters over
-them, combine deterministically" — our design at industrial scale.
+Both are prior art for "reify rules as data and separate evaluation from
+definition"; **Cedar alone** additionally validates "fold several interpreters
+over them and combine deterministically." Neither is our design "at industrial
+scale" — both adjudicate runtime access, not build-time artifacts, so the
+precedent is the architecture, not the use case.
 
 ## Honest caveats
 
