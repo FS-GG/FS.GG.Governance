@@ -30,6 +30,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 112: the PURE dry-run simulation core + its projections. Placed before Loop (which consumes them
+         in the dry-run branch); each .fsi immediately precedes its .fs (F# signature-pairing rule). -->
+    <Compile Include="Simulate.fsi" />
+    <Compile Include="Simulate.fs" />
+    <Compile Include="SimulateProjection.fsi" />
+    <Compile Include="SimulateProjection.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />

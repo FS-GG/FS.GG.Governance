@@ -75,7 +75,8 @@ module Loop =
           PersistStore: bool
           ExplicitPlain: bool
           CostBudgetOut: string
-          ProvenanceOut: string }
+          ProvenanceOut: string
+          DryRun: bool }
 
     type UsageError =
         | UnknownFlag of string
@@ -187,7 +188,8 @@ module Loop =
           Persist: bool
           Plain: bool
           CostBudgetOut: string option
-          ProvenanceOut: string option }
+          ProvenanceOut: string option
+          DryRun: bool }
 
     let emptyAcc =
         { Repo = None
@@ -201,7 +203,8 @@ module Loop =
           Persist = false
           Plain = false
           CostBudgetOut = None
-          ProvenanceOut = None }
+          ProvenanceOut = None
+          DryRun = false }
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `ship` verb — the verb this command implements.
@@ -239,6 +242,7 @@ module Loop =
             | "--store" :: _ -> Error(MissingValue "--store")
             | "--json" :: more -> go { acc with Json = true } more
             | "--plain" :: more -> go { acc with Plain = true } more
+            | "--dry-run" :: more -> go { acc with DryRun = true } more
             | "--persist-store" :: more -> go { acc with Persist = true } more
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
@@ -293,7 +297,8 @@ module Loop =
                           PersistStore = acc.Persist
                           ExplicitPlain = acc.Plain
                           CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
-                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json") }
+                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json")
+                          DryRun = acc.DryRun }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
@@ -471,13 +476,19 @@ module Loop =
             let plan, _, budgetReport = shipPlan model
 
             let toExecute =
-                plan
-                |> List.choose (fun (g, c) ->
-                    match c with
-                    | CommandHost.ToExecute cmd -> Some(g.Id, cmd)
-                    | CommandHost.ToReuse _
-                    | CommandHost.Deferred _
-                    | CommandHost.NoCommand -> None)
+                // 112: a dry run executes NOTHING — no gate command is spawned (that is the "works without the
+                // installed runtime" property). Forcing `[]` here means `ExecuteGates []` ⇒ `GatesExecuted []` ⇒
+                // every gate is `NotExecuted` in `projectExecuted` (truthful absence, never a fabricated pass).
+                if model.Request.DryRun then
+                    []
+                else
+                    plan
+                    |> List.choose (fun (g, c) ->
+                        match c with
+                        | CommandHost.ToExecute cmd -> Some(g.Id, cmd)
+                        | CommandHost.ToReuse _
+                        | CommandHost.Deferred _
+                        | CommandHost.NoCommand -> None)
 
             { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
         | _ -> model, []
@@ -509,6 +520,31 @@ module Loop =
 
     let projectExecuted (records: (GateId * CommandRecord) list) (model: Model) : Model * Effect list =
         match model.Sensed, model.Store, model.Decision with
+        | Some sensed, Some store, Some decision when model.Request.DryRun ->
+            // 112 dry-run: NOTHING executed (records = []), NOTHING written, store NEVER persisted. The verdict
+            // is the pre-execution rollup (view-currency folded to mirror the real path); the printed output is
+            // the marked `SimulateProjection` with the handoff-sufficiency breakdown. We go STRAIGHT to the emit
+            // (Phase = Persisted so `Emitted` finalizes) — no `WriteArtifact`/`PersistStore` effect is emitted,
+            // so the interpreter never touches the filesystem (SC-003).
+            ignore (sensed, store)
+
+            let folded =
+                foldViewCurrencyVerdict model.Request.Mode model.Request.Profile model.ViewCurrencyFindings decision
+
+            let simulated = Simulate.assemble folded model.SelectedGates model.Handoffs
+            let jsonDoc = SimulateProjection.toJson simulated
+
+            let text =
+                match model.Request.Format with
+                | Json -> jsonDoc
+                | Text -> SimulateProjection.toText simulated
+
+            { model with
+                Phase = Persisted
+                Decision = Some folded
+                AuditDoc = Some jsonDoc },
+            [ EmitSummary(text, None, model.Request.ExplicitPlain) ]
+
         | Some sensed, Some store, Some decision ->
             let plan, inputsMap, budgetReport = shipPlan model
 
@@ -777,10 +813,15 @@ module Loop =
             | Emitted ->
                 // The verdict is information until the very end: only the terminal exit category differs
                 // between a pass and a fail (data-model §4). Map the decision's basis here.
+                // 112: a dry run is a PREVIEW — it exits 0 regardless of the simulated verdict (the verdict
+                // lives in the printed output, not the process exit code — contract "exit status").
                 let exit =
-                    model.Decision
-                    |> Option.map (fun d -> exitFromBasis d.ExitCodeBasis)
-                    |> Option.defaultValue Success
+                    if model.Request.DryRun then
+                        Success
+                    else
+                        model.Decision
+                        |> Option.map (fun d -> exitFromBasis d.ExitCodeBasis)
+                        |> Option.defaultValue Success
 
                 { model with Phase = Done; Exit = exit }, []
 

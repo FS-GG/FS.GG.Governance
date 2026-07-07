@@ -346,7 +346,8 @@ let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.Ru
       PersistStore = false
       ExplicitPlain = false
       CostBudgetOut = "readiness/cost-budget.json"
-      ProvenanceOut = "readiness/provenance.json" }
+      ProvenanceOut = "readiness/provenance.json"
+      DryRun = false }
 
 /// A request under an explicit mode/profile lever set (for the two-lever-set / no-hide proofs).
 let requestForLevers (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) (mode: RunMode) (profile: Profile) : Loop.RunRequest =

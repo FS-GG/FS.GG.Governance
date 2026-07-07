@@ -26,7 +26,7 @@ let tests =
         "SurfaceDrift"
         [ SurfaceDrift.surfaceTest "ShipCommand" "FS.GG.Governance.ShipCommand" shipCommand
 
-          test "the public API surface is exactly the Loop + Interpreter modules (plus the Exe entry)" {
+          test "the public API surface is exactly the Loop + Interpreter (+ 112 dry-run) modules (plus the Exe entry)" {
               let typeNames = shipCommand.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
 
               Expect.isTrue
@@ -37,20 +37,25 @@ let tests =
                   (typeNames |> Array.exists (fun n -> n.Contains "FS.GG.Governance.ShipCommand.InterpreterModule"))
                   "Interpreter module is public"
 
-              // The ONLY non-Loop/Interpreter exported module is the thin `Program` Exe entry (an
-              // [<EntryPoint>] module is always public). No argv-matcher / composition / writer helper
-              // leaks — those are hidden by the two `.fsi` contracts (Principle II).
+              // The non-Loop/Interpreter exported modules are the thin `Program` Exe entry (an
+              // [<EntryPoint>] module is always public) and the 112 dry-run cores (`Simulate` +
+              // `SimulateProjection`) — the intended Tier-1 surface delta. No argv-matcher / composition /
+              // writer helper leaks — those stay hidden by the `.fsi` contracts (Principle II).
               let unexpected =
                   typeNames
                   |> Array.filter (fun n ->
                       not (
                           n.Contains "ShipCommand.LoopModule"
                           || n.Contains "ShipCommand.InterpreterModule"
+                          || n.Contains "ShipCommand.SimulateModule" // 112: dry-run simulation core
+                          || n.Contains "ShipCommand.SimulateProjectionModule" // 112: dry-run projections
                           || n.Contains "ShipCommand.Loop+" // nested DUs/records of Loop
                           || n.Contains "ShipCommand.Interpreter+" // nested types of Interpreter
+                          || n.Contains "ShipCommand.Simulate+" // nested DUs/records of Simulate
+                          || n.Contains "ShipCommand.SimulateProjection+" // nested types of SimulateProjection
                           || n.Contains "ShipCommand.Program"))
 
-              Expect.isEmpty unexpected (sprintf "only Loop/Interpreter (+ Program entry) are public; found extra: %A" unexpected)
+              Expect.isEmpty unexpected (sprintf "only Loop/Interpreter/Simulate/SimulateProjection (+ Program entry) are public; found extra: %A" unexpected)
           }
 
           SurfaceDrift.referencesOnly

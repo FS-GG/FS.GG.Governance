@@ -490,11 +490,12 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+Phase+Tags
   [Field] Int32 Selected
   [Field] Int32 Sensed'
 TYPE FS.GG.Governance.ShipCommand.LoopModule+RunRequest
-  [Constructor] Void .ctor(System.String, ScopeSelector, RunMode, Profile, OutputFormat, System.String, System.String, Boolean, Boolean, System.String, System.String)
+  [Constructor] Void .ctor(System.String, ScopeSelector, RunMode, Profile, OutputFormat, System.String, System.String, Boolean, Boolean, System.String, System.String, Boolean)
   [Method] Boolean Equals(RunRequest)
   [Method] Boolean Equals(RunRequest, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_DryRun()
   [Method] Boolean get_ExplicitPlain()
   [Method] Boolean get_PersistStore()
   [Method] Int32 CompareTo(RunRequest)
@@ -512,6 +513,7 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+RunRequest
   [Method] System.String get_ProvenanceOut()
   [Method] System.String get_Repo()
   [Method] System.String get_StorePath()
+  [Property] Boolean DryRun
   [Property] Boolean ExplicitPlain
   [Property] Boolean PersistStore
   [Property] OutputFormat Format
@@ -620,3 +622,97 @@ TYPE FS.GG.Governance.ShipCommand.Program
   [Method] Int32 main(System.String[])
   [Method] System.String categoryToken(ExitDecision)
   [Method] System.String usageMessage(UsageError)
+TYPE FS.GG.Governance.ShipCommand.SimulateModule
+  [Method] SignalClass classify(DeclaredState, Boolean)
+  [Method] SimulatedResult assemble(ShipDecision, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
+  [NestedType] FS.GG.Governance.ShipCommand.SimulateModule+SignalClass
+  [NestedType] FS.GG.Governance.ShipCommand.SimulateModule+SignalSufficiency
+  [NestedType] FS.GG.Governance.ShipCommand.SimulateModule+SimulatedResult
+  [NestedType] FS.GG.Governance.ShipCommand.SimulateModule+Sufficiency
+TYPE FS.GG.Governance.ShipCommand.SimulateModule+SignalClass
+  [Method] Boolean Equals(SignalClass)
+  [Method] Boolean Equals(SignalClass, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsNotRequired()
+  [Method] Boolean get_IsRequiredAbsent()
+  [Method] Boolean get_IsRequiredSatisfied()
+  [Method] Int32 CompareTo(SignalClass)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SignalClass get_NotRequired()
+  [Method] SignalClass get_RequiredAbsent()
+  [Method] SignalClass get_RequiredSatisfied()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.ShipCommand.SimulateModule+SignalClass+Tags
+  [Property] Boolean IsNotRequired
+  [Property] Boolean IsRequiredAbsent
+  [Property] Boolean IsRequiredSatisfied
+  [Property] Int32 Tag
+  [Property] SignalClass NotRequired
+  [Property] SignalClass RequiredAbsent
+  [Property] SignalClass RequiredSatisfied
+TYPE FS.GG.Governance.ShipCommand.SimulateModule+SignalClass+Tags
+  [Field] Int32 NotRequired
+  [Field] Int32 RequiredAbsent
+  [Field] Int32 RequiredSatisfied
+TYPE FS.GG.Governance.ShipCommand.SimulateModule+SignalSufficiency
+  [Constructor] Void .ctor(System.String, SignalClass)
+  [Method] Boolean Equals(SignalSufficiency)
+  [Method] Boolean Equals(SignalSufficiency, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SignalSufficiency)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SignalClass get_Class()
+  [Method] System.String ToString()
+  [Method] System.String get_Signal()
+  [Property] SignalClass Class
+  [Property] System.String Signal
+TYPE FS.GG.Governance.ShipCommand.SimulateModule+SimulatedResult
+  [Constructor] Void .ctor(ShipDecision, Sufficiency, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic])
+  [Method] Boolean Equals(SimulatedResult)
+  [Method] Boolean Equals(SimulatedResult, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SimulatedResult)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] get_HandoffDiagnostics()
+  [Method] ShipDecision get_Decision()
+  [Method] Sufficiency get_Sufficiency()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] HandoffDiagnostics
+  [Property] ShipDecision Decision
+  [Property] Sufficiency Sufficiency
+TYPE FS.GG.Governance.ShipCommand.SimulateModule+Sufficiency
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.SimulateModule+SignalSufficiency], Int32, Boolean)
+  [Method] Boolean Equals(Sufficiency)
+  [Method] Boolean Equals(Sufficiency, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_AllNotEvaluated()
+  [Method] Int32 CompareTo(Sufficiency)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_RequiredAbsentCount()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.SimulateModule+SignalSufficiency] get_Signals()
+  [Method] System.String ToString()
+  [Property] Boolean AllNotEvaluated
+  [Property] Int32 RequiredAbsentCount
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.ShipCommand.SimulateModule+SignalSufficiency] Signals
+TYPE FS.GG.Governance.ShipCommand.SimulateProjectionModule
+  [Method] System.String get_schemaVersion()
+  [Method] System.String toJson(SimulatedResult)
+  [Method] System.String toText(SimulatedResult)
+  [Property] System.String schemaVersion

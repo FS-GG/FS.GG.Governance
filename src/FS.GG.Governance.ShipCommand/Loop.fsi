@@ -77,7 +77,13 @@ module Loop =
           CostBudgetOut: string
           /// F25 wiring (064): the deterministic provenance sidecar path (`--provenance-out`); default
           /// `<repo>/readiness/provenance.json`. A NEW contract (`fsgg.provenance/v1`).
-          ProvenanceOut: string }
+          ProvenanceOut: string
+          /// 112 (`--dry-run`): when `true`, run the SIMULATED gate — no gate command is executed (every
+          /// selected gate is `NotExecuted`), NOTHING is written to `readiness/` and the store is never
+          /// persisted, and the printed output is the marked `SimulateProjection` (schema `fsgg.audit.dryrun/v1`)
+          /// with a handoff-sufficiency breakdown. A preview: the process exits 0 regardless of the simulated
+          /// verdict. `false` ⇒ the ordinary ship path, byte-identical to before (spec FR-005/FR-006).
+          DryRun: bool }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2 (research D9). `UnrecognizedMode`/
     /// `UnrecognizedProfile` carry the offending string from F023 `recognizeMode`/`recognizeProfile`
