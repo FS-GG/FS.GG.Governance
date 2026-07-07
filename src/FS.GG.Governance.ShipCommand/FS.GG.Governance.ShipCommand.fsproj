@@ -59,6 +59,9 @@
     <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
+    <!-- 112: the shared 073 compact deterministic JSON writer, used by SimulateProjection.toJson (the same
+         leaf AuditJson uses — already in ShipCommand's transitive closure, so a direct edge is fence-sound). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
     <!-- F27 wiring (063): the plain human projection over the SAME ShipDecision the audit.json path serializes -->
     <ProjectReference Include="../FS.GG.Governance.HumanText/FS.GG.Governance.HumanText.fsproj" />
     <!-- F27 wiring (063): the rich render + capability sensing at the edge (Spectre stays confined here) -->

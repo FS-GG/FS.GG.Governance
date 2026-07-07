@@ -532,17 +532,17 @@ module Loop =
                 foldViewCurrencyVerdict model.Request.Mode model.Request.Profile model.ViewCurrencyFindings decision
 
             let simulated = Simulate.assemble folded model.SelectedGates model.Handoffs
-            let jsonDoc = SimulateProjection.toJson simulated
 
+            // The output is the final string emitted inline below (never through renderJson/WriteArtifact),
+            // so it is computed per-format — no wasted `toJson` on the text path and no dead `AuditDoc` write.
             let text =
                 match model.Request.Format with
-                | Json -> jsonDoc
+                | Json -> SimulateProjection.toJson simulated
                 | Text -> SimulateProjection.toText simulated
 
             { model with
                 Phase = Persisted
-                Decision = Some folded
-                AuditDoc = Some jsonDoc },
+                Decision = Some folded },
             [ EmitSummary(text, None, model.Request.ExplicitPlain) ]
 
         | Some sensed, Some store, Some decision ->

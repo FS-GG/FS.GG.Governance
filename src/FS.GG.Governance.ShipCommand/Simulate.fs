@@ -32,6 +32,13 @@ module Simulate =
           Sufficiency: Sufficiency
           HandoffDiagnostics: Diagnostic list }
 
+    // The sufficiency breakdown classifies the handoff's *declared* evidence — a preview heuristic over what the
+    // producer wrote, NOT the kernel's taint-closed *effective* state. The effective state (e.g. a `Real` node
+    // resting on a `Synthetic` one tainted to auto-synthetic) is what drives the actual verdict via
+    // `Consumer.consume` → `Ship.rollup`, and that authoritative verdict is carried on `SimulatedResult.Decision`
+    // (`verdict`/`blockers`). So the top-line verdict is never rosier than reality; only this supplementary
+    // signal view reads the declared state, by design (see `.fsi` — "declared evidence signals").
+    //
     // Stale evidence is never sufficient regardless of declared state (the Governance-owned freshness flag).
     // Otherwise: only `Real` is satisfied; the not-yet/failed states are absent gaps; deliberately deferred /
     // accepted / disclosed-synthetic states are NOT counted as gaps (they are declared choices, not omissions).

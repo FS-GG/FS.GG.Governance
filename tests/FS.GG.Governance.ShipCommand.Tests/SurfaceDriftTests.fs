@@ -71,6 +71,7 @@ let tests =
                   || n = "FS.GG.Governance.Enforcement"
                   || n = "FS.GG.Governance.Ship"
                   || n = "FS.GG.Governance.AuditJson"
+                  || n = "FS.GG.Governance.JsonText" // 112: shared compact JSON writer for SimulateProjection
                   || n = "FS.GG.Governance.HumanText"
                   || n = "FS.GG.Governance.HumanRender"
                   || n = "FS.GG.Governance.CacheEligibility"

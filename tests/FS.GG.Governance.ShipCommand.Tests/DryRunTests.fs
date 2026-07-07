@@ -132,7 +132,7 @@ let tests =
               let cap = newCapture ()
               runDry Loop.Json fakeExecPort cap [ handoffRead allAbsentJson ] |> ignore
               let json = List.head cap.Emits
-              Expect.stringContains json "\"allNotEvaluated\": true" "nothing real was carried ⇒ allNotEvaluated true"
+              Expect.stringContains json "\"allNotEvaluated\":true" "nothing real was carried ⇒ allNotEvaluated true"
 
               let capT = newCapture ()
               runDry Loop.Text fakeExecPort capT [ handoffRead allAbsentJson ] |> ignore
@@ -147,7 +147,7 @@ let tests =
               Expect.stringContains json "\"handoffDiagnostics\"" "the document carries a diagnostics block"
               Expect.stringContains json "malformed" "the malformed cause is surfaced"
               // A malformed handoff yields a blocking integrity gate ⇒ the simulated verdict is not a clean Pass.
-              Expect.stringContains json "\"verdict\": \"fail\"" "a defect-in-input is not emitted as Pass"
+              Expect.stringContains json "\"verdict\":\"fail\"" "a defect-in-input is not emitted as Pass"
           }
 
           // ── US3: machine-readable simulated document ──
@@ -156,7 +156,7 @@ let tests =
               runDry Loop.Json fakeExecPort cap [ handoffRead mixedJson ] |> ignore
               let json = List.head cap.Emits
               Expect.stringContains json "fsgg.audit.dryrun/v1" "distinct dry-run schema id"
-              Expect.stringContains json "\"simulated\": true" "explicit simulated marker"
+              Expect.stringContains json "\"simulated\":true" "explicit simulated marker"
               Expect.stringContains json "\"sufficiency\"" "carries the sufficiency block"
               Expect.isFalse (json.Contains "fsgg.audit/v2") "the real audit schema id never appears in simulated output"
               Expect.equal SimulateProjection.schemaVersion "fsgg.audit.dryrun/v1" "the projection's schema id is the distinct one"
