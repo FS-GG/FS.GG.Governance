@@ -10,15 +10,7 @@ open FS.GG.Governance.Tests.Common
 
 let private repoRoot = RepositoryHelpers.repoRoot
 
-// Touch a public member to force the library assembly to load, then locate it by name.
-let private testsCommonAsm =
-    RepositoryHelpers.repoRoot |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.Tests.Common"
-        | None -> false)
+let private testsCommonAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Tests.Common"
 
 [<Tests>]
 let tests =

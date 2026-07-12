@@ -2,18 +2,12 @@ module FS.GG.Governance.HumanText.Tests.DependencyBoundaryTests
 
 open Expecto
 open FS.GG.Governance.HumanText
+open FS.GG.Governance.Tests.Common
 
 // T047 [SC-007]: the pure HumanText library must NOT reference Spectre.Console (or any presentation
 // package). Spectre lives ONLY in FS.GG.Governance.HumanRender (FR-013, SC-007).
 
-let private humanTextAssembly =
-    RenderMode.selectMode true |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.HumanText"
-        | None -> false)
+let private humanTextAssembly = SurfaceDrift.assemblyNamed "FS.GG.Governance.HumanText"
 
 [<Tests>]
 let tests =

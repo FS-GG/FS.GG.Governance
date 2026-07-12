@@ -8,16 +8,7 @@ open FS.GG.Governance.EvidenceReuse.Model
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private evidenceReuseAsm =
-    EvidenceReuse.empty |> ignore
-    EvidenceReuse.referenceValue (EvidenceRef "load") |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.EvidenceReuse"
-        | None -> false)
+let private evidenceReuseAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.EvidenceReuse"
 
 [<Tests>]
 let tests =

@@ -9,16 +9,7 @@ open FS.GG.Governance.VerdictReuse.Model
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private verdictReuseAsm =
-    Model.inputGroup ModelIdInput |> ignore
-    VerdictReuse.referenceValue (VerdictRef "load") |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.VerdictReuse"
-        | None -> false)
+let private verdictReuseAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerdictReuse"
 
 [<Tests>]
 let tests =

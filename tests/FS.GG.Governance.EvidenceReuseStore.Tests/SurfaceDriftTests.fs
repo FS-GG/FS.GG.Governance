@@ -7,16 +7,7 @@ open FS.GG.Governance.EvidenceReuseStore
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-// EvidenceReuseStore exports only the module (no public types). Touch a member to force the library assembly
-// to load, then locate it by name among the loaded assemblies.
-let private evidenceReuseStore =
-    EvidenceReuseStore.schemaVersion |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.EvidenceReuseStore"
-        | None -> false)
+let private evidenceReuseStore = SurfaceDrift.assemblyNamed "FS.GG.Governance.EvidenceReuseStore"
 
 [<Tests>]
 let tests =

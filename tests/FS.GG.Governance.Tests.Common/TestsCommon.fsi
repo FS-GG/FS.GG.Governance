@@ -116,6 +116,22 @@ module SurfaceDrift =
     open System.Reflection
     open Expecto
 
+    /// Resolve the assembly under test by simple name, loading it if it is not loaded yet. The DLL is
+    /// in the test's output dir via the project reference, so the load always resolves.
+    ///
+    /// Use this instead of scanning `AppDomain.CurrentDomain.GetAssemblies()`. That scan only sees what
+    /// has ALREADY loaded, and .NET loads referenced assemblies lazily, so it needs the caller to force
+    /// the load first — which fails in two ways we have now hit for real:
+    ///
+    ///   * A *bare-value* touch (`Foo.someValue |> ignore`) has no observable effect, so Release elides
+    ///     it. The scan then finds nothing and `Array.find` throws from a module initializer — i.e. at
+    ///     test DISCOVERY, so the suite never runs and never reports a failed test. The run prints no
+    ///     `Failed!` line at all and only the exit code dissents (#149: 22 suites, invisibly).
+    ///   * Even a sound touch only loads what it transitively executes. A referenced-but-not-yet-executed
+    ///     assembly can still be absent on a cold CI process, where the ambient load set differs from a
+    ///     warm local run (first seen in 102).
+    val assemblyNamed: name: string -> Assembly
+
     /// Canonical reflective projection of an assembly's public surface — byte-identical to the
     /// projection every committed `surface/*.surface.txt` baseline was blessed against.
     val renderSurface: asm: Assembly -> string

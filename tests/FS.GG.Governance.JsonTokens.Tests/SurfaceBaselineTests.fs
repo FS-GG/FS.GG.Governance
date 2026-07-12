@@ -3,21 +3,12 @@ module FS.GG.Governance.JsonTokens.Tests.SurfaceBaselineTests
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.JsonTokens
-open FS.GG.Governance.Config.Model
 
 // Reflective API surface-drift + dependency/scope-hygiene checks for the 073 JsonTokens leaf
 // (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3). The bespoke forbidden-edge scope
 // guard stays inline (it is a deny-list, not an allow-list).
 
-// Touch a public member to force the library assembly to load, then locate it by name.
-let private jsonTokensAsm =
-    JsonTokens.costToken Cheap |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.JsonTokens"
-        | None -> false)
+let private jsonTokensAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.JsonTokens"
 
 [<Tests>]
 let tests =

@@ -5,6 +5,7 @@ open System.IO
 open System.Reflection
 open Expecto
 open FS.GG.Governance.RouteCommand
+open FS.GG.Governance.Tests.Common
 
 // 100 (M-ARCH-2): re-homed from RouteCommand.Tests. Reflective API surface-drift + dependency/scope-hygiene
 // checks (Principle II) for the FS.GG.Governance.RoutePipeline library, which now owns the route pipeline.
@@ -14,15 +15,7 @@ open FS.GG.Governance.RouteCommand
 
 let private repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
-let private routePipeline =
-    // Touch a member to force the library assembly to load, then locate it by name.
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.RoutePipeline"
-        | None -> false)
+let private routePipeline = SurfaceDrift.assemblyNamed "FS.GG.Governance.RoutePipeline"
 
 let private baselinePath =
     Path.Combine(repoRoot, "surface", "FS.GG.Governance.RoutePipeline.surface.txt")

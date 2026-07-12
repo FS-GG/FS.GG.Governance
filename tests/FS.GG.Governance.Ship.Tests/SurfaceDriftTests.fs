@@ -2,21 +2,11 @@ module FS.GG.Governance.Ship.Tests.SurfaceDriftTests
 
 open Expecto
 open FS.GG.Governance.Tests.Common
-open FS.GG.Governance.Ship.Model
 
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
 // SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member to force the library assembly to load, then locate it by name among the loaded
-// assemblies.
-let private shipAsm =
-    (Pass: Verdict) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.Ship"
-        | None -> false)
+let private shipAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Ship"
 
 [<Tests>]
 let tests =

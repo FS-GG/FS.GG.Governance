@@ -7,16 +7,7 @@ open FS.GG.Governance.AuditJson
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
 // SurfaceDrift helper (101/M-CI-3). The "exactly one module" leak guard stays inline.
 
-// AuditJson exports only the module (no public types). Touch a member to force the library assembly to
-// load, then locate it by name among the loaded assemblies.
-let private auditJson =
-    AuditJson.schemaVersion |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.AuditJson"
-        | None -> false)
+let private auditJson = SurfaceDrift.assemblyNamed "FS.GG.Governance.AuditJson"
 
 [<Tests>]
 let tests =

@@ -7,15 +7,7 @@ open FS.GG.Governance.RouteExplain
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1), now via the shared
 // SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of a public module to force the library assembly to load, then locate it by name.
-let private routeExplainAsm =
-    RouteExplain.highCostThreshold |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.RouteExplain"
-        | None -> false)
+let private routeExplainAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.RouteExplain"
 
 [<Tests>]
 let tests =

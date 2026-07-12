@@ -1,6 +1,5 @@
 module FS.GG.Governance.ShipCommand.Tests.SurfaceDriftTests
 
-open System
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.ShipCommand
@@ -10,15 +9,7 @@ open FS.GG.Governance.ShipCommand
 // public surface is exactly the `Loop` + `Interpreter` modules (the two `.fsi` contracts); the dependency
 // boundary is the NINE cores + BCL + FSharp.Core, and NO edge into the kernel-era Host/Cli (research D1).
 
-let private shipCommand =
-    // Touch a member to force the library assembly to load, then locate it by name.
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.ShipCommand"
-        | None -> false)
+let private shipCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.ShipCommand"
 
 [<Tests>]
 let tests =

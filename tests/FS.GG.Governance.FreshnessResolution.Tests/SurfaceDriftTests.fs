@@ -16,15 +16,7 @@ let private noSensed: SensedFacts =
       CoveredArtifacts = Map.empty
       CommandVersions = Map.empty }
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private freshnessResolutionAsm =
-    FreshnessResolution.entries (FreshnessResolution.resolve [] noSensed) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.FreshnessResolution"
-        | None -> false)
+let private freshnessResolutionAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.FreshnessResolution"
 
 [<Tests>]
 let tests =

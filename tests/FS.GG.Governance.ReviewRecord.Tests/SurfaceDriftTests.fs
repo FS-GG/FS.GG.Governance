@@ -3,23 +3,12 @@ module FS.GG.Governance.ReviewRecord.Tests.SurfaceDriftTests
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.ReviewRecord
-open FS.GG.Governance.ReviewRecord.Tests.Support
 
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1, SC-006), now via the
 // shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
 let private reviewRecordAsm =
-    let loadRecord =
-        buildOf baseRequest (modelId "m") (modelVersion "v") (promptHash "p") [] (responseDigest "r") (recordedVerdict "x") []
-
-    ReviewRecord.identityValue (ReviewRecord.canonicalId loadRecord) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.ReviewRecord"
-        | None -> false)
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.ReviewRecord"
 
 [<Tests>]
 let tests =

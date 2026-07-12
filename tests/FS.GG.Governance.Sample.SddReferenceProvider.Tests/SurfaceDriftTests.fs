@@ -6,25 +6,12 @@ open System.Reflection
 open Expecto
 open FS.GG.Governance.Sample.SddReferenceProvider
 open FS.GG.Governance.Sample.SddReferenceProvider.Tests.Support
+open FS.GG.Governance.Tests.Common
 
 // Reflective surface-drift guard (Principle II). Reflection lives ONLY in this test. It checks the
 // sample provider's OWN additive baseline (blessed with BLESS_SURFACE=1), AND asserts the two generic-
 // CORE baselines are byte-identical to their committed form — the SC-006 no-delta guard proving the
 // generic seam gained no provider knowledge (contract R6, quickstart Scenario 5).
-
-/// Locate an assembly by simple name. Touching `SddReferenceProvider.providerId` nudges the provider graph
-/// to load, but .NET loads referenced assemblies LAZILY — a referenced-but-not-yet-executed assembly (e.g.
-/// `ScaffoldManifestJson` on a fresh CI process) may not be in `GetAssemblies()` yet. So fall back to an
-/// explicit `Assembly.Load` by simple name (the DLL is in this test's output dir via the project reference).
-/// (Surfaced by 102 when the suite first ran in CI: the ambient load set differs from a warm local run.)
-let private assemblyByName (name: string) : Assembly =
-    SddReferenceProvider.providerId |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.tryFind (fun a -> a.GetName().Name = name)
-    |> function
-        | Some a -> a
-        | None -> Assembly.Load name
 
 let private renderSurface (asm: Assembly) =
     let memberFlags =
@@ -49,7 +36,7 @@ let private baseline (name: string) =
 /// Assert a committed CORE baseline equals the live assembly surface WITHOUT ever blessing it (the core
 /// baselines are 071-owned — this feature must not touch them).
 let private assertCoreUnchanged (name: string) =
-    let actual = renderSurface (assemblyByName name)
+    let actual = renderSurface (SurfaceDrift.assemblyNamed name)
     let committed = File.ReadAllText(baseline name)
     Expect.equal
         (normalize actual)
@@ -61,7 +48,7 @@ let tests =
     testList
         "SurfaceDrift"
         [ test "sample provider public surface equals its own committed baseline" {
-              let actual = renderSurface (assemblyByName "FS.GG.Governance.Sample.SddReferenceProvider")
+              let actual = renderSurface (SurfaceDrift.assemblyNamed "FS.GG.Governance.Sample.SddReferenceProvider")
               let path = baseline "FS.GG.Governance.Sample.SddReferenceProvider"
 
               if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then

@@ -7,15 +7,8 @@ open FS.GG.Governance.FreshnessSensing
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, FR-014), now via the shared
 // SurfaceDrift helper (101/M-CI-3). The Tier-1 baseline for the shared sensing edge's public surface.
 
-// Touch a member to force the library assembly to load, then locate it by name.
 let private freshnessSensingAsm =
-    FreshnessSensing.realStoreReader |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.FreshnessSensing"
-        | None -> false)
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.FreshnessSensing"
 
 [<Tests>]
 let tests =

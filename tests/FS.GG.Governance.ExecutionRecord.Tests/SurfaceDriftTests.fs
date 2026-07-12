@@ -3,21 +3,11 @@ module FS.GG.Governance.ExecutionRecord.Tests.SurfaceDriftTests
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.ExecutionRecord
-open FS.GG.Governance.ExecutionRecord.Tests.Support
 
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-// ExecutionRecord exports only the module (no public types). Touch a member to force the library assembly to
-// load, then locate it by name among the loaded assemblies.
-let private executionRecord =
-    ExecutionRecord.digestOf bytesA |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.ExecutionRecord"
-        | None -> false)
+let private executionRecord = SurfaceDrift.assemblyNamed "FS.GG.Governance.ExecutionRecord"
 
 [<Tests>]
 let tests =

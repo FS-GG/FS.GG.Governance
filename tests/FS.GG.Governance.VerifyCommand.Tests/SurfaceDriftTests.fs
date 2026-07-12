@@ -1,6 +1,5 @@
 module FS.GG.Governance.VerifyCommand.Tests.SurfaceDriftTests
 
-open System
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.VerifyCommand
@@ -9,14 +8,7 @@ open FS.GG.Governance.VerifyCommand
 // SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library. The
 // public surface is exactly the `Loop` + `Interpreter` modules (the two `.fsi` contracts).
 
-let private verifyCommand =
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.VerifyCommand"
-        | None -> false)
+let private verifyCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerifyCommand"
 
 [<Tests>]
 let tests =

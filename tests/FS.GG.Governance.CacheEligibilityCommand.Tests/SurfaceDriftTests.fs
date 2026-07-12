@@ -1,6 +1,5 @@
 module FS.GG.Governance.CacheEligibilityCommand.Tests.SurfaceDriftTests
 
-open System
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.CacheEligibilityCommand
@@ -11,14 +10,7 @@ open FS.GG.Governance.CacheEligibilityCommand
 // the dependency boundary is the F022 selection cores + the cache cores (+ transitive FreshnessKey) — and
 // NO RouteJson/GatesJson/AuditJson/RouteCommand (C6).
 
-let private commandAsm =
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.CacheEligibilityCommand"
-        | None -> false)
+let private commandAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CacheEligibilityCommand"
 
 [<Tests>]
 let tests =

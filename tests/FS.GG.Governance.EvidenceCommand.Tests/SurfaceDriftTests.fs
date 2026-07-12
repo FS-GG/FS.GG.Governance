@@ -7,14 +7,7 @@ open FS.GG.Governance.EvidenceCommand
 // Reflective API surface-drift check (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3).
 // Reflection lives in the helper and here, never in the host.
 
-let private evidenceCommand =
-    Loop.exitCode Loop.Success |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.EvidenceCommand"
-        | None -> false)
+let private evidenceCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.EvidenceCommand"
 
 [<Tests>]
 let tests =

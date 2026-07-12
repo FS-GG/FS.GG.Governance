@@ -8,16 +8,7 @@ open FS.GG.Governance.AgentReviewKey.Model
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1), now via the shared
 // SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private agentReviewKeyAsm =
-    Model.inputToken ModelIdInput |> ignore
-    AgentReviewKey.value (CacheKey "load") |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.AgentReviewKey"
-        | None -> false)
+let private agentReviewKeyAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.AgentReviewKey"
 
 [<Tests>]
 let tests =
