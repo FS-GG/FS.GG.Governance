@@ -14,6 +14,7 @@ open System
 open System.IO
 open System.IO.Compression
 open System.Diagnostics
+open System.Reflection
 open Expecto
 open FS.GG.Governance.Tests.Common
 
@@ -28,6 +29,24 @@ let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml";
 let private contentPrefix = "contentFiles/any/any/.fsgg/"
 let private expectedVersion = "1.2.1.1"
 
+/// The configuration THIS assembly was built in, read from the attribute the SDK generates from
+/// $(Configuration) — the real build fact, not a guess (`#if DEBUG` would re-encode the assumption
+/// that the symbol implies the configuration; a path scrape would re-encode the output layout).
+/// The pack gate is shelled from inside our own `dotnet test` run and must target the tree the
+/// caller actually built, so it needs this (#148). Fail loud rather than assume a default: a silent
+/// "Debug" here is exactly the mismatch that made `dotnet test -c Release` red on a clean tree.
+///
+/// A function, not a module-level value, deliberately: a `let`-bound value would be computed in the
+/// module initializer, so this failure would throw at test DISCOVERY — no failed test, no `Failed!`
+/// line, just a crashed suite and a non-zero exit (the invisible failure mode of #149). Called from
+/// runPack, it fails as a red test that names the cause.
+let private buildConfiguration () =
+    match Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>() with
+    | null ->
+        failwith
+            "no AssemblyConfigurationAttribute on the test assembly — cannot tell the pack gate which configuration to run in (is GenerateAssemblyInfo disabled?)"
+    | attr -> attr.Configuration
+
 /// Run `dotnet fsi pack-reference-gate-set.fsx <args>` from the repo root; capture (exit, out, err).
 let private runPack (args: string list) : int * string * string =
     let psi = ProcessStartInfo "dotnet"
@@ -41,6 +60,10 @@ let private runPack (args: string list) : int * string * string =
     // We are already running under `dotnet test` for THIS project; tell the pack gate to run the
     // guard with --no-build so a nested run does not contend on rebuilding the loaded assembly.
     psi.Environment.["FSGG_PACK_GATE_NO_BUILD"] <- "1"
+    // …and --no-build only resolves against the tree we were actually built into, so the gate must
+    // run in OUR configuration, not a hard-coded one. Set here rather than per call site so every
+    // runPack is correct by construction (#148).
+    psi.Environment.["FSGG_PACK_GATE_CONFIGURATION"] <- buildConfiguration ()
     match Process.Start psi with
     | null -> failwith "dotnet fsi did not start"
     | p ->
@@ -176,5 +199,55 @@ let packageGuard =
                   Expect.equal (out.Trim()) "1.2.2.1" "bumping policy.yml's schemaVersion changes exactly the policy segment"
               finally
                   try Directory.Delete(src, true) with _ -> ()
+          }
+
+          // ── #148 — the nested gate runs in the CALLER's configuration, not a hard-coded one ──
+          //
+          // These assert the ACTUAL emitted gate command (via the script's --print-gate-command dry
+          // run), not a scraped duplicate of the rule. They are the reason this fix is guarded AT
+          // ALL: CI is Debug-only (#150), and in Debug a re-hard-coded `-c Debug` is
+          // indistinguishable from correct threading — which is exactly how #148 survived on a green
+          // main. Passing an EXPLICIT configuration that differs from the ambient one makes the
+          // Debug lane able to see the difference. Dry runs: no build, no gate, no pack.
+
+          test "#148 the gate targets the configuration the caller asked for, not a hard-coded Debug" {
+              let code, out, err = runPack [ "--print-gate-command"; "--configuration"; "Release" ]
+              Expect.equal code 0 (sprintf "--print-gate-command must succeed; stderr:\n%s" err)
+              Expect.stringContains out "-c Release" "an explicit --configuration must reach the nested gate"
+              // The flag must also WIN over the FSGG_PACK_GATE_CONFIGURATION runPack sets to OUR
+              // configuration — otherwise this assertion would pass vacuously in a Release run.
+              Expect.isFalse (out.Contains "-c Debug") "the explicit flag wins over the caller's env var"
+          }
+
+          // `--flag=value` is the form dotnet itself accepts, so it is the form habit produces. It
+          // used to be silently ignored — falling back to Debug, i.e. the very mismatch #148 fixes.
+          test "#148 the gate honours the --configuration=<cfg> form" {
+              let code, out, err = runPack [ "--print-gate-command"; "--configuration=Release" ]
+              Expect.equal code 0 (sprintf "--print-gate-command must succeed; stderr:\n%s" err)
+              Expect.stringContains out "-c Release" "--configuration=Release must reach the nested gate"
+          }
+
+          // With no explicit flag, the gate must run in the configuration the CALLER was built in —
+          // which runPack passes via FSGG_PACK_GATE_CONFIGURATION. This is the assertion that goes
+          // red in a Release run against the original hard-coded script.
+          test "#148 with no flag, the gate runs in the configuration this test assembly was built in" {
+              let code, out, err = runPack [ "--print-gate-command" ]
+              Expect.equal code 0 (sprintf "--print-gate-command must succeed; stderr:\n%s" err)
+              Expect.stringContains
+                  out
+                  (sprintf "-c %s" (buildConfiguration ()))
+                  "a --no-build gate only resolves against the tree its caller actually built"
+          }
+
+          // Fail loud, never guess (Principle VI): a dropped value silently gating the wrong tree is
+          // the failure this whole item is about.
+          test "#148 a --configuration with no value fails loudly instead of defaulting" {
+              let code, out, _ = runPack [ "--print-gate-command"; "--configuration" ]
+              Expect.notEqual code 0 (sprintf "a valueless --configuration must not silently default\nSTDOUT:\n%s" out)
+          }
+
+          test "#148 an unknown configuration fails loudly instead of gating an unintended tree" {
+              let code, out, _ = runPack [ "--print-gate-command"; "--configuration"; "Relase" ]
+              Expect.notEqual code 0 (sprintf "a typo'd configuration must be refused, not forwarded to MSBuild\nSTDOUT:\n%s" out)
           }
         ]
