@@ -4,6 +4,7 @@ open System
 open System.Reflection
 open Expecto
 open FS.GG.Governance.VerifyCommand
+open FS.GG.Governance.Tests.Common
 
 // 076 Phase C (T022): structural per-module guard over the three additive HOST FOLD seam modules
 // (SurfaceFold / ViewCurrencyFold / ReleasePreview). Asserts the additive module set is PRESENT and PUBLIC,
@@ -13,14 +14,7 @@ open FS.GG.Governance.VerifyCommand
 // Notes D1); this is the direct per-module assertion of the additive surface (vs only the aggregate drift
 // baseline). Reflection lives ONLY in tests.
 
-let private verifyCommand =
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.VerifyCommand"
-        | None -> false)
+let private verifyCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerifyCommand"
 
 let private exportedTypeNames =
     verifyCommand.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)

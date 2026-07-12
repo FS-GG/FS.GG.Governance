@@ -3,18 +3,12 @@ module FS.GG.Governance.VerifyCommand.Tests.ScopeGuardTests
 open System
 open Expecto
 open FS.GG.Governance.VerifyCommand
+open FS.GG.Governance.Tests.Common
 
 // T034 (Polish) — the network-free guarantee (FR-014/SC-007): the command's reachable assembly surface
 // references no networking assembly; reads are System.IO-only (the F054/ShipCommand scope-guard precedent).
 
-let private verifyCommand =
-    Loop.exitCode Loop.Success |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.VerifyCommand"
-        | None -> false)
+let private verifyCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerifyCommand"
 
 [<Tests>]
 let tests =

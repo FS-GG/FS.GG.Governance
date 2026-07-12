@@ -381,6 +381,8 @@ module SurfaceDrift =
     open System.Reflection
     open Expecto
 
+    let assemblyNamed (name: string) : Assembly = Assembly.Load(AssemblyName(name))
+
     let renderSurface (asm: Assembly) : string =
         let memberFlags =
             BindingFlags.Public

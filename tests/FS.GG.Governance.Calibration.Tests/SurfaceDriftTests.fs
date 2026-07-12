@@ -3,20 +3,11 @@ module FS.GG.Governance.Calibration.Tests.SurfaceDriftTests
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.Calibration
-open FS.GG.Governance.Calibration.Tests.Support
 
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1/D3, SC-007), now via
 // the shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private calibrationAsm =
-    Calibration.sampleCountValue (Calibration.observedSampleCount (evidenceOf 0 0)) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.Calibration"
-        | None -> false)
+let private calibrationAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Calibration"
 
 [<Tests>]
 let tests =

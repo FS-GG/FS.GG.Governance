@@ -8,15 +8,7 @@ open FS.GG.Governance.CommandHost
 // (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and
 // here. Blessed via BLESS_SURFACE=1 dotnet test.
 
-// Touch a public member to force the library assembly to load, then locate it by name.
-let private commandHostAsm =
-    CommandHost.under "." "x" |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.CommandHost"
-        | None -> false)
+let private commandHostAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CommandHost"
 
 [<Tests>]
 let tests =

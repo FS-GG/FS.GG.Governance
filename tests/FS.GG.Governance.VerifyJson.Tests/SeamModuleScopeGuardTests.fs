@@ -1,8 +1,8 @@
 module FS.GG.Governance.VerifyJson.Tests.SeamModuleScopeGuardTests
 
-open System
 open Expecto
 open FS.GG.Governance.VerifyJson
+open FS.GG.Governance.Tests.Common
 
 // 076 Phase C (T022): structural per-module guard over the four additive PROJECTION seam modules
 // (Core / SurfaceChecks / ReleaseReadiness / GeneratedViews). Asserts the additive module set is PRESENT and
@@ -11,14 +11,7 @@ open FS.GG.Governance.VerifyJson
 // the existing golden/determinism suites (Principle I, Notes D1); this is the direct per-module assertion of
 // the additive surface (vs only the aggregate drift baseline). Reflection lives ONLY in tests.
 
-let private verifyJson =
-    VerifyJson.schemaVersion |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.VerifyJson"
-        | None -> false)
+let private verifyJson = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerifyJson"
 
 let private exportedTypeNames =
     verifyJson.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)

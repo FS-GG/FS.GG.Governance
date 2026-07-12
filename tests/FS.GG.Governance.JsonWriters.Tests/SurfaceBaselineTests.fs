@@ -1,27 +1,16 @@
 module FS.GG.Governance.JsonWriters.Tests.SurfaceBaselineTests
 
-open System.IO
 open System.Text.Json
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.JsonWriters
-open FS.GG.Governance.EvidenceReuse.Model
 
 // Reflective API surface-drift + dependency/scope-hygiene checks for the 073 JsonWriters leaf
 // (Principle II), now via the shared SurfaceDrift helper (101/M-CI-3). The bespoke forbidden-edge scope
 // guard stays inline (it is a deny-list, not an allow-list).
 
-// Touch a public member to force the library assembly to load, then locate it by name.
 let private jsonWritersAsm =
-    use stream = new MemoryStream()
-    use w = new Utf8JsonWriter(stream)
-    JsonWriters.writeCause w NoPriorEvidence
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.JsonWriters"
-        | None -> false)
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.JsonWriters"
 
 [<Tests>]
 let tests =

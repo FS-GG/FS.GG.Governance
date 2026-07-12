@@ -7,16 +7,7 @@ open FS.GG.Governance.CacheEligibilityJson
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II), now via the shared
 // SurfaceDrift helper (101/M-CI-3). The "exactly one module" leak guard stays inline.
 
-// CacheEligibilityJson exports only the module (no public types). Touch a member to force the library
-// assembly to load, then locate it by name among the loaded assemblies.
-let private cacheEligibilityJson =
-    CacheEligibilityJson.schemaVersion |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.CacheEligibilityJson"
-        | None -> false)
+let private cacheEligibilityJson = SurfaceDrift.assemblyNamed "FS.GG.Governance.CacheEligibilityJson"
 
 [<Tests>]
 let tests =

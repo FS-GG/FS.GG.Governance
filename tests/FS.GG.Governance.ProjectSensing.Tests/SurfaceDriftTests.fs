@@ -5,6 +5,7 @@ open System.IO
 open System.Reflection
 open Expecto
 open FS.GG.Governance.Cli // the moved Project module keeps the FS.GG.Governance.Cli namespace
+open FS.GG.Governance.Tests.Common
 
 // 100 (M-ARCH-2): re-homed from Cli.Tests. Reflective API surface-drift + dependency-hygiene (Principle II)
 // for the FS.GG.Governance.ProjectSensing library, which now owns the F12 `Project` composition root and its
@@ -13,15 +14,7 @@ open FS.GG.Governance.Cli // the moved Project module keeps the FS.GG.Governance
 
 let private repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
-let private projectSensing =
-    // Touch a member to force the library assembly to load, then locate it by name.
-    Project.defaultJudge |> ignore
-
-    AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.ProjectSensing"
-        | None -> false)
+let private projectSensing = SurfaceDrift.assemblyNamed "FS.GG.Governance.ProjectSensing"
 
 let private baselinePath =
     Path.Combine(repoRoot, "surface", "FS.GG.Governance.ProjectSensing.surface.txt")

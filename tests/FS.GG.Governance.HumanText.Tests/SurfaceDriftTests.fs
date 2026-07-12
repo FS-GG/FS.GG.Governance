@@ -8,14 +8,7 @@ open FS.GG.Governance.HumanText
 // (101/M-CI-3). Reflection lives in the helper. The HumanText assembly is resolved from the loaded
 // app-domain after forcing a RenderMode load (preserved from the original test).
 
-let private humanText =
-    RenderMode.selectMode true |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.HumanText"
-        | None -> false)
+let private humanText = SurfaceDrift.assemblyNamed "FS.GG.Governance.HumanText"
 
 [<Tests>]
 let tests =

@@ -9,16 +9,7 @@ open FS.GG.Governance.PromptIsolation.Model
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1), now via the shared
 // SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private promptIsolationAsm =
-    excerpt (SizeBound 1) "x" |> ignore
-    PromptIsolation.assemble (QuestionText "load") [] |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.PromptIsolation"
-        | None -> false)
+let private promptIsolationAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.PromptIsolation"
 
 [<Tests>]
 let tests =

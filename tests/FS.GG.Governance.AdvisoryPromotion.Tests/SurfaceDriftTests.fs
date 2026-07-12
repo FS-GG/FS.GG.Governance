@@ -3,20 +3,11 @@ module FS.GG.Governance.AdvisoryPromotion.Tests.SurfaceDriftTests
 open Expecto
 open FS.GG.Governance.Tests.Common
 open FS.GG.Governance.AdvisoryPromotion
-open FS.GG.Governance.AdvisoryPromotion.Tests.Support
 
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, plan D1/D3, SC-007), now via
 // the shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private advisoryPromotionAsm =
-    AdvisoryPromotion.satisfiedBases (AdvisoryPromotion.decide (facts None 0 3 None)) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.AdvisoryPromotion"
-        | None -> false)
+let private advisoryPromotionAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.AdvisoryPromotion"
 
 [<Tests>]
 let tests =

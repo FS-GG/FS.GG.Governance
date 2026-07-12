@@ -8,15 +8,7 @@ open FS.GG.Governance.CacheEligibility
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, SC-008), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private cacheEligibilityAsm =
-    CacheEligibility.entries (CacheEligibility.evaluate [] EvidenceReuse.empty) |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.CacheEligibility"
-        | None -> false)
+let private cacheEligibilityAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CacheEligibility"
 
 [<Tests>]
 let tests =

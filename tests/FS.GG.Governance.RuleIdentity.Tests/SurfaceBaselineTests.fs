@@ -8,15 +8,7 @@ open FS.GG.Governance.RuleIdentity
 // now via the shared SurfaceDrift helper (101/M-CI-3). Reflection lives in the helper and here, never in the
 // library. Blessed via BLESS_SURFACE=1 (T025).
 
-// Touch a member of the public module to force the library assembly to load, then locate it by name.
-let private ruleIdentityAsm =
-    RuleIdentity.ruleIdToken (RuleIdentity.gate "load") |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.RuleIdentity"
-        | None -> false)
+let private ruleIdentityAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.RuleIdentity"
 
 [<Tests>]
 let tests =

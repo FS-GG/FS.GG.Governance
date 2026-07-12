@@ -80,4 +80,5 @@ TYPE FS.GG.Governance.Tests.Common.SurfaceDrift
   [Method] Expecto.Test noInboundReferences(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.Reflection.Assembly], System.Reflection.Assembly)
   [Method] Expecto.Test referencesOnly(System.String, Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean], System.Reflection.Assembly)
   [Method] Expecto.Test surfaceTest(System.String, System.String, System.Reflection.Assembly)
+  [Method] System.Reflection.Assembly assemblyNamed(System.String)
   [Method] System.String renderSurface(System.Reflection.Assembly)

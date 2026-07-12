@@ -9,15 +9,7 @@ open FS.GG.Governance.SensedMetadata.Model
 // check now runs via the shared SurfaceDrift helper (101/M-CI-3); the exports-shape and scope/forbidden-set
 // guards stay inline. Reflection lives in the helper and in these guards, never in the library.
 
-// Touch a member of each public module to force the library assembly to load, then locate it by name.
-let private sensedAsm =
-    SensedMetadata.renderingValue (SensedRendering "load") |> ignore
-
-    System.AppDomain.CurrentDomain.GetAssemblies()
-    |> Array.find (fun a ->
-        match Option.ofObj (a.GetName().Name) with
-        | Some n -> n = "FS.GG.Governance.SensedMetadata"
-        | None -> false)
+let private sensedAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.SensedMetadata"
 
 [<Tests>]
 let tests =
