@@ -110,6 +110,61 @@ jobs:
       - name: Test (full suite, bounded)
         run: dotnet fsi build.fsx test -c Debug --no-restore
 
+  # 150: every OTHER job in this file builds and tests exclusively in Debug, so `-c Release` had no
+  # coverage anywhere in CI — and `main` was green while `dotnet test -c Release` was red. That is not
+  # hypothetical: it hid TWO independent defects at once (#148, the pack script's nested G1–G7 gate
+  # hard-coding `-c Debug`; #149, the surface-drift assembly "touch" being elided in Release, crashing
+  # FreshnessSensing.Tests at discovery). Release is also the configuration the artifacts actually SHIP
+  # in (`pack` is always Release) and the reflex of anyone validating a change before merge — so an
+  # uncovered Release lane bills its cost to whoever next runs the obvious command, on a diff that has
+  # nothing to do with the breakage. One full Release suite catches this whole class.
+  #
+  # NAME IS A CONTRACT — see the note on full-test-suite. Until this context is registered in the
+  # "main branch protection" ruleset (id 18430843) the lane REPORTS WITHOUT GATING, which is the very
+  # defect it exists to close: main can still go green over a red Release. Arm it once it is green on
+  # main (a required check that never reports blocks every PR that predates it on a pending check).
+  full-test-suite-release:
+    name: Full test suite — Release (dotnet fsi build.fsx test -c Release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          # Warm the NuGet restore from the committed lockfiles. A lockfile change misses the cache and
+          # re-restores; --locked-mode below still validates the graph (FR-003/FR-006).
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      # Single enforcement point: locked restore against the committed packages.lock.json (mirrors the
+      # `gate` job) so a graph drift fails here too. Restore is configuration-independent — the assets
+      # file it writes serves both Debug and Release — so this is the same locked restore as elsewhere.
+      - name: Restore (locked)
+        run: |
+          set -euo pipefail
+          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
+            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
+            exit 1
+          fi
+
+      # GATE ON THE EXIT CODE, NOT ON THE LOG (#149). A crash at test DISCOVERY — a throwing module
+      # initializer, say — produces no "Failed!" line and tallies ZERO failures: #149 printed 64
+      # "Passed!" suites, 0 failed, and still exited 1. Any gate that greps the log for failures calls
+      # that green, and this lane would then repeat the bug it was added to catch. build.fsx propagates
+      # dotnet's exit code (FR-009), so the command's own status IS the gate — do not "improve" this
+      # step by parsing its output.
+      - name: Test (full suite, bounded, Release)
+        run: |
+          set -euo pipefail
+          if ! dotnet fsi build.fsx test -c Release --no-restore; then
+            echo '::error::Release test suite failed. NOTE: a "0 failed" tally does not mean green — a crash at test discovery reports no failed test and still exits non-zero (#149). Reproduce locally with: dotnet fsi build.fsx test -c Release'
+            exit 1
+          fi
+
   # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The three
   # managed build-config files (Directory.Build.props, Directory.Packages.props,
   # .config/dotnet-tools.json) must stay byte-identical to the org source of truth in
