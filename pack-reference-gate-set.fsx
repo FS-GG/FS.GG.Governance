@@ -18,6 +18,8 @@
 //   dotnet fsi pack-reference-gate-set.fsx --source <dir>       # read <dir>/.fsgg/*.yml instead of the default
 //   dotnet fsi pack-reference-gate-set.fsx --output <dir>       # pack into <dir> instead of nuget-local
 //   dotnet fsi pack-reference-gate-set.fsx --no-gate            # pack without the G1–G7 gate (CI runs the gate separately)
+//   dotnet fsi pack-reference-gate-set.fsx --configuration Release   # run the G1–G7 gate in Release (default: Debug)
+//   dotnet fsi pack-reference-gate-set.fsx --print-gate-command  # print the gate's dotnet args, no gate, no pack
 //
 // `--source <dir>`: <dir> is the directory that CONTAINS the `.fsgg/` folder; the script reads
 // <dir>/.fsgg/*.yml. Default <dir> = samples/sdd-reference-gate-set. It feeds BOTH the
@@ -29,6 +31,15 @@
 //
 // `--output <dir>`: pack destination; default ~/.local/share/nuget-local/. The guard test packs
 // into a temp dir so an automated run neither depends on nor pollutes the shared local feed.
+//
+// `--configuration <cfg>` (or FSGG_PACK_GATE_CONFIGURATION): the configuration the G1–G7 GATE runs
+// in; default Debug. It does NOT affect the pack, which is always Release — the shipped artifact is
+// content-only, so no gate configuration can change its bytes. This is an input, not a constant,
+// because the gate is sometimes shelled from INSIDE a `dotnet test` run of the guard project (the
+// package tests do exactly that, with FSGG_PACK_GATE_NO_BUILD) — and a `--no-build` gate pinned to
+// Debug points at a Debug tree a Release caller never built, so `dotnet test -c Release` was red on
+// a clean tree while Debug-only CI stayed green (#148). The caller passes the configuration it was
+// built in, and the two halves agree about which tree is in play.
 
 open System
 open System.IO
@@ -62,35 +73,74 @@ let guardTestProject =
 let nugetLocal =
     Path.Combine(Environment.GetFolderPath Environment.SpecialFolder.UserProfile, ".local", "share", "nuget-local")
 
-// ── Arg parsing ──
-let rawArgs = fsi.CommandLineArgs |> Array.toList |> List.tail // drop the script path
-
-let printVersionOnly = rawArgs |> List.contains "--print-version"
-let noGate = rawArgs |> List.contains "--no-gate"
-
-// `--source <dir>` (the directory that contains `.fsgg/`); default = the canonical sample dir.
-let rec readSource args =
-    match args with
-    | "--source" :: dir :: _ -> dir
-    | _ :: tail -> readSource tail
-    | [] -> defaultSource
-
-let sourceDir = readSource rawArgs
-let fsggDir = Path.Combine(sourceDir, ".fsgg")
-
-// `--output <dir>`: pack destination; default = the constitution-mandated local feed.
-let rec readOutput args =
-    match args with
-    | "--output" :: dir :: _ -> dir
-    | _ :: tail -> readOutput tail
-    | [] -> nugetLocal
-
-let outputDir = readOutput rawArgs
-
 /// Fail loud and closed (Principle VI): write an actionable message to stderr and exit non-zero.
 let fail (msg: string) : 'a =
     eprintfn "pack-reference-gate-set: %s" msg
     exit 1
+
+// ── Arg parsing ──
+let rawArgs = fsi.CommandLineArgs |> Array.toList |> List.tail // drop the script path
+
+let printVersionOnly = rawArgs |> List.contains "--print-version"
+let printGateCommandOnly = rawArgs |> List.contains "--print-gate-command"
+let noGate = rawArgs |> List.contains "--no-gate"
+
+/// Read a `--flag <value>` option. ONE scanner for all three of them: they were three copies of the
+/// same recursion, so a parsing bug had to be fixed three times (and was, in exactly one).
+///
+/// Accepts BOTH `--flag value` and `--flag=value` — the latter because `dotnet` itself accepts it,
+/// so it is the form a user's habit produces. A flag present with NO value is a hard failure, never
+/// a silent fallback to the default: these options decide which tree gets gated and where the
+/// artifact lands, and a silently-dropped `--configuration` is precisely the quiet Debug/Release
+/// mismatch #148 was.
+let rec readFlag (name: string) (args: string list) : string option =
+    let eq = name + "="
+
+    match args with
+    | k :: v :: _ when k = name -> Some v
+    | [ k ] when k = name -> fail (sprintf "%s requires a value (e.g. `%s Release`) — refusing to guess." name name)
+    | k :: _ when k.StartsWith(eq, StringComparison.Ordinal) ->
+        match k.Substring eq.Length with
+        | "" -> fail (sprintf "%s= was given an empty value — refusing to guess." name)
+        | v -> Some v
+    | _ :: tail -> readFlag name tail
+    | [] -> None
+
+// `--source <dir>` (the directory that contains `.fsgg/`); default = the canonical sample dir.
+let sourceDir = readFlag "--source" rawArgs |> Option.defaultValue defaultSource
+let fsggDir = Path.Combine(sourceDir, ".fsgg")
+
+// `--output <dir>`: pack destination; default = the constitution-mandated local feed.
+let outputDir = readFlag "--output" rawArgs |> Option.defaultValue nugetLocal
+
+// `--configuration <cfg>`: the configuration the G1–G7 gate runs in (NOT the pack, which is always
+// Release). Resolution order: explicit flag, then the FSGG_PACK_GATE_CONFIGURATION env var the
+// package guard sets alongside FSGG_PACK_GATE_NO_BUILD (a nested gate must run against the tree its
+// caller actually built), then Debug — the standalone/CI default, unchanged.
+//
+// Validated against the configurations this repo actually builds. MSBuild treats `Configuration` as
+// a free-form property, so an unvalidated typo (`Relase`) would quietly BUILD and gate a tree nobody
+// intended — a green gate over the wrong artifact. Fail loud instead (Principle VI).
+let knownConfigurations = [ "Debug"; "Release" ]
+
+let gateConfiguration =
+    let resolved =
+        match readFlag "--configuration" rawArgs with
+        | Some cfg -> cfg.Trim()
+        | None ->
+            match Environment.GetEnvironmentVariable "FSGG_PACK_GATE_CONFIGURATION" with
+            | v when String.IsNullOrWhiteSpace v -> "Debug"
+            | v -> v.Trim()
+
+    if not (knownConfigurations |> List.contains resolved) then
+        fail (
+            sprintf
+                "unknown configuration '%s' — expected one of: %s"
+                resolved
+                (String.concat ", " knownConfigurations)
+        )
+
+    resolved
 
 // ── Version derivation (FR-006/SC-003) ──
 // Version = "{governance}.{capabilities}.{policy}.{tooling}" — each segment is the file's own
@@ -140,6 +190,35 @@ let runDotnetWithEnv (env: (string * string) list) (args: string list) : int =
 let runDotnet = runDotnetWithEnv []
 
 // ── Main ──
+
+// FSGG_PACK_GATE_NO_BUILD: when the package guard shells this script from INSIDE its own
+// `dotnet test` run, a nested `dotnet test` that rebuilds the already-loaded guard assembly
+// would contend on the running DLL. The caller (which has just built the project) sets this so
+// the gate runs `--no-build` against the existing assembly — no rebuild, no contention. Unset
+// for standalone/CI use, where the gate builds the guard itself.
+let noBuildGate =
+    match Environment.GetEnvironmentVariable "FSGG_PACK_GATE_NO_BUILD" with
+    | null | "" | "0" -> false
+    | _ -> true
+
+let gateArgs =
+    [ "test"
+      guardTestProject
+      "-c"
+      gateConfiguration
+      "--filter"
+      "FullyQualifiedName~ReferenceGateSetGuard" ]
+    @ (if noBuildGate then [ "--no-build" ] else [])
+
+if printGateCommandOnly then
+    // Dry run: emit ONLY the gate's `dotnet` args, so the guard test can assert the ACTUAL emitted
+    // command rather than a scraped duplicate of the rule (the `--print-version` idiom, and
+    // build.fsx's `--print-command` before it). This is what lets the DEBUG-ONLY CI lane observe
+    // that the gate honours a Release caller: without it, a re-hard-coded `-c Debug` is
+    // indistinguishable from correct behaviour in Debug, which is how #148 survived. No gate, no pack.
+    printfn "%s" (String.Join(" ", gateArgs))
+    exit 0
+
 let version = derivedVersion ()
 
 if printVersionOnly then
@@ -156,24 +235,6 @@ if not noGate then
     // Point the 079 guard at <source> via the env var it honors (default = canonical), so a
     // `--source` temp copy with a broken invariant makes the gate fire (FR-004) without mutating
     // the canonical samples.
-    //
-    // FSGG_PACK_GATE_NO_BUILD: when the package guard shells this script from INSIDE its own
-    // `dotnet test` run, a nested `dotnet test` that rebuilds the already-loaded guard assembly
-    // would contend on the running DLL. The caller (which has just built the project) sets this so
-    // the gate runs `--no-build` against the existing assembly — no rebuild, no contention. Unset
-    // for standalone/CI use, where the gate builds the guard itself.
-    let noBuildGate =
-        match Environment.GetEnvironmentVariable "FSGG_PACK_GATE_NO_BUILD" with
-        | null | "" | "0" -> false
-        | _ -> true
-    let gateArgs =
-        [ "test"
-          guardTestProject
-          "-c"
-          "Debug"
-          "--filter"
-          "FullyQualifiedName~ReferenceGateSetGuard" ]
-        @ (if noBuildGate then [ "--no-build" ] else [])
     let gateExit =
         runDotnetWithEnv [ ("FSGG_REFERENCE_GATE_SET_DIR", Path.GetFullPath sourceDir) ] gateArgs
     if gateExit <> 0 then
