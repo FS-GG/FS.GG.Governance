@@ -119,10 +119,11 @@ jobs:
   # uncovered Release lane bills its cost to whoever next runs the obvious command, on a diff that has
   # nothing to do with the breakage. One full Release suite catches this whole class.
   #
-  # NAME IS A CONTRACT — see the note on full-test-suite. Until this context is registered in the
-  # "main branch protection" ruleset (id 18430843) the lane REPORTS WITHOUT GATING, which is the very
-  # defect it exists to close: main can still go green over a red Release. Arm it once it is green on
-  # main (a required check that never reports blocks every PR that predates it on a pending check).
+  # NAME IS A CONTRACT — as on full-test-suite, and as of #158 it binds: this context is REGISTERED in the
+  # "main branch protection" ruleset (id 18430843), so the lane GATES — a red Release blocks the merge,
+  # which is the defect it exists to close. The ruleset matches the `name:` below as an exact string, so a
+  # rename or typo means the required context never reports and EVERY PR blocks on a perpetually-pending
+  # check (it does not fail open — it wedges). Rename only by updating the ruleset in the same breath.
   full-test-suite-release:
     name: Full test suite — Release (dotnet fsi build.fsx test -c Release)
     runs-on: ubuntu-latest
