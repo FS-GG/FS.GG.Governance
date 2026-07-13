@@ -46,24 +46,29 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
-          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # NO NuGet cache, deliberately (#169, FS-GG/.github#429, ADR-0031).
+          #
+          # This previously read `cache: true`, justified as "speed only — --locked-mode still
+          # validates the graph". That justification was wrong, and it is the whole bug: NU1403 is
+          # raised by comparing the lock file against the copy of the package ALREADY PRESENT in the
+          # global-packages folder, so a cache hit means --locked-mode compares a record against a
+          # record and NEVER CONTACTS THE FEED. A cache that can decide the verdict is not a cache.
+          #
+          # The locked-restore action below now resolves into a fresh, empty NUGET_PACKAGES with the
+          # HTTP cache cleared, so this job's package folder is cold by construction and a
+          # setup-dotnet cache would be pure overhead (restored, then never read).
+          cache: false
 
-      # Locked restore is the single enforcement point. RestoreLockedMode is set in
-      # Directory.Build.props when GITHUB_ACTIONS=true and a lockfile exists; --locked-mode
-      # here forces it explicitly and gives one clear place to point at the regenerate command.
-      - name: Restore (locked)
-        run: |
-          set -euo pipefail
-          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
-            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
-            exit 1
-          fi
+      # Locked restore is the single enforcement point, and it is COLD — see the action. It restores
+      # into a fresh package folder against the real feed, so a lock file no fresh clone could
+      # restore fails HERE rather than sailing through on a warm hit.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: FS.GG.Governance.sln
 
-      # --no-restore: restore already happened above (exactly once). NU1603/NU1608 are
-      # promoted to errors in Directory.Build.props.
+      # --no-restore: restore already happened above (exactly once), into the cold NUGET_PACKAGES the
+      # action exported to GITHUB_ENV. NU1603/NU1608 are promoted to errors in Directory.Build.props.
       - name: Build (net10.0)
         run: dotnet build FS.GG.Governance.sln -c Debug --no-restore
 
@@ -89,20 +94,17 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # Warm the NuGet restore from the committed lockfiles. A lockfile change misses the cache and
-          # re-restores; --locked-mode below still validates the graph (FR-003/FR-006).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction, so a cache would be
+          # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
+          cache: false
 
-      # Single enforcement point: locked restore against the committed packages.lock.json (mirrors the
-      # `gate` job) so a graph drift fails here too, with one clear place pointing at the regenerate cmd.
-      - name: Restore (locked)
-        run: |
-          set -euo pipefail
-          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
-            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
-            exit 1
-          fi
+      # Single enforcement point: COLD locked restore against the committed packages.lock.json
+      # (mirrors the `gate` job) so a graph drift fails here too, with one clear place pointing at
+      # the regenerate command.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: FS.GG.Governance.sln
 
       # Whole suite via the bounded entrypoint (spec 080): `test` builds then runs EVERY test project in
       # the solution. --no-restore keeps the locked restore above as the single restore; no --no-build
@@ -136,21 +138,18 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # Warm the NuGet restore from the committed lockfiles. A lockfile change misses the cache and
-          # re-restores; --locked-mode below still validates the graph (FR-003/FR-006).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction, so a cache would be
+          # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
+          cache: false
 
-      # Single enforcement point: locked restore against the committed packages.lock.json (mirrors the
-      # `gate` job) so a graph drift fails here too. Restore is configuration-independent — the assets
-      # file it writes serves both Debug and Release — so this is the same locked restore as elsewhere.
-      - name: Restore (locked)
-        run: |
-          set -euo pipefail
-          if ! dotnet restore FS.GG.Governance.sln --locked-mode; then
-            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
-            exit 1
-          fi
+      # Single enforcement point: COLD locked restore against the committed packages.lock.json
+      # (mirrors the `gate` job) so a graph drift fails here too. Restore is configuration-independent
+      # — the assets file it writes serves both Debug and Release — so this is the same locked restore
+      # as elsewhere.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: FS.GG.Governance.sln
 
       # GATE ON THE EXIT CODE, NOT ON THE LOG (#149). A crash at test DISCOVERY — a throwing module
       # initializer, say — produces no "Failed!" line and tallies ZERO failures: #149 printed 64
@@ -214,14 +213,16 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
-          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction, so a cache would be
+          # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
+          cache: false
 
-      # Locked restore the guard project (and its references) so a graph drift fails here too.
-      - name: Restore (locked)
-        run: dotnet restore tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj --locked-mode
+      # COLD locked restore of the guard project (and its references) so a graph drift fails here too.
+      # Narrower target than the other jobs, deliberately: this job's scope is the one guard project.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.ReferenceGateSet.Tests/FS.GG.Governance.ReferenceGateSet.Tests.fsproj
 
       # Build once so the package guard can run the pre-pack G1–G7 gate against the already-built
       # assembly (the test sets FSGG_PACK_GATE_NO_BUILD so the nested gate uses --no-build).
@@ -259,14 +260,15 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the 166 committed lockfiles. A lockfile change
-          # misses the cache and re-restores; --locked-mode still validates the graph (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction, so a cache would be
+          # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
+          cache: false
 
-      # Locked restore (repo convention) so a graph drift fails here too.
-      - name: Restore (locked)
-        run: dotnet restore FS.GG.Governance.sln --locked-mode
+      # COLD locked restore (repo convention) so a graph drift fails here too.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: FS.GG.Governance.sln
 
       # The detector #r's the built leaf assemblies to GRADE through the real pure functions, so build first.
       # Bounded via build.fsx (the 162-project solution thrashes under default parallelism).
