@@ -4,8 +4,9 @@ description: >-
   FS-GG/.github#429, FS.GG.Governance#169). Restores in --locked-mode against the committed
   packages.lock.json so any dependency-graph drift, or a silently substituted version
   (NU1603) / out-of-range version (NU1608), fails the gate instead of resolving quietly.
-  Consolidates the formerly-5x-duplicated inline "Restore (locked)" step so the enforcement,
-  the error text, and the --force-evaluate regenerate hint live in exactly one place.
+  Consolidates the seven duplicated inline "Restore (locked)" steps (five in gate.yml, two in
+  publish.yml) so the enforcement, the error text, and the --force-evaluate regenerate hint live
+  in exactly one place.
 
   The restore is COLD by construction: it resolves into a fresh, empty package folder with the
   HTTP cache cleared, so --locked-mode validates the committed contentHash against THE FEED. A
@@ -25,7 +26,8 @@ inputs:
   target:
     description: >-
       The solution or single project file to restore in locked mode. Defaults to the whole
-      solution; the pack-guard job passes a single .fsproj to preserve its scope.
+      solution; the pack-guard, CLI-test, smoke and publish jobs pass a single .fsproj to keep
+      their restore scoped to what they actually build.
     required: false
     default: FS.GG.Governance.sln
 
@@ -67,10 +69,11 @@ runs:
           exit 0
         fi
 
-        # The restore failed against the feed. Rather than leave the author to guess which of
-        # the three plausible hashes is the right one (the committed one, the .nupkg's own
-        # SHA512, and the lock's contentHash are three DIFFERENT values — pasting the wrong one
-        # re-breaks the build), regenerate from the feed and print exactly what to commit.
+        # The restore failed against the feed. Several similar-looking base64 hashes sit around a
+        # NuGet package — the lock's contentHash, the .nupkg.sha512 sidecar, the .nupkg.metadata
+        # record — and they are NOT interchangeable, so an author hand-copying one out of an error
+        # message re-breaks the build as often as not. Regenerate from the feed instead and print
+        # exactly what to commit.
         echo "::group::what a cold restore from the feed actually resolves (commit this)"
         dotnet restore "$LOCKED_RESTORE_TARGET" --force-evaluate >/dev/null 2>&1 || true
         git --no-pager diff --stat -- '**/packages.lock.json' || true
