@@ -85,6 +85,10 @@ If the work is cross-repo (needs a change/release from *another* FS-GG repo), us
 ## The loop
 
 **Once per machine, first:** `dotnet tool install -g FS.GG.Coord.Cli`
+**And keep it current:** `dotnet tool update -g FS.GG.Coord.Cli` — a global tool does NOT self-update, and
+**a stale engine is worse than no engine** (#655). `fsgg-coord` carries a floor and REFUSES to shadow
+below it (a recorded skip, never an error), because engines before `0.1.1` mis-parse every dotfile path
+and will call a HELD item startable (#649).
 
 Optional, and safe to skip — `fsgg-coord` works exactly as before without it. What it buys is the
 **shadow** (ADR-0034): with an engine present, every `take`/`next`/`batch` is decided by *both* the
@@ -96,17 +100,20 @@ authoritative until that log has been clean across the live fleet for three cons
 log only fills where an engine exists. A worker without one contributes no evidence, and the clock
 does not move.
 
-**And when your loop is done, publish what it saw — your local log is not evidence until you do:**
+**Your evidence is published for you.** `done --flip` sends it to the fleet ledger as part of finishing
+the item — no extra step, nothing to remember (#656). This used to be a request, and across 28 workers and
+597 compared verdicts it was run **zero times**. Asking is not a mechanism.
+
+Run it by hand only if you stop without finishing an item:
 
 ```sh
-fsgg-coord divergence --publish                # one command, at the END of your run
+fsgg-coord divergence --publish                # your local log is not evidence until it is published
 fsgg-coord divergence --fleet                  # where the FLEET stands: 0 green · 1 red · 3 no verdict
 ```
 
-The log lives in a *cache dir* on one machine, which nothing collects and which dies with your
-container. `--publish` sends a per-day summary to the fleet ledger over REST (no GraphQL budget, and
-never one comment per call). The criterion is about the **live fleet**, and a worker who shadows but
-never publishes has moved the clock exactly as far as one who never shadowed at all (#634).
+The log lives in a *cache dir* that dies with your container. The criterion is about the **live fleet**,
+and a worker who shadows but never publishes has moved the clock exactly as far as one who never
+shadowed at all (#634).
 
 ```sh
 eval "$(scripts/fsgg-coord whoami --mint)"     # MINT one; never invent or copy one (#419, #551)
@@ -324,13 +331,25 @@ scripts/fsgg-coord say <issue> --to <worker> 'I own src/Audio until this lands.'
 scripts/fsgg-coord inbox --repo <r>          # what is new for me, across every live claim
 ```
 
-Widening a touch-set mid-flight re-checks it **and notifies whoever it now collides with**:
+`widen` **re-declares** a touch-set mid-flight. It sets `Paths:` to exactly what you pass — it does
+not union with what was there — then re-checks the result against every live claim **and notifies
+whoever it now collides with**:
 
 ```sh
 scripts/fsgg-coord widen <issue> --paths "src/Scene/**, src/Audio/**"   # non-zero on a collision
 ```
 
 Stop editing the shared paths until the collision is resolved.
+
+**So it narrows, too — and narrowing is the direction nobody ever uses.** Pass a smaller set and the
+reservation genuinely shrinks. A narrowing can never be refused for collision, because a subset
+collides with nothing its superset did not; the capability is already there and it is safe. The name
+says "widen" and only the *growth* direction is ever taught, so an over-reservation is **never handed
+back** — it holds for the full lease, against files nobody is touching, and the workers it locks out
+see only a dead queue ([#601](https://github.com/FS-GG/.github/issues/601)).
+
+**When you learn your declaration over-reserves, re-declare it smaller — at once, not at merge.**
+[pnext-item §3](../pnext-item/SKILL.md) names the two triggers that actually fire.
 
 ## 5. Finish — the earned done-stamp (unchanged)
 
@@ -339,6 +358,47 @@ scripts/fsgg-coord done <issue> --flip     # green FSGG-DONE only after PR merge
 ```
 
 Same stamp and epic roll-up as cross-repo. Check your PR stayed inside its declaration:
+
+### Never write a closing keyword next to an issue you do not mean to close
+
+GitHub scans the PR body for `close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved` followed
+by an issue ref, and links the two. **It does not parse the sentence.** A body that said, in as many
+words, `It does not close #422` **closed #422** on merge — the string contains `close #422`, and the
+negation is invisible to the parser. The board then stamped the item **Done**, so an open, unfinished,
+explicitly-not-done item was closed and stamped with its acceptance criteria unmet
+([#643](https://github.com/FS-GG/.github/issues/643)).
+
+`done --flip` cannot save you here: it refuses to stamp work that is not *merged*, and this work
+**was** merged — it just did not *finish the item*.
+
+It needs no negation, either — only adjacency. Narrative past tense (`On merge, GitHub closed #422`),
+a quoted example, a deferral (`a follow-up will resolve #N`): none carries the word "not", and every
+one closes an issue. So the rule is:
+
+> **Say what you close, on a line that says nothing else. Everywhere else in the body, GitHub must
+> not be able to bind a keyword to a number.**
+
+```
+Closes #643.                  ← a declaration: the whole line, nothing else on it
+Closes #1, closes #2.         ← REPEAT the keyword. `Closes #1, #2` closes only #1; the bare
+                                `#2` binds to nothing and is silently dropped.
+```
+
+Everywhere else, deny the binding: **reword the verb** (`does NOT complete`, `addresses`,
+`supersedes`), **drop the verb** (`Refs #422.`), or **break the adjacency** (quote the number without
+its `#`).
+
+**Writing it as code does NOT work, and this line used to say it did**
+([#683](https://github.com/FS-GG/.github/issues/683)). Two parsers read a PR and they disagree about
+code. The **markdown** parser builds the PR's `closingIssuesReferences` link and skips code — but what
+**closes** the issue on a squash merge is the **commit message**, and that is **plain text**, in which
+backticks and fences are ordinary characters. PR
+[#681](https://github.com/FS-GG/.github/pull/681) — the PR that shipped the gate against this bug —
+took its own advice, wrote its examples in backticks, and **re-closed #422**. The docs may quote the
+bug in code because a file in the tree is never parsed for keywords; **a PR body may not.**
+
+The `closing-keywords` gate fails the PR on every undeclared closing reference, and it now scans the
+**raw** body — code included — because that is the parse that closes the issue.
 
 ### If you filed an issue, LINK it — a mention is not a link
 

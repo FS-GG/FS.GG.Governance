@@ -76,9 +76,11 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache. This job never restores — it only evaluates <Version> via `dotnet msbuild
+          # -getProperty` — so the cache was dead weight. It is also removed to keep this file uniform:
+          # a stray `cache: true` here is the line somebody copies into a job that DOES restore, which
+          # is how the warm-package-folder defect (#169) regenerates itself.
+          cache: false
 
       - name: Resolve version
         id: ver
@@ -145,17 +147,18 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction (#169), so a cache would
+          # be restored and never read. A warm folder would turn this locked restore — the release
+          # path's lock gate — into a record-vs-record comparison that never contacts the feed.
+          cache: false
 
-      - name: Restore (locked)
-        run: |
-          set -euo pipefail
-          if ! dotnet restore tests/FS.GG.Governance.Cli.Tests/FS.GG.Governance.Cli.Tests.fsproj --locked-mode; then
-            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
-            exit 1
-          fi
+      # COLD locked restore (#169): fresh package folder + cleared HTTP cache, so the committed
+      # contentHash is validated against THE FEED. This job gates the publish (`publish` needs it), so
+      # a lock file no fresh clone could restore must fail HERE, before anything is shipped.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.Cli.Tests/FS.GG.Governance.Cli.Tests.fsproj
 
       # The FULL suite gates the publish, WidthResilienceTests included. The earlier headless-determinism
       # gap (those tests asserted Spectre.Console rich-render line widths at narrow widths 10/20 and the CI
@@ -184,9 +187,18 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache — see the cold restore below (#169).
+          cache: false
+
+      # run.sh packs the CLI, which restores IMPLICITLY — and an implicit restore is still a LOCKED one
+      # in CI (Directory.Build.props sets RestoreLockedMode when GITHUB_ACTIONS=true and a lockfile
+      # exists). So this job runs a lock gate whether or not it names one, and a warm package folder
+      # degrades it exactly as it did the explicit gates. Restoring cold here primes the fresh
+      # NUGET_PACKAGES (exported to GITHUB_ENV) that run.sh's own restore then resolves from.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj
 
       - name: Pack + install + enforce (real evidence)
         run: bash tests/cli-publish-smoke/run.sh
@@ -216,17 +228,17 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache: the locked restore below is cold by construction (#169), so a cache would be
+          # restored and never read.
+          cache: false
 
-      - name: Restore (locked)
-        run: |
-          set -euo pipefail
-          if ! dotnet restore src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj --locked-mode; then
-            echo "::error::locked restore failed — the resolved graph does not match the committed packages.lock.json (or a version was substituted, NU1603). If this is an intentional dependency change, run: dotnet restore FS.GG.Governance.sln --force-evaluate  and commit the updated packages.lock.json files."
-            exit 1
-          fi
+      # COLD locked restore (#169). This is the LAST lock gate before bytes are pushed to the org feed
+      # and nuget.org: the artifact this job ships is built from the graph validated HERE, so it must be
+      # validated against the feed rather than against a warm copy of a record of it.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj
 
       # PackAsTool/ToolCommandName=fsgg-governance already on the fsproj; pack bundles the full runtime
       # closure (incl. Adapters.SddHandoff.dll) so the installed tool enforces standalone. Version comes
@@ -311,9 +323,20 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
-          # 101 (M-CI-3): warm the NuGet restore from the committed lockfiles (FR-006/008).
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
+          # No NuGet cache — see the cold restore below (#169).
+          cache: false
+
+      # COLD locked restore (#169), and this job needed it MOST. Its only `needs:` is resolve-version,
+      # which does not restore at all — so unlike every other publish job, NOTHING upstream of it
+      # validated the committed lock, while pack-reference-gate-set.fsx restored IMPLICITLY (still a
+      # locked restore in CI, per Directory.Build.props) against a warm, cached package folder. That is
+      # a job that PUBLISHES to the org feed and nuget.org behind a lock gate that could not fail.
+      # Whole-solution target deliberately: the packer runs the G1–G7 guard across the reference set, so
+      # this validates the entire committed lock cold before any byte is shipped.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: FS.GG.Governance.sln
 
       # Pack via the single canonical packer, reused as-is (Principle III). It runs the G1–G7
       # reference-set guard first and refuses to pack when red, so the shipped artifact is provably
