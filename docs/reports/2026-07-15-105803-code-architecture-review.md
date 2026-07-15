@@ -449,10 +449,18 @@ Tier 1+ with `.fsi`/baseline in lockstep).
 
 ### Later — hardening & consolidation tail
 
-- [ ] **CI-1 — Wire a real api-compat baseline in CI, or soften the overstated comment (Medium).**
-      Seed the baseline feed from the org GitHub Packages feed (`--baseline-feed`) so
-      `Checked:met` is reachable, or state that detection is inert until a baseline source
-      exists — before promoting the gate to required.
+- [x] **CI-1 — Wire a real api-compat baseline in CI, or soften the overstated comment (Medium).**
+      ✅ Done, via the honesty branch (wiring a live baseline needs org-feed auth that 401s outside CI
+      and would still grade most packages NoBaseline). The `api-compatibility-gate` job comment in
+      `gate.yml` no longer claims the detector "produces real signal" / "an API break surfaces on the PR
+      that introduces it" — a `BASELINE / DETECTION IS INERT IN CI (CI-1)` note now states plainly that the
+      job never seeds the `--baseline-feed` folder, so every real package grades `NoBaseline` and no live
+      break can surface; what is proven live is only the grading path (`--selftest` → `Checked:met`) and
+      tool resolution (M-CI-1's partial half). The note makes seeding a baseline source a **hard
+      precondition** for promoting the gate to required (US2/SC-005) — do not add it to required checks
+      while baseline-blind — and records the concrete wiring (seed from the org GitHub Packages feed →
+      `--baseline-feed <dir>`, needs `packages: read`). The `Detect + grade` step comment is corrected the
+      same way. Comment-only (no job behavior change); `gate.yml` YAML re-validated.
 - [ ] **JSON-2 — Populate or remove `verify.json` `currency.unresolved[].missing` (Low–Medium).**
       Thread the tokens through, or drop the field under a schema bump and document the omission.
 - [ ] **JSON-3 — Hoist the shared `writeRun` + value helpers into `JsonWriters` (Low).**
