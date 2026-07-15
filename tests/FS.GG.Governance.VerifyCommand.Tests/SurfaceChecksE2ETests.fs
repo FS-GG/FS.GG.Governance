@@ -150,6 +150,36 @@ let tests =
                   Expect.stringContains content "package.baseline-unreadable" "a missing source is a disclosed sensor outcome"
                   Expect.equal model.Exit Loop.Blocked "the disclosed input-state finding blocks under Strict (not a silent pass)") }
 
+          // ── ADPT-1 (fail-closed): an INVALID catalog must not collapse surface sensing to [] ──
+          test "ADPT-1 an invalid governance catalog ⇒ a Blocking input-state surface finding, never a silent empty pass" {
+              // Drive the REAL surface sense (`realSurfaceSense` = the production `Interpreter.realPorts` field)
+              // over a temp tree whose on-disk `.fsgg` catalog does not validate (schemaVersion 999). Before
+              // ADPT-1 this returned `[]` — verify would PASS with zero surface evidence exactly when the
+              // catalog was too broken to gather any. It must instead fail CLOSED with a disclosed finding.
+              let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-adpt1-" + Guid.NewGuid().ToString("N"))
+              Directory.CreateDirectory dir |> ignore
+
+              try
+                  for KeyValue(name, content) in invalidCatalog do
+                      writeFile dir (".fsgg/" + name) content
+
+                  // The Invalid path short-circuits before the report is consumed, so an empty report suffices.
+                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+                  let findings = realSurfaceSense dir report
+
+                  Expect.isNonEmpty findings "an invalid catalog must NOT collapse to [] (that passes with zero surface evidence)"
+                  Expect.all findings (fun f -> f.IsInputState) "every reified failure is an input-state finding, not a fabricated rule violation"
+                  Expect.all findings (fun f -> f.BaseSeverity = Blocking) "reified as Blocking so verify fails closed"
+
+                  Expect.isTrue
+                      (findings |> List.exists (fun f -> f.Code = "surface.catalog-invalid"))
+                      "the catalog-invalid code is reported"
+
+                  // Fail-closed means it actually BLOCKS at Verify under Strict (via the existing deriveEffectiveSeverity).
+                  Expect.isTrue (SurfaceFold.surfaceBlocks Strict findings) "the reified finding blocks the verify verdict"
+              finally
+                  try Directory.Delete(dir, true) with _ -> () }
+
           // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
           test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {
               withDriftedPackageRepo (fun dir ->
