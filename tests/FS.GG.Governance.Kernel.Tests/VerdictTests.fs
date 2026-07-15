@@ -114,8 +114,9 @@ let tests =
               Expect.equal (Verdict.all [ Fail "spacing; tone" ]) (Fail "spacing; tone") "already-ordinal components pass through unchanged"
               Expect.equal (Verdict.all [ Fail "tone; spacing" ]) (Fail "spacing; tone") "a leaf reason's \"; \"-parts are split and reordered, not preserved verbatim"
               Expect.equal (Verdict.any [ Uncertain "z; a; z" ]) (Uncertain "a; z") "duplicate components within one leaf reason collapse too"
-              // The token is inert without aggregation: a bare reason carries "; " verbatim.
-              Expect.equal (Fail "tone; spacing") (Fail "tone; spacing") "an un-aggregated reason is stored as authored"
+              // The token is inert without aggregation: a non-aggregating op (negate passes
+              // Uncertain through untouched, never calling combineReasons) keeps "; " verbatim.
+              Expect.equal (Verdict.negate (Uncertain "tone; spacing")) (Uncertain "tone; spacing") "an un-aggregated reason is carried verbatim, unsplit"
           }
 
           // ── User Story 3: negate a verdict ──
