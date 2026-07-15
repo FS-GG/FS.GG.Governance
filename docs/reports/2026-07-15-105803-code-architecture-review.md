@@ -519,8 +519,18 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       pinned by `AssembleTests` (`StatusRaw = Error → only UnreadableWorkingTree`); the incomplete-drain
       race itself is not deterministically reproducible (a 5 s real-process drain timeout) and so is not
       given a bespoke flaky test.
-- [ ] **ADPT-4 — Roll back empty directories in Scaffold (Low),** so "ZERO new files" holds for
-      directories too.
+- [x] **ADPT-4 — Roll back empty directories in Scaffold (Low).** ✅ Done: `writeAllUnder`
+      (`Scaffold/Interpreter.fs`) now records every directory the batch newly creates — an `ensureDir`
+      helper walks up from each file's parent collecting the chain of not-yet-existing ancestors
+      (shallowest-first, stopping at the first already-existing dir, so the target root and any operator
+      dirs are never recorded) before calling `Directory.CreateDirectory`. On a mid-batch failure the
+      rollback, after deleting the in-flight temp and every renamed file, removes the created directories
+      deepest-first (reverse of record order) via a guarded non-recursive `Directory.Delete`, so a dir
+      that is somehow non-empty is left intact rather than clobbering pre-existing content. "ZERO new
+      files" (SC-005) now holds for the tree, not just the leaves. Edge-only change: `writeAllUnder` is
+      not in `Interpreter.fsi` (no baseline/contract churn); the happy path is byte-identical. Two new
+      `InterpreterTests` cases pin it: a mid-batch rename clash rolls back the created `src`/`src/App`
+      dirs, and a rollback into a pre-existing operator `src/` leaves that dir and its file untouched.
 - [ ] **CLI-5 — Distinguish `UnexpectedArgument` from `UnknownFlag` in the no-positional verb
       hosts (Low).**
 - [ ] **CORE-3 — Document the reserved `"; "` reason separator at the probe-authoring surface

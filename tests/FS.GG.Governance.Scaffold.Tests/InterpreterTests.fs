@@ -116,6 +116,46 @@ let tests =
                   Expect.isEmpty (filesUnder target) "no partial tree and no orphan .tmp residue")
           }
 
+          test "Synthetic provider: a mid-batch failure rolls back the directories it created too — ZERO new dirs (ADPT-4)" {
+              withTemp (fun target ->
+                  // The first file writes into a fresh nested subtree (`src/App` is created), then a duplicate
+                  // path clashes on its atomic rename and aborts the batch. Rollback must remove the renamed
+                  // file AND the directories this batch created (`src`, `src/App`) — "ZERO new files" has to
+                  // hold for the tree, not just the leaves.
+                  let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// hi"; "dup.fs", "// first"; "dup.fs", "// second" ]
+                  let model = Interpreter.run (Interpreter.realPorts target) (runRequest target [] (Some p))
+
+                  match model.Manifest with
+                  | Some { Outcome = Refused(ProviderErrored _) } -> ()
+                  | other -> failtestf "expected Refused(ProviderErrored) from the rename clash, got %A" other
+
+                  Expect.isEmpty (filesUnder target) "no partial tree"
+                  Expect.isFalse (Directory.Exists(Path.Combine(target, "src", "App"))) "the created leaf directory is rolled back"
+                  Expect.isFalse (Directory.Exists(Path.Combine(target, "src"))) "the created parent directory is rolled back too")
+          }
+
+          test "Synthetic provider: rollback does NOT delete a pre-existing directory it wrote into (ADPT-4)" {
+              withTemp (fun target ->
+                  // Operator already has `src/` (with a file). The batch writes into it then aborts on a
+                  // duplicate-path rename clash. Rollback removes ONLY what the batch created — the operator's
+                  // pre-existing `src/` and its file must survive (never recorded, so never deleted).
+                  Directory.CreateDirectory(Path.Combine(target, "src")) |> ignore
+                  let seeded = Path.Combine(target, "src", "keep.txt")
+                  File.WriteAllText(seeded, "OPERATOR")
+
+                  let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// hi"; "dup.fs", "// first"; "dup.fs", "// second" ]
+                  let model = Interpreter.run (Interpreter.realPorts target) (runRequest target [] (Some p))
+
+                  match model.Manifest with
+                  | Some { Outcome = Refused(ProviderErrored _) } -> ()
+                  | other -> failtestf "expected Refused(ProviderErrored) from the rename clash, got %A" other
+
+                  Expect.isTrue (Directory.Exists(Path.Combine(target, "src"))) "the pre-existing directory survives rollback"
+                  Expect.equal (File.ReadAllText seeded) "OPERATOR" "the operator's file under it is untouched"
+                  Expect.isFalse (Directory.Exists(Path.Combine(target, "src", "App"))) "only the batch-created nested dir is rolled back"
+                  Expect.equal (filesUnder target) [ "src/keep.txt" ] "only the operator's file remains")
+          }
+
           test "Synthetic provider: re-running over an already-scaffolded target reports Collision and writes nothing new" {
               withTemp (fun target ->
                   let p = fakeProvider "fixture.lib" [ "src/App/Program.fs", "// hello"; "README.md", "# hi" ]

@@ -94,16 +94,39 @@ module Interpreter =
 
             // Track what we created so we can roll back on a mid-batch failure: the files already renamed
             // into place, PLUS the single in-flight temp that was written but not yet renamed (a failure
-            // between WriteAllText and Move — e.g. the target already exists — otherwise leaks a `.tmp-<guid>`).
+            // between WriteAllText and Move — e.g. the target already exists — otherwise leaks a `.tmp-<guid>`),
+            // PLUS every directory this batch newly created (deepest-first once reversed) so a rollback leaves
+            // ZERO new files AND ZERO new directories, not just files (ADPT-4 — "ZERO new files" must hold for
+            // the tree, not only leaves).
             let written = System.Collections.Generic.List<string>()
+            let createdDirs = System.Collections.Generic.List<string>()
             let mutable inFlight: string option = None
+
+            // Record and create the chain of `dir`'s ancestors that do NOT yet exist (shallowest-first, down
+            // to but excluding the first already-existing ancestor — so the target root and any pre-existing
+            // dirs are never recorded and never rolled back). Idempotent across files: a dir created for an
+            // earlier file already exists, so it contributes nothing the second time.
+            let ensureDir (dir: string) =
+                let rec collectMissing (d: string) (acc: string list) =
+                    if String.IsNullOrEmpty d || Directory.Exists d then
+                        acc
+                    else
+                        match Path.GetDirectoryName d with
+                        | null
+                        | "" -> d :: acc
+                        | parent -> collectMissing parent (d :: acc)
+
+                for missing in collectMissing dir [] do
+                    createdDirs.Add missing
+
+                Directory.CreateDirectory dir |> ignore
 
             try
                 for (full, contents) in pairs do
                     match Path.GetDirectoryName full with
                     | null
                     | "" -> ()
-                    | dir -> Directory.CreateDirectory dir |> ignore
+                    | dir -> ensureDir dir
 
                     let tmp = full + ".tmp-" + Guid.NewGuid().ToString("N")
                     inFlight <- Some tmp
@@ -115,7 +138,11 @@ module Interpreter =
                 Ok()
             with e ->
                 // Roll back so no partial tree survives (SC-005): first the in-flight temp (present only if
-                // the failure landed between its write and its rename), then every renamed file.
+                // the failure landed between its write and its rename), then every renamed file, then every
+                // directory this batch created — deepest-first (reverse of shallowest-first record order) so a
+                // child empties before its parent. Each dir delete is non-recursive and guarded, so a dir that
+                // is somehow non-empty (never expected — every file we made is deleted above) is left intact
+                // rather than clobbering pre-existing content.
                 match inFlight with
                 | Some tmp ->
                     try
@@ -127,6 +154,12 @@ module Interpreter =
                 for created in written do
                     try
                         File.Delete created
+                    with _ ->
+                        ()
+
+                for i in (createdDirs.Count - 1) .. -1 .. 0 do
+                    try
+                        Directory.Delete(createdDirs[i], false)
                     with _ ->
                         ()
 
