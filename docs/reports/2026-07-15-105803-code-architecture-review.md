@@ -366,9 +366,10 @@ Tier 1+ with `.fsi`/baseline in lockstep).
 
 ### Now — correctness & truth (highest leverage)
 
-- [ ] **CLI-1 — Guard the `tui` key reader (High).** Route `tuiKeyReader` through the
-      `Watch.safeKeyPoll` guard (catch → `Tui.Quit`); add a redirected-stdin test driving the
-      real reader. Mirrors the H3 fix so both interactive surfaces are headless-safe.
+- [x] **CLI-1 — Guard the `tui` key reader (High).** ✅ Done: `tuiKeyReader`
+      (`Cli/Program.fs`) now catches the unreadable-console `InvalidOperationException` → `Tui.Quit`,
+      mirroring `Watch.safeKeyPoll`; a redirected-stdin regression test drives the real reader
+      (`WatchTuiHostWiringTests.fs`). Both interactive surfaces are now headless-safe.
 - [ ] **ARCH-1 — Fix the README packaging claim + the self-contradicting props comment
       (Medium).** State the packable-by-default reality; delete the stale
       `Directory.Build.local.props` line.
