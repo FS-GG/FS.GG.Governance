@@ -379,9 +379,10 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       section no longer references the deleted `CommandHost.ExitDecision` type (each host declares
       its own DU); `refresh` now has its own `0/1/2/3/4/5` table with `ViewsRegenerated=5` called
       out as a second success code.
-- [ ] **CI-5 — Refresh README dependency versions (Low).** `FS.GG.Contracts 1.0.1→2.0.0`,
-      `YamlDotNet 16.3.0→18.1.0`, `Spectre.Console 0.57.1→0.57.2`; confirm the org
-      `registry/dependencies.yml` `fsgg-contracts` pin equals `2.0.0`.
+- [x] **CI-5 — Refresh README dependency versions (Low).** ✅ Done: README now states
+      `YamlDotNet 18.1.0`, `FS.GG.Contracts 2.0.0` (both the key-dependencies list and the
+      spec-087 `pinned` line), and `Spectre.Console 0.57.2`, matching `Directory.Packages.local.props`;
+      the org `registry/dependencies.yml` `fsgg-contracts` pin was confirmed to equal `2.0.0`.
 - [ ] **CORE-1 — Make `GateId` injective (Low–Medium).** Drop the domain prefix or
       length-prefix/escape the components; fix the "INJECTIVE" comment. Add a collision test
       (`b:c`/`c` case).

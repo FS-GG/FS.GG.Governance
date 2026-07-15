@@ -281,7 +281,7 @@ repo's reality stops matching the registry.
 
 Recent integration ([spec 087](specs/087-retype-config-onto-contracts/)) makes
 `FS.GG.Governance.Config` a **consumer** of `FS.GG.Contracts` (`Fsgg.Schemas`, pinned
-`1.0.1`) rather than a second source of truth for the four `.fsgg` `schemaVersion`
+`2.0.0`) rather than a second source of truth for the four `.fsgg` `schemaVersion`
 constants — a future schema bump now flows in by re-pinning the package instead of
 editing Governance code. The public Config surface stays byte-identical.
 
@@ -305,9 +305,9 @@ arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Relea
 - **Target framework:** `net10.0` · `LangVersion=latest` · `Nullable=enable` ·
   `TreatWarningsAsErrors=true`.
 - **Tests:** Expecto (with FsCheck property tests); the full suite is the delivery gate.
-- **Key dependencies:** `FSharp.Core 10.1.301` (org-pinned), `YamlDotNet 16.3.0`
-  (isolated to `Config`), `FS.GG.Contracts 1.0.1` (consumed by `Config`),
-  `Spectre.Console 0.57.1` (exactly one project, `HumanRender`).
+- **Key dependencies:** `FSharp.Core 10.1.301` (org-pinned), `YamlDotNet 18.1.0`
+  (isolated to `Config`), `FS.GG.Contracts 2.0.0` (consumed by `Config`),
+  `Spectre.Console 0.57.2` (exactly one project, `HumanRender`).
 - **Build config:** `Directory.Build.props` / `Directory.Packages.props` are
   org-synced and drift-checked from [`FS-GG/.github → dist/dotnet/`](https://github.com/FS-GG/.github);
   repo-specific overrides live in `*.local.props`. Central Package Management is on
