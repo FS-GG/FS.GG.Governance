@@ -1,7 +1,5 @@
 namespace FS.GG.Governance.ScaffoldManifestJson
 
-open System.IO
-open System.Text
 open System.Text.Json
 open FS.GG.Governance.Scaffold.Model
 

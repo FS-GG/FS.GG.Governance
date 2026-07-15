@@ -572,7 +572,18 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `writeDecision`'s doc-comment points back at the header. Comment-only (Tier 0): the projection is
       byte-identical, so no `.fsi`/baseline/golden churn (`ofReport`'s output is unchanged).
 - [ ] **JSON-4 — Resolve the generated-view writer duplication if #83 proceeds (Low).**
-- [ ] **JSON-6 — Remove the dead `open System.IO` / `System.Text` in the 11 projections (Nit).**
+- [x] **JSON-6 — Remove the dead `open System.IO` / `System.Text` in the 11 projections (Nit).**
+      ✅ Done: the two dead opens (`open System.IO`, `open System.Text`) were dropped from all 11
+      JSON projections (AttestationJson, AuditJson, CacheEligibilityJson, CostBudgetJson, EvidenceJson,
+      GatesJson, ProvenanceJson, RefreshJson, RouteJson, ReleaseJson, ScaffoldManifestJson) — unused
+      since the 073 extraction moved `MemoryStream`/`Encoding` behind `JsonText.writeToString` (they
+      remain, correctly, in `JsonText.fs`, which is not in the list). `open System.Text.Json` is a
+      distinct namespace and was left intact in every file; `open System` (for `String.CompareOrdinal`)
+      was untouched. Comment/hygiene-only (Tier 0): no `.fsi`/baseline/golden churn, and every projection
+      builds byte-identical output — all 11 projects compile clean with 0 warnings / 0 errors. The one
+      earlier-in-list item, JSON-4, stays open: its resolution needs a NEW shared module sited above
+      RefreshJson (both writers need `RefreshModel.viewKindToken`), which the `JsonWriters` header records
+      as re-deferred on #83 — and #83 closed without taking the A4 dedup, so its precondition is unmet.
 - [ ] **Kernel `Json.fsi` — surface the throwing contract of the public readers (no behavior
       change).**
 - [ ] **ARCH-4 / M-CLI-1 tail — optional: prune redundant direct `ProjectReference`s and the

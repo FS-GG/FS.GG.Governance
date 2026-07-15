@@ -1,8 +1,6 @@
 namespace FS.GG.Governance.ProvenanceJson
 
 open System
-open System.IO
-open System.Text
 open System.Text.Json
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.FreshnessKey.Model
