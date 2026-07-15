@@ -36,6 +36,18 @@ let tests =
               | Error e -> failtestf "expected Ok, got %A" e
           }
 
+          test "--format text is an additive synonym for human (CLI-3)" {
+              match Loop.parse [ "--format"; "text" ] with
+              | Ok req -> Expect.equal req.Format Loop.Human "text maps to the canonical Human format"
+              | Error e -> failtestf "expected Ok, got %A" e
+          }
+
+          test "--format human is still accepted (CLI-3 is additive)" {
+              match Loop.parse [ "--format"; "human" ] with
+              | Ok req -> Expect.equal req.Format Loop.Human "human remains the canonical token"
+              | Error e -> failtestf "expected Ok, got %A" e
+          }
+
           test "--plain is additive and does not override --format json (M-CLI-7)" {
               match Loop.parse [ "--format"; "json"; "--plain" ] with
               | Ok req ->

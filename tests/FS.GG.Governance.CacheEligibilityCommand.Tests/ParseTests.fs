@@ -46,6 +46,11 @@ let tests =
               Expect.equal r.Format Loop.Json "--format json"
           }
 
+          test "--format text is an additive synonym for human (CLI-3)" {
+              Expect.equal (parseOk [ "--format"; "text" ]).Format Loop.Human "text maps to the canonical Human format"
+              Expect.equal (parseOk [ "--format"; "human" ]).Format Loop.Human "human remains the canonical token"
+          }
+
           test "--paths yields ExplicitPaths (normalized); --since yields Since" {
               match (parseOk [ "--paths"; "src/A.fs"; "src/B.fs" ]).Scope with
               | Loop.ExplicitPaths ps -> Expect.equal ps [ normalizePath "src/A.fs"; normalizePath "src/B.fs" ] "explicit paths normalized"

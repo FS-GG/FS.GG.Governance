@@ -100,7 +100,8 @@ module Loop =
           Exit: ExitDecision }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
-    /// exceptions. Tolerates a leading `evidence` verb. `--format` other than `human`/`json` ⇒ `BadFormat`.
+    /// exceptions. Tolerates a leading `evidence` verb. `--format` accepts `human` (canonical/default),
+    /// `text` (an additive synonym for `human`, CLI-3), or `json`; any other value ⇒ `BadFormat`.
     val parse: argv: string list -> Result<RunRequest, UsageError>
 
     /// Initial state plus the first requested effect — `SenseReport request.Repo`.

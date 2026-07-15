@@ -485,8 +485,16 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       green (no `*Json`/kernel/host edge). Output is byte-identical: the AttestationJson/ProvenanceJson goldens
       are unchanged, and a new `JsonWritersTests` case pins `writeRun`'s field order + values over a real
       record.
-- [ ] **CLI-3 — Converge the format-flag vocabulary (Low–Medium).** One `--format text|json`
-      spelling (or accept `text` as a `human` synonym), ahead of the single-tool multiplexer.
+- [x] **CLI-3 — Converge the format-flag vocabulary (Low–Medium).** ✅ Done, via the additive-synonym
+      branch (full convergence is a breaking Tier-1 CLI change deferred to a future major by ADR-0006).
+      Evidence and CacheEligibility now accept `--format text` as a synonym for the canonical, still-default
+      `human` token (`Loop.parse` in both hosts; `BadFormat` messages now read `expected human|text|json`;
+      `.fsi` doc-comments updated), so `--format text` works on all seven hosts and the `evidence --format text`
+      → `BadFormat` footgun is closed. Backward-compatible (a pure superset of previously-accepted input — no
+      `human` invocation changes), one non-breaking step toward ADR-0006's deferred `--format text|json|both`-
+      everywhere target; the reverse (`human` everywhere) was intentionally not done. ADR-0006 carries a
+      2026-07-15 update recording the additive move; new `ParseTests` cases pin `--format text` ⇒ `Human` and
+      that `human` still parses, in both hosts.
 - [ ] **CLI-4 — Drop the `wrote` path object from the cache-eligibility JSON contract (Low),**
       matching route's FR-012.
 - [ ] **ADPT-3 — Emit an `UnreadableWorkingTree` diagnostic on an incomplete Snapshot drain

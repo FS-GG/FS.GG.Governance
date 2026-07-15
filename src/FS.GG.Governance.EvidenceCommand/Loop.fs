@@ -102,7 +102,13 @@ module Loop =
             | "--out" :: value :: rest when not (value.StartsWith "--") -> loop { acc with Out = Some value } rest
             | "--format" :: value :: rest when not (value.StartsWith "--") ->
                 match value with
-                | "human" -> loop { acc with Format = Human } rest
+                // CLI-3: `text` is an ADDITIVE synonym for the canonical `human` token, so the plain
+                // spelling accepted by route/ship/verify/release/refresh/dispatcher works here too
+                // (`evidence --format text` no longer errors). `human` stays the canonical/default token;
+                // this is backward-compatible and does not contradict ADR-0006 (nothing is renamed or
+                // removed) — it realizes that ADR's deferred `--format text|json|both`-everywhere direction
+                // one non-breaking step early. See docs/decisions/0006-cli-format-flag-vocabularies.md.
+                | "human" | "text" -> loop { acc with Format = Human } rest
                 | "json" -> loop { acc with Format = Json } rest
                 | other -> Error(BadFormat other)
             // M-CLI-7 (#49): `--plain` is an ADDITIVE ANSI-free signal that never overrides `--format` (the

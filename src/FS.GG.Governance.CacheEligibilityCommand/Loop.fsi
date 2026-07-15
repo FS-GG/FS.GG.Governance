@@ -141,7 +141,8 @@ module Loop =
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
     /// exceptions. Tolerates a leading `cache-eligibility` verb. `--paths` + `--since` ⇒ `PathsAndSinceTogether`;
-    /// `--format` other than `human`/`json` ⇒ `BadFormat`.
+    /// `--format` accepts `human` (canonical/default), `text` (an additive synonym for `human`, CLI-3), or
+    /// `json`; any other value ⇒ `BadFormat`.
     val parse: argv: string list -> Result<RunRequest, UsageError>
 
     /// Initial state plus the first requested effect(s). `ExplicitPaths` emits `LoadCatalog` directly (no git);

@@ -35,3 +35,11 @@ The internal-consolidation goal of #49 is served without touching the surface: t
 - The four vocabularies stand. Contributors should expect per-host flag grammars and consult each host's `Loop.fs` parser + `usage`.
 - If a future major (SemVer) CLI revision is undertaken, this ADR is the place to record a converged grammar (candidate target: `--format text|json|both` everywhere, with `--plain` additive, retiring the bare-boolean and `human` spellings behind a deprecation window). Until then, convergence is explicitly deferred as a breaking change not worth its cost.
 - No code changes accompany this decision; the M-CLI-3 guard (Phase A, #69) already made the *parsing* of every vocabulary safe and uniform.
+
+## Update — 2026-07-15 (CLI-3): `text` accepted as an additive synonym for `human`
+
+The 2026-07-15 review re-raised the `human` vs `text` split (finding **CLI-3**): `fsgg release --format text` succeeds while `fsgg evidence --format text` errors with `BadFormat "text"`, a footgun for anyone reusing the plain-token spelling across hosts.
+
+This ADR's "do not converge" decision stands for the **breaking** direction — nothing is renamed or removed, so no existing invocation changes behavior. What landed is the strictly **additive** half the finding also offered: Evidence and CacheEligibility now accept `text` as a synonym for the canonical, still-default `human` token (`Loop.parse` in both hosts; `BadFormat` messages now read `expected human|text|json`). `human` remains canonical and the default; `text` is simply also accepted, so `--format text` now works on all seven hosts.
+
+This is backward-compatible (a pure superset of previously-accepted input) and moves one non-breaking step toward the deferred convergence target recorded above (`--format text|json|both` everywhere). The reverse — teaching route/ship/verify/release/dispatcher to accept `human` — was **not** done: the convergence direction is toward `text` (README documents the shared spelling as `--format {text|json}`), and adding `human` everywhere would broaden surface against that direction. Full convergence (retiring the bare-`--json` boolean, the `both`/`text-and-json` spellings, and the `human` default) remains a breaking change deferred to a future major SemVer CLI revision, exactly as decided above.
