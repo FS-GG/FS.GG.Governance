@@ -86,6 +86,21 @@ let tests =
                   | None -> failtestf "expected a MalformedValue on the colon-bearing '%s' field" field
           }
 
+          test "a non-positive command timeout is rejected as located MalformedValue (CORE-2)" {
+              // A `timeout` of `0`/`-5` otherwise validates as Valid and the gate waits `<= 0` ms →
+              // an immediate `timeoutExitCode 124` every run: a silent, always-failing gate from a
+              // typo. The config boundary rejects it. The fixture's tooling.yml has `timeout: 0`.
+              let diags = diagsOf "malformed-nonpositive-timeout"
+              match diags |> List.tryFind (fun d -> d.Id = MalformedValue && d.Locator.Field = Some "timeout") with
+              | Some d ->
+                  Expect.stringContains d.Message "positive"
+                      "the diagnostic explains the timeout must be positive"
+                  Expect.isTrue
+                      (d.Locator.Field.IsSome || d.Locator.Line.IsSome)
+                      "diagnostic is located (field/line)"
+              | None -> failtest "expected a MalformedValue on the non-positive 'timeout' field"
+          }
+
           test "multiple defects → deterministic (file, locator, id) order, byte-stable across runs" {
               let run () = diagsOf "malformed-multi"
               let a = run ()
