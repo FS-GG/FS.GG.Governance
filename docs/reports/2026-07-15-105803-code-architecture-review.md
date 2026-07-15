@@ -571,7 +571,24 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       *structural* re-ordering, with the reason synthesis called out as the principled exception, and
       `writeDecision`'s doc-comment points back at the header. Comment-only (Tier 0): the projection is
       byte-identical, so no `.fsi`/baseline/golden churn (`ofReport`'s output is unchanged).
-- [ ] **JSON-4 — Resolve the generated-view writer duplication if #83 proceeds (Low).**
+- [x] **JSON-4 — Resolve the generated-view writer duplication (Low).** ✅ Done, via a NEW shared
+      project rather than #83 (whose precondition never materialized — #83 closed without taking the A4
+      dedup): the byte-identical `writeGeneratedView`/`writeGeneratedViews` bodies that lived side by side in
+      `AuditJson.fs` and `VerifyJson/GeneratedViews.fs` now live ONCE in `FS.GG.Governance.GeneratedViewsJson`
+      (`writeGeneratedViews`; the per-entry `writeGeneratedView` stays hidden by its absence from the `.fsi`).
+      The leaf is sited ABOVE `RefreshJson` (it needs `RefreshModel.viewKindToken`) and
+      `CurrencyEnforcement`/`Enforcement` but BELOW the two projections — the exact position JSON-4 named. It
+      deliberately could NOT fold into the 073 `JsonWriters` leaf (that leaf must not reference the RefreshJson
+      *projection* layer) nor into RefreshJson itself (which sits BELOW `CurrencyEnforcement`, so it cannot
+      reference it without a cycle). `AuditJson` (private copies) now calls the shared writer directly and
+      drops its dead `RefreshJson`/`FreshnessKey.Model` opens + direct `RefreshJson` ref; `VerifyJson` keeps
+      its 076-Phase-C `GeneratedViews` seam as a thin byte-preserving delegator so the surface asserted by
+      `SeamModuleScopeGuardTests` is unchanged. Output is byte-identical — both projections' goldens are
+      unchanged and stay green — so no `fsgg.audit`/`fsgg.verify` schema bump. New `GeneratedViewsJson.Tests`
+      pins the writer's wire shape (sorted-by-viewId, empty ⇒ omitted, source-drift vs undeterminable) + a
+      blessed surface baseline + a `referencesOnly` allow-list; the `AuditJson` `referencesOnly` guard gained
+      the new edge. This closes the last JSON-family dedup; only ARCH-4 / M-CLI-1 (optional ref/host pruning)
+      remains open.
 - [x] **JSON-6 — Remove the dead `open System.IO` / `System.Text` in the 11 projections (Nit).**
       ✅ Done: the two dead opens (`open System.IO`, `open System.Text`) were dropped from all 11
       JSON projections (AttestationJson, AuditJson, CacheEligibilityJson, CostBudgetJson, EvidenceJson,
@@ -580,10 +597,9 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       remain, correctly, in `JsonText.fs`, which is not in the list). `open System.Text.Json` is a
       distinct namespace and was left intact in every file; `open System` (for `String.CompareOrdinal`)
       was untouched. Comment/hygiene-only (Tier 0): no `.fsi`/baseline/golden churn, and every projection
-      builds byte-identical output — all 11 projects compile clean with 0 warnings / 0 errors. The one
-      earlier-in-list item, JSON-4, stays open: its resolution needs a NEW shared module sited above
-      RefreshJson (both writers need `RefreshModel.viewKindToken`), which the `JsonWriters` header records
-      as re-deferred on #83 — and #83 closed without taking the A4 dedup, so its precondition is unmet.
+      builds byte-identical output — all 11 projects compile clean with 0 warnings / 0 errors. (The one
+      earlier-in-list item, JSON-4, was subsequently closed via a NEW `GeneratedViewsJson` shared leaf sited
+      above RefreshJson — see its entry below — rather than through #83, whose precondition never landed.)
 - [x] **Kernel `Json.fsi` — surface the throwing contract of the public readers (no behavior
       change).** ✅ Done: the `Json.fsi` module header now carries an explicit `THROWING CONTRACT`
       (spec 110 B8) block naming the four exception classes a caller feeding externally-sourced JSON

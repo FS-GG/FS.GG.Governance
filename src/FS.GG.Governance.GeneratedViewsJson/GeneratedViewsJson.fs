@@ -1,0 +1,65 @@
+// The shared `generatedViews` array writer (JSON-4). This is the SINGLE home of the F070 stale-
+// generated-view writer body — extracted verbatim from the byte-identical copies AuditJson.fs
+// (audit.json / ship.json) and VerifyJson/GeneratedViews.fs (verify.json) used to carry side by side.
+// Visibility lives in GeneratedViewsJson.fsi (Principle II) — no top-level access modifiers here;
+// `writeGeneratedView` is hidden by its absence from the .fsi. PURE: walks a caller-owned
+// `Utf8JsonWriter`; both composing projections call `GeneratedViewsJson.writeGeneratedViews` under the
+// same non-empty guard, so the emitted bytes are unchanged.
+//
+// LAYERING: this leaf is sited ABOVE RefreshJson (needs `RefreshModel.viewKindToken`) and
+// CurrencyEnforcement/Enforcement (the finding + decision vocabulary), but BELOW the AuditJson/VerifyJson
+// projections that consume it. It cannot fold into the 073 `JsonWriters` writer leaf: `JsonWriters` must
+// NOT reference the RefreshJson projection layer (that would invert the writer→projection layering), and
+// RefreshJson itself is BELOW CurrencyEnforcement (which already references it), so neither could host
+// this without a cycle — hence a dedicated project, exactly as JSON-4 prescribed.
+
+namespace FS.GG.Governance.GeneratedViewsJson
+
+open System.Text.Json
+open FS.GG.Governance.FreshnessKey.Model       // categoryToken
+open FS.GG.Governance.Enforcement.Enforcement  // EnforcementDecision
+open FS.GG.Governance.JsonTokens               // severityToken
+open FS.GG.Governance.RefreshJson              // F070: RefreshModel.viewKindToken for the generatedViews kind
+
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module GeneratedViewsJson =
+
+    // F070: the additive `generatedViews` array (stale-generated-view findings folded through the existing
+    // F023 truth table). Each entry carries the view id/kind, the stale cause, the drifted categories (or the
+    // undeterminable detail), and BOTH base and effective severity + the lever-naming reason (no-hide, FR-006).
+    // Sorted by viewId; written ONLY when non-empty ⇒ absent ⇒ byte-identical to the pre-F070 projection (FR-004).
+    let writeGeneratedView (w: Utf8JsonWriter) (finding: CE.CurrencyFinding) (decision: EnforcementDecision) =
+        w.WriteStartObject()
+        w.WriteString("viewId", finding.ViewId)
+        w.WriteString("kind", RefreshModel.viewKindToken finding.Kind)
+        w.WriteString("cause", CE.staleCauseToken finding.Cause)
+
+        match finding.Cause with
+        | CE.SourceDrift drifted ->
+            w.WritePropertyName "drifted"
+            w.WriteStartArray()
+
+            for category in drifted do
+                w.WriteStringValue(categoryToken category)
+
+            w.WriteEndArray()
+        | CE.Undeterminable reason -> w.WriteString("detail", reason)
+
+        w.WriteString("baseSeverity", JsonTokens.severityToken finding.BaseSeverity)
+        w.WriteString("effectiveSeverity", JsonTokens.severityToken decision.EffectiveSeverity)
+        w.WriteString("reason", decision.Reason)
+        w.WriteEndObject()
+
+    let writeGeneratedViews (w: Utf8JsonWriter) (views: (CE.CurrencyFinding * EnforcementDecision) list) =
+        match views with
+        | [] -> ()
+        | _ ->
+            w.WritePropertyName "generatedViews"
+            w.WriteStartArray()
+
+            for finding, decision in views |> List.sortBy (fun (f, _) -> f.ViewId) do
+                writeGeneratedView w finding decision
+
+            w.WriteEndArray()

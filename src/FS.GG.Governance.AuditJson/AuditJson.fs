@@ -6,7 +6,6 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
-open FS.GG.Governance.FreshnessKey.Model
 open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
@@ -14,9 +13,8 @@ open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
 open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
 open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
-open FS.GG.Governance.RefreshJson               // F070: RefreshModel.viewKindToken for the generatedViews kind
 
-module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary
+module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary (CurrencyFinding in the generatedViews overload signature)
 
 // The F025 audit.json projection (US1–US4). Renders the F024 `ShipDecision` into the deterministic,
 // versioned `audit.json` WHOLE-CHANGE verdict document text via a hand-driven `System.Text.Json`
@@ -31,6 +29,7 @@ module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: th
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
 open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
+open FS.GG.Governance.GeneratedViewsJson // JSON-4: the shared `generatedViews` array writer (module-qualified)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AuditJson =
@@ -162,43 +161,10 @@ module AuditJson =
             writeItem w lookup execLookup item
         w.WriteEndArray()
 
-    // F070: the additive `generatedViews` array (stale-generated-view findings folded through the existing
-    // F023 truth table). Each entry carries the view id/kind, the stale cause, the drifted categories (or the
-    // undeterminable detail), and BOTH base and effective severity + the lever-naming reason (no-hide, FR-006).
-    // Sorted by viewId; written ONLY when non-empty ⇒ absent ⇒ byte-identical to the pre-F070 projection (FR-004).
-    let writeGeneratedView (w: Utf8JsonWriter) (finding: CE.CurrencyFinding) (decision: EnforcementDecision) =
-        w.WriteStartObject()
-        w.WriteString("viewId", finding.ViewId)
-        w.WriteString("kind", RefreshModel.viewKindToken finding.Kind)
-        w.WriteString("cause", CE.staleCauseToken finding.Cause)
-
-        match finding.Cause with
-        | CE.SourceDrift drifted ->
-            w.WritePropertyName "drifted"
-            w.WriteStartArray()
-
-            for category in drifted do
-                w.WriteStringValue(categoryToken category)
-
-            w.WriteEndArray()
-        | CE.Undeterminable reason -> w.WriteString("detail", reason)
-
-        w.WriteString("baseSeverity", JsonTokens.severityToken finding.BaseSeverity)
-        w.WriteString("effectiveSeverity", JsonTokens.severityToken decision.EffectiveSeverity)
-        w.WriteString("reason", decision.Reason)
-        w.WriteEndObject()
-
-    let writeGeneratedViews (w: Utf8JsonWriter) (views: (CE.CurrencyFinding * EnforcementDecision) list) =
-        match views with
-        | [] -> ()
-        | _ ->
-            w.WritePropertyName "generatedViews"
-            w.WriteStartArray()
-
-            for finding, decision in views |> List.sortBy (fun (f, _) -> f.ViewId) do
-                writeGeneratedView w finding decision
-
-            w.WriteEndArray()
+    // F070/JSON-4: the additive `generatedViews` array writer now lives ONCE in the shared
+    // `GeneratedViewsJson` leaf — it was byte-identical to VerifyJson's copy. The composing entry below
+    // calls `GeneratedViewsJson.writeGeneratedViews` under the same non-empty guard, so the emitted bytes
+    // are unchanged (FR-004, guarded by this projection's goldens).
 
     // ── the public entry point ──
 
@@ -239,7 +205,7 @@ module AuditJson =
             writeSection w lookup execLookup "warnings" decision.Warnings
             writeSection w lookup execLookup "passing" decision.Passing
             w.WriteBoolean("cacheEligibilityEvaluated", Option.isSome cache)
-            writeGeneratedViews w generatedViews
+            GeneratedViewsJson.writeGeneratedViews w generatedViews
             w.WriteEndObject())
 
     // The no-generated-views entry point. Delegates to the overload with an empty view list — `writeGeneratedViews`
