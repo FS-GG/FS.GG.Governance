@@ -302,8 +302,11 @@ arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Relea
 
 ## Packaging
 
-Most projects are `IsPackable=false`. The publishable `FS.GG.Governance.*` packages
-(including the `FS.GG.Governance.Cli` tool) pack to a local folder feed
+Most projects are packable by default (74 of 82 `src` projects; only a small explicit
+set carries `IsPackable=false`). The api-compat breaking-change gate packs every packable
+project against its org-feed baseline, but only the two publishable `FS.GG.Governance.*`
+packages (`FS.GG.Governance.Cli` and `FS.GG.Governance.ReferenceGateSet`) are actually
+published. The publishable packages pack to a local folder feed
 (`~/.local/share/nuget-local/`) and publish to the org GitHub Packages feed;
 `nuget.config` additively adds that feed (`https://nuget.pkg.github.com/FS-GG/index.json`)
 with source mapping (`FS.GG.*` → org feed, everything else → nuget.org). Each packable
