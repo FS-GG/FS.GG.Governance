@@ -93,6 +93,23 @@ let tests =
                   Expect.isFalse (File.Exists(Path.Combine(dir, "readiness", "route.json"))) "watch compose writes no contract artifact")
           }
 
+          test "headless (CLI-1): the dispatcher's `tuiKeyReader` swallows an unreadable console (redirected stdin) and quits, never crashing" {
+              // `Console.ReadKey` throws `InvalidOperationException` when stdin is redirected / no console is
+              // attached — the state of the Expecto runner, and of every CI/piped `fsgg-governance tui`
+              // invocation. `tuiKeyReader` must be TOTAL: map that to `Quit` (clean exit), the navigation-surface
+              // sibling of `Watch.safeKeyPoll` (H3/#47). Without the guard the real `tui` entry crashes headless
+              // instead of exiting cleanly. Guarded on `IsInputRedirected` so this never blocks on a real console
+              // (where `ReadKey` would wait for a keypress) — it asserts exactly the headless path the fix targets.
+              if Console.IsInputRedirected then
+                  let mutable threw = false
+                  let mutable msg = Tui.MoveDown
+                  try msg <- Program.tuiKeyReader () with _ -> threw <- true
+                  Expect.isFalse threw "tuiKeyReader never propagates a console exception"
+                  Expect.equal msg Tui.Quit "an unreadable console maps to Quit (clean exit), not a crash"
+              else
+                  skiptest "console is interactive here; the headless guard path is not exercised (ReadKey would block)"
+          }
+
           test "headless (H3 / #47): the dispatcher's `runWatch` over a nonexistent root fails to arm the watcher and exits input-unavailable (66), never crashing" {
               // The FileSystemWatcher cannot be constructed for a missing root, so `Watch.run` returns
               // `InputUnreadable` BEFORE the poll loop consults the console. `runWatch` maps that to the CLI's
