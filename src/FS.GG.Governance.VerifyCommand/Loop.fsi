@@ -91,9 +91,11 @@ module Loop =
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2. `UnrecognizedProfile` carries the offending
     /// string from F023 `recognizeProfile` `Unrecognized`; recognition happens IN `parse` so a typo writes no
-    /// artifact. There is NO `UnrecognizedMode` (verify has no `--mode`): a `--mode` flag is an `UnknownFlag`.
+    /// artifact. There is NO `UnrecognizedMode` (verify has no `--mode`): a `--mode` flag is an `UnknownFlag`,
+    /// while a stray non-`--` positional is an `UnexpectedArgument` (CLI-5).
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths

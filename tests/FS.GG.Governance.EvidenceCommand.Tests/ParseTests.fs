@@ -62,6 +62,12 @@ let tests =
               | other -> failtestf "expected UnknownFlag, got %A" other
           }
 
+          test "CLI-5: a stray non-`--` positional is an UnexpectedArgument, not an UnknownFlag" {
+              match Loop.parse [ "junk" ] with
+              | Error(Loop.UnexpectedArgument value) -> Expect.equal value "junk" "names the unexpected argument"
+              | other -> failtestf "expected UnexpectedArgument, got %A" other
+          }
+
           test "a bad --format value is a BadFormat UsageError" {
               match Loop.parse [ "--format"; "yaml" ] with
               | Error(Loop.BadFormat value) -> Expect.equal value "yaml" "names the bad value"
