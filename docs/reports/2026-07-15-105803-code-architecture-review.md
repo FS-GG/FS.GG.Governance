@@ -547,8 +547,19 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `ParseTests` cases across all seven hosts pin the positional ⇒ `UnexpectedArgument`/"unexpected
       argument" split and that an unknown `--flag` still reports `UnknownFlag`; the stale
       Verify/Release "…is an UnknownFlag/unknown argument" test names/assertions were corrected.
-- [ ] **CORE-3 — Document the reserved `"; "` reason separator at the probe-authoring surface
-      (Low),** or escape it in leaf reasons.
+- [x] **CORE-3 — Document the reserved `"; "` reason separator at the probe-authoring surface
+      (Low).** ✅ Done, via the document branch (escaping would rewrite the reason algebra and could
+      churn contract/golden bytes for a hazard no current reason actually hits). The two surfaces
+      where a leaf reason is authored now carry a `RESERVED SEPARATOR` note: `Check.Outcome`
+      (`Check.fsi` — the probe-authoring surface: `Unmet`/`Unknown` reason) and `Verdict`
+      (`Verdict.fsi` — `Fail`/`Uncertain` reason) each state that `"; "` is split/reordered on
+      roll-up (`combineReasons`, the Hazard-2 mitigation) and that a single reason must not embed it
+      (use `", "`/`" — "`/`" / "`), while an un-aggregated reason keeps it verbatim. The
+      `combineReasons` implementation comment now names the reservation and its pinning test. Comment-
+      only (Tier 0): the surface baseline is reflection-based, so no `.fsi`/baseline/golden churn
+      (`SurfaceDrift` stays green). A new `VerdictTests` case `V8b` pins the reservation as intended
+      behavior — a single leaf reason containing `"; "` is fragmented and ordinal-reordered on
+      aggregation, duplicate components collapse, and a bare reason carries `"; "` unchanged.
 - [ ] **JSON-5 — Carry `overBudget.reason` from the model, or document the emit-time synthesis
       (Low).**
 - [ ] **JSON-4 — Resolve the generated-view writer duplication if #83 proceeds (Low).**

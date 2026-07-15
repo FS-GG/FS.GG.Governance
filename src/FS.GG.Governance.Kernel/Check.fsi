@@ -28,6 +28,15 @@ type ArtifactRef = { Kind: string; Key: string }
 /// the F02 `Verdict`: `Met → Pass`, `Unmet → Fail`, `Unknown → Uncertain` (FR-002).
 /// `Unknown` is the "a competent judge has not yet ruled" state (spec prose: "undecided")
 /// — it is preserved through composition, never silently coerced to met/unmet.
+///
+/// RESERVED SEPARATOR — `"; "` is reserved in the `Unmet`/`Unknown` reason text. When a
+/// composed verdict rolls up (`Verdict.all`/`any`, via `combineReasons`), each contributing
+/// reason is SPLIT on `"; "`, de-duplicated, and ordinal-sorted to make the combined reason
+/// order-/nesting-/duplication-independent (Hazard-2). A leaf reason that itself contains
+/// `"; "` is therefore fragmented and its parts reordered on aggregation — so a probe author
+/// MUST NOT use `"; "` inside a single reason (use `", "`, `" — "`, or `" / "` for internal
+/// separation). The token is inert in an un-aggregated reason: a single probe's reason is
+/// rendered verbatim.
 type Outcome =
     | Met
     | Unmet of reason: string
