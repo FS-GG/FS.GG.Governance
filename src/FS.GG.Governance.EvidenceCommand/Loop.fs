@@ -30,6 +30,7 @@ module Loop =
 
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | BadFormat of value: string
 
@@ -118,7 +119,8 @@ module Loop =
             // Missing value: empty rest OR a `--`-prefixed next token (the guarded arms above declined it).
             | ("--repo" | "--out" | "--format") :: _ -> Error(MissingValue(List.head args))
             | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
-            | other :: _ -> Error(UnknownFlag other)
+            // CLI-5: a stray non-`--` positional is an UnexpectedArgument, not a mis-labelled "unknown flag".
+            | other :: _ -> Error(UnexpectedArgument other)
 
         loop
             { Repo = "."

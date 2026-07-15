@@ -531,8 +531,22 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       not in `Interpreter.fsi` (no baseline/contract churn); the happy path is byte-identical. Two new
       `InterpreterTests` cases pin it: a mid-batch rename clash rolls back the created `src`/`src/App`
       dirs, and a rollback into a pre-existing operator `src/` leaves that dir and its file untouched.
-- [ ] **CLI-5 — Distinguish `UnexpectedArgument` from `UnknownFlag` in the no-positional verb
-      hosts (Low).**
+- [x] **CLI-5 — Distinguish `UnexpectedArgument` from `UnknownFlag` in the no-positional verb
+      hosts (Low).** ✅ Done, and swept across **all seven verb hosts** (not just the four named) so the
+      distinction doesn't land half-applied. A stray non-`--` positional no longer reads as a mis-labelled
+      "unknown flag": each host's catch-all `other :: _` arm now splits on `StartsWith "--"`, so a
+      `--`-prefixed token stays `UnknownFlag` (a `--mode` on verify still reports "unknown flag", FR-017)
+      while a bare positional becomes an unexpected-argument. The five DU hosts
+      (Verify/Ship/Evidence/Route[`RoutePipeline`]/CacheEligibility `Loop.fs`) gained an
+      `UnexpectedArgument of string` case, rendered "unexpected argument: <x>" by each `Program.usageMessage`
+      — mirroring the dispatcher's own `Cli.UnexpectedArgument`/`CliRender`. The two message-record hosts
+      (Refresh/Release `Loop.fs`) reworded their single `{ Message }` arm the same way ("unknown flag:" vs
+      "unexpected argument:") — no DU/`.fsi` change. Tier 1 for the five DU hosts: `.fsi` case +
+      `*.surface.txt` baseline moved in lockstep (re-blessed via `BLESS_SURFACE=1`); Refresh/Release are
+      Tier 0 (record message only). Exit-code-preserving (every case is still `UsageError'`/exit 2). New
+      `ParseTests` cases across all seven hosts pin the positional ⇒ `UnexpectedArgument`/"unexpected
+      argument" split and that an unknown `--flag` still reports `UnknownFlag`; the stale
+      Verify/Release "…is an UnknownFlag/unknown argument" test names/assertions were corrected.
 - [ ] **CORE-3 — Document the reserved `"; "` reason separator at the probe-authoring surface
       (Low),** or escape it in leaf reasons.
 - [ ] **JSON-5 — Carry `overBudget.reason` from the model, or document the emit-time synthesis

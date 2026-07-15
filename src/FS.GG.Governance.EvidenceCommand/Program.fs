@@ -11,6 +11,7 @@ open FS.GG.Governance.EvidenceCommand
 let usageMessage (err: Loop.UsageError) : string =
     match err with
     | Loop.UnknownFlag flag -> "unknown flag: " + flag
+    | Loop.UnexpectedArgument value -> "unexpected argument: " + value
     | Loop.MissingValue flag -> "missing value for flag: " + flag
     | Loop.BadFormat value -> "unknown --format value: " + value + " (expected human|text|json)"
 

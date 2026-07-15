@@ -311,6 +311,7 @@ TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError
   [Method] Boolean Equals(UsageError, System.Collections.IEqualityComparer)
   [Method] Boolean get_IsBadFormat()
   [Method] Boolean get_IsMissingValue()
+  [Method] Boolean get_IsUnexpectedArgument()
   [Method] Boolean get_IsUnknownFlag()
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -321,13 +322,16 @@ TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError
   [Method] System.String ToString()
   [Method] UsageError NewBadFormat(System.String)
   [Method] UsageError NewMissingValue(System.String)
+  [Method] UsageError NewUnexpectedArgument(System.String)
   [Method] UsageError NewUnknownFlag(System.String)
   [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+BadFormat
   [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+MissingValue
   [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+Tags
+  [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnexpectedArgument
   [NestedType] FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnknownFlag
   [Property] Boolean IsBadFormat
   [Property] Boolean IsMissingValue
+  [Property] Boolean IsUnexpectedArgument
   [Property] Boolean IsUnknownFlag
   [Property] Int32 Tag
 TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+BadFormat
@@ -339,7 +343,11 @@ TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+MissingValue
 TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+Tags
   [Field] Int32 BadFormat
   [Field] Int32 MissingValue
+  [Field] Int32 UnexpectedArgument
   [Field] Int32 UnknownFlag
+TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnexpectedArgument
+  [Method] System.String get_Item()
+  [Property] System.String Item
 TYPE FS.GG.Governance.EvidenceCommand.LoopModule+UsageError+UnknownFlag
   [Method] System.String get_Item()
   [Property] System.String Item

@@ -53,9 +53,13 @@ let tests =
 
           test "--repo with no value is a usage error" { Expect.isTrue (isError [ "--repo" ]) "missing value" }
 
-          test "a leading bare 'release' token is an unknown argument (flags-only contract)" {
+          test "a leading bare 'release' token is an unexpected argument (flags-only contract)" {
               // No central fsgg dispatcher: parse does not expect/strip a leading `release` token.
               Expect.isTrue (isError [ "release"; "--repo"; "/x" ]) "leading release rejected"
+              // CLI-5: a stray non-`--` positional reads as "unexpected argument", not "unknown flag".
+              match Loop.parse [ "release"; "--repo"; "/x" ] with
+              | Error e -> Expect.stringContains e.Message "unexpected argument: release" "names the unexpected positional"
+              | Ok _ -> failtest "expected an error for a leading positional"
               // ...while the flags-only argv parses Ok.
               Expect.equal (ok [ "--repo"; "/x" ]).Repo "/x" "flags-only Ok"
           } ]

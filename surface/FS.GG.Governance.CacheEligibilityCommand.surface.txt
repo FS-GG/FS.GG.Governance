@@ -459,6 +459,7 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError
   [Method] Boolean get_IsEmptyPaths()
   [Method] Boolean get_IsMissingValue()
   [Method] Boolean get_IsPathsAndSinceTogether()
+  [Method] Boolean get_IsUnexpectedArgument()
   [Method] Boolean get_IsUnknownFlag()
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -469,17 +470,20 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError
   [Method] System.String ToString()
   [Method] UsageError NewBadFormat(System.String)
   [Method] UsageError NewMissingValue(System.String)
+  [Method] UsageError NewUnexpectedArgument(System.String)
   [Method] UsageError NewUnknownFlag(System.String)
   [Method] UsageError get_EmptyPaths()
   [Method] UsageError get_PathsAndSinceTogether()
   [NestedType] FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+BadFormat
   [NestedType] FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+MissingValue
   [NestedType] FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+Tags
+  [NestedType] FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+UnexpectedArgument
   [NestedType] FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+UnknownFlag
   [Property] Boolean IsBadFormat
   [Property] Boolean IsEmptyPaths
   [Property] Boolean IsMissingValue
   [Property] Boolean IsPathsAndSinceTogether
+  [Property] Boolean IsUnexpectedArgument
   [Property] Boolean IsUnknownFlag
   [Property] Int32 Tag
   [Property] UsageError EmptyPaths
@@ -495,7 +499,11 @@ TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+Tags
   [Field] Int32 EmptyPaths
   [Field] Int32 MissingValue
   [Field] Int32 PathsAndSinceTogether
+  [Field] Int32 UnexpectedArgument
   [Field] Int32 UnknownFlag
+TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+UnexpectedArgument
+  [Method] System.String get_Item()
+  [Property] System.String Item
 TYPE FS.GG.Governance.CacheEligibilityCommand.LoopModule+UsageError+UnknownFlag
   [Method] System.String get_Item()
   [Property] System.String Item

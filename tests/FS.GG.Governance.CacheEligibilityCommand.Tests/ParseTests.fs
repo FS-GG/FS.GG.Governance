@@ -69,6 +69,10 @@ let tests =
               Expect.equal (Loop.parse [ "--format"; "yaml" ]) (Error(Loop.BadFormat "yaml")) "bad format"
           }
 
+          test "CLI-5: a stray non-`--` positional ⇒ UnexpectedArgument, not UnknownFlag" {
+              Expect.equal (Loop.parse [ "junk" ]) (Error(Loop.UnexpectedArgument "junk")) "stray positional rejected as UnexpectedArgument"
+          }
+
           test "exitCode mapping is total: 0/2/3/4" {
               Expect.equal (Loop.exitCode Loop.Success) 0 "success 0"
               Expect.equal (Loop.exitCode Loop.UsageError') 2 "usage 2"

@@ -137,7 +137,9 @@ module Loop =
             | "--text" :: more -> go { acc with Format = Some "text" } more
             | "--json" :: more -> go { acc with Format = Some "json" } more
             | "--text-and-json" :: more -> go { acc with Format = Some "text-and-json" } more
-            | other :: _ -> Error { Message = "unknown argument: " + other }
+            // CLI-5: distinguish an unknown `--` flag from a stray non-`--` positional in the message.
+            | flag :: _ when flag.StartsWith "--" -> Error { Message = "unknown flag: " + flag }
+            | other :: _ -> Error { Message = "unexpected argument: " + other }
 
         match go emptyAcc argv with
         | Error e -> Error e

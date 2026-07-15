@@ -54,8 +54,14 @@ let tests =
 
           test "unknown flag → Error (exit 2)" {
               match Loop.parse [ "--nope" ] with
-              | Error e -> Expect.stringContains e.Message "unknown" "names the offending flag"
+              | Error e -> Expect.stringContains e.Message "unknown flag" "names the offending flag"
               | Ok _ -> failtest "expected an error for an unknown flag"
+          }
+
+          test "CLI-5: a stray non-`--` positional → 'unexpected argument' (distinct from an unknown flag)" {
+              match Loop.parse [ "junk" ] with
+              | Error e -> Expect.stringContains e.Message "unexpected argument: junk" "names the unexpected positional"
+              | Ok _ -> failtest "expected an error for a stray positional"
           }
 
           test "missing flag value → Error" {

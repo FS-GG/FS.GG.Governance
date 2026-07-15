@@ -42,6 +42,7 @@ module Loop =
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2.
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | BadFormat of value: string
 

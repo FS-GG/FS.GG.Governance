@@ -50,6 +50,7 @@ module Loop =
 
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths
@@ -187,7 +188,9 @@ module Loop =
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
-            | other :: _ -> Error(UnknownFlag other)
+            | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
+            // CLI-5: a stray non-`--` positional is an UnexpectedArgument, not a mis-labelled "unknown flag".
+            | other :: _ -> Error(UnexpectedArgument other)
 
         match go emptyAcc tokens with
         | Error e -> Error e
