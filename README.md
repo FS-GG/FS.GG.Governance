@@ -148,7 +148,8 @@ fakeable-port `Interpreter`, and a thin `Program`.
 > 43 references (32 transitively reachable). That breadth is by design at the edge and is
 > *not* drift; the dependency fences guarded by `FS.GG.Governance.DependencyFences.Tests`
 > constrain the *kinds* of edges that matter (no executable may reference another executable;
-> YAML parsing stays with its owners), not the raw reference count of a leaf command.
+> YAML parsing stays with its owners; Spectre.Console stays confined to `HumanRender`), not the
+> raw reference count of a leaf command.
 
 ## The `.fsgg` configuration model
 
@@ -307,7 +308,8 @@ arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Relea
 - **Tests:** Expecto (with FsCheck property tests); the full suite is the delivery gate.
 - **Key dependencies:** `FSharp.Core 10.1.301` (org-pinned), `YamlDotNet 18.1.0`
   (isolated to `Config`), `FS.GG.Contracts 2.0.0` (consumed by `Config`),
-  `Spectre.Console 0.57.2` (exactly one project, `HumanRender`).
+  `Spectre.Console 0.57.2` (confined to exactly one project, `HumanRender` — a fence
+  guarded by `FS.GG.Governance.DependencyFences.Tests`).
 - **Build config:** `Directory.Build.props` / `Directory.Packages.props` are
   org-synced and drift-checked from [`FS-GG/.github → dist/dotnet/`](https://github.com/FS-GG/.github);
   repo-specific overrides live in `*.local.props`. Central Package Management is on
