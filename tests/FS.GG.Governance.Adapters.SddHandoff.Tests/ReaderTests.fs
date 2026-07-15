@@ -83,6 +83,48 @@ let tests =
               Expect.equal (causeOf r) (Some Malformed) "garbage → Malformed, no throw"
           }
 
+          test "a malformed dependency edge is REJECTED as Malformed, not silently dropped (ADPT-2)" {
+              // AutoSynthetic taint flows along dependency edges; a dropped edge could leave a
+              // downstream verdict resting on a synthetic node un-tainted. Every non-[from,to]-string
+              // shape must fail the whole handoff, mirroring the strict node fold.
+              let edge (dep: string) =
+                  sprintf
+                      """{ "contractVersion": "1.0.0",
+                           "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": [ %s ] } }"""
+                      dep
+
+              let cases =
+                  [ """[ "a" ]""", "single-element tuple"
+                    """[ "a", "b", "c" ]""", "three-element tuple"
+                    """[ "a", 5 ]""", "non-string member"
+                    "\"a:b\"", "scalar in place of a tuple"
+                    "[]", "empty tuple" ]
+
+              for dep, label in cases do
+                  let r = Reader.parse { Source = "x"; Json = edge dep }
+                  Expect.equal (causeOf r) (Some Malformed) (sprintf "%s → Malformed, not dropped" label)
+          }
+
+          test "a present-but-non-array 'dependencies' is Malformed (ADPT-2)" {
+              let json =
+                  """{ "contractVersion": "1.0.0",
+                       "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": {} } }"""
+
+              let r = Reader.parse { Source = "x"; Json = json }
+              Expect.equal (causeOf r) (Some Malformed) "non-array dependencies → Malformed"
+          }
+
+          test "a well-formed dependency edge still round-trips (ADPT-2 happy path)" {
+              let json =
+                  """{ "contractVersion": "1.0.0",
+                       "evidence": { "nodes": [ { "id": "a", "state": "real" } ],
+                                     "dependencies": [ [ "a", "b" ], [ "c", "d" ] ] } }"""
+
+              match Reader.parse { Source = "x"; Json = json } with
+              | Error d -> failtestf "expected Ok, got Error %A" d
+              | Ok h -> Expect.equal h.Evidence.Dependencies [ ("a", "b"); ("c", "d") ] "edges carried in source order"
+          }
+
           test "unknown additive (minor) fields are ignored" {
               let withExtra =
                   """{ "contractVersion": "1.4.0", "schemaVersion": 1,
