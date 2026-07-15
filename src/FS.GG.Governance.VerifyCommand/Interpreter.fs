@@ -21,6 +21,8 @@ open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: CurrencyFinding (the port's result)
 module CS = FS.GG.Governance.CurrencySensing.CurrencySensing         // F070: the shared edge sensing (senseRepo)
+module SC = FS.GG.Governance.SurfaceChecks.Model                     // ADPT-1: the shared SurfaceFinding vocabulary
+module Enf = FS.GG.Governance.Enforcement.Enforcement                // ADPT-1: Severity (Blocking) for a reified fail-closed finding
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -153,17 +155,49 @@ module Interpreter =
     // (read-only) for the request build, senses each DECLARED domain through a READ-ONLY port, then runs the
     // pure `Composition.run` aggregator. Crucially side-effect-free at verify (FR-012): the **package** port
     // no-ops `WriteBaseline` (an absent baseline is REPORTED via `package.baseline-absent`, never written) and
-    // lists NO transcripts (no FSI process is spawned). TOTAL & SAFE: an invalid/absent catalog or an
-    // unexpected exception degrades to `[]` (no fabricated findings, no crash — FR-010, research D6). The four
-    // domain sensors themselves already encode bounded, disclosed outcomes for missing/unreadable inputs.
+    // lists NO transcripts (no FSI process is spawned).
+    //
+    // ADPT-1 — FAIL CLOSED. Surface sensing must NEVER collapse to `[]` on an invalid catalog or an unexpected
+    // throw: `[]` reads as "no surface findings", so `fsgg verify` would PASS with zero surface evidence exactly
+    // when the evidence could not be gathered. Each such failure is instead reified as a Blocking, input-state
+    // finding (BlockOnPr maturity, mirroring the four domain sensors, so it blocks at Verify just like a real
+    // `package.baseline-absent`) — the same fail-closed discipline the sensors now apply to their own
+    // unreadable/missing inputs (ADPT-4). The `try` is ISOLATED PER DOMAIN so a throw sensing one surface reifies
+    // to a finding for THAT surface without erasing every other domain's real findings.
     let senseSurfacesReal
         (repo: string)
         (exec: FS.GG.Governance.GateExecution.Model.ExecutionPort)
         (report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport)
-        : FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+        : SC.SurfaceFinding list =
+        // A synthetic Blocking, input-state finding for an infrastructure-level sensing failure — no rule
+        // violation, but never a fabricated pass. Deterministic locus (`.`, no clock/abs-root of our own; the
+        // reified `ex.Message` follows the same precedent as `package.baseline-unreadable`).
+        let inputStateFinding
+            (domain: SC.CheckDomain)
+            (surface: string)
+            (code: string)
+            (message: string)
+            : SC.SurfaceFinding =
+            { Domain = domain
+              Surface = SurfaceId surface
+              Code = code
+              Location = { File = normalizePath "."; Detail = code }
+              BaseSeverity = Enf.Blocking
+              Maturity = BlockOnPr
+              EvidenceTag = None
+              IsInputState = true
+              Message = message }
+
         try
             match Loader.readSource (GovernedPath ".") (Loader.fileSystemReader repo) |> Schema.validate with
-            | Invalid _ -> []
+            | Invalid _ ->
+                // The catalog itself doesn't validate ⇒ the surface requests can't be derived ⇒ no domain sense
+                // can run. Report blocking, never a silent skip.
+                [ inputStateFinding
+                      SC.PackageDomain
+                      "<surface-catalog>"
+                      "surface.catalog-invalid"
+                      "the governance catalog is invalid, so product-surface checks could not run (blocking, not silently skipped)" ]
             | Valid facts ->
                 let requests =
                     FS.GG.Governance.SurfaceChecks.Dispatch.Composition.requestsOf facts report
@@ -179,44 +213,79 @@ module Interpreter =
                 let skillPort = FS.GG.Governance.SkillChecks.Interpreter.realPort repo
                 let designPort = FS.GG.Governance.DesignChecks.Interpreter.realPort repo designCatalogLayout
 
-                let bundle =
+                // Fold the requests into the fact bundle, ISOLATING each domain's sense: a throw in one domain
+                // reifies to a per-surface Blocking input-state finding (collected in `senseFailures`) instead of
+                // discarding every other domain's real findings.
+                let bundle, senseFailures =
                     requests
                     |> List.fold
-                        (fun (b: FS.GG.Governance.SurfaceChecks.Dispatch.Composition.DomainFactBundle) req ->
-                            match req.Domain with
-                            | FS.GG.Governance.SurfaceChecks.Model.PackageDomain ->
-                                { b with
-                                    Package =
-                                        Map.add
-                                            req.Surface
-                                            (FS.GG.Governance.PackageChecks.Interpreter.sensePackage pkgPort req)
-                                            b.Package }
-                            | FS.GG.Governance.SurfaceChecks.Model.DocsDomain ->
-                                { b with
-                                    Docs =
-                                        Map.add
-                                            req.Surface
-                                            (FS.GG.Governance.DocsChecks.Interpreter.senseDocs docsPort req)
-                                            b.Docs }
-                            | FS.GG.Governance.SurfaceChecks.Model.SkillDomain ->
-                                { b with
-                                    Skill =
-                                        Map.add
-                                            req.Surface
-                                            (FS.GG.Governance.SkillChecks.Interpreter.senseSkill skillPort req)
-                                            b.Skill }
-                            | FS.GG.Governance.SurfaceChecks.Model.DesignDomain ->
-                                { b with
-                                    Design =
-                                        Map.add
-                                            req.Surface
-                                            (FS.GG.Governance.DesignChecks.Interpreter.senseDesign designPort req)
-                                            b.Design })
-                        FS.GG.Governance.SurfaceChecks.Dispatch.Composition.emptyBundle
+                        (fun (b: FS.GG.Governance.SurfaceChecks.Dispatch.Composition.DomainFactBundle, fails) req ->
+                            try
+                                let b' =
+                                    match req.Domain with
+                                    | SC.PackageDomain ->
+                                        { b with
+                                            Package =
+                                                Map.add
+                                                    req.Surface
+                                                    (FS.GG.Governance.PackageChecks.Interpreter.sensePackage pkgPort req)
+                                                    b.Package }
+                                    | SC.DocsDomain ->
+                                        { b with
+                                            Docs =
+                                                Map.add
+                                                    req.Surface
+                                                    (FS.GG.Governance.DocsChecks.Interpreter.senseDocs docsPort req)
+                                                    b.Docs }
+                                    | SC.SkillDomain ->
+                                        { b with
+                                            Skill =
+                                                Map.add
+                                                    req.Surface
+                                                    (FS.GG.Governance.SkillChecks.Interpreter.senseSkill skillPort req)
+                                                    b.Skill }
+                                    | SC.DesignDomain ->
+                                        { b with
+                                            Design =
+                                                Map.add
+                                                    req.Surface
+                                                    (FS.GG.Governance.DesignChecks.Interpreter.senseDesign designPort req)
+                                                    b.Design }
 
+                                b', fails
+                            with ex ->
+                                let (SurfaceId sid) = req.Surface
+
+                                let fail =
+                                    inputStateFinding
+                                        req.Domain
+                                        sid
+                                        "surface.sense-error"
+                                        (sprintf
+                                            "sensing this product surface threw (%s); reported blocking, not silently skipped"
+                                            ex.Message)
+
+                                b, fail :: fails)
+                        (FS.GG.Governance.SurfaceChecks.Dispatch.Composition.emptyBundle, [])
+
+                // Merge the reified per-domain failures with the pack findings and re-establish the deterministic
+                // order `Composition.run` guarantees (surface id, domain ordinal, file, detail, code) so a reified
+                // failure interleaves stably alongside real findings (`senseFailures` is `[]` on the happy path ⇒
+                // byte-identical to the pre-ADPT-1 output).
                 FS.GG.Governance.SurfaceChecks.Dispatch.Composition.run facts report bundle
-        with _ ->
-            []
+                @ senseFailures
+                |> List.sortBy (fun (f: SC.SurfaceFinding) ->
+                    let (SurfaceId sid) = f.Surface
+                    let (GovernedPath file) = f.Location.File
+                    sid, SC.checkDomainOrdinal f.Domain, file, f.Location.Detail, f.Code)
+        with ex ->
+            // A throw OUTSIDE any single domain sense — the catalog read, request derivation, or aggregation.
+            // Fail closed with one infrastructure finding rather than a silent empty pass.
+            [ inputStateFinding
+                  SC.PackageDomain
+                  "<surface-sensing>"
+                  "surface.sense-error"
+                  (sprintf "product-surface sensing threw (%s); reported blocking, not silently skipped" ex.Message) ]
 
     let realPorts (repo: string) : Ports =
         { Files = Loader.fileSystemReader repo

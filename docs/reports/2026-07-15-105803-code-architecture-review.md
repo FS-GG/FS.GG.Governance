@@ -425,8 +425,16 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       helper is private). A `malformed-nonpositive-timeout` fixture (`timeout: 0`, otherwise valid) +
       a `DiagnosticTests` case pin the rejection; the fixture README lists it. No existing config uses
       a non-positive timeout, so no regression.
-- [ ] **ADPT-1 — Make Verify surface-sensing fail closed (Low).** Isolate the `try` per domain;
-      reify a caught exception / `Invalid` catalog as a Blocking input-state finding.
+- [x] **ADPT-1 — Make Verify surface-sensing fail closed (Low).** ✅ Done: `senseSurfacesReal`
+      (`VerifyCommand/Interpreter.fs`) no longer collapses to `[]` on an invalid catalog or an unexpected
+      throw — each failure is reified as a **Blocking, input-state** `SurfaceFinding` (`surface.catalog-invalid`
+      / `surface.sense-error`, `BlockOnPr` maturity mirroring the domain sensors, so it blocks at Verify exactly
+      like `package.baseline-absent`), and the `try` is now **isolated per domain** so a throw sensing one
+      surface reifies to a finding for THAT surface without erasing the other domains' real findings. The
+      happy path is byte-identical (`senseFailures` is `[]` ⇒ the combined list re-sorts to the same order
+      `Composition.run` already produced). A `SurfaceChecksE2ETests` case drives the real sense over a temp tree
+      with an on-disk invalid catalog and asserts a Blocking input-state finding that blocks the verdict, rather
+      than a silent empty pass.
 - [ ] **ADPT-2 — Reject malformed SddHandoff evidence-dependency edges (Low).** `Malformed`
       diagnostic instead of a silent `Seq.choose` drop, closing the taint fail-open.
 
