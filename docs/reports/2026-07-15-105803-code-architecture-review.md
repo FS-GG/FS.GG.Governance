@@ -435,8 +435,17 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `Composition.run` already produced). A `SurfaceChecksE2ETests` case drives the real sense over a temp tree
       with an on-disk invalid catalog and asserts a Blocking input-state finding that blocks the verdict, rather
       than a silent empty pass.
-- [ ] **ADPT-2 — Reject malformed SddHandoff evidence-dependency edges (Low).** `Malformed`
-      diagnostic instead of a silent `Seq.choose` drop, closing the taint fail-open.
+- [x] **ADPT-2 — Reject malformed SddHandoff evidence-dependency edges (Low).** ✅ Done (#208):
+      `Reader.parse` (`Adapters.SddHandoff/Reader.fs`) now parses `evidence.dependencies` STRICTLY
+      via a `Result`-accumulating fold that mirrors the nodes fold — any present-but-malformed edge
+      (non-array element, wrong arity, or a non-string member) rejects the whole handoff as a
+      descriptive `Malformed` diagnostic instead of a silent `Seq.choose` drop, closing the
+      `AutoSynthetic` taint fail-open (a dropped edge could leave a downstream verdict resting on a
+      synthetic node un-tainted). The optional field stays lenient exactly where it is safe: an absent
+      or explicit-`null` `dependencies` is `Ok []` (no edges to drop), while a present non-array *value*
+      is `Malformed`. `parse` stays pure/total; signature and `.fsi` unchanged (no baseline/contract
+      churn). `ReaderTests` pins the rejected shapes, the non-array field, null/absent acceptance, and
+      the well-formed happy path round-tripping in source order.
 
 ### Later — hardening & consolidation tail
 
