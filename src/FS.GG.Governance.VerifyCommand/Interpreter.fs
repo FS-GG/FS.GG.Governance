@@ -268,16 +268,22 @@ module Interpreter =
                                 b, fail :: fails)
                         (FS.GG.Governance.SurfaceChecks.Dispatch.Composition.emptyBundle, [])
 
-                // Merge the reified per-domain failures with the pack findings and re-establish the deterministic
-                // order `Composition.run` guarantees (surface id, domain ordinal, file, detail, code) so a reified
-                // failure interleaves stably alongside real findings (`senseFailures` is `[]` on the happy path ⇒
-                // byte-identical to the pre-ADPT-1 output).
-                FS.GG.Governance.SurfaceChecks.Dispatch.Composition.run facts report bundle
-                @ senseFailures
-                |> List.sortBy (fun (f: SC.SurfaceFinding) ->
-                    let (SurfaceId sid) = f.Surface
-                    let (GovernedPath file) = f.Location.File
-                    sid, SC.checkDomainOrdinal f.Domain, file, f.Location.Detail, f.Code)
+                let composed =
+                    FS.GG.Governance.SurfaceChecks.Dispatch.Composition.run facts report bundle
+
+                // On the happy path there are no reified failures ⇒ return `Composition.run`'s output verbatim
+                // (already sorted, no re-sort work, structurally byte-identical to the pre-ADPT-1 output). Only
+                // when a domain sense threw do we merge and re-establish the SAME deterministic order
+                // `Composition.run` guarantees (surface id, domain ordinal, file, detail, code — Composition.fs)
+                // so a reified failure interleaves stably alongside real findings.
+                match senseFailures with
+                | [] -> composed
+                | _ ->
+                    composed @ senseFailures
+                    |> List.sortBy (fun (f: SC.SurfaceFinding) ->
+                        let (SurfaceId sid) = f.Surface
+                        let (GovernedPath file) = f.Location.File
+                        sid, SC.checkDomainOrdinal f.Domain, file, f.Location.Detail, f.Code)
         with ex ->
             // A throw OUTSIDE any single domain sense — the catalog read, request derivation, or aggregation.
             // Fail closed with one infrastructure finding rather than a silent empty pass.
