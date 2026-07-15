@@ -160,4 +160,28 @@ let tests =
               let recomputed = currency doc "recomputed"
               let ship = recomputed |> List.find (fun e -> strField e "gate" = "build:ship")
               Expect.equal (ship.GetProperty("cause").ValueKind) JsonValueKind.String "bare string cause"
-              Expect.equal (ship.GetProperty("cause").GetString()) "noPriorEvidence" "noPriorEvidence" } ]
+              Expect.equal (ship.GetProperty("cause").GetString()) "noPriorEvidence" "noPriorEvidence" }
+
+          // JSON-2: the `currency.unresolved[].missing` array now carries the caller-supplied missing-fact
+          // wire tokens (was structurally always-empty). `ofVerifyDecisionWithGeneratedViews` is the sole
+          // overload threading the `missingByGate` map (keyed on the gate id value).
+          test "unresolved[].missing carries the caller-supplied missing-fact tokens for that gate" {
+              // docs:lint is richDecision's selected gate absent from mixedReport ⇒ the sole unresolved entry.
+              let missingByGate = Map.ofList [ "docs:lint", [ "coveredArtifacts"; "commandVersion" ] ]
+
+              use doc =
+                  parse (VerifyJson.ofVerifyDecisionWithGeneratedViews richDecision (Some mixedReport) mixedOutcomes [] None [] missingByGate)
+
+              let lint = currency doc "unresolved" |> List.find (fun e -> strField e "gate" = "docs:lint")
+              let missing = [ for m in lint.GetProperty("missing").EnumerateArray() -> m.GetString() ]
+              Expect.equal missing [ "coveredArtifacts"; "commandVersion" ] "missing tokens emitted verbatim, in the supplied order" }
+
+          test "an empty missingByGate reproduces the always-empty missing array (byte-identical to ofVerifyDecision)" {
+              // Map.empty is the caller-with-no-resolution path (and the pre-JSON-2 behaviour of every overload).
+              let withEmptyMap =
+                  VerifyJson.ofVerifyDecisionWithGeneratedViews richDecision (Some mixedReport) mixedOutcomes [] None [] Map.empty
+
+              Expect.equal
+                  withEmptyMap
+                  (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
+                  "empty map ⇒ byte-identical to the base projection (no surfaceChecks/preview/generatedViews, empty missing)" } ]

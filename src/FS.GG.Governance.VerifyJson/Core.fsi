@@ -27,9 +27,16 @@ module Core =
     /// `exitCodeBasis`, `blockers`/`warnings`/`passing`, `currency` — appended to the caller-owned writer in
     /// the fixed wire order. The optional trailing sections (`surfaceChecks`/`releaseReadiness`/
     /// `generatedViews`) are appended by the entry AFTER this call, so the byte stream is unchanged.
+    ///
+    /// `missingByGate` carries the already-tokenized missing-fact wire tokens for each `currency.unresolved`
+    /// gate, keyed on the gate id value (the caller resolves them from `FreshnessResolution`, which holds the
+    /// sensed facts the cache report alone cannot reconstruct). A gate absent from the map — including the
+    /// whole-map-empty case used by the pinning unit projections — emits an empty `missing` array, so those
+    /// paths stay byte-identical to the pre-threading output.
     val writeCore:
         w: Utf8JsonWriter ->
         decision: ShipDecision ->
         cache: CacheEligibilityReport option ->
         execution: (GateId * GateOutcome) list ->
+        missingByGate: Map<string, string list> ->
             unit

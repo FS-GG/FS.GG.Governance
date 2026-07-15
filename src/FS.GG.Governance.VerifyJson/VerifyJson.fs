@@ -54,9 +54,10 @@ module VerifyJson =
         (findings: SC.SurfaceFinding list)
         (preview: VerifyReleasePreview option)
         (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
+        (missingByGate: Map<string, string list>)
         =
         w.WriteStartObject()
-        Core.writeCore w decision cache execution
+        Core.writeCore w decision cache execution missingByGate
 
         // F24: the additive product-surface findings. Written ONLY when non-empty; absent ⇒ byte-identical
         // to the pre-F24 projection (D8). Emitted in the Composition.run order the caller already fixed.
@@ -84,7 +85,7 @@ module VerifyJson =
         (execution: (GateId * GateOutcome) list)
         (findings: SC.SurfaceFinding list)
         : string =
-        JsonText.writeToString (fun w -> writeDocument w decision cache execution findings None [])
+        JsonText.writeToString (fun w -> writeDocument w decision cache execution findings None [] Map.empty)
 
     /// The F056 contract, unchanged: no surface findings ⇒ NO `surfaceChecks` field, so this is
     /// byte-identical to the pre-F24 projection (existing goldens untouched).
@@ -106,11 +107,17 @@ module VerifyJson =
         (findings: SC.SurfaceFinding list)
         (preview: VerifyReleasePreview option)
         : string =
-        JsonText.writeToString (fun w -> writeDocument w decision cache execution findings preview [])
+        JsonText.writeToString (fun w -> writeDocument w decision cache execution findings preview [] Map.empty)
 
     /// F070: the additive verify.json overload carrying the stale-generated-view currency findings + their
     /// F023 `EnforcementDecision`s. Identical to `ofVerifyDecisionWithPreview` plus the trailing
     /// `generatedViews` array (omitted when empty ⇒ byte-identical, FR-004). Existing entry points untouched.
+    ///
+    /// JSON-2: the ONLY overload carrying `missingByGate` — the already-tokenized missing-fact wire tokens per
+    /// `currency.unresolved` gate (keyed on the gate id value), so the field is honest rather than a
+    /// structurally-empty contract member. The command host resolves them from `FreshnessResolution` (which
+    /// holds `Model.Sensed`) and tokenizes via `missingFactToken` before calling, keeping this projection
+    /// emit-only. `Map.empty` (a caller with no resolution) reproduces the pre-JSON-2 empty `missing` arrays.
     let ofVerifyDecisionWithGeneratedViews
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
@@ -118,5 +125,7 @@ module VerifyJson =
         (findings: SC.SurfaceFinding list)
         (preview: VerifyReleasePreview option)
         (generatedViews: (CE.CurrencyFinding * EnforcementDecision) list)
+        (missingByGate: Map<string, string list>)
         : string =
-        JsonText.writeToString (fun w -> writeDocument w decision cache execution findings preview generatedViews)
+        JsonText.writeToString (fun w ->
+            writeDocument w decision cache execution findings preview generatedViews missingByGate)

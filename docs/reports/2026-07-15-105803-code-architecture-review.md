@@ -461,8 +461,18 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       while baseline-blind — and records the concrete wiring (seed from the org GitHub Packages feed →
       `--baseline-feed <dir>`, needs `packages: read`). The `Detect + grade` step comment is corrected the
       same way. Comment-only (no job behavior change); `gate.yml` YAML re-validated.
-- [ ] **JSON-2 — Populate or remove `verify.json` `currency.unresolved[].missing` (Low–Medium).**
-      Thread the tokens through, or drop the field under a schema bump and document the omission.
+- [x] **JSON-2 — Populate or remove `verify.json` `currency.unresolved[].missing` (Low–Medium).** ✅ Done,
+      via the populate branch (keeps `fsgg.verify/v1` — no schema bump, no consumer break: a documented-but-empty
+      array now carries data). `VerifyJson` threads a `missingByGate: Map<string, string list>` — the
+      already-tokenized missing-fact wire tokens per unresolved gate — through `writeCore`/`writeCurrency` and
+      exposes it on the sole production overload `ofVerifyDecisionWithGeneratedViews` (the four simpler overloads
+      pass `Map.empty` ⇒ byte-identical to their pre-JSON-2 output; the pinning unit golden is unchanged).
+      Verify's command host (`VerifyCommand/Loop.fs projectExecuted`) resolves the tokens from the SAME
+      `FreshnessResolution` report the cache report is built from and tokenizes via the injective
+      `missingFactToken`, so the projection stays emit-only (re-derives nothing) and the field is honest rather
+      than structurally dead. `.fsi` + the `VerifyJson.surface.txt` baseline moved in lockstep (Tier 1); two new
+      `VerifyJsonTests` cases pin a populated `missing` and the `Map.empty` byte-identity; the
+      `verify-no-surfaces.json` golden was re-blessed to show the real `["baseRevision","headRevision"]` tokens.
 - [ ] **JSON-3 — Hoist the shared `writeRun` + value helpers into `JsonWriters` (Low).**
       Contract-agnostic and un-deferred; guard with the existing byte-identity tests.
 - [ ] **CLI-3 — Converge the format-flag vocabulary (Low–Medium).** One `--format text|json`
