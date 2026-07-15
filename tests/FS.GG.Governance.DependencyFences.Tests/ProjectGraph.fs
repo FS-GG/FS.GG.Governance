@@ -47,13 +47,20 @@ let render (v: Violation) : string =
 // in the red-path tests) and returns the violations, so it is testable without touching the tree.
 // ---------------------------------------------------------------------------------------------------
 
-/// INV-1 — the set of projects declaring a direct YamlDotNet reference must equal `allowed` exactly.
-/// Two failure directions: an undocumented owner (has YamlDotNet, not in `allowed`) and a documented
-/// owner that dropped it (in `allowed`, no YamlDotNet).
-let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+/// Shared owner-fence matcher: the set of projects declaring a direct `package` reference must equal
+/// `allowed` exactly. Two failure directions: an undocumented owner (has the package, not in `allowed`)
+/// and a documented owner that dropped it (in `allowed`, no package). `rule`/`label` shape the
+/// diagnostic; `label` is the human name used in the detail text (e.g. "YAML", "Spectre.Console").
+let private packageOwnerViolations
+    (rule: string)
+    (package: string)
+    (label: string)
+    (allowed: Set<string>)
+    (nodes: ProjectNode list)
+    : Violation list =
     let owners =
         nodes
-        |> List.filter (fun n -> n.PackageReferences.Contains "YamlDotNet")
+        |> List.filter (fun n -> n.PackageReferences.Contains package)
         |> List.map (fun n -> n.Name)
         |> Set.ofList
 
@@ -61,19 +68,31 @@ let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Viola
         Set.difference owners allowed
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = "yaml-owner"
+            { Rule = rule
               Project = name
-              Detail = "declares a direct YamlDotNet reference but is not in the documented YAML-owner allowlist" })
+              Detail = sprintf "declares a direct %s reference but is not in the documented %s-owner allowlist" package label })
 
     let missing =
         Set.difference allowed owners
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = "yaml-owner"
+            { Rule = rule
               Project = name
-              Detail = "is a documented YAML owner but no longer declares a direct YamlDotNet reference (update the allowlist)" })
+              Detail = sprintf "is a documented %s owner but no longer declares a direct %s reference (update the allowlist)" label package })
 
     undocumented @ missing
+
+/// INV-1 — the set of projects declaring a direct YamlDotNet reference must equal `allowed` exactly.
+/// Two failure directions: an undocumented owner (has YamlDotNet, not in `allowed`) and a documented
+/// owner that dropped it (in `allowed`, no YamlDotNet).
+let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+    packageOwnerViolations "yaml-owner" "YamlDotNet" "YAML" allowed nodes
+
+/// INV-4 (ARCH-2) — the set of projects declaring a direct Spectre.Console reference must equal
+/// `allowed` exactly. Mirrors `yamlOwnerViolations`: the rich-terminal presentation package is confined
+/// to a single owner (HumanRender), machine-enforced rather than prose-only.
+let spectreOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+    packageOwnerViolations "spectre-owner" "Spectre.Console" "Spectre.Console" allowed nodes
 
 /// INV-2 — no Exe node may reach another Exe node via the transitive ProjectReference closure.
 let exeExeEdges (nodes: ProjectNode list) : Violation list =

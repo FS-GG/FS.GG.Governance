@@ -2,9 +2,10 @@
 
   <!-- 100: the dependency-fence guards (2026-07-02 review M-ARCH-1/2/3, issue #53). A single
        self-contained Expecto regression guard, modeled on FS.GG.Governance.RenameGuard.Tests, that
-       parses the REAL tracked .fsproj graph (`git ls-files` → filter *.fsproj) and asserts three
+       parses the REAL tracked .fsproj graph (`git ls-files` → filter *.fsproj) and asserts four
        fences: (1) the direct-YamlDotNet owner set equals the documented allowlist, (2) no executable
-       references another executable, (3) at most one project claims ToolCommandName=fsgg.
+       references another executable, (3) at most one project claims ToolCommandName=fsgg, and
+       (4, ARCH-2) the direct-Spectre.Console owner set equals the documented allowlist.
 
        Real evidence (Principle V): the production assertions read the real project graph (no mocks);
        the red-path tests pass literal ProjectNode values to the pure matchers. No new public F#
@@ -20,6 +21,7 @@
   <ItemGroup>
     <Compile Include="ProjectGraph.fs" />
     <Compile Include="YamlFenceTests.fs" />
+    <Compile Include="SpectreFenceTests.fs" />
     <Compile Include="FsggOwnerTests.fs" />
     <Compile Include="ExeLeafTests.fs" />
     <Compile Include="Main.fs" />

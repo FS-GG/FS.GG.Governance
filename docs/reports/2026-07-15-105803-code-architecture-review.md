@@ -394,9 +394,14 @@ Tier 1+ with `.fsi`/baseline in lockstep).
 
 ### Next — enforce the invariants the docs claim
 
-- [ ] **ARCH-2 — Add a `spectre-owner` dependency fence (Medium).** Mirror
-      `yamlOwnerViolations`, allowlist `{ HumanRender }`, so the confinement is machine-enforced
-      like YamlDotNet's.
+- [x] **ARCH-2 — Add a `spectre-owner` dependency fence (Medium).** ✅ Done: `ProjectGraph.fs`
+      now exposes `spectreOwnerViolations` (a bidirectional owner fence, allowlist `{ HumanRender }`)
+      alongside `yamlOwnerViolations` — both delegate to a shared `packageOwnerViolations` matcher, so
+      the near-duplicate was factored, not copied. `SpectreFenceTests.fs` asserts the fence over the
+      real project graph plus red-path cases (an undocumented owner, and a documented owner that
+      dropped its reference). The README prose that presented the confinement as equivalent to
+      YamlDotNet's now names the guarding test, so the invariant is machine-enforced rather than
+      prose-only.
 - [ ] **ARCH-3 — Generalize the `fsgg-owner` fence to global `ToolCommandName` uniqueness
       (Low).** Group-by over packable `PackAsTool` nodes; keep the current case, close the
       general collision class.
