@@ -16,10 +16,16 @@ open FS.GG.Governance.CostBudget.Findings
 // findings into the deterministic, versioned `fsgg.cost-budget/v1` document via a hand-driven
 // `System.Text.Json` `Utf8JsonWriter` walk — the net10.0 shared-framework mechanism every `*Json` projection
 // uses, so NO new dependency. PURE and TOTAL: no I/O, no git, no clock, the opaque `EvidenceRef` rendered
-// verbatim, never throws. Emit-only: it re-derives/re-orders NOTHING (the report is already GateId-ordinal,
-// the findings already (GateId, kind)-sorted). Every token `match` is EXHAUSTIVE with no wildcard, so a
-// future DU case is a compile error here. No access modifiers — the surface is CostBudgetJson.fsi
-// (Principle II).
+// verbatim, never throws. Emit-only: it re-derives/re-orders NOTHING structural (the report is already
+// GateId-ordinal, the findings already (GateId, kind)-sorted). The ONE documented exception (JSON-5): the
+// `overBudget.reason` string is a HUMAN MESSAGE composed here at emit time from closed-enum wire tokens
+// (`gateIdValue` + `costToken`) — see `writeDecision`. It is deliberately NOT carried on `BudgetReason`: the
+// model is wire-independent, and threading the string up would push the JSON token vocabulary (`costToken`)
+// into the pure domain core `Budget.fs`, a worse coupling than composing it once at this projection edge. The
+// synthesis is still deterministic, closed-enum, and byte-identical for identical input (no clock/env/float/
+// culture), so it re-derives no FACT — the underlying cause lives in the findings section, not here. Every
+// token `match` is EXHAUSTIVE with no wildcard, so a future DU case is a compile error here. No access
+// modifiers — the surface is CostBudgetJson.fsi (Principle II).
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
@@ -50,6 +56,8 @@ module CostBudgetJson =
 
     /// The tagged `decision` object — exactly one shape. `overBudget` carries `class`, `ceiling`, and a
     /// deterministic `reason` string (the underlying cause is surfaced in the findings section, not here).
+    /// `reason` is the ONE emit-time composition in this projection (JSON-5, see file header): a human message
+    /// built from closed-enum wire tokens, intentionally NOT carried on the wire-independent `BudgetReason`.
     let writeDecision (w: Utf8JsonWriter) (gate: GateId) (decision: CacheDecision) =
         w.WriteStartObject()
 

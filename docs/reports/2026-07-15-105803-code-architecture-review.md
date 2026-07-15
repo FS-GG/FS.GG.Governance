@@ -560,8 +560,17 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       (`SurfaceDrift` stays green). A new `VerdictTests` case `V8b` pins the reservation as intended
       behavior — a single leaf reason containing `"; "` is fragmented and ordinal-reordered on
       aggregation, duplicate components collapse, and a bare reason carries `"; "` unchanged.
-- [ ] **JSON-5 — Carry `overBudget.reason` from the model, or document the emit-time synthesis
-      (Low).**
+- [x] **JSON-5 — Carry `overBudget.reason` from the model, or document the emit-time synthesis
+      (Low).** ✅ Done, via the document branch (carrying the string would force the pure domain core
+      `Budget.fs` to compose it from the JSON token vocabulary — `costToken`/`gateIdValue` — pushing wire
+      spelling into a wire-independent model, a worse coupling than the localized synthesis). The
+      `CostBudgetJson.fs` file header now names the ONE documented exception: `overBudget.reason` is a HUMAN
+      MESSAGE composed at emit time from closed-enum wire tokens, deliberately NOT carried on `BudgetReason`;
+      it re-derives no FACT (deterministic, closed-enum, byte-identical for identical input — the underlying
+      cause stays in the findings section). The "Emit-only: re-derives NOTHING" claim is now scoped to
+      *structural* re-ordering, with the reason synthesis called out as the principled exception, and
+      `writeDecision`'s doc-comment points back at the header. Comment-only (Tier 0): the projection is
+      byte-identical, so no `.fsi`/baseline/golden churn (`ofReport`'s output is unchanged).
 - [ ] **JSON-4 — Resolve the generated-view writer duplication if #83 proceeds (Low).**
 - [ ] **JSON-6 — Remove the dead `open System.IO` / `System.Text` in the 11 projections (Nit).**
 - [ ] **Kernel `Json.fsi` — surface the throwing contract of the public readers (no behavior
