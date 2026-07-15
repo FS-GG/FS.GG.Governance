@@ -40,8 +40,11 @@ module Gates =
         |> Map.ofList
 
     /// The stable, INJECTIVE gate id of a check: `GateId "<domain>:<checkId>"`. Injective over
-    /// distinct checks because F014 guarantees check ids are unique catalog-wide and the domain
-    /// qualifies them (FR-003/FR-005). Deterministic — never positional, time-derived, or random.
+    /// distinct checks because F014 guarantees (a) check ids are unique catalog-wide — so distinct
+    /// checks carry distinct `<checkId>` — and (b) NEITHER component contains the `:` delimiter:
+    /// `Schema.reqIdString` rejects a `:` in a check `id`/`domain` at the config boundary (CORE-1),
+    /// so `<domain>:<checkId>` is unambiguously decodable and no two checks collide on one id.
+    /// Deterministic — never positional, time-derived, or random.
     let gateIdOf (check: Check) : GateId =
         let (DomainId d) = check.Domain
         let (CheckId c) = check.Id

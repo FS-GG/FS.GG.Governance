@@ -383,9 +383,14 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `YamlDotNet 18.1.0`, `FS.GG.Contracts 2.0.0` (both the key-dependencies list and the
       spec-087 `pinned` line), and `Spectre.Console 0.57.2`, matching `Directory.Packages.local.props`;
       the org `registry/dependencies.yml` `fsgg-contracts` pin was confirmed to equal `2.0.0`.
-- [ ] **CORE-1 — Make `GateId` injective (Low–Medium).** Drop the domain prefix or
-      length-prefix/escape the components; fix the "INJECTIVE" comment. Add a collision test
-      (`b:c`/`c` case).
+- [x] **CORE-1 — Make `GateId` injective (Low–Medium).** ✅ Done, via the config boundary rather
+      than the `GateId` format: `Schema.reqIdString` now rejects the reserved `:` delimiter in a
+      check `id`/`domain` (a located `MalformedValue`), so the existing `<domain>:<checkId>` join is
+      injective by construction — no wire/contract/golden churn (tracing showed reformatting the id
+      would have reordered and rewritten 6 versioned JSON contracts, since the id is the sort key and
+      is embedded in every `ruleId`). The `gateIdOf` "INJECTIVE" comment now states the real
+      guarantee (colon-free + catalog-unique); a `malformed-reserved-colon` fixture + `DiagnosticTests`
+      case pin the rejection of both the `b:c` id and the colon domain.
 
 ### Next — enforce the invariants the docs claim
 
