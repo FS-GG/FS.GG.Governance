@@ -402,9 +402,13 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       dropped its reference). The README prose that presented the confinement as equivalent to
       YamlDotNet's now names the guarding test, so the invariant is machine-enforced rather than
       prose-only.
-- [ ] **ARCH-3 — Generalize the `fsgg-owner` fence to global `ToolCommandName` uniqueness
-      (Low).** Group-by over packable `PackAsTool` nodes; keep the current case, close the
-      general collision class.
+- [x] **ARCH-3 — Generalize the `fsgg-owner` fence to global `ToolCommandName` uniqueness
+      (Low).** ✅ Done: `ProjectGraph.fs` now exposes `toolCommandCollisions` — a group-by over the
+      packable `PackAsTool` nodes that flags any `ToolCommandName` claimed by more than one publishable
+      project, closing the general collision class (a duplicate `fsgg-evidence`, say) the `fsgg`-only
+      `fsggClaimants` let through. The original `fsgg`-specific case is kept. `FsggOwnerTests.fs` adds a
+      production assertion over the real graph plus a red-path case (a non-`fsgg` collision is flagged;
+      a name shared by a non-`PackAsTool` project is not).
 - [ ] **JSON-1 — Add divergence warnings to the two `EvidenceState` `stateToken` sites (Medium),
       or converge the casing under a schema bump.**
 - [ ] **CORE-2 — Reject non-positive `TimeoutLimit` at the config boundary (Low).** Emit a
