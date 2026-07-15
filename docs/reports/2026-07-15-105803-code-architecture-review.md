@@ -495,8 +495,15 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       everywhere target; the reverse (`human` everywhere) was intentionally not done. ADR-0006 carries a
       2026-07-15 update recording the additive move; new `ParseTests` cases pin `--format text` ⇒ `Human` and
       that `human` still parses, in both hosts.
-- [ ] **CLI-4 — Drop the `wrote` path object from the cache-eligibility JSON contract (Low),**
-      matching route's FR-012.
+- [x] **CLI-4 — Drop the `wrote` path object from the cache-eligibility JSON contract (Low).** ✅ Done:
+      `renderJson` (`CacheEligibilityCommand/Loop.fs`) no longer embeds `"wrote":{cache,unresolved}` — the
+      caller-supplied host output paths (`CacheOut`/`UnresolvedOut`) were leaking into the stamped
+      `fsgg.cache-eligibility-summary/v1` document, an existing FR-003 violation (operational output MUST NOT
+      leak into the JSON contract). The paths stay in the host's `operationalLines` `wrote` narration only,
+      mirroring route's FR-012. Comment-only header update documents the exclusion; the summary keeps its
+      `v1` schemaVersion (the field was accidental leakage, not a contract consumers should have relied on),
+      and the two persisted artifacts (`cache-eligibility.json` + unresolved sidecar) are byte-unchanged. A
+      new `RenderModeDispatchTests` case pins that neither `"wrote"` nor either output path reaches the JSON.
 - [ ] **ADPT-3 — Emit an `UnreadableWorkingTree` diagnostic on an incomplete Snapshot drain
       (Low).** Don't convert lost git output into a positive "clean" fact.
 - [ ] **ADPT-4 — Roll back empty directories in Scaffold (Low),** so "ZERO new files" holds for
