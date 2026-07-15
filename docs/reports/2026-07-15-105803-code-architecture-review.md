@@ -409,8 +409,14 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `fsggClaimants` let through. The original `fsgg`-specific case is kept. `FsggOwnerTests.fs` adds a
       production assertion over the real graph plus a red-path case (a non-`fsgg` collision is flagged;
       a name shared by a non-`PackAsTool` project is not).
-- [ ] **JSON-1 — Add divergence warnings to the two `EvidenceState` `stateToken` sites (Medium),
-      or converge the casing under a schema bump.**
+- [x] **JSON-1 — Add divergence warnings to the two `EvidenceState` `stateToken` sites (Medium).**
+      ✅ Done, via mirrored `DIVERGENCE — DO NOT UNIFY` comments rather than a schema bump (converging
+      would rewrite one contract's bytes). `Kernel/Json.fs stateToken` (lowercase, round-tripping) and
+      `EvidenceJson/EvidenceJson.fs stateToken` (Capitalized, emit-only) now each name the other's
+      spelling, the reason they diverge, and the pinning test on the far side (Kernel.Tests/JsonTests ↔
+      EvidenceJson.Tests/ProjectionTests) — matching the `localOrCi`/`local-or-ci` precedent in
+      JsonTokens. A well-meaning unification is now a comment away from being caught, not a silent
+      byte change. Comment-only (Tier 0), no `.fsi`/baseline/golden churn.
 - [ ] **CORE-2 — Reject non-positive `TimeoutLimit` at the config boundary (Low).** Emit a
       located `MalformedValue` diagnostic instead of a silent always-failing gate.
 - [ ] **ADPT-1 — Make Verify surface-sensing fail closed (Low).** Isolate the `try` per domain;

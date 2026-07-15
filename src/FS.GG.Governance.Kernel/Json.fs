@@ -205,6 +205,14 @@ module Json =
 
     // ── Evidence state (F05) — US4 ──
 
+    // DIVERGENCE — DO NOT UNIFY: this kernel effective-state wire spelling is lowercase
+    // (`pending`/`real`/`synthetic`/…) and deliberately DIFFERS from the Capitalized spelling
+    // (`Pending`/`Real`/`Synthetic`/…) emitted by `EvidenceJson.stateToken` in the separate
+    // `fsgg.evidence/v1` contract. The two are independent emit contracts, but the strings DIVERGE:
+    // folding them into one shared `stateToken` would change one contract's bytes silently. This
+    // lowercase spelling ALSO round-trips (`toEvidenceState`), so a casing change here breaks the
+    // round-trip too. Pinned by Kernel.Tests/JsonTests; the Capitalized side by
+    // EvidenceJson.Tests/ProjectionTests (cf. the `localOrCi`/`local-or-ci` divergence in JsonTokens).
     let stateToken =
         function
         | Pending -> "pending"
