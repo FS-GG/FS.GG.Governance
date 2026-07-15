@@ -417,8 +417,14 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       EvidenceJson.Tests/ProjectionTests) — matching the `localOrCi`/`local-or-ci` precedent in
       JsonTokens. A well-meaning unification is now a comment away from being caught, not a silent
       byte change. Comment-only (Tier 0), no `.fsi`/baseline/golden churn.
-- [ ] **CORE-2 — Reject non-positive `TimeoutLimit` at the config boundary (Low).** Emit a
-      located `MalformedValue` diagnostic instead of a silent always-failing gate.
+- [x] **CORE-2 — Reject non-positive `TimeoutLimit` at the config boundary (Low).** ✅ Done: a new
+      private `Schema.reqPositiveInt` (mirroring `reqIdString`) rejects a `timeout <= 0` in
+      `tooling.yml` as a located `MalformedValue` (`field 'timeout' must be a positive integer`)
+      instead of admitting a silent always-failing gate (`0`/negative ms → immediate `timeoutExitCode
+      124` every run). Comment-only guarded by construction: no `.fsi`/baseline/contract churn (the
+      helper is private). A `malformed-nonpositive-timeout` fixture (`timeout: 0`, otherwise valid) +
+      a `DiagnosticTests` case pin the rejection; the fixture README lists it. No existing config uses
+      a non-positive timeout, so no regression.
 - [ ] **ADPT-1 — Make Verify surface-sensing fail closed (Low).** Isolate the `try` per domain;
       reify a caught exception / `Invalid` catalog as a Blocking input-state finding.
 - [ ] **ADPT-2 — Reject malformed SddHandoff evidence-dependency edges (Low).** `Malformed`

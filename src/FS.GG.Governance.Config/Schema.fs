@@ -298,6 +298,20 @@ module Schema =
                 addMalformed diags file name node (sprintf "field '%s' must be an integer scalar" name)
                 None
 
+    /// Like `reqInt`, but additionally rejects a non-positive value. A `TimeoutLimit` of `0`/`-5`
+    /// otherwise validates as `Valid` and the gate waits `<= 0` ms → an immediate `timeoutExitCode
+    /// 124` every run: a silent, always-failing gate from a typo. Rejecting it at the config
+    /// boundary turns that into a located `MalformedValue` (CORE-2). Emits on the field.
+    let private reqPositiveInt (diags: ResizeArray<Diagnostic>) m file name : int option =
+        match reqInt diags m file name with
+        | Some n when n <= 0 ->
+            let line = getField m name |> Option.bind lineOf
+            diags.Add(
+                diag MalformedValue file (Some name) None line
+                    (sprintf "field '%s' must be a positive integer (was %d)" name n))
+            None
+        | other -> other
+
     let private reqBool (diags: ResizeArray<Diagnostic>) m file name : bool option =
         match getField m name with
         | None ->
@@ -524,7 +538,7 @@ module Schema =
         diags.AddRange(unknownFields m (set [ "id"; "command"; "timeout"; "environment" ]) Tooling)
         let id = reqString diags m Tooling "id" |> Option.map CommandId
         let command = reqString diags m Tooling "command"
-        let timeout = reqInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
+        let timeout = reqPositiveInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
         let env = reqEnum parseEnvironment diags m Tooling "environment"
         match id, command, timeout, env with
         | Some i, Some c, Some t, Some e -> Some { Id = i; Command = c; Timeout = t; Environment = e }
