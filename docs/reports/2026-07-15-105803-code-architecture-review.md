@@ -584,8 +584,20 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       earlier-in-list item, JSON-4, stays open: its resolution needs a NEW shared module sited above
       RefreshJson (both writers need `RefreshModel.viewKindToken`), which the `JsonWriters` header records
       as re-deferred on #83 — and #83 closed without taking the A4 dedup, so its precondition is unmet.
-- [ ] **Kernel `Json.fsi` — surface the throwing contract of the public readers (no behavior
-      change).**
+- [x] **Kernel `Json.fsi` — surface the throwing contract of the public readers (no behavior
+      change).** ✅ Done: the `Json.fsi` module header now carries an explicit `THROWING CONTRACT`
+      (spec 110 B8) block naming the four exception classes a caller feeding externally-sourced JSON
+      must expect — `System.Text.Json.JsonException` (invalid JSON syntax), `KeyNotFoundException` (a
+      required property absent), `InvalidOperationException` (a value of the wrong JSON type), and a
+      plain `System.Exception` (an unrecognized closed-enum token/tag) — and each of the four readers
+      (`toExplanation`/`toContract`/`toEvidenceState`/`toEffective`) gained a `THROWS:` doc-line
+      pointing back to it (`toEvidenceState`/`toEffective` name only their reachable subset, having no
+      `GetProperty` path). Comment-only (Tier 0): the surface baseline is reflection-based, so no
+      `.fsi`/baseline/golden churn (`SurfaceDrift` V11 stays green) and the emit/round-trip behavior is
+      byte-identical. The previously-untested throwing paths are now pinned by a new `JsonTests` case
+      (`V40`) that asserts each documented exception class over malformed input, verified empirically
+      against the built kernel (invalid JSON surfaces `JsonReaderException`, a subclass of the
+      documented `JsonException`).
 - [ ] **ARCH-4 / M-CLI-1 tail — optional: prune redundant direct `ProjectReference`s and the
       per-host `Program.fs` triplet during the single-tool consolidation (Low).**
 
