@@ -114,6 +114,23 @@ let tests =
               Expect.equal (causeOf r) (Some Malformed) "non-array dependencies → Malformed"
           }
 
+          test "an explicit-null or absent 'dependencies' is accepted as no edges (ADPT-2)" {
+              // `dependencies` is optional and carries no edges to drop, so null/absent must NOT be
+              // rejected — only a present, malformed *value* fails closed.
+              let nullDeps =
+                  """{ "contractVersion": "1.0.0",
+                       "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": null } }"""
+
+              let absentDeps =
+                  """{ "contractVersion": "1.0.0",
+                       "evidence": { "nodes": [ { "id": "a", "state": "real" } ] } }"""
+
+              for json, label in [ nullDeps, "null"; absentDeps, "absent" ] do
+                  match Reader.parse { Source = "x"; Json = json } with
+                  | Error d -> failtestf "expected Ok for %s dependencies, got %A" label d
+                  | Ok h -> Expect.isEmpty h.Evidence.Dependencies (sprintf "%s dependencies → no edges" label)
+          }
+
           test "a well-formed dependency edge still round-trips (ADPT-2 happy path)" {
               let json =
                   """{ "contractVersion": "1.0.0",

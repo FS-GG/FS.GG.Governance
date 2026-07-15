@@ -166,10 +166,12 @@ module Reader =
             // above: a present-but-malformed edge is REJECTED as Malformed, never silently dropped
             // (ADPT-2). AutoSynthetic taint flows ALONG these edges, so a dropped edge could leave a
             // downstream verdict resting on a synthetic node un-tainted — a taint fail-open. An absent
-            // `dependencies` field is fine (Ok []); a present one must be a well-formed [from, to] list.
+            // `dependencies` field (or an explicit `null`) is fine (Ok []) since it is optional and
+            // carries no edges to drop; a present *value* must be a well-formed [from, to] list.
             let parsedDeps =
                 match tryProp evidence "dependencies" with
                 | None -> Ok []
+                | Some depsEl when depsEl.ValueKind = JsonValueKind.Null -> Ok []
                 | Some depsEl when depsEl.ValueKind <> JsonValueKind.Array ->
                     malformed "handoff 'evidence.dependencies' is present but is not an array"
                 | Some depsEl ->
