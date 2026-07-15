@@ -172,4 +172,51 @@ let tests =
               Expect.stringContains json "autoSynthetic" "the tainted node is visibly marked AutoSynthetic"
               Expect.equal (Json.toEffective json) eff "effective map round-trips to the equal projected map (FR-011)"
               Expect.equal (Json.ofEffective id eff) (Json.ofEffective id eff) "ofEffective is byte-for-byte deterministic (SC-002)"
+          }
+
+          // ── Reader THROWING CONTRACT (spec 110 B8 / Json.fsi header) ──
+          // The four parsers are total over kernel-emitted JSON but FAIL FAST on malformed/
+          // foreign input rather than returning a wrong value (Principle VI). This pins the
+          // now-signature-documented exception classes so a caller feeding externally-sourced
+          // JSON can rely on them (and so the docs can't drift from behavior).
+          test "V40 the four readers throw fast on malformed input, per the documented contract" {
+              // captures the thrown exception; fails the test (cleanly, outside the catch) if
+              // the reader does NOT throw
+              let captureThrow (f: unit -> unit) =
+                  match (try f (); None with e -> Some e) with
+                  | Some e -> e
+                  | None -> failtest "expected the reader to throw on malformed input, but it returned"
+
+              // `match e with :? T` tests runtime assignability, so a subclass counts.
+
+              // syntactically invalid JSON ⇒ System.Text.Json.JsonException (JsonDocument.Parse);
+              // JsonReaderException derives from JsonException — the documented base type
+              let explInvalid = captureThrow (fun () -> Json.toExplanation "@@" |> ignore)
+              Expect.isTrue (match explInvalid with :? JsonException -> true | _ -> false)
+                  "toExplanation on invalid JSON ⇒ JsonException"
+
+              let contractInvalid = captureThrow (fun () -> Json.toContract "@@" |> ignore)
+              Expect.isTrue (match contractInvalid with :? JsonException -> true | _ -> false)
+                  "toContract on invalid JSON ⇒ JsonException"
+
+              // a required property absent ⇒ KeyNotFoundException (GetProperty)
+              let explNoKind = captureThrow (fun () -> Json.toExplanation "{}" |> ignore)
+              Expect.isTrue (match explNoKind with :? System.Collections.Generic.KeyNotFoundException -> true | _ -> false)
+                  "toExplanation on a node missing 'kind' ⇒ KeyNotFoundException"
+
+              // a value of the wrong JSON type ⇒ InvalidOperationException (GetString/EnumerateObject)
+              let stateNumber = captureThrow (fun () -> Json.toEvidenceState "123" |> ignore)
+              Expect.isTrue (match stateNumber with :? System.InvalidOperationException -> true | _ -> false)
+                  "toEvidenceState on a non-string token ⇒ InvalidOperationException"
+
+              let effNonObject = captureThrow (fun () -> Json.toEffective "\"x\"" |> ignore)
+              Expect.isTrue (match effNonObject with :? System.InvalidOperationException -> true | _ -> false)
+                  "toEffective on a non-object root ⇒ InvalidOperationException"
+
+              // an unrecognized closed-enum token ⇒ a plain System.Exception carrying a "Json:" message (failwithf)
+              let badKind = captureThrow (fun () -> Json.toExplanation "{\"kind\":\"bogus\"}" |> ignore)
+              Expect.stringStarts badKind.Message "Json:" "an unknown explanation kind ⇒ a 'Json:'-tagged failure"
+
+              let badState = captureThrow (fun () -> Json.toEvidenceState "\"bogus\"" |> ignore)
+              Expect.stringStarts badState.Message "Json:" "an unknown evidence-state token ⇒ a 'Json:'-tagged failure"
           } ]
