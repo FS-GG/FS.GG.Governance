@@ -68,6 +68,24 @@ let tests =
                   "a check.command with tooling.yml absent must dangle, not be dropped"
           }
 
+          test "a ':' in a check id or domain is rejected as located MalformedValue (CORE-1)" {
+              // ':' is reserved as the `<domain>:<checkId>` gate-id delimiter (Gates.gateIdOf). The
+              // config boundary must reject it in BOTH components, else two distinct checks can
+              // compose the same GateId ({domain=a; id=b:c} and {domain=a:b; id=c} → "a:b:c") and
+              // Route.select's by-GateId dedup silently drops one. The fixture has a colon `id` on
+              // one check and a colon `domain` on another; each must dangle its own diagnostic.
+              let diags = diagsOf "malformed-reserved-colon"
+              for field in [ "id"; "domain" ] do
+                  match diags |> List.tryFind (fun d -> d.Id = MalformedValue && d.Locator.Field = Some field) with
+                  | Some d ->
+                      Expect.stringContains d.Message "delimiter"
+                          (sprintf "the '%s' diagnostic explains ':' is the reserved gate-id delimiter" field)
+                      Expect.isTrue
+                          (d.Locator.Field.IsSome || d.Locator.Line.IsSome)
+                          "diagnostic is located (field/line)"
+                  | None -> failtestf "expected a MalformedValue on the colon-bearing '%s' field" field
+          }
+
           test "multiple defects → deterministic (file, locator, id) order, byte-stable across runs" {
               let run () = diagsOf "malformed-multi"
               let a = run ()

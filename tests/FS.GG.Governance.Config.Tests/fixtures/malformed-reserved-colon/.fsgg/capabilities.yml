@@ -1,0 +1,19 @@
+schemaVersion: 2
+domains:
+  - workflow
+  - build:core
+checks:
+  # ':' is reserved as the `<domain>:<checkId>` gate-id delimiter — a colon in the check `id`...
+  - id: build:tests
+    domain: workflow
+    owner: platform
+    cost: cheap
+    environment: ci
+    maturity: warn
+  # ...or in the check `domain` must be rejected as MalformedValue (CORE-1).
+  - id: lint
+    domain: build:core
+    owner: platform
+    cost: cheap
+    environment: ci
+    maturity: warn
