@@ -326,13 +326,15 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
+          "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.JsonTokens": "[0.1.0, )"
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.Provenance": "[0.1.0, )"
         }
       },
       "fs.gg.governance.kernel": {
