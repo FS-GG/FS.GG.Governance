@@ -1,7 +1,5 @@
 namespace FS.GG.Governance.EvidenceJson
 
-open System.IO
-open System.Text
 open System.Text.Json
 open FS.GG.Governance.Kernel
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper
