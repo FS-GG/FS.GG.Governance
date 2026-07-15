@@ -109,8 +109,9 @@ module JsonWriters =
 
         w.WriteEndObject()
 
-    // JSON-3: the newtype value un-wrappers + the per-run `execution`/audit-run writer the AttestationJson and
-    // ProvenanceJson projections used to hand-copy verbatim. `writeRun` depends only on `Audit.*` +
+    // JSON-3: the newtype value un-wrappers + the per-run audit-run writer (`writeRun`, distinct from the
+    // gate-`execution` `writeExecution` above) the AttestationJson and ProvenanceJson projections used to
+    // hand-copy verbatim. `writeRun` depends only on `Audit.*` +
     // `KindedCommandRun`, and the seven un-wrappers only on their FreshnessKey/Provenance/CommandRecord owners
     // — all domain owners already BELOW this leaf, so hoisting inverts no layering and couples no schema
     // versions (unlike the ADR-0008 pair). Output is byte-identical to the two projections' prior local copies
