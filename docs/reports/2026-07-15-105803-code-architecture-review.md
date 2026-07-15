@@ -614,8 +614,30 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       (`V40`) that asserts each documented exception class over malformed input, verified empirically
       against the built kernel (invalid JSON surfaces `JsonReaderException`, a subclass of the
       documented `JsonException`).
-- [ ] **ARCH-4 / M-CLI-1 tail — optional: prune redundant direct `ProjectReference`s and the
-      per-host `Program.fs` triplet during the single-tool consolidation (Low).**
+- [x] **ARCH-4 / M-CLI-1 tail — optional: prune redundant direct `ProjectReference`s and the
+      per-host `Program.fs` triplet during the single-tool consolidation (Low).** ✅ Closed as a
+      **ratified deferral** (not a code change): both halves are already documented, intentional
+      decisions, and acting now would contradict them and be graded low value.
+      - *ARCH-4 (reference breadth) is by design, not drift.* The edge-tier reference convention is
+        stated in `README.md` ("Edge-tier reference convention" — command/edge executables are
+        composition roots that legitimately carry broad `ProjectReference` lists; `VerifyCommand`'s
+        43 refs / 32 transitively-reachable are "by design at the edge and *not* drift") and pinned
+        at the source in the `VerifyCommand.fsproj` 111/C2f comment ("intentional and is NOT pruned":
+        a host declaring its complete surface is clearer and more robust to refactors than one
+        relying on transitive flow — a pruned ref silently breaks when an intermediate drops its own
+        dependency). Correctness is fenced by *kind*, not count, in
+        `FS.GG.Governance.DependencyFences.Tests` (no exe→exe, YAML/Spectre confinement), so a
+        minimal-reference count buys robustness loss without a correctness gain. **Won't-prune.**
+      - *M-CLI-1 (`Program.fs` triplet) is gated behind the single-tool consolidation.* `README.md`
+        records that "a single-tool unification is planned" and the thin per-host `Program.fs` is one
+        composition root per still-separate executable. The shared `CommandHost` leaf's ratified
+        **ADR-0007** scope note already states why the per-host thin edges stay local (a shared form
+        "would require generics over each host's `Model` — Constitution III"); the prior-review
+        closure table independently grades a Program.fs dedup "low value." The genuine consolidation
+        is a future major effort (distinct-`ToolCommandName` packaging, exit-vocabulary alignment),
+        out of scope for a point fix. **Deferred to the single-tool consolidation.**
+      With every other roadmap item landed, this closes the review: the remaining work is a ratified
+      deferral, not an open finding.
 
 ---
 
