@@ -217,8 +217,9 @@ bare `fsgg` command, `evidence` installs as `fsgg-evidence`, and `cache-eligibil
 The two lineages use **two different exit-code families** — the same integer can mean
 different things, so read them against the right column.
 
-**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/`refresh`/
-`evidence`/`cache-eligibility`), via `CommandHost.ExitDecision`:
+**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/
+`evidence`/`cache-eligibility`). Each host declares its own exit-code DU (there is no
+shared `ExitDecision` type); they agree on this `0`–`4` scheme:
 
 | Code | Meaning |
 |---|---|
@@ -227,6 +228,19 @@ different things, so read them against the right column.
 | `2` | usage error (bad flags/arguments) |
 | `3` | input unavailable (a required input could not be read) |
 | `4` | tool error (an internal/IO failure while running) |
+
+**`fsgg refresh`** is the one verb host with a **sixth** code: it distinguishes "nothing
+needed refreshing" from "views were regenerated", so `0` is *not* the sole success code —
+a successful regeneration returns `5`. A script must treat both `0` and `5` as success.
+
+| Code | Meaning |
+|---|---|
+| `0` | success — nothing to refresh (all views current) |
+| `1` | stale views remain unresolved (some view could not be brought current) |
+| `2` | usage error (bad flags/arguments) |
+| `3` | input unavailable (the refresh manifest could not be read) |
+| `4` | tool error (a generator/write/provenance failure) |
+| `5` | **success — views were regenerated** |
 
 **`fsgg-governance`** (the kernel-era dispatcher, `src/FS.GG.Governance.Cli`) remaps onto
 BSD **sysexits**:

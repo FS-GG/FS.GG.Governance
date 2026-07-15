@@ -375,8 +375,10 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       reality (74 of 82 packable; a small explicit set is `false`) and names the two actually-
       published packages; the stale "the ~70 `IsPackable=false` projects never pack" line in
       `Directory.Build.local.props` was corrected so it no longer contradicts the SCOPING NOTE.
-- [ ] **CLI-2 — Correct the README exit-code section (Medium).** Drop the deleted
-      `CommandHost.ExitDecision` reference; give `refresh` its own `0/1/2/3/4/5` row.
+- [x] **CLI-2 — Correct the README exit-code section (Medium).** ✅ Done: the README exit-code
+      section no longer references the deleted `CommandHost.ExitDecision` type (each host declares
+      its own DU); `refresh` now has its own `0/1/2/3/4/5` table with `ViewsRegenerated=5` called
+      out as a second success code.
 - [ ] **CI-5 — Refresh README dependency versions (Low).** `FS.GG.Contracts 1.0.1→2.0.0`,
       `YamlDotNet 16.3.0→18.1.0`, `Spectre.Console 0.57.1→0.57.2`; confirm the org
       `registry/dependencies.yml` `fsgg-contracts` pin equals `2.0.0`.
