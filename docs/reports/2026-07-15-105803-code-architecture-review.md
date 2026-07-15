@@ -370,9 +370,11 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       (`Cli/Program.fs`) now catches the unreadable-console `InvalidOperationException` → `Tui.Quit`,
       mirroring `Watch.safeKeyPoll`; a redirected-stdin regression test drives the real reader
       (`WatchTuiHostWiringTests.fs`). Both interactive surfaces are now headless-safe.
-- [ ] **ARCH-1 — Fix the README packaging claim + the self-contradicting props comment
-      (Medium).** State the packable-by-default reality; delete the stale
-      `Directory.Build.local.props` line.
+- [x] **ARCH-1 — Fix the README packaging claim + the self-contradicting props comment
+      (Medium).** ✅ Done: `README.md` Packaging section now states the packable-by-default
+      reality (74 of 82 packable; a small explicit set is `false`) and names the two actually-
+      published packages; the stale "the ~70 `IsPackable=false` projects never pack" line in
+      `Directory.Build.local.props` was corrected so it no longer contradicts the SCOPING NOTE.
 - [ ] **CLI-2 — Correct the README exit-code section (Medium).** Drop the deleted
       `CommandHost.ExitDecision` reference; give `refresh` its own `0/1/2/3/4/5` row.
 - [ ] **CI-5 — Refresh README dependency versions (Low).** `FS.GG.Contracts 1.0.1→2.0.0`,
