@@ -14,7 +14,7 @@ let usageMessage (err: Loop.UsageError) : string =
     | Loop.MissingValue flag -> "missing value for flag: " + flag
     | Loop.PathsAndSinceTogether -> "--paths and --since are mutually exclusive"
     | Loop.EmptyPaths -> "--paths requires at least one path"
-    | Loop.BadFormat value -> "unknown --format value: " + value + " (expected human|json)"
+    | Loop.BadFormat value -> "unknown --format value: " + value + " (expected human|text|json)"
 
 let categoryToken (decision: Loop.ExitDecision) : string =
     match decision with

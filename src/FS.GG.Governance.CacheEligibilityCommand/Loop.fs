@@ -199,7 +199,12 @@ module Loop =
                 let formatChoice =
                     match acc.Format with
                     | None -> Ok Human
-                    | Some "human" -> Ok Human
+                    // CLI-3: `text` is an ADDITIVE synonym for the canonical `human` token, matching the
+                    // plain spelling accepted by route/ship/verify/release/refresh/dispatcher, so
+                    // `cache-eligibility --format text` no longer errors. `human` stays canonical/default;
+                    // backward-compatible, and consistent with ADR-0006's deferred convergence direction
+                    // (nothing renamed/removed). See docs/decisions/0006-cli-format-flag-vocabularies.md.
+                    | Some "human" | Some "text" -> Ok Human
                     | Some "json" -> Ok Json
                     | Some other -> Error(BadFormat other)
 

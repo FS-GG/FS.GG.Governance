@@ -12,7 +12,7 @@ let usageMessage (err: Loop.UsageError) : string =
     match err with
     | Loop.UnknownFlag flag -> "unknown flag: " + flag
     | Loop.MissingValue flag -> "missing value for flag: " + flag
-    | Loop.BadFormat value -> "unknown --format value: " + value + " (expected human|json)"
+    | Loop.BadFormat value -> "unknown --format value: " + value + " (expected human|text|json)"
 
 let categoryToken (decision: Loop.ExitDecision) : string =
     match decision with
