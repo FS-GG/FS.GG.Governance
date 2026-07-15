@@ -71,7 +71,9 @@ module JsonWriters =
     // 111/A4: the freshness-key / prerequisite / cache-eligibility sub-objects — byte-identical copies the
     // Gates/Route/Audit projections used to hand-hold. (The generated-view and attestation-ref writers are
     // NOT hoisted here: they need RefreshJson / AttestationJson — higher projection layers — which would
-    // invert the writer→projection layering; left local, re-deferred on #83.)
+    // invert the writer→projection layering. The generated-view writer instead lives in its own
+    // `GeneratedViewsJson` leaf sited ABOVE RefreshJson but below the projections — JSON-4; the
+    // attestation-ref writer stays local, re-deferred on #83.)
 
     let writeFreshnessKey (w: Utf8JsonWriter) (key: FreshnessKey) =
         w.WriteStartObject()

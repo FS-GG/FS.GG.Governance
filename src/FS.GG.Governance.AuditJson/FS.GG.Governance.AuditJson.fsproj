@@ -57,10 +57,13 @@
     <ProjectReference Include="../FS.GG.Governance.GateRun/FS.GG.Governance.GateRun.fsproj" />
     <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
     <!-- F070: the stale-generated-view `generatedViews` overload references the pure CurrencyEnforcement
-         leaf (CurrencyFinding/StaleCause/staleCauseToken) and RefreshJson (RefreshModel.viewKindToken);
-         Enforcement/FreshnessKey arrive transitively. No new third-party package. -->
+         leaf (CurrencyFinding, the overload's public signature type); Enforcement/FreshnessKey arrive
+         transitively. No new third-party package. -->
     <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <!-- JSON-4: the `generatedViews` array writer body (was byte-identical to VerifyJson's copy) now lives
+         ONCE in the shared GeneratedViewsJson leaf — sited above RefreshJson (RefreshModel.viewKindToken
+         arrives there) but below this projection. -->
+    <ProjectReference Include="../FS.GG.Governance.GeneratedViewsJson/FS.GG.Governance.GeneratedViewsJson.fsproj" />
   </ItemGroup>
 
 

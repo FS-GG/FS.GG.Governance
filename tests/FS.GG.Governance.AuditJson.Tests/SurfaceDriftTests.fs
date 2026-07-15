@@ -31,7 +31,8 @@ let tests =
 
           // FR-014 scope guard: One-way dependency AuditJson -> Ship -> Enforcement/Route/Config/Gates/
           // Findings/Kernel, plus the F045 CacheEligibility embed, the F052 GateRun embed, the 068
-          // RuleIdentity leaf, the F070 CurrencyEnforcement/RefreshJson edges, and the 073 Json* leaves.
+          // RuleIdentity leaf, the F070 CurrencyEnforcement edge + the JSON-4 GeneratedViewsJson writer leaf
+          // (RefreshJson arrives transitively through it), and the 073 Json* leaves.
           // No host/adapter/CLI edge and no new third-party package.
           SurfaceDrift.referencesOnly
               "AuditJson"
@@ -53,6 +54,7 @@ let tests =
                   || n = "FS.GG.Governance.RuleIdentity"
                   || n = "FS.GG.Governance.CurrencyEnforcement"
                   || n = "FS.GG.Governance.RefreshJson"
+                  || n = "FS.GG.Governance.GeneratedViewsJson"
                   || n = "FS.GG.Governance.JsonText"
                   || n = "FS.GG.Governance.JsonWriters"
                   || n = "FS.GG.Governance.JsonTokens")

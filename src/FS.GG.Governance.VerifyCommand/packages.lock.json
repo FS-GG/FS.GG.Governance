@@ -237,6 +237,14 @@
           "FS.GG.Governance.Config": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.generatedviewsjson": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.CurrencyEnforcement": "[0.1.0, )",
+          "FS.GG.Governance.JsonTokens": "[0.1.0, )",
+          "FS.GG.Governance.RefreshJson": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.humanrender": {
         "type": "Project",
         "dependencies": {
@@ -463,10 +471,10 @@
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
+          "FS.GG.Governance.GeneratedViewsJson": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FS.GG.Governance.JsonTokens": "[0.1.0, )",
           "FS.GG.Governance.JsonWriters": "[0.1.0, )",
-          "FS.GG.Governance.RefreshJson": "[0.1.0, )",
           "FS.GG.Governance.ReleaseReport": "[0.1.0, )",
           "FS.GG.Governance.RuleIdentity": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",

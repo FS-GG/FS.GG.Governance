@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- JSON-4: the shared `generatedViews` array writer leaf — the SINGLE home of the F070 stale-generated-
+       view writer body that AuditJson (audit.json / ship.json) and VerifyJson (verify.json) previously
+       hand-copied byte-for-byte (AuditJson.fs ≡ VerifyJson/GeneratedViews.fs). A single pure writer over a
+       caller-owned `Utf8JsonWriter`; both projections now call `GeneratedViewsJson.writeGeneratedViews`
+       under their existing non-empty guard, so the emitted bytes are unchanged (guarded by both projections'
+       goldens).
+
+       LAYERING: placed ABOVE RefreshJson (it needs `RefreshModel.viewKindToken`) and
+       CurrencyEnforcement/Enforcement (the finding + decision vocabulary), but BELOW the AuditJson/VerifyJson
+       projections that consume it. It deliberately does NOT fold into the 073 `JsonWriters` writer leaf:
+       `JsonWriters` must not reference the RefreshJson *projection* layer (that inverts the
+       writer→projection layering), and RefreshJson itself sits BELOW CurrencyEnforcement (which already
+       references it), so neither existing leaf could host this without a cycle — hence its own project,
+       exactly as JSON-4 prescribed.
+
+       It references CurrencyEnforcement (CurrencyFinding/StaleCause/staleCauseToken), RefreshJson
+       (RefreshModel.viewKindToken — kept explicit because it is opened directly) and JsonTokens
+       (severityToken); Enforcement and FreshnessKey arrive transitively. It adds NO
+       third-party PackageReference — serialization is the net10.0 shared-framework `System.Text.Json`
+       (`Utf8JsonWriter`) every *Json projection already uses. PURE and TOTAL: no I/O, no git, no clock,
+       never throws. Compile order GeneratedViewsJson.fsi -> GeneratedViewsJson.fs. No MVU ceremony
+       (Principle IV). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.GeneratedViewsJson</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.GeneratedViewsJson</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="GeneratedViewsJson.fsi" />
+    <Compile Include="GeneratedViewsJson.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The stale-view finding vocabulary (CurrencyFinding/StaleCause/staleCauseToken) plus, transitively,
+         RefreshJson (RefreshModel.viewKindToken), Enforcement (EnforcementDecision) and FreshnessKey
+         (categoryToken) — the exact set the two projections opened. -->
+    <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
+    <!-- Kept explicit because `open FS.GG.Governance.RefreshJson` is a direct reference (mirrors the
+         AuditJson/VerifyJson projections, which also reference it explicitly). -->
+    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <!-- The shared closed-enum token helpers (severityToken; module-qualified calls). -->
+    <ProjectReference Include="../FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
+  </ItemGroup>
+
+</Project>
