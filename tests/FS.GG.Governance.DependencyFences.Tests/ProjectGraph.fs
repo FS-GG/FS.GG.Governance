@@ -132,6 +132,32 @@ let fsggClaimants (nodes: ProjectNode list) : string list =
     |> List.map (fun n -> n.Name)
     |> List.sort
 
+/// INV-3 (generalized, ARCH-3) — no `ToolCommandName` value may be claimed by more than one
+/// publishable tool. `fsggClaimants` guards the specific `fsgg` collision; this closes the general
+/// class — a second project colliding on ANY command name (e.g. a duplicate `fsgg-evidence`) installs
+/// one tool over the other and would otherwise pass silently. Only packable `PackAsTool` nodes carry a
+/// meaningful `ToolCommandName` (that is the value `dotnet tool install` resolves), so the group-by is
+/// scoped to them; a shared name across two such projects is the violation.
+let toolCommandCollisions (nodes: ProjectNode list) : Violation list =
+    nodes
+    |> List.filter (fun n -> n.PackAsTool && n.IsPackable)
+    |> List.choose (fun n -> n.ToolCommandName |> Option.map (fun tcn -> tcn, n.Name))
+    |> List.groupBy fst
+    |> List.sortBy fst
+    |> List.choose (fun (tcn, pairs) ->
+        match pairs |> List.map snd |> List.sort with
+        | _ :: _ :: _ as claimants ->
+            Some
+                { Rule = "tool-command-owner"
+                  Project = String.concat ", " claimants
+                  Detail =
+                    sprintf
+                        "ToolCommandName '%s' is claimed by %d publishable projects: %s"
+                        tcn
+                        (List.length claimants)
+                        (String.concat ", " claimants) }
+        | _ -> None)
+
 // ---------------------------------------------------------------------------------------------------
 // The I/O edge — parse the REAL tracked .fsproj graph. Isolated here; everything above is pure.
 // ---------------------------------------------------------------------------------------------------
