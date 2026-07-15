@@ -3,11 +3,15 @@ module FS.GG.Governance.JsonWriters.Tests.JsonWritersTests
 open Expecto
 open FS.GG.Governance.JsonText
 open FS.GG.Governance.JsonWriters
+open FS.GG.Governance.Config.Model             // TimeoutLimit
 open FS.GG.Governance.Gates.Model              // GateId
 open FS.GG.Governance.GateRun.Model            // GateOutcome, GateDisposition
-open FS.GG.Governance.CommandRecord.Model      // ExitCode
+open FS.GG.Governance.CommandRecord            // CommandRecord.build
+open FS.GG.Governance.CommandRecord.Model      // ExitCode, ReproducibleFacts, SensedDuration, …
 open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause, InputCategory via FreshnessKey
 open FS.GG.Governance.FreshnessKey.Model       // InputCategory
+open FS.GG.Governance.CommandKind              // Audit (runIdentity)
+open FS.GG.Governance.CommandKind.Model        // KindedCommandRun, CommandKind
 open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, entry, verdict
 
 // Semantic tests for the 073 sub-object/map writer leaf, exercising the PUBLIC surface over REAL,
@@ -72,4 +76,35 @@ let tests =
 
               let m = JsonWriters.verdictByGate report
               Expect.equal (Map.find "g1" m) (MustRecompute NoPriorEvidence) "first entry by report order wins"
+          }
+
+          // JSON-3: writeRun was hoisted here from AttestationJson/ProvenanceJson (byte-identical copies). Its
+          // field order `kind`, `identity`, `exitCode`, `durationNanos` is what both projection goldens depend
+          // on; `identity` is re-derived here through the real Audit.runIdentity (Principle V — real values).
+          test "writeRun emits kind/identity/exitCode/durationNanos in order over a real record" {
+              let record =
+                  CommandRecord.build
+                      (Executable "gcc")
+                      [ Argument "-c"; Argument "main.c" ]
+                      (WorkingDirectory "/work")
+                      { Added = []; Changed = []; Removed = [] }
+                      (TimeoutLimit 30)
+                      (ExitCode 137)
+                      (OutputDigest "sha-out")
+                      (OutputDigest "sha-err")
+                      NoCapturedOutput
+                      (SensedDuration 333L)
+
+              let run = { Kind = Pack; Record = record }
+
+              // identity is a multi-line canonical string; encode it exactly as the writer does so the
+              // expected bytes (and field ORDER) are pinned without hand-escaping.
+              let identityJson =
+                  System.Text.Json.JsonSerializer.Serialize(Audit.runIdentity run)
+
+              let expected =
+                  sprintf """{"kind":"pack","identity":%s,"exitCode":137,"durationNanos":333}""" identityJson
+
+              let actual = render (fun w -> JsonWriters.writeRun w run)
+              Expect.equal actual expected "writeRun field order + values"
           } ]

@@ -24,6 +24,7 @@ open FS.GG.Governance.CommandKind.Model
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // JSON-3: the shared value un-wrappers + writeRun (module-qualified)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ProvenanceJson =
@@ -31,25 +32,8 @@ module ProvenanceJson =
     let schemaVersion = "fsgg.provenance/v1"
 
     // ── internal writer plumbing + value/token helpers (hidden — absent from ProvenanceJson.fsi) ──
-
-    let revisionValue (Revision s) = s
-    let ruleHashValue (RuleHash s) = s
-    let generatorVersionValue (GeneratorVersion s) = s
-    let artifactValue (ArtifactHash s) = s
-    let builderValue (BuilderIdentity s) = s
-    let exitCodeValue (ExitCode i) = i
-    let durationNanos (SensedDuration n) = n
-
-    /// One command run — field order `kind`, `identity`, `exitCode`, `durationNanos`. `identity` reuses the
-    /// F032 identity verbatim (via `Audit.runIdentity`); `durationNanos` is the sensed metadata, never part
-    /// of any identity.
-    let writeRun (w: Utf8JsonWriter) (run: KindedCommandRun) =
-        w.WriteStartObject()
-        w.WriteString("kind", Audit.kindToken run.Kind)
-        w.WriteString("identity", Audit.runIdentity run)
-        w.WriteNumber("exitCode", exitCodeValue run.Record.Reproducible.ExitCode)
-        w.WriteNumber("durationNanos", durationNanos run.Record.Duration)
-        w.WriteEndObject()
+    // JSON-3: the seven newtype un-wrappers and `writeRun` now live in the shared JsonWriters leaf (they were
+    // byte-identical to AttestationJson's copies); referenced module-qualified as `JsonWriters.<name>`.
 
     // ── the public entry point ──
 
@@ -58,20 +42,20 @@ module ProvenanceJson =
 
         let sortedDigests =
             p.ArtifactDigests
-            |> List.map artifactValue
+            |> List.map JsonWriters.artifactValue
             |> List.sortWith (fun a b -> String.CompareOrdinal(a, b))
 
         JsonText.writeToString (fun w ->
             w.WriteStartObject()
             w.WriteString("schemaVersion", schemaVersion)
             w.WriteString("identity", Audit.snapshotIdentity snapshot)
-            w.WriteString("sourceCommit", revisionValue p.SourceCommit)
-            w.WriteString("base", revisionValue p.Base)
-            w.WriteString("head", revisionValue p.Head)
-            w.WriteString("ruleHash", ruleHashValue p.RuleHash)
-            w.WriteString("generatorVersion", generatorVersionValue p.GeneratorVersion)
+            w.WriteString("sourceCommit", JsonWriters.revisionValue p.SourceCommit)
+            w.WriteString("base", JsonWriters.revisionValue p.Base)
+            w.WriteString("head", JsonWriters.revisionValue p.Head)
+            w.WriteString("ruleHash", JsonWriters.ruleHashValue p.RuleHash)
+            w.WriteString("generatorVersion", JsonWriters.generatorVersionValue p.GeneratorVersion)
             w.WriteString("environment", JsonTokens.environmentToken p.Environment)
-            w.WriteString("builder", builderValue p.Builder)
+            w.WriteString("builder", JsonWriters.builderValue p.Builder)
 
             w.WritePropertyName "artifactDigests"
             w.WriteStartArray()
@@ -82,7 +66,7 @@ module ProvenanceJson =
             w.WritePropertyName "commandRuns"
             w.WriteStartArray()
             for run in snapshot.Runs do
-                writeRun w run
+                JsonWriters.writeRun w run
             w.WriteEndArray()
 
             w.WriteEndObject())

@@ -23,6 +23,7 @@ open FS.GG.Governance.Attestation.Model
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
+open FS.GG.Governance.JsonWriters // JSON-3: the shared value un-wrappers + writeRun (module-qualified)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AttestationJson =
@@ -37,14 +38,8 @@ module AttestationJson =
         "SLSA/in-toto-shaped, reproducible metadata; NOT a claim of formal SLSA-level or in-toto attestation conformance."
 
     // ── internal writer plumbing + value/token helpers (hidden — absent from AttestationJson.fsi) ──
-
-    let revisionValue (Revision s) = s
-    let ruleHashValue (RuleHash s) = s
-    let generatorVersionValue (GeneratorVersion s) = s
-    let artifactValue (ArtifactHash s) = s
-    let builderValue (BuilderIdentity s) = s
-    let exitCodeValue (ExitCode i) = i
-    let durationNanos (SensedDuration n) = n
+    // JSON-3: the seven newtype un-wrappers and `writeRun` now live in the shared JsonWriters leaf (they were
+    // byte-identical to ProvenanceJson's copies); referenced module-qualified as `JsonWriters.<name>`.
 
     let complianceMarkerToken (marker: ComplianceMarker) : string =
         match marker with
@@ -54,17 +49,7 @@ module AttestationJson =
         w.WriteStartObject()
         w.WriteString("name", s.Name)
         w.WriteString("version", s.Version)
-        w.WriteString("digest", artifactValue s.Digest)
-        w.WriteEndObject()
-
-    /// One command run — field order `kind`, `identity`, `exitCode`, `durationNanos`. `identity` reuses the
-    /// F032 identity verbatim (via Audit.runIdentity); `durationNanos` is sensed metadata, never identity.
-    let writeRun (w: Utf8JsonWriter) (run: KindedCommandRun) =
-        w.WriteStartObject()
-        w.WriteString("kind", Audit.kindToken run.Kind)
-        w.WriteString("identity", Audit.runIdentity run)
-        w.WriteNumber("exitCode", exitCodeValue run.Record.Reproducible.ExitCode)
-        w.WriteNumber("durationNanos", durationNanos run.Record.Duration)
+        w.WriteString("digest", JsonWriters.artifactValue s.Digest)
         w.WriteEndObject()
 
     // ── the public entry point ──
@@ -78,7 +63,7 @@ module AttestationJson =
 
         let sortedDigests =
             m.ArtifactDigests
-            |> List.map artifactValue
+            |> List.map JsonWriters.artifactValue
             |> List.sortWith (fun a b -> String.CompareOrdinal(a, b))
 
         JsonText.writeToString (fun w ->
@@ -87,7 +72,7 @@ module AttestationJson =
             w.WriteString("compliance", complianceMarkerToken summary.Compliance)
             w.WriteString("complianceNote", complianceNote)
             w.WriteString("identity", summary.Identity)
-            w.WriteString("builder", builderValue summary.Builder)
+            w.WriteString("builder", JsonWriters.builderValue summary.Builder)
 
             w.WritePropertyName "subjects"
             w.WriteStartArray()
@@ -97,11 +82,11 @@ module AttestationJson =
 
             w.WritePropertyName "materials"
             w.WriteStartObject()
-            w.WriteString("ruleHash", ruleHashValue m.RuleHash)
-            w.WriteString("generatorVersion", generatorVersionValue m.GeneratorVersion)
-            w.WriteString("sourceCommit", revisionValue m.SourceCommit)
-            w.WriteString("base", revisionValue m.BaseRevision)
-            w.WriteString("head", revisionValue m.HeadRevision)
+            w.WriteString("ruleHash", JsonWriters.ruleHashValue m.RuleHash)
+            w.WriteString("generatorVersion", JsonWriters.generatorVersionValue m.GeneratorVersion)
+            w.WriteString("sourceCommit", JsonWriters.revisionValue m.SourceCommit)
+            w.WriteString("base", JsonWriters.revisionValue m.BaseRevision)
+            w.WriteString("head", JsonWriters.revisionValue m.HeadRevision)
 
             w.WritePropertyName "artifactDigests"
             w.WriteStartArray()
@@ -117,7 +102,7 @@ module AttestationJson =
             w.WritePropertyName "runs"
             w.WriteStartArray()
             for run in summary.Invocation.Runs do
-                writeRun w run
+                JsonWriters.writeRun w run
             w.WriteEndArray()
             w.WriteEndObject()
 
