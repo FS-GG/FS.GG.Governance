@@ -504,8 +504,21 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       `v1` schemaVersion (the field was accidental leakage, not a contract consumers should have relied on),
       and the two persisted artifacts (`cache-eligibility.json` + unresolved sidecar) are byte-unchanged. A
       new `RenderModeDispatchTests` case pins that neither `"wrote"` nor either output path reaches the JSON.
-- [ ] **ADPT-3 — Emit an `UnreadableWorkingTree` diagnostic on an incomplete Snapshot drain
-      (Low).** Don't convert lost git output into a positive "clean" fact.
+- [x] **ADPT-3 — Emit an `UnreadableWorkingTree` diagnostic on an incomplete Snapshot drain
+      (Low).** ✅ Done: `runGit` (`Snapshot/Interpreter.fs`) no longer converts lost git output into a
+      positive fact. On a clean exit (`ExitCode = 0`) it now returns `Ok stdout` only when the stdout
+      read actually reached EOF within the drain window (`outTask.IsCompletedSuccessfully`); if the read
+      did NOT complete it returns an `Error` instead of the `""` that `resultOf` would hand back — because
+      an empty `status --porcelain` parses to a CLEAN working tree, so a lost read could report a dirty
+      tree as clean. The reified `Error` funnels into the pure assembler's already-covered path
+      (`Snapshot.fs` `StatusRaw = Error → UnreadableWorkingTree` diagnostic + empty tree), so status lost-
+      output becomes a diagnostic rather than a fabricated clean — mirroring the nonzero-exit failure path
+      and the sensors' fail-closed discipline. Edge-only change: `.fsi`/baseline/contract unchanged (the
+      one impure branch is inside private `runGit`); the happy path is byte-identical (real git reads
+      complete instantly ⇒ `IsCompletedSuccessfully` true ⇒ unchanged). The downstream diagnostic is
+      pinned by `AssembleTests` (`StatusRaw = Error → only UnreadableWorkingTree`); the incomplete-drain
+      race itself is not deterministically reproducible (a 5 s real-process drain timeout) and so is not
+      given a bespoke flaky test.
 - [ ] **ADPT-4 — Roll back empty directories in Scaffold (Low),** so "ZERO new files" holds for
       directories too.
 - [ ] **CLI-5 — Distinguish `UnexpectedArgument` from `UnknownFlag` in the no-positional verb

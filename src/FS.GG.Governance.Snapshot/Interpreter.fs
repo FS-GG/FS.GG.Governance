@@ -111,7 +111,17 @@ module Interpreter =
                     let stderr = resultOf errTask
 
                     if proc.ExitCode = 0 then
-                        Ok stdout
+                        // git exited cleanly — but only trust stdout if its read actually reached EOF
+                        // within the drain window. If the read did NOT complete, `resultOf` handed back
+                        // `""`, and an empty `status --porcelain` parses to a CLEAN working tree: lost
+                        // output would masquerade as a positive "nothing changed" fact and a dirty tree
+                        // could be reported clean (ADPT-3). Reify the incomplete read as an Error so a lost
+                        // read becomes an UnreadableWorkingTree diagnostic (for status) via `assemble`,
+                        // never a fabricated clean — mirroring the nonzero-exit failure path.
+                        if outTask.IsCompletedSuccessfully then
+                            Ok stdout
+                        else
+                            Error(sprintf "git '%s' exited but its output could not be read within %d ms" cmd.Token gitDrainTimeoutMs)
                     else
                         let reason = stderr.Trim()
                         Error(if reason <> "" then reason else sprintf "git exited with code %d" proc.ExitCode)
