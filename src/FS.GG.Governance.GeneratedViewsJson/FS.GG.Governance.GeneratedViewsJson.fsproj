@@ -15,8 +15,9 @@
        references it), so neither existing leaf could host this without a cycle — hence its own project,
        exactly as JSON-4 prescribed.
 
-       It references ONLY CurrencyEnforcement (CurrencyFinding/StaleCause/staleCauseToken; Enforcement,
-       FreshnessKey and RefreshJson arrive transitively) and JsonTokens (severityToken), and adds NO
+       It references CurrencyEnforcement (CurrencyFinding/StaleCause/staleCauseToken), RefreshJson
+       (RefreshModel.viewKindToken — kept explicit because it is opened directly) and JsonTokens
+       (severityToken); Enforcement and FreshnessKey arrive transitively. It adds NO
        third-party PackageReference — serialization is the net10.0 shared-framework `System.Text.Json`
        (`Utf8JsonWriter`) every *Json projection already uses. PURE and TOTAL: no I/O, no git, no clock,
        never throws. Compile order GeneratedViewsJson.fsi -> GeneratedViewsJson.fs. No MVU ceremony
