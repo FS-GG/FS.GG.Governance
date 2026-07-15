@@ -56,6 +56,7 @@ module Loop =
     /// Pure-parser rejections (mirrors RouteCommand.Loop.UsageError) — each maps to `UsageError'`/exit 2.
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths

@@ -71,6 +71,7 @@ module Loop =
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths
