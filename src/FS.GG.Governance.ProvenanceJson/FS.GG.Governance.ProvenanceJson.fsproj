@@ -48,4 +48,11 @@
     <ProjectReference Include="../FS.GG.Governance.JsonTokens/FS.GG.Governance.JsonTokens.fsproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- JSON-3: the shared value un-wrappers + writeRun (pure JsonWriters leaf; module-qualified calls) —
+         formerly hand-copied here and in AttestationJson. -->
+    <ProjectReference Include="../FS.GG.Governance.JsonWriters/FS.GG.Governance.JsonWriters.fsproj" />
+  </ItemGroup>
+
 </Project>

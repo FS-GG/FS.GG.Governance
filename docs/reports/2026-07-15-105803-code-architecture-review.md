@@ -473,8 +473,18 @@ Tier 1+ with `.fsi`/baseline in lockstep).
       than structurally dead. `.fsi` + the `VerifyJson.surface.txt` baseline moved in lockstep (Tier 1); two new
       `VerifyJsonTests` cases pin a populated `missing` and the `Map.empty` byte-identity; the
       `verify-no-surfaces.json` golden was re-blessed to show the real `["baseRevision","headRevision"]` tokens.
-- [ ] **JSON-3 — Hoist the shared `writeRun` + value helpers into `JsonWriters` (Low).**
-      Contract-agnostic and un-deferred; guard with the existing byte-identity tests.
+- [x] **JSON-3 — Hoist the shared `writeRun` + value helpers into `JsonWriters` (Low).** ✅ Done: the
+      seven newtype un-wrappers (`revisionValue`/`ruleHashValue`/`generatorVersionValue`/`artifactValue`/
+      `builderValue`/`exitCodeValue`/`durationNanos`) and `writeRun` — byte-identical copies in
+      `AttestationJson.fs` and `ProvenanceJson.fs` — now live once in the `JsonWriters` leaf; both projections
+      call them module-qualified (`JsonWriters.<name>`). `exitCodeValue`/`durationNanos` are consumed only by
+      `writeRun`, so they stay hidden (absent from `JsonWriters.fsi`); the other five + `writeRun` are the new
+      public surface (baseline re-blessed). `JsonWriters` gains `CommandKind` (`Audit`/`KindedCommandRun`) and
+      `Provenance` (`BuilderIdentity`) references — both domain owners BELOW the leaf, so no writer→projection
+      layering inversion and no schema-version coupling (unlike the ADR-0008 pair); the scope-guard fence stays
+      green (no `*Json`/kernel/host edge). Output is byte-identical: the AttestationJson/ProvenanceJson goldens
+      are unchanged, and a new `JsonWritersTests` case pins `writeRun`'s field order + values over a real
+      record.
 - [ ] **CLI-3 — Converge the format-flag vocabulary (Low–Medium).** One `--format text|json`
       spelling (or accept `text` as a `human` synonym), ahead of the single-tool multiplexer.
 - [ ] **CLI-4 — Drop the `wrote` path object from the cache-eligibility JSON contract (Low),**
