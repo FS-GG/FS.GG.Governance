@@ -107,6 +107,14 @@ module VerifyJson =
     /// F070: the additive overload carrying the stale-generated-view currency findings + their F023
     /// `EnforcementDecision`s. Emits an additive `generatedViews` array (omitted when empty ⇒ byte-identical to
     /// `ofVerifyDecisionWithPreview`, FR-004). Existing entry points untouched (FR-010).
+    ///
+    /// JSON-2: this overload additionally carries `missingByGate` — the already-tokenized missing-fact wire
+    /// tokens for each `currency.unresolved` gate, keyed on the gate id value. The missing facts live in the
+    /// sensed inputs the plain `CacheEligibilityReport` cannot reconstruct, so verify's command host resolves
+    /// them via `FreshnessResolution` and tokenizes (`missingFactToken`) before calling; this projection stays
+    /// emit-only, re-deriving nothing. A gate absent from the map — including `Map.empty` for a caller with no
+    /// resolution (the pinning unit projections) — writes an empty `missing` array, so the
+    /// no-missing-facts output is BYTE-IDENTICAL to the pre-JSON-2 projection (the always-empty precedent).
     val ofVerifyDecisionWithGeneratedViews:
         decision: ShipDecision ->
         cache: CacheEligibilityReport option ->
@@ -116,4 +124,5 @@ module VerifyJson =
         generatedViews:
             (FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding *
              FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
+        missingByGate: Map<string, string list> ->
             string

@@ -184,14 +184,32 @@ let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (ca
 
     Loop.applyExecution passedIds decision, outcomes
 
+/// JSON-2: the missing-fact wire tokens per unresolved gate the host threads into
+/// `currency.unresolved[].missing`, rebuilt here from the SAME freshness resolution the cache report is
+/// (`fakeSensor` + the snapshot's base/head), so the oracle stays byte-identical to `projectExecuted`.
+let expectedMissingByGate (selectedGates: Gate list) (baseHead: Revision option * Revision option) : Map<string, string list> =
+    match FreshnessSensing.senseFreshness fakeSensor selectedGates baseHead with
+    | Ok sensed ->
+        FreshnessResolution.resolve selectedGates sensed
+        |> FreshnessResolution.entries
+        |> List.choose (fun entry ->
+            match FreshnessResolution.missingFacts entry.Outcome with
+            | [] -> None
+            | facts -> Some(gateIdValue entry.Gate, facts |> List.map FreshnessResolution.missingFactToken))
+        |> Map.ofList
+    | Error _ -> Map.empty
+
 /// The genuine F056 `verify.json` bytes the command persists over a given execution port: the F052-relocated
-/// decision + the LIVE cache report + the per-gate execution embed.
+/// decision + the LIVE cache report + the per-gate execution embed + (JSON-2) the unresolved-gate missing-fact
+/// tokens. Uses the fullest overload with empty surfaceChecks/preview/generatedViews ⇒ byte-identical to the
+/// base projection except for the now-honest `missing` arrays.
 let verifyExpectedWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (profile: Profile) (snap: RepoSnapshot option) : string =
     let result, _ = resultAndDecisionOf files candidates Verify profile
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
     let cacheReport = expectedCacheReport selectedGates (baseHeadOfSnap snap)
+    let missingByGate = expectedMissingByGate selectedGates (baseHeadOfSnap snap)
     let relocated, outcomes = relocatedDecisionWith port files candidates Verify profile
-    VerifyJson.ofVerifyDecision relocated (Some cacheReport) outcomes
+    VerifyJson.ofVerifyDecisionWithGeneratedViews relocated (Some cacheReport) outcomes [] None [] missingByGate
 
 let verifyExpected (files: Map<string, string>) (candidates: GovernedPath list) (profile: Profile) (snap: RepoSnapshot option) : string =
     verifyExpectedWith fakeExecPortFail files candidates profile snap
