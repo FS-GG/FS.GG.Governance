@@ -90,6 +90,7 @@ module Loop =
     /// `Unrecognized` (research D5); recognition happens IN `parse` so a typo writes no artifact.
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths

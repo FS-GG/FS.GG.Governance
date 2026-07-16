@@ -16,6 +16,9 @@ open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause (NoPriorEvidenc
 open FS.GG.Governance.FreshnessKey.Model       // categoryToken, FreshnessKey
 open FS.GG.Governance.CacheEligibility         // entries
 open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, CacheEligibilityVerdict, entry fields
+open FS.GG.Governance.CommandKind              // Audit (kindToken / runIdentity) — JSON-3
+open FS.GG.Governance.CommandKind.Model        // KindedCommandRun — JSON-3
+open FS.GG.Governance.Provenance.Model         // BuilderIdentity — JSON-3
 open FS.GG.Governance.JsonTokens               // dispositionToken (module-qualified)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -68,7 +71,9 @@ module JsonWriters =
     // 111/A4: the freshness-key / prerequisite / cache-eligibility sub-objects — byte-identical copies the
     // Gates/Route/Audit projections used to hand-hold. (The generated-view and attestation-ref writers are
     // NOT hoisted here: they need RefreshJson / AttestationJson — higher projection layers — which would
-    // invert the writer→projection layering; left local, re-deferred on #83.)
+    // invert the writer→projection layering. The generated-view writer instead lives in its own
+    // `GeneratedViewsJson` leaf sited ABOVE RefreshJson but below the projections — JSON-4; the
+    // attestation-ref writer stays local, re-deferred on #83.)
 
     let writeFreshnessKey (w: Utf8JsonWriter) (key: FreshnessKey) =
         w.WriteStartObject()
@@ -104,4 +109,33 @@ module JsonWriters =
             writeCause w cause
         | None -> w.WriteString("kind", "notEvaluated")
 
+        w.WriteEndObject()
+
+    // JSON-3: the newtype value un-wrappers + the per-run audit-run writer (`writeRun`, distinct from the
+    // gate-`execution` `writeExecution` above) the AttestationJson and ProvenanceJson projections used to
+    // hand-copy verbatim. `writeRun` depends only on `Audit.*` +
+    // `KindedCommandRun`, and the seven un-wrappers only on their FreshnessKey/Provenance/CommandRecord owners
+    // — all domain owners already BELOW this leaf, so hoisting inverts no layering and couples no schema
+    // versions (unlike the ADR-0008 pair). Output is byte-identical to the two projections' prior local copies
+    // (guarded by their goldens/byte-identity tests). `exitCodeValue`/`durationNanos` are used only by
+    // `writeRun`, so they stay hidden (absent from JsonWriters.fsi); the other five un-wrappers + `writeRun`
+    // are the public surface the projections now call.
+
+    let revisionValue (Revision s) = s
+    let ruleHashValue (RuleHash s) = s
+    let generatorVersionValue (GeneratorVersion s) = s
+    let artifactValue (ArtifactHash s) = s
+    let builderValue (BuilderIdentity s) = s
+    let exitCodeValue (ExitCode i) = i
+    let durationNanos (SensedDuration n) = n
+
+    /// One command run — field order `kind`, `identity`, `exitCode`, `durationNanos`. `identity` reuses the
+    /// F032 identity verbatim (via `Audit.runIdentity`); `durationNanos` is the sensed metadata, never part
+    /// of any identity.
+    let writeRun (w: Utf8JsonWriter) (run: KindedCommandRun) =
+        w.WriteStartObject()
+        w.WriteString("kind", Audit.kindToken run.Kind)
+        w.WriteString("identity", Audit.runIdentity run)
+        w.WriteNumber("exitCode", exitCodeValue run.Record.Reproducible.ExitCode)
+        w.WriteNumber("durationNanos", durationNanos run.Record.Duration)
         w.WriteEndObject()

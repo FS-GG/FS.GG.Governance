@@ -63,9 +63,12 @@
     <ProjectReference Include="../FS.GG.Governance.ReleaseReport/FS.GG.Governance.ReleaseReport.fsproj" />
     <ProjectReference Include="..\FS.GG.Governance.RuleIdentity\FS.GG.Governance.RuleIdentity.fsproj" />
     <!-- F070: the stale-generated-view `generatedViews` overload references the pure CurrencyEnforcement
-         leaf and RefreshJson (RefreshModel.viewKindToken); Enforcement/FreshnessKey arrive transitively. -->
+         leaf (CurrencyFinding, the overload's signature type; categoryToken in Core arrives transitively). -->
     <ProjectReference Include="../FS.GG.Governance.CurrencyEnforcement/FS.GG.Governance.CurrencyEnforcement.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.RefreshJson/FS.GG.Governance.RefreshJson.fsproj" />
+    <!-- JSON-4: the `generatedViews` array writer body (was byte-identical to AuditJson's copy) now lives
+         ONCE in the shared GeneratedViewsJson leaf; the `GeneratedViews` seam delegates to it (RefreshJson's
+         RefreshModel.viewKindToken arrives transitively through that leaf). -->
+    <ProjectReference Include="../FS.GG.Governance.GeneratedViewsJson/FS.GG.Governance.GeneratedViewsJson.fsproj" />
   </ItemGroup>
 
 

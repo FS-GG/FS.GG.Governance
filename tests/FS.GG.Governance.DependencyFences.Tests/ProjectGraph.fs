@@ -47,13 +47,20 @@ let render (v: Violation) : string =
 // in the red-path tests) and returns the violations, so it is testable without touching the tree.
 // ---------------------------------------------------------------------------------------------------
 
-/// INV-1 — the set of projects declaring a direct YamlDotNet reference must equal `allowed` exactly.
-/// Two failure directions: an undocumented owner (has YamlDotNet, not in `allowed`) and a documented
-/// owner that dropped it (in `allowed`, no YamlDotNet).
-let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+/// Shared owner-fence matcher: the set of projects declaring a direct `package` reference must equal
+/// `allowed` exactly. Two failure directions: an undocumented owner (has the package, not in `allowed`)
+/// and a documented owner that dropped it (in `allowed`, no package). `rule`/`label` shape the
+/// diagnostic; `label` is the human name used in the detail text (e.g. "YAML", "Spectre.Console").
+let private packageOwnerViolations
+    (rule: string)
+    (package: string)
+    (label: string)
+    (allowed: Set<string>)
+    (nodes: ProjectNode list)
+    : Violation list =
     let owners =
         nodes
-        |> List.filter (fun n -> n.PackageReferences.Contains "YamlDotNet")
+        |> List.filter (fun n -> n.PackageReferences.Contains package)
         |> List.map (fun n -> n.Name)
         |> Set.ofList
 
@@ -61,19 +68,31 @@ let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Viola
         Set.difference owners allowed
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = "yaml-owner"
+            { Rule = rule
               Project = name
-              Detail = "declares a direct YamlDotNet reference but is not in the documented YAML-owner allowlist" })
+              Detail = sprintf "declares a direct %s reference but is not in the documented %s-owner allowlist" package label })
 
     let missing =
         Set.difference allowed owners
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = "yaml-owner"
+            { Rule = rule
               Project = name
-              Detail = "is a documented YAML owner but no longer declares a direct YamlDotNet reference (update the allowlist)" })
+              Detail = sprintf "is a documented %s owner but no longer declares a direct %s reference (update the allowlist)" label package })
 
     undocumented @ missing
+
+/// INV-1 — the set of projects declaring a direct YamlDotNet reference must equal `allowed` exactly.
+/// Two failure directions: an undocumented owner (has YamlDotNet, not in `allowed`) and a documented
+/// owner that dropped it (in `allowed`, no YamlDotNet).
+let yamlOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+    packageOwnerViolations "yaml-owner" "YamlDotNet" "YAML" allowed nodes
+
+/// INV-4 (ARCH-2) — the set of projects declaring a direct Spectre.Console reference must equal
+/// `allowed` exactly. Mirrors `yamlOwnerViolations`: the rich-terminal presentation package is confined
+/// to a single owner (HumanRender), machine-enforced rather than prose-only.
+let spectreOwnerViolations (allowed: Set<string>) (nodes: ProjectNode list) : Violation list =
+    packageOwnerViolations "spectre-owner" "Spectre.Console" "Spectre.Console" allowed nodes
 
 /// INV-2 — no Exe node may reach another Exe node via the transitive ProjectReference closure.
 let exeExeEdges (nodes: ProjectNode list) : Violation list =
@@ -112,6 +131,32 @@ let fsggClaimants (nodes: ProjectNode list) : string list =
     |> List.filter (fun n -> n.ToolCommandName = Some "fsgg")
     |> List.map (fun n -> n.Name)
     |> List.sort
+
+/// INV-3 (generalized, ARCH-3) — no `ToolCommandName` value may be claimed by more than one
+/// publishable tool. `fsggClaimants` guards the specific `fsgg` collision; this closes the general
+/// class — a second project colliding on ANY command name (e.g. a duplicate `fsgg-evidence`) installs
+/// one tool over the other and would otherwise pass silently. Only packable `PackAsTool` nodes carry a
+/// meaningful `ToolCommandName` (that is the value `dotnet tool install` resolves), so the group-by is
+/// scoped to them; a shared name across two such projects is the violation.
+let toolCommandCollisions (nodes: ProjectNode list) : Violation list =
+    nodes
+    |> List.filter (fun n -> n.PackAsTool && n.IsPackable)
+    |> List.choose (fun n -> n.ToolCommandName |> Option.map (fun tcn -> tcn, n.Name))
+    |> List.groupBy fst
+    |> List.sortBy fst
+    |> List.choose (fun (tcn, pairs) ->
+        match pairs |> List.map snd |> List.sort with
+        | _ :: _ :: _ as claimants ->
+            Some
+                { Rule = "tool-command-owner"
+                  Project = String.concat ", " claimants
+                  Detail =
+                    sprintf
+                        "ToolCommandName '%s' is claimed by %d publishable projects: %s"
+                        tcn
+                        (List.length claimants)
+                        (String.concat ", " claimants) }
+        | _ -> None)
 
 // ---------------------------------------------------------------------------------------------------
 // The I/O edge — parse the REAL tracked .fsproj graph. Isolated here; everything above is pure.

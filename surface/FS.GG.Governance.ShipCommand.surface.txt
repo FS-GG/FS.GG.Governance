@@ -569,6 +569,7 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError
   [Method] Boolean get_IsEmptyPaths()
   [Method] Boolean get_IsMissingValue()
   [Method] Boolean get_IsPathsAndSinceTogether()
+  [Method] Boolean get_IsUnexpectedArgument()
   [Method] Boolean get_IsUnknownFlag()
   [Method] Boolean get_IsUnrecognizedMode()
   [Method] Boolean get_IsUnrecognizedProfile()
@@ -580,6 +581,7 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError
   [Method] Int32 get_Tag()
   [Method] System.String ToString()
   [Method] UsageError NewMissingValue(System.String)
+  [Method] UsageError NewUnexpectedArgument(System.String)
   [Method] UsageError NewUnknownFlag(System.String)
   [Method] UsageError NewUnrecognizedMode(System.String)
   [Method] UsageError NewUnrecognizedProfile(System.String)
@@ -587,12 +589,14 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError
   [Method] UsageError get_PathsAndSinceTogether()
   [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+MissingValue
   [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+Tags
+  [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnexpectedArgument
   [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnknownFlag
   [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedMode
   [NestedType] FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnrecognizedProfile
   [Property] Boolean IsEmptyPaths
   [Property] Boolean IsMissingValue
   [Property] Boolean IsPathsAndSinceTogether
+  [Property] Boolean IsUnexpectedArgument
   [Property] Boolean IsUnknownFlag
   [Property] Boolean IsUnrecognizedMode
   [Property] Boolean IsUnrecognizedProfile
@@ -606,9 +610,13 @@ TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+Tags
   [Field] Int32 EmptyPaths
   [Field] Int32 MissingValue
   [Field] Int32 PathsAndSinceTogether
+  [Field] Int32 UnexpectedArgument
   [Field] Int32 UnknownFlag
   [Field] Int32 UnrecognizedMode
   [Field] Int32 UnrecognizedProfile
+TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnexpectedArgument
+  [Method] System.String get_Item()
+  [Property] System.String Item
 TYPE FS.GG.Governance.ShipCommand.LoopModule+UsageError+UnknownFlag
   [Method] System.String get_Item()
   [Property] System.String Item

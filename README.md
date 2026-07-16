@@ -148,7 +148,8 @@ fakeable-port `Interpreter`, and a thin `Program`.
 > 43 references (32 transitively reachable). That breadth is by design at the edge and is
 > *not* drift; the dependency fences guarded by `FS.GG.Governance.DependencyFences.Tests`
 > constrain the *kinds* of edges that matter (no executable may reference another executable;
-> YAML parsing stays with its owners), not the raw reference count of a leaf command.
+> YAML parsing stays with its owners; Spectre.Console stays confined to `HumanRender`), not the
+> raw reference count of a leaf command.
 
 ## The `.fsgg` configuration model
 
@@ -217,8 +218,9 @@ bare `fsgg` command, `evidence` installs as `fsgg-evidence`, and `cache-eligibil
 The two lineages use **two different exit-code families** — the same integer can mean
 different things, so read them against the right column.
 
-**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/`refresh`/
-`evidence`/`cache-eligibility`), via `CommandHost.ExitDecision`:
+**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/
+`evidence`/`cache-eligibility`). Each host declares its own exit-code DU (there is no
+shared `ExitDecision` type); they agree on this `0`–`4` scheme:
 
 | Code | Meaning |
 |---|---|
@@ -227,6 +229,19 @@ different things, so read them against the right column.
 | `2` | usage error (bad flags/arguments) |
 | `3` | input unavailable (a required input could not be read) |
 | `4` | tool error (an internal/IO failure while running) |
+
+**`fsgg refresh`** is the one verb host with a **sixth** code: it distinguishes "nothing
+needed refreshing" from "views were regenerated", so `0` is *not* the sole success code —
+a successful regeneration returns `5`. A script must treat both `0` and `5` as success.
+
+| Code | Meaning |
+|---|---|
+| `0` | success — nothing to refresh (all views current) |
+| `1` | stale views remain unresolved (some view could not be brought current) |
+| `2` | usage error (bad flags/arguments) |
+| `3` | input unavailable (the refresh manifest could not be read) |
+| `4` | tool error (a generator/write/provenance failure) |
+| `5` | **success — views were regenerated** |
 
 **`fsgg-governance`** (the kernel-era dispatcher, `src/FS.GG.Governance.Cli`) remaps onto
 BSD **sysexits**:
@@ -267,7 +282,7 @@ repo's reality stops matching the registry.
 
 Recent integration ([spec 087](specs/087-retype-config-onto-contracts/)) makes
 `FS.GG.Governance.Config` a **consumer** of `FS.GG.Contracts` (`Fsgg.Schemas`, pinned
-`1.0.1`) rather than a second source of truth for the four `.fsgg` `schemaVersion`
+`2.0.0`) rather than a second source of truth for the four `.fsgg` `schemaVersion`
 constants — a future schema bump now flows in by re-pinning the package instead of
 editing Governance code. The public Config surface stays byte-identical.
 
@@ -291,9 +306,10 @@ arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Relea
 - **Target framework:** `net10.0` · `LangVersion=latest` · `Nullable=enable` ·
   `TreatWarningsAsErrors=true`.
 - **Tests:** Expecto (with FsCheck property tests); the full suite is the delivery gate.
-- **Key dependencies:** `FSharp.Core 10.1.301` (org-pinned), `YamlDotNet 16.3.0`
-  (isolated to `Config`), `FS.GG.Contracts 1.0.1` (consumed by `Config`),
-  `Spectre.Console 0.57.1` (exactly one project, `HumanRender`).
+- **Key dependencies:** `FSharp.Core 10.1.301` (org-pinned), `YamlDotNet 18.1.0`
+  (isolated to `Config`), `FS.GG.Contracts 2.0.0` (consumed by `Config`),
+  `Spectre.Console 0.57.2` (confined to exactly one project, `HumanRender` — a fence
+  guarded by `FS.GG.Governance.DependencyFences.Tests`).
 - **Build config:** `Directory.Build.props` / `Directory.Packages.props` are
   org-synced and drift-checked from [`FS-GG/.github → dist/dotnet/`](https://github.com/FS-GG/.github);
   repo-specific overrides live in `*.local.props`. Central Package Management is on
@@ -302,8 +318,11 @@ arguments after the verb pass through (e.g. `dotnet fsi build.fsx build -c Relea
 
 ## Packaging
 
-Most projects are `IsPackable=false`. The publishable `FS.GG.Governance.*` packages
-(including the `FS.GG.Governance.Cli` tool) pack to a local folder feed
+Most projects are packable by default (74 of 82 `src` projects; only a small explicit
+set carries `IsPackable=false`). The api-compat breaking-change gate packs every packable
+project against its org-feed baseline, but only the two publishable `FS.GG.Governance.*`
+packages (`FS.GG.Governance.Cli` and `FS.GG.Governance.ReferenceGateSet`) are actually
+published. The publishable packages pack to a local folder feed
 (`~/.local/share/nuget-local/`) and publish to the org GitHub Packages feed;
 `nuget.config` additively adds that feed (`https://nuget.pkg.github.com/FS-GG/index.json`)
 with source mapping (`FS.GG.*` → org feed, everything else → nuget.org). Each packable

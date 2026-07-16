@@ -88,6 +88,17 @@ let tests =
               Expect.isFalse (emitted.Contains "evidence:") "JSON is not the human text"
           }
 
+          test "Json contract does NOT leak host output paths (CLI-4, FR-003)" {
+              let req = requestFor Loop.DefaultRange Loop.Json
+              let cap0 = newCapture ()
+              let ports = fakePorts validCatalog git fixedSensor (storeReaderOf (Ok None)) cap0 req
+              Interpreter.run ports req |> ignore
+              let emitted = Expect.wantSome (List.tryHead cap0.Emits) "the JSON summary is emitted via Out"
+              Expect.isFalse (emitted.Contains "\"wrote\"") "the `wrote` path object is dropped from the JSON contract"
+              Expect.isFalse (emitted.Contains req.CacheOut) "the caller-supplied cache path never reaches the JSON"
+              Expect.isFalse (emitted.Contains req.UnresolvedOut) "the caller-supplied unresolved path never reaches the JSON"
+          }
+
           test "--plain parses into the request (FR-012)" {
               match Loop.parse [ "cache-eligibility"; "--plain" ] with
               | Ok req -> Expect.isTrue req.ExplicitPlain "--plain sets ExplicitPlain"

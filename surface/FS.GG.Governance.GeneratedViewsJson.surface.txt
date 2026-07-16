@@ -1,0 +1,2 @@
+TYPE FS.GG.Governance.GeneratedViewsJson.GeneratedViewsJsonModule
+  [Method] Void writeGeneratedViews(System.Text.Json.Utf8JsonWriter, Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding,FS.GG.Governance.Enforcement.EnforcementModule+EnforcementDecision]])

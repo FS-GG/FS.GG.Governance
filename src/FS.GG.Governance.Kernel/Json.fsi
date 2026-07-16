@@ -21,8 +21,22 @@
 // contributes its declared name and recorded outcome only (FR-002, SC-004). All output is
 // domain-neutral; node identity for the effective-state map is rendered by a SUPPLIED
 // projection (FR-012). Performs no I/O — persisting/printing the JSON is the F08/F12 edge's
-// job (FR-013). Parsing the kernel's own emitted JSON is total; malformed external JSON
-// fails fast with an explicit `System.Text.Json` exception (Principle VI).
+// job (FR-013).
+//
+// THROWING CONTRACT (spec 110 B8). The four parsers — `toExplanation`, `toContract`,
+// `toEvidenceState`, `toEffective` — are TOTAL over the kernel's own emitted JSON but
+// FAIL FAST on malformed/foreign input rather than returning a wrong value (Principle VI):
+// a caller feeding externally-sourced JSON MUST expect an exception, one of
+//   • `System.Text.Json.JsonException` — syntactically invalid JSON (`JsonDocument.Parse`);
+//   • `System.Collections.Generic.KeyNotFoundException` — a required property is absent
+//     (`GetProperty`);
+//   • `System.InvalidOperationException` — a value has the wrong JSON type: a non-string
+//     read as a string (`GetString`), or a non-array/non-object walked as one
+//     (`EnumerateArray`/`EnumerateObject`);
+//   • `System.Exception` — an unrecognized closed-enum token/tag (kind, outcome/verdict tag,
+//     severity, evidence-state), raised via `failwithf` with the offending token.
+// The four emitters (`ofExplanation`/`ofContract`/`ofEvidenceState`/`ofEffective`) never
+// throw for any well-typed value. Each reader's `THROWS:` line below points back here.
 
 namespace FS.GG.Governance.Kernel
 
@@ -42,8 +56,9 @@ module Json =
 
     /// Parse JSON emitted by `ofExplanation` back to an `Explanation` EQUAL to the original
     /// — no loss of structure, outcome, or verdict (`AtomExplained` and `OpaqueExplained`
-    /// stay distinct) (FR-004, SC-003). Total over kernel-emitted JSON; fails fast on
-    /// malformed input (Principle VI).
+    /// stay distinct) (FR-004, SC-003). Total over kernel-emitted JSON (Principle VI).
+    /// THROWS on malformed/foreign input — see the module header's THROWING CONTRACT
+    /// (`JsonException` / `KeyNotFoundException` / `InvalidOperationException` / `Exception`).
     val toExplanation: json: string -> Explanation
 
     // ── Published contract (F06 ContractEntry list) ──
@@ -55,8 +70,9 @@ module Json =
     val ofContract: contract: ContractEntry list -> string
 
     /// Parse JSON emitted by `ofContract` back to a `ContractEntry list` EQUAL to the
-    /// original (FR-007, SC-003). Total over kernel-emitted JSON; fails fast on malformed
-    /// input.
+    /// original (FR-007, SC-003). Total over kernel-emitted JSON.
+    /// THROWS on malformed/foreign input — see the module header's THROWING CONTRACT
+    /// (`JsonException` / `KeyNotFoundException` / `InvalidOperationException` / `Exception`).
     val toContract: json: string -> ContractEntry list
 
     // ── Evidence state (F05) ──
@@ -68,7 +84,9 @@ module Json =
     val ofEvidenceState: state: EvidenceState -> string
 
     /// Parse a JSON token emitted by `ofEvidenceState` back to its `EvidenceState`
-    /// (FR-011, SC-003). Fails fast on an unrecognized token.
+    /// (FR-011, SC-003). THROWS on malformed/foreign input — an unrecognized token raises
+    /// `System.Exception` (`failwithf`); a non-string JSON value raises
+    /// `System.InvalidOperationException`. See the module header's THROWING CONTRACT.
     val toEvidenceState: json: string -> EvidenceState
 
     /// Serialize an effective-state map (node identity → effective `EvidenceState`, as
@@ -82,5 +100,9 @@ module Json =
     /// Parse JSON emitted by `ofEffective` back to a `Map<string, EvidenceState>` keyed by
     /// the PROJECTED node id (the projection is one-way, so the recovered map is keyed by
     /// the projected strings) — equal to the projected original map (FR-011, SC-003). Total
-    /// over kernel-emitted JSON; fails fast on malformed input.
+    /// over kernel-emitted JSON.
+    /// THROWS on malformed/foreign input — see the module header's THROWING CONTRACT: a
+    /// non-object root or non-string value raises `System.InvalidOperationException`, an
+    /// unrecognized state token raises `System.Exception`, and syntactically invalid JSON
+    /// raises `System.Text.Json.JsonException`.
     val toEffective: json: string -> Map<string, EvidenceState>

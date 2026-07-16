@@ -22,6 +22,11 @@ namespace FS.GG.Governance.Kernel
 /// `Pass` carries no reason; `Fail`/`Uncertain` carry an opaque, caller-supplied
 /// free-text reason. The algebra combines reasons deterministically but never
 /// interprets their meaning (FR-010).
+///
+/// RESERVED SEPARATOR — `"; "` is reserved inside a `Fail`/`Uncertain` reason: aggregation
+/// (`all`/`any`, via `combineReasons`) splits reasons on it, so a leaf reason containing
+/// `"; "` is fragmented and reordered on roll-up. Authors of leaf verdicts (probe reasons at
+/// `Check.Outcome`) must not embed `"; "` in a single reason. See `combineReasons`.
 type Verdict =
     | Pass
     | Fail of reason: string

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- JSON-4: semantic tests for the shared GeneratedViewsJson writer leaf, exercising its PUBLIC surface
+       (`writeGeneratedViews`) over REAL, literally-constructed CurrencyFinding + EnforcementDecision values
+       (Principle V — real values, no mocks; the writer is pure). The emitted JSON is captured through a real
+       Utf8JsonWriter (via the JsonText leaf) and inspected by string comparison: byte-shape must match the
+       field order the AuditJson/VerifyJson goldens depend on. The reflective SurfaceBaseline test pins the
+       public surface + the dependency-hygiene allow-list (above RefreshJson/CurrencyEnforcement, below the
+       projections). -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="GeneratedViewsJsonTests.fs" />
+    <Compile Include="SurfaceBaselineTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.GeneratedViewsJson/FS.GG.Governance.GeneratedViewsJson.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.JsonText/FS.GG.Governance.JsonText.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+  </ItemGroup>
+
+</Project>

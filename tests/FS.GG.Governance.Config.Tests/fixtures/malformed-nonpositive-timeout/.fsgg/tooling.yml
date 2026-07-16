@@ -1,0 +1,14 @@
+schemaVersion: 1
+commands:
+  # A non-positive `timeout` is rejected as a located MalformedValue (CORE-2): a gate that waits
+  # `<= 0` ms times out immediately (exit 124) every run — a silent, always-failing gate from a typo.
+  - id: dotnet-build
+    command: "dotnet build"
+    timeout: 0
+    environment: local-or-ci
+environmentClasses:
+  - local
+  - ci
+externalTools:
+  - tool: dotnet
+    minVersion: "10.0.0"

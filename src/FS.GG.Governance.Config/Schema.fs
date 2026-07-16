@@ -255,6 +255,22 @@ module Schema =
                 addMalformed diags file name node (sprintf "field '%s' must be a non-empty scalar" name)
                 None
 
+    /// Like `reqString`, but additionally rejects the `:` character reserved as the gate-id
+    /// delimiter (`Gates.gateIdOf` composes a `GateId` as `<domain>:<checkId>`). Guarding `:` out of
+    /// BOTH gate-id components at the config boundary is what keeps that join INJECTIVE by
+    /// construction (CORE-1): without it `{domain="a"; id="b:c"}` and `{domain="a:b"; id="c"}` both
+    /// render `"a:b:c"`, and `Route.select`'s by-`GateId` dedup would silently drop one of the two
+    /// gates — a check that should run wouldn't. Emits a located `MalformedValue` on the field.
+    let private reqIdString (diags: ResizeArray<Diagnostic>) m file name : string option =
+        match reqString diags m file name with
+        | Some v when v.Contains(":") ->
+            let line = getField m name |> Option.bind lineOf
+            diags.Add(
+                diag MalformedValue file (Some name) None line
+                    (sprintf "field '%s' must not contain ':' (reserved as the gate-id delimiter)" name))
+            None
+        | other -> other
+
     let private optString (diags: ResizeArray<Diagnostic>) m file name : string option =
         match getField m name with
         | None -> None
@@ -281,6 +297,20 @@ module Schema =
             | None ->
                 addMalformed diags file name node (sprintf "field '%s' must be an integer scalar" name)
                 None
+
+    /// Like `reqInt`, but additionally rejects a non-positive value. A `TimeoutLimit` of `0`/`-5`
+    /// otherwise validates as `Valid` and the gate waits `<= 0` ms → an immediate `timeoutExitCode
+    /// 124` every run: a silent, always-failing gate from a typo. Rejecting it at the config
+    /// boundary turns that into a located `MalformedValue` (CORE-2). Emits on the field.
+    let private reqPositiveInt (diags: ResizeArray<Diagnostic>) m file name : int option =
+        match reqInt diags m file name with
+        | Some n when n <= 0 ->
+            let line = getField m name |> Option.bind lineOf
+            diags.Add(
+                diag MalformedValue file (Some name) None line
+                    (sprintf "field '%s' must be a positive integer (was %d)" name n))
+            None
+        | other -> other
 
     let private reqBool (diags: ResizeArray<Diagnostic>) m file name : bool option =
         match getField m name with
@@ -480,8 +510,10 @@ module Schema =
 
     let private parseCheck (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : Check option =
         diags.AddRange(unknownFields m (set [ "id"; "domain"; "command"; "owner"; "cost"; "environment"; "maturity"; "tier" ]) Capabilities)
-        let id = reqString diags m Capabilities "id" |> Option.map CheckId
-        let domain = reqString diags m Capabilities "domain" |> Option.map DomainId
+        // `id` and `domain` compose the gate id (`Gates.gateIdOf`), so both reject the reserved `:`
+        // delimiter here to keep that composition injective (CORE-1).
+        let id = reqIdString diags m Capabilities "id" |> Option.map CheckId
+        let domain = reqIdString diags m Capabilities "domain" |> Option.map DomainId
         let command = optString diags m Capabilities "command" |> Option.map CommandId
         let owner = reqString diags m Capabilities "owner" |> Option.map Owner
         let cost = reqEnum parseCost diags m Capabilities "cost"
@@ -506,7 +538,7 @@ module Schema =
         diags.AddRange(unknownFields m (set [ "id"; "command"; "timeout"; "environment" ]) Tooling)
         let id = reqString diags m Tooling "id" |> Option.map CommandId
         let command = reqString diags m Tooling "command"
-        let timeout = reqInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
+        let timeout = reqPositiveInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
         let env = reqEnum parseEnvironment diags m Tooling "environment"
         match id, command, timeout, env with
         | Some i, Some c, Some t, Some e -> Some { Id = i; Command = c; Timeout = t; Environment = e }

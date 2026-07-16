@@ -21,6 +21,7 @@ MVP surface class.
 | `malformed-unknown-field` | `UnknownField` | strictness (FR-006) |
 | `malformed-missing-required-field` | `MissingRequiredField` | strictness (FR-006) |
 | `malformed-malformed-value` | `MalformedValue` | closed-enum out-of-set (`cost`) |
+| `malformed-nonpositive-timeout` | `MalformedValue` | non-positive command `timeout` (CORE-2) |
 | `malformed-missing-schema-version` | `MissingSchemaVersion` | US2 AS3 |
 | `malformed-malformed-schema-version` | `MalformedSchemaVersion` | US2 AS3 |
 | `malformed-unsupported-schema-version` | `UnsupportedSchemaVersion` | "upgrade the tool" edge case |

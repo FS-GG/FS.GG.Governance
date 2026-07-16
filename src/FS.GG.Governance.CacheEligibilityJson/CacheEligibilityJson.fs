@@ -1,7 +1,5 @@
 namespace FS.GG.Governance.CacheEligibilityJson
 
-open System.IO
-open System.Text
 open System.Text.Json
 open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.FreshnessKey.Model

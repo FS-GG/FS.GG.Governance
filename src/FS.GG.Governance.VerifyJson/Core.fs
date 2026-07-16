@@ -202,7 +202,12 @@ module Core =
         // byte-identical to the previous O(n²) `List.contains`/append fold.
         |> List.distinct
 
-    let writeCurrency (w: Utf8JsonWriter) (decision: ShipDecision) (cache: CacheEligibilityReport option) =
+    let writeCurrency
+        (w: Utf8JsonWriter)
+        (decision: ShipDecision)
+        (cache: CacheEligibilityReport option)
+        (missingByGate: Map<string, string list>)
+        =
         let entries =
             match cache with
             | Some report -> CacheEligibility.entries report
@@ -246,9 +251,13 @@ module Core =
 
         w.WriteEndArray()
 
-        // unresolved ⇐ selected gate with no cache entry → { gate, missing: [] }. The missing-fact tokens
-        // are surfaced richly in the command's TEXT render (which holds `Model.Sensed`); the cache report
-        // alone cannot reconstruct them, so the projection emits a present, empty `missing` array.
+        // unresolved ⇐ selected gate with no cache entry → { gate, missing: [<missing-fact wire tokens>] }.
+        // The missing-fact tokens (`ruleHash`/`coveredArtifacts`/… — the F029 enum-order, injective
+        // `missingFactToken` set) are carried in by the caller keyed on the gate id value: verify's command
+        // host resolves them from `FreshnessResolution` (which holds `Model.Sensed`) and hands them here
+        // already tokenized, so this stays emit-only — it re-derives and re-classifies nothing. A gate absent
+        // from `missingByGate` (or a caller that has no resolution, e.g. the pinning unit projections) writes
+        // an empty array, so those paths are byte-identical to the pre-threading output.
         w.WritePropertyName "unresolved"
         w.WriteStartArray()
 
@@ -257,6 +266,8 @@ module Core =
             w.WriteString("gate", g)
             w.WritePropertyName "missing"
             w.WriteStartArray()
+            for token in (Map.tryFind g missingByGate |> Option.defaultValue []) do
+                w.WriteStringValue token
             w.WriteEndArray()
             w.WriteEndObject()
 
@@ -273,6 +284,7 @@ module Core =
         (decision: ShipDecision)
         (cache: CacheEligibilityReport option)
         (execution: (GateId * GateOutcome) list)
+        (missingByGate: Map<string, string list>)
         =
         let lookup: GateId -> CacheEligibilityVerdict option =
             match cache with
@@ -290,4 +302,4 @@ module Core =
         writeSection w lookup execLookup "blockers" decision.Blockers
         writeSection w lookup execLookup "warnings" decision.Warnings
         writeSection w lookup execLookup "passing" decision.Passing
-        writeCurrency w decision cache
+        writeCurrency w decision cache missingByGate

@@ -83,5 +83,6 @@ let tests =
               Expect.equal (err [ "--mode"; "gate" ]) (Loop.UnknownFlag "--mode") "--mode is unknown"
           }
 
-          test "a non-verify leading positional is an UnknownFlag" {
-              Expect.equal (err [ "ship" ]) (Loop.UnknownFlag "ship") "stray positional rejected" } ]
+          test "CLI-5: a non-verify leading positional is an UnexpectedArgument, an unknown --flag stays UnknownFlag" {
+              Expect.equal (err [ "ship" ]) (Loop.UnexpectedArgument "ship") "stray positional rejected as UnexpectedArgument"
+              Expect.equal (err [ "--nope" ]) (Loop.UnknownFlag "--nope") "unknown --flag stays UnknownFlag" } ]

@@ -107,6 +107,18 @@ let tests =
               Expect.equal (Verdict.all [ Fail "z"; Fail "a"; Fail "z"; Fail "a" ]) (Fail "a; z") "duplicates collapse"
           }
 
+          test "V8b \"; \" is RESERVED inside a single leaf reason — it is split and reordered (CORE-3)" {
+              // Pins the documented reservation (Check.Outcome / Verdict .fsi): a single leaf
+              // reason that embeds "; " is treated as multiple components, so it is fragmented
+              // and ordinal-reordered on roll-up — a probe author must not put "; " in one reason.
+              Expect.equal (Verdict.all [ Fail "spacing; tone" ]) (Fail "spacing; tone") "already-ordinal components pass through unchanged"
+              Expect.equal (Verdict.all [ Fail "tone; spacing" ]) (Fail "spacing; tone") "a leaf reason's \"; \"-parts are split and reordered, not preserved verbatim"
+              Expect.equal (Verdict.any [ Uncertain "z; a; z" ]) (Uncertain "a; z") "duplicate components within one leaf reason collapse too"
+              // The token is inert without aggregation: a non-aggregating op (negate passes
+              // Uncertain through untouched, never calling combineReasons) keeps "; " verbatim.
+              Expect.equal (Verdict.negate (Uncertain "tone; spacing")) (Uncertain "tone; spacing") "an un-aggregated reason is carried verbatim, unsplit"
+          }
+
           // ── User Story 3: negate a verdict ──
 
           test "V9 negate swaps pass/fail tags, fixes Uncertain; double-negate recovers tags (US3)" {

@@ -162,21 +162,41 @@ module Reader =
             // Restore source order once (#56/C1f): the fold above prepended for O(n) accumulation.
             let nodes = List.rev nodesReversed
 
-            // evidence.dependencies (optional array of 2-tuples).
-            let deps =
+            // evidence.dependencies (optional array of 2-string tuples). Parsed STRICTLY, like nodes
+            // above: a present-but-malformed edge is REJECTED as Malformed, never silently dropped
+            // (ADPT-2). AutoSynthetic taint flows ALONG these edges, so a dropped edge could leave a
+            // downstream verdict resting on a synthetic node un-tainted — a taint fail-open. An absent
+            // `dependencies` field (or an explicit `null`) is fine (Ok []) since it is optional and
+            // carries no edges to drop; a present *value* must be a well-formed [from, to] list.
+            let parsedDeps =
                 match tryProp evidence "dependencies" with
-                | Some depsEl when depsEl.ValueKind = JsonValueKind.Array ->
+                | None -> Ok []
+                | Some depsEl when depsEl.ValueKind = JsonValueKind.Null -> Ok []
+                | Some depsEl when depsEl.ValueKind <> JsonValueKind.Array ->
+                    malformed "handoff 'evidence.dependencies' is present but is not an array"
+                | Some depsEl ->
                     depsEl.EnumerateArray()
-                    |> Seq.choose (fun pair ->
-                        if pair.ValueKind = JsonValueKind.Array then
-                            let items = pair.EnumerateArray() |> Seq.choose asString |> Seq.toList
-                            match items with
-                            | [ a; b ] -> Some(a, b)
-                            | _ -> None
-                        else
-                            None)
-                    |> Seq.toList
-                | _ -> []
+                    |> Seq.fold
+                        (fun (acc: Result<(string * string) list, Diagnostic>) pair ->
+                            acc
+                            |> Result.bind (fun ds ->
+                                if pair.ValueKind <> JsonValueKind.Array then
+                                    malformed "an 'evidence.dependencies[]' entry is not a 2-element array"
+                                else
+                                    // Do NOT Seq.choose here: a non-string element must fail the edge,
+                                    // not be silently skipped into a shorter (and possibly matching) list.
+                                    match pair.EnumerateArray() |> Seq.map asString |> Seq.toList with
+                                    | [ Some a; Some b ] -> Ok((a, b) :: ds)
+                                    | _ ->
+                                        malformed
+                                            "an 'evidence.dependencies[]' entry is not a pair of strings [from, to]"))
+                        (Ok [])
+                    // Prepended for O(n); restore source order once (mirrors the nodes fold above).
+                    |> Result.map List.rev
+
+            match parsedDeps with
+            | Error d -> Error d
+            | Ok deps ->
 
             // readiness (optional object).
             let readiness =

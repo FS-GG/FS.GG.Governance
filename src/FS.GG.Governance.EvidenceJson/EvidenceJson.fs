@@ -1,7 +1,5 @@
 namespace FS.GG.Governance.EvidenceJson
 
-open System.IO
-open System.Text
 open System.Text.Json
 open FS.GG.Governance.Kernel
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper
@@ -63,6 +61,14 @@ module EvidenceJson =
 
     /// The `EvidenceState` wire token — the closed six-case Kernel DU (FR-005). `Skipped` is a DISTINCT token
     /// from `Failed`/`Pending` (INV-2). Exhaustive: a future state is a compile error here.
+    /// DIVERGENCE — DO NOT UNIFY: this `fsgg.evidence/v1` spelling is Capitalized
+    /// (`Pending`/`Real`/`Synthetic`/…) and deliberately DIFFERS from the lowercase spelling
+    /// (`pending`/`real`/`synthetic`/…) emitted by `Kernel.Json.stateToken` for the kernel
+    /// effective-state contract. The two are independent emit contracts, so the strings DIVERGE:
+    /// folding them into one shared `stateToken` would change this contract's bytes silently (and the
+    /// kernel side additionally round-trips). This Capitalized spelling is pinned by
+    /// EvidenceJson.Tests/ProjectionTests; the lowercase side by Kernel.Tests/JsonTests
+    /// (cf. the `localOrCi`/`local-or-ci` divergence in JsonTokens).
     let stateToken (state: EvidenceState) : string =
         match state with
         | Pending -> "Pending"

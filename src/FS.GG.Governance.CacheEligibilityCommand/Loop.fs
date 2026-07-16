@@ -50,6 +50,7 @@ module Loop =
 
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths
@@ -187,7 +188,9 @@ module Loop =
             | "--paths" :: more ->
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
-            | other :: _ -> Error(UnknownFlag other)
+            | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
+            // CLI-5: a stray non-`--` positional is an UnexpectedArgument, not a mis-labelled "unknown flag".
+            | other :: _ -> Error(UnexpectedArgument other)
 
         match go emptyAcc tokens with
         | Error e -> Error e
@@ -199,7 +202,12 @@ module Loop =
                 let formatChoice =
                     match acc.Format with
                     | None -> Ok Human
-                    | Some "human" -> Ok Human
+                    // CLI-3: `text` is an ADDITIVE synonym for the canonical `human` token, matching the
+                    // plain spelling accepted by route/ship/verify/release/refresh/dispatcher, so
+                    // `cache-eligibility --format text` no longer errors. `human` stays canonical/default;
+                    // backward-compatible, and consistent with ADR-0006's deferred convergence direction
+                    // (nothing renamed/removed). See docs/decisions/0006-cli-format-flag-vocabularies.md.
+                    | Some "human" | Some "text" -> Ok Human
                     | Some "json" -> Ok Json
                     | Some other -> Error(BadFormat other)
 
@@ -473,6 +481,9 @@ module Loop =
     // = reusable/mustRecompute, and the `unresolved` sidecar). This stdout is a DELIBERATE combined summary over
     // both, so rather than silently diverging as a schema-less blob it is STAMPED with its own `schemaVersion`
     // and documented here; each underlying document remains available as its own persisted artifact.
+    // The caller-supplied host output paths (`CacheOut`/`UnresolvedOut`) are NOT part of this contract — they
+    // stay in the `operationalLines` `wrote` narration only (FR-003, mirroring route's FR-012); emitting them
+    // here would leak host paths into the JSON contract (CLI-4).
     and renderJson (model: Model) : string =
         match model.Resolution with
         | None ->
@@ -505,12 +516,10 @@ module Loop =
                 |> String.concat ","
 
             sprintf
-                "{\"schemaVersion\":\"fsgg.cache-eligibility-summary/v1\",\"reusable\":[%s],\"mustRecompute\":[%s],\"unresolved\":[%s],\"wrote\":{\"cache\":%s,\"unresolved\":%s}}"
+                "{\"schemaVersion\":\"fsgg.cache-eligibility-summary/v1\",\"reusable\":[%s],\"mustRecompute\":[%s],\"unresolved\":[%s]}"
                 reusable
                 recompute
                 unresolved
-                (jstr model.Request.CacheOut)
-                (jstr model.Request.UnresolvedOut)
 
     and render (model: Model) (format: OutputFormat) : string =
         match format with

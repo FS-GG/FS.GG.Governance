@@ -94,6 +94,10 @@ let tests =
               Expect.equal (parse [ "ship"; "--mode" ]) (Error(Loop.MissingValue "--mode")) "missing mode value"
           }
 
+          test "CLI-5: a stray non-`--` positional ⇒ UnexpectedArgument, not UnknownFlag" {
+              Expect.equal (parse [ "ship"; "junk" ]) (Error(Loop.UnexpectedArgument "junk")) "stray positional rejected as UnexpectedArgument"
+          }
+
           // ── F046 (U1): --store parse + default + missing-value-is-a-value ──
 
           test "--store sets StorePath; omitted ⇒ default <repo>/readiness/evidence-reuse.json" {

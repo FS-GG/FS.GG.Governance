@@ -11,6 +11,7 @@ open FS.GG.Governance.ShipCommand
 let usageMessage (err: Loop.UsageError) : string =
     match err with
     | Loop.UnknownFlag flag -> "unknown flag: " + flag
+    | Loop.UnexpectedArgument value -> "unexpected argument: " + value
     | Loop.MissingValue flag -> "missing value for flag: " + flag
     | Loop.PathsAndSinceTogether -> "--paths and --since are mutually exclusive"
     | Loop.EmptyPaths -> "--paths requires at least one path"

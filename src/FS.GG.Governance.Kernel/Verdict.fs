@@ -27,6 +27,11 @@ module Verdict =
     // empty components, de-duplicate, ordinal-sort (culture-invariant, byte-stable),
     // and re-join. This is what makes the reason byte-for-byte order-, nesting-, and
     // duplication-independent — and absorbs the `any []` identity reason "".
+    //
+    // "; " is RESERVED: a leaf reason (a probe's Unmet/Unknown reason, a Fail/Uncertain
+    // reason) that itself embeds "; " is fragmented and reordered here. The reservation is
+    // documented at the probe-authoring surface (Check.Outcome / Verdict) so authors keep
+    // "; " out of a single reason; VerdictTests pins the fragmentation as intended behavior.
     let combineReasons (reasons: string list) : string =
         reasons
         |> List.collect (fun r -> List.ofArray (r.Split([| "; " |], System.StringSplitOptions.RemoveEmptyEntries)))

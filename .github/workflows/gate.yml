@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
           # NO NuGet cache, deliberately (#169, FS-GG/.github#429, ADR-0031).
@@ -91,7 +91,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
@@ -135,7 +135,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
@@ -210,7 +210,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
@@ -242,10 +242,19 @@ jobs:
   # detector NEVER reddens the build (D7) — the single enforcement point is the ApiCompatibility release
   # rule's Maturity, promoted to BlockOnRelease (and this job to required checks) once SC-005 holds (US2).
   # At rollout most packages resolve NoBaseline (research D5) — reported honestly, never hidden (FR-007).
-  # SCHEDULING (M-CI-3, revisited): kept PER-PR now that the detector produces real signal — apicompat
-  # resolves off PATH and the clean-run banner grades Checked:met (M-CI-1), so an API break surfaces on the
-  # PR that introduces it (where the signal is worth the packing cost). It stays advisory + continue-on-error
-  # (never blocks / serializes the required checks) and is also runnable on demand via workflow_dispatch.
+  # BASELINE / DETECTION IS INERT IN CI (CI-1) — the detector reads baselines from a folder feed
+  # (`--baseline-feed`, default `~/.local/share/nuget-local`), and this job never SEEDS that feed: on the
+  # runner it is empty, so every real package grades NoBaseline and NO live API break can surface. What IS
+  # proven live is the GRADING PATH (`--selftest` exercises Checked:met/UNMET through the real pure
+  # functions) and the tool RESOLUTION (apicompat resolves off PATH — M-CI-1's PARTIAL half). Live break
+  # detection stays inert until a baseline SOURCE is wired — seed the feed from the org GitHub Packages feed
+  # into a job-local dir and pass `--baseline-feed <dir>` (needs `packages: read`). This is a HARD
+  # PRECONDITION for promoting the gate to required (US2 / SC-005): do NOT add this job to required checks
+  # while it is baseline-blind, or a break-free-because-uncompared run would read as real coverage.
+  # SCHEDULING (M-CI-3, revisited): kept PER-PR because the grading path + tool resolution are real and the
+  # packing cost is worth paying where a break would be introduced — once a baseline feed is seeded the same
+  # per-PR run surfaces the break. It stays advisory + continue-on-error (never blocks / serializes the
+  # required checks) and is also runnable on demand via workflow_dispatch.
   api-compatibility-gate:
     name: API compatibility gate (breaking-change → SemVer major) [advisory]
     runs-on: ubuntu-latest
@@ -257,7 +266,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
@@ -287,7 +296,9 @@ jobs:
           echo "$RUNNER_TEMP/apicompat-tool" >> "$GITHUB_PATH"
 
       # Run the detector: pack Release + ApiCompat vs the feed baseline → ApiBreakSignal set + coverage.
-      # Exits 0 (advisory, D7); the rule renders the decision. The selftest proves the grading path first.
+      # NOTE (CI-1): the feed is UNSEEDED here, so every real package grades NoBaseline — this run proves the
+      # grading path (--selftest) and reports honest coverage, but detects no live break until a baseline
+      # feed is wired (see the BASELINE note on the job). Exits 0 (advisory, D7); the rule renders the decision.
       - name: Detect + grade (advisory)
         run: |
           dotnet fsi pack-and-apicheck.fsx --selftest

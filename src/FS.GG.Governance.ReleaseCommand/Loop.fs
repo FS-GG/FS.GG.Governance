@@ -148,7 +148,9 @@ module Loop =
             | "--out" :: _ -> Error { Message = "missing value for flag: --out" }
             | "--attestation-out" :: v :: more when not (v.StartsWith "--") -> go { acc with AttestationOut = Some v } more
             | "--attestation-out" :: _ -> Error { Message = "missing value for flag: --attestation-out" }
-            | other :: _ -> Error { Message = "unknown argument: " + other }
+            // CLI-5: distinguish an unknown `--` flag from a stray non-`--` positional in the message.
+            | flag :: _ when flag.StartsWith "--" -> Error { Message = "unknown flag: " + flag }
+            | other :: _ -> Error { Message = "unexpected argument: " + other }
 
         match go emptyAcc argv with
         | Error e -> Error e

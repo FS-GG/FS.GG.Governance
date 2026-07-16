@@ -196,20 +196,27 @@ module Program =
         Console.Out.WriteLine(sprintf "report navigator — section %s  (up/down move, right/left expand/collapse, q quit)" path)
         Console.Out.WriteLine(HumanText.render model.View)
 
-    /// Map a blocking key read to a navigation message; any other key quits.
+    /// Map a blocking key read to a navigation message; any other key quits. Headless-safe: exactly like
+    /// the shared `Watch.safeKeyPoll`, `Console.ReadKey` throws `InvalidOperationException` when stdin is
+    /// redirected or no console is attached (pipes, CI). An interactive `tui` cannot be driven without a
+    /// console, so ANY such failure QUITS cleanly (clean exit) instead of crashing the process — the
+    /// navigation-surface sibling of the `watch` stop-poll guard (CLI-1; same headless-fragility class as
+    /// H3/#47). `tui` has a single reader (only the dispatcher owns it), so the guard lives here at the
+    /// interpreter edge rather than being hoisted like the two-entry `watch` poll.
     let tuiKeyReader () : Tui.TuiMsg =
-        let key = Console.ReadKey(true)
-
-        match key.Key with
-        | ConsoleKey.UpArrow
-        | ConsoleKey.K -> Tui.MoveUp
-        | ConsoleKey.DownArrow
-        | ConsoleKey.J -> Tui.MoveDown
-        | ConsoleKey.RightArrow
-        | ConsoleKey.L -> Tui.Expand
-        | ConsoleKey.LeftArrow
-        | ConsoleKey.H -> Tui.Collapse
-        | _ -> Tui.Quit
+        try
+            match Console.ReadKey(true).Key with
+            | ConsoleKey.UpArrow
+            | ConsoleKey.K -> Tui.MoveUp
+            | ConsoleKey.DownArrow
+            | ConsoleKey.J -> Tui.MoveDown
+            | ConsoleKey.RightArrow
+            | ConsoleKey.L -> Tui.Expand
+            | ConsoleKey.LeftArrow
+            | ConsoleKey.H -> Tui.Collapse
+            | _ -> Tui.Quit
+        with _ ->
+            Tui.Quit
 
     /// The read-only `tui` subcommand: navigate the composed route `ReportView`. Navigation changes only the
     /// cursor/expanded state (Tui.update is pure & read-only); no verdict/contract is touched (FR-009).

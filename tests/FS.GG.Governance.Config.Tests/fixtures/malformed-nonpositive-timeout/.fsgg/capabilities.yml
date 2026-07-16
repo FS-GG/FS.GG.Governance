@@ -1,0 +1,12 @@
+schemaVersion: 2
+domains:
+  - workflow
+checks:
+  # A valid check (no command → no dangling ref), so the ONLY defect in this fixture is the
+  # non-positive `timeout` in tooling.yml (CORE-2).
+  - id: review
+    domain: workflow
+    owner: platform
+    cost: cheap
+    environment: local
+    maturity: warn

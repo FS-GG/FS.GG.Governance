@@ -84,6 +84,7 @@ module Loop =
 
     type UsageError =
         | UnknownFlag of string
+        | UnexpectedArgument of string
         | MissingValue of flag: string
         | PathsAndSinceTogether
         | EmptyPaths
@@ -264,7 +265,9 @@ module Loop =
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
             // NO `--mode` flag (FR-017): it falls through to UnknownFlag, like any other unknown flag.
-            | other :: _ -> Error(UnknownFlag other)
+            | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
+            // CLI-5: a stray non-`--` positional is an UnexpectedArgument, not a mis-labelled "unknown flag".
+            | other :: _ -> Error(UnexpectedArgument other)
 
         match go emptyAcc tokens with
         | Error e -> Error e
@@ -537,6 +540,9 @@ module Loop =
                     model.SurfaceFindings
                     preview
                     (ViewCurrencyFold.viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
+                    // JSON-2: the empty-selection path has no selected gates ⇒ no unresolved gates ⇒ no missing
+                    // facts to carry; `Map.empty` keeps this byte-identical to its pre-JSON-2 output.
+                    Map.empty
 
             { model with
                 Phase = Rolled
@@ -626,6 +632,18 @@ module Loop =
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
             let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
             let cacheReport = CacheEligibility.evaluate candidates store
+            // JSON-2: carry the missing-fact wire tokens for each unresolved gate into verify.json's
+            // `currency.unresolved[].missing` (was structurally always-empty). The tokens live in the freshness
+            // resolution — the cache report alone cannot reconstruct them — so build the emit-only map here,
+            // keyed on the gate id value, tokenized once via the injective `missingFactToken`. A resolved gate
+            // (empty missing set) contributes nothing, so the map holds exactly the unresolved gates.
+            let missingByGate =
+                FreshnessResolution.entries resReport
+                |> List.choose (fun entry ->
+                    match FreshnessResolution.missingFacts entry.Outcome with
+                    | [] -> None
+                    | facts -> Some(gateIdValue entry.Gate, facts |> List.map FreshnessResolution.missingFactToken))
+                |> Map.ofList
             // verify.json is projected over the surface-folded decision + cache report + outcomes; the budgeted
             // findings are NOT folded in (D6). 065 (US3): build the snapshot first so the advisory preview can
             // use it. 067: thread the real `model.SurfaceFindings` (was `[]`) so the additive `surfaceChecks`
@@ -646,6 +664,7 @@ module Loop =
                     model.SurfaceFindings
                     preview
                     (ViewCurrencyFold.viewCurrencyDetail model.Request.Profile model.ViewCurrencyFindings)
+                    missingByGate
 
             // F25 wiring (064): the two NEW deterministic sidecars (D5/D6). cost-budget.json = the budgeted
             // decisions + the advisory cost/cache findings; provenance.json = the kinded-run audit snapshot.
