@@ -171,8 +171,11 @@ jobs:
   # FS-GG/.github dist/dotnet/. This job checks out that repo and runs its drift check; a
   # hand-edit to a managed file (or an un-re-synced org baseline bump) fails the job. Run as
   # a SEPARATE job so a drift failure is a distinct signal, not serialized behind the build.
-  # FOLLOW-UP: replace this self-contained checkout with `uses: FS-GG/.github/.github/
-  # workflows/contract-coherence.yml@main` once .github#18 (the reusable workflow) lands.
+  # The self-contained checkout is deliberate, not a placeholder: since ADR-0036 / .github#592 the
+  # drift check compares against the commit pinned in .config/fsgg-build-config.sha, not against
+  # .github@main, so a change landing in .github cannot red-light an open PR here. A reusable
+  # workflow that tracked @main would reintroduce exactly that race. (.github#18, the reusable
+  # coherence workflow, has landed — but it is not the right shape for this pinned-baseline gate.)
   build-config-drift:
     name: Build-config drift check (shared-build-config)
     runs-on: ubuntu-latest
