@@ -171,8 +171,11 @@ jobs:
   # FS-GG/.github dist/dotnet/. This job checks out that repo and runs its drift check; a
   # hand-edit to a managed file (or an un-re-synced org baseline bump) fails the job. Run as
   # a SEPARATE job so a drift failure is a distinct signal, not serialized behind the build.
-  # FOLLOW-UP: replace this self-contained checkout with `uses: FS-GG/.github/.github/
-  # workflows/contract-coherence.yml@main` once .github#18 (the reusable workflow) lands.
+  # This job is KEPT DELIBERATELY even though the reusable coherence workflow (.github#18) has
+  # landed and is already called below (the `contract-coherence` job, check-build-config=true).
+  # The duplication is intentional: this job's `name:` is a REQUIRED status check on main, so
+  # retiring it must happen in a change that updates branch protection in the same stroke — see
+  # the `contract-coherence` job's comment and ADR-0036 (#592). Do not swap it out here. (#704)
   build-config-drift:
     name: Build-config drift check (shared-build-config)
     runs-on: ubuntu-latest
