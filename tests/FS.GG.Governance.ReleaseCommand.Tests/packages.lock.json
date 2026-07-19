@@ -384,6 +384,14 @@
           "FSharp.Core": "[10.1.302, )"
         }
       },
+      "fs.gg.governance.inheritance": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.jsontext": {
         "type": "Project"
       },
@@ -587,6 +595,7 @@
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.HumanRender": "[0.1.0, )",
           "FS.GG.Governance.HumanText": "[0.1.0, )",
+          "FS.GG.Governance.Inheritance": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FS.GG.Governance.Provenance": "[0.1.0, )",
           "FS.GG.Governance.ProvenanceJson": "[0.1.0, )",

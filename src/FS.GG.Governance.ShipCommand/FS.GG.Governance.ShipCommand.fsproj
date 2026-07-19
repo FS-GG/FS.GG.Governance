@@ -58,6 +58,7 @@
     <ProjectReference Include="../FS.GG.Governance.Adapters.SddHandoff/FS.GG.Governance.Adapters.SddHandoff.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Inheritance/FS.GG.Governance.Inheritance.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.AuditJson/FS.GG.Governance.AuditJson.fsproj" />
     <!-- 112: the shared 073 compact deterministic JSON writer, used by SimulateProjection.toJson (the same
          leaf AuditJson uses — already in ShipCommand's transitive closure, so a direct edge is fence-sound). -->

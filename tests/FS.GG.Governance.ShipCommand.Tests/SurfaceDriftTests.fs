@@ -61,6 +61,7 @@ let tests =
                   || n = "FS.GG.Governance.Adapters.SddHandoff"
                   || n = "FS.GG.Governance.Enforcement"
                   || n = "FS.GG.Governance.Ship"
+                  || n = "FS.GG.Governance.Inheritance" // WI-5/ADR-0049: profile-bound gate floor, folded pre-rollup
                   || n = "FS.GG.Governance.AuditJson"
                   || n = "FS.GG.Governance.JsonText" // 112: shared compact JSON writer for SimulateProjection
                   || n = "FS.GG.Governance.HumanText"

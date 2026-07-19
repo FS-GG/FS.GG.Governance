@@ -260,6 +260,14 @@
           "FSharp.Core": "[10.1.302, )"
         }
       },
+      "fs.gg.governance.inheritance": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Gates": "[0.1.0, )",
+          "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.jsontext": {
         "type": "Project"
       },
