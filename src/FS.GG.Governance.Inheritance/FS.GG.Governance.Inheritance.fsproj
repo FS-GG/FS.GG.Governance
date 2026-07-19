@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- WI-5 / ADR-0049: profile-bound gate inheritance. The pure layer that RETIRES the "policy is
+       purely local" invariant — `TemplateProfile` (recorded on a product's `Surface`, until now
+       provenance-only) becomes a LOOKUP KEY into an embedded, org-owned reference floor. A product
+       carrying a bound profile inherits that floor's gates, unioned with its local gates as a
+       NON-LOWERABLE floor: local `.fsgg/` may raise an inherited gate but never remove/downgrade it.
+
+       It produces the EFFECTIVE gate set (`applyInheritance : TypedFacts -> RouteResult -> RouteResult`)
+       that the UNCHANGED `Ship.rollup` enforces through the UNCHANGED `deriveEffectiveSeverity` — so
+       neither the ship rollup nor the enforcement core is edited (verbatim reuse). Inherited gates are
+       single-sourced through the same `Gates.buildRegistry` `Check -> Gate` projection as local gates.
+
+       PURE and TOTAL: no I/O, git, clock, or serialization; deterministic — byte-identical for
+       identical input; never throws. publish-before-flip: the `game` gameplay gate binds at `warn`
+       (non-blocking), so this contract lands without changing any product's ship verdict; WI-8
+       (FS-GG/FS.GG.Governance#276) flips it to `block-on-ship`.
+
+       A pure leaf reaching no git/filesystem/clock — NO new third-party `PackageReference`
+       (`System.*`/FSharp.Core only); `Findings` flows transitively through `Route`. The whole surface
+       is pure total functions — no MVU ceremony (Principle IV). Compile order is Inheritance.fsi ->
+       Inheritance.fs: the curated public surface, then the pure composition. -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Inheritance</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- Optional library, but packable like Config/Gates/Route/Enforcement/Ship (overrides
+         Directory.Build.props). -->
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Inheritance</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Inheritance.fsi" />
+    <Compile Include="Inheritance.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+  </ItemGroup>
+
+</Project>

@@ -68,6 +68,7 @@
     <ProjectReference Include="../FS.GG.Governance.Adapters.SddHandoff/FS.GG.Governance.Adapters.SddHandoff.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Ship/FS.GG.Governance.Ship.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Inheritance/FS.GG.Governance.Inheritance.fsproj" />
     <!-- F056: verify projects its OWN deterministic document (NOT AuditJson). -->
     <ProjectReference Include="../FS.GG.Governance.VerifyJson/FS.GG.Governance.VerifyJson.fsproj" />
     <!-- F27 wiring (063): the plain human projection over the SAME ShipDecision the verify.json path serializes -->

@@ -6,6 +6,7 @@ TYPE FS.GG.Governance.Config.ModelModule
   [Method] GovernedPath normalizePath(System.String)
   [Method] Int32 costRank(Cost)
   [Method] Int32 generatedProductTierRank(GeneratedProductTier)
+  [Method] Int32 maturityRank(Maturity)
   [Method] System.String diagnosticIdToken(DiagnosticId)
   [Method] System.String generatedProductTierToken(GeneratedProductTier)
   [Method] System.String surfaceClassToken(SurfaceClass)

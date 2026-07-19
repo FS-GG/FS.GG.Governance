@@ -236,6 +236,20 @@ module Model =
         | High -> 3
         | Exhaustive -> 4
 
+    // The closed maturity order Observe < Warn < BlockOnPr < BlockOnShip < BlockOnRelease. Comparisons
+    // go through this so ordering is invariant to DU case declaration order (mirrors `costRank`). Total;
+    // a new case is a compile error here until it is ranked. Used to take the STRICTER of two maturities
+    // when a profile-bound inherited gate is floored against a product's local one (ADR-0049): a local
+    // gate may RAISE an inherited floor but never LOWER it, i.e. the effective maturity is the one with
+    // the higher rank.
+    let maturityRank (m: Maturity) : int =
+        match m with
+        | Observe -> 1
+        | Warn -> 2
+        | BlockOnPr -> 3
+        | BlockOnShip -> 4
+        | BlockOnRelease -> 5
+
     // The closed order StructuralScan < RestoreBuild < FocusedTests < FullVerify < ReleaseValidation.
     let generatedProductTierRank (tier: GeneratedProductTier) : int =
         match tier with
