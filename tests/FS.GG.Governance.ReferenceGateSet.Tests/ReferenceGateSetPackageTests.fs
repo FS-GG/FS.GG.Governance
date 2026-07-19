@@ -24,10 +24,27 @@ let private samplesFsgg = Path.Combine(repoRoot, "samples", "sdd-reference-gate-
 let private packagingProject =
     Path.Combine(repoRoot, "packaging", "FS.GG.Governance.ReferenceGateSet", "FS.GG.Governance.ReferenceGateSet.fsproj")
 
-// Fixed bundle order (positional version segments) — must match the pack script and the ADR.
+// Fixed bundle order — the manifest field order and the .fsgg pack order (must match the pack
+// script and ADR-0055).
 let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
 let private contentPrefix = "contentFiles/any/any/.fsgg/"
-let private expectedVersion = "1.2.1.1"
+// ADR-0055: the in-package schema manifest sits ALONGSIDE the .fsgg set (a sibling of .fsgg/).
+let private manifestEntry = "contentFiles/any/any/schema-manifest.json"
+// The pinned plain SemVer (ADR-0055), no longer derived from the contained schemaVersions.
+let private expectedVersion = "1.3.0"
+
+/// The test's OWN independent parse of a sample's `schemaVersion:` — so an assertion over the packed
+/// manifest is evidence about the real on-disk generations, not a re-scrape of the script's rule
+/// (Principle V).
+let private schemaVersionOf (fileName: string) : int =
+    let text = File.ReadAllText(Path.Combine(samplesFsgg, fileName))
+    let m =
+        System.Text.RegularExpressions.Regex.Match(
+            text,
+            @"^\s*schemaVersion:\s*(\d+)\s*$",
+            System.Text.RegularExpressions.RegexOptions.Multiline)
+    if not m.Success then failtestf "no schemaVersion in %s" fileName
+    int m.Groups.[1].Value
 
 /// The configuration THIS assembly was built in, read from the attribute the SDK generates from
 /// $(Configuration) — the real build fact, not a guess (`#if DEBUG` would re-encode the assumption
@@ -177,28 +194,64 @@ let packageGuard =
                   "the .fsproj must pack the canonical samples in place (no duplicated copy, FR-002)"
           }
 
-          // ── US3 (T011) — deterministic, distinguishable version via the script's actual output ──
+          // ── US3 (T011) — plain SemVer (ADR-0055): pinned, deterministic, decoupled from schemaVersions ──
 
-          // SC-003: the rule derives exactly 1.2.1.1 from the canonical schema versions (no clock/env).
-          test "T011 print-version emits the deterministic 1.2.1.1" {
+          // ADR-0055: --print-version emits the pinned plain SemVer verbatim (no clock/env, no
+          // derivation from the contained schemaVersions).
+          test "T011 print-version emits the pinned plain SemVer 1.3.0" {
               let code, out, err = runPack [ "--print-version" ]
               Expect.equal code 0 (sprintf "--print-version must succeed; stderr:\n%s" err)
-              Expect.equal (out.Trim()) expectedVersion "derived version is governance.capabilities.policy.tooling = 1.2.1.1"
+              Expect.equal (out.Trim()) expectedVersion "the version is the pinned plain SemVer (ADR-0055), not a schema-derived tuple"
           }
 
-          // SC-003: a single-segment schemaVersion bump yields a distinguishable version — asserted
-          // against the script's ACTUAL emitted value (not a re-scraped rule), over a temp-dir copy.
-          test "T011 a policy schemaVersion bump yields a distinguishable 1.2.2.1" {
+          // ADR-0055's core decision — the version no longer encodes the schemaVersions. A
+          // schemaVersion bump on a --source copy leaves the version UNCHANGED (still the pinned
+          // SemVer) and instead moves the in-package MANIFEST. This is the exact inversion of the
+          // retired ADR-0007 rule, under which the same bump changed the version (1.2.1.1 → 1.2.2.1).
+          test "T011 a schemaVersion bump moves the manifest, NOT the version" {
               let src = copyReferenceTo ()
               try
                   let policy = Path.Combine(src, ".fsgg", "policy.yml")
                   let bumped = (File.ReadAllText policy).Replace("schemaVersion: 1", "schemaVersion: 2")
                   File.WriteAllText(policy, bumped)
-                  let code, out, err = runPack [ "--print-version"; "--source"; src ]
-                  Expect.equal code 0 (sprintf "--print-version must succeed; stderr:\n%s" err)
-                  Expect.equal (out.Trim()) "1.2.2.1" "bumping policy.yml's schemaVersion changes exactly the policy segment"
+
+                  let vcode, vout, verr = runPack [ "--print-version"; "--source"; src ]
+                  Expect.equal vcode 0 (sprintf "--print-version must succeed; stderr:\n%s" verr)
+                  Expect.equal (vout.Trim()) expectedVersion "a schemaVersion bump must NOT change the pinned version (ADR-0055)"
+
+                  let mcode, mout, merr = runPack [ "--print-manifest"; "--source"; src ]
+                  Expect.equal mcode 0 (sprintf "--print-manifest must succeed; stderr:\n%s" merr)
+                  Expect.stringContains mout "\"policy\": 2" "the bumped policy generation must show in the manifest"
               finally
                   try Directory.Delete(src, true) with _ -> ()
+          }
+
+          // ── ADR-0055 — the in-package schema manifest, over the REAL produced artifact ──
+
+          // The manifest ships at contentFiles/any/any/schema-manifest.json — ALONGSIDE the .fsgg set,
+          // never inside it, so the packed `.fsgg/` stays byte-identical to source (T005 counts
+          // exactly the four files there).
+          test "ADR-0055 Package carries schema-manifest.json alongside .fsgg, not inside it" {
+              use archive = ZipFile.OpenRead producedNupkg.Value
+              let names = entryNames archive
+              Expect.contains names manifestEntry "the manifest must be packed at contentFiles/any/any/schema-manifest.json"
+              Expect.isFalse
+                  (names |> List.exists (fun n -> n.StartsWith contentPrefix && n.EndsWith "schema-manifest.json"))
+                  "the manifest must be a SIBLING of .fsgg/, not a fifth file inside it (byte-identity, T005)"
+          }
+
+          // The manifest records the four contained schemaVersion GENERATIONS, keyed by file stem,
+          // matching the real on-disk samples (independently parsed here — Principle V).
+          test "ADR-0055 schema-manifest.json records the on-disk schema generations" {
+              use archive = ZipFile.OpenRead producedNupkg.Value
+              let manifest = System.Text.Encoding.UTF8.GetString(readEntryBytes archive manifestEntry)
+              for f in orderedFiles do
+                  let key = Path.GetFileNameWithoutExtension f
+                  let gen = schemaVersionOf f
+                  Expect.stringContains
+                      manifest
+                      (sprintf "\"%s\": %d" key gen)
+                      (sprintf "manifest must record %s at its on-disk schemaVersion %d" key gen)
           }
 
           // ── #148 — the nested gate runs in the CALLER's configuration, not a hard-coded one ──
