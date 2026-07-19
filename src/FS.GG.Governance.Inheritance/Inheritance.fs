@@ -27,15 +27,18 @@ module Inheritance =
         match p with
         | "game" ->
             // The per-FR gameplay-obligation gate every `game` product inherits as a floor (epic
-            // FS-GG/.github#1190). Command left unbound here (no `tooling.yml` dependency); WI-8 aligns
-            // this with the reference sample's gameplay check when it lands and flips the maturity.
+            // FS-GG/.github#1190). Command left unbound (no `tooling.yml` dependency) — the reference
+            // sample's `gameplay:fr-covered` check carries the identical command-free, `block-on-ship`
+            // shape. WI-8 (FS-GG/FS.GG.Governance#276) flipped the maturity from `warn` to
+            // `block-on-ship`, the ADR-0049 profile binding at full teeth (WI-7's reference-game proof
+            // green): every `game` product now inherits this gate as a NON-LOWERABLE block-on-ship floor.
             [ { Id = CheckId "fr-covered"
                 Domain = DomainId "gameplay"
                 Command = None
                 Owner = Owner "platform"
                 Cost = High
                 Environment = Ci
-                Maturity = Warn
+                Maturity = BlockOnShip
                 Tier = None } ]
         | _ -> []
 

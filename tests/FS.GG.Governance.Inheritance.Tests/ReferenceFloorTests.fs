@@ -21,9 +21,9 @@ let tests =
               Expect.equal (gateIds gates) [ "gameplay:fr-covered" ] "the game floor is the per-FR gameplay gate"
           }
 
-          test "the game gameplay gate binds NON-BLOCKING (warn) — publish-before-flip (FR-008)" {
+          test "the game gameplay gate binds BLOCKING (block-on-ship) — WI-8 flip (FR-008)" {
               let gate = referenceGatesFor (TemplateProfile "game") |> List.exactlyOne
-              Expect.equal gate.Maturity Warn "WI-5 binds at warn; WI-8 flips to block-on-ship"
+              Expect.equal gate.Maturity BlockOnShip "WI-5 bound at warn; WI-8 flipped to block-on-ship once WI-7 was green"
           }
 
           test "an unknown / unbound profile yields no gates — never a fabricated gate (FR-001)" {

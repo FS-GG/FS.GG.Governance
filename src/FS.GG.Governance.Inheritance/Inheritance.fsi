@@ -18,9 +18,11 @@
 // gates are single-sourced through the same `Gates.buildRegistry` projection that produces local
 // gates, so an inherited gate is indistinguishable in shape from a locally-declared one.
 //
-// publish-before-flip: the `game` profile's gameplay gate binds at a NON-blocking maturity (`warn`),
-// so this contract lands without changing any product's ship verdict. WI-8
-// (FS-GG/FS.GG.Governance#276) raises it to `block-on-ship`.
+// publish-before-flip: WI-5 landed this contract with the `game` profile's gameplay gate at a
+// NON-blocking maturity (`warn`), changing no product's ship verdict. WI-8
+// (FS-GG/FS.GG.Governance#276) then flipped it to `block-on-ship` once WI-7's reference-game proof
+// was green — so a `game` product now inherits the gameplay gate as a NON-LOWERABLE block-on-ship
+// floor it cannot delete or downgrade from its own `.fsgg/`.
 
 namespace FS.GG.Governance.Inheritance
 

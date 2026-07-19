@@ -14,9 +14,9 @@ empty or flip to blocking.
 | # | Assertion | Guards against | FR / SC |
 |---|-----------|----------------|---------|
 | G1 | `loadAndValidate` returns `Valid` with empty diagnostics | reference becoming unloadable / gaining unknown fields | FR-007, SC-002 |
-| G2 | Registry has exactly 3 gates: `build:build`, `test:test`, `evidence:evidence` (one `Gate` per declared `Check`; surfaces are NOT projected into the registry — confirmed against `Gates.buildRegistry`, which reads only `Capabilities.Checks`) | check set emptied / a kind dropped ("rots to empty"), or an unexpected extra gate | FR-002, FR-003, FR-010, SC-001, SC-007 |
-| G3 | Every gate's command prerequisite resolves to a declared `tooling.yml` command | a command reference broken ("dangling") | FR-004, SC-001, SC-007 |
-| G4 | Each of build/test/evidence selected by its candidate path; 0 orphan checks/commands/unreachable domains | orphan check / dead command / unreachable domain | FR-005, FR-008, SC-004 |
+| G2 | Registry has exactly 4 gates: `build:build`, `test:test`, `evidence:evidence`, `gameplay:fr-covered` (one `Gate` per declared `Check`; surfaces are NOT projected into the registry — confirmed against `Gates.buildRegistry`, which reads only `Capabilities.Checks`). The `gameplay:fr-covered` floor is the ADR-0049 / WI-8 per-FR gameplay-obligation gate | check set emptied / a kind dropped ("rots to empty"), or an unexpected extra gate | FR-002, FR-003, FR-010, SC-001, SC-007 |
+| G3 | Every command-bound gate's prerequisite resolves to a declared `tooling.yml` command; the `gameplay:fr-covered` floor is command-free by design (ADR-0049 / WI-8) and carries no prerequisite | a command reference broken ("dangling") | FR-004, SC-001, SC-007 |
+| G4 | Each of build/test/evidence/gameplay selected by its candidate path (gameplay via `specs/**`); 0 orphan checks/commands/unreachable domains | orphan check / dead command / unreachable domain | FR-005, FR-008, SC-004 |
 | G5 | `policy.defaultProfile == light` | default profile changed away from `light` ("drift to blocking") | FR-006, SC-007 |
 | G6 | Under `Light` @ `Verify`, all selected gates derive `Advisory` (BaseSeverity=Blocking) | populated gates flipping to blocking-by-default | FR-006, SC-003 |
 | G7 | Under `Strict` @ `Verify`, ≥1 selected gate derives `Blocking` on the same change | gates becoming unable to block (proves `light` is a deliberate default) | SC-006 |
