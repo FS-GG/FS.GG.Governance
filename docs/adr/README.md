@@ -14,6 +14,7 @@ is a local pointer so a reader can resolve an `ADR-00NN` citation without leavin
 | **ADR-0007** | Reference-gate-set version is **schema-derived** | `FS.GG.Governance.ReferenceGateSet` packaging |
 | **ADR-0012** | Byte-identical pack; §5 NuGet listing metadata | `publish.yml`; `Directory.Build.local.props` listing metadata |
 | **ADR-0013** | Trusted Publishing (OIDC) — no long-lived key | `publish.yml` nuget.org leg |
+| **ADR-0049** | Profile-bound gate inheritance — a `TemplateProfile` binds org-owned gates every product with that profile inherits as a **non-lowerable** floor (retires "policy is purely local") | `FS.GG.Governance.Inheritance` (the embedded reference floor + the pre-rollup fold); `Config.Model.maturityRank`; the `fsgg ship` rollup |
 
 To read an ADR: see `FS-GG/.github` (the org governance/protocol repo). When a new
 org-level ADR is cited from this repo's code or specs, add a row here.

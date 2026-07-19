@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Semantic tests for WI-5 / ADR-0049, exercising the PUBLIC surface of
+       FS.GG.Governance.Inheritance — `referenceGatesFor`, `productTemplateProfiles`,
+       `inheritedGatesFor`, `composeEffectiveGates`, `applyInheritance` — over REAL typed F014/F018/F019
+       values (never mocks, Principle V; the embedded `referenceChecks`/`refFacts` helpers are exercised
+       ONLY through the public functions). Asserts the non-lowerable-floor contract (a local gate may
+       raise an inherited floor but never lower it), the `TemplateProfile` lookup, and the pre-rollup
+       fold's identity for an unbound product. The input surface is small and literally constructible,
+       so NO synthetic evidence is anticipated. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Support.fs" />
+    <Compile Include="CompositionTests.fs" />
+    <Compile Include="ReferenceFloorTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.Inheritance/FS.GG.Governance.Inheritance.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
+    <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+  </ItemGroup>
+
+</Project>

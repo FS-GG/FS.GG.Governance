@@ -277,6 +277,14 @@ module Model =
     /// Deterministic and total.
     val costRank: cost: Cost -> int
 
+    /// The rank of a `Maturity` in its closed enforcement order, 1 (`Observe`) .. 5 (`BlockOnRelease`):
+    /// `Observe < Warn < BlockOnPr < BlockOnShip < BlockOnRelease`. Comparisons go through this so
+    /// ordering is invariant to DU case declaration order (mirrors `costRank`). Deterministic and total.
+    /// The non-lowerable-floor primitive for ADR-0049 profile-bound gate inheritance: the effective
+    /// maturity of a gate present both locally and in an inherited profile floor is the higher-ranked of
+    /// the two, so a product may raise an inherited floor but never lower it.
+    val maturityRank: m: Maturity -> int
+
     /// The rank of a `GeneratedProductTier` in its closed order, 1 (`StructuralScan`) .. 5
     /// (`ReleaseValidation`). Deterministic and total (D4).
     val generatedProductTierRank: tier: GeneratedProductTier -> int

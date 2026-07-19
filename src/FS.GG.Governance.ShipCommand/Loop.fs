@@ -22,6 +22,7 @@ open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
 open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile, Severity, Recognized, recognizeMode, recognizeProfile
 open FS.GG.Governance.Ship                // Ship.rollup
+open FS.GG.Governance.Inheritance          // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
 open FS.GG.Governance.AuditJson           // AuditJson.ofShipDecision
 open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofShipDecision — the plain projection
@@ -707,7 +708,7 @@ module Loop =
                 // (no re-sort) ⇒ byte-identical ship.json (FR-001, SC-003).
                 let consumed = Consumer.consume model.Handoffs
 
-                let result =
+                let consumedResult =
                     match consumed.Selected with
                     | [] -> routed
                     | extra ->
@@ -715,6 +716,13 @@ module Loop =
                             SelectedGates =
                                 routed.SelectedGates @ extra
                                 |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+
+                // WI-5 / ADR-0049: fold the product's profile-bound inherited gate floor into the
+                // selection BEFORE `Ship.rollup`, so an inherited gate enforces via the SAME
+                // `deriveEffectiveSeverity` machinery as any local one. A product declaring no bound
+                // `templateProfile` (or a profile with no binding) inherits nothing ⇒ this is the
+                // IDENTITY ⇒ byte-identical ship.json (mirrors the F081 absent-handoff identity above).
+                let result = Inheritance.applyInheritance facts consumedResult
 
                 let decision = Ship.rollup result model.Request.Mode model.Request.Profile
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)

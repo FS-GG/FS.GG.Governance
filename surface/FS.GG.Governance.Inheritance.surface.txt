@@ -1,0 +1,6 @@
+TYPE FS.GG.Governance.Inheritance.InheritanceModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+TemplateProfile] productTemplateProfiles(TypedFacts)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] composeEffectiveGates(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] inheritedGatesFor(TypedFacts)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] referenceGatesFor(TemplateProfile)
+  [Method] RouteResult applyInheritance(TypedFacts, RouteResult)

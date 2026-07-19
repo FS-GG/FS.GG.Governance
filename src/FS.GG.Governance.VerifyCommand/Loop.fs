@@ -23,6 +23,7 @@ open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
 open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Severity, Recognized, recognizeProfile
 open FS.GG.Governance.Ship                // Ship.rollup
+open FS.GG.Governance.Inheritance          // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
 open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
 open FS.GG.Governance.VerifyJson           // VerifyJson.ofVerifyDecision
 open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofVerifyDecision — the plain projection
@@ -747,7 +748,7 @@ module Loop =
                 // (research D5, SC-005). Absent handoff ⇒ identity fold (no re-sort) ⇒ byte-identical verify.json.
                 let consumed = Consumer.consume model.Handoffs
 
-                let result =
+                let consumedResult =
                     match consumed.Selected with
                     | [] -> routed
                     | extra ->
@@ -755,6 +756,12 @@ module Loop =
                             SelectedGates =
                                 routed.SelectedGates @ extra
                                 |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+
+                // WI-5 / ADR-0049: fold the product's profile-bound inherited gate floor into the
+                // selection so `verify` mirrors `ship` — the SAME effective gate set enforced through the
+                // SAME `deriveEffectiveSeverity`. A product with no bound `templateProfile` inherits
+                // nothing ⇒ IDENTITY ⇒ byte-identical verify.json (mirrors the F081 absent-handoff identity).
+                let result = Inheritance.applyInheritance facts consumedResult
 
                 let decision = Ship.rollup result Verify model.Request.Profile
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
