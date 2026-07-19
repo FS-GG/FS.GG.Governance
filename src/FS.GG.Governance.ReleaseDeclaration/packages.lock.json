@@ -43,7 +43,7 @@
       "fs.gg.governance.config": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Contracts": "[2.0.0, )",
+          "FS.GG.Contracts": "[2.1.0, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
@@ -166,11 +166,11 @@
       },
       "FS.GG.Contracts": {
         "type": "CentralTransitive",
-        "requested": "[2.0.0, )",
-        "resolved": "2.0.0",
-        "contentHash": "rQVo2MtYRkmN4G8X/3hTWzl3AfPyxE7CP/Kjgh/HikIO1Q8eNPzec8HIdl8ivx+Vz9oAEdQBVW7Rkl7+lWbeNg==",
+        "requested": "[2.1.0, )",
+        "resolved": "2.1.0",
+        "contentHash": "t5IShKAXAklu1R7HBH0eoCfSI4h5MJkpKtfACmDkwo7ON4ekjOWrQ6H/6iDfBXFPBGlfTOo4ZzUxJHgOUhBFug==",
         "dependencies": {
-          "FSharp.Core": "10.1.301"
+          "FSharp.Core": "10.1.302"
         }
       }
     }
