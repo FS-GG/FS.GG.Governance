@@ -14,7 +14,8 @@
 //
 // Usage:
 //   dotnet fsi pack-reference-gate-set.fsx                      # gate on G1–G7, then pack -> nuget-local
-//   dotnet fsi pack-reference-gate-set.fsx --print-version      # derive + print the version, no gate, no pack
+//   dotnet fsi pack-reference-gate-set.fsx --print-version      # print the pinned SemVer, no gate, no pack
+//   dotnet fsi pack-reference-gate-set.fsx --print-manifest     # print the schema-manifest.json JSON, no gate, no pack
 //   dotnet fsi pack-reference-gate-set.fsx --source <dir>       # read <dir>/.fsgg/*.yml instead of the default
 //   dotnet fsi pack-reference-gate-set.fsx --output <dir>       # pack into <dir> instead of nuget-local
 //   dotnet fsi pack-reference-gate-set.fsx --no-gate            # pack without the G1–G7 gate (CI runs the gate separately)
@@ -82,6 +83,7 @@ let fail (msg: string) : 'a =
 let rawArgs = fsi.CommandLineArgs |> Array.toList |> List.tail // drop the script path
 
 let printVersionOnly = rawArgs |> List.contains "--print-version"
+let printManifestOnly = rawArgs |> List.contains "--print-manifest"
 let printGateCommandOnly = rawArgs |> List.contains "--print-gate-command"
 let noGate = rawArgs |> List.contains "--no-gate"
 
@@ -142,12 +144,33 @@ let gateConfiguration =
 
     resolved
 
-// ── Version derivation (FR-006/SC-003) ──
-// Version = "{governance}.{capabilities}.{policy}.{tooling}" — each segment is the file's own
-// `schemaVersion`, in fixed bundle order (manifest root first). A bump to any one file changes
-// EXACTLY one segment, so the version is deterministic, reversible, and distinguishable on every
-// bump. Recorded as an ADR in FS-GG/.github (the numbering rule is itself a contract).
-// Fixed file order — do not reorder (the version segments are positional).
+// ── Package version (ADR-0055) ──
+// A PLAIN SemVer that bumps on ANY change to the packed `.fsgg` set — schema OR content. It no
+// longer encodes the contained schemaVersions; those now travel in the in-package
+// `schema-manifest.json` (below). ADR-0055 supersedes ADR-0007's 4-segment
+// `{governance}.{capabilities}.{policy}.{tooling}` rule, which could not represent a content-only
+// change (a bump to a file's content with no schemaVersion change left the version identical) and
+// so blocked WI-8. Bump class by impact, by SemVer's ordinary meaning for a data package:
+//   • a content-only change to the packed set                              → at least PATCH
+//   • a change a consumer's drift gate must be re-pinned to absorb (a
+//     schema-generation bump, or any change to the set's shape)            → at least MINOR
+//   • a change that breaks an existing consumer pin's assumptions          → MAJOR
+// This is a MANUAL, human-judged bump — the escalated decision ADR-0055 records, not a value the
+// tool can derive — so it is edited HERE on every change to samples/sdd-reference-gate-set/.fsgg/.
+// The `--print-version` hook emits it so the guard asserts the ACTUAL shipped version.
+//
+// 1.3.0 (MINOR, 2026-07-19): first version under ADR-0055. Ships WI-8's gameplay-gate content — a
+// new `gameplay` domain + an `fr-covered` block-on-ship check (Governance#276) — that was
+// byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
+// --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
+// re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
+let private packageVersion = "1.3.0"
+
+// ── Schema manifest (ADR-0055) ──
+// The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the
+// "which schema generation?" fact is a queryable field rather than something parsed out of the
+// version string. Fixed field order (stable JSON) — do NOT reorder. This order also matches the
+// pack order the .fsproj uses for the .fsgg files.
 let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
 
 let private schemaVersionRegex = Regex(@"^\s*schemaVersion:\s*(\d+)\s*$", RegexOptions.Multiline)
@@ -162,16 +185,26 @@ let private readSchemaVersion (fileName: string) : int =
     let text = File.ReadAllText path
     let m = schemaVersionRegex.Match text
     if not m.Success then
-        fail (sprintf "no parseable `schemaVersion: <int>` line in %s — cannot derive a package version" path)
+        fail (sprintf "no parseable `schemaVersion: <int>` line in %s — cannot read its schema generation" path)
     match Int32.TryParse m.Groups.[1].Value with
     | true, v -> v
     | false, _ -> fail (sprintf "schemaVersion in %s is not an integer: %s" path m.Groups.[1].Value)
 
-let derivedVersion () : string =
+/// The manifest's (field, generation) pairs — the four contained schemaVersions keyed by their
+/// file's stem (`governance.yml` → `governance`), in the fixed bundle order.
+let private schemaManifestFields () : (string * int) list =
     orderedFiles
-    |> List.map readSchemaVersion
-    |> List.map string
-    |> String.concat "."
+    |> List.map (fun f -> Path.GetFileNameWithoutExtension f, readSchemaVersion f)
+
+/// The in-package `schema-manifest.json` payload. HAND-formatted rather than serialized so the bytes
+/// are deterministic and reviewable, with a trailing newline (POSIX text). Two-space indent, one
+/// field per line, in `orderedFiles` order.
+let private schemaManifestJson () : string =
+    let body =
+        schemaManifestFields ()
+        |> List.map (fun (k, v) -> sprintf "  \"%s\": %d" k v)
+        |> String.concat ",\n"
+    sprintf "{\n%s\n}\n" body
 
 // ── Process edge (mirrors build.fsx) ──
 /// Run `dotnet` with the given args (and optional extra env vars); return the exit code. I/O lives
@@ -219,12 +252,19 @@ if printGateCommandOnly then
     printfn "%s" (String.Join(" ", gateArgs))
     exit 0
 
-let version = derivedVersion ()
+let version = packageVersion
 
 if printVersionOnly then
-    // Dry run: emit ONLY the derived version on its own line so the guard test can capture it
+    // Dry run: emit ONLY the pinned version on its own line so the guard test can capture it
     // verbatim. No gate, no pack.
     printfn "%s" version
+    exit 0
+
+if printManifestOnly then
+    // Dry run: emit ONLY the schema-manifest.json payload (verbatim, trailing newline included) so
+    // the guard test can assert the manifest the pack will carry — over a `--source` copy too, to
+    // show a schemaVersion bump moves the MANIFEST, not the version. No gate, no pack.
+    printf "%s" (schemaManifestJson ())
     exit 0
 
 // G1–G7 gate (FR-004): run ONLY the reference-set guard, never the whole suite (which now also
@@ -244,9 +284,21 @@ if not noGate then
                 gateExit
         )
 
-// Pack to the output dir at the derived version. IncludeBuildOutput=false in the .fsproj keeps the
+// Pack to the output dir at the pinned version. IncludeBuildOutput=false in the .fsproj keeps the
 // .nupkg content-only (no lib/, no dependency group).
 Directory.CreateDirectory outputDir |> ignore
+
+// Emit the in-package schema manifest (ADR-0055) to a temp file the pack picks up via
+// $(SchemaManifestPath). Named EXACTLY `schema-manifest.json` so the .fsproj packs it under that
+// name, ALONGSIDE the .fsgg set (contentFiles/any/any/) and never inside `.fsgg/` — the packed
+// `.fsgg/` must stay byte-identical to the samples that the G1–G7 guard and the Templates overlay
+// drift gate compare. The temp DIR name is random, but the packed bytes are not: the file's name
+// and content are fixed, so the artifact stays deterministic (SC-005).
+let manifestDir =
+    Path.Combine(Path.GetTempPath(), "fsgg-manifest-" + Guid.NewGuid().ToString("N"))
+Directory.CreateDirectory manifestDir |> ignore
+let manifestPath = Path.Combine(manifestDir, "schema-manifest.json")
+File.WriteAllText(manifestPath, schemaManifestJson ())
 
 let packExit =
     runDotnet
@@ -255,8 +307,12 @@ let packExit =
           "-c"
           "Release"
           (sprintf "-p:Version=%s" version)
+          (sprintf "-p:SchemaManifestPath=%s" manifestPath)
           "-o"
           outputDir ]
+
+// Tidy the temp manifest (best-effort — the OS reaps /tmp regardless).
+try Directory.Delete(manifestDir, true) with _ -> ()
 
 if packExit <> 0 then
     fail (sprintf "dotnet pack failed (exit %d)" packExit)
