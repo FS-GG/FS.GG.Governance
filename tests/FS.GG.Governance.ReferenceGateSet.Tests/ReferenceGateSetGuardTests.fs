@@ -40,9 +40,10 @@ let private requireFacts () =
 // The candidate paths shaped to the SDD reference skeleton. `App.sln` exercises the `*.sln`
 // path-map glob that `src/App/Program.fs` alone would leave untested; `build.fsx` exercises the
 // evidence glob even though the skeleton ships no such file on disk (SC-004 is a property of the
-// path-map, not of physical files — research D3).
+// path-map, not of physical files — research D3). `specs/**` exercises the `gameplay` glob that
+// selects the command-free `gameplay:fr-covered` floor (ADR-0049 / WI-8).
 let private candidatePaths =
-    [ "src/App/Program.fs"; "App.sln"; "tests/App.Tests/Tests.fs"; "build.fsx" ]
+    [ "src/App/Program.fs"; "App.sln"; "tests/App.Tests/Tests.fs"; "build.fsx"; "specs/001-example/spec.md" ]
 
 /// Drive the real F018->F015->F017->F019 chain over the loaded facts, exactly as `fsgg route` would.
 let private routeResultOf (f: TypedFacts) : RouteResult =
@@ -71,7 +72,11 @@ let private decideUnder (profile: Enforcement.Profile) (gate: Gate) : Enforcemen
               Profile = profile }
     decision.EffectiveSeverity
 
-let private expectedGateIds = set [ "build:build"; "test:test"; "evidence:evidence" ]
+// build/test/evidence each declare a `tooling.yml` command; the gameplay floor is command-free
+// (satisfied by per-FR handoff evidence, ADR-0049 / WI-8), so it carries no command prerequisite —
+// G3 counts command prerequisites against the 3 command-bound gates, not all 4.
+let private expectedGateIds =
+    set [ "build:build"; "test:test"; "evidence:evidence"; "gameplay:fr-covered" ]
 
 [<Tests>]
 let guard =
@@ -87,18 +92,21 @@ let guard =
               | Invalid diags -> failtestf "expected Valid with 0 diagnostics; got %d: %A" (List.length diags) diags
           }
 
-          // G2 (FR-002/FR-003/SC-001) — exactly 3 gates: build:build, test:test, evidence:evidence.
-          // Surfaces are NOT projected into the registry (buildRegistry reads only Capabilities.Checks).
-          test "G2 Routes registry has exactly 3 gates build test evidence" {
+          // G2 (FR-002/FR-003/SC-001) — exactly 4 gates: build:build, test:test, evidence:evidence,
+          // and the gameplay:fr-covered floor (ADR-0049 / WI-8). Surfaces are NOT projected into the
+          // registry (buildRegistry reads only Capabilities.Checks).
+          test "G2 Routes registry has exactly 4 gates build test evidence gameplay" {
               let f = requireFacts ()
               let registry = FS.GG.Governance.Gates.Gates.buildRegistry f
               let ids = registry.Gates |> List.map (fun g -> gateIdValue g.Id) |> Set.ofList
-              Expect.equal ids expectedGateIds "registry must hold exactly the 3 reference gates (guards 'rots to empty')"
+              Expect.equal ids expectedGateIds "registry must hold exactly the 4 reference gates (guards 'rots to empty')"
           }
 
-          // G3 (FR-004/SC-001/SC-007) — every gate's command prerequisite resolves to a declared
-          // tooling.yml command; 0 dangling command references.
-          test "G3 Routes every gate command prerequisite is declared in tooling" {
+          // G3 (FR-004/SC-001/SC-007) — every command-BOUND gate's prerequisite resolves to a declared
+          // tooling.yml command; 0 dangling command references. The gameplay floor is command-free by
+          // design (ADR-0049 / WI-8) — it carries NO prerequisite, which is a resolved state, not a
+          // dangling one.
+          test "G3 Routes every command-bound gate prerequisite is declared; gameplay is command-free" {
               let f = requireFacts ()
               let declaredCommands =
                   match f.Tooling with
@@ -108,18 +116,21 @@ let guard =
               let referenced =
                   registry.Gates
                   |> List.collect (fun g -> g.Prerequisites |> List.map (fun (RequiresCommand (CommandId c)) -> c))
-              Expect.equal (List.length referenced) 3 "all 3 gates carry a command prerequisite"
+              Expect.equal (List.length referenced) 3 "the 3 command-bound gates (build/test/evidence) each carry one command prerequisite"
               for c in referenced do
                   Expect.isTrue (declaredCommands.Contains c) (sprintf "command '%s' must be declared in tooling.yml (no dangling ref)" c)
+              // The gameplay floor is command-free: it declares no prerequisite at all.
+              let gameplay = registry.Gates |> List.find (fun g -> gateIdValue g.Id = "gameplay:fr-covered")
+              Expect.isEmpty gameplay.Prerequisites "the gameplay floor is command-free (satisfied by per-FR handoff evidence)"
           }
 
-          // G4 (FR-005/FR-008/SC-004) — build/test/evidence each selected by a candidate path; 0 orphan
-          // checks (every gate selectable), 0 orphan commands (every declared command referenced), 0
-          // unreachable domains.
-          test "G4 Routes build test evidence each selected, no orphans" {
+          // G4 (FR-005/FR-008/SC-004) — build/test/evidence/gameplay each selected by a candidate path;
+          // 0 orphan checks (every gate selectable, incl. the gameplay floor via `specs/**`), 0 orphan
+          // commands (every declared command referenced), 0 unreachable domains.
+          test "G4 Routes build test evidence gameplay each selected, no orphans" {
               let f = requireFacts ()
               let selectedIds = selectedGates f |> List.map (fun g -> gateIdValue g.Id) |> Set.ofList
-              Expect.equal selectedIds expectedGateIds "each of build/test/evidence is selected by its candidate path (0 orphan checks/unreachable domains)"
+              Expect.equal selectedIds expectedGateIds "each of build/test/evidence/gameplay is selected by its candidate path (0 orphan checks/unreachable domains)"
 
               // 0 orphan commands: every declared tooling command is referenced by a gate prerequisite.
               let registry = FS.GG.Governance.Gates.Gates.buildRegistry f
