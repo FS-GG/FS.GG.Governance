@@ -184,18 +184,31 @@ jobs:
       - name: Checkout this repo
         uses: actions/checkout@v7
 
-      # Source of truth: scripts/ + dist/dotnet/ must land together (the script resolves its
-      # source as dirname(script)/../dist/dotnet). Track main — the live baseline — so an org
-      # bump shows up here as red until this repo re-syncs (intended coherence pressure).
-      - name: Checkout org build config (FS-GG/.github)
-        uses: actions/checkout@v7
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
         with:
-          repository: FS-GG/.github
-          ref: main
-          path: _org-build
+          dotnet-version: 10.0.x
 
-      - name: Drift check (managed files == source of truth)
-        run: _org-build/scripts/sync-build-config.sh --check "$GITHUB_WORKSPACE"
+      # Build config now ships as the FS.GG.Kit package (ADR-0062, FS-GG/.github#1262): this repo
+      # materializes Directory.Build.props / Directory.Packages.props from its pinned FS.GG.Kit, and
+      # kit-materialize.yml refreshes them on a Renovate bump. This job's NAME is preserved so the
+      # REQUIRED status context is unchanged — only its body moved from the retired byte-copy drift
+      # check (sync-build-config.sh --check + the .config/fsgg-build-config.sha pin, FS-GG/.github#592)
+      # to a package-based check: re-run the materialize and assert the COMMITTED .props still match the
+      # pinned package. A hand-edited managed .props is overwritten by the materialize, so the diff is
+      # non-empty and this fails. Repo-specific settings live in Directory.Build.local.props /
+      # Directory.Packages.local.props, which the materialize never touches. FS.GG.Kit restores from
+      # nuget.org via this repo's nuget.config source-map exception (dual-published, no credential).
+      - name: Assert the committed build config matches the pinned FS.GG.Kit
+        run: |
+          set -euo pipefail
+          dotnet build .config/kit/FS.GG.Kit.receiver.proj -t:FsggKitMaterialize -v minimal
+          if ! git diff --quiet -- Directory.Build.props Directory.Packages.props; then
+            echo "::error::build-config drift — Directory.Build.props / Directory.Packages.props do not match this repo's pinned FS.GG.Kit. These are MATERIALIZED files: do not hand-edit them. Put repo-specific settings in Directory.Build.local.props / Directory.Packages.local.props. To refresh, take the Renovate FS.GG.Kit bump, or run 'dotnet build .config/kit/FS.GG.Kit.receiver.proj -t:FsggKitMaterialize' and commit."
+            git --no-pager diff -- Directory.Build.props Directory.Packages.props
+            exit 1
+          fi
+          echo "Build config matches the pinned FS.GG.Kit."
 
   # Reference-gate-set content package guard (spec 086, FS.GG.Governance#15). Runs the
   # ReferenceGateSet.Tests project, which (a) freezes the bundle invariants (079 G1–G7) and
@@ -314,13 +327,12 @@ jobs:
   # package version. This repo consumes FS.GG.Contracts, so a registry that has drifted from
   # the real package version is this repo's problem, and until now nothing here said so.
   #
-  # `check-build-config` is left at its default (true) because registry/repos.yml declares this
-  # repo a `build-config` receiver. That DUPLICATES the hand-rolled `build-config-drift` job in
-  # this same file, and the duplication is DELIBERATE: that job's `name:` is a REQUIRED status
-  # check on main, so deleting it here would leave a required context permanently unreported —
-  # a PR that can never merge, which is exactly the silent deadlock FS-GG/.github#574's verifier
-  # is being built to catch. Retiring the hand-rolled job must happen in a change that updates
-  # this repo's branch protection in the same stroke. Tracked separately; do not "tidy" it away.
+  # The reusable gate's build-config drift step was RETIRED in FS-GG/.github#1262 (ADR-0062): build
+  # config now ships as the FS.GG.Kit package, so `check-build-config` is no longer consulted (a no-op
+  # input kept for compatibility). The inline `build-config-drift` job above keeps its exact `name:` —
+  # the REQUIRED status context is unchanged — but its body now asserts the committed .props match the
+  # pinned package instead of running the byte-copy `sync-build-config.sh --check`. The required context
+  # was preserved rather than removed, so no branch-protection change was needed.
   #
   # `packages: read` is MANDATORY for callers: the gate restores the typed fsgg-sdd registry
   # validator from the org GitHub Packages feed using the run-scoped GITHUB_TOKEN.
