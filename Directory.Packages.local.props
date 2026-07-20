@@ -20,7 +20,7 @@
          .config/kit/FS.GG.Kit.receiver.proj, which materializes the kit onto disk; Renovate bumps
          this pin and kit-materialize.yml refreshes the committed kit on that PR. Restored from
          nuget.org (dual-published anonymously, like FS.GG.Coord.Cli) — see the nuget.config source map. -->
-    <PackageVersion Include="FS.GG.Kit" Version="0.1.0" />
+    <PackageVersion Include="FS.GG.Kit" Version="0.1.1" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
