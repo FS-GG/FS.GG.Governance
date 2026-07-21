@@ -4,21 +4,18 @@ Optional rule, evidence, and route-explanation tooling for the
 [FS-GG](https://github.com/FS-GG) projects, built as a normal F# tool component with
 standard [Spec Kit](https://github.com/github/spec-kit).
 
-**In one sentence:** governance is a *pure inference kernel* over typed facts and
-rules, where every rule declares **who is competent to decide it** (machine, agent,
-or human), every rule's check is **reified data** that can be evaluated, rendered,
-hashed, and explained from one source, and enforcement is **light and advisory by
-default** with a loud, local-only escape hatch.
+> **New here?** Start with the **[15-minute adopter onboarding →](docs/tutorials/adopter-onboarding.md)** —
+> from an empty directory to a buildable, governed workspace, with no boilerplate to
+> hand-write. Then the [design overview](docs/governance-design/index.md) explains how
+> the kernel works.
 
-The kernel is domain-neutral: what changes between governing F# code, an essay, or a
-research project is the *fact vocabulary* — the inference, arbitration, evidence, and
-rule language stay the same. See the [design overview](docs/governance-design/index.md).
-
-> **Platform vs. workspace.** FS-GG is a **platform** — five repositories (the
-> governance kernel is one optional **component** of it). What you scaffold *with*
-> the platform is a **workspace**: a generated repo with a runnable app, the
+> **Platform vs. workspace.** FS-GG is a **platform** of focused framework components,
+> of which the governance kernel is one optional **component**. What you scaffold
+> *with* the platform is a **workspace**: a generated repo with a runnable app, the
 > `.fsgg/` lifecycle, skills, and optional governance. See the
-> [vocabulary](https://github.com/FS-GG/.github/blob/main/docs/adr/0020-platform-workspace-component-vocabulary.md).
+> [platform vocabulary (ADR-0020)](https://github.com/FS-GG/.github/blob/main/docs/adr/0020-platform-workspace-component-vocabulary.md)
+> and [`docs/architecture.md`](https://github.com/FS-GG/.github/blob/main/docs/architecture.md)
+> for the live component roster.
 
 ## The operating rule
 
@@ -36,14 +33,11 @@ this tool's shape.
 FS-GG is the split of the archived [`FS-Skia-UI`](https://github.com/EHotwagner/FS-Skia-UI)
 monolith — a single self-hosting platform that bundled a UI runtime with an
 experimental governance system and got too heavy to develop on — into **focused
-components that each stand on their own**, each using standard Spec Kit.
-
-| Repo | What it is |
-|---|---|
-| [**FS.GG.Rendering**](https://github.com/FS-GG/FS.GG.Rendering) | The UI framework — Elmish/MVU apps rendered with SkiaSharp over OpenGL. Depends on no FS-GG component; **never** depends on Governance. |
-| [**FS.GG.Governance**](https://github.com/FS-GG/FS.GG.Governance) | *This repo.* Optional rule/evidence/route tooling, developed as a normal tool component. |
-| [**FS.GG.SDD**](https://github.com/FS-GG/FS.GG.SDD) | Spec-driven development lifecycle tooling (`charter → specify → plan → tasks → verify → ship`) and the org-shared `FS.GG.Contracts` schema-authority package. |
-| [**FS.GG.Templates**](https://github.com/FS-GG/FS.GG.Templates) | Downstream composition: `dotnet new` templates and scaffold providers wiring SDD + Rendering + Governance into a ready-to-run workspace. Depends on the others; none depend back. |
+components that each stand on their own**, each using standard Spec Kit. For the live
+roster of those components and how they fit together, see
+[`docs/architecture.md`](https://github.com/FS-GG/.github/blob/main/docs/architecture.md)
+and the [platform vocabulary (ADR-0020)](https://github.com/FS-GG/.github/blob/main/docs/adr/0020-platform-workspace-component-vocabulary.md) —
+that canonical narrative carries the inventory so this page never has to.
 
 Governance fills the *enforcement / rule-engine* slot — but explicitly **optional and
 one-directional**. It relates to its siblings only through explicit, versioned
@@ -56,6 +50,16 @@ repo (issue-based requests, a Projects-v2 "Coordination" board, a contract &
 compatibility registry, and ADRs).
 
 ## The core idea
+
+**In one sentence:** governance is a *pure inference kernel* over typed facts and
+rules, where every rule declares **who is competent to decide it** (machine, agent,
+or human), every rule's check is **reified data** that can be evaluated, rendered,
+hashed, and explained from one source, and enforcement is **light and advisory by
+default** with a loud, local-only escape hatch.
+
+The kernel is domain-neutral: what changes between governing F# code, an essay, or a
+research project is the *fact vocabulary* — the inference, arbitration, evidence, and
+rule language stay the same. See the [design overview](docs/governance-design/index.md).
 
 The product is the **inference kernel** (facts, rules, fixed-point evaluation,
 provenance), the **`CheckTier` arbitration model** (machine / agent / human), the
