@@ -24,14 +24,14 @@ let private samplesFsgg = Path.Combine(repoRoot, "samples", "sdd-reference-gate-
 let private packagingProject =
     Path.Combine(repoRoot, "packaging", "FS.GG.Governance.ReferenceGateSet", "FS.GG.Governance.ReferenceGateSet.fsproj")
 
-// Fixed bundle order — the manifest field order and the .fsgg pack order (must match the pack
-// script and ADR-0055).
+// Fixed YAML order — the schema-manifest field order (must match the pack script and ADR-0055).
 let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
+let private shippedFiles = orderedFiles @ [ "controlled-imports.fsx"; "controlled-imports.json" ]
 let private contentPrefix = "contentFiles/any/any/.fsgg/"
 // ADR-0055: the in-package schema manifest sits ALONGSIDE the .fsgg set (a sibling of .fsgg/).
 let private manifestEntry = "contentFiles/any/any/schema-manifest.json"
 // The pinned plain SemVer (ADR-0055), no longer derived from the contained schemaVersions.
-let private expectedVersion = "1.3.0"
+let private expectedVersion = "1.4.0"
 
 /// The test's OWN independent parse of a sample's `schemaVersion:` — so an assertion over the packed
 /// manifest is evidence about the real on-disk generations, not a re-scrape of the script's rule
@@ -89,7 +89,7 @@ let private runPack (args: string list) : int * string * string =
         p.WaitForExit()
         p.ExitCode, out, err
 
-/// Copy the four canonical reference files into a fresh temp `<dir>/.fsgg/`; return <dir> (the
+/// Copy the four canonical YAML reference files into a fresh temp `<dir>/.fsgg/`; return <dir> (the
 /// directory that CONTAINS `.fsgg/`, i.e. the `--source` value). Real I/O, no mock.
 let private copyReferenceTo () : string =
     let tmp = Path.Combine(Path.GetTempPath(), "fsgg-pack-test-" + Guid.NewGuid().ToString("N"))
@@ -127,18 +127,20 @@ let private readEntryBytes (archive: ZipArchive) (name: string) : byte[] =
 
 [<Tests>]
 let packageGuard =
-    testList
+    testSequenced
+    <| testList
         "ReferenceGateSetPackage"
         [
           // ── US1 (T005) — byte-identity & content-only over the REAL produced artifact ──
 
-          // SC-002: exactly the four reference files, each byte-identical to the on-disk sample.
-          test "T005 Package carries exactly the four .fsgg files byte-identical to source" {
+          // SC-002: exactly the reference YAML + controlled-import contract files, each
+          // byte-identical to the on-disk sample.
+          test "T005 Package carries exactly the six .fsgg files byte-identical to source" {
               use archive = ZipFile.OpenRead producedNupkg.Value
               let content = entryNames archive |> List.filter (fun n -> n.StartsWith contentPrefix) |> List.sort
-              let expected = orderedFiles |> List.map (fun f -> contentPrefix + f) |> List.sort
-              Expect.equal content expected "exactly the four content files at contentFiles/any/any/.fsgg/"
-              for f in orderedFiles do
+              let expected = shippedFiles |> List.map (fun f -> contentPrefix + f) |> List.sort
+              Expect.equal content expected "exactly the six content files at contentFiles/any/any/.fsgg/"
+              for f in shippedFiles do
                   let packed = readEntryBytes archive (contentPrefix + f)
                   let onDisk = File.ReadAllBytes(Path.Combine(samplesFsgg, f))
                   Expect.equal packed onDisk (sprintf "%s: packed bytes identical to on-disk sample (0 drift)" f)
@@ -184,21 +186,29 @@ let packageGuard =
                   try Directory.Delete(outDir, true) with _ -> ()
           }
 
-          // FR-002: the package draws from samples/sdd-reference-gate-set/.fsgg/ — a single source,
-          // no duplicated second copy. Assert the packaging project references that exact path.
-          test "T008 Packaging project sources the four files in place from the sample directory" {
+          // FR-002: the package draws all six files from samples/sdd-reference-gate-set/.fsgg/ — a
+          // single source, no duplicated second copy. Assert each item class references that path.
+          test "T008 Packaging project sources all six files in place from the sample directory" {
               let proj = File.ReadAllText packagingProject
               Expect.stringContains
                   proj
                   "../../samples/sdd-reference-gate-set/.fsgg/*.yml"
-                  "the .fsproj must pack the canonical samples in place (no duplicated copy, FR-002)"
+                  "the .fsproj must pack the four canonical YAML files in place (no duplicated copy, FR-002)"
+              Expect.stringContains
+                  proj
+                  "../../samples/sdd-reference-gate-set/.fsgg/controlled-imports.fsx"
+                  "the .fsproj must pack the canonical controlled-import verifier in place"
+              Expect.stringContains
+                  proj
+                  "../../samples/sdd-reference-gate-set/.fsgg/controlled-imports.json"
+                  "the .fsproj must pack the canonical controlled-import starter manifest in place"
           }
 
           // ── US3 (T011) — plain SemVer (ADR-0055): pinned, deterministic, decoupled from schemaVersions ──
 
           // ADR-0055: --print-version emits the pinned plain SemVer verbatim (no clock/env, no
           // derivation from the contained schemaVersions).
-          test "T011 print-version emits the pinned plain SemVer 1.3.0" {
+          test "T011 print-version emits the pinned plain SemVer 1.4.0" {
               let code, out, err = runPack [ "--print-version" ]
               Expect.equal code 0 (sprintf "--print-version must succeed; stderr:\n%s" err)
               Expect.equal (out.Trim()) expectedVersion "the version is the pinned plain SemVer (ADR-0055), not a schema-derived tuple"
@@ -230,7 +240,7 @@ let packageGuard =
 
           // The manifest ships at contentFiles/any/any/schema-manifest.json — ALONGSIDE the .fsgg set,
           // never inside it, so the packed `.fsgg/` stays byte-identical to source (T005 counts
-          // exactly the four files there).
+          // exactly the six reference-set files there).
           test "ADR-0055 Package carries schema-manifest.json alongside .fsgg, not inside it" {
               use archive = ZipFile.OpenRead producedNupkg.Value
               let names = entryNames archive
