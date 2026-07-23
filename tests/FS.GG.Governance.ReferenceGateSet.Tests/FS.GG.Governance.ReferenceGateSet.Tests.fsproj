@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Compile Include="ReferenceGateSetGuardTests.fs" />
+    <Compile Include="ControlledImportGateTests.fs" />
     <!-- 086: the published-artifact guard (byte-identity / content-only / gated / schema-versioned).
          It shells the checked-in pack script to produce the REAL .nupkg; it adds NO project
          reference to the packaging project (it asserts over the produced archive and the script's

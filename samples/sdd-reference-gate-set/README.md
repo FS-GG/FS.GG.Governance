@@ -12,7 +12,7 @@ substitution is the `<App>` placeholder in the `tooling.yml` command strings.
 > pipeline on every build. Empty the checks, break a command reference, or flip
 > `defaultProfile` off `light` and the build goes red before this page can drift.
 
-## The four files
+## The four configuration files
 
 | File | Schema | Purpose |
 |------|--------|---------|
@@ -20,6 +20,59 @@ substitution is the `<App>` placeholder in the `tooling.yml` command strings.
 | `capabilities.yml` | v2 | The `domains`, the `pathMap` (glob → domain), the `public-api` package surface, and the **three checks**. |
 | `policy.yml` | v1 | The profiles and the load-bearing `defaultProfile: light`, plus declared branch-policy / review-budget placeholders. |
 | `tooling.yml` | v1 | The three allow-listed commands each check binds to, the environment classes, and the `dotnet` external tool. |
+
+## Controlled file and directory imports
+
+The same `.fsgg/` bundle ships two producer-owned files for controlled upstream content:
+
+- `controlled-imports.json` is the typed manifest. Each entry declares `kind: "file"` or
+  `kind: "directory"`, a repo-relative destination, the pinned upstream repository/revision/path,
+  licence, import method, and lowercase SHA-256.
+- `controlled-imports.fsx` is the fail-closed verifier. Run it from the product root with
+  `dotnet fsi .fsgg/controlled-imports.fsx -- --root .`. It verifies the manifest before emitting
+  any `GOV-IMPORT-VERIFIED` result. A caller that needs to exempt a path from locally-authored
+  source-field rules can add `--check-exemption <repo-relative-path>` and accept
+  `GOV-IMPORT-EXEMPT` only from a zero-exit run.
+
+Directory SHA-256 uses the canonical `fsgg-controlled-tree/v1` byte stream. Files are ordered by
+their `/`-normalized relative path using ordinal comparison. Each record is:
+
+```text
+uint64-be(path UTF-8 byte length) || path UTF-8 bytes ||
+uint64-be(file byte length)       || raw file bytes
+```
+
+The length prefixes make the record stream injective; hashing raw file bytes makes line-ending
+conversion observable. Every manifest entry therefore also requires an exact `.gitattributes`
+policy: `<file> -text` for a file or `<directory>/** -text` for a directory tree. Missing paths,
+unreadable bytes, path escapes, symlinks/reparse points, and digest drift all fail with a named
+`GOV-IMPORT-*` rule and path.
+
+Example:
+
+```json
+{
+  "schemaVersion": 1,
+  "imports": [
+    {
+      "kind": "directory",
+      "destinationPath": "data/upstream/content",
+      "upstreamRepository": "https://github.com/example/project",
+      "upstreamRevision": "0123456789abcdef0123456789abcdef01234567",
+      "upstreamPath": "content",
+      "license": "MIT",
+      "importMethod": "git-archive",
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  ]
+}
+```
+
+The corresponding checkout policy is:
+
+```gitattributes
+data/upstream/content/** -text
+```
 
 ## The three gates
 

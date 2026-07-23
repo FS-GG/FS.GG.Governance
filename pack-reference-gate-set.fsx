@@ -3,8 +3,8 @@
 //
 // Why this exists: the validated reference `.fsgg` gate set under
 // samples/sdd-reference-gate-set/.fsgg/ is published as ONE versioned source of truth for the
-// Templates overlay drift gate (Templates#14). This script is the single place that (a) derives
-// the package version deterministically from the four contained `schemaVersion` declarations,
+// Templates overlay drift gate (Templates#14). This script is the single place that (a) pins the
+// package's plain SemVer and emits the four YAML `schemaVersion` generations as a manifest,
 // (b) refuses to pack when the G1–G7 invariants are red (the shipped artifact is provably the
 // tested artifact, FR-004), and (c) packs to ~/.local/share/nuget-local/ (constitution). It
 // mirrors the build.fsx idiom: linear build step, Process.Start confined to the script edge, a
@@ -24,7 +24,7 @@
 //
 // `--source <dir>`: <dir> is the directory that CONTAINS the `.fsgg/` folder; the script reads
 // <dir>/.fsgg/*.yml. Default <dir> = samples/sdd-reference-gate-set. It feeds BOTH the
-// version-derivation AND the G1–G7 gate (via the FSGG_REFERENCE_GATE_SET_DIR env var the 079 guard
+// schema-manifest projection AND the G1–G7 gate (via the FSGG_REFERENCE_GATE_SET_DIR env var the 079 guard
 // honors), so the guard test can point a temp-dir copy — bumped `schemaVersion` (SC-003) or a
 // broken invariant (FR-004) — at the script without touching the canonical source. (The packed
 // CONTENT is always the canonical samples — the .fsproj packs them in place; `--source` is a test
@@ -159,12 +159,16 @@ let gateConfiguration =
 // tool can derive — so it is edited HERE on every change to samples/sdd-reference-gate-set/.fsgg/.
 // The `--print-version` hook emits it so the guard asserts the ACTUAL shipped version.
 //
+// 1.4.0 (MINOR, 2026-07-23): adds the typed controlled-import manifest and fail-closed verifier to
+// the content set. MINOR: the package shape grows by two first-class files and exact-pin consumers
+// must re-pin deliberately before adopting the new directory-import contract.
+//
 // 1.3.0 (MINOR, 2026-07-19): first version under ADR-0055. Ships WI-8's gameplay-gate content — a
 // new `gameplay` domain + an `fr-covered` block-on-ship check (Governance#276) — that was
 // byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
 // --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
 // re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
-let private packageVersion = "1.3.0"
+let private packageVersion = "1.4.0"
 
 // ── Schema manifest (ADR-0055) ──
 // The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the

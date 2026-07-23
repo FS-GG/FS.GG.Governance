@@ -54,7 +54,8 @@ coverage/
 #     * specs/<feature>/readiness/ — per-run readiness evidence (0 committed
 #       here; no per-feature re-inclusion whack-a-mole, unlike Rendering);
 #     * .fsgg/*.json — CLI-emitted run outputs (gates.json, evidence.json,
-#       evidence-reuse.json); the .fsgg *inputs* are .yml and stay committed;
+#       evidence-reuse.json); authored .fsgg inputs stay committed (normally
+#       .yml; the controlled-import reference manifest is the explicit JSON exception);
 #     * the SDD shared fragment's regenerable roles (see below).
 # -----------------------------------------------------------------------------
 
@@ -62,10 +63,11 @@ coverage/
 # specs/<feature>/readiness/); regenerated on every run, never committed.
 specs/*/readiness/
 
-# CLI-emitted evidence run outputs (never committed; .fsgg/*.yml inputs are).
+# CLI-emitted evidence run outputs (never committed; authored .fsgg inputs are).
 # **/ so it matches whether the tool runs at the repo root or inside a
 # sample/fixture .fsgg/ dir.
 **/.fsgg/*.json
+!samples/sdd-reference-gate-set/.fsgg/controlled-imports.json
 
 # --- SDD shared transient-artifact fragment (ADR-0018) — adopted -------------
 # Convergence per FS.GG.SDD#110: the SDD lifecycle owns the durable-vs-
