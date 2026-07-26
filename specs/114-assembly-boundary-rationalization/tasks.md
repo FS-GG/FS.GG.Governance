@@ -8,4 +8,4 @@
 - [x] T006 Add classification completeness, consolidation, and graph-artifact tests.
 - [x] T007 Regenerate the classified graph artifact.
 - [x] T008 Run focused and full verification.
-- [ ] T009 Open, review, and land the implementation PR.
+- [x] T009 Open, review, and land the implementation PR.
