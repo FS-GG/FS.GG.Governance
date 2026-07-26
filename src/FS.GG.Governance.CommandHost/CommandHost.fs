@@ -279,31 +279,98 @@ module CommandHost =
         with e ->
             Error e.Message
 
-    // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable ordinal <id>
-    // order. A missing readiness dir (or any IO failure) yields `[]`. The ordinal sort is spelled out so the
-    // ordering guarantee is visible and identical to the former per-host copies + the Cli mirror (#49, D3).
-    let realHandoffs (repo: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
-        try
-            let readinessDir = Path.Combine(repo, "readiness")
+    type HandoffLoadOutcome =
+        | HandoffsAbsent
+        | HandoffsEmpty
+        | HandoffsUnreadable of source: string * message: string
+        | HandoffsMalformed of
+            reads: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list *
+            diagnostics: FS.GG.Governance.Adapters.SddHandoff.Model.Diagnostic list
+        | HandoffsLoaded of reads: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
 
-            if not (Directory.Exists readinessDir) then
-                []
-            else
+    // F081/#309: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable ordinal
+    // <id> order. Missing and empty are distinct benign states. Enumeration/read failures and malformed
+    // documents remain typed — no exceptional state is collapsed into "no handoffs".
+    let discoverHandoffs (repo: string) : HandoffLoadOutcome =
+        let readinessDir = Path.Combine(repo, "readiness")
+
+        let directories =
+            try
                 Directory.GetDirectories readinessDir
                 |> Array.sortWith (fun a b -> System.String.CompareOrdinal(Path.GetFileName a, Path.GetFileName b))
-                |> Array.choose (fun dir ->
+                |> Ok
+            with
+            | :? DirectoryNotFoundException as missing ->
+                try
+                    let attributes = File.GetAttributes readinessDir
+
+                    if attributes.HasFlag FileAttributes.Directory then
+                        Error None
+                    else
+                        Error(Some missing.Message)
+                with
+                | :? FileNotFoundException
+                | :? DirectoryNotFoundException -> Error None
+                | e -> Error(Some e.Message)
+            | e -> Error(Some e.Message)
+
+        match directories with
+        | Error None -> HandoffsAbsent
+        | Error(Some message) -> HandoffsUnreadable("readiness", message)
+        | Ok directories ->
+            let rec readAll
+                (reads: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list)
+                (remaining: string list)
+                =
+                match remaining with
+                | [] -> Ok(List.rev reads)
+                | dir :: rest ->
+                    let id = Path.GetFileName dir
+                    let source = sprintf "readiness/%s/governance-handoff.json" id
                     let file = Path.Combine(dir, "governance-handoff.json")
 
-                    if File.Exists file then
-                        Some
-                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
-                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
-                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
-                    else
-                        None)
-                |> Array.toList
-        with _ ->
-            []
+                    try
+                        let read: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =
+                            { Source = source; Json = File.ReadAllText file }
+
+                        readAll (read :: reads) rest
+                    with
+                    | :? FileNotFoundException
+                    | :? DirectoryNotFoundException -> readAll reads rest
+                    | e -> Error(source, e.Message)
+
+            match readAll [] (Array.toList directories) with
+            | Error(source, message) -> HandoffsUnreadable(source, message)
+            | Ok [] -> HandoffsEmpty
+            | Ok reads ->
+                let diagnostics =
+                    reads
+                    |> List.choose (fun read ->
+                        match FS.GG.Governance.Adapters.SddHandoff.Reader.parse read with
+                        | Ok _ -> None
+                        | Error diagnostic -> Some diagnostic)
+
+                match diagnostics with
+                | [] -> HandoffsLoaded reads
+                | _ -> HandoffsMalformed(reads, diagnostics)
+
+    // Compatibility projection for the three command-host ports, which still consume raw reads. A read
+    // failure becomes a deliberately malformed document carrying the I/O message in `contractVersion`.
+    // Reader.parse then produces the normal descriptive diagnostic; Consumer.consume turns it into its
+    // pre-selected BlockOnShip integrity gate, so strict verify/ship fails closed with a non-zero result.
+    let realHandoffs (repo: string) : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list =
+        match discoverHandoffs repo with
+        | HandoffsAbsent
+        | HandoffsEmpty -> []
+        | HandoffsLoaded reads
+        | HandoffsMalformed(reads, _) -> reads
+        | HandoffsUnreadable(source, message) ->
+            let diagnosticText = "unreadable handoff state: " + message
+            let encoded = System.Text.Json.JsonSerializer.Serialize diagnosticText
+
+            [ { FS.GG.Governance.Adapters.SddHandoff.Reader.Source = source
+                FS.GG.Governance.Adapters.SddHandoff.Reader.Json =
+                    sprintf """{"contractVersion":%s}""" encoded } ]
 
     // Sense the runner environment from the `CI` variable: set ⇒ `Ci`, unset/empty ⇒ `Local`. Fully qualified
     // to avoid the `Ci` clash with `Snapshot.Model.CiEnvironment` in scope here (#49, D1).

@@ -1,9 +1,12 @@
 module FS.GG.Governance.VerifyCommand.Tests.HandoffReadinessTests
 
+open System
+open System.IO
 open Expecto
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.Gates.Model
+open FS.GG.Governance.CommandHost
 open FS.GG.Governance.VerifyCommand
 open FS.GG.Governance.VerifyCommand.Tests.Support
 
@@ -43,6 +46,19 @@ let private blockerGateIds (d: ShipDecision) =
         | GateItem g -> Some(gateIdValue g)
         | FindingItem _ -> None)
 
+let private withLockedHandoff body =
+    let repo = Path.Combine(Path.GetTempPath(), "fsgg-verify-handoff-" + Guid.NewGuid().ToString("N"))
+    let dir = Path.Combine(repo, "readiness", "locked")
+    Directory.CreateDirectory dir |> ignore
+    let path = Path.Combine(dir, "governance-handoff.json")
+    File.WriteAllText(path, cleanReadinessJson)
+
+    try
+        use _lock = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)
+        body repo
+    finally
+        Directory.Delete(repo, true)
+
 [<Tests>]
 let tests =
     testList
@@ -68,4 +84,32 @@ let tests =
               Expect.isFalse
                   (blockerGateIds (Option.get m.Decision) |> List.exists (fun id -> id.Contains "sdd-handoff:readiness"))
                   "a clean readiness gate is NOT a blocker"
+          }
+
+          test "unreadable readiness emits an integrity diagnostic and exits non-zero" {
+              withLockedHandoff (fun repo ->
+                  let req =
+                      { requestForProfile (Loop.ExplicitPaths []) Loop.Text Strict with
+                          Repo = repo }
+
+                  let cap = newCapture ()
+
+                  let ports =
+                      { fakePorts validCatalog gitSrcChange cap with
+                          Handoffs = CommandHost.realHandoffs }
+
+                  let m = Interpreter.run ports req
+
+                  let integrityGate =
+                      m.SelectedGates
+                      |> List.tryFind (fun gate -> gateIdValue gate.Id = "sdd-handoff:integrity:locked")
+
+                  Expect.isSome integrityGate "unreadable state emits the pre-selected integrity gate"
+
+                  Expect.stringContains
+                      (Option.get integrityGate).Description
+                      "unreadable handoff state"
+                      "the gate carries a descriptive diagnostic"
+
+                  Expect.equal (Loop.exitCode m.Exit) 1 "strict verify fails closed with exit 1")
           } ]

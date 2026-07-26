@@ -125,8 +125,26 @@ module CommandHost =
     /// target — a failed write leaves NO partial file. Reifies any exception to `Error`. (7 host copies.)
     val writeAtomic: path: string -> content: string -> Result<unit, string>
 
+    /// Typed result of locating and reading the repository's SDD handoff documents. Missing and empty are
+    /// distinct benign states; malformed documents retain both their reads and parse diagnostics; any
+    /// enumeration/read failure is an explicit fail-closed state rather than an empty collection.
+    type HandoffLoadOutcome =
+        | HandoffsAbsent
+        | HandoffsEmpty
+        | HandoffsUnreadable of source: string * message: string
+        | HandoffsMalformed of
+            reads: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list *
+            diagnostics: FS.GG.Governance.Adapters.SddHandoff.Model.Diagnostic list
+        | HandoffsLoaded of reads: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+
+    /// Locate, read, and validate every readiness/<id>/governance-handoff.json under `repo`, in stable ordinal
+    /// <id> order. Filesystem failures and malformed documents remain typed and observable.
+    val discoverHandoffs: repo: string -> HandoffLoadOutcome
+
     /// Locate + read every readiness/<id>/governance-handoff.json under `repo`, in stable ordinal <id> order.
-    /// A missing readiness dir (or any IO error) yields `[]`. (3 host copies + the Cli mirror sort, D3.)
+    /// Compatibility port for the existing command hosts: absent/empty yield `[]`, malformed reads flow to
+    /// the handoff consumer, and unreadable state becomes a synthetic malformed read so the consumer emits a
+    /// blocking integrity diagnostic and the command exits non-zero.
     val realHandoffs: repo: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
 
     /// Sense the runner environment from the `CI` variable: set ⇒ `Ci`, unset/empty ⇒ `Local`. (3 copies.)
