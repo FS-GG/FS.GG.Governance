@@ -48,12 +48,12 @@ let private handoffRead (json: string) : Reader.HandoffRead =
 
 let private failingHandoff =
     handoffRead
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 let private passingHandoff =
     handoffRead
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "test:unit", "state": "real" } ], "dependencies": [] } }"""
 
 // Drive parse → snapshot(with handoffs) → host-completion and recover the route exit from WriteOutput.

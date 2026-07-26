@@ -48,13 +48,13 @@ let private handoffRead (source: string) (json: string) : Reader.HandoffRead = {
 let private failingHandoff =
     handoffRead
         "readiness/wi-1/governance-handoff.json"
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 let private satisfiedHandoff =
     handoffRead
         "readiness/wi-2/governance-handoff.json"
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "test:unit", "state": "real" } ], "dependencies": [] } }"""
 
 let private profile (raw: string) : ConfigModel.ProfileId option = Some(ConfigModel.ProfileId raw)

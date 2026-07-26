@@ -1,10 +1,6 @@
-// Pure handoff parse + version-check (F081, US2). Visibility lives in Reader.fsi (Principle II).
-// BCL-only: System.Text.Json `JsonDocument` (research D2). PURE and TOTAL — never throws
-// (Constitution VI): malformed / missing-required / unknown-major / declared-autoSynthetic each
-// becomes a distinct, descriptive `Diagnostic`.
-
 namespace FS.GG.Governance.Adapters.SddHandoff
 
+open System
 open System.Text.Json
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Adapters.SddHandoff.Model
@@ -16,255 +12,358 @@ module Reader =
         { Source: string
           Json: string }
 
-    // ── Small total JsonElement accessors (no throw — kind-checked) ──
+    exception ParseFailure of DiagnosticCause * string
 
-    let private tryProp (e: JsonElement) (name: string) : JsonElement option =
-        match e.TryGetProperty name with
-        | true, v -> Some v
-        | false, _ -> None
+    let fail cause message = raise (ParseFailure(cause, message))
 
-    let private asString (e: JsonElement) : string option =
-        if e.ValueKind = JsonValueKind.String then Option.ofObj (e.GetString()) else None
+    let property (path: string) (name: string) (value: JsonElement) =
+        match value.TryGetProperty name with
+        | true, found -> found
+        | _ -> fail Malformed $"{path} is missing required field '{name}'"
 
-    let private asBool (e: JsonElement) : bool option =
-        match e.ValueKind with
-        | JsonValueKind.True -> Some true
-        | JsonValueKind.False -> Some false
+    let optionalProperty (name: string) (value: JsonElement) =
+        match value.TryGetProperty name with
+        | true, found -> Some found
         | _ -> None
 
-    let private asInt (e: JsonElement) : int option =
-        if e.ValueKind = JsonValueKind.Number then
-            match e.TryGetInt32() with
-            | true, n -> Some n
-            | false, _ -> None
-        else
-            None
+    let objectValue (path: string) (value: JsonElement) =
+        if value.ValueKind <> JsonValueKind.Object then
+            fail Malformed $"{path} must be an object"
 
-    // The declared-state token map (kernel tokens + SDD `deferred`/`accepted-deferral`). A declared
-    // `autoSynthetic` is its OWN distinct rejection (research D4), never generic Malformed.
-    let private parseDeclaredState (token: string) : Result<DeclaredState, DiagnosticCause> =
+        value
+
+    let arrayValue (path: string) (value: JsonElement) =
+        if value.ValueKind <> JsonValueKind.Array then
+            fail Malformed $"{path} must be an array"
+
+        value.EnumerateArray() |> Seq.toList
+
+    let stringValue (path: string) (value: JsonElement) =
+        if value.ValueKind <> JsonValueKind.String then
+            fail Malformed $"{path} must be a string"
+
+        value.GetString() |> Option.ofObj |> Option.defaultValue ""
+
+    let boolValue (path: string) (value: JsonElement) =
+        match value.ValueKind with
+        | JsonValueKind.True -> true
+        | JsonValueKind.False -> false
+        | _ -> fail Malformed $"{path} must be a boolean"
+
+    let intValue (path: string) (value: JsonElement) =
+        match value.TryGetInt32() with
+        | true, parsed -> parsed
+        | _ -> fail Malformed $"{path} must be a 32-bit integer"
+
+    let decimalValue (path: string) (value: JsonElement) =
+        match value.TryGetDecimal() with
+        | true, parsed -> parsed
+        | _ -> fail Malformed $"{path} must be a decimal number"
+
+    let optionalString (path: string) (value: JsonElement option) =
+        match value with
+        | None -> None
+        | Some element when element.ValueKind = JsonValueKind.Null -> None
+        | Some element -> Some(stringValue path element)
+
+    let strings (path: string) (value: JsonElement) =
+        arrayValue path value
+        |> List.mapi (fun index element -> stringValue $"{path}[{index}]" element)
+
+    let decimals (path: string) (value: JsonElement) =
+        arrayValue path value
+        |> List.mapi (fun index element -> decimalValue $"{path}[{index}]" element)
+
+    let ints (path: string) (value: JsonElement) =
+        arrayValue path value
+        |> List.mapi (fun index element -> intValue $"{path}[{index}]" element)
+
+    let parseDeclaredState (id: string) (token: string) : DeclaredState =
         match token with
-        | "pending" -> Ok Pending
-        | "real" -> Ok Real
-        | "synthetic" -> Ok Synthetic
-        | "failed" -> Ok Failed
-        | "skipped" -> Ok Skipped
-        | "deferred" -> Ok Deferred
-        | "accepted-deferral" -> Ok AcceptedDeferral
-        | "autoSynthetic" -> Error AutoSyntheticDeclared
-        | _ -> Error Malformed
+        | "pending" -> Pending
+        | "real" -> Real
+        | "synthetic" -> Synthetic
+        | "failed" -> DeclaredState.Failed
+        | "skipped" -> Skipped
+        | "deferred" -> Deferred
+        | "accepted-deferral" -> AcceptedDeferral
+        | "autoSynthetic" ->
+            fail
+                AutoSyntheticDeclared
+                $"evidence node '{id}' declares computed-only state 'autoSynthetic'"
+        | _ -> fail Malformed $"evidence node '{id}' declares unknown state token '{token}'"
 
-    // The MAJOR component of a semver string (text before the first `.`), or None if absent/non-numeric.
-    let private majorOf (version: string) : int option =
-        let head = version.Split('.') |> Array.tryHead
-        match head with
-        | Some h ->
-            match System.Int32.TryParse h with
-            | true, n -> Some n
-            | false, _ -> None
+    let majorOf (version: string) =
+        match version.Split('.') |> Array.tryHead with
+        | Some value ->
+            match Int32.TryParse value with
+            | true, parsed -> Some parsed
+            | _ -> None
         | None -> None
 
+    let parseIntent (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceIntentDeclaration option =
+        if value.ValueKind = JsonValueKind.Null then
+            None
+        else
+            let item = objectValue path value
+
+            let intent: Fsgg.Schemas.PerformanceIntentDeclaration =
+                { Id = property path "id" item |> stringValue $"{path}.id"
+                  Disposition = property path "disposition" item |> stringValue $"{path}.disposition"
+                  TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
+                  WorkloadIds = property path "workloadIds" item |> strings $"{path}.workloadIds"
+                  WorkloadDefinitionDigests =
+                    property path "workloadDefinitionDigests" item
+                    |> strings $"{path}.workloadDefinitionDigests"
+                  MaximumExpectedScale =
+                    property path "maximumExpectedScale" item |> stringValue $"{path}.maximumExpectedScale"
+                  MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
+                  MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
+                  MaxCatchUpFrames =
+                    property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
+                  StructuralCostBudgets =
+                    property path "structuralCostBudgets" item |> strings $"{path}.structuralCostBudgets"
+                  RequiredCapability =
+                    property path "requiredCapability" item |> stringValue $"{path}.requiredCapability"
+                  LiveCompositorRequired =
+                    property path "liveCompositorRequired" item |> boolValue $"{path}.liveCompositorRequired"
+                  DeferralIssue = optionalProperty "deferralIssue" item |> optionalString $"{path}.deferralIssue"
+                  EvidenceRefs = property path "evidenceRefs" item |> strings $"{path}.evidenceRefs"
+                  Rationale = optionalProperty "rationale" item |> optionalString $"{path}.rationale" }
+
+            Some intent
+
+    let parseSample (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceEvidenceSampleSet =
+        let item = objectValue path value
+
+        { WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
+          WorkloadDefinitionDigest =
+            property path "workloadDefinitionDigest" item |> stringValue $"{path}.workloadDefinitionDigest"
+          WorkloadClass = property path "workloadClass" item |> stringValue $"{path}.workloadClass"
+          TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
+          MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
+          MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
+          MaxCatchUpFrames =
+            property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
+          MeasurementScope =
+            property path "measurementScope" item |> stringValue $"{path}.measurementScope"
+          RequiredCapability =
+            property path "requiredCapability" item |> stringValue $"{path}.requiredCapability"
+          HostProfile = property path "hostProfile" item |> stringValue $"{path}.hostProfile"
+          PackageVersions = property path "packageVersions" item |> strings $"{path}.packageVersions"
+          MeasurementMode =
+            property path "measurementMode" item |> stringValue $"{path}.measurementMode"
+          Capabilities = property path "capabilities" item |> strings $"{path}.capabilities"
+          WarmupPolicy = property path "warmupPolicy" item |> stringValue $"{path}.warmupPolicy"
+          SamplePolicy = property path "samplePolicy" item |> stringValue $"{path}.samplePolicy"
+          CapturedAtUtc = property path "capturedAtUtc" item |> stringValue $"{path}.capturedAtUtc"
+          CurrencyToken = property path "currencyToken" item |> stringValue $"{path}.currencyToken"
+          ProbeReadbackContaminated =
+            property path "probeReadbackContaminated" item
+            |> boolValue $"{path}.probeReadbackContaminated"
+          DurationSamplesMs =
+            property path "durationSamplesMs" item |> decimals $"{path}.durationSamplesMs"
+          CatchUpFrames = property path "catchUpFrames" item |> ints $"{path}.catchUpFrames" }
+
+    let parseMeasurement (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceEvidenceMeasurement =
+        let item = objectValue path value
+
+        { WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
+          P95Ms = property path "p95Ms" item |> decimalValue $"{path}.p95Ms"
+          P99Ms = property path "p99Ms" item |> decimalValue $"{path}.p99Ms"
+          MaxCatchUpFrames =
+            property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames" }
+
+    let parsePerformanceEvidence index (value: JsonElement) : Fsgg.Schemas.GovernanceHandoffPerformanceEvidence =
+        let path = $"performanceEvidence[{index}]"
+        let item = objectValue path value
+        let artifactPath = $"{path}.artifact"
+        let artifact = property path "artifact" item |> objectValue artifactPath
+
+        let claimed =
+            match optionalProperty "claimedBudgetPassed" artifact with
+            | None -> None
+            | Some element when element.ValueKind = JsonValueKind.Null -> None
+            | Some element -> Some(boolValue $"{artifactPath}.claimedBudgetPassed" element)
+
+        let artifactValue: Fsgg.Schemas.PerformanceEvidenceArtifact =
+            { ContractVersion =
+                property artifactPath "contractVersion" artifact
+                |> stringValue $"{artifactPath}.contractVersion"
+              ClaimedBudgetPassed = claimed
+              SampleSets =
+                property artifactPath "sampleSets" artifact
+                |> arrayValue $"{artifactPath}.sampleSets"
+                |> List.mapi (fun sampleIndex sample ->
+                    parseSample $"{artifactPath}.sampleSets[{sampleIndex}]" sample) }
+
+        { EvidenceId = property path "evidenceId" item |> stringValue $"{path}.evidenceId"
+          ArtifactPath = property path "artifactPath" item |> stringValue $"{path}.artifactPath"
+          Intent = property path "intent" item |> parseIntent $"{path}.intent"
+          Artifact = artifactValue
+          Measurements =
+            property path "measurements" item
+            |> arrayValue $"{path}.measurements"
+            |> List.mapi (fun measurementIndex measurement ->
+                parseMeasurement $"{path}.measurements[{measurementIndex}]" measurement) }
+
     let parse (read: HandoffRead) : Result<Handoff, Diagnostic> =
-        let diag cause message : Diagnostic =
-            { Cause = cause; Source = read.Source; Message = message }
+        let diagnostic cause message =
+            Error
+                { Cause = cause
+                  Source = read.Source
+                  Message = message }
 
-        let malformed msg = Error(diag Malformed msg)
-
-        // Distinct, descriptive messages per cause (SC-004).
         try
-            use doc = JsonDocument.Parse read.Json
-            let root = doc.RootElement
-
-            if root.ValueKind <> JsonValueKind.Object then
-                malformed "handoff document is not a JSON object"
-            else
-
-            // contractVersion (required) + major version pin (FR-002).
-            match tryProp root "contractVersion" |> Option.bind asString with
-            | None -> malformed "handoff is missing the required string field 'contractVersion'"
-            | Some contractVersion ->
+            use document = JsonDocument.Parse read.Json
+            let root = objectValue "handoff" document.RootElement
+            let contractVersion = property "handoff" "contractVersion" root |> stringValue "contractVersion"
 
             match majorOf contractVersion with
-            | None -> malformed (sprintf "handoff 'contractVersion' is not a recognizable semver: '%s'" contractVersion)
+            | None -> fail Malformed $"handoff contractVersion is not recognizable semver: '{contractVersion}'"
             | Some major when major <> supportedContractMajor ->
-                Error(
-                    diag
-                        VersionMismatch
-                        (sprintf
-                            "handoff 'contractVersion' major %d is unsupported (this consumer pins major %d): '%s'"
-                            major
-                            supportedContractMajor
-                            contractVersion)
-                )
-            | Some _ ->
+                fail
+                    VersionMismatch
+                    $"handoff contractVersion major {major} is unsupported; this consumer pins major {supportedContractMajor}"
+            | Some _ -> ()
 
-            let schemaVersion =
-                tryProp root "schemaVersion" |> Option.bind asInt |> Option.defaultValue 1
+            let evidence = property "handoff" "evidence" root |> objectValue "evidence"
 
-            // evidence (required object).
-            match tryProp root "evidence" with
-            | None -> malformed "handoff is missing the required 'evidence' block"
-            | Some evidence when evidence.ValueKind <> JsonValueKind.Object ->
-                malformed "handoff 'evidence' is not a JSON object"
-            | Some evidence ->
+            let nodes =
+                property "evidence" "nodes" evidence
+                |> arrayValue "evidence.nodes"
+                |> List.mapi (fun index value ->
+                    let path = $"evidence.nodes[{index}]"
+                    let node = objectValue path value
+                    let id = property path "id" node |> stringValue $"{path}.id"
+                    let token = property path "state" node |> stringValue $"{path}.state"
 
-            // evidence.nodes (required array). Each node: id (string), state (token), stale?, rationale?.
-            let nodesEl = tryProp evidence "nodes"
+                    { Id = id
+                      State = parseDeclaredState id token
+                      Stale =
+                        optionalProperty "stale" node
+                        |> Option.map (boolValue $"{path}.stale")
+                        |> Option.defaultValue false
+                      Rationale = optionalProperty "rationale" node |> optionalString $"{path}.rationale" })
 
-            match nodesEl with
-            | None -> malformed "handoff 'evidence.nodes' is missing"
-            | Some nodesEl when nodesEl.ValueKind <> JsonValueKind.Array ->
-                malformed "handoff 'evidence.nodes' is not an array"
-            | Some nodesEl ->
+            let dependencies =
+                optionalProperty "dependencies" evidence
+                |> Option.bind (fun value ->
+                    if value.ValueKind = JsonValueKind.Null then None else Some value)
+                |> Option.map (arrayValue "evidence.dependencies")
+                |> Option.defaultValue []
+                |> List.mapi (fun index value ->
+                    let path = $"evidence.dependencies[{index}]"
+                    let edge = objectValue path value
+                    property path "dependent" edge |> stringValue $"{path}.dependent",
+                    property path "dependency" edge |> stringValue $"{path}.dependency")
 
-            // Fold nodes, surfacing the FIRST node-level diagnostic (autoSynthetic / malformed token).
-            let parsedNodes =
-                nodesEl.EnumerateArray()
-                |> Seq.fold
-                    (fun (acc: Result<DeclaredNode list, Diagnostic>) nodeEl ->
-                        acc
-                        |> Result.bind (fun ns ->
-                            match tryProp nodeEl "id" |> Option.bind asString with
-                            | None -> malformed "an 'evidence.nodes[]' entry is missing the required string 'id'"
-                            | Some id ->
-                                match tryProp nodeEl "state" |> Option.bind asString with
-                                | None ->
-                                    malformed (sprintf "evidence node '%s' is missing the required string 'state'" id)
-                                | Some stateToken ->
-                                    match parseDeclaredState stateToken with
-                                    | Error AutoSyntheticDeclared ->
-                                        Error(
-                                            diag
-                                                AutoSyntheticDeclared
-                                                (sprintf
-                                                    "evidence node '%s' declares state 'autoSynthetic', which is computed-only and never a valid declared input (FR-005)"
-                                                    id)
-                                        )
-                                    | Error _ ->
-                                        malformed (
-                                            sprintf "evidence node '%s' declares an unknown state token '%s'" id stateToken
-                                        )
-                                    | Ok state ->
-                                        let stale =
-                                            tryProp nodeEl "stale" |> Option.bind asBool |> Option.defaultValue false
-
-                                        let rationale = tryProp nodeEl "rationale" |> Option.bind asString
-
-                                        // Prepend (O(1)) and reverse once after the fold (#56/C1f) instead of
-                                        // `ns @ [node]` per element, which was O(n²). Order is restored below.
-                                        Ok({ Id = id; State = state; Stale = stale; Rationale = rationale } :: ns)))
-                    (Ok [])
-
-            match parsedNodes with
-            | Error d -> Error d
-            | Ok nodesReversed ->
-
-            // Restore source order once (#56/C1f): the fold above prepended for O(n) accumulation.
-            let nodes = List.rev nodesReversed
-
-            // evidence.dependencies (optional array of 2-string tuples). Parsed STRICTLY, like nodes
-            // above: a present-but-malformed edge is REJECTED as Malformed, never silently dropped
-            // (ADPT-2). AutoSynthetic taint flows ALONG these edges, so a dropped edge could leave a
-            // downstream verdict resting on a synthetic node un-tainted — a taint fail-open. An absent
-            // `dependencies` field (or an explicit `null`) is fine (Ok []) since it is optional and
-            // carries no edges to drop; a present *value* must be a well-formed [from, to] list.
-            let parsedDeps =
-                match tryProp evidence "dependencies" with
-                | None -> Ok []
-                | Some depsEl when depsEl.ValueKind = JsonValueKind.Null -> Ok []
-                | Some depsEl when depsEl.ValueKind <> JsonValueKind.Array ->
-                    malformed "handoff 'evidence.dependencies' is present but is not an array"
-                | Some depsEl ->
-                    depsEl.EnumerateArray()
-                    |> Seq.fold
-                        (fun (acc: Result<(string * string) list, Diagnostic>) pair ->
-                            acc
-                            |> Result.bind (fun ds ->
-                                if pair.ValueKind <> JsonValueKind.Array then
-                                    malformed "an 'evidence.dependencies[]' entry is not a 2-element array"
-                                else
-                                    // Do NOT Seq.choose here: a non-string element must fail the edge,
-                                    // not be silently skipped into a shorter (and possibly matching) list.
-                                    match pair.EnumerateArray() |> Seq.map asString |> Seq.toList with
-                                    | [ Some a; Some b ] -> Ok((a, b) :: ds)
-                                    | _ ->
-                                        malformed
-                                            "an 'evidence.dependencies[]' entry is not a pair of strings [from, to]"))
-                        (Ok [])
-                    // Prepended for O(n); restore source order once (mirrors the nodes fold above).
-                    |> Result.map List.rev
-
-            match parsedDeps with
-            | Error d -> Error d
-            | Ok deps ->
-
-            // readiness (optional object).
             let readiness =
-                match tryProp root "readiness" with
-                | Some r when r.ValueKind = JsonValueKind.Object ->
-                    let str name = tryProp r name |> Option.bind asString |> Option.defaultValue ""
+                optionalProperty "readiness" root
+                |> Option.map (fun value ->
+                    let item = objectValue "readiness" value
+                    let counts = property "readiness" "counts" item |> objectValue "readiness.counts"
 
-                    let blocking =
-                        match tryProp r "blockingDiagnosticIds" with
-                        | Some b when b.ValueKind = JsonValueKind.Array ->
-                            b.EnumerateArray() |> Seq.choose asString |> Seq.toList
-                        | _ -> []
+                    let countValues =
+                        counts.EnumerateObject()
+                        |> Seq.map (fun entry -> entry.Name, intValue $"readiness.counts.{entry.Name}" entry.Value)
+                        |> Seq.toList
 
-                    let counts =
-                        match tryProp r "counts" with
-                        | Some c when c.ValueKind = JsonValueKind.Object ->
-                            c.EnumerateObject()
-                            |> Seq.choose (fun p -> asInt p.Value |> Option.map (fun n -> p.Name, n))
-                            |> Seq.toList
-                        | _ -> []
+                    let perView =
+                        property "readiness" "perViewState" item
+                        |> fun perViewState ->
+                            if perViewState.ValueKind = JsonValueKind.Object then
+                                perViewState.EnumerateObject()
+                                |> Seq.map (fun entry ->
+                                    entry.Name, stringValue $"readiness.perViewState.{entry.Name}" entry.Value)
+                                |> Seq.toList
+                            else
+                                arrayValue "readiness.perViewState" perViewState
+                                |> List.mapi (fun index value ->
+                                    let path = $"readiness.perViewState[{index}]"
+                                    let view = objectValue path value
+                                    property path "view" view |> stringValue $"{path}.view",
+                                    property path "state" view |> stringValue $"{path}.state")
 
-                    let perViewState =
-                        match tryProp r "perViewState" with
-                        | Some p when p.ValueKind = JsonValueKind.Object ->
-                            p.EnumerateObject()
-                            |> Seq.choose (fun e -> asString e.Value |> Option.map (fun v -> e.Name, v))
-                            |> Seq.toList
-                        | _ -> []
+                    { ShipDisposition =
+                        property "readiness" "shipDisposition" item
+                        |> stringValue "readiness.shipDisposition"
+                      VerificationReadiness =
+                        property "readiness" "verificationReadiness" item
+                        |> stringValue "readiness.verificationReadiness"
+                      BlockingDiagnosticIds =
+                        property "readiness" "blockingDiagnosticIds" item
+                        |> strings "readiness.blockingDiagnosticIds"
+                      Counts = countValues
+                      PerViewState = perView })
 
-                    Some
-                        { ShipDisposition = str "shipDisposition"
-                          VerificationReadiness = str "verificationReadiness"
-                          BlockingDiagnosticIds = blocking
-                          Counts = counts
-                          PerViewState = perViewState }
-                | _ -> None
-
-            // governedReferences (optional array; routing enrichment only — FR-010).
             let governedReferences =
-                match tryProp root "governedReferences" with
-                | Some g when g.ValueKind = JsonValueKind.Array ->
-                    g.EnumerateArray()
-                    |> Seq.choose (fun refEl ->
-                        if refEl.ValueKind = JsonValueKind.Object then
-                            let workItem = tryProp refEl "workItem" |> Option.bind asString |> Option.defaultValue ""
+                optionalProperty "governedReferences" root
+                |> Option.map (arrayValue "governedReferences")
+                |> Option.defaultValue []
+                |> List.mapi (fun index value ->
+                    let path = $"governedReferences[{index}]"
+                    let item = objectValue path value
 
-                            let paths =
-                                match tryProp refEl "paths" with
-                                | Some p when p.ValueKind = JsonValueKind.Array ->
-                                    p.EnumerateArray()
-                                    |> Seq.choose asString
-                                    |> Seq.map normalizePath
-                                    |> Seq.toList
-                                | _ -> []
+                    match optionalProperty "path" item with
+                    | Some rawPath ->
+                        [ { Path = rawPath |> stringValue $"{path}.path" |> normalizePath
+                            Owner = property path "owner" item |> stringValue $"{path}.owner"
+                            Relationship =
+                                property path "relationship" item |> stringValue $"{path}.relationship"
+                            Kind = optionalProperty "kind" item |> optionalString $"{path}.kind"
+                            Operation =
+                                optionalProperty "operation" item |> optionalString $"{path}.operation" } ]
+                    | None ->
+                        let workItem =
+                            optionalProperty "workItem" item
+                            |> Option.map (stringValue $"{path}.workItem")
+                            |> Option.defaultValue ""
 
-                            Some { WorkItem = workItem; Paths = paths }
-                        else
-                            None)
-                    |> Seq.toList
-                | _ -> []
+                        property path "paths" item
+                        |> strings $"{path}.paths"
+                        |> List.map (fun rawPath ->
+                            { Path = normalizePath rawPath
+                              Owner = workItem
+                              Relationship = "legacy"
+                              Kind = None
+                              Operation = None }))
+                |> List.collect id
+
+            let performanceEvidence =
+                optionalProperty "performanceEvidence" root
+                |> Option.map (arrayValue "performanceEvidence")
+                |> Option.defaultValue []
+                |> List.mapi parsePerformanceEvidence
+
+            let diagnostics =
+                optionalProperty "diagnostics" root
+                |> Option.map (arrayValue "diagnostics")
+                |> Option.defaultValue []
+                |> List.mapi (fun index value ->
+                    let path = $"diagnostics[{index}]"
+                    let item = objectValue path value
+
+                    { Id = property path "id" item |> stringValue $"{path}.id"
+                      Message = property path "message" item |> stringValue $"{path}.message"
+                      Correction =
+                        property path "correction" item |> stringValue $"{path}.correction"
+                      RelatedIds = property path "relatedIds" item |> strings $"{path}.relatedIds" })
 
             Ok
                 { ContractVersion = contractVersion
-                  SchemaVersion = schemaVersion
-                  Evidence = { Nodes = nodes; Dependencies = deps }
+                  SchemaVersion =
+                    optionalProperty "schemaVersion" root
+                    |> Option.map (intValue "schemaVersion")
+                    |> Option.defaultValue 1
+                  Evidence =
+                    { Nodes = nodes
+                      Dependencies = dependencies }
                   Readiness = readiness
-                  GovernedReferences = governedReferences }
-        with ex ->
-            // Any parse failure (malformed JSON, unexpected shape) is a descriptive Malformed diagnostic,
-            // never a throw (Constitution VI).
-            malformed ("handoff JSON could not be parsed: " + ex.Message)
+                  GovernedReferences = governedReferences
+                  PerformanceEvidence = performanceEvidence
+                  Diagnostics = diagnostics }
+        with
+        | ParseFailure(cause, message) -> diagnostic cause message
+        | :? JsonException as ex -> diagnostic Malformed $"handoff JSON could not be parsed: {ex.Message}"
+        | ex -> diagnostic Malformed $"handoff JSON could not be parsed: {ex.Message}"

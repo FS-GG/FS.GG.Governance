@@ -1,6 +1,6 @@
 {
-  "contractVersion": "2.0.0",
-  "schemaVersion": 2,
+  "contractVersion": "3.0.0",
+  "schemaVersion": 1,
   "evidence": {
     "nodes": [ { "id": "build:lib", "state": "real" } ],
     "dependencies": []

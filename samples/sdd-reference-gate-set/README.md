@@ -17,7 +17,7 @@ substitution is the `<App>` placeholder in the `tooling.yml` command strings.
 | File | Schema | Purpose |
 |------|--------|---------|
 | `governance.yml` | v1 | Project identity, the three governed `domains`, the `src` package surface, and refs to the sibling policy/capabilities files. |
-| `capabilities.yml` | v2 | The `domains`, the `pathMap` (glob → domain), the `public-api` package surface, and the **three checks**. |
+| `capabilities.yml` | v2 | The `domains`, the `pathMap` (glob → domain), the `public-api` package surface, and the **four checks**. |
 | `policy.yml` | v1 | The profiles and the load-bearing `defaultProfile: light`, plus declared branch-policy / review-budget placeholders. |
 | `tooling.yml` | v1 | The three allow-listed commands each check binds to, the environment classes, and the `dotnet` external tool. |
 
@@ -74,7 +74,7 @@ The corresponding checkout policy is:
 data/upstream/content/** -text
 ```
 
-## The three gates
+## The four configured gates
 
 Each `check` becomes one gate `"<domain>:<checkId>"`, bound to a declared `tooling.yml`
 command and reached by a path-map glob:
@@ -84,12 +84,34 @@ command and reached by a path-map glob:
 | `build:build` | `src/**`, `*.sln` | `dotnet-build` | `block-on-ship` | yes, at the ship/release ratchet |
 | `test:test` | `tests/**` | `dotnet-test` | `block-on-ship` | yes, at the ship/release ratchet |
 | `evidence:evidence` | `build.fsx` | `build-evidence` | `warn` | never — advisory everywhere |
+| `gameplay:fr-covered` | `specs/**` | handoff evidence | `block-on-ship` | yes, at the ship/release ratchet |
 
 `build` and `test` are the real, block-capable gates. `evidence` is a first-class
 governed gate that runs the product's in-process evidence-integrity step
 (`dotnet fsi build.fsx -- evidence`); its `warn` maturity keeps it **advisory on first
 touch** — the "evidence not yet present" posture — even while the block-capable gates can
 block.
+
+## Interactive performance evidence lanes
+
+Interactive performance is a fifth, **handoff-derived** gate rather than another
+`capabilities.yml` check. An active SDD performance intent causes Governance to validate every
+`performance-evidence-v1` binding and independently recompute nearest-rank p95/p99 plus maximum
+catch-up frames from raw samples. The 60 FPS normal-play default is p95 ≤ 16.67 ms, p99 ≤ 25 ms,
+and catch-up = 0 unless the typed intent explicitly selects another positive target.
+
+Use two CI lanes when the product ships a live surface:
+
+1. **Ordinary CI / Verify** captures the bounded headless artifact. It must name workload digests,
+   host profile, package versions, warmup/sample policy, currency, capability, and measurement mode.
+2. **Protected capable-runner lane** captures `measurementMode: live-compositor`. Make the
+   Governance ship/gate result from this lane a required protected-branch check. Headless evidence
+   presented for a live-compositor intent is reported `environment-limited`; readback-contaminated
+   evidence is rejected.
+
+A non-interactive product with no active performance intent receives no performance gate. Keep
+stress/throughput workloads classified `stress-throughput`; they are audited separately and never
+substitute for normal-play latency evidence.
 
 ## Non-blocking by default — and how to ratchet up
 
@@ -112,7 +134,7 @@ the floor/tighten derivation.
 ## Validate it yourself
 
 ```bash
-# Loads Valid, assembles 3 gates, routes, stays non-blocking-by-default:
+# Loads Valid, assembles 4 configured gates, routes, stays non-blocking-by-default:
 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests
 
 # Or copy it unedited and load through the CLI from a product working tree:

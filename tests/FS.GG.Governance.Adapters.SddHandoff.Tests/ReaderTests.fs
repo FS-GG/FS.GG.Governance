@@ -22,11 +22,11 @@ let private messageOf (r: Result<Handoff, Diagnostic>) =
 let tests =
     testList
         "Reader"
-        [ test "well-formed v1.x handoff parses to Ok with every node state round-tripping" {
+        [ test "well-formed v2.x handoff parses to Ok with every node state round-tripping" {
               match Reader.parse (Fixtures.read "satisfied") with
               | Error d -> failtestf "expected Ok, got Error %A" d
               | Ok h ->
-                  Expect.equal h.ContractVersion "1.0.0" "contract version carried"
+                  Expect.equal h.ContractVersion "2.0.0" "contract version carried"
                   Expect.equal h.SchemaVersion 1 "schema version carried"
                   let states = h.Evidence.Nodes |> List.map (fun n -> n.State)
                   Expect.contains states Real "real node round-trips"
@@ -46,7 +46,7 @@ let tests =
                   Expect.equal (byId "perf:bench").State AcceptedDeferral "accepted-deferral token parsed"
           }
 
-          test "unknown contractVersion major (2.0.0) yields VersionMismatch (FR-002)" {
+          test "unknown contractVersion major (3.0.0) yields VersionMismatch (FR-002)" {
               let r = Reader.parse (Fixtures.read "v2-major")
               Expect.equal (causeOf r) (Some VersionMismatch) "version-mismatch cause"
           }
@@ -85,20 +85,20 @@ let tests =
 
           test "a malformed dependency edge is REJECTED as Malformed, not silently dropped (ADPT-2)" {
               // AutoSynthetic taint flows along dependency edges; a dropped edge could leave a
-              // downstream verdict resting on a synthetic node un-tainted. Every non-[from,to]-string
+              // downstream verdict resting on a synthetic node un-tainted. Every malformed v2 object
               // shape must fail the whole handoff, mirroring the strict node fold.
               let edge (dep: string) =
                   sprintf
-                      """{ "contractVersion": "1.0.0",
+                      """{ "contractVersion": "2.0.0",
                            "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": [ %s ] } }"""
                       dep
 
               let cases =
-                  [ """[ "a" ]""", "single-element tuple"
-                    """[ "a", "b", "c" ]""", "three-element tuple"
-                    """[ "a", 5 ]""", "non-string member"
-                    "\"a:b\"", "scalar in place of a tuple"
-                    "[]", "empty tuple" ]
+                  [ """{ "dependent": "a" }""", "missing dependency"
+                    """{ "dependency": "b" }""", "missing dependent"
+                    """{ "dependent": "a", "dependency": 5 }""", "non-string member"
+                    """[ "a", "b" ]""", "legacy tuple"
+                    "\"a:b\"", "scalar in place of an object" ]
 
               for dep, label in cases do
                   let r = Reader.parse { Source = "x"; Json = edge dep }
@@ -107,7 +107,7 @@ let tests =
 
           test "a present-but-non-array 'dependencies' is Malformed (ADPT-2)" {
               let json =
-                  """{ "contractVersion": "1.0.0",
+                  """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": {} } }"""
 
               let r = Reader.parse { Source = "x"; Json = json }
@@ -118,11 +118,11 @@ let tests =
               // `dependencies` is optional and carries no edges to drop, so null/absent must NOT be
               // rejected — only a present, malformed *value* fails closed.
               let nullDeps =
-                  """{ "contractVersion": "1.0.0",
+                  """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": null } }"""
 
               let absentDeps =
-                  """{ "contractVersion": "1.0.0",
+                  """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ] } }"""
 
               for json, label in [ nullDeps, "null"; absentDeps, "absent" ] do
@@ -133,9 +133,12 @@ let tests =
 
           test "a well-formed dependency edge still round-trips (ADPT-2 happy path)" {
               let json =
-                  """{ "contractVersion": "1.0.0",
+                  """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ],
-                                     "dependencies": [ [ "a", "b" ], [ "c", "d" ] ] } }"""
+                                     "dependencies": [
+                                       { "dependent": "a", "dependency": "b" },
+                                       { "dependent": "c", "dependency": "d" }
+                                     ] } }"""
 
               match Reader.parse { Source = "x"; Json = json } with
               | Error d -> failtestf "expected Ok, got Error %A" d
@@ -144,10 +147,20 @@ let tests =
 
           test "unknown additive (minor) fields are ignored" {
               let withExtra =
-                  """{ "contractVersion": "1.4.0", "schemaVersion": 1,
+                  """{ "contractVersion": "2.4.0", "schemaVersion": 1,
                        "futureField": { "anything": 1 },
                        "evidence": { "nodes": [ { "id": "a", "state": "real", "newNodeField": true } ], "dependencies": [] } }"""
               match Reader.parse { Source = "x"; Json = withExtra } with
               | Error d -> failtestf "expected Ok ignoring unknown fields, got %A" d
-              | Ok h -> Expect.equal h.ContractVersion "1.4.0" "minor 1.x accepted, unknown fields ignored"
+              | Ok h -> Expect.equal h.ContractVersion "2.4.0" "minor 2.x accepted, unknown fields ignored"
+          }
+
+          test "real v2 projection parses typed performance evidence and flat governed references" {
+              match Reader.parse (Fixtures.read "performance-v2") with
+              | Error d -> failtestf "expected v2 producer-shaped fixture to parse, got %A" d
+              | Ok handoff ->
+                  Expect.equal handoff.PerformanceEvidence.Length 1 "typed performance item parsed"
+                  Expect.equal handoff.PerformanceEvidence.Head.Intent.Value.Id "PI-001" "typed intent carried"
+                  Expect.equal handoff.Evidence.Dependencies [ ("task:T-1", "evidence:EV-PERF") ] "object edge parsed"
+                  Expect.equal handoff.GovernedReferences.Length 1 "flat governed reference parsed"
           } ]

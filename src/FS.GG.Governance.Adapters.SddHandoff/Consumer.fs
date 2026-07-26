@@ -60,9 +60,67 @@ module Consumer =
     // — FR-010). Handoff gates are PRE-SELECTED regardless (relevance = the declared work item).
     let private selectingPaths (handoff: Handoff) : SelectingPath list =
         handoff.GovernedReferences
-        |> List.collect (fun r -> r.Paths)
-        |> List.map (fun p -> { Path = p; MatchedGlob = p })
+        |> List.map (fun reference -> reference.Path)
+        |> List.map (fun path -> { Path = path; MatchedGlob = path })
         |> List.distinct
+
+    let private performanceGate id (evaluation: PerformanceEvaluation) =
+        let state, maturity =
+            match evaluation.State with
+            | PerformancePassed -> "passed", Warn
+            | PerformanceFailed -> "failed", BlockOnShip
+            | PerformanceEnvironmentLimited -> "environment-limited", BlockOnShip
+            | PerformanceNotApplicable -> "not-applicable", Warn
+
+        let measurements =
+            evaluation.Measurements
+            |> List.map (fun measured ->
+                $"{measured.WorkloadId}: p95={measured.P95Ms}ms, p99={measured.P99Ms}ms, catch-up={measured.MaxCatchUpFrames}")
+            |> String.concat "; "
+
+        let failures =
+            match evaluation.Failures with
+            | [] -> ""
+            | values ->
+                let rendered = String.concat "; " values
+                $" Failures: {rendered}."
+
+        { Id = GateId($"sdd-handoff:performance:{id}:{evaluation.EvidenceId}")
+          Domain = DomainId "interactive-performance"
+          Description =
+            $"Interactive performance evidence '{evaluation.EvidenceId}' is {state} (Governance recomputation: {measurements}).{failures} Remediation: {evaluation.Remediation}"
+          Prerequisites = []
+          Cost = Medium
+          Timeout = Gates.defaultTimeout
+          Owner = Owner "sdd-handoff"
+          Maturity = maturity
+          ProductCheck = true
+          FreshnessKey =
+            { Check = CheckId($"performance:{evaluation.EvidenceId}")
+              Domain = DomainId "interactive-performance"
+              Cost = Medium
+              Environment = Ci
+              Command = None } }
+
+    let private performancePairs id paths (handoff: Handoff) =
+        let isStale evidenceId =
+            handoff.Diagnostics
+            |> List.exists (fun diagnostic ->
+                diagnostic.Id.EndsWith("staleEvidence", System.StringComparison.Ordinal)
+                && (diagnostic.RelatedIds
+                    |> List.exists (fun related ->
+                        related = evidenceId
+                        || related = $"evidence:{evidenceId}")))
+
+        handoff.PerformanceEvidence
+        |> List.choose (fun evidence ->
+            let evaluation = Performance.evaluate (isStale evidence.EvidenceId) evidence
+
+            match evaluation.State with
+            | PerformanceNotApplicable -> None
+            | PerformancePassed
+            | PerformanceFailed
+            | PerformanceEnvironmentLimited -> Some(performanceGate id evaluation, paths))
 
     // An effective evidence state of `Failed` or `AutoSynthetic` makes the evidence gate blocking-capable.
     let private evidenceBlocking (states: Map<string, EvidenceState>) : bool =
@@ -142,7 +200,10 @@ module Consumer =
                         | Some block -> [ Readiness.toGate read.Source block ]
                         | None -> []
 
-                    let gates = evidenceGate :: readinessGates |> List.map (fun g -> g, paths)
+                    let ordinaryGates =
+                        evidenceGate :: readinessGates |> List.map (fun gate -> gate, paths)
+
+                    let gates = ordinaryGates @ performancePairs id paths handoff
                     gates, staleDiags
 
     let consume (reads: Reader.HandoffRead list) : ConsumeResult =
@@ -167,6 +228,7 @@ module Consumer =
             match Reader.parse r with
             | Ok handoff -> Some handoff
             | Error _ -> None) // bad document ⇒ no candidates (FR-008)
-        |> List.collect (fun h -> h.GovernedReferences |> List.collect (fun g -> g.Paths))
+        |> List.collect (fun handoff ->
+            handoff.GovernedReferences |> List.map (fun reference -> reference.Path))
         |> List.distinct // dedup across work items / docs (FR-006)
         |> List.sortBy (fun (GovernedPath p) -> p)

@@ -35,5 +35,6 @@ let tests =
                   || n = "FS.GG.Governance.Gates"
                   || n = "FS.GG.Governance.Route"
                   || n = "FS.GG.Governance.Routing"
-                  || n = "FS.GG.Governance.Findings")
+                  || n = "FS.GG.Governance.Findings"
+                  || n = "FS.GG.Contracts")
               sddHandoff ]

@@ -14,11 +14,11 @@ open FS.GG.Governance.ShipCommand.Tests.Support
 // no routed gate), so the delta is traceable to the declared evidence — the handoff is no longer inert.
 
 let private satisfiedJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "real" } ], "dependencies": [] } }"""
 
 let private failingJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =

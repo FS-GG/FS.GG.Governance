@@ -12,7 +12,7 @@ open FS.GG.Governance.RouteCommand.Tests.Support
 // the pure `Consumer` determinism assumes). The handoff is the sole verdict driver (ExplicitPaths []).
 
 let private evidenceHandoffJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 let private handoffRead source json : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =

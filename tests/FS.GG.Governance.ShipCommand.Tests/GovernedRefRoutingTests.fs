@@ -22,12 +22,12 @@ let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.Hando
 // declaring the given governedReferences paths.
 let private declaringJson (paths: string) : string =
     sprintf
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
              "governedReferences": [ { "workItem": "WI-1", "paths": [ %s ] } ] }"""
         paths
 
-let private malformedJson = """{ "contractVersion": "1.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
+let private malformedJson = """{ "contractVersion": "2.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
 
 let private runWith scope handoffs =
     let req = requestFor scope Loop.Text
@@ -54,7 +54,7 @@ let tests =
         [ // ── US1 V3 (SC-004): a declared surface flips the ship verdict to non-shippable ──
           test "V3 — a declared block-on-ship path with no sensed change flips ship to Fail (SC-004)" {
               // Baseline: the same satisfied handoff but declaring NO governed surface ⇒ no routed gate ⇒ Pass.
-              let baseline = runWith (Loop.ExplicitPaths []) [ handoffRead (sprintf """{ "contractVersion": "1.0.0", "schemaVersion": 1, "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] }, "governedReferences": [] }""") ]
+              let baseline = runWith (Loop.ExplicitPaths []) [ handoffRead (sprintf """{ "contractVersion": "2.0.0", "schemaVersion": 1, "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] }, "governedReferences": [] }""") ]
               Expect.equal (Option.get baseline.Decision).Verdict Pass "with no declared surface and no sensed change ⇒ Pass"
 
               // Declaring src/Lib/Thing.fs selects the block-on-ship package-api gates; they fail on the

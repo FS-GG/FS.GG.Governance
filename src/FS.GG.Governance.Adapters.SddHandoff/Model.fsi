@@ -8,9 +8,8 @@
 // in-memory projection of one read-only `readiness/<id>/governance-handoff.json` document — the shape
 // Governance reads against its OWN target types. Field names come from ADR 0002 + the handoff tutorial
 // (docs/tutorials/sdd-governance-handoff.md); the authoritative JSON key spellings are SDD-owned and
-// cross-checked at implementation (research D8). Governance imports NO SDD code and changes NO field of
-// the SDD-owned document (FR-013, SC-006). It REUSES `Config.Model.GovernedPath` for path provenance
-// (never redefined).
+// cross-checked at implementation (research D8). Governance imports NO SDD implementation code and
+// consumes the published `FS.GG.Contracts` types for the SDD-owned performance projection.
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
@@ -56,21 +55,49 @@ module Model =
           Counts: (string * int) list
           PerViewState: (string * string) list }
 
-    /// Optional routing enrichment only (FR-010): a declared work item and the governed paths it touches.
-    /// Used solely to populate `SelectingPath` provenance on handoff gates when present; correctness never
-    /// depends on it.
+    /// One flat governed-reference projection from the v2 contract. `Path` is used as optional
+    /// SelectingPath provenance; the remaining fields are carried for auditability.
     type GovernedReference =
-        { WorkItem: string
-          Paths: GovernedPath list }
+        { Path: GovernedPath
+          Owner: string
+          Relationship: string
+          Kind: string option
+          Operation: string option }
+
+    /// One handoff diagnostic used for freshness and actionable correction projection.
+    type HandoffDiagnostic =
+        { Id: string
+          Message: string
+          Correction: string
+          RelatedIds: string list }
 
     /// The in-memory projection of one `readiness/<id>/governance-handoff.json`. The consumer pins
-    /// `ContractVersion` MAJOR `1`; an unknown major ⇒ a version-mismatch diagnostic (FR-002).
+    /// `ContractVersion` MAJOR `2`; an unknown major ⇒ a version-mismatch diagnostic (FR-002).
     type Handoff =
         { ContractVersion: string
           SchemaVersion: int
           Evidence: EvidenceBlock
           Readiness: ReadinessBlock option
-          GovernedReferences: GovernedReference list }
+          GovernedReferences: GovernedReference list
+          PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
+          Diagnostics: HandoffDiagnostic list }
+
+    /// Governance's independent disposition of one typed performance-evidence projection.
+    type PerformanceGateState =
+        | PerformancePassed
+        | PerformanceFailed
+        | PerformanceEnvironmentLimited
+        | PerformanceNotApplicable
+
+    /// The auditable result used to build the performance gate. `Measurements` are recomputed from
+    /// raw samples by Governance; `Failures` and `Remediation` are projected verbatim to gate JSON.
+    type PerformanceEvaluation =
+        { EvidenceId: string
+          ArtifactPath: string
+          State: PerformanceGateState
+          Measurements: Fsgg.Schemas.PerformanceEvidenceMeasurement list
+          Failures: string list
+          Remediation: string }
 
     /// Why a handoff (or one of its nodes) was refused or flagged. Distinct per cause so the surfaced
     /// message is distinct and descriptive (SC-004). These are handoff-domain diagnostics — NOT F017
@@ -88,6 +115,6 @@ module Model =
           Source: string
           Message: string }
 
-    /// The pinned contract MAJOR the consumer recognizes (= 1). A handoff whose `ContractVersion` major
+    /// The pinned contract MAJOR the consumer recognizes (= 2). A handoff whose `ContractVersion` major
     /// differs yields a `VersionMismatch` diagnostic and no mapped result (FR-002).
     val supportedContractMajor: int
