@@ -7,7 +7,7 @@
       { "id": "test:unit", "state": "failed", "rationale": "unit suite red — same failing handoff as failing-handoff/, but this product declares the light profile" }
     ],
     "dependencies": [
-      ["test:unit", "build:lib"]
+      { "dependent": "test:unit", "dependency": "build:lib" }
     ]
   },
   "readiness": {

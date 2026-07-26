@@ -7,7 +7,7 @@
       { "id": "test:unit", "state": "failed", "rationale": "unit suite red — a fix regressed the parser" }
     ],
     "dependencies": [
-      ["test:unit", "build:lib"]
+      { "dependent": "test:unit", "dependency": "build:lib" }
     ]
   },
   "readiness": {

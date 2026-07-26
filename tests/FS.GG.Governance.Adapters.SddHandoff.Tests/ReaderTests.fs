@@ -3,6 +3,7 @@ module FS.GG.Governance.Adapters.SddHandoff.Tests.ReaderTests
 open Expecto
 open FS.GG.Governance.Adapters.SddHandoff
 open FS.GG.Governance.Adapters.SddHandoff.Model
+open System.IO
 
 // US2 — safe read + version-check the contract (FR-002/005/011, SC-004). `Reader.parse` is pure,
 // total, never throws: an unknown major / malformed / missing-required / declared-autoSynthetic each
@@ -163,4 +164,32 @@ let tests =
                   Expect.equal handoff.PerformanceEvidence.Head.Intent.Value.Id "PI-001" "typed intent carried"
                   Expect.equal handoff.Evidence.Dependencies [ ("task:T-1", "evidence:EV-PERF") ] "object edge parsed"
                   Expect.equal handoff.GovernedReferences.Length 1 "flat governed reference parsed"
+          }
+
+          test "publish-smoke handoffs stay valid v2 fixtures" {
+              // The release workflow consumes these separately from the adapter test fixtures. Keep
+              // them behind the same strict Reader so a contract-version bump cannot leave a legacy
+              // edge shape that turns the nominal passing smoke into a false release block.
+              let smokeRoot =
+                  Path.GetFullPath(Path.Combine(__SOURCE_DIRECTORY__, "..", "cli-publish-smoke", "fixtures"))
+
+              let fixtures =
+                  [ "failing-handoff", "wi-089-fail"
+                    "light-failing-handoff", "wi-090-light"
+                    "passing-handoff", "wi-089-pass" ]
+
+              for fixture, workItem in fixtures do
+                  let path =
+                      Path.Combine(smokeRoot, fixture, "readiness", workItem, "governance-handoff.json")
+
+                  let input: Reader.HandoffRead = { Source = path; Json = File.ReadAllText path }
+
+                  match Reader.parse input with
+                  | Error d -> failtestf "publish-smoke fixture %s must parse as v2: %A" fixture d
+                  | Ok handoff ->
+                      Expect.equal handoff.ContractVersion "2.0.0" (sprintf "%s uses the v2 contract" fixture)
+                      Expect.equal
+                          handoff.Evidence.Dependencies
+                          [ ("test:unit", "build:lib") ]
+                          (sprintf "%s carries the typed dependency edge" fixture)
           } ]
