@@ -7,7 +7,7 @@
       { "id": "test:unit", "state": "real" }
     ],
     "dependencies": [
-      ["test:unit", "build:lib"]
+      { "dependent": "test:unit", "dependency": "build:lib" }
     ]
   },
   "readiness": {
