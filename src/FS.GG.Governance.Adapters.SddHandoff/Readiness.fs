@@ -51,7 +51,7 @@ module Readiness =
 
     // A disposition is shippable only when it is one of the recognized clean tokens; anything else
     // (including an empty/unknown disposition) is treated as non-shippable ⇒ blocking-capable.
-    let private shippableTokens = set [ "shippable"; "ready"; "clean"; "ship" ]
+    let private shippableTokens = set [ "shipready"; "shippable"; "ready"; "clean"; "ship" ]
 
     let private isNonShippable (disposition: string) : bool =
         shippableTokens.Contains(disposition.Trim().ToLowerInvariant()) |> not

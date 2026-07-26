@@ -24,6 +24,8 @@ unification is deferred). Each file is self-contained; this page is the index.
 | [0006](0006-cli-format-flag-vocabularies.md) | The per-command output-format flag vocabularies intentionally diverge |
 | [0007](0007-commandhost-owns-host-edge-impure-leaves.md) | `FS.GG.Governance.CommandHost` is the home for the shared host-edge impure leaves |
 | [0008](0008-json-writer-duplication.md) | Per-projection JSON writer duplication is intentional; byte-identity is guarded by tests, not by extraction |
+| [0009](0009-profile-bound-gate-inheritance.md) | Profile-bound gate inheritance is embedded, pre-rollup, and non-lowerable |
+| [0010](0010-production-journey-floor.md) | Production-journey evidence is an inherited, non-lowerable game-profile floor |
 
 ## Org-level ADRs
 

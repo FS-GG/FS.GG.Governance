@@ -31,7 +31,7 @@ let private contentPrefix = "contentFiles/any/any/.fsgg/"
 // ADR-0055: the in-package schema manifest sits ALONGSIDE the .fsgg set (a sibling of .fsgg/).
 let private manifestEntry = "contentFiles/any/any/schema-manifest.json"
 // The pinned plain SemVer (ADR-0055), no longer derived from the contained schemaVersions.
-let private expectedVersion = "1.4.0"
+let private expectedVersion = "1.5.0"
 
 /// The test's OWN independent parse of a sample's `schemaVersion:` — so an assertion over the packed
 /// manifest is evidence about the real on-disk generations, not a re-scrape of the script's rule
@@ -208,7 +208,7 @@ let packageGuard =
 
           // ADR-0055: --print-version emits the pinned plain SemVer verbatim (no clock/env, no
           // derivation from the contained schemaVersions).
-          test "T011 print-version emits the pinned plain SemVer 1.4.0" {
+          test "T011 print-version emits the pinned plain SemVer 1.5.0" {
               let code, out, err = runPack [ "--print-version" ]
               Expect.equal code 0 (sprintf "--print-version must succeed; stderr:\n%s" err)
               Expect.equal (out.Trim()) expectedVersion "the version is the pinned plain SemVer (ADR-0055), not a schema-derived tuple"

@@ -29,6 +29,19 @@ let tests =
               Expect.equal gate.Maturity Warn "shippable + no blocking diagnostics ⇒ advisory warn"
           }
 
+          test "the published SDD shipReady token is shippable" {
+              let gate =
+                  Readiness.toGate
+                      "readiness/reference/governance-handoff.json"
+                      { ShipDisposition = "shipReady"
+                        VerificationReadiness = "verificationReady"
+                        BlockingDiagnosticIds = []
+                        Counts = [ "journeyObligationsUnmet", 0 ]
+                        PerViewState = [] }
+
+              Expect.equal gate.Maturity Warn "camel-case producer token must not become a false block"
+          }
+
           test "a non-empty blockingDiagnosticIds forces blocking even on a shippable disposition" {
               let block =
                   { ShipDisposition = "shippable"

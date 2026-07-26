@@ -200,8 +200,14 @@ module Consumer =
                         | Some block -> [ Readiness.toGate read.Source block ]
                         | None -> []
 
+                    let journeyGates =
+                        match handoff.JourneyReadiness with
+                        | Some readiness -> [ Journey.toGate read.Source readiness ]
+                        | None -> []
+
                     let ordinaryGates =
-                        evidenceGate :: readinessGates |> List.map (fun gate -> gate, paths)
+                        evidenceGate :: (readinessGates @ journeyGates)
+                        |> List.map (fun gate -> gate, paths)
 
                     let gates = ordinaryGates @ performancePairs id paths handoff
                     gates, staleDiags

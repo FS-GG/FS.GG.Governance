@@ -156,6 +156,65 @@ let tests =
               | Ok h -> Expect.equal h.ContractVersion "2.4.0" "minor 2.x accepted, unknown fields ignored"
           }
 
+          test "legacy producer without journey facts stays inside the compatibility window" {
+              let json =
+                  """{ "contractVersion": "2.0.0",
+                       "generatorVersion": "FS.GG.SDD.Artifacts/0.29.1",
+                       "evidence": { "nodes": [], "dependencies": [] },
+                       "readiness": {
+                         "shipDisposition": "shipReady",
+                         "verificationReadiness": "verificationReady",
+                         "counts": {},
+                         "blockingDiagnosticIds": [],
+                         "perViewState": []
+                       } }"""
+
+              match Reader.parse { Source = "legacy"; Json = json } with
+              | Error diagnostic -> failtestf "legacy compatibility input must parse: %A" diagnostic
+              | Ok handoff -> Expect.isNone handoff.JourneyReadiness "absence is explicit, never inferred as zero"
+          }
+
+          test "SDD 0.30 required journey fact cannot be absent" {
+              let json =
+                  """{ "contractVersion": "2.0.0",
+                       "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
+                       "evidence": { "nodes": [], "dependencies": [] },
+                       "readiness": {
+                         "shipDisposition": "shipReady",
+                         "verificationReadiness": "verificationReady",
+                         "counts": {},
+                         "blockingDiagnosticIds": [],
+                         "perViewState": []
+                       } }"""
+
+              let result = Reader.parse { Source = "required"; Json = json }
+              Expect.equal (causeOf result) (Some Malformed) "required absence fails closed"
+              Expect.stringContains (messageOf result) "journeyObligationsUnmet" "the missing fact is named"
+          }
+
+          test "negative and contradictory journey counts fail closed" {
+              let json count disposition =
+                  sprintf
+                      """{ "contractVersion": "2.0.0",
+                           "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
+                           "evidence": { "nodes": [], "dependencies": [] },
+                           "readiness": {
+                             "shipDisposition": "%s",
+                             "verificationReadiness": "verificationReady",
+                             "counts": { "journeyObligationsUnmet": %d },
+                             "blockingDiagnosticIds": [],
+                             "perViewState": []
+                           } }"""
+                      disposition
+                      count
+
+              let negative = Reader.parse { Source = "negative"; Json = json -1 "needsShipCorrection" }
+              Expect.equal (causeOf negative) (Some Malformed) "negative count is malformed"
+
+              let contradiction = Reader.parse { Source = "contradiction"; Json = json 1 "shipReady" }
+              Expect.equal (causeOf contradiction) (Some Malformed) "ship ready with unmet journey is malformed"
+          }
+
           test "real v2 projection parses typed performance evidence and flat governed references" {
               match Reader.parse (Fixtures.read "performance-v2") with
               | Error d -> failtestf "expected v2 producer-shaped fixture to parse, got %A" d

@@ -55,6 +55,24 @@ module Model =
           Counts: (string * int) list
           PerViewState: (string * string) list }
 
+    /// Governance's typed interpretation of the SDD-owned production-journey receipt/provenance
+    /// result. Receipt validation remains producer-owned; this closed union prevents consumers from
+    /// treating an unknown or malformed provenance failure as a satisfied journey.
+    type JourneyProvenanceDisposition =
+        | JourneySatisfied
+        | JourneyReceiptMissing
+        | JourneyReceiptInvalid
+        | JourneyReceiptStale
+        | JourneyProvenanceUnsupported
+
+    /// The required SDD 0.30+ journey readiness fact. `ObligationsUnmet` is preserved exactly;
+    /// diagnostic and related ids retain the producer's actionable obligation/scenario provenance.
+    type JourneyReadiness =
+        { ObligationsUnmet: int
+          BlockingDiagnosticIds: string list
+          RelatedIds: string list
+          Disposition: JourneyProvenanceDisposition }
+
     /// One flat governed-reference projection from the v2 contract. `Path` is used as optional
     /// SelectingPath provenance; the remaining fields are carried for auditability.
     type GovernedReference =
@@ -76,8 +94,10 @@ module Model =
     type Handoff =
         { ContractVersion: string
           SchemaVersion: int
+          GeneratorVersion: string option
           Evidence: EvidenceBlock
           Readiness: ReadinessBlock option
+          JourneyReadiness: JourneyReadiness option
           GovernedReferences: GovernedReference list
           PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
           Diagnostics: HandoffDiagnostic list }

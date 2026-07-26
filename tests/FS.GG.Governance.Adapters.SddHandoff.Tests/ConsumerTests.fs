@@ -102,6 +102,15 @@ let tests =
               Expect.stringContains gate.Description "p95=12ms" "recomputed measurement is projected"
               Expect.stringContains gate.Description "Remediation:" "remediation pointer is projected"
               Expect.exists result.Selected (fun selected -> selected.Gate.Id = gate.Id) "gate is preselected"
+          }
+
+          test "Synthetic Rogue-shaped helper-only handoff contributes a blocking gameplay journey gate" {
+              // SYNTHETIC: compact negative handoff proving generic helper evidence cannot satisfy the gate.
+              let result = Consumer.consume [ Fixtures.read "rogue-helper-only-journey" ]
+              Expect.equal
+                  (maturityOf result "production-journey")
+                  (Some BlockOnShip)
+                  "generic real helper evidence cannot satisfy a missing production journey"
           } ]
 
 // F082 C1–C8 — `Consumer.candidatePaths` projects the declared `governedReferences` of every

@@ -101,6 +101,34 @@ module Reader =
             | _ -> None
         | None -> None
 
+    let generatorRequiresJourney (generatorVersion: string option) =
+        generatorVersion
+        |> Option.bind (fun generator ->
+            let prefix = "FS.GG.SDD.Artifacts/"
+
+            if generator.StartsWith(prefix, StringComparison.Ordinal) then
+                match Version.TryParse(generator.Substring prefix.Length) with
+                | true, version -> Some(version >= Version(0, 30, 0))
+                | _ -> fail Malformed $"generatorVersion '{generator}' is not a supported SDD version identity"
+            else
+                None)
+        |> Option.defaultValue false
+
+    let journeyDisposition (unmet: int) (diagnosticIds: string list) =
+        if unmet = 0 then
+            JourneySatisfied
+        else
+            let normalized = diagnosticIds |> List.map (fun id -> id.ToLowerInvariant())
+
+            if normalized |> List.exists (fun id -> id.Contains "stale") then
+                JourneyReceiptStale
+            elif normalized |> List.exists (fun id -> id.Contains "missing") then
+                JourneyReceiptMissing
+            elif normalized |> List.exists (fun id -> id.Contains "invalid" || id.Contains "forged") then
+                JourneyReceiptInvalid
+            else
+                JourneyProvenanceUnsupported
+
     let parseIntent (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceIntentDeclaration option =
         if value.ValueKind = JsonValueKind.Null then
             None
@@ -227,6 +255,9 @@ module Reader =
                     $"handoff contractVersion major {major} is unsupported; this consumer pins major {supportedContractMajor}"
             | Some _ -> ()
 
+            let generatorVersion =
+                optionalProperty "generatorVersion" root |> optionalString "generatorVersion"
+
             let evidence = property "handoff" "evidence" root |> objectValue "evidence"
 
             let nodes =
@@ -350,16 +381,59 @@ module Reader =
                         property path "correction" item |> stringValue $"{path}.correction"
                       RelatedIds = property path "relatedIds" item |> strings $"{path}.relatedIds" })
 
+            let journeyReadiness =
+                match readiness with
+                | None when generatorRequiresJourney generatorVersion ->
+                    fail
+                        Malformed
+                        "readiness is required for SDD 0.30+ production-journey facts"
+                | None -> None
+                | Some block ->
+                    match block.Counts |> List.tryFind (fun (name, _) -> name = "journeyObligationsUnmet") with
+                    | None when generatorRequiresJourney generatorVersion ->
+                        fail
+                            Malformed
+                            "readiness.counts is missing required field 'journeyObligationsUnmet' for SDD 0.30+"
+                    | None -> None
+                    | Some(_, unmet) ->
+                        if unmet < 0 then
+                            fail
+                                Malformed
+                                "readiness.counts.journeyObligationsUnmet must be non-negative"
+
+                        let shipDisposition = block.ShipDisposition.Trim().ToLowerInvariant()
+
+                        if unmet > 0 && (shipDisposition = "shipready" || shipDisposition = "shippable") then
+                            fail
+                                Malformed
+                                "readiness contradicts itself: ship-ready disposition has unmet production journeys"
+
+                        let relatedIds =
+                            diagnostics
+                            |> List.filter (fun diagnostic ->
+                                block.BlockingDiagnosticIds |> List.contains diagnostic.Id)
+                            |> List.collect (fun diagnostic -> diagnostic.RelatedIds)
+                            |> List.distinct
+                            |> List.sort
+
+                        Some
+                            { ObligationsUnmet = unmet
+                              BlockingDiagnosticIds = block.BlockingDiagnosticIds
+                              RelatedIds = relatedIds
+                              Disposition = journeyDisposition unmet block.BlockingDiagnosticIds }
+
             Ok
                 { ContractVersion = contractVersion
                   SchemaVersion =
                     optionalProperty "schemaVersion" root
                     |> Option.map (intValue "schemaVersion")
                     |> Option.defaultValue 1
+                  GeneratorVersion = generatorVersion
                   Evidence =
                     { Nodes = nodes
                       Dependencies = dependencies }
                   Readiness = readiness
+                  JourneyReadiness = journeyReadiness
                   GovernedReferences = governedReferences
                   PerformanceEvidence = performanceEvidence
                   Diagnostics = diagnostics }

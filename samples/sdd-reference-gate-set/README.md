@@ -74,10 +74,11 @@ The corresponding checkout policy is:
 data/upstream/content/** -text
 ```
 
-## The four configured gates
+## The five configured gates
 
-Each `check` becomes one gate `"<domain>:<checkId>"`, bound to a declared `tooling.yml`
-command and reached by a path-map glob:
+Each `check` becomes one gate `"<domain>:<checkId>"` and is reached by a path-map glob.
+Build/test/evidence bind declared `tooling.yml` commands; the gameplay floors consume handoff
+evidence:
 
 | Gate | Routed by | Command | Maturity | Blocks? |
 |------|-----------|---------|----------|---------|
@@ -85,12 +86,18 @@ command and reached by a path-map glob:
 | `test:test` | `tests/**` | `dotnet-test` | `block-on-ship` | yes, at the ship/release ratchet |
 | `evidence:evidence` | `build.fsx` | `build-evidence` | `warn` | never — advisory everywhere |
 | `gameplay:fr-covered` | `specs/**` | handoff evidence | `block-on-ship` | yes, at the ship/release ratchet |
+| `gameplay:production-journey` | `specs/**` | SDD 0.30 journey readiness | `block-on-ship` | yes, when a declared journey is unmet |
 
 `build` and `test` are the real, block-capable gates. `evidence` is a first-class
 governed gate that runs the product's in-process evidence-integrity step
 (`dotnet fsi build.fsx -- evidence`); its `warn` maturity keeps it **advisory on first
 touch** — the "evidence not yet present" posture — even while the block-capable gates can
 block.
+
+`gameplay:production-journey` is stronger than ordinary observed gameplay coverage. A helper or
+constructed-state test may satisfy `fr-covered`; only SDD readiness validated from a runner-issued
+production boot/input/update receipt satisfies a declared production journey. The `game` template
+profile inherits both gates as non-lowerable floors.
 
 ## Interactive performance evidence lanes
 
