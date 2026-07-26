@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "2.0.0",
+  "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
+  "workId": "rogue-helper-only",
+  "evidence": {
+    "nodes": [
+      { "id": "evidence:helper-test", "state": "real", "rationale": null }
+    ],
+    "dependencies": []
+  },
+  "readiness": {
+    "shipDisposition": "needsShipCorrection",
+    "verificationReadiness": "needsVerificationCorrection",
+    "counts": {
+      "advisory": 0,
+      "warning": 0,
+      "blocking": 1,
+      "classifiedObligationsUnmet": 0,
+      "journeyObligationsUnmet": 1
+    },
+    "blockingDiagnosticIds": [
+      "evidence.productionJourneyReceiptInvalid"
+    ],
+    "perViewState": [
+      { "view": "ship.json", "state": "current" }
+    ]
+  },
+  "diagnostics": [
+    {
+      "id": "evidence.productionJourneyReceiptInvalid",
+      "message": "Production-journey receipt is invalid: journey receipt is missing.",
+      "correction": "Capture a receipt through the production boot/input/update route.",
+      "relatedIds": [
+        "FR-DOOR-TRANSITION",
+        "scenario:door-helper-unreachable"
+      ]
+    }
+  ]
+}

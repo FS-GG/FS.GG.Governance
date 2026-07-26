@@ -55,3 +55,12 @@ checks:
     cost: high
     environment: ci
     maturity: block-on-ship
+  # Stronger than generic observed gameplay coverage: when SDD classifies a requirement as a
+  # production journey, only a compatible runner-issued boot/input/update receipt satisfies it.
+  # The game profile inherits this organization-owned floor and local products cannot lower it.
+  - id: production-journey
+    domain: gameplay
+    owner: platform
+    cost: high
+    environment: ci
+    maturity: block-on-ship

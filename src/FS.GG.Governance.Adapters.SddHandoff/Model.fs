@@ -34,6 +34,18 @@ module Model =
           Counts: (string * int) list
           PerViewState: (string * string) list }
 
+    type JourneyProvenanceDisposition =
+        | JourneySatisfied
+        | JourneyReceiptInvalid
+        | JourneyReceiptStale
+        | JourneyProvenanceUnsupported
+
+    type JourneyReadiness =
+        { ObligationsUnmet: int
+          BlockingDiagnosticIds: string list
+          RelatedIds: string list
+          Disposition: JourneyProvenanceDisposition }
+
     type GovernedReference =
         { Path: GovernedPath
           Owner: string
@@ -50,8 +62,10 @@ module Model =
     type Handoff =
         { ContractVersion: string
           SchemaVersion: int
+          GeneratorVersion: string option
           Evidence: EvidenceBlock
           Readiness: ReadinessBlock option
+          JourneyReadiness: JourneyReadiness option
           GovernedReferences: GovernedReference list
           PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
           Diagnostics: HandoffDiagnostic list }

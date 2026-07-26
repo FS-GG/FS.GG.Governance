@@ -18,12 +18,15 @@ let tests =
         "ReferenceFloor"
         [ test "the game profile binds the gameplay gate, single-sourced through buildRegistry (FR-001/FR-009)" {
               let gates = referenceGatesFor (TemplateProfile "game")
-              Expect.equal (gateIds gates) [ "gameplay:fr-covered" ] "the game floor is the per-FR gameplay gate"
+              Expect.equal
+                  (gateIds gates)
+                  [ "gameplay:fr-covered"; "gameplay:production-journey" ]
+                  "the game floor carries ordinary and production-journey gameplay gates"
           }
 
           test "the game gameplay gate binds BLOCKING (block-on-ship) — WI-8 flip (FR-008)" {
-              let gate = referenceGatesFor (TemplateProfile "game") |> List.exactlyOne
-              Expect.equal gate.Maturity BlockOnShip "WI-5 bound at warn; WI-8 flipped to block-on-ship once WI-7 was green"
+              let gates = referenceGatesFor (TemplateProfile "game")
+              Expect.all gates (fun gate -> gate.Maturity = BlockOnShip) "both gameplay floors are block-on-ship"
           }
 
           test "an unknown / unbound profile yields no gates — never a fabricated gate (FR-001)" {
@@ -43,7 +46,10 @@ let tests =
 
           test "a game product inherits the gameplay gate (FR-002 -> FR-001)" {
               let inherited = inheritedGatesFor (factsWithProfiles [ "game" ])
-              Expect.equal (gateIds inherited) [ "gameplay:fr-covered" ] "game inherits its gameplay floor"
+              Expect.equal
+                  (gateIds inherited)
+                  [ "gameplay:fr-covered"; "gameplay:production-journey" ]
+                  "game inherits both gameplay floors"
           }
 
           test "applyInheritance is the IDENTITY for a product with no bound profile (FR-006)" {
@@ -56,7 +62,10 @@ let tests =
               let route = mkRoute [ mkSelectedGate (mkGate "build:compile" BlockOnShip) ]
               let out = applyInheritance (factsWithProfiles [ "game" ]) route
               let ids = out.SelectedGates |> List.map (fun sg -> gateIdValue sg.Gate.Id)
-              Expect.equal ids [ "build:compile"; "gameplay:fr-covered" ] "the inherited gate joins the local one"
+              Expect.equal
+                  ids
+                  [ "build:compile"; "gameplay:fr-covered"; "gameplay:production-journey" ]
+                  "the inherited gates join the local one"
           }
 
           test "an inherited-only gate carries an EMPTY selection trace (FR-005)" {

@@ -39,6 +39,14 @@ module Inheritance =
                 Cost = High
                 Environment = Ci
                 Maturity = BlockOnShip
+                Tier = None }
+              { Id = CheckId "production-journey"
+                Domain = DomainId "gameplay"
+                Command = None
+                Owner = Owner "platform"
+                Cost = High
+                Environment = Ci
+                Maturity = BlockOnShip
                 Tier = None } ]
         | _ -> []
 

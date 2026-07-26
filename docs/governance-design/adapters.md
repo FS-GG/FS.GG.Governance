@@ -24,6 +24,35 @@ can govern itself **without** copying another domain's vocabulary or layout.
 Nothing else. Inference, arbitration, evidence, rendering, hashing, explanation,
 severity, and run modes all come from the kernel.
 
+## Production-journey handoff adapter
+
+The SDD handoff adapter is an important boundary case: it consumes producer-owned facts rather than
+reimplementing the producer's evidence validator. Game issues production-journey receipts; SDD binds
+them to classified requirements and validates the route, report bytes, provenance, and terminal
+outcome. Governance reads only the published `governance-handoff.json` projection through
+`FS.GG.Contracts`.
+
+The relevant flow is:
+
+```text
+Game runner receipt
+        ↓
+SDD classification + receipt/report validation
+        ↓ governance-handoff.json (v2, SDD 0.30+)
+Governance typed JourneyReadiness
+        ↓
+gameplay:production-journey:<work> evidence gate
+        +
+gameplay:production-journey inherited game-profile floor
+```
+
+The reader preserves the unmet count and the canonical SDD journey-receipt diagnostic and related
+requirement/scenario ids. Unrelated readiness diagnostics never classify journey provenance. Zero
+is advisory; non-zero is `block-on-ship`. A required-but-absent count, negative count, ship-ready
+disposition with unmet journeys, or zero paired with a canonical journey failure fails closed.
+Older SDD producer lines without the additive fact remain distinguishable as compatibility-window
+absence rather than being inferred as zero. See [ADR 0010](../decisions/0010-production-journey-floor.md).
+
 **Shipped surface (F09, `FS.GG.Governance.Adapters.Spi`).** These five are bundled
 with the F04 `Bridge` (kernel wiring — how the domain-neutral `RuleOutcome` embeds in
 `'fact`, the judge identity, the artifact-content hash read from facts) into one total

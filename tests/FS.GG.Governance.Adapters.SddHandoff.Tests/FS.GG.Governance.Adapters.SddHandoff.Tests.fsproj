@@ -16,6 +16,7 @@
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="MappingTests.fs" />
     <Compile Include="ReadinessGateTests.fs" />
+    <Compile Include="JourneyGateTests.fs" />
     <Compile Include="ConsumerTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />

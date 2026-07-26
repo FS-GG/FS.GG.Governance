@@ -40,6 +40,22 @@ let tests =
               Expect.equal (maturityOf "gameplay:fr-covered" effective) (Some BlockOnRelease) "local stronger stays"
           }
 
+          test "a local product cannot lower or remove the production-journey floor" {
+              let inherited = [ mkGate "gameplay:production-journey" BlockOnShip ]
+              let local = [ mkGate "gameplay:production-journey" Observe ]
+              let effective = composeEffectiveGates inherited local
+              Expect.equal
+                  (maturityOf "gameplay:production-journey" effective)
+                  (Some BlockOnShip)
+                  "local observe is raised to the organization floor"
+
+              let restored = composeEffectiveGates inherited []
+              Expect.equal
+                  (maturityOf "gameplay:production-journey" restored)
+                  (Some BlockOnShip)
+                  "omitting the gate locally cannot remove it"
+          }
+
           test "an inherited-only gate is added verbatim (FR-005)" {
               let inherited = [ mkGate "gameplay:fr-covered" Warn ]
               let local = [ mkGate "build:compile" BlockOnShip ]

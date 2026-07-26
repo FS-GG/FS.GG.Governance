@@ -76,7 +76,12 @@ let private decideUnder (profile: Enforcement.Profile) (gate: Gate) : Enforcemen
 // (satisfied by per-FR handoff evidence, ADR-0049 / WI-8), so it carries no command prerequisite —
 // G3 counts command prerequisites against the 3 command-bound gates, not all 4.
 let private expectedGateIds =
-    set [ "build:build"; "test:test"; "evidence:evidence"; "gameplay:fr-covered" ]
+    set
+        [ "build:build"
+          "test:test"
+          "evidence:evidence"
+          "gameplay:fr-covered"
+          "gameplay:production-journey" ]
 
 [<Tests>]
 let guard =
@@ -95,11 +100,11 @@ let guard =
           // G2 (FR-002/FR-003/SC-001) — exactly 4 gates: build:build, test:test, evidence:evidence,
           // and the gameplay:fr-covered floor (ADR-0049 / WI-8). Surfaces are NOT projected into the
           // registry (buildRegistry reads only Capabilities.Checks).
-          test "G2 Routes registry has exactly 4 gates build test evidence gameplay" {
+          test "G2 Routes registry has exactly 5 gates including both gameplay floors" {
               let f = requireFacts ()
               let registry = FS.GG.Governance.Gates.Gates.buildRegistry f
               let ids = registry.Gates |> List.map (fun g -> gateIdValue g.Id) |> Set.ofList
-              Expect.equal ids expectedGateIds "registry must hold exactly the 4 reference gates (guards 'rots to empty')"
+              Expect.equal ids expectedGateIds "registry must hold exactly the 5 reference gates (guards 'rots to empty')"
           }
 
           // G3 (FR-004/SC-001/SC-007) — every command-BOUND gate's prerequisite resolves to a declared
@@ -120,8 +125,10 @@ let guard =
               for c in referenced do
                   Expect.isTrue (declaredCommands.Contains c) (sprintf "command '%s' must be declared in tooling.yml (no dangling ref)" c)
               // The gameplay floor is command-free: it declares no prerequisite at all.
-              let gameplay = registry.Gates |> List.find (fun g -> gateIdValue g.Id = "gameplay:fr-covered")
-              Expect.isEmpty gameplay.Prerequisites "the gameplay floor is command-free (satisfied by per-FR handoff evidence)"
+              let gameplay =
+                  registry.Gates
+                  |> List.filter (fun gate -> gate.Domain = DomainId "gameplay")
+              Expect.all gameplay (fun gate -> List.isEmpty gate.Prerequisites) "both gameplay floors are command-free"
           }
 
           // G4 (FR-005/FR-008/SC-004) — build/test/evidence/gameplay each selected by a candidate path;
