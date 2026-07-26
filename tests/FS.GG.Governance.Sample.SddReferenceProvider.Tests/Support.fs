@@ -182,26 +182,3 @@ let dotnetBuild (slnPath: string) : BuildAttempt =
         workingDir
         buildBudget
         ignore
-
-// ── run-configuration gate: fast default, real evidence behind an explicit opt-in / CI (research D4) ──
-
-/// True iff the heavyweight real-evidence build should run: `FSGG_REAL_EVIDENCE` is exactly `1`, OR `CI` is
-/// *truthy* (set and, trimmed + case-insensitive, NOT one of "" / "0" / "false") — so GitHub Actions' CI=true
-/// and a bare CI=1 both enable, while CI=0 / CI=false / unset do not (the canonical CI full-evidence path,
-/// FR-005). The env read is kept in this one place so the gate is testable.
-let realEvidenceEnabled () : bool =
-    let truthy =
-        match Environment.GetEnvironmentVariable "CI" with
-        | null -> false
-        | raw ->
-            match raw.Trim().ToLowerInvariant() with
-            | ""
-            | "0"
-            | "false" -> false
-            | _ -> true
-
-    Environment.GetEnvironmentVariable "FSGG_REAL_EVIDENCE" = "1" || truthy
-
-/// The NAMED opt-out skip message used when `realEvidenceEnabled ()` is false (FR-009).
-let realEvidenceSkipReason : string =
-    "REAL-EVIDENCE OPT-OUT: set FSGG_REAL_EVIDENCE=1 (or run under CI) to exercise the real dotnet build"
