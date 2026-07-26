@@ -71,6 +71,45 @@ let tests =
                   Expect.isEmpty facts.Links "no fabricated links")
           }
 
+          test "typed symbol read failures are preserved, never reclassified as stale symbols" {
+              let cases =
+                  [ Interpreter.PermissionDenied, "permission-denied", "access denied"
+                    Interpreter.InvalidEncoding, "invalid-encoding", "bad utf-8"
+                    Interpreter.TransientIo, "transient-io", "sharing violation" ]
+
+              for kind, token, detail in cases do
+                  let error: Interpreter.DocsReadError =
+                      { Path = "src/Unreadable.fsi"
+                        Kind = kind
+                        Detail = detail }
+
+                  let port: Interpreter.DocsPort =
+                      { ReadSource = fun _ -> Ok "# Guide\n[[ExpectedSymbol]]\n"
+                        ResolveTarget = fun _ -> true
+                        ResolveSymbol = fun _ -> Error [ error ] }
+
+                  let facts = Interpreter.senseDocs port req
+
+                  Expect.isEmpty facts.References (sprintf "%s does not fabricate ReferenceStale" token)
+                  Expect.hasLength facts.Unreadable 1 (sprintf "%s is preserved as an input diagnostic" token)
+                  Expect.stringContains facts.Unreadable.Head "src/Unreadable.fsi" "diagnostic names the unreadable input"
+                  Expect.stringContains facts.Unreadable.Head token "diagnostic preserves the typed failure kind"
+                  Expect.stringContains facts.Unreadable.Head detail "diagnostic preserves the underlying detail"
+          }
+
+          test "real symbol scan reports invalid UTF-8 instead of a stale symbol" {
+              withTempRepo (fun repo ->
+                  File.WriteAllText(Path.Combine(repo, "docs", "guide.md"), "# Guide\n[[ExpectedSymbol]]\n")
+                  File.WriteAllBytes(Path.Combine(repo, "src", "Corrupt.fsi"), [| 0xC3uy; 0x28uy |])
+
+                  let facts = Interpreter.senseDocs (Interpreter.realPort repo) req
+
+                  Expect.isEmpty facts.References "an incomplete real scan produces no symbol verdict"
+                  Expect.hasLength facts.Unreadable 1 "the corrupt .fsi is disclosed"
+                  Expect.stringContains facts.Unreadable.Head "src/Corrupt.fsi" "diagnostic names the corrupt input"
+                  Expect.stringContains facts.Unreadable.Head "invalid-encoding" "diagnostic classifies malformed UTF-8")
+          }
+
           test "a link escaping to a sibling dir prefixed by the repo name dangles, never a fabricated pass (FR-016)" {
               withTempRepo (fun repo ->
                   // Sibling directory whose name STARTS WITH the repo dir name (`<repo>-sibling`), holding a
