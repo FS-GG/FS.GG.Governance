@@ -3,6 +3,7 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [Method] BuilderIdentity senseBuilderReal()
   [Method] CommandKind kindOf(Gate)
   [Method] EnvironmentClass senseEnvironmentReal()
+  [Method] HandoffLoadOutcome discoverHandoffs(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] realHandoffs(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] kindedRunsOf(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]])
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String] senseSnapshotResult(FS.GG.Governance.Snapshot.Ports, SnapshotOptions)
@@ -19,6 +20,7 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [Method] model drive[model,effect,msg](Microsoft.FSharp.Core.FSharpFunc`2[model,System.Boolean], Microsoft.FSharp.Core.FSharpFunc`2[effect,msg], Microsoft.FSharp.Core.FSharpFunc`2[msg,Microsoft.FSharp.Core.FSharpFunc`2[model,System.Tuple`2[model,Microsoft.FSharp.Collections.FSharpList`1[effect]]]], model, Microsoft.FSharp.Collections.FSharpList`1[effect])
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+GateClassification
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome
   [Property] SensedFacts emptySensedFacts
 TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
   [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict],System.Tuple`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CostBudget.ModelModule+BudgetReason],FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport]]])
@@ -69,3 +71,56 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule+GateClassification+ToExecute
 TYPE FS.GG.Governance.CommandHost.CommandHostModule+GateClassification+ToReuse
   [Method] ExitCode get_Item()
   [Property] ExitCode Item
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome
+  [Method] Boolean Equals(HandoffLoadOutcome)
+  [Method] Boolean Equals(HandoffLoadOutcome, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsHandoffsAbsent()
+  [Method] Boolean get_IsHandoffsEmpty()
+  [Method] Boolean get_IsHandoffsLoaded()
+  [Method] Boolean get_IsHandoffsMalformed()
+  [Method] Boolean get_IsHandoffsUnreadable()
+  [Method] HandoffLoadOutcome NewHandoffsLoaded(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead])
+  [Method] HandoffLoadOutcome NewHandoffsMalformed(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic])
+  [Method] HandoffLoadOutcome NewHandoffsUnreadable(System.String, System.String)
+  [Method] HandoffLoadOutcome get_HandoffsAbsent()
+  [Method] HandoffLoadOutcome get_HandoffsEmpty()
+  [Method] Int32 CompareTo(HandoffLoadOutcome)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsLoaded
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsMalformed
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsUnreadable
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+Tags
+  [Property] Boolean IsHandoffsAbsent
+  [Property] Boolean IsHandoffsEmpty
+  [Property] Boolean IsHandoffsLoaded
+  [Property] Boolean IsHandoffsMalformed
+  [Property] Boolean IsHandoffsUnreadable
+  [Property] HandoffLoadOutcome HandoffsAbsent
+  [Property] HandoffLoadOutcome HandoffsEmpty
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsLoaded
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] get_reads()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] reads
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsMalformed
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] get_diagnostics()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] get_reads()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] diagnostics
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] reads
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+HandoffsUnreadable
+  [Method] System.String get_message()
+  [Method] System.String get_source()
+  [Property] System.String message
+  [Property] System.String source
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+Tags
+  [Field] Int32 HandoffsAbsent
+  [Field] Int32 HandoffsEmpty
+  [Field] Int32 HandoffsLoaded
+  [Field] Int32 HandoffsMalformed
+  [Field] Int32 HandoffsUnreadable

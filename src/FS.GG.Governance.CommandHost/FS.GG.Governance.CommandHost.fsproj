@@ -31,7 +31,7 @@
        split into a `.Io` sibling is possible but deferred (marginal benefit; lockfile/offline cost). -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.CommandHost</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <IsPackable>true</IsPackable>
     <PackageId>FS.GG.Governance.CommandHost</PackageId>
   </PropertyGroup>
