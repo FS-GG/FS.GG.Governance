@@ -27,8 +27,79 @@ type ProjectNode =
       PackageReferences: Set<string> // direct <PackageReference Include=...>
       ProjectReferences: Set<string> } // direct <ProjectReference>, resolved to a node Name
 
+/// The reason a source-project assembly boundary exists. Packaging boundaries are independently
+/// shipped tools/libraries; security-or-purity boundaries enforce dependency direction or isolate an
+/// effect/package owner; organizational boundaries only group cohesive implementation.
+[<RequireQualifiedAccess>]
+type BoundaryKind =
+    | SecurityOrPurity
+    | Packaging
+    | Organizational
+
 let isExe (n: ProjectNode) : bool =
     n.OutputType = "Exe" || n.OutputType = "WinExe"
+
+let sourceNodes (nodes: ProjectNode list) : ProjectNode list =
+    nodes |> List.filter (fun n -> n.Path.StartsWith("src/", StringComparison.Ordinal))
+
+// These internal assemblies are load-bearing boundaries even though they are not independently
+// packaged. Keep this set explicit: a new non-packable project must make its reason reviewable.
+let private securityOrPurityBoundaries =
+    Set.ofList
+        [ "FS.GG.Governance.Adapters.SddHandoff"
+          "FS.GG.Governance.Adapters.Spi"
+          "FS.GG.Governance.FreshnessSensing"
+          "FS.GG.Governance.Host"
+          "FS.GG.Governance.HumanRender"
+          "FS.GG.Governance.ProjectSensing"
+          "FS.GG.Governance.RoutePipeline" ]
+
+// The two built-in adapter namespaces intentionally share this one low-cost organizational assembly.
+let private organizationalBoundaries =
+    Set.ofList [ "FS.GG.Governance.Adapters.BuiltIn" ]
+
+let classifyBoundary (node: ProjectNode) : BoundaryKind option =
+    if securityOrPurityBoundaries.Contains node.Name then
+        Some BoundaryKind.SecurityOrPurity
+    elif organizationalBoundaries.Contains node.Name then
+        Some BoundaryKind.Organizational
+    elif node.IsPackable || isExe node then
+        Some BoundaryKind.Packaging
+    else
+        None
+
+let private boundaryKindToken =
+    function
+    | BoundaryKind.SecurityOrPurity -> "security-or-purity"
+    | BoundaryKind.Packaging -> "packaging"
+    | BoundaryKind.Organizational -> "organizational"
+
+/// Deterministic Graphviz projection of the real source-project dependency graph. Each node carries
+/// its reviewed boundary classification; an unclassified node is rendered loudly rather than hidden.
+let renderClassifiedDot (nodes: ProjectNode list) : string =
+    let source = sourceNodes nodes |> List.sortBy (fun n -> n.Name)
+    let sourceNames = source |> List.map (fun n -> n.Name) |> Set.ofList
+
+    let nodeLines =
+        source
+        |> List.map (fun n ->
+            let kind =
+                classifyBoundary n
+                |> Option.map boundaryKindToken
+                |> Option.defaultValue "UNCLASSIFIED"
+
+            sprintf "  \"%s\" [label=\"%s\\n%s\"];" n.Name n.Name kind)
+
+    let edgeLines =
+        source
+        |> List.collect (fun n ->
+            n.ProjectReferences
+            |> Set.filter sourceNames.Contains
+            |> Set.toList
+            |> List.sort
+            |> List.map (fun target -> sprintf "  \"%s\" -> \"%s\";" n.Name target))
+
+    String.concat Environment.NewLine ([ "digraph Governance {"; "  rankdir=LR;" ] @ nodeLines @ edgeLines @ [ "}"; "" ])
 
 // ---------------------------------------------------------------------------------------------------
 // data-model §Violation — the per-failure value the matchers emit; drives the actionable diagnostic.

@@ -24,6 +24,7 @@
     <Compile Include="SpectreFenceTests.fs" />
     <Compile Include="FsggOwnerTests.fs" />
     <Compile Include="ExeLeafTests.fs" />
+    <Compile Include="BoundaryClassificationTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

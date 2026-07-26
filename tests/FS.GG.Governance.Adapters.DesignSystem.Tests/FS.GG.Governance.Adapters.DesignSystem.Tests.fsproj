@@ -37,9 +37,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
-    <!-- F10, for the faithful-lift / adoption-bar proof ONLY (D9). -->
-    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
+    <!-- 114: both preserved adapter namespaces are supplied by the shared built-in assembly. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Adapters.BuiltIn/FS.GG.Governance.Adapters.BuiltIn.fsproj" />
     <!-- 101 (M-CI-3): the shared SurfaceDrift helper for the consolidated surface-drift check. -->
     <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>

@@ -50,8 +50,7 @@
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.BuiltIn/FS.GG.Governance.Adapters.BuiltIn.fsproj" />
     <!-- F27 wiring (063): the pure human projection (RenderMode/ReportView) and the Spectre-owning rich
          render + capability sensing. The dispatcher renders the read-only watch/tui surfaces through these;
          it adds NO direct Spectre.Console reference (Spectre stays confined to HumanRender — FR-011/SC-007). -->
