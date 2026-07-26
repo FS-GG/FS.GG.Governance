@@ -11,13 +11,27 @@ open FS.GG.Governance.DocsChecks.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
+    /// Typed failure reported when the symbol scanner cannot read the `.fsi` corpus completely.
+    /// Callers must preserve this as an input diagnostic rather than treating it as "symbol absent".
+    type DocsReadErrorKind =
+        | PermissionDenied
+        | InvalidEncoding
+        | TransientIo
+        | UnexpectedIo
+
+    type DocsReadError =
+        { Path: string
+          Kind: DocsReadErrorKind
+          Detail: string }
+
     /// Injected port: read a docs source, resolve an internal path/anchor target, resolve a symbol/anchor.
     /// The ONLY filesystem seam. `ResolveTarget`/`ResolveSymbol` interpret their argument relative to the
-    /// repo root (the real port closes over `repo`).
+    /// repo root (the real port closes over `repo`). `ResolveSymbol` reports every unreadable `.fsi`
+    /// input as typed errors; an incomplete scan is never collapsed into `Ok false`.
     type DocsPort =
         { ReadSource: GovernedPath -> Result<string, string>
           ResolveTarget: string -> bool
-          ResolveSymbol: string -> bool }
+          ResolveSymbol: string -> Result<bool, DocsReadError list> }
 
     val realPort: repo: string -> DocsPort
 

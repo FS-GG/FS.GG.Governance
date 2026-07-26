@@ -4,15 +4,70 @@ TYPE FS.GG.Governance.DocsChecks.InterpreterModule
   [Method] DocsFacts senseDocs(DocsPort, SurfaceCheckRequest)
   [Method] DocsPort realPort(System.String)
   [NestedType] FS.GG.Governance.DocsChecks.InterpreterModule+DocsPort
+  [NestedType] FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadError
+  [NestedType] FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadErrorKind
 TYPE FS.GG.Governance.DocsChecks.InterpreterModule+DocsPort
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean], Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean])
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadError]]])
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] get_ReadSource()
-  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] get_ResolveSymbol()
+  [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadError]]] get_ResolveSymbol()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] get_ResolveTarget()
   [Method] System.String ToString()
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.Config.ModelModule+GovernedPath,Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String]] ReadSource
-  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] ResolveSymbol
+  [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[System.Boolean,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadError]]] ResolveSymbol
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[System.String,System.Boolean] ResolveTarget
+TYPE FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadError
+  [Constructor] Void .ctor(System.String, DocsReadErrorKind, System.String)
+  [Method] Boolean Equals(DocsReadError)
+  [Method] Boolean Equals(DocsReadError, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DocsReadErrorKind get_Kind()
+  [Method] Int32 CompareTo(DocsReadError)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Detail()
+  [Method] System.String get_Path()
+  [Property] DocsReadErrorKind Kind
+  [Property] System.String Detail
+  [Property] System.String Path
+TYPE FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadErrorKind
+  [Method] Boolean Equals(DocsReadErrorKind)
+  [Method] Boolean Equals(DocsReadErrorKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInvalidEncoding()
+  [Method] Boolean get_IsPermissionDenied()
+  [Method] Boolean get_IsTransientIo()
+  [Method] Boolean get_IsUnexpectedIo()
+  [Method] DocsReadErrorKind get_InvalidEncoding()
+  [Method] DocsReadErrorKind get_PermissionDenied()
+  [Method] DocsReadErrorKind get_TransientIo()
+  [Method] DocsReadErrorKind get_UnexpectedIo()
+  [Method] Int32 CompareTo(DocsReadErrorKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadErrorKind+Tags
+  [Property] Boolean IsInvalidEncoding
+  [Property] Boolean IsPermissionDenied
+  [Property] Boolean IsTransientIo
+  [Property] Boolean IsUnexpectedIo
+  [Property] DocsReadErrorKind InvalidEncoding
+  [Property] DocsReadErrorKind PermissionDenied
+  [Property] DocsReadErrorKind TransientIo
+  [Property] DocsReadErrorKind UnexpectedIo
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.DocsChecks.InterpreterModule+DocsReadErrorKind+Tags
+  [Field] Int32 InvalidEncoding
+  [Field] Int32 PermissionDenied
+  [Field] Int32 TransientIo
+  [Field] Int32 UnexpectedIo
 TYPE FS.GG.Governance.DocsChecks.ModelModule
   [NestedType] FS.GG.Governance.DocsChecks.ModelModule+DocsFacts
   [NestedType] FS.GG.Governance.DocsChecks.ModelModule+ExampleFact
