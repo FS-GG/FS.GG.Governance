@@ -159,6 +159,10 @@ let gateConfiguration =
 // tool can derive — so it is edited HERE on every change to samples/sdd-reference-gate-set/.fsgg/.
 // The `--print-version` hook emits it so the guard asserts the ACTUAL shipped version.
 //
+// 1.5.0 (MINOR, 2026-07-26): adds the interactive/render-loop performance gate and its governed
+// evidence bindings to the reference policy. MINOR: this is additive enforcement functionality;
+// exact-pin consumers must re-pin deliberately before adopting the new gate.
+//
 // 1.4.0 (MINOR, 2026-07-23): adds the typed controlled-import manifest and fail-closed verifier to
 // the content set. MINOR: the package shape grows by two first-class files and exact-pin consumers
 // must re-pin deliberately before adopting the new directory-import contract.
@@ -168,7 +172,7 @@ let gateConfiguration =
 // byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
 // --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
 // re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
-let private packageVersion = "1.4.0"
+let private packageVersion = "1.5.0"
 
 // ── Schema manifest (ADR-0055) ──
 // The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the
