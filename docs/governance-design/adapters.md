@@ -46,11 +46,12 @@ gameplay:production-journey:<work> evidence gate
 gameplay:production-journey inherited game-profile floor
 ```
 
-The reader preserves the unmet count, diagnostic ids, and related requirement/scenario ids. Zero is
-advisory; non-zero is `block-on-ship`. A required-but-absent count, negative count, or ship-ready
-disposition with unmet journeys fails closed. Older SDD producer lines without the additive fact
-remain distinguishable as compatibility-window absence rather than being inferred as zero. See
-[ADR 0010](../decisions/0010-production-journey-floor.md).
+The reader preserves the unmet count and the canonical SDD journey-receipt diagnostic and related
+requirement/scenario ids. Unrelated readiness diagnostics never classify journey provenance. Zero
+is advisory; non-zero is `block-on-ship`. A required-but-absent count, negative count, ship-ready
+disposition with unmet journeys, or zero paired with a canonical journey failure fails closed.
+Older SDD producer lines without the additive fact remain distinguishable as compatibility-window
+absence rather than being inferred as zero. See [ADR 0010](../decisions/0010-production-journey-floor.md).
 
 **Shipped surface (F09, `FS.GG.Governance.Adapters.Spi`).** These five are bundled
 with the F04 `Bridge` (kernel wiring — how the domain-neutral `RuleOutcome` embeds in

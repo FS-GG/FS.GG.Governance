@@ -114,19 +114,26 @@ module Reader =
                 None)
         |> Option.defaultValue false
 
-    let journeyDisposition (unmet: int) (diagnosticIds: string list) =
+    let invalidJourneyReceiptId = "evidence.productionJourneyReceiptInvalid"
+    let staleJourneyReceiptId = "evidence.productionJourneyReceiptStale"
+
+    let canonicalJourneyDiagnostics (diagnosticIds: string list) =
+        diagnosticIds
+        |> List.filter (fun id -> id = invalidJourneyReceiptId || id = staleJourneyReceiptId)
+        |> List.distinct
+
+    let journeyDisposition (unmet: int) (journeyDiagnosticIds: string list) =
         if unmet = 0 then
             JourneySatisfied
         else
-            let normalized = diagnosticIds |> List.map (fun id -> id.ToLowerInvariant())
+            let has id = journeyDiagnosticIds |> List.contains id
 
-            if normalized |> List.exists (fun id -> id.Contains "stale") then
+            match has invalidJourneyReceiptId, has staleJourneyReceiptId with
+            | false, true ->
                 JourneyReceiptStale
-            elif normalized |> List.exists (fun id -> id.Contains "missing") then
-                JourneyReceiptMissing
-            elif normalized |> List.exists (fun id -> id.Contains "invalid" || id.Contains "forged") then
+            | true, false ->
                 JourneyReceiptInvalid
-            else
+            | _ ->
                 JourneyProvenanceUnsupported
 
     let parseIntent (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceIntentDeclaration option =
@@ -408,19 +415,27 @@ module Reader =
                                 Malformed
                                 "readiness contradicts itself: ship-ready disposition has unmet production journeys"
 
+                        let journeyDiagnosticIds =
+                            canonicalJourneyDiagnostics block.BlockingDiagnosticIds
+
+                        if unmet = 0 && not (List.isEmpty journeyDiagnosticIds) then
+                            fail
+                                Malformed
+                                "readiness contradicts itself: zero unmet production journeys has a journey receipt failure diagnostic"
+
                         let relatedIds =
                             diagnostics
                             |> List.filter (fun diagnostic ->
-                                block.BlockingDiagnosticIds |> List.contains diagnostic.Id)
+                                journeyDiagnosticIds |> List.contains diagnostic.Id)
                             |> List.collect (fun diagnostic -> diagnostic.RelatedIds)
                             |> List.distinct
                             |> List.sort
 
                         Some
                             { ObligationsUnmet = unmet
-                              BlockingDiagnosticIds = block.BlockingDiagnosticIds
+                              BlockingDiagnosticIds = journeyDiagnosticIds
                               RelatedIds = relatedIds
-                              Disposition = journeyDisposition unmet block.BlockingDiagnosticIds }
+                              Disposition = journeyDisposition unmet journeyDiagnosticIds }
 
             Ok
                 { ContractVersion = contractVersion

@@ -60,7 +60,6 @@ module Model =
     /// treating an unknown or malformed provenance failure as a satisfied journey.
     type JourneyProvenanceDisposition =
         | JourneySatisfied
-        | JourneyReceiptMissing
         | JourneyReceiptInvalid
         | JourneyReceiptStale
         | JourneyProvenanceUnsupported

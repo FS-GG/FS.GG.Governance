@@ -41,7 +41,8 @@ gate description names the count, disposition, diagnostic, and related ids.
 - **FR-002**: Preserve journey unmet counts and diagnostic/related ids as typed facts.
 - **FR-003**: Accept zero unmet journeys whether no journey was declared or all were satisfied.
 - **FR-004**: Make every non-zero journey unmet count a blocking, actionable gate.
-- **FR-005**: Reject negative counts and a ship-ready disposition paired with unmet journeys.
+- **FR-005**: Reject negative counts, a ship-ready disposition paired with unmet journeys, and zero
+  unmet paired with a canonical journey-receipt failure diagnostic.
 - **FR-006**: During the compatibility window, accept older producer handoffs without journey
   fields; require the field for the published SDD 0.30.x producer line and later compatible lines.
 - **FR-007**: Ignore unknown additive fields while rejecting unsupported contract majors.
@@ -51,6 +52,8 @@ gate description names the count, disposition, diagnostic, and related ids.
 - **FR-010**: Prove the producer-generated SDD 0.30 handoff golden passes, and a Rogue-shaped
   helper-only handoff blocks. The published aggregate intentionally does not distinguish “none
   declared” from “all satisfied”; both are the producer-owned zero-unmet verdict.
+- **FR-011**: Classify provenance only from SDD's canonical production-journey diagnostic ids;
+  unrelated readiness diagnostics and their related ids must not contaminate the journey fact.
 
 ## Success Criteria
 

@@ -33,10 +33,14 @@ enough to diagnose and migrate them honestly.
    window: absence yields no journey-readiness fact, so operators can distinguish “not promised”
    from “promised and zero.”
 
-3. **Contradictions fail closed.** Negative counts and a ship-ready disposition paired with a
-   non-zero unmet count reject the handoff. Unsupported contract majors and unreadable/malformed
-   JSON continue through the existing integrity-blocking path. A non-zero valid count produces a
-   `block-on-ship` journey evidence gate carrying the producer diagnostics and affected ids.
+3. **Contradictions fail closed.** Negative counts, a ship-ready disposition paired with a non-zero
+   unmet count, and zero unmet paired with a canonical journey-receipt failure diagnostic reject the
+   handoff. Only SDD's canonical `evidence.productionJourneyReceiptInvalid` and
+   `evidence.productionJourneyReceiptStale` ids classify journey provenance; unrelated readiness
+   diagnostics cannot mint a journey disposition. Unsupported contract majors and
+   unreadable/malformed JSON continue through the existing integrity-blocking path. A non-zero
+   valid count produces a `block-on-ship` journey evidence gate carrying the journey diagnostics
+   and affected ids.
 
 4. **Every `game` profile inherits `gameplay:production-journey`.** The embedded reference floor
    and published reference gate set both add the command-free check at `block-on-ship`.

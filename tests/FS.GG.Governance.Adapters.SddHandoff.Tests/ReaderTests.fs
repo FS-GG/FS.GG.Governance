@@ -215,6 +215,61 @@ let tests =
               Expect.equal (causeOf contradiction) (Some Malformed) "ship ready with unmet journey is malformed"
           }
 
+          test "mixed readiness diagnostics preserve only the canonical journey provenance" {
+              // SYNTHETIC: compact mixed-diagnostic handoff isolates canonical journey-id filtering.
+              let json =
+                  """{ "contractVersion": "2.0.0",
+                       "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
+                       "evidence": { "nodes": [], "dependencies": [] },
+                       "readiness": {
+                         "shipDisposition": "needsShipCorrection",
+                         "verificationReadiness": "needsVerificationCorrection",
+                         "counts": { "journeyObligationsUnmet": 1 },
+                         "blockingDiagnosticIds": [
+                           "view.stale",
+                           "artifact.missing",
+                           "evidence.productionJourneyReceiptInvalid"
+                         ],
+                         "perViewState": []
+                       },
+                       "diagnostics": [
+                         { "id": "view.stale", "message": "unrelated", "correction": "refresh",
+                           "relatedIds": [ "view:ship" ] },
+                         { "id": "evidence.productionJourneyReceiptInvalid", "message": "journey",
+                           "correction": "recapture", "relatedIds": [ "FR-JOURNEY" ] }
+                       ] }"""
+
+              match Reader.parse { Source = "mixed"; Json = json } with
+              | Error diagnostic -> failtestf "mixed diagnostic input must parse: %A" diagnostic
+              | Ok handoff ->
+                  let readiness = handoff.JourneyReadiness |> Option.get
+                  Expect.equal readiness.Disposition JourneyReceiptInvalid "unrelated stale/missing ids cannot reclassify provenance"
+                  Expect.equal
+                      readiness.BlockingDiagnosticIds
+                      [ "evidence.productionJourneyReceiptInvalid" ]
+                      "only canonical journey diagnostics are preserved"
+                  Expect.equal readiness.RelatedIds [ "FR-JOURNEY" ] "unrelated diagnostic provenance is excluded"
+          }
+
+          test "zero unmet journeys with a canonical receipt failure is contradictory" {
+              // SYNTHETIC: compact contradictory producer shape exercises the fail-closed boundary.
+              let json =
+                  """{ "contractVersion": "2.0.0",
+                       "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
+                       "evidence": { "nodes": [], "dependencies": [] },
+                       "readiness": {
+                         "shipDisposition": "needsShipCorrection",
+                         "verificationReadiness": "needsVerificationCorrection",
+                         "counts": { "journeyObligationsUnmet": 0 },
+                         "blockingDiagnosticIds": [ "evidence.productionJourneyReceiptInvalid" ],
+                         "perViewState": []
+                       } }"""
+
+              let result = Reader.parse { Source = "zero-contradiction"; Json = json }
+              Expect.equal (causeOf result) (Some Malformed) "zero plus canonical journey failure rejects"
+              Expect.stringContains (messageOf result) "contradicts" "the producer contradiction is actionable"
+          }
+
           test "real v2 projection parses typed performance evidence and flat governed references" {
               match Reader.parse (Fixtures.read "performance-v2") with
               | Error d -> failtestf "expected v2 producer-shaped fixture to parse, got %A" d

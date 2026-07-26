@@ -36,7 +36,6 @@ module Model =
 
     type JourneyProvenanceDisposition =
         | JourneySatisfied
-        | JourneyReceiptMissing
         | JourneyReceiptInvalid
         | JourneyReceiptStale
         | JourneyProvenanceUnsupported

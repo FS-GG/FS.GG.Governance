@@ -259,7 +259,6 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDispositi
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
   [Method] Boolean get_IsJourneyProvenanceUnsupported()
   [Method] Boolean get_IsJourneyReceiptInvalid()
-  [Method] Boolean get_IsJourneyReceiptMissing()
   [Method] Boolean get_IsJourneyReceiptStale()
   [Method] Boolean get_IsJourneySatisfied()
   [Method] Int32 CompareTo(JourneyProvenanceDisposition)
@@ -270,26 +269,22 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDispositi
   [Method] Int32 get_Tag()
   [Method] JourneyProvenanceDisposition get_JourneyProvenanceUnsupported()
   [Method] JourneyProvenanceDisposition get_JourneyReceiptInvalid()
-  [Method] JourneyProvenanceDisposition get_JourneyReceiptMissing()
   [Method] JourneyProvenanceDisposition get_JourneyReceiptStale()
   [Method] JourneyProvenanceDisposition get_JourneySatisfied()
   [Method] System.String ToString()
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDisposition+Tags
   [Property] Boolean IsJourneyProvenanceUnsupported
   [Property] Boolean IsJourneyReceiptInvalid
-  [Property] Boolean IsJourneyReceiptMissing
   [Property] Boolean IsJourneyReceiptStale
   [Property] Boolean IsJourneySatisfied
   [Property] Int32 Tag
   [Property] JourneyProvenanceDisposition JourneyProvenanceUnsupported
   [Property] JourneyProvenanceDisposition JourneyReceiptInvalid
-  [Property] JourneyProvenanceDisposition JourneyReceiptMissing
   [Property] JourneyProvenanceDisposition JourneyReceiptStale
   [Property] JourneyProvenanceDisposition JourneySatisfied
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDisposition+Tags
   [Field] Int32 JourneyProvenanceUnsupported
   [Field] Int32 JourneyReceiptInvalid
-  [Field] Int32 JourneyReceiptMissing
   [Field] Int32 JourneyReceiptStale
   [Field] Int32 JourneySatisfied
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyReadiness
