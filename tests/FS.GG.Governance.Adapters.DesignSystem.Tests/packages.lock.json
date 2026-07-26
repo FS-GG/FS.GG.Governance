@@ -123,13 +123,7 @@
         "resolved": "0.11.6",
         "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
       },
-      "fs.gg.governance.adapters.designsystem": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.adapters.speckit": {
+      "fs.gg.governance.adapters.builtin": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"

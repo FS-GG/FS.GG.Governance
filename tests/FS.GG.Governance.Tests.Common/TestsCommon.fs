@@ -383,14 +383,14 @@ module SurfaceDrift =
 
     let assemblyNamed (name: string) : Assembly = Assembly.Load(AssemblyName(name))
 
-    let renderSurface (asm: Assembly) : string =
+    let renderTypes (types: Type array) : string =
         let memberFlags =
             BindingFlags.Public
             ||| BindingFlags.Instance
             ||| BindingFlags.Static
             ||| BindingFlags.DeclaredOnly
 
-        asm.GetExportedTypes()
+        types
         |> Array.sortBy (fun t -> t.FullName)
         |> Array.map (fun t ->
             let members =
@@ -401,6 +401,17 @@ module SurfaceDrift =
             String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
         |> String.concat "\n"
 
+    let renderSurface (asm: Assembly) : string =
+        renderTypes (asm.GetExportedTypes())
+
+    let renderSurfaceForNamespace (namespaceName: string) (asm: Assembly) : string =
+        asm.GetExportedTypes()
+        |> Array.filter (fun t ->
+            match Option.ofObj t.Namespace with
+            | Some ns -> ns = namespaceName || ns.StartsWith(namespaceName + ".", StringComparison.Ordinal)
+            | None -> false)
+        |> renderTypes
+
     let normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
 
     let surfaceTest (label: string) (baselineName: string) (asm: Assembly) : Test =
@@ -408,7 +419,16 @@ module SurfaceDrift =
             let baselinePath =
                 Path.Combine(RepositoryHelpers.repoRoot, "surface", baselineName + ".surface.txt")
 
-            let actual = renderSurface asm
+            let assemblyName =
+                asm.GetName().Name |> Option.ofObj |> Option.defaultValue ""
+
+            // A low-value organizational assembly may carry multiple preserved namespace contracts.
+            // When the baseline name differs from the assembly name, it is also the namespace filter.
+            let actual =
+                if assemblyName = baselineName then
+                    renderSurface asm
+                else
+                    renderSurfaceForNamespace baselineName asm
 
             // Bless path: BLESS_SURFACE=1 (re)writes the baseline intentionally.
             if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then

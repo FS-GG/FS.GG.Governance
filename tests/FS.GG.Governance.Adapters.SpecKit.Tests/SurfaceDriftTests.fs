@@ -17,7 +17,10 @@ let private kernel = typeof<FactId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "V8 SpecKit" "FS.GG.Governance.Adapters.SpecKit" specKit
+        [ SurfaceDrift.surfaceTest
+              "V8 SpecKit"
+              "FS.GG.Governance.Adapters.SpecKit"
+              specKit
 
           SurfaceDrift.referencesOnly
               "V8 SpecKit"

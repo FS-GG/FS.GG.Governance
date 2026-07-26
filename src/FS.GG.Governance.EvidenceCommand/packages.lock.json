@@ -8,7 +8,7 @@
         "resolved": "10.1.302",
         "contentHash": "bN7XMQrAQg1dyHScJ7FcsznERBkvm74LtIo1O6C5mUzgbDqSwNbDpb3+nBGaJAjDmtC/suK5Vx5pFysKY6Hm+Q=="
       },
-      "fs.gg.governance.adapters.designsystem": {
+      "fs.gg.governance.adapters.builtin": {
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
@@ -21,12 +21,6 @@
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FS.GG.Governance.Route": "[0.1.0, )"
-        }
-      },
-      "fs.gg.governance.adapters.speckit": {
-        "type": "Project",
-        "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
         }
       },
       "fs.gg.governance.adapters.spi": {
@@ -215,9 +209,8 @@
       "fs.gg.governance.projectsensing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.DesignSystem": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.BuiltIn": "[0.1.0, )",
           "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
-          "FS.GG.Governance.Adapters.SpecKit": "[0.1.0, )",
           "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.Host": "[0.1.0, )",

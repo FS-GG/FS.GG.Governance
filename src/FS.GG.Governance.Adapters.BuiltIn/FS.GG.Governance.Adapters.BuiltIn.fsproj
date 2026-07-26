@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 114: the two built-in pure adapters share one organizational assembly boundary.
+       Their public namespaces and curated signatures remain independent, while the
+       security/purity boundary stays at Adapters.Spi. Every production consumer already
+       consumed both former assemblies, so keeping separate restore/reference/release
+       units added cost without enforcing dependency direction. This assembly is internal
+       and non-packable (inherited from Directory.Build.props). -->
+  <PropertyGroup>
+    <RootNamespace>FS.GG.Governance.Adapters.BuiltIn</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SpecKit.fsi" />
+    <Compile Include="SpecKit.fs" />
+    <Compile Include="SpecKitCatalog.fsi" />
+    <Compile Include="SpecKitCatalog.fs" />
+    <Compile Include="DesignSystem.fsi" />
+    <Compile Include="DesignSystem.fs" />
+    <Compile Include="DesignSystemCatalog.fsi" />
+    <Compile Include="DesignSystemCatalog.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj" />
+  </ItemGroup>
+
+</Project>

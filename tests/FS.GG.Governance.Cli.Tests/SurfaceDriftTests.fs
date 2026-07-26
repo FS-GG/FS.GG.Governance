@@ -70,13 +70,11 @@ let tests =
                   |> Array.choose (fun name -> name.Name |> Option.ofObj)
                   |> Set.ofArray
 
-              // 100 (M-ARCH-2): the ArtifactReading sensing edge (the sole direct user of the DesignSystem
-              // adapter) moved to ProjectSensing, so the Cli executable no longer references
-              // Adapters.DesignSystem directly — design-domain sensing is delegated through ProjectSensing.
+              // 114: both preserved adapter namespaces now arrive through one built-in assembly.
               for required in
                   [ "FS.GG.Governance.Kernel"
                     "FS.GG.Governance.Host"
                     "FS.GG.Governance.Adapters.Spi"
-                    "FS.GG.Governance.Adapters.SpecKit" ] do
+                    "FS.GG.Governance.Adapters.BuiltIn" ] do
                   Expect.isTrue (names.Contains required) ("has " + required)
           } ]

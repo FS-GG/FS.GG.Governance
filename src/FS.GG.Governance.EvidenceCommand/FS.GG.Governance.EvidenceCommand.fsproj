@@ -51,8 +51,7 @@
     <ProjectReference Include="../FS.GG.Governance.CommandHost/FS.GG.Governance.CommandHost.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Host/FS.GG.Governance.Host.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.Adapters.SpecKit/FS.GG.Governance.Adapters.SpecKit.fsproj" />
-    <ProjectReference Include="../FS.GG.Governance.Adapters.DesignSystem/FS.GG.Governance.Adapters.DesignSystem.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Adapters.BuiltIn/FS.GG.Governance.Adapters.BuiltIn.fsproj" />
   </ItemGroup>
 
 </Project>
