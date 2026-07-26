@@ -24,6 +24,8 @@
     <Compile Include="Model.fs" />
     <Compile Include="Reader.fsi" />
     <Compile Include="Reader.fs" />
+    <Compile Include="Performance.fsi" />
+    <Compile Include="Performance.fs" />
     <Compile Include="Mapping.fsi" />
     <Compile Include="Mapping.fs" />
     <Compile Include="Readiness.fsi" />
@@ -33,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FS.GG.Contracts" />
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />

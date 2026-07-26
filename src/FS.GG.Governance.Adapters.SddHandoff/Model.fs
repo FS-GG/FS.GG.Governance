@@ -35,15 +35,40 @@ module Model =
           PerViewState: (string * string) list }
 
     type GovernedReference =
-        { WorkItem: string
-          Paths: GovernedPath list }
+        { Path: GovernedPath
+          Owner: string
+          Relationship: string
+          Kind: string option
+          Operation: string option }
+
+    type HandoffDiagnostic =
+        { Id: string
+          Message: string
+          Correction: string
+          RelatedIds: string list }
 
     type Handoff =
         { ContractVersion: string
           SchemaVersion: int
           Evidence: EvidenceBlock
           Readiness: ReadinessBlock option
-          GovernedReferences: GovernedReference list }
+          GovernedReferences: GovernedReference list
+          PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
+          Diagnostics: HandoffDiagnostic list }
+
+    type PerformanceGateState =
+        | PerformancePassed
+        | PerformanceFailed
+        | PerformanceEnvironmentLimited
+        | PerformanceNotApplicable
+
+    type PerformanceEvaluation =
+        { EvidenceId: string
+          ArtifactPath: string
+          State: PerformanceGateState
+          Measurements: Fsgg.Schemas.PerformanceEvidenceMeasurement list
+          Failures: string list
+          Remediation: string }
 
     type DiagnosticCause =
         | VersionMismatch
@@ -56,4 +81,4 @@ module Model =
           Source: string
           Message: string }
 
-    let supportedContractMajor = 1
+    let supportedContractMajor = 2

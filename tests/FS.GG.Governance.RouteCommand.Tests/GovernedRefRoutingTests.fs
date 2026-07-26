@@ -25,19 +25,19 @@ let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.Hando
 // A consumable v1 handoff declaring the given governedReferences paths under work item WI-1.
 let private declaringJson (paths: string) : string =
     sprintf
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
              "governedReferences": [ { "workItem": "WI-1", "paths": [ %s ] } ] }"""
         paths
 
 // A consumable v1 handoff with an EMPTY governedReferences list (declares no governed surface).
 let private emptyRefsJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
          "governedReferences": [] }"""
 
 // A malformed (un-parseable) document.
-let private malformedJson = """{ "contractVersion": "1.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
+let private malformedJson = """{ "contractVersion": "2.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
 
 let private runWith scope handoffs =
     let req = requestFor scope Loop.Text

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "2.0.0",
+  "evidence": {
+    "nodes": [
+      { "id": "evidence:EV-PERF", "state": "real", "rationale": null },
+      { "id": "task:T-1", "state": "real", "rationale": null }
+    ],
+    "dependencies": [
+      { "dependent": "task:T-1", "dependency": "evidence:EV-PERF" }
+    ]
+  },
+  "performanceEvidence": [
+    {
+      "evidenceId": "EV-PERF",
+      "artifactPath": "readiness/performance.json",
+      "intent": {
+        "id": "PI-001",
+        "disposition": "active",
+        "targetFps": 60,
+        "workloadIds": [ "normal" ],
+        "workloadDefinitionDigests": [ "normal=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ],
+        "maximumExpectedScale": "10k sprites",
+        "maxP95Ms": 16.67,
+        "maxP99Ms": 25,
+        "maxCatchUpFrames": 0,
+        "structuralCostBudgets": [ "draw-calls<=500" ],
+        "requiredCapability": "headless",
+        "liveCompositorRequired": false,
+        "deferralIssue": null,
+        "evidenceRefs": [ "EV-PERF" ],
+        "rationale": null
+      },
+      "artifact": {
+        "contractVersion": "performance-evidence-v1",
+        "claimedBudgetPassed": true,
+        "sampleSets": [
+          {
+            "workloadId": "normal",
+            "workloadDefinitionDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "workloadClass": "normal-play",
+            "targetFps": 60,
+            "maxP95Ms": 16.67,
+            "maxP99Ms": 25,
+            "maxCatchUpFrames": 0,
+            "measurementScope": "interactive",
+            "requiredCapability": "headless",
+            "hostProfile": "linux-ci",
+            "packageVersions": [ "FS.GG.Game@1.2.3" ],
+            "measurementMode": "headless",
+            "capabilities": [ "headless" ],
+            "warmupPolicy": "120-frames",
+            "samplePolicy": "nearest-rank/3",
+            "capturedAtUtc": "2026-07-26T00:00:00Z",
+            "currencyToken": "commit:abc123",
+            "probeReadbackContaminated": false,
+            "durationSamplesMs": [ 10, 11, 12 ],
+            "catchUpFrames": [ 0, 0, 0 ]
+          }
+        ]
+      },
+      "measurements": [
+        { "workloadId": "normal", "p95Ms": 12, "p99Ms": 12, "maxCatchUpFrames": 0 }
+      ]
+    }
+  ],
+  "governedReferences": [
+    {
+      "path": "src/Game.fs",
+      "owner": "product",
+      "relationship": "modified",
+      "kind": null,
+      "operation": null
+    }
+  ],
+  "readiness": {
+    "shipDisposition": "shipReady",
+    "verificationReadiness": "verificationReady",
+    "counts": { "advisory": 0, "warning": 0, "blocking": 0 },
+    "blockingDiagnosticIds": [],
+    "perViewState": [
+      { "view": "verify.json", "state": "current" }
+    ]
+  },
+  "diagnostics": []
+}

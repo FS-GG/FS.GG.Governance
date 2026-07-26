@@ -32,6 +32,9 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+EvidenceBlock
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceEvaluation
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceGateState
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
   [Property] Int32 supportedContractMajor
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode
@@ -174,23 +177,29 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+EvidenceBlock
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode] Nodes
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] Dependencies
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference
-  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath])
+  [Constructor] Void .ctor(GovernedPath, System.String, System.String, Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
   [Method] Boolean Equals(GovernedReference)
   [Method] Boolean Equals(GovernedReference, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Path()
   [Method] Int32 CompareTo(GovernedReference)
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
-  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_Paths()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Kind()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Operation()
   [Method] System.String ToString()
-  [Method] System.String get_WorkItem()
-  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath] Paths
-  [Property] System.String WorkItem
+  [Method] System.String get_Owner()
+  [Method] System.String get_Relationship()
+  [Property] GovernedPath Path
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Kind
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Operation
+  [Property] System.String Owner
+  [Property] System.String Relationship
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
-  [Constructor] Void .ctor(System.String, Int32, EvidenceBlock, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference])
+  [Constructor] Void .ctor(System.String, Int32, EvidenceBlock, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference], Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+GovernanceHandoffPerformanceEvidence], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic])
   [Method] Boolean Equals(Handoff)
   [Method] Boolean Equals(Handoff, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -203,14 +212,97 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] Int32 get_SchemaVersion()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference] get_GovernedReferences()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+GovernanceHandoffPerformanceEvidence] get_PerformanceEvidence()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock] get_Readiness()
   [Method] System.String ToString()
   [Method] System.String get_ContractVersion()
   [Property] EvidenceBlock Evidence
   [Property] Int32 SchemaVersion
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference] GovernedReferences
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+GovernanceHandoffPerformanceEvidence] PerformanceEvidence
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock] Readiness
   [Property] System.String ContractVersion
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic
+  [Constructor] Void .ctor(System.String, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(HandoffDiagnostic)
+  [Method] Boolean Equals(HandoffDiagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(HandoffDiagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_RelatedIds()
+  [Method] System.String ToString()
+  [Method] System.String get_Correction()
+  [Method] System.String get_Id()
+  [Method] System.String get_Message()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] RelatedIds
+  [Property] System.String Correction
+  [Property] System.String Id
+  [Property] System.String Message
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceEvaluation
+  [Constructor] Void .ctor(System.String, System.String, PerformanceGateState, Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+PerformanceEvidenceMeasurement], Microsoft.FSharp.Collections.FSharpList`1[System.String], System.String)
+  [Method] Boolean Equals(PerformanceEvaluation)
+  [Method] Boolean Equals(PerformanceEvaluation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(PerformanceEvaluation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+PerformanceEvidenceMeasurement] get_Measurements()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Failures()
+  [Method] PerformanceGateState get_State()
+  [Method] System.String ToString()
+  [Method] System.String get_ArtifactPath()
+  [Method] System.String get_EvidenceId()
+  [Method] System.String get_Remediation()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[Fsgg.Schemas+PerformanceEvidenceMeasurement] Measurements
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Failures
+  [Property] PerformanceGateState State
+  [Property] System.String ArtifactPath
+  [Property] System.String EvidenceId
+  [Property] System.String Remediation
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceGateState
+  [Method] Boolean Equals(PerformanceGateState)
+  [Method] Boolean Equals(PerformanceGateState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsPerformanceEnvironmentLimited()
+  [Method] Boolean get_IsPerformanceFailed()
+  [Method] Boolean get_IsPerformanceNotApplicable()
+  [Method] Boolean get_IsPerformancePassed()
+  [Method] Int32 CompareTo(PerformanceGateState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PerformanceGateState get_PerformanceEnvironmentLimited()
+  [Method] PerformanceGateState get_PerformanceFailed()
+  [Method] PerformanceGateState get_PerformanceNotApplicable()
+  [Method] PerformanceGateState get_PerformancePassed()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceGateState+Tags
+  [Property] Boolean IsPerformanceEnvironmentLimited
+  [Property] Boolean IsPerformanceFailed
+  [Property] Boolean IsPerformanceNotApplicable
+  [Property] Boolean IsPerformancePassed
+  [Property] Int32 Tag
+  [Property] PerformanceGateState PerformanceEnvironmentLimited
+  [Property] PerformanceGateState PerformanceFailed
+  [Property] PerformanceGateState PerformanceNotApplicable
+  [Property] PerformanceGateState PerformancePassed
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceGateState+Tags
+  [Field] Int32 PerformanceEnvironmentLimited
+  [Field] Int32 PerformanceFailed
+  [Field] Int32 PerformanceNotApplicable
+  [Field] Int32 PerformancePassed
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
   [Constructor] Void .ctor(System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.Int32]], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]])
   [Method] Boolean Equals(ReadinessBlock)
@@ -233,6 +325,8 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] PerViewState
   [Property] System.String ShipDisposition
   [Property] System.String VerificationReadiness
+TYPE FS.GG.Governance.Adapters.SddHandoff.PerformanceModule
+  [Method] PerformanceEvaluation evaluate(Boolean, GovernanceHandoffPerformanceEvidence)
 TYPE FS.GG.Governance.Adapters.SddHandoff.ReaderModule
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff,FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] parse(HandoffRead)
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead

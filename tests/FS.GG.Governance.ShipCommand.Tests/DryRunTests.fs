@@ -19,12 +19,12 @@ let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.Hando
 
 // A handoff whose only real, non-stale signal is `build:lib`; `test:unit` is failed (a required-absent gap).
 let private mixedJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 // A handoff carrying NOTHING real — the all-not-evaluated (FS.GG.Audio) failure mode.
 let private allAbsentJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "pending" }, { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 // A dry-run request over a src change (selects block-on-ship command gates that would normally execute).

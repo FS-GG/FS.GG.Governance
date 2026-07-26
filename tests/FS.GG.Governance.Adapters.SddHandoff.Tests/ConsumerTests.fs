@@ -70,8 +70,8 @@ let tests =
               let withRefs = Consumer.consume [ Fixtures.read "satisfied" ]
 
               let strippedJson =
-                  """{ "contractVersion": "1.0.0", "schemaVersion": 1,
-                       "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "real" }, { "id": "doc:api", "state": "skipped" } ], "dependencies": [ ["test:unit","build:lib"] ] } }"""
+                  """{ "contractVersion": "2.0.0", "schemaVersion": 1,
+                       "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "real" }, { "id": "doc:api", "state": "skipped" } ], "dependencies": [ { "dependent": "test:unit", "dependency": "build:lib" } ] } }"""
 
               let withoutRefs =
                   Consumer.consume [ { Source = "readiness/satisfied/governance-handoff.json"; Json = strippedJson } ]
@@ -84,12 +84,24 @@ let tests =
 
           test "a synthetic-tainted handoff ⇒ a blocking evidence gate (taint closure, research D4)" {
               let json =
-                  """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+                  """{ "contractVersion": "2.0.0", "schemaVersion": 1,
                        "evidence": { "nodes": [ { "id": "build:lib", "state": "synthetic" }, { "id": "test:unit", "state": "real" } ],
-                                     "dependencies": [ ["test:unit","build:lib"] ] } }"""
+                                     "dependencies": [ { "dependent": "test:unit", "dependency": "build:lib" } ] } }"""
 
               let r = Consumer.consume [ { Source = "readiness/taint/governance-handoff.json"; Json = json } ]
               Expect.equal (maturityOf r "evidence") (Some BlockOnShip) "a Real node resting on Synthetic taints AutoSynthetic ⇒ blocking"
+          }
+
+          test "v2 performance evidence is independently projected as a preselected gate with remediation" {
+              let result = Consumer.consume [ Fixtures.read "performance-v2" ]
+              let gate =
+                  result.Gates
+                  |> List.find (fun candidate -> gateIdValue candidate.Id |> fun id -> id.Contains "performance:")
+              Expect.equal gate.Maturity Warn "recomputed passing evidence remains advisory"
+              Expect.equal gate.Domain (DomainId "interactive-performance") "typed performance domain"
+              Expect.stringContains gate.Description "p95=12ms" "recomputed measurement is projected"
+              Expect.stringContains gate.Description "Remediation:" "remediation pointer is projected"
+              Expect.exists result.Selected (fun selected -> selected.Gate.Id = gate.Id) "gate is preselected"
           } ]
 
 // F082 C1–C8 — `Consumer.candidatePaths` projects the declared `governedReferences` of every
@@ -99,10 +111,10 @@ let tests =
 let private mk (id: string) (json: string) : Reader.HandoffRead =
     { Source = sprintf "readiness/%s/governance-handoff.json" id; Json = json }
 
-// A consumable v1 document declaring the given `governedReferences` work items.
+// A consumable v2 document declaring the given `governedReferences` work items.
 let private docDeclaring (refsJson: string) : string =
     sprintf
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
              "governedReferences": %s }"""
         refsJson

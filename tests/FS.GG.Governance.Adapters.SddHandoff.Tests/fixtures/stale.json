@@ -1,12 +1,12 @@
 {
-  "contractVersion": "1.0.0",
+  "contractVersion": "2.0.0",
   "schemaVersion": 1,
   "evidence": {
     "nodes": [
       { "id": "build:lib", "state": "real" },
       { "id": "perf:bench", "state": "real", "stale": true, "rationale": "benchmark recorded last week" }
     ],
-    "dependencies": [ ["perf:bench", "build:lib"] ]
+    "dependencies": [ { "dependent": "perf:bench", "dependency": "build:lib" } ]
   },
   "governedReferences": []
 }

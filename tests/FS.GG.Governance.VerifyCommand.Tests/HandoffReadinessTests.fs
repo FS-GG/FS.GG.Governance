@@ -17,13 +17,13 @@ open FS.GG.Governance.VerifyCommand.Tests.Support
 // The handoff is the sole verdict driver (ExplicitPaths [] selects no routed gate).
 
 let private blockingReadinessJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
          "readiness": { "shipDisposition": "blocked", "verificationReadiness": "incomplete",
                         "blockingDiagnosticIds": [ "VIEW_STALE" ], "counts": { "blocking": 1 }, "perViewState": { "ledger": "stale" } } }"""
 
 let private cleanReadinessJson =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
          "readiness": { "shipDisposition": "shippable", "verificationReadiness": "complete",
                         "blockingDiagnosticIds": [], "counts": { "blocking": 0 }, "perViewState": { "ledger": "fresh" } } }"""

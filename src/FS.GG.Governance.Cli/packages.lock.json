@@ -22,6 +22,7 @@
       "fs.gg.governance.adapters.sddhandoff": {
         "type": "Project",
         "dependencies": {
+          "FS.GG.Contracts": "[7.0.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
@@ -94,7 +95,7 @@
       "fs.gg.governance.config": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Contracts": "[4.0.0, )",
+          "FS.GG.Contracts": "[7.0.0, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
@@ -359,7 +360,7 @@
         "dependencies": {
           "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CommandHost": "[0.1.0, )",
+          "FS.GG.Governance.CommandHost": "[0.2.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.EvidenceCapture": "[0.1.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
@@ -405,9 +406,9 @@
       },
       "FS.GG.Contracts": {
         "type": "CentralTransitive",
-        "requested": "[4.0.0, )",
-        "resolved": "4.0.0",
-        "contentHash": "qBTPo3EM452CnFXN0RfVSSste3y6zHEj1dhGk6QwN4sAcpmmZoReTHiKR4ysGZg+Gi9KOsTRxjfSQTiFNWzoxA==",
+        "requested": "[7.0.0, )",
+        "resolved": "7.0.0",
+        "contentHash": "rKLirb5qpv/+Y+U/sp8tEr3NaJNZHVL9S0trxNdsKdPJ8FR/WvdmQyZqlSNbp1T2dClynHcQQBtRq9IX9A/fmg==",
         "dependencies": {
           "FSharp.Core": "10.1.302"
         }

@@ -33,8 +33,9 @@ module Consumer =
 
     /// Parse + map + readiness-project all located documents, in stable (`<id>`, then `GateId`) order.
     /// Empty input ⇒ `{ Gates = []; Selected = []; Diagnostics = [] }` (no-op, SC-003). A bad document
-    /// ⇒ a blocking integrity gate + diagnostic and NO mapped gate for that document (FR-011). Total;
-    /// never throws.
+    /// ⇒ a blocking integrity gate + diagnostic and NO mapped gate for that document (FR-011).
+    /// Active performance projections add independently recomputed performance gates; non-applicable
+    /// projections add none. Total; never throws.
     val consume: reads: Reader.HandoffRead list -> ConsumeResult
 
     /// The de-duplicated declared `governedReferences` paths from every CONSUMABLE document,

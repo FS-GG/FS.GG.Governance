@@ -24,7 +24,7 @@ let private withTempDir body =
         Directory.Delete(dir, true)
 
 let private validHandoff =
-    """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+    """{ "contractVersion": "2.0.0", "schemaVersion": 1,
          "evidence": { "nodes": [], "dependencies": [] } }"""
 
 let private writeHandoff (repo: string) (id: string) (json: string) =

@@ -22,7 +22,7 @@ module Reader =
         { Source: string
           Json: string }
 
-    /// Pure: parse + validate one located document. `Ok handoff` for a well-formed `v1.x` document;
+    /// Pure: parse + validate one located document. `Ok handoff` for a well-formed `v2.x` document;
     /// otherwise `Error` with a distinct, descriptive `Diagnostic`:
     ///   • malformed JSON / missing required contract field ⇒ `Malformed`;
     ///   • unrecognized `contractVersion` major (≠ `supportedContractMajor`) ⇒ `VersionMismatch`;

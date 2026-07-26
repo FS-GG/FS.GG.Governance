@@ -20,12 +20,12 @@ let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.Hando
 
 let private declaringJson (paths: string) : string =
     sprintf
-        """{ "contractVersion": "1.0.0", "schemaVersion": 1,
+        """{ "contractVersion": "2.0.0", "schemaVersion": 1,
              "evidence": { "nodes": [ { "id": "build:lib", "state": "real" } ], "dependencies": [] },
              "governedReferences": [ { "workItem": "WI-1", "paths": [ %s ] } ] }"""
         paths
 
-let private malformedJson = """{ "contractVersion": "1.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
+let private malformedJson = """{ "contractVersion": "2.0.0", "schemaVersion": 1, "evidence": { "nodes": [ this is not json """
 
 let private runWith scope profile handoffs =
     let req = requestForProfile scope Loop.Text profile
