@@ -66,6 +66,57 @@
 # An id in the output root that falls into none of the above is UNATTRIBUTED: reported, and refused rather
 # than projected. That is the property `cp -R` cannot have.
 #
+# THE MANIFEST IS AN INSTALL RECEIPT, NOT A DESIRED STATE (FS.GG.Governance#328)
+#
+# Authority (2) above says `claude.manifest.json`'s digests for the three preset-overridden skills are
+# "stale by design". That was true, and it was knowledge held ONLY in this comment — so every OTHER reader
+# of the manifest saw a content-addressed record reporting drift on a CORRECT tree. `overlay.json` is that
+# knowledge, PUBLISHED and machine-readable, derived here and asserted by `--check`.
+#
+# The manifest's rows were NOT rewritten to the post-overlay digests, and that is a deliberate choice with
+# evidence behind it:
+#
+#   * The digests are CORRECT FOR WHAT THEY MEAN. `specify integration status` reads exactly these rows and
+#     reports the three as "managed file(s) were modified" — the installer's own vocabulary for "differs
+#     from what I laid down". The manifest is a RECEIPT of the install, and a receipt is not a wish.
+#   * Rewriting them is NOT REFUSED by the tooling — that was checked, and it is the reason this is a
+#     JUDGEMENT and not a constraint. Against the real CLI, on a throwaway copy: rewriting the three digests
+#     is accepted, not rejected, and not overwritten on read. So both branches were open and this one was
+#     chosen on meaning, not feasibility.
+#   * Rewriting them makes the receipt LIE, which is why. In that same experiment, regenerating the digests
+#     flips `specify integration status` from WARNING to OK — telling the installer it laid down the preset
+#     bytes itself. That discards the only tamper baseline those three files have, and
+#     `specify integration uninstall` — documented as "safely preserving modified files" — would then treat
+#     preset-authored content as pristine installer output.
+#     CAVEAT, since it bounds the claim: the CLI on hand is 0.14.3.dev0 and this project was installed by
+#     0.10.3.dev0 (`.specify/init-options.json`). The behaviour above is 0.14.3.dev0's. It was not verified
+#     against 0.10.3.dev0, which was not available to run.
+#   * Rewriting them is NOT DURABLE. A frozen digest goes stale again the next time the preset's content
+#     changes. That is not hypothetical: it already happened once. The manifest has NEVER matched these three
+#     files in this repo's history — not even at the bootstrap commit (1766ffe) — and commit 0fe7828 changed
+#     all three skills without touching it.
+#   * It would also make this script a second producer, which the paragraph above refuses on its own terms.
+#
+# So the record is annotated rather than rewritten, and the annotation carries NO CONTENT DIGEST. It names
+# the AUTHORITY FILE and the CHECK ("body-derivation"). That is what survives the next preset change:
+#
+#   * preset command CONTENT changes  -> nothing to update; the derivation check still holds.
+#   * a preset ADDS a 4th override    -> the derived set grows, `overlay.json` is regenerated, and a tree
+#                                        that forgot to regenerate it fails `--check` and the tests.
+#   * a preset DROPS an override      -> the row leaves the record and the skill falls back to the
+#                                        manifest digest, which is the correct authority again.
+#
+# Rows the manifest does not list at all (the extension-provided `speckit-agent-context-update`) are
+# recorded in the same file under `not_in_manifest`, so "the manifest is not the whole tree" is also a fact
+# a consumer can read rather than a surprise it has to survive.
+#
+# NOT AFFECTED: `speckit.manifest.json`. The preset's `provides:` also `replaces:` two TEMPLATES
+# (`constitution-template`, `tasks-template`) whose base copies that manifest records. Those rows are
+# accurate and structurally cannot go stale the way the skill rows did, because the template lane RESOLVES
+# at read time instead of overlaying bytes: `specify preset resolve constitution-template` answers with the
+# preset's own copy while `.specify/templates/` keeps the base bytes the manifest recorded. Only the lane
+# that MATERIALIZES bytes into an output root needs an overlay record.
+#
 # WHAT STILL GATES THE NEXT REGRESSION
 #
 # This script repairs today's state and can prove itself re-runnable. The DURABLE guard is the
@@ -87,8 +138,13 @@ DEFAULT_ROOTS=".claude/skills .codex/skills .agents/skills"   # ADR-0011's three
 
 SPECIFY="$REPO_ROOT/.specify"
 CLAUDE_MANIFEST="$SPECIFY/integrations/claude.manifest.json"
-PRESET_COMMANDS="$SPECIFY/presets/fsharp-opinionated/commands"
+PRESET_DIR="$SPECIFY/presets/fsharp-opinionated"
+PRESET_COMMANDS="$PRESET_DIR/commands"
 EXT_REGISTRY="$SPECIFY/extensions/.registry"
+# The DERIVED, published authority record that tells any consumer which of the manifest's rows the
+# manifest itself does not speak for. Written by this script, asserted by --check, and consumed by
+# `IntegrationRecordTests` — see "THE MANIFEST IS AN INSTALL RECEIPT" above.
+OVERLAY_RECORD="$SPECIFY/integrations/overlay.json"
 
 # The kit-owned subset (.github registry/repos.yml `kit:` rows, kind: skill). Named here ONLY to
 # attribute them to `coordination-coherence` rather than leaving them unattributed — this script does not
@@ -299,6 +355,166 @@ printf '%s\n' "$ATTRIB" | while IFS=$'\t' read -r sid cls verdict detail; do
   printf '  %-32s %-20s %-14s %s\n' "$sid" "$cls" "$verdict" "$detail"
 done
 
+# ---------------------------------------------------------------------------------------------------
+# Step 1b — DERIVE the published authority record (`overlay.json`).
+#
+# Derived from the producers under `.specify/` on every run, never read back as input: this script's
+# answer about who owns a skill does not depend on the file it publishes, so the record cannot bootstrap
+# its own mistake. `--check` asserts the published copy equals this derivation; `apply` rewrites it.
+#
+# The record deliberately carries NO CONTENT DIGEST — see the header. It names the authority file and the
+# check, which is what makes a preset CONTENT change a no-op here instead of a re-staling event.
+# ---------------------------------------------------------------------------------------------------
+DERIVED_OVERLAY="$(python3 - "$REPO_ROOT" "$CLAUDE_MANIFEST" "$PRESET_DIR" "$EXT_REGISTRY" "$OUT_ROOT" <<'PY'
+import json, os, re, sys
+
+# OUT_ROOT is passed in rather than re-derived from the manifest. The block above already derived it and
+# REFUSED a manifest that names more than one skill root; re-deriving here would be a second definition
+# of the same fact, free to disagree with the first — the exact failure mode the KIT_SKILLS note warns
+# about. One derivation, one answer.
+repo, manifest_p, preset_dir, ext_registry, out_root = sys.argv[1:6]
+preset_cmds = os.path.join(preset_dir, "commands")
+preset_id = os.path.basename(preset_dir)
+
+def rel(p):
+    return os.path.relpath(p, repo).replace(os.sep, "/")
+
+def read(p):
+    with open(p, encoding="utf-8") as f:
+        return f.read()
+
+# The preset's overrides, taken from the commands it actually ships AND cross-checked against what
+# `preset.yml` DECLARES it replaces. Two sources that must agree: a command file nobody declares, or a
+# declaration with no file behind it, is a producer defect and is reported rather than published.
+shipped = {}
+if os.path.isdir(preset_cmds):
+    for fn in sorted(os.listdir(preset_cmds)):
+        m = re.fullmatch(r"speckit\.([A-Za-z0-9._-]+)\.md", fn)
+        if m:
+            shipped["speckit-" + m.group(1).replace(".", "-")] = os.path.join(preset_cmds, fn)
+
+declared_yml = set()
+preset_yml = os.path.join(preset_dir, "preset.yml")
+if os.path.isfile(preset_yml):
+    # Narrow line scan, for the same reason the extension lane uses one: PyYAML is not a dependency of
+    # this repo's tooling. Only `commands/` files are overrides; the preset's `templates/` entries are
+    # resolved at read time and never overlay the tree (header).
+    #
+    # The quotes are NOT optional decoration to skip over: preset.yml writes `file: "commands/x.md"` and
+    # a pattern anchored on a bare `commands/` matched NOTHING, which made the agreement check below
+    # vacuous — it silently passed on a set it had never read. Strip an optional quote on each side.
+    for f in re.findall(r"""^\s*file:\s*["']?(commands/[^"'\s]+)["']?\s*$""", read(preset_yml), re.M):
+        m = re.fullmatch(r"speckit\.([A-Za-z0-9._-]+)\.md", os.path.basename(f))
+        if m:
+            declared_yml.add("speckit-" + m.group(1).replace(".", "-"))
+
+if not declared_yml:
+    # A preset that ships command files must declare them. An empty parse against a non-empty commands/
+    # directory means the scan stopped matching, not that the preset declares nothing — fail loudly
+    # rather than publish a record derived from a set nobody checked.
+    if shipped:
+        sys.stderr.write(
+            "parsed no `file: commands/...` entries from %s, but %s/ ships %d command(s): %s\n"
+            % (rel(preset_yml), rel(preset_cmds), len(shipped), sorted(shipped))
+        )
+        sys.exit(2)
+
+if declared_yml != set(shipped):
+    sys.stderr.write(
+        "preset.yml and %s/ disagree about the override set:\n  declared only: %s\n  shipped only:  %s\n"
+        % (rel(preset_cmds), sorted(declared_yml - set(shipped)) or "-", sorted(set(shipped) - declared_yml) or "-")
+    )
+    sys.exit(2)
+
+# Extension-provided commands, from the registry that says which are ENABLED (same source as attribution).
+ext_cmds = {}
+if os.path.isfile(ext_registry):
+    reg = json.load(open(ext_registry, encoding="utf-8"))
+    for ext_id, ext in (reg.get("extensions") or {}).items():
+        if not ext.get("enabled", False):
+            continue
+        ext_dir = os.path.join(os.path.dirname(ext_registry), ext_id)
+        ymlp = os.path.join(ext_dir, "extension.yml")
+        # Quote-tolerant, unlike the attribution scan above: a value this scan fails to read drops a row
+        # from `not_in_manifest`, which fails OPEN (a consumer is told nothing rather than told wrong).
+        # The attribution scan can afford the stricter pattern because a miss there makes the skill
+        # UNATTRIBUTED and refuses the whole projection.
+        files = re.findall(r"""^\s*file:\s*["']?([^"'\s]+)["']?\s*$""", read(ymlp), re.M) if os.path.isfile(ymlp) else []
+        for r in files:
+            m = re.fullmatch(r"speckit\.([A-Za-z0-9._-]+)\.md", os.path.basename(r))
+            if m:
+                ext_cmds["speckit-" + m.group(1).replace(".", "-")] = os.path.join(ext_dir, r)
+
+manifest = json.load(open(manifest_p, encoding="utf-8"))
+rows = {}          # skill id -> manifest path
+for p in manifest.get("files", {}):
+    parts = p.split("/")
+    if len(parts) == 4 and parts[1] == "skills" and parts[3] == "SKILL.md":
+        rows[parts[2]] = p
+
+# One producer per id, and the PRESET WINS a collision — the same precedence the attribution block applies
+# (`overrides.get(sid) or ext_cmds[sid]`). Merging the two dicts blind would let iteration order decide,
+# and the record would then name a different authority than the check that enforces it.
+producers = dict(ext_cmds)
+producers.update(shipped)
+
+superseded, not_in_manifest = {}, {}
+for sid, src in sorted(producers.items()):
+    kind = "preset-command" if sid in shipped else "extension-command"
+    entry = {"authority": rel(src), "authority_kind": kind, "check": "body-derivation"}
+    if kind == "preset-command":
+        entry["preset"] = preset_id
+    if sid in rows:
+        entry["manifest_row"] = "pre-overlay"
+        superseded[rows[sid]] = entry
+    else:
+        not_in_manifest["%s/%s/SKILL.md" % (out_root, sid)] = entry
+
+record = {
+    "schema_version": "1.0",
+    "generated_by": "scripts/materialize-skill-roots.sh",
+    "manifest": os.path.basename(manifest_p),
+    "manifest_semantics": "install-receipt",
+    "note": (
+        "%s records the bytes the spec-kit installer LAID DOWN, not the bytes that SHOULD be present. "
+        "For every path under `superseded` the installed bytes were then replaced by an overlay, so the "
+        "manifest's digest for that path is pre-overlay and comparing it to the tree is a FALSE RED. "
+        "Check those paths against `authority` instead, using `check`: `body-derivation` means the "
+        "SKILL.md body equals the authority command's body once each side's YAML frontmatter and leading "
+        "H1 title lines are dropped. Paths under `not_in_manifest` are produced for this output root but "
+        "are not manifest rows at all, so the manifest is not a complete inventory of the root. Rows in "
+        "neither list are the manifest's own, and their digests are authoritative. This file carries no "
+        "content digest on purpose: it names WHO owns each path, so a change to an authority's CONTENT "
+        "needs no update here. Derived from .specify/ — regenerate with "
+        "`scripts/materialize-skill-roots.sh` and assert with `--check`."
+    ) % os.path.basename(manifest_p),
+    "superseded": superseded,
+    "not_in_manifest": not_in_manifest,
+}
+print(json.dumps(record, indent=2, sort_keys=True))
+PY
+)" || die "could not derive the overlay authority record."
+
+# Compared as BYTES, through a file, not as `[ "$(cat …)" = "$DERIVED_OVERLAY" ]`. Command substitution
+# strips trailing newlines from BOTH sides, so a record whose final newline was lost compared EQUAL while
+# `apply` would still rewrite it — `--check` green on a tree the writer would change is precisely the
+# idempotency claim this script makes ("re-run with --check, or a second time, to confirm idempotency").
+OVERLAY_TMP="$(mktemp)"
+trap 'rm -f "$OVERLAY_TMP"' EXIT
+printf '%s\n' "$DERIVED_OVERLAY" > "$OVERLAY_TMP"
+
+overlay_stale=0
+if [ -f "$OVERLAY_RECORD" ] && cmp -s "$OVERLAY_TMP" "$OVERLAY_RECORD"; then
+  note "authority record: $(basename "$OVERLAY_RECORD") agrees with the producers."
+else
+  overlay_stale=1
+  if [ -f "$OVERLAY_RECORD" ]; then
+    note "authority record: $(basename "$OVERLAY_RECORD") does NOT match the producers under .specify/"
+  else
+    note "authority record: $(basename "$OVERLAY_RECORD") is MISSING — nothing tells a consumer which manifest rows are pre-overlay"
+  fi
+fi
+
 # `--list` is a REPORT: the table above is its whole output, and it must stop here — before the
 # projection below, which WRITES. (It used to fall through and materialize, so the one mode documented
 # as read-only was the one that silently applied.) Its verdicts are on the rows, so it makes no claim of
@@ -330,6 +546,20 @@ note "attributed union: $n_union skills — projecting into the derived roots."
 # ---------------------------------------------------------------------------------------------------
 drift=0
 changed=0
+
+# The published authority record travels with the projection: `apply` brings it into line, `--check`
+# calls a stale or absent one drift. Deferred to here — past the refusal gate — so a run that refuses to
+# project does not leave a rewritten record behind as its only effect.
+if [ "$overlay_stale" -ne 0 ]; then
+  if [ "$mode" = "check" ]; then
+    echo "  drift: $(basename "$OVERLAY_RECORD")" >&2
+    drift=1
+  else
+    cp -- "$OVERLAY_TMP" "$OVERLAY_RECORD"
+    changed=$((changed + 1))
+    note "wrote $(basename "$OVERLAY_RECORD")."
+  fi
+fi
 
 # sync_file <src> <dst>: byte-identical content plus the executable bit.
 sync_file() {
