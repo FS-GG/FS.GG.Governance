@@ -12,6 +12,7 @@
     <Compile Include="EvaluateTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="SensorTests.fs" />
+    <Compile Include="IntegrationRecordTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

@@ -1,0 +1,37 @@
+{
+  "generated_by": "scripts/materialize-skill-roots.sh",
+  "manifest": "claude.manifest.json",
+  "manifest_semantics": "install-receipt",
+  "not_in_manifest": {
+    ".claude/skills/speckit-agent-context-update/SKILL.md": {
+      "authority": ".specify/extensions/agent-context/commands/speckit.agent-context.update.md",
+      "authority_kind": "extension-command",
+      "check": "body-derivation"
+    }
+  },
+  "note": "claude.manifest.json records the bytes the spec-kit installer LAID DOWN, not the bytes that SHOULD be present. For every path under `superseded` the installed bytes were then replaced by an overlay, so the manifest's digest for that path is pre-overlay and comparing it to the tree is a FALSE RED. Check those paths against `authority` instead, using `check`: `body-derivation` means the SKILL.md body equals the authority command's body once each side's YAML frontmatter and leading H1 title lines are dropped. Paths under `not_in_manifest` are produced for this output root but are not manifest rows at all, so the manifest is not a complete inventory of the root. Rows in neither list are the manifest's own, and their digests are authoritative. This file carries no content digest on purpose: it names WHO owns each path, so a change to an authority's CONTENT needs no update here. Derived from .specify/ \u2014 regenerate with `scripts/materialize-skill-roots.sh` and assert with `--check`.",
+  "schema_version": "1.0",
+  "superseded": {
+    ".claude/skills/speckit-constitution/SKILL.md": {
+      "authority": ".specify/presets/fsharp-opinionated/commands/speckit.constitution.md",
+      "authority_kind": "preset-command",
+      "check": "body-derivation",
+      "manifest_row": "pre-overlay",
+      "preset": "fsharp-opinionated"
+    },
+    ".claude/skills/speckit-implement/SKILL.md": {
+      "authority": ".specify/presets/fsharp-opinionated/commands/speckit.implement.md",
+      "authority_kind": "preset-command",
+      "check": "body-derivation",
+      "manifest_row": "pre-overlay",
+      "preset": "fsharp-opinionated"
+    },
+    ".claude/skills/speckit-tasks/SKILL.md": {
+      "authority": ".specify/presets/fsharp-opinionated/commands/speckit.tasks.md",
+      "authority_kind": "preset-command",
+      "check": "body-derivation",
+      "manifest_row": "pre-overlay",
+      "preset": "fsharp-opinionated"
+    }
+  }
+}
