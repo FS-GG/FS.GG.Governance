@@ -89,8 +89,8 @@ let private manifestRows =
             |> Seq.toArray
         | _ -> [||])
 
-/// The overlay record's two sections, as path -> authority-relative-path. Absent file ⇒ empty, which is
-/// the state these tests were written against: nothing explained the three stale rows.
+/// The overlay record's two sections, as path -> (authority-relative-path, authority_kind). Absent file ⇒
+/// empty, which is the state these tests were written against: nothing explained the three stale rows.
 let private overlaySection (section: string) =
     if not (File.Exists overlayPath) then
         Map.empty
@@ -100,7 +100,15 @@ let private overlaySection (section: string) =
         match doc.RootElement.TryGetProperty section with
         | true, s ->
             s.EnumerateObject()
-            |> Seq.map (fun p -> p.Name, nn (p.Value.GetProperty("authority").GetString()))
+            |> Seq.map (fun p ->
+                let authority = nn (p.Value.GetProperty("authority").GetString())
+
+                let kind =
+                    match p.Value.TryGetProperty "authority_kind" with
+                    | true, k -> nn (k.GetString())
+                    | _ -> ""
+
+                p.Name, (authority, kind))
             |> Map.ofSeq
         | _ -> Map.empty
 
@@ -184,7 +192,7 @@ let tests =
               let failures =
                   superseded
                   |> Map.toList
-                  |> List.choose (fun (rel, authority) ->
+                  |> List.choose (fun (rel, (authority, _)) ->
                       let skill = repoFile rel
                       let src = repoFile authority
 
@@ -208,12 +216,22 @@ let tests =
                   presetShipped
                   "preset.yml and the preset's commands/ directory disagree about which commands the preset provides"
 
-              let recorded = superseded |> Map.toSeq |> Seq.choose (fst >> skillIdOf) |> Set.ofSeq
+              // Counted across BOTH sections, not just `superseded`. An override lands in `superseded`
+              // only when the base integration also installed that skill, so a preset that overrode a
+              // command the manifest does not list would be recorded — correctly — under
+              // `not_in_manifest`. Reading only one section would fail that legitimate tree, and a test
+              // that reds on a correct tree is the defect this item exists to remove.
+              let recordedPreset =
+                  Map.toSeq superseded
+                  |> Seq.append (Map.toSeq notInManifest)
+                  |> Seq.filter (fun (_, (_, kind)) -> kind = "preset-command")
+                  |> Seq.choose (fst >> skillIdOf)
+                  |> Set.ofSeq
 
               Expect.equal
-                  recorded
+                  recordedPreset
                   presetShipped
-                  ("overlay.json's superseded set is stale with respect to the preset. "
+                  ("overlay.json's recorded preset-override set is stale with respect to the preset. "
                    + "Re-run scripts/materialize-skill-roots.sh and commit overlay.json.")
           }
 
@@ -229,7 +247,7 @@ let tests =
                   (recordedAbsent |> Set.exists manifestIds.Contains)
                   "not_in_manifest lists a skill the manifest does in fact record"
 
-              for rel, authority in Map.toList notInManifest do
+              for rel, (authority, _) in Map.toList notInManifest do
                   let skill = repoFile rel
                   let src = repoFile authority
                   Expect.isTrue (File.Exists skill) $"{rel} — recorded in not_in_manifest but absent from the tree"

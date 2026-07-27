@@ -365,10 +365,14 @@ done
 # The record deliberately carries NO CONTENT DIGEST — see the header. It names the authority file and the
 # check, which is what makes a preset CONTENT change a no-op here instead of a re-staling event.
 # ---------------------------------------------------------------------------------------------------
-DERIVED_OVERLAY="$(python3 - "$REPO_ROOT" "$CLAUDE_MANIFEST" "$PRESET_DIR" "$EXT_REGISTRY" <<'PY'
+DERIVED_OVERLAY="$(python3 - "$REPO_ROOT" "$CLAUDE_MANIFEST" "$PRESET_DIR" "$EXT_REGISTRY" "$OUT_ROOT" <<'PY'
 import json, os, re, sys
 
-repo, manifest_p, preset_dir, ext_registry = sys.argv[1:5]
+# OUT_ROOT is passed in rather than re-derived from the manifest. The block above already derived it and
+# REFUSED a manifest that names more than one skill root; re-deriving here would be a second definition
+# of the same fact, free to disagree with the first — the exact failure mode the KIT_SKILLS note warns
+# about. One derivation, one answer.
+repo, manifest_p, preset_dir, ext_registry, out_root = sys.argv[1:6]
 preset_cmds = os.path.join(preset_dir, "commands")
 preset_id = os.path.basename(preset_dir)
 
@@ -443,15 +447,19 @@ if os.path.isfile(ext_registry):
 
 manifest = json.load(open(manifest_p, encoding="utf-8"))
 rows = {}          # skill id -> manifest path
-out_root = None
 for p in manifest.get("files", {}):
     parts = p.split("/")
     if len(parts) == 4 and parts[1] == "skills" and parts[3] == "SKILL.md":
         rows[parts[2]] = p
-        out_root = parts[0] + "/" + parts[1]
+
+# One producer per id, and the PRESET WINS a collision — the same precedence the attribution block applies
+# (`overrides.get(sid) or ext_cmds[sid]`). Merging the two dicts blind would let iteration order decide,
+# and the record would then name a different authority than the check that enforces it.
+producers = dict(ext_cmds)
+producers.update(shipped)
 
 superseded, not_in_manifest = {}, {}
-for sid, src in sorted(list(shipped.items()) + list(ext_cmds.items())):
+for sid, src in sorted(producers.items()):
     kind = "preset-command" if sid in shipped else "extension-command"
     entry = {"authority": rel(src), "authority_kind": kind, "check": "body-derivation"}
     if kind == "preset-command":
@@ -459,7 +467,7 @@ for sid, src in sorted(list(shipped.items()) + list(ext_cmds.items())):
     if sid in rows:
         entry["manifest_row"] = "pre-overlay"
         superseded[rows[sid]] = entry
-    elif out_root:
+    else:
         not_in_manifest["%s/%s/SKILL.md" % (out_root, sid)] = entry
 
 record = {
@@ -487,8 +495,16 @@ print(json.dumps(record, indent=2, sort_keys=True))
 PY
 )" || die "could not derive the overlay authority record."
 
+# Compared as BYTES, through a file, not as `[ "$(cat …)" = "$DERIVED_OVERLAY" ]`. Command substitution
+# strips trailing newlines from BOTH sides, so a record whose final newline was lost compared EQUAL while
+# `apply` would still rewrite it — `--check` green on a tree the writer would change is precisely the
+# idempotency claim this script makes ("re-run with --check, or a second time, to confirm idempotency").
+OVERLAY_TMP="$(mktemp)"
+trap 'rm -f "$OVERLAY_TMP"' EXIT
+printf '%s\n' "$DERIVED_OVERLAY" > "$OVERLAY_TMP"
+
 overlay_stale=0
-if [ -f "$OVERLAY_RECORD" ] && [ "$(cat "$OVERLAY_RECORD")" = "$DERIVED_OVERLAY" ]; then
+if [ -f "$OVERLAY_RECORD" ] && cmp -s "$OVERLAY_TMP" "$OVERLAY_RECORD"; then
   note "authority record: $(basename "$OVERLAY_RECORD") agrees with the producers."
 else
   overlay_stale=1
@@ -539,7 +555,7 @@ if [ "$overlay_stale" -ne 0 ]; then
     echo "  drift: $(basename "$OVERLAY_RECORD")" >&2
     drift=1
   else
-    printf '%s\n' "$DERIVED_OVERLAY" > "$OVERLAY_RECORD"
+    cp -- "$OVERLAY_TMP" "$OVERLAY_RECORD"
     changed=$((changed + 1))
     note "wrote $(basename "$OVERLAY_RECORD")."
   fi
