@@ -14,9 +14,10 @@
 #            and this file. An unarmed gate is not a gate (#332/#334/#880) — a `push`-only workflow reports
 #            nothing on a pull request, so it could never be the required check.
 #
-# It follows the doc's block with ONE sanctioned deviation, explained at the `pull_request:` key below: the
-# doc's verbatim example filters `pull_request` by `paths:`, and a `paths:`-filtered workflow CANNOT safely
-# be a required context. The doc's own alternative — no `paths:` filter at all — is used instead.
+# It follows the doc's block verbatim. It was authored against an EARLIER revision of that block, whose
+# example filtered `pull_request` by `paths:`, and deviated from it deliberately because a `paths:`-filtered
+# workflow CANNOT safely be a required context. FS-GG/.github#1508 accepted that reading and #1521 corrected
+# the doc, so the unfiltered form below is now what the authority prescribes — not a deviation from it.
 #
 # Why this is NOT redundant with `coordination-coherence`: that gate's subject is the KIT-OWNED SUBSET
 # (the four `kit:` rows). It was green throughout while eleven co-tenant skills — the ten `speckit-*` and
@@ -43,9 +44,12 @@ on:
   # detector reads an absent `paths:` key as armed. So this satisfies the capability, and it can be
   # required without deadlocking anything. The cost is a checkout plus a shell script on every PR.
   #
-  # Note that `scripts/check-required-contexts.py` would NOT have caught the filtered form: it asserts a
-  # required context is producible by some workflow triggering on `pull_request`, and does not model
-  # `paths:` at all. The filtered-and-required combination is invisible to it.
+  # This is now MECHANICALLY asserted, not just remembered. `scripts/check-required-contexts.py` used to
+  # ask only whether some producing workflow triggers on `pull_request` — strictly wider than whether the
+  # context reports on EVERY pull request — so the filtered-and-required combination was invisible to it.
+  # FS-GG/.github#1521 taught it to model `paths:`/`paths-ignore:` on the PR triggers, and
+  # `required-context-coherence.yml` sweeps the roster with it nightly. Restoring a filter here would now
+  # be caught there, but the deadlock it causes is still yours to avoid.
   pull_request:
   push:
     branches: [main]
