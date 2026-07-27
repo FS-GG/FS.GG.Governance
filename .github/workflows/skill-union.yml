@@ -1,0 +1,66 @@
+# skill-union — thin caller for the shared reusable assertion (FS-GG/.github#1504, ADR-0011 / ADR-0014).
+#
+# This repo `receives: skill-union` in FS-GG/.github registry/repos.yml, so it must hold the COMPLETE
+# runtime-visible union of its agent skills in every ADR-0011 root — `.claude/skills`, `.codex/skills`,
+# `.agents/skills` — byte-identically, so the Claude, Codex and generic agent runtimes are interchangeable.
+#
+# This is the RECEIVER caller shape (FS-GG/.github docs/coordination/skill-union-assertion.md
+# §"The required receiver caller"), and `scripts/repos-audit.sh` requires BOTH halves in this one file:
+#   Half 1 — the call is aimed at THIS repo's own committed roots: no `with:` at all, so `product-path`
+#            defaults to "." and `roots` to ADR-0011's three. Aiming it at a subdirectory would be a
+#            generated-product audit, and narrowing `roots` would be a smaller audit than the capability
+#            claims — neither satisfies `receives: skill-union`.
+#   Half 2 — the gate is ARMED: the `pull_request` trigger fires on every PR, which covers all three roots
+#            and this file. An unarmed gate is not a gate (#332/#334/#880) — a `push`-only workflow reports
+#            nothing on a pull request, so it could never be the required check.
+#
+# It follows the doc's block with ONE sanctioned deviation, explained at the `pull_request:` key below: the
+# doc's verbatim example filters `pull_request` by `paths:`, and a `paths:`-filtered workflow CANNOT safely
+# be a required context. The doc's own alternative — no `paths:` filter at all — is used instead.
+#
+# Why this is NOT redundant with `coordination-coherence`: that gate's subject is the KIT-OWNED SUBSET
+# (the four `kit:` rows). It was green throughout while eleven co-tenant skills — the ten `speckit-*` and
+# `spectre-console` — existed in `.claude/skills` alone (Governance#326). A `coordination-coherence` green
+# is evidence about four skills; only a `skill-union` green is evidence about the tree.
+#
+# The companion write arm is `scripts/materialize-skill-roots.sh`, which projects the producer-authored
+# union into the derived roots. Both halves are needed and neither is sufficient: this gate alone would go
+# red on a partition it cannot fix, and the materialize alone leaves nothing gating the next regression.
+name: skill-union
+
+on:
+  # DELIBERATELY NO `paths:` FILTER ON `pull_request`, and it must stay that way. Do not "restore" one.
+  #
+  # `skill-union / skill-union` is a REQUIRED status check on `main` (that is criterion 4's second half).
+  # GitHub does not skip a required check whose workflow was filtered out: a workflow skipped by path
+  # filtering leaves its checks PENDING, and a PR that requires them is blocked from merging — forever, on
+  # every PR that does not happen to touch a skill root. Requiring the context and filtering the trigger
+  # are therefore incompatible, and the filtered form is what deadlocks the repo.
+  #
+  # Unfiltered is the form the authority sanctions for exactly this reason. `repos-audit.sh`'s Half 2 is
+  # "the `pull_request` trigger must fire when any of the three roots changes: either it carries `paths:`
+  # covering all three, or it carries NO `paths:` filter at all (wider, and therefore fine)" — and its
+  # detector reads an absent `paths:` key as armed. So this satisfies the capability, and it can be
+  # required without deadlocking anything. The cost is a checkout plus a shell script on every PR.
+  #
+  # Note that `scripts/check-required-contexts.py` would NOT have caught the filtered form: it asserts a
+  # required context is producible by some workflow triggering on `pull_request`, and does not model
+  # `paths:` at all. The filtered-and-required combination is invisible to it.
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - ".claude/skills/**"
+      - ".codex/skills/**"
+      - ".agents/skills/**"
+      - ".github/workflows/skill-union.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  skill-union:
+    uses: FS-GG/.github/.github/workflows/skill-union-assert.yml@main
+    # No `with:` at all is the most correct form: `product-path` defaults to "." (the repository root)
+    # and `roots` to ADR-0011's three. Writing them out is equivalent, and narrowing either is not.
