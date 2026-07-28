@@ -102,8 +102,8 @@ Thumbs.db
 # It is git-ignored rather than committed because a COMMITTED symlink does not degrade safely: under
 # `git -c core.symlinks=false` (the git-for-Windows default without Developer Mode) it checks out as a
 # small regular text file, and both runtimes then exit 0 with zero skills and no diagnostic
-# (ADR-0067 §6). An untracked generated root fails loudly instead — `scripts/check-skill-view-roots.sh`
-# and `scripts/skill-view check` both run on the required `skill-view-check` context.
+# (ADR-0067 §6). An untracked generated root fails loudly instead — `scripts/skill-view check`, with
+# both its declaration and resolution lanes, runs on the required `skill-view-check` context.
 #
 # Do NOT commit this root, and do NOT delete this line to "fix" a missing directory. Regenerate it:
 #   bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills"
