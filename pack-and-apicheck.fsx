@@ -129,8 +129,12 @@ let private baselineFor (feed: Map<string, string list>) (id: string) (packed: s
 // ── ApiCompat invocation (fail-safe) ──
 // Runs the SDK ApiCompat tool by its OWN executable name so it resolves off PATH (the job-scoped
 // `dotnet tool install --tool-path …` / `--global` install CI performs) — NOT `dotnet tool run apicompat`,
-// which resolves ONLY a LOCAL `.config/dotnet-tools.json` manifest we deliberately don't carry (it is
-// drift-locked). Using `dotnet tool run` is why every package graded Indeterminate and `Checked:met` was
+// which resolves ONLY a LOCAL `.config/dotnet-tools.json` manifest. This repo DOES carry one — it is our
+// own file since FS.GG.Kit 0.18.0 (ADR-0068, FS-GG/.github#1615), declaring `fake-cli` and the
+// `fs.gg.coord.cli` engine Renovate bumps there — but `apicompat` is deliberately not in it (spec 088 D6:
+// a CI-only tool is installed by the job that uses it), so `tool run` resolves nothing either way. The
+// earlier reading of this comment — "a manifest we don't carry, because it is drift-locked" — was false on
+// both halves. Using `dotnet tool run` is why every package graded Indeterminate and `Checked:met` was
 // unreachable (M-CI-1). TOTAL: a missing executable throws inside Process.Start; we catch it and surface a
 // non-zero exit so the caller maps it to the `ERROR …` marker (Indeterminate — never a clean pass).
 let private runApiCompat (args: string list) : int * string =

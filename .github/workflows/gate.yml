@@ -165,10 +165,14 @@ jobs:
             exit 1
           fi
 
-  # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The three
-  # managed build-config files (Directory.Build.props, Directory.Packages.props,
-  # .config/dotnet-tools.json) must stay byte-identical to the org source of truth in
-  # FS-GG/.github dist/dotnet/. This job checks out that repo and runs its drift check; a
+  # Sync-not-fork drift gate (spec 085, shared-build-config contract, ADR-0006). The managed
+  # build-config files — Directory.Build.props and Directory.Packages.props — must stay
+  # byte-identical to the org source of truth in FS-GG/.github dist/dotnet/. Spec 085 counted a
+  # THIRD, .config/dotnet-tools.json; it left the managed set at FS.GG.Kit 0.18.0 (ADR-0068,
+  # FS-GG/.github#1615), is now this repo's OWN file, and nothing in this job grades it — the
+  # assert step below diffs the two .props and only those. It is named here so the drop reads as a
+  # deliberate transfer of ownership rather than an assertion someone forgot. This job
+  # checks out that repo and runs its drift check; a
   # hand-edit to a managed file (or an un-re-synced org baseline bump) fails the job. Run as
   # a SEPARATE job so a drift failure is a distinct signal, not serialized behind the build.
   # The self-contained checkout is deliberate, not a placeholder: since ADR-0036 / .github#592 the
@@ -300,10 +304,16 @@ jobs:
       - name: Build (bounded)
         run: dotnet fsi build.fsx --no-restore
 
-      # Install the ApiCompat tool JOB-SCOPED (D6) — never in .config/dotnet-tools.json (drift-locked) — to an
+      # Install the ApiCompat tool JOB-SCOPED (D6) — never in .config/dotnet-tools.json — to an
       # explicit --tool-path we prepend to PATH, so the detector resolves the `apicompat` EXECUTABLE directly
-      # (NOT `dotnet tool run apicompat`, which resolves only a local manifest we don't carry). Without an
-      # on-PATH `apicompat` every package graded Indeterminate and Checked:met was unreachable (M-CI-1).
+      # (NOT `dotnet tool run apicompat`: this repo DOES carry a local manifest, but apicompat is deliberately
+      # not declared in it, so `tool run` would resolve nothing). D6's reason has outlived its original one:
+      # the manifest is no longer drift-locked — it is this repo's own file since FS.GG.Kit 0.18.0 (ADR-0068,
+      # FS-GG/.github#1615), so we COULD edit it now. We still don't. It declares the two tools the repo
+      # actually depends on (`fake-cli`, and the `fs.gg.coord.cli` engine Renovate bumps there directly); a
+      # CI-only, advisory-job-only tool belongs in the job that uses it, not in a manifest every checkout
+      # restores. Without an on-PATH `apicompat` every package graded Indeterminate and Checked:met was
+      # unreachable (M-CI-1).
       # Advisory: a failed install still leaves the detector fail-safe (Indeterminate, never a clean pass).
       - name: Install ApiCompat tool (job-scoped, on PATH)
         continue-on-error: true

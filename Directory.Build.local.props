@@ -50,8 +50,13 @@
   </PropertyGroup>
 
   <!-- 088 Breaking-Change (API-Compat) gate (spec 088, research D6/D7). The .NET SDK Package Validation /
-       ApiCompat settings live HERE (repo-owned, drift-exempt) — never in the org-synced Directory.Build.props,
-       Directory.Packages.props, or .config/dotnet-tools.json (D6, byte-identity drift-checked by gate.yml).
+       ApiCompat settings live HERE (repo-owned, drift-exempt) — never in the org-synced Directory.Build.props
+       or Directory.Packages.props (D6, byte-identity drift-checked by gate.yml). D6 named a third file,
+       .config/dotnet-tools.json; that one is no longer org-synced or drift-checked — it is this repo's OWN
+       manifest since FS.GG.Kit 0.18.0 (ADR-0068, FS-GG/.github#1615), where Renovate bumps fs.gg.coord.cli
+       directly. D6's conclusion for it is unchanged and its reason is now a different one: a CI-only
+       ApiCompat tool stays job-scoped because it is not a dependency of this repo, not because the manifest
+       is locked. Nothing here may be put there on the grounds that the lock is gone.
        EnablePackageValidation is left OFF for the normal build (D7): Package Validation emits MSBuild ERRORS
        by default, which would redden `dotnet build`/pack and split enforcement from the governance verdict.
        The detector runs as a SEPARATE step (`pack-and-apicheck.fsx`, the I/O-edge sensor) that captures the
