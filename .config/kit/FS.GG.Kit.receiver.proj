@@ -13,11 +13,39 @@
 
         dotnet build .config/kit/FS.GG.Kit.receiver.proj -t:FsggKitMaterialize
 
-    The materialized files (skills, scripts/fsgg-coord, .config/dotnet-tools.json, and — because this is
-    a `build-config` receiver — Directory.Build.props / Directory.Packages.props) are COMMITTED: the
-    materialize is the write arm that replaces the byte-copy, not a live per-build input, so it does NOT
-    run on every build (FsggKitMaterializeOnBuild=false, per the .github#1280 review). The committed bytes
-    are content-addressed and byte-identical to canonical, so `coordination-coherence` stays green.
+    The materialized files (skills, scripts/fsgg-coord, and — because this is a `build-config` receiver —
+    Directory.Build.props / Directory.Packages.props) are COMMITTED: the materialize is the write arm that
+    replaces the byte-copy, not a live per-build input, so it does NOT run on every build
+    (FsggKitMaterializeOnBuild=false, per the .github#1280 review). The committed bytes are
+    content-addressed and byte-identical to canonical, so `coordination-coherence` stays green.
+
+    `.config/dotnet-tools.json` IS DELIBERATELY NOT IN THAT LIST — IT IS THIS REPO'S OWN FILE.
+    ADR-0068 (FS-GG/.github#1615) removed `dist/dotnet/.config/dotnet-tools.json` from the kit's `kit:`
+    block, taking kit members 9 -> 8, and FS.GG.Kit 0.18.0 is the first pin that no longer writes that
+    path into any receiver. NOTHING WAS LOST HERE: the manifest is tracked in this repo and predates the
+    package fabric (spec 085 adopted it verbatim, back when the byte-copy drift gate covered it), so the
+    only thing that changed is that the kit stopped OVERWRITING it. Measured on this tree at the 0.18.0
+    bump (#340): `-t:FsggKitMaterialize` reports "materialized 29 file(s) (0 written)", and
+    `coordination-sync` in its pinned check mode (the required `kit / coordination-kit` context) was
+    GREEN on that pull request — the now-unmanaged committed file raises no "extra"/drift finding,
+    because a path the kit does not claim is a path it does not grade.
+
+    THE PRACTICAL CONSEQUENCE IS WHO MOVES THE ENGINE PIN. `fs.gg.coord.cli` (the `fsgg-coord-engine`
+    that `scripts/fsgg-coord` resolves through a LOCAL tool manifest) is now bumped by RENOVATE, in this
+    repo, directly against `.config/dotnet-tools.json` — on this repo's own schedule, as an ordinary
+    package pin. It no longer arrives second-hand as a kit republish plus a seven-receiver fan-out for a
+    version string. `fake-cli` sits in the same manifest and is unaffected.
+
+    OWNING IT DOES NOT MEAN NOTHING WATCHES IT. The failure mode a repo-owned file introduces is
+    DELETION: with the kit no longer writing the path, a receiver that dropped the manifest would break
+    no gate here and no materialize would restore it. So the invariant moved to where it can still be
+    asserted from outside — FS-GG/.github's `repos-audit` ENGINE-MANIFEST SWEEP (#1615) runs daily over
+    the `coordination-kit` receivers and asserts that each one, this repo included, DECLARES
+    `fs.gg.coord.cli`. It is f(roster, receiver tree), which is precisely what the old `repos.sh validate`
+    co-fabric rule (#1077) was not: that one read only the hub's roster, so a receiver that deleted its
+    own manifest stayed green. Deleting this file is therefore caught centrally and on a schedule, not
+    silently. The sweep grades the DECLARATION, not the VERSION — engine freshness is the kit-pin sweep's
+    job, one package over.
   -->
 
   <PropertyGroup>
