@@ -37,6 +37,17 @@ fresh() {
   printf '%s' "$d"
 }
 
+# THE KIT DECLARATION MUST BE RESTORED BEFORE ANY LEG RUNS. The script under test now EVALUATES the
+# kit properties through MSBuild rather than scraping the project's XML, and it refuses outright on
+# an unrestored tree — because the property only the KIT defaults (FsggKitRetiredSkillRoots) reads as
+# empty there, which is indistinguishable from "this receiver retires nothing". Restoring once here is
+# what makes every fixture below inherit a real evaluation: `fresh()` copies obj/ along with the tree.
+if ! dotnet restore "$REPO_ROOT/.config/kit/FS.GG.Kit.receiver.proj" >/dev/null 2>&1; then
+  echo "materialize-skill-roots write-set tests: could not restore the kit receiver project — the legs" >&2
+  echo "  below would all refuse on an unevaluated declaration. NOT MEASURED, not passed." >&2
+  exit 1
+fi
+
 echo "materialize-skill-roots write-set tests"
 
 # ---------------------------------------------------------------------------------------------------
@@ -86,8 +97,11 @@ fi
 # ---------------------------------------------------------------------------------------------------
 # LEG 3 — Apply mode must not write into a root the declaration does not name.
 #
-# `.codex/skills` was retired from the runtime contract by ADR-0067 §5 (.github#1636) and is not in
-# this receiver's FsggKitSkillRoots/FsggKitViewSkillRoots. It is still COMMITTED here (.github#1865).
+# `.codex/skills` was retired from the runtime contract by ADR-0067 §5 (.github#1636). It is DECLARED
+# retired — not by this project's XML, which never mentions it, but by the KIT'S DEFAULT for
+# `FsggKitRetiredSkillRoots`, which is why the script under test must EVALUATE the declaration through
+# MSBuild rather than scrape it. Measured: scraped -> "", evaluated -> ".codex/skills". The directory
+# is still committed here, which ADR-0067 phase 4 (.github#1676) owns and this script must not touch.
 # The pre-#338 script hardcoded it as a projection target, so running the remedy its own `--check`
 # printed re-created the four kit skill directories inside it — measured, 11 -> 15 entries. ADR-0065
 # §Retiring a root forbids a receiver hand-re-materializing a retired root.

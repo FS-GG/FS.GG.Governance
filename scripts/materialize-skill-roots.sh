@@ -199,19 +199,39 @@ command -v python3 >/dev/null 2>&1 || {
 # checked-in .agent-skill-roots, else the default. An ABSENT root is a hard error at every level —
 # declaring roots narrows what is asked for, it never weakens the answer (#517 / #266).
 # ---------------------------------------------------------------------------------------------------
-# Reads one MSBuild property out of the receiver project. `;`-separated per MSBuild, space-separated
-# out. Absent property -> empty string, which is a legitimate answer (a receiver may declare no view
-# and no retired root); an absent FILE is not, and is caught by the caller.
+# EVALUATED BY MSBUILD, NOT PARSED BY US — and this is not a style preference.
+#
+# The kit's properties are DEFAULTED by the package (`build/FS.GG.Kit.props`, each
+# `Condition="'$(X)' == ''"`) and OVERRIDABLE by the receiver, so a property's value is the RESULT OF
+# AN EVALUATION and is not necessarily present in this file's XML at all. Measured on FS.GG.SDD:
+# the receiver project declares no `FsggKitRetiredSkillRoots` anywhere in its text, and MSBuild
+# evaluates it to `.codex/skills` — from the kit's default. An XML scrape reports "" and would
+# conclude nothing is retired, which is the wrong answer in the dangerous direction.
+#
+# Reading the package's props XML instead would be a second implementation of MSBuild — the same
+# mistake one layer down. `dotnet build -getProperty:` asks the evaluator, exactly as
+# FS.GG.SDD's `scripts/materialize-skill-roots.fsx` does for the same declaration.
+#
+# ONE evaluation, three properties: an MSBuild invocation per property triples the cost of every run
+# of this script for no added truth.
+kit_eval() {
+  ( cd "$REPO_ROOT" && dotnet build "$KIT_RECEIVER_PROJ" --no-restore \
+      -getProperty:FsggKitSkillRoots \
+      -getProperty:FsggKitRetiredSkillRoots \
+      -getProperty:FsggKitViewSkillRoots 2>&1 )
+}
+
+# Pulls one property out of the captured evaluation. `;`-separated in, space-separated out.
 kit_prop() {
-  python3 - "$KIT_RECEIVER_PROJ" "$1" <<'PY'
-import re, sys
-try:
-    xml = open(sys.argv[1], encoding="utf-8").read()
-except OSError:
-    sys.exit(3)
-m = re.search(r"<%s>([^<]*)</%s>" % (sys.argv[2], sys.argv[2]), xml)
-print(" ".join(p.strip() for p in m.group(1).split(";") if p.strip()) if m else "")
-PY
+  printf '%s' "$KIT_PROPS" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+i, j = raw.find("{"), raw.rfind("}")
+if i < 0 or j < 0:
+    sys.exit(4)
+props = json.loads(raw[i:j+1]).get("Properties", {})
+print(" ".join(p.strip() for p in props.get(sys.argv[1], "").split(";") if p.strip()))
+' "$1"
 }
 
 VIEW_ROOTS=""; RETIRED_ROOTS=""
@@ -222,15 +242,44 @@ elif [ -f "$REPO_ROOT/.agent-skill-roots" ]; then
   ROOTS_SRC=".agent-skill-roots"
   [ -n "$ROOTS" ] || die ".agent-skill-roots parses to nothing — a tree that checked it in meant to say something."
 elif [ -f "$KIT_RECEIVER_PROJ" ]; then
+  command -v dotnet >/dev/null 2>&1 || die "dotnet is required to EVALUATE the kit declaration in
+  $KIT_RECEIVER_PROJ. The properties are defaulted by the package and overridable by the receiver, so
+  their values come from MSBuild — scraping this file's XML would report \"\" for a property the kit
+  defaults, and conclude nothing is retired."
+
+  KIT_PROPS="$(kit_eval)"
   # The runtime contract is the UNION of the source and view roots — ADR-0011's two, as ADR-0067 §5
   # narrowed them. Retired roots are read too, but only so the write set can subtract them by name.
-  src_roots="$(kit_prop FsggKitSkillRoots)"     || die "could not read FsggKitSkillRoots from $KIT_RECEIVER_PROJ"
-  VIEW_ROOTS="$(kit_prop FsggKitViewSkillRoots)" || die "could not read FsggKitViewSkillRoots from $KIT_RECEIVER_PROJ"
-  RETIRED_ROOTS="$(kit_prop FsggKitRetiredSkillRoots)" || true
+  src_roots="$(kit_prop FsggKitSkillRoots)"
+  VIEW_ROOTS="$(kit_prop FsggKitViewSkillRoots)"
+  RETIRED_ROOTS="$(kit_prop FsggKitRetiredSkillRoots)"
   ROOTS="$(printf '%s %s' "$src_roots" "$VIEW_ROOTS" | tr -s ' ' | sed 's/^ *//; s/ *$//')"
-  ROOTS_SRC="the pinned kit declaration ($(basename "$KIT_RECEIVER_PROJ"))"
-  [ -n "$ROOTS" ] || die "$KIT_RECEIVER_PROJ declares no FsggKitSkillRoots — the receiver's runtime
-  contract is empty, and this script will not guess one (ADR-0065)."
+  ROOTS_SRC="the pinned kit declaration ($(basename "$KIT_RECEIVER_PROJ"), MSBuild-evaluated)"
+
+  # AND IT FAILS CLOSED — ON THE RESTORE, NOT ON A PROPERTY'S VALUE.
+  #
+  # The obvious guard is "refuse if FsggKitSkillRoots is empty", which is what FS.GG.SDD's driver can
+  # do because nothing in its tree declares that property inline. HERE IT WOULD NOT FIRE: this
+  # receiver project declares FsggKitSkillRoots and FsggKitViewSkillRoots in its own XML, so MSBuild
+  # returns both WITHOUT a restore. The property that goes silently empty is the one only the kit
+  # DEFAULTS — `FsggKitRetiredSkillRoots` — and an empty retired set is indistinguishable from a
+  # receiver that retires nothing. Measured: unrestored, this script reported no retired roots at all
+  # and exited 0.
+  #
+  # So the precondition is asserted directly: the kit's `build/` props reach the evaluation only
+  # through NuGet's generated `.g.props`, and its absence means every kit-DEFAULTED property in the
+  # answer above is a default that never loaded.
+  kit_obj_props="$(dirname "$KIT_RECEIVER_PROJ")/obj/$(basename "$KIT_RECEIVER_PROJ").nuget.g.props"
+  [ -f "$kit_obj_props" ] || die "the kit declaration was read from an UNRESTORED project, so every
+  property the KIT defaults — including FsggKitRetiredSkillRoots — evaluated to the empty string.
+  This receiver declares its source and view roots inline, so those look correct while the retired set
+  silently reads as \"nothing retired\": the wrong answer in the wrong direction (FS.GG.SDD#767).
+    missing: $kit_obj_props
+    fix:     dotnet restore $KIT_RECEIVER_PROJ
+  Refusing rather than materializing an unmeasured root set (ADR-0065)."
+
+  [ -n "$src_roots" ] || die "$KIT_RECEIVER_PROJ evaluates FsggKitSkillRoots to nothing — the
+  receiver's runtime contract is empty, and this script will not guess one (ADR-0065)."
 else
   die "no root set: \$AGENT_SKILL_ROOTS is unset, .agent-skill-roots is absent, and there is no
   $KIT_RECEIVER_PROJ to read the declaration from. This script no longer carries a hardcoded default —

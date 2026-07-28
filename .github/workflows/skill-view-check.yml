@@ -248,5 +248,12 @@ jobs:
       # where a git-ignored view root is absent by construction (ADR-0067 §6.1) — is not a
       # misconfiguration. Generating it here would make that leg unfalsifiable in the one environment
       # that reproduces it.
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      # The test restores the kit receiver project itself, and refuses loudly if it cannot — the
+      # script under test EVALUATES the kit declaration through MSBuild, and an unrestored project
+      # returns the empty string for every property the kit DEFAULTS.
       - name: Every leg, each with the mutation that kills it recorded beside it
         run: bash scripts/tests/materialize-skill-roots.test.sh
