@@ -223,3 +223,30 @@ jobs:
             --source .claude/skills \
             --tree . \
             --receiver-proj .config/kit/FS.GG.Kit.receiver.proj
+
+  # ---------------------------------------------------------------------------------------------------
+  # THE WRITE SET OF THE OTHER SKILL-ROOT TOOL, WHICH NOTHING GRADED UNTIL NOW (FS.GG.Governance#338).
+  #
+  # `scripts/materialize-skill-roots.sh` PROJECTS the spec-kit union into derived roots. It is the only
+  # tool in this repo that WRITES skill roots, and before #338 no workflow ran it — `grep -rn
+  # materialize-skill-roots .github/` was empty. It stayed wrong through two contract changes as a
+  # result: it kept `.codex/skills` (retired by ADR-0067 §5) and `.agents/skills` (a generated VIEW root
+  # since FS-GG/.github#1748) in its write set, so `--check` exited 2 on an untouched `main`, and the
+  # remedy its own failure message printed re-created four kit skill directories inside the retired
+  # root — measured, 11 -> 15 entries.
+  #
+  # A job here rather than a new workflow: this file already owns the skill-root subject, and adding a
+  # second workflow for a second skill-root question is the copying this repo is retiring.
+  # ---------------------------------------------------------------------------------------------------
+  materialize-write-set:
+    name: materialize-skill-roots write set
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Deliberately does NOT generate the view first. Leg 1's whole subject is that a FRESH checkout —
+      # where a git-ignored view root is absent by construction (ADR-0067 §6.1) — is not a
+      # misconfiguration. Generating it here would make that leg unfalsifiable in the one environment
+      # that reproduces it.
+      - name: Every leg, each with the mutation that kills it recorded beside it
+        run: bash scripts/tests/materialize-skill-roots.test.sh
