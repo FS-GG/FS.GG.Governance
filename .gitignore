@@ -92,3 +92,19 @@ Thumbs.db
 
 # Agent memory / session data (not a project deliverable)
 .claude/projects/
+
+# --- ADR-0067 phase 4: the second committed skill root is now a generated VIEW ------------
+# `.agents/skills` is STILL a runtime skill root — both Claude and Codex load it, and it is half of
+# the union `<FsggKitSkillRoots>` + `<FsggKitViewSkillRoots>` declares in
+# `.config/kit/FS.GG.Kit.receiver.proj`. It is simply no longer a second COMMITTED copy of
+# `.claude/skills`: `scripts/skill-view generate` resolves it at checkout (FS-GG/.github#1676, #1748).
+#
+# It is git-ignored rather than committed because a COMMITTED symlink does not degrade safely: under
+# `git -c core.symlinks=false` (the git-for-Windows default without Developer Mode) it checks out as a
+# small regular text file, and both runtimes then exit 0 with zero skills and no diagnostic
+# (ADR-0067 §6). An untracked generated root fails loudly instead — `scripts/check-skill-view-roots.sh`
+# and `scripts/skill-view check` both run on the required `skill-view-check` context.
+#
+# Do NOT commit this root, and do NOT delete this line to "fix" a missing directory. Regenerate it:
+#   bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills"
+/.agents/skills
