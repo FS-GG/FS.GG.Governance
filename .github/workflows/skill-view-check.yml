@@ -101,31 +101,47 @@
 # the wedge; there is never a reason to.
 #
 # =================================================================================================
-# WHEN THIS REPO RETIRES ITS SECOND COMMITTED ROOT, THIS FILE CHANGES IN THE SAME PULL REQUEST.
+# THE SECOND COMMITTED ROOT WAS RETIRED, AND THIS FILE CHANGED IN THAT SAME PULL REQUEST.
 # =================================================================================================
-# ADR-0067 phase 4 (FS-GG/.github#1676) untracks `.agents/skills` and git-ignores it, so a VIEW root
-# does not exist in a fresh checkout — a clean clone, a new worktree and this runner alike. The step
-# below would then correctly report `[absent-root]` and this required context would be RED on every
-# pull request. Measured on a bare checkout of a dry-run retirement of this repo, 2026-07-28: exit 1.
+# DONE 2026-07-28 by ADR-0067 phase 4 (FS-GG/.github#1676, #1748). `.agents/skills` is untracked and
+# git-ignored, so a VIEW root does not exist in a fresh checkout — a clean clone, a new worktree and
+# this runner alike. Without a generate the check below correctly reports `[absent-root]` and this
+# required context is RED on every pull request. Measured on a bare checkout of the retired tree of
+# THIS repo, 2026-07-28: `[absent-root] .agents/skills does not exist`, exit 1.
 #
-# So the retiring pull request MUST add the generate ahead of the check, in the same commit that
-# untracks the root — never before it (`skill-view generate` refuses a root git TRACKS, with no
-# override, and would die), and never after it (that is the RED window):
-#
-#     - name: Resolve the view roots this tree no longer commits
-#       run: bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills"
+# So the generate is the step immediately below, added in the SAME commit that untracks the root —
+# never before it (`skill-view generate` refuses a root git TRACKS, with no override, and would die)
+# and never after it (that is the RED window on every pull request).
 #
 # `--roots` names the VIEW roots explicitly, exactly as `FsggKitViewSkillRoots` does for the
 # materializer: letting the tool fall back to the default pair would also try to resolve
-# `.claude/skills`, this repo's tracked source, and be a refusal rather than a no-op. That two-step
-# form was proven green on a bare checkout of a retired tree of THIS repo before this file was made
-# required — the run id is on FS-GG/.github#1715.
+# `.claude/skills`, this repo's tracked source, and be a refusal rather than a no-op.
 #
-# Do NOT pre-emptively add that step now, and do NOT make it conditional on whether the root happens to
-# be missing. "Generate whatever is absent, then assert it is present" is the fail-open shape this
-# whole item exists to remove: it would make [absent-root] unreachable and hand back a gate that cannot
-# fail. The generate is authorised by the repo DECLARING a root to be a view, never by observing that
-# one is missing.
+# It is NOT conditional on whether the root happens to be missing, and it must never become so.
+# "Generate whatever is absent, then assert it is present" is the fail-open shape this whole item
+# exists to remove: it would make [absent-root] unreachable and hand back a gate that cannot fail. The
+# generate is authorised by the repo DECLARING a root to be a view — in `<FsggKitViewSkillRoots>`,
+# `.config/kit/FS.GG.Kit.receiver.proj` — never by observing that one is missing.
+#
+# THE SAME GENERATE ALSO EXISTS IN THE RECEIVER PROJECT, AND THAT IS NOT A DUPLICATE. This workflow
+# runs no MSBuild, so it needs its own step; `FsggGovernanceGenerateSkillView` covers the OTHER trees
+# the view has to exist in — `gate.yml`'s required `Build-config drift check` job and, critically,
+# `kit-materialize.yml`, which is a `uses:` of FS-GG/.github's reusable workflow and therefore cannot
+# be given a step by this repo at all. Both were measured RED on a bare checkout of the retired tree
+# without it.
+#
+# =================================================================================================
+# THE §8 ALARM RIDES THIS CONTEXT, AND THAT IS WHY IT IS NOT DECORATION.
+# =================================================================================================
+# The retirement removes the only gate that would have noticed `.agents/skills` LEAVING the runtime
+# contract later. Measured on this repo's own tree with `<FsggKitViewSkillRoots>` emptied and the
+# directory deleted: the materialize reports "no view skill roots declared — nothing to assert" and
+# succeeds, and `coordination-sync --check --against-pin` reports "OK — all 30 materialized file(s)" —
+# and that second one IS the required context `kit / coordination-kit`. The required set passes on
+# exactly the tree the alarm exists to fail. `scripts/check-skill-view-roots.sh` is that alarm, and it
+# runs here because `skill-view-check` is REQUIRED on `main`, is authored in this repo, and needs no
+# .NET SDK or restore. See that script's header for the shape it ports (FS.GG.Audio's) and why not the
+# other two.
 
 name: skill-view-check
 
@@ -145,6 +161,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+
+      # UNCONDITIONAL, and ahead of both assertions. `.agents/skills` is a VIEW root: git-ignored, and
+      # therefore absent in this checkout exactly as it is in every fresh clone. See the header block
+      # for why this may be neither conditional nor moved.
+      - name: Resolve the view roots this tree no longer commits
+        run: bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills"
+
+      # ADR-0067 §8's replacement alarm. Rides this REQUIRED context because the retirement left no
+      # other gate able to see `.agents/skills` leave the runtime contract — `kit / coordination-kit`
+      # is green on exactly that tree, measured. Runs BEFORE the visibility check so that a broken
+      # DECLARATION is reported as such rather than as a missing directory.
+      - name: Assert the runtime skill-root contract is still ADR-0011's two
+        run: bash scripts/check-skill-view-roots.sh
 
       # The bare command a worker runs, over this repo's own declared roots. The expected set is the
       # SOURCE directory, never a manifest: `registry`-style manifests declare a subset of a tree's
