@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+# Tests for scripts/materialize-skill-roots.sh's WRITE SET (FS.GG.Governance#338).
+#
+# WHY THIS FILE EXISTS AT ALL. Before #338 nothing ran that script — `grep -rn materialize-skill-roots
+# .github/` was empty, and the only other mention was prose in `IntegrationRecordTests.fs`. It was a
+# producer tool that was wrong in the direction of WRITING, with no gate over it, and it stayed wrong
+# through two contract changes: ADR-0067 §5 retiring `.codex/skills`, and .github#1748 making
+# `.agents/skills` a generated VIEW root. An ungated writer is how both went unnoticed.
+#
+# EVERY LEG NAMES THE MUTATION THAT KILLS IT. A leg that passes with the fix reverted is not a test
+# (.github#1808/#1810), and this file's subject is unusually good at looking green while being wrong:
+# under the default `--mode link` view the two roots are the SAME OBJECT, so a bad write set writes
+# a file onto itself, reports "already in sync", and exits 0. Leg 2 exists because of exactly that —
+# it is the one arrangement in which the defect is observable.
+#
+# Usage:  bash scripts/tests/materialize-skill-roots.test.sh
+# Exit:   0 all legs pass;  1 a leg failed
+
+set -uo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$HERE/../.." && pwd)"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+fails=0
+ok()  { printf '  ok   %s\n' "$1"; }
+bad() { printf '  FAIL %s\n' "$1" >&2; fails=$((fails + 1)); }
+
+# A pristine copy of the working tree, minus git, per leg. The script only reads the tree and
+# .config/kit/FS.GG.Kit.receiver.proj, so a copy is a faithful subject.
+fresh() {
+  local d="$WORK/$1"
+  rm -rf "$d"; mkdir -p "$d"
+  tar -C "$REPO_ROOT" --exclude=.git -cf - . 2>/dev/null | tar -C "$d" -xf -
+  rm -rf "$d/.agents/skills"      # a view root is git-ignored: ABSENT in every fresh checkout
+  printf '%s' "$d"
+}
+
+# THE KIT DECLARATION MUST BE RESTORED BEFORE ANY LEG RUNS. The script under test now EVALUATES the
+# kit properties through MSBuild rather than scraping the project's XML, and it refuses outright on
+# an unrestored tree — because the property only the KIT defaults (FsggKitRetiredSkillRoots) reads as
+# empty there, which is indistinguishable from "this receiver retires nothing". Restoring once here is
+# what makes every fixture below inherit a real evaluation: `fresh()` copies obj/ along with the tree.
+if ! dotnet restore "$REPO_ROOT/.config/kit/FS.GG.Kit.receiver.proj" >/dev/null 2>&1; then
+  echo "materialize-skill-roots write-set tests: could not restore the kit receiver project — the legs" >&2
+  echo "  below would all refuse on an unevaluated declaration. NOT MEASURED, not passed." >&2
+  exit 1
+fi
+
+echo "materialize-skill-roots write-set tests"
+
+# ---------------------------------------------------------------------------------------------------
+# LEG 1 — `--check` succeeds on a fresh checkout, where the view root has not been generated.
+#
+# Regression: this exited 2 ("configured root is absent: .agents/skills") on an untouched `main`,
+# because the absent-root guard did not know a view root is absent BY CONSTRUCTION (ADR-0067 §6.1).
+# That failure also MASKED the `.codex` drift underneath it, which is why #338 recorded a different
+# exit code than the tree actually produced.
+#
+# KILLED BY: making the absent-root check fatal for view roots again (drop the `in_list "$r"
+# "$VIEW_ROOTS"` arm in the absence loop) — this leg then sees exit 2.
+# ---------------------------------------------------------------------------------------------------
+d="$(fresh leg1)"
+out="$(cd "$d" && bash scripts/materialize-skill-roots.sh --check 2>&1)"; rc=$?
+if [ "$rc" -eq 0 ]; then
+  ok "leg 1: --check exits 0 on a fresh checkout with the view root ungenerated"
+else
+  bad "leg 1: --check exited $rc on a fresh checkout, want 0. An ungenerated view root is not a
+       misconfiguration (ADR-0067 §6.1). Output:
+$out"
+fi
+
+# ---------------------------------------------------------------------------------------------------
+# LEG 2 — THE HEADLINE. Apply mode must not CREATE an ungenerated view root.
+#
+# This is the only arrangement in which a view root in the write set is observable. With the view
+# present as a `--mode link` symlink the projection writes each file onto itself and reports "already
+# in sync"; with it present as a `--mode copy` directory the bytes already match. Only on a tree where
+# the view has NOT been generated does a bad write set produce a visible artefact — it materializes
+# the union into a real directory, re-creating precisely the second committed copy the view exists to
+# remove (FS.GG.SDD#770 records the same hazard in the F# driver).
+#
+# KILLED BY: dropping `in_list "$r" "$VIEW_ROOTS" && continue` from the WRITE_ROOTS loop.
+#            Measured with that line removed: .agents/skills created holding 34 files.
+# ---------------------------------------------------------------------------------------------------
+d="$(fresh leg2)"
+(cd "$d" && bash scripts/materialize-skill-roots.sh >/dev/null 2>&1)
+if [ -e "$d/.agents/skills" ]; then
+  bad "leg 2: apply mode CREATED the view root ($(find "$d/.agents/skills" -type f | wc -l) files).
+       A view root is generated by scripts/skill-view, never transported — writing into it re-creates
+       the copy ADR-0067 retired."
+else
+  ok "leg 2: apply mode does not create an ungenerated view root"
+fi
+
+# ---------------------------------------------------------------------------------------------------
+# LEG 3 — Apply mode must not write into a root the declaration does not name.
+#
+# `.codex/skills` was retired from the runtime contract by ADR-0067 §5 (.github#1636). It is DECLARED
+# retired — not by this project's XML, which never mentions it, but by the KIT'S DEFAULT for
+# `FsggKitRetiredSkillRoots`, which is why the script under test must EVALUATE the declaration through
+# MSBuild rather than scrape it. Measured: scraped -> "", evaluated -> ".codex/skills". The directory
+# is still committed here, which ADR-0067 phase 4 (.github#1676) owns and this script must not touch.
+# The pre-#338 script hardcoded it as a projection target, so running the remedy its own `--check`
+# printed re-created the four kit skill directories inside it — measured, 11 -> 15 entries. ADR-0065
+# §Retiring a root forbids a receiver hand-re-materializing a retired root.
+#
+# KILLED BY: restoring the hardcoded `DEFAULT_ROOTS=".claude/skills .codex/skills .agents/skills"` as
+#            the root set — the projection then fans out into .codex/skills again.
+# ---------------------------------------------------------------------------------------------------
+#
+# THE VIEW IS GENERATED FIRST, DELIBERATELY, AND THE LEG IS WORTHLESS WITHOUT IT. Measured while
+# writing this file: with the view left ungenerated, a mutant that restores the hardcoded root set
+# dies at "configured root is absent: .agents/skills" (exit 2) BEFORE reaching the projection — so
+# .codex/skills stays untouched for a reason that has nothing to do with this leg's subject, and the
+# leg reports green over a defect that is present. That is protection by POSITION rather than by
+# CONSTRUCTION (.github#1849). Generating the view removes the early exit and makes the projection
+# actually run, which is the only state in which this leg observes anything.
+d="$(fresh leg3)"
+if [ -d "$d/.codex/skills" ]; then
+  (cd "$d" && bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills" >/dev/null 2>&1) || true
+  before="$(find "$d/.codex/skills" -mindepth 1 -maxdepth 1 -type d | wc -l)"
+  (cd "$d" && bash scripts/materialize-skill-roots.sh >/dev/null 2>&1)
+  after="$(find "$d/.codex/skills" -mindepth 1 -maxdepth 1 -type d | wc -l)"
+  if [ "$before" -eq "$after" ]; then
+    ok "leg 3: apply mode leaves the undeclared .codex/skills untouched ($before entries)"
+  else
+    bad "leg 3: apply mode changed .codex/skills from $before to $after entries — it re-materialized
+         into a root the kit declaration does not name (ADR-0065 §Retiring a root)."
+  fi
+else
+  # NOT a pass. This repo has the directory today; if it is ever removed this leg has no subject and
+  # must say so rather than report green over nothing (#266).
+  echo "  SKIP leg 3: .codex/skills is absent from this tree — leg NOT MEASURED, not passed."
+fi
+
+# ---------------------------------------------------------------------------------------------------
+# LEG 4 — The root set is DERIVED, not hardcoded. Guards the fix's shape rather than its effect: a
+# future edit could reintroduce a constant that happens to agree with the declaration today and
+# silently diverge on the next contract change, which is how #338 happened in the first place.
+#
+# KILLED BY: reintroducing a hardcoded default root set.
+# ---------------------------------------------------------------------------------------------------
+d="$(fresh leg4)"
+out="$(cd "$d" && bash scripts/materialize-skill-roots.sh --check 2>&1)"
+if grep -q "from the pinned kit declaration" <<<"$out"; then
+  ok "leg 4: the root set is read from the pinned kit declaration"
+else
+  bad "leg 4: the root set did not come from the kit declaration. Got:
+$(grep -E '^materialize-skill-roots: roots:' <<<"$out")"
+fi
+
+echo
+if [ "$fails" -eq 0 ]; then
+  echo "materialize-skill-roots write-set tests: all legs passed"
+  exit 0
+fi
+echo "materialize-skill-roots write-set tests: $fails leg(s) FAILED" >&2
+exit 1

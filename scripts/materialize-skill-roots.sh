@@ -134,7 +134,24 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/.." && pwd)"
-DEFAULT_ROOTS=".claude/skills .codex/skills .agents/skills"   # ADR-0011's three (ADR-0065's one default).
+# THE ROOT SET IS DERIVED FROM THE PINNED KIT DECLARATION, NEVER HARDCODED (FS.GG.Governance#338).
+#
+# It used to be `.claude/skills .codex/skills .agents/skills` — "ADR-0011's three". Both of the other
+# two have since changed disposition underneath that constant and it never learned:
+#
+#   * ADR-0067 §5 (executed by FS-GG/.github#1636) RETIRED `.codex/skills` from the runtime contract.
+#     Projecting into it re-creates a root the contract retired — measured, 11 -> 15 entries, by
+#     running the remedy this script's own `--check` prints. ADR-0065 §Retiring a root forbids exactly
+#     that.
+#   * FS-GG/.github#1748 made `.agents/skills` a VIEW root: generated at checkout, git-ignored, and
+#     therefore ABSENT in a fresh clone. The old absent-root check died `exit 2` on untouched `main`
+#     for that reason alone, masking the `.codex` drift behind it.
+#
+# ADR-0065 §A root's three dispositions gives a root THREE states; the constant modelled one. So the
+# set is now read from the receiver project that already declares it, and each disposition is
+# subtracted from the WRITE set for its own stated reason. A declaration is what a tool can subtract;
+# prose is not.
+KIT_RECEIVER_PROJ="$REPO_ROOT/.config/kit/FS.GG.Kit.receiver.proj"
 
 SPECIFY="$REPO_ROOT/.specify"
 CLAUDE_MANIFEST="$SPECIFY/integrations/claude.manifest.json"
@@ -182,14 +199,92 @@ command -v python3 >/dev/null 2>&1 || {
 # checked-in .agent-skill-roots, else the default. An ABSENT root is a hard error at every level —
 # declaring roots narrows what is asked for, it never weakens the answer (#517 / #266).
 # ---------------------------------------------------------------------------------------------------
+# EVALUATED BY MSBUILD, NOT PARSED BY US — and this is not a style preference.
+#
+# The kit's properties are DEFAULTED by the package (`build/FS.GG.Kit.props`, each
+# `Condition="'$(X)' == ''"`) and OVERRIDABLE by the receiver, so a property's value is the RESULT OF
+# AN EVALUATION and is not necessarily present in this file's XML at all. Measured on FS.GG.SDD:
+# the receiver project declares no `FsggKitRetiredSkillRoots` anywhere in its text, and MSBuild
+# evaluates it to `.codex/skills` — from the kit's default. An XML scrape reports "" and would
+# conclude nothing is retired, which is the wrong answer in the dangerous direction.
+#
+# Reading the package's props XML instead would be a second implementation of MSBuild — the same
+# mistake one layer down. `dotnet build -getProperty:` asks the evaluator, exactly as
+# FS.GG.SDD's `scripts/materialize-skill-roots.fsx` does for the same declaration.
+#
+# ONE evaluation, three properties: an MSBuild invocation per property triples the cost of every run
+# of this script for no added truth.
+kit_eval() {
+  ( cd "$REPO_ROOT" && dotnet build "$KIT_RECEIVER_PROJ" --no-restore \
+      -getProperty:FsggKitSkillRoots \
+      -getProperty:FsggKitRetiredSkillRoots \
+      -getProperty:FsggKitViewSkillRoots 2>&1 )
+}
+
+# Pulls one property out of the captured evaluation. `;`-separated in, space-separated out.
+kit_prop() {
+  printf '%s' "$KIT_PROPS" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+i, j = raw.find("{"), raw.rfind("}")
+if i < 0 or j < 0:
+    sys.exit(4)
+props = json.loads(raw[i:j+1]).get("Properties", {})
+print(" ".join(p.strip() for p in props.get(sys.argv[1], "").split(";") if p.strip()))
+' "$1"
+}
+
+VIEW_ROOTS=""; RETIRED_ROOTS=""
 if [ -n "${AGENT_SKILL_ROOTS:-}" ]; then
   ROOTS="$AGENT_SKILL_ROOTS"; ROOTS_SRC="\$AGENT_SKILL_ROOTS"
 elif [ -f "$REPO_ROOT/.agent-skill-roots" ]; then
   ROOTS="$(sed 's/#.*$//' "$REPO_ROOT/.agent-skill-roots" | tr '\n\t\r' '   ' | tr -s ' ' | sed 's/^ *//; s/ *$//')"
   ROOTS_SRC=".agent-skill-roots"
   [ -n "$ROOTS" ] || die ".agent-skill-roots parses to nothing — a tree that checked it in meant to say something."
+elif [ -f "$KIT_RECEIVER_PROJ" ]; then
+  command -v dotnet >/dev/null 2>&1 || die "dotnet is required to EVALUATE the kit declaration in
+  $KIT_RECEIVER_PROJ. The properties are defaulted by the package and overridable by the receiver, so
+  their values come from MSBuild — scraping this file's XML would report \"\" for a property the kit
+  defaults, and conclude nothing is retired."
+
+  KIT_PROPS="$(kit_eval)"
+  # The runtime contract is the UNION of the source and view roots — ADR-0011's two, as ADR-0067 §5
+  # narrowed them. Retired roots are read too, but only so the write set can subtract them by name.
+  src_roots="$(kit_prop FsggKitSkillRoots)"
+  VIEW_ROOTS="$(kit_prop FsggKitViewSkillRoots)"
+  RETIRED_ROOTS="$(kit_prop FsggKitRetiredSkillRoots)"
+  ROOTS="$(printf '%s %s' "$src_roots" "$VIEW_ROOTS" | tr -s ' ' | sed 's/^ *//; s/ *$//')"
+  ROOTS_SRC="the pinned kit declaration ($(basename "$KIT_RECEIVER_PROJ"), MSBuild-evaluated)"
+
+  # AND IT FAILS CLOSED — ON THE RESTORE, NOT ON A PROPERTY'S VALUE.
+  #
+  # The obvious guard is "refuse if FsggKitSkillRoots is empty", which is what FS.GG.SDD's driver can
+  # do because nothing in its tree declares that property inline. HERE IT WOULD NOT FIRE: this
+  # receiver project declares FsggKitSkillRoots and FsggKitViewSkillRoots in its own XML, so MSBuild
+  # returns both WITHOUT a restore. The property that goes silently empty is the one only the kit
+  # DEFAULTS — `FsggKitRetiredSkillRoots` — and an empty retired set is indistinguishable from a
+  # receiver that retires nothing. Measured: unrestored, this script reported no retired roots at all
+  # and exited 0.
+  #
+  # So the precondition is asserted directly: the kit's `build/` props reach the evaluation only
+  # through NuGet's generated `.g.props`, and its absence means every kit-DEFAULTED property in the
+  # answer above is a default that never loaded.
+  kit_obj_props="$(dirname "$KIT_RECEIVER_PROJ")/obj/$(basename "$KIT_RECEIVER_PROJ").nuget.g.props"
+  [ -f "$kit_obj_props" ] || die "the kit declaration was read from an UNRESTORED project, so every
+  property the KIT defaults — including FsggKitRetiredSkillRoots — evaluated to the empty string.
+  This receiver declares its source and view roots inline, so those look correct while the retired set
+  silently reads as \"nothing retired\": the wrong answer in the wrong direction (FS.GG.SDD#767).
+    missing: $kit_obj_props
+    fix:     dotnet restore $KIT_RECEIVER_PROJ
+  Refusing rather than materializing an unmeasured root set (ADR-0065)."
+
+  [ -n "$src_roots" ] || die "$KIT_RECEIVER_PROJ evaluates FsggKitSkillRoots to nothing — the
+  receiver's runtime contract is empty, and this script will not guess one (ADR-0065)."
 else
-  ROOTS="$DEFAULT_ROOTS"; ROOTS_SRC="default (ADR-0011's three)"
+  die "no root set: \$AGENT_SKILL_ROOTS is unset, .agent-skill-roots is absent, and there is no
+  $KIT_RECEIVER_PROJ to read the declaration from. This script no longer carries a hardcoded default —
+  a constant is what let a retired root (.codex/skills) and a generated view root (.agents/skills)
+  stay in the write set after the contract changed (FS.GG.Governance#338, ADR-0067 §5)."
 fi
 
 # ---------------------------------------------------------------------------------------------------
@@ -219,12 +314,58 @@ case " $ROOTS " in
   to project bytes into roots while the tree that produces them is not itself asserted." ;;
 esac
 
+# ---------------------------------------------------------------------------------------------------
+# THE WRITE SET, WHICH IS NARROWER THAN THE CONTRACT SET. Three subtractions, three different reasons:
+#
+#   the SOURCE   — the producer's own output root. Regenerating it would make this script a second,
+#                  competing producer (see the header). Never written; already excluded below.
+#   a VIEW root  — its content is GENERATED by `scripts/skill-view`, never transported. Writing into
+#                  one either lands on the source through a symlink, or (under `--mode copy`, the
+#                  documented Windows fallback) re-creates the very copy the view exists to remove.
+#   a RETIRED root — withdrawn from the runtime contract. ADR-0065 §Retiring a root: a receiver never
+#                  hand-re-materializes one.
+#
+# A view root stays in $ROOTS, because it IS in the runtime contract and the attribution/agreement
+# pass below must still see it. Only the WRITES narrow. Do not fold it into the retired set.
+# ---------------------------------------------------------------------------------------------------
+in_list() { case " $2 " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
+
+WRITE_ROOTS=""
 for r in $ROOTS; do
-  [ -d "$REPO_ROOT/$r" ] || die "configured root is absent: $r (roots from $ROOTS_SRC)"
+  [ "$r" = "$OUT_ROOT" ] && continue
+  in_list "$r" "$VIEW_ROOTS"    && continue
+  in_list "$r" "$RETIRED_ROOTS" && continue
+  WRITE_ROOTS="$WRITE_ROOTS $r"
+done
+WRITE_ROOTS="$(printf '%s' "$WRITE_ROOTS" | sed 's/^ *//; s/ *$//')"
+
+# An absent root is still a hard error (#517 / #266) — EXCEPT a view root, which is git-ignored and
+# therefore absent in every fresh checkout by construction (ADR-0067 §6.1). Its visibility is
+# `FsggKitCheckSkillView` / `scripts/skill-view check`'s subject, not this script's, and dying on it
+# here made `--check` exit 2 on an untouched `main`.
+for r in $ROOTS; do
+  [ -d "$REPO_ROOT/$r" ] && continue
+  if in_list "$r" "$VIEW_ROOTS"; then
+    note "view root not generated in this tree: $r — not an error here (ADR-0067 §6.1); its visibility
+  belongs to \`scripts/skill-view check\`. Generate it with:  bash scripts/skill-view generate --source $OUT_ROOT --roots \"$r\""
+  else
+    die "configured root is absent: $r (roots from $ROOTS_SRC)"
+  fi
 done
 
 note "roots: $ROOTS (from $ROOTS_SRC)"
-note "producer output root: $OUT_ROOT (derived from $(basename "$CLAUDE_MANIFEST"))"
+note "producer output root: $OUT_ROOT (derived from $(basename "$CLAUDE_MANIFEST")) — the SOURCE, never written"
+[ -n "$VIEW_ROOTS" ]    && note "view roots: $VIEW_ROOTS — in the contract, GENERATED, not written here"
+[ -n "$RETIRED_ROOTS" ] && note "retired roots: $RETIRED_ROOTS — withdrawn from the contract, not written, not swept here"
+if [ -n "$WRITE_ROOTS" ]; then
+  note "write set: $WRITE_ROOTS"
+else
+  # Say it out loud. A projection with no target that reports nothing is a pass that asserted
+  # nothing — epic #266's shape, and the exact failure this repo keeps paying for.
+  note "write set: EMPTY — every declared root is either the source or generated, so this script
+  projects nothing in this tree. That is the ADR-0067 §5 end state (one source + one generated view),
+  not a silent success: the verification and authority-record steps below still run and still grade."
+fi
 
 # ---------------------------------------------------------------------------------------------------
 # Step 1 — verify the `.specify/`-produced set against its producer authority, and attribute every id in
@@ -539,7 +680,11 @@ fi
 
 UNION="$(printf '%s\n' "$ATTRIB" | awk -F'\t' 'NF { print $1 }' | sort -u)"
 n_union="$(printf '%s\n' "$UNION" | grep -c . || true)"
-note "attributed union: $n_union skills — projecting into the derived roots."
+if [ -n "$WRITE_ROOTS" ]; then
+  note "attributed union: $n_union skills — projecting into: $WRITE_ROOTS"
+else
+  note "attributed union: $n_union skills — verified and attributed, projected NOWHERE (write set is empty)."
+fi
 
 # ---------------------------------------------------------------------------------------------------
 # Step 2 — project the union into every root that is not the producer's own output root.
@@ -578,8 +723,7 @@ sync_file() {
   changed=$((changed + 1))
 }
 
-for root in $ROOTS; do
-  [ "$root" = "$OUT_ROOT" ] && continue
+for root in $WRITE_ROOTS; do
 
   # prune: skill dirs in this root that the attributed union does not contain
   for d in "$REPO_ROOT/$root"/*/; do
@@ -629,7 +773,16 @@ if [ "$mode" = "check" ]; then
     echo "  scripts/materialize-skill-roots.sh   (no flags) and commit the result." >&2
     exit 1
   fi
-  note "every root holds the attributed union, byte-identically. In sync."
+  if [ -n "$WRITE_ROOTS" ]; then
+    note "every derived root holds the attributed union, byte-identically. In sync."
+  else
+    # NOT "in sync" — there is nothing to be in sync WITH. Reporting a byte-identity verdict over an
+    # empty write set would be a gate that cannot fail claiming it passed (#266). What DID grade
+    # here is the producer verification and the authority record, and only those are claimed.
+    note "no derived root to compare: the write set is empty, so no byte-identity verdict is made here.
+  The producer verification and the overlay.json authority record above DID run and passed; the view
+  root's visibility is \`scripts/skill-view check\`'s verdict, not this one."
+  fi
   exit 0
 fi
 
