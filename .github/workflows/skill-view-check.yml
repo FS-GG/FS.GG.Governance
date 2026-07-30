@@ -134,16 +134,17 @@
 #   [text-file-root]  rc 1 — but via `skill-view generate` REFUSING ("exists, is not a symlink, and
 #                     carries no .skill-view receipt"), exit 2, BEFORE the check runs
 #
-# So none of ADR-0067 §8's three absence classes is this check's verdict on the per-PR path. That is
-# STRUCTURAL, not an oversight: a view root is absent in every fresh checkout by construction (§6.1),
-# a required context over it must generate first, so absence can never be what it reports. The
-# unconditional-and-declared rule remains right for the reason it was written — it decides WHO may
-# generate — and it never preserved the class's reachability.
+# So none of ADR-0067 §8's three absence classes is this receiver's per-PR assertion verdict. That is
+# STRUCTURAL, not an oversight: the declared generate repairs [absent-root] and [dangling-root] before
+# the assertion runs, while [text-file-root] reds through the generator refusal before it can run. A
+# view root is absent in every fresh checkout by construction (§6.1), and a required context over it
+# must generate first. The unconditional-and-declared rule remains right for the reason it was written
+# — it decides WHO may generate — and it never preserved the classes' reachability here.
 #
-# WHAT THIS CHECK ASSERTS HERE, THEN: that the generate SUCCEEDED and the SOURCE is complete. Both are
-# real and both can fail — the text-file row above is one of them failing. §8's absence classes remain
-# reachable, and are mutation-proven to fire, in FS-GG/.github's own `src/FS.GG.Kit/verify-package.sh`,
-# whose fixtures deliberately do not generate (FS-GG/.github#1867).
+# WHAT THIS RECEIVER PATH GRADES, THEN: successful declared generation and SOURCE completeness. Both
+# are real and both can fail — the text-file row above is generation failing loudly. §8's absence
+# classes are mutation-proven on FS.GG.Kit's no-generate fixture path,
+# `src/FS.GG.Kit/verify-package.sh` (FS-GG/.github#1867), not by this per-PR assertion.
 #
 # THE SAME GENERATE ALSO EXISTS IN THE RECEIVER PROJECT, AND THAT IS NOT A DUPLICATE. This workflow
 # runs no MSBuild, so it needs its own step; `FsggGovernanceGenerateSkillView` covers the OTHER trees
@@ -153,16 +154,16 @@
 # without it.
 #
 # =================================================================================================
-# THE §8 ALARM RIDES THIS CONTEXT, AND THAT IS WHY IT IS NOT DECORATION.
+# THIS REQUIRED RECEIVER CONTEXT GRADES ITS DECLARED GENERATE AND SOURCE COMPLETENESS.
 # =================================================================================================
-# The retirement removes the only gate that would have noticed `.agents/skills` LEAVING the runtime
-# contract later. Measured on this repo's own tree with `<FsggKitViewSkillRoots>` emptied and the
-# directory deleted: the materialize reports "no view skill roots declared — nothing to assert" and
-# succeeds, and `coordination-sync --check --against-pin` reports "OK — all 30 materialized file(s)" —
-# and that second one IS the required context `kit / coordination-kit`. The required set passes on
-# exactly the tree the alarm exists to fail. `skill-view check` (with the `receiver-proj` flag) is
-# that alarm, and it runs here because `skill-view-check` is REQUIRED on `main` and needs no .NET SDK
-# or restore.
+# The retirement still needs a loud contract alarm. Measured on this repo's own tree with
+# `<FsggKitViewSkillRoots>` emptied and the directory deleted: the materialize reports "no view skill
+# roots declared — nothing to assert" and succeeds, and `coordination-sync --check --against-pin`
+# reports "OK — all 30 materialized file(s)" — and that second one IS the required context
+# `kit / coordination-kit`. The mutation-proven no-generate fixture path in FS.GG.Kit's
+# `src/FS.GG.Kit/verify-package.sh` owns the §8 absence-class verdicts. This workflow invokes
+# `skill-view check` with `receiver-proj` after its authorised generate so it can grade the resulting
+# receiver declaration and source visibility without misattributing those fixture verdicts.
 #
 # IT USED TO BE `scripts/check-skill-view-roots.sh`, 14,864 BYTES OF THIS REPO'S OWN
 # (FS-GG/.github#1710/#1777). Five receivers retired their second committed skill root, ADR-0067 §8
