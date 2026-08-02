@@ -113,9 +113,12 @@
 # never before it (`skill-view generate` refuses a root git TRACKS, with no override, and would die)
 # and never after it (that is the RED window on every pull request).
 #
-# `--roots` names the VIEW roots explicitly, exactly as `FsggKitViewSkillRoots` does for the
-# materializer: letting the tool fall back to the default pair would also try to resolve
-# `.claude/skills`, this repo's tracked source, and be a refusal rather than a no-op.
+# `--receiver-proj .config/kit/FS.GG.Kit.receiver.proj` names the source AND the view roots from THE
+# DECLARATION (FS-GG/.github#1893, FS.GG.SDD#801, FS.GG.Audio#226), exactly as
+# `FsggGovernanceGenerateSkillView` does for the materializer: it is refused alongside
+# `--source`/`--roots`, so there is no fallback to the default pair to worry about resolving
+# `.claude/skills`, this repo's tracked source, into a refusal — the declaration is the whole input
+# set by construction.
 #
 # It is NOT conditional on whether the root happens to be missing, and it must never become so.
 # "Generate whatever is absent, then assert it is present" is the fail-open shape this whole item
@@ -205,8 +208,55 @@ jobs:
       # UNCONDITIONAL, and ahead of both assertions. `.agents/skills` is a VIEW root: git-ignored, and
       # therefore absent in this checkout exactly as it is in every fresh clone. See the header block
       # for why this may be neither conditional nor moved.
+      #
+      # `--receiver-proj .config/kit/FS.GG.Kit.receiver.proj` names the source AND the view roots from
+      # THE DECLARATION the check step below already grades (FS-GG/.github#1893, FS.GG.SDD#801,
+      # FS.GG.Audio#226) rather than a hand-copied `--source`/`--roots` pair. Before this, the pair
+      # written here had to independently agree with `<FsggKitSkillRoots>` / `<FsggKitViewSkillRoots>`,
+      # so a legal ADR-0065 disposition swap in the declaration could leave this step generating the
+      # wrong pair, silently, until `skill-view check --receiver-proj` caught the mismatch two steps
+      # downstream. `--receiver-proj` makes that class unrepresentable: this step and `check` resolve
+      # the same file, so there is no second copy left to forget. It is refused alongside
+      # `--source`/`--roots` by construction, so the fallback this repo's tracked source used to force
+      # (`skill-view generate` refuses a root git tracks with no override) cannot recur either.
+      #
+      # `FsggGovernanceGenerateSkillView` in `.config/kit/FS.GG.Kit.receiver.proj` covers the OTHER
+      # trees the view has to exist in — `gate.yml`'s required `Build-config drift check` job and
+      # `kit-materialize.yml`, a `uses:` of a reusable workflow this repo cannot add a step to at all —
+      # and reads `$(FsggKitSkillRoots)`/`$(FsggKitViewSkillRoots)` directly because it lives INSIDE the
+      # file that IS the declaration: it is the declaration's own resolution, not a third hand-copy.
       - name: Resolve the view roots this tree no longer commits
-        run: bash scripts/skill-view generate --source .claude/skills --roots ".agents/skills"
+        run: bash scripts/skill-view generate --receiver-proj .config/kit/FS.GG.Kit.receiver.proj
+
+      # FS.GG.Governance#351. Pins that the invocation above literally reads the declared
+      # `--receiver-proj` form, not a hand-copied `--source`/`--roots` pair that could silently drift
+      # from `.config/kit/FS.GG.Kit.receiver.proj` on a legal ADR-0065 disposition change. Reads THIS
+      # workflow file verbatim, so it is directly revert-sensitive to the step above.
+      #
+      # ON ITS OWN THIS WOULD ONLY PIN TEXT — the trap FS.GG.Audio#226's critic named: a string
+      # assertion proves nothing about resolution. It is deliberately paired with `skill-view selftest`
+      # below (`Demonstrate every lane of the skill-root alarm can fire`), whose "generate declaration
+      # mode" lanes (FS-GG/.github#1893) already run `generate --receiver-proj` against a fixture tree
+      # with live/view roots SWAPPED and assert it follows the new declaration, plus a case proving
+      # `--source`/`--roots` cannot override one. That selftest step runs in this same job, so the
+      # behavioural half of the falsifiability claim is a real command already executed against real
+      # fixtures — not a second hand-maintained list asserted alongside this one (the #824/#827 trap).
+      - name: Pin the skill-view generate invocation text (FS.GG.Governance#351)
+        run: |
+          set -euo pipefail
+          expected='bash scripts/skill-view generate --receiver-proj .config/kit/FS.GG.Kit.receiver.proj'
+          actual="$(grep -m1 -E '^[[:space:]]*run:[[:space:]]*bash scripts/skill-view generate' .github/workflows/skill-view-check.yml \
+                     | sed 's/^[[:space:]]*run:[[:space:]]*//; s/[[:space:]]*$//')"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::skill-view-check.yml's skill-view generate step reads '$actual', expected '$expected' (FS.GG.Governance#351 — reverted to a hand-copied --source/--roots pair?)"
+            exit 1
+          fi
+          case "$actual" in
+            *--source*|*--roots*)
+              echo "::error::skill-view-check.yml's skill-view generate step still names --source/--roots directly: '$actual'"
+              exit 1 ;;
+          esac
+          echo "ok: skill-view-check.yml's generate step reads '$expected'"
 
       # The can-fire demonstration now ships INSIDE the tool (FS-GG/.github#1710/#1770), so this repo
       # runs the same one the hub does rather than a copy of it. The deleted script carried its own
