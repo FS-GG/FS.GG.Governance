@@ -14,6 +14,7 @@
     <Compile Include="EvidenceBoundaryTests.fs" />
     <Compile Include="FSharpSurfaceTests.fs" />
     <Compile Include="FSharpSurfaceCommandTests.fs" />
+    <Compile Include="FSharpEffectBoundaryTests.fs" />
     <Compile Include="DeterminismTests.fs" />
     <Compile Include="SensorTests.fs" />
     <Compile Include="RenderFenceTests.fs" />

@@ -22,6 +22,8 @@
     <Compile Include="EvidenceBoundary.fs" />
     <Compile Include="FSharpSurface.fsi" />
     <Compile Include="FSharpSurface.fs" />
+    <Compile Include="FSharpEffectBoundary.fsi" />
+    <Compile Include="FSharpEffectBoundary.fs" />
     <Compile Include="Interpreter.fsi" />
     <Compile Include="Interpreter.fs" />
   </ItemGroup>
