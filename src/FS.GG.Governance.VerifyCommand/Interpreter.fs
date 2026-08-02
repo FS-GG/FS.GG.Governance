@@ -277,7 +277,7 @@ module Interpreter =
                 // used to create receipts, so an executable such as Rogue3 is governed even when it has no
                 // package/design surface entry.  The sensor is fail-closed: an unreadable project becomes a
                 // Blocking input finding via the normal FSharpSurface evaluator path, never a skipped gate.
-                let fsharpRequest project =
+                let fsharpRequest project : SC.SurfaceCheckRequest =
                     { Domain = SC.DesignDomain
                       Surface = SurfaceId "fsharp-public-surface"
                       Class = FS.GG.Governance.Config.Model.DesignSurface

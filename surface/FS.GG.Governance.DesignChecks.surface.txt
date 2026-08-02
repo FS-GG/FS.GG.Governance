@@ -91,7 +91,7 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] SignatureCompileIndex
   [Property] System.String Project
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
-  [Constructor] Void .ctor(Int32, System.String, Boolean, System.String, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Int32, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Constructor] Void .ctor(Int32, System.String, System.String, Boolean, System.String, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], Int32, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
   [Method] Boolean Equals(Receipt)
   [Method] Boolean Equals(Receipt, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -106,12 +106,14 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
   [Method] Int32 get_SchemaVersion()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding] get_Findings()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_CompiledSources()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_MatchedModules()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_ConfigDigest()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_FreshnessDigest()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Malformed()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_PolicyDigest()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_SourceDigest()
   [Method] System.String ToString()
+  [Method] System.String get_Applicability()
   [Method] System.String get_ApplicabilityReason()
   [Method] System.String get_Cardinality()
   [Method] System.String get_DeclaredGlob()
@@ -123,11 +125,13 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
   [Property] Int32 SchemaVersion
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding] Findings
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] CompiledSources
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] MatchedModules
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] ConfigDigest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] FreshnessDigest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Malformed
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] PolicyDigest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] SourceDigest
+  [Property] System.String Applicability
   [Property] System.String ApplicabilityReason
   [Property] System.String Cardinality
   [Property] System.String DeclaredGlob

@@ -42,11 +42,13 @@ module FSharpSurface =
     type Receipt =
         { SchemaVersion: int
           Kind: string
+          Applicability: string
           Applicable: bool
           ApplicabilityReason: string
           Project: string
           DeclaredGlob: string
           CompiledSources: string list
+          MatchedModules: string list
           MatchedModuleCount: int
           Cardinality: string
           Maturity: string

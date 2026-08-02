@@ -22,6 +22,8 @@
     <Compile Include="Schema.fs" />
     <Compile Include="Loader.fsi" />
     <Compile Include="Loader.fs" />
+    <Compile Include="FSharpSurfacePolicy.fsi" />
+    <Compile Include="FSharpSurfacePolicy.fs" />
   </ItemGroup>
 
   <ItemGroup>

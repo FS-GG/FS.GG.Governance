@@ -139,12 +139,13 @@ let tests =
               temporaryProject
                   [ "App.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
                     "Domain.fs", "module Domain\nlet value = 1"
-                    ".fsgg/fsharp-surface.json", "{\"projects\":{\"App.fsproj\":{\"requiresBaseline\":true,\"baselineCurrent\":false}},\"exemptions\":[{\"module\":\"Domain.fs\",\"owner\":\"team\",\"rationale\":\"migration\",\"reviewBy\":\"2099-01-01\"}]}" ]
+                    ".fsgg/fsharp-surface.json", "{\"declaredGlob\":\"src/**/Public*.fsi\",\"projects\":{\"App.fsproj\":{\"requiresBaseline\":true,\"baselineCurrent\":false}},\"exemptions\":[{\"module\":\"Domain.fs\",\"owner\":\"team\",\"rationale\":\"migration\",\"reviewBy\":\"2099-01-01\"}]}" ]
                   (fun root ->
                       let facts = senseProject root "App.fsproj" false false true |> Result.defaultWith failtest
                       let codes = evaluate request facts |> List.map _.Code
                       Expect.isFalse (List.contains "fsharp.signature-missing" codes) "valid exemption is reachable"
-                      Expect.contains codes "fsharp.surface-baseline-stale" "configured applicable baseline is reachable")
+                      Expect.contains codes "fsharp.surface-baseline-stale" "configured applicable baseline is reachable"
+                      Expect.equal (receipt root "App.fsproj" false false true request).DeclaredGlob "src/**/Public*.fsi" "typed config supplies receipt glob")
           }
 
           test "expired live exemption fails closed" {
@@ -167,6 +168,8 @@ let tests =
                       let second = receipt root "Lib.fsproj" false false true request |> receiptJson
                       Expect.equal first second "the receipt has no clock or machine-specific fields"
                       Expect.stringContains first "\"kind\":\"fsharp-public-surface\"" "identifies stable contract"
+                      Expect.stringContains first "\"applicability\":\"applicable\"" "disposition is explicit"
+                      Expect.stringContains first "\"matchedModules\":[\"Domain.fsi\"]" "matched modules are explicit"
                       Expect.stringContains first "\"findings\":[]" "clean signature carries an explicit empty finding set"
                       Expect.stringContains first "\"cardinality\":\"one\"" "one match is explicit"
                       let malformed = receipt root "Missing.fsproj" false false true request
@@ -199,5 +202,6 @@ let tests =
                   (fun root ->
                       let result = receipt root "Game.fsproj" false false true request
                       Expect.isTrue result.Applicable "non-test executable is applicable"
+                      Expect.equal result.Applicability "applicable" "disposition is not inferred from count"
                       Expect.equal (result.MatchedModuleCount, result.Cardinality) (0, "zero") "matches signatures, not implementations")
           } ]

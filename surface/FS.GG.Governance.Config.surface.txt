@@ -1,3 +1,104 @@
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule
+  [Method] Facts get_defaultFacts()
+  [Method] LoadResult load(System.String)
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+Facts
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy
+  [Property] Facts defaultFacts
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption
+  [Constructor] Void .ctor(System.String, System.String, System.String, System.DateOnly)
+  [Method] Boolean Equals(Exemption)
+  [Method] Boolean Equals(Exemption, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Exemption)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.DateOnly get_ReviewBy()
+  [Method] System.String ToString()
+  [Method] System.String get_Module()
+  [Method] System.String get_Owner()
+  [Method] System.String get_Rationale()
+  [Property] System.DateOnly ReviewBy
+  [Property] System.String Module
+  [Property] System.String Owner
+  [Property] System.String Rationale
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+Facts
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption])
+  [Method] Boolean Equals(Facts)
+  [Method] Boolean Equals(Facts, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Facts)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption] get_Exemptions()
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy] get_Projects()
+  [Method] System.String ToString()
+  [Method] System.String get_DeclaredGlob()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption] Exemptions
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy] Projects
+  [Property] System.String DeclaredGlob
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult
+  [Method] Boolean Equals(LoadResult)
+  [Method] Boolean Equals(LoadResult, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInvalid()
+  [Method] Boolean get_IsLoaded()
+  [Method] Boolean get_IsMissing()
+  [Method] Int32 CompareTo(LoadResult)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] LoadResult NewInvalid(System.String)
+  [Method] LoadResult NewLoaded(Facts)
+  [Method] LoadResult NewMissing(Facts)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Invalid
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Loaded
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Missing
+  [NestedType] FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Tags
+  [Property] Boolean IsInvalid
+  [Property] Boolean IsLoaded
+  [Property] Boolean IsMissing
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Invalid
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Loaded
+  [Method] Facts get_Item()
+  [Property] Facts Item
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Missing
+  [Method] Facts get_Item()
+  [Property] Facts Item
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+LoadResult+Tags
+  [Field] Int32 Invalid
+  [Field] Int32 Loaded
+  [Field] Int32 Missing
+TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy
+  [Constructor] Void .ctor(Boolean, Boolean)
+  [Method] Boolean Equals(ProjectPolicy)
+  [Method] Boolean Equals(ProjectPolicy, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_BaselineCurrent()
+  [Method] Boolean get_RequiresBaseline()
+  [Method] Int32 CompareTo(ProjectPolicy)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] Boolean BaselineCurrent
+  [Property] Boolean RequiresBaseline
 TYPE FS.GG.Governance.Config.LoaderModule
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]] fileSystemReader(System.String)
   [Method] RawSource readSource(GovernedPath, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]])

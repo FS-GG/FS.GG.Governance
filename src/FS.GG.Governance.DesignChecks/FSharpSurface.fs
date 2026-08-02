@@ -9,6 +9,7 @@ open System.Text
 open System.Text.Json
 open System.Diagnostics
 open FS.GG.Governance.Config.Model
+open FS.GG.Governance.Config.FSharpSurfacePolicy
 open FS.GG.Governance.Enforcement.Enforcement
 
 module SC = FS.GG.Governance.SurfaceChecks.Model
@@ -47,11 +48,13 @@ module FSharpSurface =
     type Receipt =
         { SchemaVersion: int
           Kind: string
+          Applicability: string
           Applicable: bool
           ApplicabilityReason: string
           Project: string
           DeclaredGlob: string
           CompiledSources: string list
+          MatchedModules: string list
           MatchedModuleCount: int
           Cardinality: string
           Maturity: string
@@ -183,36 +186,22 @@ module FSharpSurface =
         finally
             if File.Exists output then File.Delete output
 
-    let private policyFor root project source fallbackRequires fallbackCurrent =
-        let path = Path.Combine(root, ".fsgg", "fsharp-surface.json")
-        if not (File.Exists path) then NoExemption, fallbackRequires, fallbackCurrent
-        else
-            use document = JsonDocument.Parse(File.ReadAllText path)
-            let top = document.RootElement
-            let tryProperty (name: string) (element: JsonElement) =
-                match element.TryGetProperty name with true, value -> Some value | _ -> None
+    let private policyFor policy project source fallbackRequires fallbackCurrent =
+        match policy with
+        | Invalid reason -> InvalidExemption reason, fallbackRequires, fallbackCurrent
+        | Missing facts | Loaded facts ->
             let requiresBaseline, baselineCurrent =
-                match tryProperty "projects" top |> Option.bind (tryProperty project) with
-                | Some configured ->
-                    let boolValue (name: string) fallback = tryProperty name configured |> Option.map (fun value -> value.GetBoolean()) |> Option.defaultValue fallback
-                    boolValue "requiresBaseline" fallbackRequires, boolValue "baselineCurrent" fallbackCurrent
+                match Map.tryFind project facts.Projects with
+                | Some configured -> configured.RequiresBaseline, configured.BaselineCurrent
                 | None -> fallbackRequires, fallbackCurrent
             let exemption =
-                match tryProperty "exemptions" top with
-                | None -> NoExemption
-                | Some entries ->
-                    entries.EnumerateArray()
-                    |> Seq.tryFind (fun (entry: JsonElement) -> tryProperty "module" entry |> Option.exists (fun value -> String.Equals(value.GetString(), source, StringComparison.Ordinal)))
-                    |> Option.map (fun entry ->
-                        let text (name: string) = tryProperty name entry |> Option.bind (fun value -> value.GetString() |> Option.ofObj)
-                        match text "owner", text "rationale", text "reviewBy" with
-                        | Some owner, Some rationale, Some reviewBy ->
-                            match DateTime.TryParse reviewBy with
-                            | true, date when date.Date >= DateTime.UtcNow.Date -> ActiveExemption(owner, rationale, reviewBy)
-                            | true, _ -> InvalidExemption("review date has expired")
-                            | _ -> InvalidExemption("reviewBy is not a date")
-                        | _ -> InvalidExemption("owner, rationale, and reviewBy are required"))
-                    |> Option.defaultValue NoExemption
+                facts.Exemptions
+                |> List.tryFind (fun entry -> String.Equals(entry.Module, source, StringComparison.Ordinal))
+                |> Option.map (fun entry ->
+                    if entry.ReviewBy >= DateOnly.FromDateTime(DateTime.UtcNow) then
+                        ActiveExemption(entry.Owner, entry.Rationale, entry.ReviewBy.ToString("yyyy-MM-dd"))
+                    else InvalidExemption("review date has expired"))
+                |> Option.defaultValue NoExemption
             exemption, requiresBaseline, baselineCurrent
 
     /// Edge sensor for SDK-style projects.  It reads the declared Compile order rather than globbing source;
@@ -223,6 +212,7 @@ module FSharpSurface =
             if not (File.Exists projectPath) then Error(sprintf "F# project was not found: %s" project)
             else
                 let document = XDocument.Load projectPath
+                let policy = load root
                 let projectDir = Path.GetDirectoryName(projectPath) |> Option.ofObj |> Option.defaultValue "."
                 let compiled =
                     document.Descendants(XName.Get "Compile")
@@ -260,7 +250,7 @@ module FSharpSurface =
                                         && compilerMatchesSignature fullSignature fullSource
                                     else true
                                 let exemption, configuredRequiresBaseline, configuredBaselineCurrent =
-                                    policyFor root project source requiresSurfaceBaseline surfaceBaselineCurrent
+                                    policyFor policy project source requiresSurfaceBaseline surfaceBaselineCurrent
                                 let entry = projectIsExecutable && sourceText.Contains("[<EntryPoint>", StringComparison.Ordinal)
                                 Some
                                     { Project = project
@@ -310,11 +300,13 @@ module FSharpSurface =
         | Error reason ->
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
+              Applicability = "applicable"
               Applicable = true
               ApplicabilityReason = "project input must be readable"
               Project = project
               DeclaredGlob = "src/**/*.fsi"
               CompiledSources = []
+              MatchedModules = []
               MatchedModuleCount = 0
               Cardinality = "zero"
               Maturity = "warn"
@@ -334,13 +326,19 @@ module FSharpSurface =
                 facts
                 |> List.choose (fun fact -> fact.Signature |> Option.map (fun (GovernedPath path) -> path))
                 |> List.sort
+            let declaredGlob =
+                match load root with
+                | Missing policy | Loaded policy -> policy.DeclaredGlob
+                | Invalid _ -> defaultFacts.DeclaredGlob
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
+              Applicability = if isTestProject then "not-applicable" else "applicable"
               Applicable = not isTestProject
               ApplicabilityReason = if isTestProject then "test projects are excluded" else "compiled non-test F# project"
               Project = project
-              DeclaredGlob = "src/**/*.fsi"
+              DeclaredGlob = declaredGlob
               CompiledSources = sources
+              MatchedModules = sources
               MatchedModuleCount = List.length sources
               Cardinality = match List.length sources with 0 -> "zero" | 1 -> "one" | _ -> "many"
               Maturity = "warn"
@@ -357,6 +355,7 @@ module FSharpSurface =
         writer.WriteStartObject()
         writer.WriteNumber("schemaVersion", receipt.SchemaVersion)
         writer.WriteString("kind", receipt.Kind)
+        writer.WriteString("applicability", receipt.Applicability)
         writer.WriteBoolean("applicable", receipt.Applicable)
         writer.WriteString("applicabilityReason", receipt.ApplicabilityReason)
         writer.WriteString("project", receipt.Project)
@@ -364,6 +363,10 @@ module FSharpSurface =
         writer.WritePropertyName("compiledSources")
         writer.WriteStartArray()
         receipt.CompiledSources |> List.iter writer.WriteStringValue
+        writer.WriteEndArray()
+        writer.WritePropertyName("matchedModules")
+        writer.WriteStartArray()
+        receipt.MatchedModules |> List.iter writer.WriteStringValue
         writer.WriteEndArray()
         writer.WriteNumber("matchedModuleCount", receipt.MatchedModuleCount)
         writer.WriteString("cardinality", receipt.Cardinality)

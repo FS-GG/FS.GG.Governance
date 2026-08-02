@@ -128,6 +128,12 @@
         "resolved": "0.57.2",
         "contentHash": "Y1+u73shwP+JYHmrkdN6bSt2kaGBEAafhi2nrecczbXdFRey+k7J/WF9YPfcB0rqivv2S8fmif6FSBq9m/AFvw=="
       },
+      "fs.gg.governance.adapters.builtin": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.adapters.sddhandoff": {
         "type": "Project",
         "dependencies": {
@@ -136,6 +142,12 @@
           "FS.GG.Governance.Gates": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FS.GG.Governance.Route": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.adapters.spi": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Kernel": "[0.1.1, )"
         }
       },
       "fs.gg.governance.agentreviewkey": {
@@ -361,6 +373,12 @@
           "FS.GG.Governance.RefreshJson": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.host": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Kernel": "[0.1.1, )"
+        }
+      },
       "fs.gg.governance.humanrender": {
         "type": "Project",
         "dependencies": {
@@ -446,6 +464,19 @@
         "dependencies": {
           "FS.GG.Governance.Config": "[0.1.0, )",
           "FS.GG.Governance.Routing": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.projectsensing": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Adapters.BuiltIn": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.DesignChecks": "[0.1.0, )",
+          "FS.GG.Governance.Host": "[0.1.0, )",
+          "FS.GG.Governance.Kernel": "[0.1.1, )",
+          "FSharp.Core": "[10.1.302, )"
         }
       },
       "fs.gg.governance.provenance": {
@@ -643,6 +674,7 @@
           "FS.GG.Governance.PackEvidence": "[0.1.0, )",
           "FS.GG.Governance.PackageChecks": "[0.1.0, )",
           "FS.GG.Governance.ProductSurfaces": "[0.1.0, )",
+          "FS.GG.Governance.ProjectSensing": "[0.1.0, )",
           "FS.GG.Governance.Provenance": "[0.1.0, )",
           "FS.GG.Governance.ProvenanceJson": "[0.1.0, )",
           "FS.GG.Governance.ReleaseDeclaration": "[0.1.0, )",
