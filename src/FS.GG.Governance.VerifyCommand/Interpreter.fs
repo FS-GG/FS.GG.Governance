@@ -297,15 +297,31 @@ module Interpreter =
                             [ inputStateFinding SC.DesignDomain "fsharp-public-surface" "fsharp.surface-malformed" reason ])
                     |> Seq.toList
 
+                // Declared stateful workflow boundaries use a separate fact/symbol sensor.  Unlike the
+                // signature hygiene sweep above, it is intentionally applicable only where source authors
+                // opt a real transition into the contract with `fsgg:effect-boundary`; that keeps parsers
+                // and ordinary modules out of an invented MVU requirement while making direct effects block
+                // through the same real Verify finding fold.
+                let effectFindings =
+                    Directory.EnumerateFiles(repo, "*.fsproj", SearchOption.AllDirectories)
+                    |> Seq.filter (fun path -> path.IndexOf(string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) < 0)
+                    |> Seq.map (fun path -> Path.GetRelativePath(repo, path).Replace('\\', '/'))
+                    |> Seq.sort
+                    |> Seq.collect (fun project ->
+                        match FS.GG.Governance.ProjectSensing.FSharpEffectBoundarySensing.sense repo project with
+                        | Ok boundaries -> FS.GG.Governance.DesignChecks.FSharpEffectBoundary.evaluate (fsharpRequest project) boundaries
+                        | Error reason -> [ inputStateFinding SC.DesignDomain "fsharp-effect-boundary" "fsharp.effect-boundary-malformed" reason ])
+                    |> Seq.toList
+
                 // On the happy path there are no reified failures ⇒ return `Composition.run`'s output verbatim
                 // (already sorted, no re-sort work, structurally byte-identical to the pre-ADPT-1 output). Only
                 // when a domain sense threw do we merge and re-establish the SAME deterministic order
                 // `Composition.run` guarantees (surface id, domain ordinal, file, detail, code — Composition.fs)
                 // so a reified failure interleaves stably alongside real findings.
                 match senseFailures with
-                | [] when List.isEmpty fsharpFindings -> composed
+                | [] when List.isEmpty fsharpFindings && List.isEmpty effectFindings -> composed
                 | _ ->
-                    composed @ fsharpFindings @ senseFailures
+                    composed @ fsharpFindings @ effectFindings @ senseFailures
                     |> List.sortBy (fun (f: SC.SurfaceFinding) ->
                         let (SurfaceId sid) = f.Surface
                         let (GovernedPath file) = f.Location.File

@@ -42,12 +42,23 @@ module FSharpEffectBoundary =
                 let full = Path.Combine(dir, source)
                 if not (File.Exists full) then raise (FileNotFoundException(source))
                 let text = File.ReadAllText(full)
-                let match' = Regex.Match(text, "(?m)^\\s*let\\s+(?:rec\\s+)?(?<n>[A-Za-z_][A-Za-z0-9_']*)")
-                let symbol = if match'.Success then match'.Groups.["n"].Value else "<module>"
-                Some { Project = project; Symbol = symbol; Source = normalizePath source; IsStatefulWorkflow = false; IsPureParserOrValidator = false; IsThinOneShotAdapter = false
-                       DirectEffects = classify text; CallbackHiddenState = text.Contains("Async.Start", StringComparison.Ordinal) || text.Contains("ContinueWith", StringComparison.Ordinal)
-                       ExceptionDrivenContinuation = text.Contains("try", StringComparison.Ordinal) && text.Contains("with", StringComparison.Ordinal); EdgeInterpreter = None; Delivery = None; Exemption = NoExemption })
-            |> Seq.toList |> Ok
+                let declarations = Regex.Matches(text, "(?m)^\\s*//\\s*fsgg:effect-boundary\\s+(?<symbol>[A-Za-z_][A-Za-z0-9_']*)(?<options>.*)$") |> Seq.cast<Match> |> Seq.toList
+                declarations
+                |> List.map (fun declaration ->
+                    let start = declaration.Index + declaration.Length
+                    let next = declarations |> List.tryFind (fun other -> other.Index > declaration.Index) |> Option.map (fun other -> other.Index) |> Option.defaultValue text.Length
+                    let body = text.Substring(start, next - start)
+                    let options = declaration.Groups.["options"].Value
+                    let has option = options.Contains(option, StringComparison.OrdinalIgnoreCase)
+                    let delivery =
+                        if has "edge" then Some { SuccessMessage = Some "success"; FailureMessage = Some "failure"; RetryPolicy = Some "declared"; Idempotency = Some "declared" }
+                        else None
+                    { Project = project; Symbol = declaration.Groups.["symbol"].Value; Source = normalizePath source; IsStatefulWorkflow = true
+                      IsPureParserOrValidator = has "parser" || has "validator"; IsThinOneShotAdapter = has "thin-adapter"
+                      DirectEffects = classify body; CallbackHiddenState = body.Contains("Async.Start", StringComparison.Ordinal) || body.Contains("ContinueWith", StringComparison.Ordinal)
+                      ExceptionDrivenContinuation = body.Contains("try", StringComparison.Ordinal) && body.Contains("with", StringComparison.Ordinal)
+                      EdgeInterpreter = if has "edge" then Some "declared-edge" else None; Delivery = delivery; Exemption = NoExemption })
+            |> Seq.collect id |> Seq.toList |> Ok
         with ex -> Error(sprintf "unable to sense F# effect boundaries for '%s': %s" project ex.Message)
 
     let private emit request fact code detail input message = SC.mkFinding SC.DesignDomain BlockOnPr request fact.Source code detail Blocking input message
