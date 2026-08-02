@@ -11,7 +11,7 @@ sourceAnalysis: readiness/375-surface-maturity/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/375-surface-maturity/analysis.json
-    digest: d160d9b5067d477612351004f92a86c9d2814129a8b365e9ffb2ef4ce3f24c52
+    digest: 2d1c2f44de2a34748e2562857100228166cc70ffbbbe7f75930f0294b9e506a2
     schemaVersion: 1
   - label: checklist
     path: work/375-surface-maturity/checklist.md
@@ -54,7 +54,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -80,7 +80,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -106,7 +106,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -132,7 +132,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -158,7 +158,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -184,7 +184,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -210,7 +210,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -236,7 +236,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
@@ -262,7 +262,7 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
-      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      digest: "sha256:594a2c5d565a238e988b791e2d01c2355db52192f00ceb80e0730a4224a5883b"
       outcome: passed
       passed: 1
       failed: 0
