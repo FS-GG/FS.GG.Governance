@@ -11,6 +11,7 @@
 namespace FS.GG.Governance.VerifyCommand
 
 open System
+open System.IO
 open FS.GG.Governance.Config              // Loader, Schema
 open FS.GG.Governance.Config.Model         // GovernedPath, Validation, Invalid, Diagnostic, Locator, DiagnosticId
 open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken
@@ -271,15 +272,40 @@ module Interpreter =
                 let composed =
                     FS.GG.Governance.SurfaceChecks.Dispatch.Composition.run facts report bundle
 
+                // #366: F# contract hygiene is intentionally independent of an optional product-surface
+                // declaration.  Scan the project's *declared compiled items* through the same live sensor
+                // used to create receipts, so an executable such as Rogue3 is governed even when it has no
+                // package/design surface entry.  The sensor is fail-closed: an unreadable project becomes a
+                // Blocking input finding via the normal FSharpSurface evaluator path, never a skipped gate.
+                let fsharpRequest project =
+                    { Domain = SC.DesignDomain
+                      Surface = SurfaceId "fsharp-public-surface"
+                      Class = FS.GG.Governance.Config.Model.DesignSurface
+                      Path = normalizePath project
+                      EvidenceTag = None }
+
+                let fsharpFindings =
+                    Directory.EnumerateFiles(repo, "*.fsproj", SearchOption.AllDirectories)
+                    |> Seq.filter (fun path -> path.IndexOf(string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) < 0)
+                    |> Seq.map (fun path -> Path.GetRelativePath(repo, path).Replace('\\', '/'))
+                    |> Seq.sort
+                    |> Seq.collect (fun project ->
+                        let isTest = project.IndexOf("test", StringComparison.OrdinalIgnoreCase) >= 0
+                        match FS.GG.Governance.DesignChecks.FSharpSurface.senseProject repo project isTest false true with
+                        | Ok modules -> FS.GG.Governance.DesignChecks.FSharpSurface.evaluate (fsharpRequest project) modules
+                        | Error reason ->
+                            [ inputStateFinding SC.DesignDomain "fsharp-public-surface" "fsharp.surface-malformed" reason ])
+                    |> Seq.toList
+
                 // On the happy path there are no reified failures ⇒ return `Composition.run`'s output verbatim
                 // (already sorted, no re-sort work, structurally byte-identical to the pre-ADPT-1 output). Only
                 // when a domain sense threw do we merge and re-establish the SAME deterministic order
                 // `Composition.run` guarantees (surface id, domain ordinal, file, detail, code — Composition.fs)
                 // so a reified failure interleaves stably alongside real findings.
                 match senseFailures with
-                | [] -> composed
+                | [] when List.isEmpty fsharpFindings -> composed
                 | _ ->
-                    composed @ senseFailures
+                    composed @ fsharpFindings @ senseFailures
                     |> List.sortBy (fun (f: SC.SurfaceFinding) ->
                         let (SurfaceId sid) = f.Surface
                         let (GovernedPath file) = f.Location.File
