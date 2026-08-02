@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "904bcf18cc4fbcc196dee6a1a4d2477387b862c93f55d9f13e24f5e7d05d6641"
+        "value": "9e998b039b998d7669bff1f80e5a272987d3bd02c1aba387278e9ef538db88af"
       }
     },
     {
@@ -113,7 +113,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "c0adf69b0b7e1086f880187c4a5a7e10166991eae27100ca656990d77ad8af29"
+        "value": "dd091602e51a117425c65844f3c993d61bdbcb666204dcd1c26a6cabedc77901"
       }
     }
   ],
@@ -216,7 +216,7 @@
     {
       "id": "T001",
       "title": "Implement requirement FR-001",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [],
       "requirements": [
@@ -244,7 +244,7 @@
     {
       "id": "T002",
       "title": "Implement requirement FR-002",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [],
       "requirements": [
@@ -272,7 +272,7 @@
     {
       "id": "T003",
       "title": "Implement requirement FR-003",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [],
       "requirements": [
@@ -300,7 +300,7 @@
     {
       "id": "T004",
       "title": "Implement requirement FR-004",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [],
       "requirements": [
@@ -328,7 +328,7 @@
     {
       "id": "T005",
       "title": "Update contract surface PC-001",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [
         "T001"
@@ -354,7 +354,7 @@
     {
       "id": "T006",
       "title": "Record verification evidence VO-001",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [
         "T001"
@@ -382,7 +382,7 @@
     {
       "id": "T007",
       "title": "Handle migration posture PM-001",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [
         "T001"
@@ -408,7 +408,7 @@
     {
       "id": "T008",
       "title": "Refresh generated view impact GV-001",
-      "status": "pending",
+      "status": "done",
       "owner": "sdd",
       "dependencies": [
         "T001"
@@ -435,7 +435,7 @@
   "evidence": [
     {
       "id": "EV001",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T001",
       "taskRefs": [
@@ -445,7 +445,7 @@
         "FR-001"
       ],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -459,7 +459,7 @@
     },
     {
       "id": "EV002",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T002",
       "taskRefs": [
@@ -469,7 +469,7 @@
         "FR-002"
       ],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -483,7 +483,7 @@
     },
     {
       "id": "EV003",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T003",
       "taskRefs": [
@@ -493,7 +493,7 @@
         "FR-003"
       ],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -507,7 +507,7 @@
     },
     {
       "id": "EV004",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T004",
       "taskRefs": [
@@ -517,7 +517,7 @@
         "FR-004"
       ],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -531,7 +531,7 @@
     },
     {
       "id": "EV005",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T005",
       "taskRefs": [
@@ -539,7 +539,7 @@
       ],
       "requirementRefs": [],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -553,7 +553,7 @@
     },
     {
       "id": "EV006",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T006",
       "taskRefs": [
@@ -561,7 +561,7 @@
       ],
       "requirementRefs": [],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -575,7 +575,7 @@
     },
     {
       "id": "EV007",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T007",
       "taskRefs": [
@@ -583,7 +583,7 @@
       ],
       "requirementRefs": [],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -597,7 +597,7 @@
     },
     {
       "id": "EV008",
-      "kind": "missing",
+      "kind": "verification",
       "subjectType": "task",
       "subjectId": "T008",
       "taskRefs": [
@@ -605,7 +605,7 @@
       ],
       "requirementRefs": [],
       "artifactRefs": [],
-      "result": "missing",
+      "result": "pass",
       "synthetic": false,
       "performanceBudget": null,
       "performanceEvidenceArtifact": null,
@@ -672,7 +672,7 @@
           "path": "work/369-effect-boundary/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "904bcf18cc4fbcc196dee6a1a4d2477387b862c93f55d9f13e24f5e7d05d6641"
+            "value": "9e998b039b998d7669bff1f80e5a272987d3bd02c1aba387278e9ef538db88af"
           },
           "schemaVersion": 1
         },
@@ -696,14 +696,14 @@
           "path": "work/369-effect-boundary/tasks.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "c0adf69b0b7e1086f880187c4a5a7e10166991eae27100ca656990d77ad8af29"
+            "value": "dd091602e51a117425c65844f3c993d61bdbcb666204dcd1c26a6cabedc77901"
           },
           "schemaVersion": 1
         }
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "59352ef35f04195123f17e6df9e4e5f7d655d86dcffa06b93de3789d6d39a89c"
+        "value": "7f77fea4dc61b1bd260bccfad568e0c982062845e4bbdc87879f77fef046e0ba"
       },
       "currency": "current"
     }
