@@ -6,17 +6,17 @@
   "sources": [
     {
       "path": "readiness/366-fsharp-surface-governance/ship.json",
-      "digest": "sha256:9e91d65fbb8d68640397c7810b275d21e150ece7927b27d583f61e12faf5b0f7",
+      "digest": "sha256:2835a76adc0a599bfd1cefb130d8540b14fcfabaf684fb94b7ad92e9673ad8dc",
       "schemaVersion": 1
     },
     {
       "path": "readiness/366-fsharp-surface-governance/verify.json",
-      "digest": "sha256:68252651cb6ab21a17b27540d8f0112fac99d3bdd16023d79e106c0a7c643936",
+      "digest": "sha256:cf996111531da9334dc3ae2a8a7f047870e0e5eed6cc94784c4bf0b357658e04",
       "schemaVersion": 1
     },
     {
       "path": "readiness/366-fsharp-surface-governance/work-model.json",
-      "digest": "sha256:1629dce9124bb4d8026c14d3445d711d920fd4572314398cd8320c96f855bfd9",
+      "digest": "sha256:64cf13b8c56e76b52daf4f9f2f84ac929d007169677f6015ccb140b83a21a22c",
       "schemaVersion": 1
     }
   ],
