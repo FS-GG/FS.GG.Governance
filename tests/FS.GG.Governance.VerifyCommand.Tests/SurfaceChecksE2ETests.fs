@@ -230,6 +230,39 @@ let interpret effect = task {
               senseBoundarySource good (fun findings ->
                   Expect.isEmpty (effectCodes findings) "a pure transition plus explicit real edge contract passes")
 
+              let documented = """module internal Boundary
+type Message = Saved | SaveFailed
+type Effect = Persist of string
+// fsgg:effect-boundary advance edge=interpret success=Saved failure=SaveFailed retry=never idempotency=document-id
+let advance model = model, [ Persist model.Document ] // pure: no File.WriteAllText here
+let interpret effect = task {
+    match effect with
+    | Persist text ->
+        do! File.WriteAllTextAsync("document.txt", text)
+        return Saved
+}"""
+              senseBoundarySource documented (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "the exact documented pure-line comment does not manufacture an effect")
+
+              let lexicalNoise = """module internal Boundary
+// fsgg:effect-boundary advance
+let advance model =
+    (* Process.Start("ignored") *)
+    let ordinary = "File.WriteAllText(ignored)"
+    let interpolated = $"File.WriteAllText({model})"
+    let FileWriteAllText = ordinary
+    model"""
+              senseBoundarySource lexicalNoise (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "comments, string text, interpolation text, and identifiers are not calls")
+
+              let actualCall = """module internal Boundary
+// fsgg:effect-boundary advance
+let advance model =
+    File.WriteAllText("document.txt", model)"""
+              senseBoundarySource actualCall (fun findings ->
+                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+                  Expect.stringContains effect.Location.Detail "File.WriteAllText@4:5" "production diagnostics retain actual call identity and location")
+
               let unrelatedEdge = """module internal Boundary
 // fsgg:effect-boundary advance
 let advance model = model

@@ -34,6 +34,8 @@ Teams can mechanically enforce functional-core/imperative-shell semantics withou
 - FR-004: Pure parsers/validators and explicitly declared thin adapters are non-applicable; exemptions require a symbol, owner, rationale, and unexpired review date. (Stories: US-001; Acceptance: AC-001)
 - FR-005: Each source declaration uses an exact `key=value` grammar, binds the immediately following compiled `let` with the same symbol, and fails closed for missing symbols, unknown or duplicate options, malformed values, and unresolved edge interpreters. (Stories: US-001; Acceptance: AC-001)
 - FR-006: Production Verify sensing proves both directions: a pure declared transition plus explicit edge/delivery contract passes, while symbol-local direct I/O, callbacks, malformed policy, incomplete delivery, and expired exemptions block. (Stories: US-001; Acceptance: AC-001)
+- FR-007: Effect sensing recognizes executable call syntax rather than raw substrings, ignores comments, literal contents, and identifier-shaped text, and retains each matched call identity plus its one-based line and column. (Stories: US-001; Acceptance: AC-001)
+- FR-008: Production Verify controls execute the documented pure-comment example and lexical false-positive fixtures as passing cases, and an actual `File.WriteAllText` call as a blocking case whose diagnostic carries call identity and location. (Stories: US-001; Acceptance: AC-001)
 
 ## Ambiguities
 No material ambiguities recorded.

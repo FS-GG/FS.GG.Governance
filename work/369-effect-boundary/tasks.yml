@@ -13,19 +13,19 @@ work:
 sources:
   - label: spec
     path: work/369-effect-boundary/spec.md
-    digest: fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a
+    digest: edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00
     schemaVersion: 1
   - label: clarifications
     path: work/369-effect-boundary/clarifications.md
-    digest: bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81
+    digest: 2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5
     schemaVersion: 1
   - label: checklist
     path: work/369-effect-boundary/checklist.md
-    digest: 5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355
+    digest: de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7
     schemaVersion: 1
   - label: plan
     path: work/369-effect-boundary/plan.md
-    digest: 5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe
+    digest: dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183
     schemaVersion: 1
 tasks:
   - id: T001
@@ -138,6 +138,36 @@ tasks:
     sourceIds: [GV-001, VO-002]
     requiredSkills: [deterministic-json, readiness-evidence]
     requiredEvidence: [EV011]
+  - id: T012
+    title: Replace substring sensing with lexical executable-call facts
+    status: done
+    owner: crake-1738
+    dependencies: [T009]
+    requirements: [FR-007]
+    decisions: [DEC-002]
+    sourceIds: [AC-001, FR-007, PD-007]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV012]
+  - id: T013
+    title: Exercise false-positive and call-identity production controls
+    status: done
+    owner: crake-1738
+    dependencies: [T012]
+    requirements: [FR-008]
+    decisions: [DEC-002]
+    sourceIds: [AC-001, FR-008, PD-008, VO-003]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV013]
+  - id: T014
+    title: Refresh lifecycle evidence and public surface for call facts
+    status: done
+    owner: crake-1738
+    dependencies: [T013]
+    requirements: []
+    decisions: [DEC-002]
+    sourceIds: [GV-001, PC-001, VO-003]
+    requiredSkills: [deterministic-json, readiness-evidence]
+    requiredEvidence: [EV014]
 acceptedDeferrals: []
 findings: []
 advisoryNotes:
