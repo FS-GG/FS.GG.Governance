@@ -7,6 +7,7 @@ open System.Text.RegularExpressions
 open System.Security.Cryptography
 open System.Text
 open System.Text.Json
+open System.Diagnostics
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 
@@ -161,6 +162,27 @@ module FSharpSurface =
             else matched.Groups.["name"].Value)
         |> Set.ofSeq
 
+    let private compilerMatchesSignature signaturePath sourcePath =
+        let sdk =
+            let probe = Process.Start(ProcessStartInfo("dotnet", "--list-sdks", RedirectStandardOutput = true, UseShellExecute = false)) |> Option.ofObj |> Option.defaultWith (fun () -> failwith "dotnet SDK probe failed")
+            let lines = probe.StandardOutput.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            probe.WaitForExit()
+            let line = lines |> Array.last
+            let bracket = line.IndexOf('[')
+            let version = line.Substring(0, line.IndexOf(' '))
+            let root = line.Substring(bracket + 1).TrimEnd(']')
+            Path.Combine(root, version, "FSharp", "fsc.dll")
+        let output = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".dll")
+        try
+            let info = ProcessStartInfo("dotnet", RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false)
+            for argument in [ sdk; "--targetprofile:netcore"; "--target:library"; "--out:" + output; signaturePath; sourcePath ] do
+                info.ArgumentList.Add argument
+            use compilerProcess = Process.Start info |> Option.ofObj |> Option.defaultWith (fun () -> failwith "F# compiler failed to start")
+            compilerProcess.WaitForExit()
+            compilerProcess.ExitCode = 0
+        finally
+            if File.Exists output then File.Delete output
+
     let private policyFor root project source fallbackRequires fallbackCurrent =
         let path = Path.Combine(root, ".fsgg", "fsharp-surface.json")
         if not (File.Exists path) then NoExemption, fallbackRequires, fallbackCurrent
@@ -233,7 +255,10 @@ module FSharpSurface =
                                 let declarations = if File.Exists fullSignature then signatureDeclarations fullSignature else []
                                 let sourceNames = sourceDeclarationNames sourceText
                                 let signatureMatchesSource =
-                                    declarations |> List.forall (fun declaration -> Set.contains declaration.Name sourceNames)
+                                    if File.Exists fullSignature then
+                                        declarations |> List.forall (fun declaration -> Set.contains declaration.Name sourceNames)
+                                        && compilerMatchesSignature fullSignature fullSource
+                                    else true
                                 let exemption, configuredRequiresBaseline, configuredBaselineCurrent =
                                     policyFor root project source requiresSurfaceBaseline surfaceBaselineCurrent
                                 let entry = projectIsExecutable && sourceText.Contains("[<EntryPoint>", StringComparison.Ordinal)

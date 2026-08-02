@@ -104,8 +104,8 @@ let tests =
           test "project sensor reads documented signatures and fail-closes missing compiled source" {
               temporaryProject
                   [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
-                    "Domain.fsi", "/// Parses input\nval parse: string -> int"
-                    "Domain.fs", "let parse text = text.Length" ]
+                    "Domain.fsi", "/// Domain\nmodule Domain\n/// Parses input\nval parse: string -> int"
+                    "Domain.fs", "module Domain\nlet parse (text: string) = text.Length" ]
                   (fun root ->
                       match senseProject root "Lib.fsproj" false true true with
                       | Error error -> failtest error
@@ -115,7 +115,7 @@ let tests =
           test "project sensor detects an adjacent signature declaration absent from implementation" {
               temporaryProject
                   [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
-                    "Domain.fsi", "/// Parses input\nval parse: string -> int"
+                    "Domain.fsi", "/// Domain\nmodule Domain\n/// Parses input\nval parse: string -> int"
                     "Domain.fs", "module Domain\nlet format text = text.Length" ]
                   (fun root ->
                       match senseProject root "Lib.fsproj" false false true with
@@ -123,6 +123,16 @@ let tests =
                       | Ok facts ->
                           let codes = evaluate request facts |> List.map (fun finding -> finding.Code)
                           Expect.contains codes "fsharp.signature-source-mismatch" "compilation adjacency is not mistaken for contract compatibility")
+          }
+
+          test "compiler rejects an adjacent same-name declaration with an incompatible type" {
+              temporaryProject
+                  [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fsi", "/// Domain\nmodule Domain\n/// value\nval value: string"
+                    "Domain.fs", "module Domain\nlet value = 1" ]
+                  (fun root ->
+                      let facts = senseProject root "Lib.fsproj" false false true |> Result.defaultWith failtest
+                      Expect.contains (evaluate request facts |> List.map _.Code) "fsharp.signature-source-mismatch" "real F# compiler owns compatibility")
           }
 
           test "live policy carries valid exemptions and stale applicable baselines" {
@@ -150,7 +160,7 @@ let tests =
           test "versioned receipt is deterministic and malformed project input fails closed" {
               temporaryProject
                   [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
-                    "Domain.fsi", "/// value\nval value: int"
+                    "Domain.fsi", "/// Domain\nmodule Domain\n/// value\nval value: int"
                     "Domain.fs", "module Domain\nlet value = 1" ]
                   (fun root ->
                       let first = receipt root "Lib.fsproj" false false true request |> receiptJson
@@ -169,9 +179,9 @@ let tests =
                   [ "Zero.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Only.fsi\" /></ItemGroup></Project>"
                     "Only.fsi", "/// marker\ntype Marker = class end"
                     "Many.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"A.fsi\" /><Compile Include=\"A.fs\" /><Compile Include=\"B.fsi\" /><Compile Include=\"B.fs\" /></ItemGroup></Project>"
-                    "A.fsi", "/// a\nval a: int"
+                    "A.fsi", "/// A\nmodule A\n/// a\nval a: int"
                     "A.fs", "module A\nlet a = 1"
-                    "B.fsi", "/// b\nval b: int"
+                    "B.fsi", "/// B\nmodule B\n/// b\nval b: int"
                     "B.fs", "module B\nlet b = 2" ]
                   (fun root ->
                       let zero = receipt root "Zero.fsproj" false false true request
