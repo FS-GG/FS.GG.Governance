@@ -1,0 +1,116 @@
+schemaVersion: 1
+work:
+  id: 369-effect-boundary
+  title: "F# functional-core/effect-edge governance gate"
+  stage: tasks
+  status: tasksReady
+  sourceSpec: work/369-effect-boundary/spec.md
+  sourceClarifications: work/369-effect-boundary/clarifications.md
+  sourceChecklist: work/369-effect-boundary/checklist.md
+  sourcePlan: work/369-effect-boundary/plan.md
+  publicOrToolFacingImpact: true
+
+sources:
+  - label: spec
+    path: work/369-effect-boundary/spec.md
+    digest: f731900d63f56ac730f7d379189b9e183608edc045a35933335129046c93118a
+    schemaVersion: 1
+  - label: clarifications
+    path: work/369-effect-boundary/clarifications.md
+    digest: 5a1233cb365d4c482d58ea11ca1e174c50020e3a950a99c43c3d3e2846d03527
+    schemaVersion: 1
+  - label: checklist
+    path: work/369-effect-boundary/checklist.md
+    digest: 9ea583eca19d1da9e832fd6f7e00a11fbc886d372b413b9ad22d322aaecee87d
+    schemaVersion: 1
+  - label: plan
+    path: work/369-effect-boundary/plan.md
+    digest: 3032d047caeaf6434ed64241feffae2ace29f0b3e53f8bc477749ff30f3e3376
+    schemaVersion: 1
+tasks:
+  - id: T001
+    title: Implement requirement FR-001
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-001]
+    decisions: []
+    sourceIds: [AC-001, FR-001, PD-001]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV001]
+  - id: T002
+    title: Implement requirement FR-002
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-002]
+    decisions: []
+    sourceIds: [AC-001, FR-002, PD-002]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV002]
+  - id: T003
+    title: Implement requirement FR-003
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-003]
+    decisions: []
+    sourceIds: [AC-001, FR-003, PD-003]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV003]
+  - id: T004
+    title: Implement requirement FR-004
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-004]
+    decisions: []
+    sourceIds: [AC-001, FR-004, PD-004]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV004]
+  - id: T005
+    title: Update contract surface PC-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-001]
+    requiredSkills: [fsharp]
+    requiredEvidence: [EV005]
+  - id: T006
+    title: Record verification evidence VO-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-001, VO-001]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV006]
+  - id: T007
+    title: Handle migration posture PM-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PM-001]
+    requiredSkills: [schema-versioning]
+    requiredEvidence: [EV007]
+  - id: T008
+    title: Refresh generated view impact GV-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [GV-001, PD-001]
+    requiredSkills: [deterministic-json]
+    requiredEvidence: [EV008]
+acceptedDeferrals: []
+findings: []
+advisoryNotes:
+  - "Optional Governance pointers remain compatibility facts only."
+lifecycleNotes:
+  - "Next lifecycle action: fsgg-sdd analyze --work 369-effect-boundary."
