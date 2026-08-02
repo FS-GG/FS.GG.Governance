@@ -284,6 +284,10 @@ module Interpreter =
                       Path = normalizePath project
                       EvidenceTag = None }
 
+                let effectRequest project : SC.SurfaceCheckRequest =
+                    { fsharpRequest project with
+                        Surface = SurfaceId "fsharp-effect-boundary" }
+
                 let fsharpFindings =
                     Directory.EnumerateFiles(repo, "*.fsproj", SearchOption.AllDirectories)
                     |> Seq.filter (fun path -> path.IndexOf(string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) < 0)
@@ -309,7 +313,7 @@ module Interpreter =
                     |> Seq.sort
                     |> Seq.collect (fun project ->
                         match FS.GG.Governance.ProjectSensing.FSharpEffectBoundarySensing.sense repo project with
-                        | Ok boundaries -> FS.GG.Governance.DesignChecks.FSharpEffectBoundary.evaluate (fsharpRequest project) boundaries
+                        | Ok boundaries -> FS.GG.Governance.DesignChecks.FSharpEffectBoundary.evaluate (effectRequest project) boundaries
                         | Error reason -> [ inputStateFinding SC.DesignDomain "fsharp-effect-boundary" "fsharp.effect-boundary-malformed" reason ])
                     |> Seq.toList
 
