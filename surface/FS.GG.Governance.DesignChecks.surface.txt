@@ -5,10 +5,11 @@ TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts],System.String] senseProject(System.String, System.String)
   [NestedType] FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts
   [NestedType] FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery
+  [NestedType] FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCall
   [NestedType] FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCategory
   [NestedType] FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Exemption
 TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts
-  [Constructor] Void .ctor(System.String, System.String, GovernedPath, Boolean, Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCategory], Boolean, Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery], Exemption)
+  [Constructor] Void .ctor(System.String, System.String, GovernedPath, Boolean, Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCall], Boolean, Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery], Exemption)
   [Method] Boolean Equals(BoundaryFacts)
   [Method] Boolean Equals(BoundaryFacts, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -25,7 +26,7 @@ TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
-  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCategory] get_DirectEffects()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCall] get_DirectEffects()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery] get_Delivery()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_EdgeInterpreter()
   [Method] System.String ToString()
@@ -38,7 +39,7 @@ TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts
   [Property] Boolean IsThinOneShotAdapter
   [Property] Exemption Exemption
   [Property] GovernedPath Source
-  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCategory] DirectEffects
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCall] DirectEffects
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery] Delivery
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] EdgeInterpreter
   [Property] System.String Project
@@ -63,6 +64,26 @@ TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+Delivery
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Idempotency
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] RetryPolicy
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] SuccessMessage
+TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCall
+  [Constructor] Void .ctor(EffectCategory, System.String, Int32, Int32)
+  [Method] Boolean Equals(EffectCall)
+  [Method] Boolean Equals(EffectCall, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EffectCategory get_Category()
+  [Method] Int32 CompareTo(EffectCall)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Column()
+  [Method] Int32 get_Line()
+  [Method] System.String ToString()
+  [Method] System.String get_Symbol()
+  [Property] EffectCategory Category
+  [Property] Int32 Column
+  [Property] Int32 Line
+  [Property] System.String Symbol
 TYPE FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+EffectCategory
   [Method] Boolean Equals(EffectCategory)
   [Method] Boolean Equals(EffectCategory, System.Collections.IEqualityComparer)

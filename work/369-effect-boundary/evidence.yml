@@ -11,27 +11,27 @@ sourceAnalysis: readiness/369-effect-boundary/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/369-effect-boundary/analysis.json
-    digest: 76611ec2415675dc1959ebd34b1a626ab40afc90ebfb2f037c825ecf9e1fca07
+    digest: 8c4ee0ab65a3b6fe2d78197d28c2d659ebe43815e9e0d53d8a8723029057d9f3
     schemaVersion: 1
   - label: checklist
     path: work/369-effect-boundary/checklist.md
-    digest: 5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355
+    digest: de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7
     schemaVersion: 1
   - label: clarifications
     path: work/369-effect-boundary/clarifications.md
-    digest: bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81
+    digest: 2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5
     schemaVersion: 1
   - label: plan
     path: work/369-effect-boundary/plan.md
-    digest: 5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe
+    digest: dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183
     schemaVersion: 1
   - label: spec
     path: work/369-effect-boundary/spec.md
-    digest: fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a
+    digest: edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00
     schemaVersion: 1
   - label: tasks
     path: work/369-effect-boundary/tasks.yml
-    digest: c667ebb342e91177e18df44efda46da7c50c61bbb29641351550169d50b6014a
+    digest: 6988e50ad748e6c8c0d0b06e53f7066a830e753eacaf8d29d424fdb0dc57f928
     schemaVersion: 1
 evidence:
   - id: EV001
@@ -322,5 +322,85 @@ evidence:
       failed: 0
       skipped: 0
     notes: [Updated documentation example and production fixtures are aligned before exact-head CI.]
+  - id: EV012
+    kind: verification
+    subject:
+      type: task
+      id: T012
+    taskRefs: [T012]
+    requirementRefs: [FR-007]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-007]
+    planDecisionRefs: [PD-007]
+    obligationRefs: [EV012]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-call-syntax.trx
+      digest: "sha256:f358798dbdbae0584c0747d479bd9fbf7dab025a92db1469e3f192ad5779e209"
+      outcome: passed
+      passed: 11
+      failed: 0
+      skipped: 0
+    notes: [Lexical false-positive controls and exact executable-call identity/location passed.]
+  - id: EV013
+    kind: verification
+    subject:
+      type: task
+      id: T013
+    taskRefs: [T013]
+    requirementRefs: [FR-008]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-008]
+    planDecisionRefs: [PD-008]
+    obligationRefs: [EV013]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-production-call-syntax.trx
+      digest: "sha256:e226b79e26238316bba6b6fc0060e794e08077517ca73858e1f1e0e5f4d8feea"
+      outcome: passed
+      passed: 90
+      failed: 0
+      skipped: 0
+    notes: [Production realPorts sensing passed documented, and actual-call controls., lexical-noise]
+  - id: EV014
+    kind: verification
+    subject:
+      type: task
+      id: T014
+    taskRefs: [T014]
+    requirementRefs: []
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-007, CR-008]
+    planDecisionRefs: [PD-007, PD-008]
+    obligationRefs: [EV014]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: surface/FS.GG.Governance.DesignChecks.surface.txt
+      - kind: verification
+        path: docs/governance-design/fsharp-effect-boundary.md
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-call-syntax.trx
+      digest: "sha256:f358798dbdbae0584c0747d479bd9fbf7dab025a92db1469e3f192ad5779e209"
+      outcome: passed
+      passed: 11
+      failed: 0
+      skipped: 0
+    notes: [The signature, and focused evidence are aligned., documentation, public surface baseline]
 lifecycleNotes:
   - "Next lifecycle action: verify."

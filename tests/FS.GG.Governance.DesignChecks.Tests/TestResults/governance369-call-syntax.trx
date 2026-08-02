@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="4c92135a-f2f9-4013-9e7c-0ac61c4e01b7" name="@0bc8bbef51b6 2026-08-03 01:00:56" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-08-03T01:00:56.8327798+02:00" queuing="2026-08-03T01:00:56.8327798+02:00" start="2026-08-03T01:00:56.5086034+02:00" finish="2026-08-03T01:00:56.8686455+02:00" />
+  <TestSettings name="default" id="119efe29-2ba2-4f8b-a0e0-ba5d6999f336">
+    <Deployment runDeploymentRoot="_0bc8bbef51b6_2026-08-03_01_00_56" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="48992f26-77b3-4c2a-8949-377ea1690e7f" testId="3a9ab946-5de9-4cd8-9583-f9f664f05183" testName="FSharpEffectBoundary.compiled declared boundary senses only its own transition body" computerName="0bc8bbef51b6" duration="00:00:00.0220000" startTime="2026-08-03T01:00:56.7965971+02:00" endTime="2026-08-03T01:00:56.8225203+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="48992f26-77b3-4c2a-8949-377ea1690e7f" />
+    <UnitTestResult executionId="2dbf388f-b497-487f-9df7-66c45aee2e45" testId="20fa2f89-e3bc-3c35-e201-c30e6e5b7ae1" testName="FSharpEffectBoundary.pure reducer is clean without name-shaped requirements" computerName="0bc8bbef51b6" duration="00:00:00.0030000" startTime="2026-08-03T01:00:56.7960682+02:00" endTime="2026-08-03T01:00:56.8077901+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2dbf388f-b497-487f-9df7-66c45aee2e45" />
+    <UnitTestResult executionId="a4a312ed-b064-43d4-a6a5-6bf5b733221d" testId="0f22367f-113d-b0d2-d0d7-0877cf8a0e6b" testName="FSharpEffectBoundary.callback hidden state and exception continuations fail" computerName="0bc8bbef51b6" duration="00:00:00.0050000" startTime="2026-08-03T01:00:56.7961829+02:00" endTime="2026-08-03T01:00:56.8077992+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a4a312ed-b064-43d4-a6a5-6bf5b733221d" />
+    <UnitTestResult executionId="b7a9b902-ec2c-4b7a-a8ba-13098d09d371" testId="0a772eaa-21aa-5e90-f953-50292e4a78c2" testName="FSharpEffectBoundary.comments literals and identifier-shaped text are not executable effects" computerName="0bc8bbef51b6" duration="00:00:00.0210000" startTime="2026-08-03T01:00:56.7966975+02:00" endTime="2026-08-03T01:00:56.8209329+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7a9b902-ec2c-4b7a-a8ba-13098d09d371" />
+    <UnitTestResult executionId="510199cc-bae0-4873-b4d7-2dbc7152422f" testId="33f77b6d-ae51-2def-657d-1723af27f2bd" testName="FSharpEffectBoundary.symbol-local sensing excludes later edge bodies and preserves visible delivery values" computerName="0bc8bbef51b6" duration="00:00:00.0170000" startTime="2026-08-03T01:00:56.7968893+02:00" endTime="2026-08-03T01:00:56.8217095+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="510199cc-bae0-4873-b4d7-2dbc7152422f" />
+    <UnitTestResult executionId="e9d8cb99-4117-4078-9dcb-901285e0c441" testId="1eca3e44-2b3c-568b-ff27-1c5542725594" testName="FSharpEffectBoundary.effect edge requires explicit result retry and idempotency semantics" computerName="0bc8bbef51b6" duration="00:00:00.0120000" startTime="2026-08-03T01:00:56.7960707+02:00" endTime="2026-08-03T01:00:56.8122800+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e9d8cb99-4117-4078-9dcb-901285e0c441" />
+    <UnitTestResult executionId="8e7ad992-3005-45f5-b6ce-04ad511df677" testId="05d8bc32-5dbc-542f-8513-fbd5ef4a74e2" testName="FSharpEffectBoundary.missing symbols and substring-shaped options fail closed" computerName="0bc8bbef51b6" duration="00:00:00.0170000" startTime="2026-08-03T01:00:56.7970053+02:00" endTime="2026-08-03T01:00:56.8225361+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8e7ad992-3005-45f5-b6ce-04ad511df677" />
+    <UnitTestResult executionId="4ba3cb3a-0ceb-4f43-b9b1-19bf062d782b" testId="da11f6fd-dca0-9cf5-8206-0923615fbb1f" testName="FSharpEffectBoundary.direct filesystem and process effects fail with their categories" computerName="0bc8bbef51b6" duration="00:00:00.0120000" startTime="2026-08-03T01:00:56.7960707+02:00" endTime="2026-08-03T01:00:56.8121367+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4ba3cb3a-0ceb-4f43-b9b1-19bf062d782b" />
+    <UnitTestResult executionId="b8e1750d-4dce-4494-933c-e16ca0b473d0" testId="86748957-d263-f829-2454-50d728db9535" testName="FSharpEffectBoundary.pure parsers and dated exemptions are narrow non-applicable cases" computerName="0bc8bbef51b6" duration="00:00:00.0030000" startTime="2026-08-03T01:00:56.7963185+02:00" endTime="2026-08-03T01:00:56.8077825+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b8e1750d-4dce-4494-933c-e16ca0b473d0" />
+    <UnitTestResult executionId="71bac772-0e07-4d46-b673-a0aa5d8de695" testId="bb441376-54c0-c776-5d3f-ce9821390681" testName="FSharpEffectBoundary.an executable call retains exact identity and one-based location" computerName="0bc8bbef51b6" duration="00:00:00.0210000" startTime="2026-08-03T01:00:56.7967835+02:00" endTime="2026-08-03T01:00:56.8214028+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="71bac772-0e07-4d46-b673-a0aa5d8de695" />
+    <UnitTestResult executionId="d6d02591-ae18-47bc-90e6-32bae2d8972d" testId="f2fd9cd5-9f83-5d61-4beb-466787fdf952" testName="FSharpEffectBoundary.expired exemption fails closed" computerName="0bc8bbef51b6" duration="00:00:00.0140000" startTime="2026-08-03T01:00:56.7964659+02:00" endTime="2026-08-03T01:00:56.8138189+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d6d02591-ae18-47bc-90e6-32bae2d8972d" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="FSharpEffectBoundary.pure parsers and dated exemptions are narrow non-applicable cases" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="86748957-d263-f829-2454-50d728db9535">
+      <Execution id="b8e1750d-4dce-4494-933c-e16ca0b473d0" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="pure parsers and dated exemptions are narrow non-applicable cases" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.direct filesystem and process effects fail with their categories" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="da11f6fd-dca0-9cf5-8206-0923615fbb1f">
+      <Execution id="4ba3cb3a-0ceb-4f43-b9b1-19bf062d782b" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="direct filesystem and process effects fail with their categories" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.effect edge requires explicit result retry and idempotency semantics" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="1eca3e44-2b3c-568b-ff27-1c5542725594">
+      <Execution id="e9d8cb99-4117-4078-9dcb-901285e0c441" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="effect edge requires explicit result retry and idempotency semantics" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.missing symbols and substring-shaped options fail closed" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="05d8bc32-5dbc-542f-8513-fbd5ef4a74e2">
+      <Execution id="8e7ad992-3005-45f5-b6ce-04ad511df677" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="missing symbols and substring-shaped options fail closed" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.expired exemption fails closed" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="f2fd9cd5-9f83-5d61-4beb-466787fdf952">
+      <Execution id="d6d02591-ae18-47bc-90e6-32bae2d8972d" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="expired exemption fails closed" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.an executable call retains exact identity and one-based location" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="bb441376-54c0-c776-5d3f-ce9821390681">
+      <Execution id="71bac772-0e07-4d46-b673-a0aa5d8de695" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="an executable call retains exact identity and one-based location" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.compiled declared boundary senses only its own transition body" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="3a9ab946-5de9-4cd8-9583-f9f664f05183">
+      <Execution id="48992f26-77b3-4c2a-8949-377ea1690e7f" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="compiled declared boundary senses only its own transition body" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.comments literals and identifier-shaped text are not executable effects" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="0a772eaa-21aa-5e90-f953-50292e4a78c2">
+      <Execution id="b7a9b902-ec2c-4b7a-a8ba-13098d09d371" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="comments literals and identifier-shaped text are not executable effects" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.callback hidden state and exception continuations fail" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="0f22367f-113d-b0d2-d0d7-0877cf8a0e6b">
+      <Execution id="a4a312ed-b064-43d4-a6a5-6bf5b733221d" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="callback hidden state and exception continuations fail" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.symbol-local sensing excludes later edge bodies and preserves visible delivery values" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="33f77b6d-ae51-2def-657d-1723af27f2bd">
+      <Execution id="510199cc-bae0-4873-b4d7-2dbc7152422f" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="symbol-local sensing excludes later edge bodies and preserves visible delivery values" />
+    </UnitTest>
+    <UnitTest name="FSharpEffectBoundary.pure reducer is clean without name-shaped requirements" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.designchecks.tests/bin/debug/net10.0/fs.gg.governance.designchecks.tests.dll" id="20fa2f89-e3bc-3c35-e201-c30e6e5b7ae1">
+      <Execution id="2dbf388f-b497-487f-9df7-66c45aee2e45" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.DesignChecks.Tests/bin/Debug/net10.0/FS.GG.Governance.DesignChecks.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="FSharpEffectBoundary" name="pure reducer is clean without name-shaped requirements" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="3a9ab946-5de9-4cd8-9583-f9f664f05183" executionId="48992f26-77b3-4c2a-8949-377ea1690e7f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="20fa2f89-e3bc-3c35-e201-c30e6e5b7ae1" executionId="2dbf388f-b497-487f-9df7-66c45aee2e45" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f22367f-113d-b0d2-d0d7-0877cf8a0e6b" executionId="a4a312ed-b064-43d4-a6a5-6bf5b733221d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0a772eaa-21aa-5e90-f953-50292e4a78c2" executionId="b7a9b902-ec2c-4b7a-a8ba-13098d09d371" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="33f77b6d-ae51-2def-657d-1723af27f2bd" executionId="510199cc-bae0-4873-b4d7-2dbc7152422f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1eca3e44-2b3c-568b-ff27-1c5542725594" executionId="e9d8cb99-4117-4078-9dcb-901285e0c441" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="05d8bc32-5dbc-542f-8513-fbd5ef4a74e2" executionId="8e7ad992-3005-45f5-b6ce-04ad511df677" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da11f6fd-dca0-9cf5-8206-0923615fbb1f" executionId="4ba3cb3a-0ceb-4f43-b9b1-19bf062d782b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86748957-d263-f829-2454-50d728db9535" executionId="b8e1750d-4dce-4494-933c-e16ca0b473d0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bb441376-54c0-c776-5d3f-ce9821390681" executionId="71bac772-0e07-4d46-b673-a0aa5d8de695" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f2fd9cd5-9f83-5d61-4beb-466787fdf952" executionId="d6d02591-ae18-47bc-90e6-32bae2d8972d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="11" executed="11" passed="11" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>

@@ -22,7 +22,10 @@ compiled project items and folds findings into its normal blocking result.
 The pure transition returns requested effects as data. The edge interpreter performs filesystem,
 process, environment, clock/randomness, network, UI/host, persistence, or mutable-global work and
 returns an explicit success or failure message. A repeatable effect declares both retry and idempotency
-semantics. This keeps callback continuations and exceptions from becoming hidden workflow state.
+semantics. The sensor matches executable call forms, not raw substrings: comments, string/interpolated-string
+contents, character literals, and identifier-shaped text are ignored. A direct-effect diagnostic retains the
+matched call identity and its one-based line and column alongside the nearest declared boundary. This keeps
+callback continuations and exceptions from becoming hidden workflow state.
 
 ```fsharp
 type Message = Saved | SaveFailed of string

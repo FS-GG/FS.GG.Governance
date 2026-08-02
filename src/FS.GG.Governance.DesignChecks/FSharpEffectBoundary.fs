@@ -13,23 +13,103 @@ module SC = FS.GG.Governance.SurfaceChecks.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FSharpEffectBoundary =
     type EffectCategory = Filesystem | Process | Environment | ClockOrRandomness | Network | UiOrHost | Persistence | MutableGlobalState
+    type EffectCall = { Category: EffectCategory; Symbol: string; Line: int; Column: int }
     type Delivery = { SuccessMessage: string option; FailureMessage: string option; RetryPolicy: string option; Idempotency: string option }
     type Exemption = NoExemption | ActiveExemption of owner: string * rationale: string * reviewBy: DateOnly | InvalidExemption of reason: string
     type BoundaryFacts =
         { Project: string; Symbol: string; Source: GovernedPath; IsStatefulWorkflow: bool; IsPureParserOrValidator: bool
-          IsThinOneShotAdapter: bool; DirectEffects: EffectCategory list; CallbackHiddenState: bool
+          IsThinOneShotAdapter: bool; DirectEffects: EffectCall list; CallbackHiddenState: bool
           ExceptionDrivenContinuation: bool; EdgeInterpreter: string option; Delivery: Delivery option; Exemption: Exemption }
 
     let private names = function
         | Filesystem -> "filesystem" | Process -> "process" | Environment -> "environment" | ClockOrRandomness -> "clock-randomness"
         | Network -> "network" | UiOrHost -> "ui-host" | Persistence -> "persistence" | MutableGlobalState -> "mutable-global-state"
 
-    let private classify (text: string) =
-        [ Filesystem, [ "File."; "Directory."; "FileStream" ]; Process, [ "Process.Start"; "Diagnostics.Process" ]
-          Environment, [ "Environment."; "GetEnvironmentVariable" ]; ClockOrRandomness, [ "DateTime.Now"; "DateTime.UtcNow"; "Random(" ]
-          Network, [ "HttpClient"; "WebRequest"; "Socket" ]; UiOrHost, [ "Console."; "Application."; "Window" ]
-          Persistence, [ "SaveChanges"; "Serialize"; "WriteAll" ]; MutableGlobalState, [ "static let mutable"; "let mutable" ] ]
-        |> List.choose (fun (category, markers) -> if markers |> List.exists (fun m -> text.Contains(m, StringComparison.Ordinal)) then Some category else None)
+    let private executableText (text: string) =
+        let visible = text.ToCharArray()
+        let mask index = if visible.[index] <> '\n' then visible.[index] <- ' '
+        let mutable index = 0
+        while index < text.Length do
+            if index + 1 < text.Length && text.[index] = '/' && text.[index + 1] = '/' then
+                while index < text.Length && text.[index] <> '\n' do mask index; index <- index + 1
+            elif index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
+                let mutable depth = 0
+                while index < text.Length && (depth > 0 || (index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*')) do
+                    if index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
+                        mask index; mask (index + 1); depth <- depth + 1; index <- index + 2
+                    elif index + 1 < text.Length && text.[index] = '*' && text.[index + 1] = ')' then
+                        mask index; mask (index + 1); depth <- depth - 1; index <- index + 2
+                    else mask index; index <- index + 1
+            else
+                let prefixLength, quoteLength, verbatim =
+                    if index + 4 < text.Length && (text.Substring(index, 5) = "$@\"\"\"" || text.Substring(index, 5) = "@$\"\"\"") then 2, 3, false
+                    elif index + 3 < text.Length && text.Substring(index, 4) = "$\"\"\"" then 1, 3, false
+                    elif index + 2 < text.Length && (text.Substring(index, 3) = "$@\"" || text.Substring(index, 3) = "@$\"") then 2, 1, true
+                    elif index + 1 < text.Length && text.Substring(index, 2) = "$\"" then 1, 1, false
+                    elif index + 1 < text.Length && text.Substring(index, 2) = "@\"" then 1, 1, true
+                    elif index + 2 < text.Length && text.Substring(index, 3) = "\"\"\"" then 0, 3, false
+                    elif text.[index] = '"' then 0, 1, false
+                    else -1, 0, false
+                if prefixLength >= 0 then
+                    let opening = prefixLength + quoteLength
+                    for offset in 0 .. opening - 1 do mask (index + offset)
+                    index <- index + opening
+                    let mutable closed = false
+                    while index < text.Length && not closed do
+                        if quoteLength = 3 && index + 2 < text.Length && text.Substring(index, 3) = "\"\"\"" then
+                            mask index; mask (index + 1); mask (index + 2); index <- index + 3; closed <- true
+                        elif quoteLength = 1 && text.[index] = '"' then
+                            if verbatim && index + 1 < text.Length && text.[index + 1] = '"' then
+                                mask index; mask (index + 1); index <- index + 2
+                            else mask index; index <- index + 1; closed <- true
+                        elif not verbatim && text.[index] = '\\' && index + 1 < text.Length then
+                            mask index; mask (index + 1); index <- index + 2
+                        else mask index; index <- index + 1
+                elif text.[index] = '\''
+                     && ((index + 2 < text.Length && text.[index + 2] = '\'')
+                         || (index + 3 < text.Length && text.[index + 1] = '\\' && text.[index + 3] = '\'')) then
+                    mask index; index <- index + 1
+                    let mutable closed = false
+                    while index < text.Length && not closed && text.[index] <> '\n' do
+                        if text.[index] = '\\' && index + 1 < text.Length then mask index; mask (index + 1); index <- index + 2
+                        elif text.[index] = '\'' then mask index; index <- index + 1; closed <- true
+                        else mask index; index <- index + 1
+                else index <- index + 1
+        String visible
+
+    let private effectPatterns =
+        let token = "(?<![A-Za-z0-9_'.])"
+        [ Filesystem, token + "(?<symbol>(?:System\\.IO\\.)?(?:File|Directory)\\.[A-Za-z_][A-Za-z0-9_']*)\\s*\\("
+          Filesystem, token + "(?<symbol>(?:System\\.IO\\.)?FileStream)\\s*\\("
+          Process, token + "(?<symbol>(?:System\\.Diagnostics\\.)?Process\\.Start)\\s*\\("
+          Environment, token + "(?<symbol>(?:System\\.)?Environment\\.(?:GetEnvironmentVariable|SetEnvironmentVariable|Exit))\\s*\\("
+          ClockOrRandomness, token + "(?<symbol>(?:System\\.)?DateTime(?:Offset)?\\.(?:Now|UtcNow))\\b"
+          ClockOrRandomness, token + "(?<symbol>(?:System\\.)?Random)\\s*\\("
+          Network, token + "(?<symbol>(?:System\\.Net\\.Http\\.)?HttpClient)\\s*\\("
+          Network, token + "(?<symbol>(?:System\\.Net\\.)?WebRequest\\.Create)\\s*\\("
+          Network, token + "(?<symbol>(?:System\\.Net\\.Sockets\\.)?Socket)\\s*\\("
+          UiOrHost, token + "(?<symbol>(?:System\\.)?Console\\.[A-Za-z_][A-Za-z0-9_']*)\\s*\\("
+          UiOrHost, token + "(?<symbol>(?:Application|Window)\\.[A-Za-z_][A-Za-z0-9_']*)\\s*\\("
+          Persistence, token + "(?<symbol>[A-Za-z_][A-Za-z0-9_']*\\.(?:SaveChanges|SaveChangesAsync))\\s*\\("
+          Persistence, token + "(?<symbol>(?:System\\.Text\\.Json\\.)?JsonSerializer\\.Serialize)\\s*\\("
+          MutableGlobalState, token + "(?<symbol>let\\s+mutable)\\b" ]
+
+    let private classify startLine (text: string) =
+        let visible = executableText text
+        effectPatterns
+        |> List.collect (fun (category, pattern) ->
+            Regex.Matches(visible, pattern)
+            |> Seq.cast<Match>
+            |> Seq.map (fun matched ->
+                let before = visible.Substring(0, matched.Index)
+                let relativeLine = before |> Seq.filter ((=) '\n') |> Seq.length
+                let lastNewline = before.LastIndexOf('\n')
+                { Category = category
+                  Symbol = matched.Groups.["symbol"].Value
+                  Line = startLine + relativeLine + 1
+                  Column = matched.Index - lastNewline })
+            |> Seq.toList)
+        |> List.sortBy (fun call -> call.Line, call.Column, names call.Category, call.Symbol)
 
     type private Binding =
         { Symbol: string
@@ -134,6 +214,7 @@ module FSharpEffectBoundary =
         match applicability, exemption source declaration with
         | Error reason, _ | _, Error reason -> Error reason
         | Ok(parserOrValidator, thinAdapter), Ok exemptionFact ->
+            let visibleBody = executableText binding.Body
             match option "edge" with
             | Some edge when knownBindings |> List.exists (fun candidate -> candidate.Symbol = edge) |> not ->
                 Error(sprintf "%s:%d names unresolved edge interpreter '%s'" source declaration.Line edge)
@@ -154,9 +235,9 @@ module FSharpEffectBoundary =
                       IsStatefulWorkflow = true
                       IsPureParserOrValidator = parserOrValidator
                       IsThinOneShotAdapter = thinAdapter
-                      DirectEffects = classify binding.Body
-                      CallbackHiddenState = binding.Body.Contains("Async.Start", StringComparison.Ordinal) || binding.Body.Contains("ContinueWith", StringComparison.Ordinal)
-                      ExceptionDrivenContinuation = binding.Body.Contains("try", StringComparison.Ordinal) && binding.Body.Contains("with", StringComparison.Ordinal)
+                      DirectEffects = classify binding.StartLine binding.Body
+                      CallbackHiddenState = visibleBody.Contains("Async.Start", StringComparison.Ordinal) || visibleBody.Contains("ContinueWith", StringComparison.Ordinal)
+                      ExceptionDrivenContinuation = Regex.IsMatch(visibleBody, "\\btry\\b") && Regex.IsMatch(visibleBody, "\\bwith\\b")
                       EdgeInterpreter = edge
                       Delivery = delivery
                       Exemption = exemptionFact }
@@ -230,7 +311,7 @@ module FSharpEffectBoundary =
         | InvalidExemption reason -> [ emit request fact "fsharp.effect-exemption-invalid" fact.Symbol true (sprintf "effect-boundary exemption is invalid: %s" reason) ]
         | _ when not fact.IsStatefulWorkflow || excluded fact -> []
         | _ ->
-            let direct = fact.DirectEffects |> List.map (fun category -> emit request fact "fsharp.effect-in-transition" (names category) false (sprintf "declared pure transition '%s' directly performs %s; emit an effect for its edge interpreter" fact.Symbol (names category)))
+            let direct = fact.DirectEffects |> List.map (fun call -> emit request fact "fsharp.effect-in-transition" (sprintf "%s %s@%d:%d" (names call.Category) call.Symbol call.Line call.Column) false (sprintf "declared pure transition '%s' directly calls %s at %d:%d (%s); emit an effect for its edge interpreter" fact.Symbol call.Symbol call.Line call.Column (names call.Category)))
             let hidden = [ if fact.CallbackHiddenState then yield emit request fact "fsharp.callback-hidden-state" fact.Symbol false "stateful workflow hides continuation state in a callback; model messages and requested effects explicitly"
                            if fact.ExceptionDrivenContinuation then yield emit request fact "fsharp.exception-continuation" fact.Symbol false "stateful workflow uses exception-driven continuation; return explicit failure messages into the transition" ]
             let deliveryContract =

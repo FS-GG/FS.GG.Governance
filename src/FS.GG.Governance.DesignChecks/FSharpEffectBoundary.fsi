@@ -6,6 +6,13 @@ module FSharpEffectBoundary =
     /// Classified external capability observed at a declared transition or edge interpreter.
     type EffectCategory = Filesystem | Process | Environment | ClockOrRandomness | Network | UiOrHost | Persistence | MutableGlobalState
 
+    /// One executable effect call observed in source, including its diagnostic identity and 1-based location.
+    type EffectCall =
+        { Category: EffectCategory
+          Symbol: string
+          Line: int
+          Column: int }
+
     /// The semantic delivery contract of an effect that can be repeated by an interpreter.
     type Delivery =
         { SuccessMessage: string option
@@ -25,14 +32,15 @@ module FSharpEffectBoundary =
           IsStatefulWorkflow: bool
           IsPureParserOrValidator: bool
           IsThinOneShotAdapter: bool
-          DirectEffects: EffectCategory list
+          DirectEffects: EffectCall list
           CallbackHiddenState: bool
           ExceptionDrivenContinuation: bool
           EdgeInterpreter: string option
           Delivery: Delivery option
           Exemption: Exemption }
 
-    /// Read declared compiled F# sources and conservatively classify effect symbols. Each exact key/value
+    /// Read declared compiled F# sources and conservatively classify executable effect calls. Comments,
+    /// literals, and identifier-shaped text are ignored. Each exact key/value
     /// declaration binds only the immediately following same-named `let`; malformed policy fails closed.
     /// This sensor does not infer a workflow from a module or function name.
     val senseProject: root: string -> project: string -> Result<BoundaryFacts list, string>
