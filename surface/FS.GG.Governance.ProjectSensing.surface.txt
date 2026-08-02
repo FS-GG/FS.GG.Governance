@@ -356,5 +356,7 @@ TYPE FS.GG.Governance.Cli.RunRequest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] OutputPath
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] ReviewStore
   [Property] System.String Root
+TYPE FS.GG.Governance.ProjectSensing.FSharpEffectBoundarySensingModule
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpEffectBoundaryModule+BoundaryFacts],System.String] sense(System.String, System.String)
 TYPE FS.GG.Governance.ProjectSensing.FSharpSurfaceSensingModule
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts],System.String] sense(System.String, System.String, Boolean, Boolean, Boolean)

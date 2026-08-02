@@ -37,8 +37,8 @@ module FSharpEffectBoundary =
             let dir = Path.GetDirectoryName(path) |> Option.ofObj |> Option.defaultValue root
             XDocument.Load(path).Descendants(XName.Get "Compile")
             |> Seq.choose (fun node -> node.Attribute(XName.Get "Include") |> Option.ofObj |> Option.map (fun a -> a.Value))
-            |> Seq.choose (fun source ->
-                if not (source.EndsWith(".fs", StringComparison.OrdinalIgnoreCase)) || source.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase) then None else
+            |> Seq.collect (fun source ->
+                if not (source.EndsWith(".fs", StringComparison.OrdinalIgnoreCase)) || source.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase) then [] else
                 let full = Path.Combine(dir, source)
                 if not (File.Exists full) then raise (FileNotFoundException(source))
                 let text = File.ReadAllText(full)
@@ -49,7 +49,7 @@ module FSharpEffectBoundary =
                     let next = declarations |> List.tryFind (fun other -> other.Index > declaration.Index) |> Option.map (fun other -> other.Index) |> Option.defaultValue text.Length
                     let body = text.Substring(start, next - start)
                     let options = declaration.Groups.["options"].Value
-                    let has option = options.Contains(option, StringComparison.OrdinalIgnoreCase)
+                    let has (option: string) = options.Contains(option, StringComparison.OrdinalIgnoreCase)
                     let delivery =
                         if has "edge" then Some { SuccessMessage = Some "success"; FailureMessage = Some "failure"; RetryPolicy = Some "declared"; Idempotency = Some "declared" }
                         else None
@@ -57,8 +57,8 @@ module FSharpEffectBoundary =
                       IsPureParserOrValidator = has "parser" || has "validator"; IsThinOneShotAdapter = has "thin-adapter"
                       DirectEffects = classify body; CallbackHiddenState = body.Contains("Async.Start", StringComparison.Ordinal) || body.Contains("ContinueWith", StringComparison.Ordinal)
                       ExceptionDrivenContinuation = body.Contains("try", StringComparison.Ordinal) && body.Contains("with", StringComparison.Ordinal)
-                      EdgeInterpreter = if has "edge" then Some "declared-edge" else None; Delivery = delivery; Exemption = NoExemption })
-            |> Seq.collect id |> Seq.toList |> Ok
+                      EdgeInterpreter = (if has "edge" then Some "declared-edge" else None); Delivery = delivery; Exemption = NoExemption }))
+            |> Seq.toList |> Ok
         with ex -> Error(sprintf "unable to sense F# effect boundaries for '%s': %s" project ex.Message)
 
     let private emit request fact code detail input message = SC.mkFinding SC.DesignDomain BlockOnPr request fact.Source code detail Blocking input message
