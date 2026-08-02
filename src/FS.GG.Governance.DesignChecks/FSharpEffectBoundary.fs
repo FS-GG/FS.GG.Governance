@@ -2,6 +2,7 @@ namespace FS.GG.Governance.DesignChecks
 
 open System
 open System.IO
+open System.Globalization
 open System.Text.RegularExpressions
 open System.Xml.Linq
 open FS.GG.Governance.Config.Model
@@ -30,35 +31,188 @@ module FSharpEffectBoundary =
           Persistence, [ "SaveChanges"; "Serialize"; "WriteAll" ]; MutableGlobalState, [ "static let mutable"; "let mutable" ] ]
         |> List.choose (fun (category, markers) -> if markers |> List.exists (fun m -> text.Contains(m, StringComparison.Ordinal)) then Some category else None)
 
+    type private Binding =
+        { Symbol: string
+          StartLine: int
+          EndLine: int
+          Body: string }
+
+    type private Declaration =
+        { Symbol: string
+          Line: int
+          Options: Map<string, string> }
+
+    let private markerPrefix = "// fsgg:effect-boundary"
+    let private symbolPattern = "[A-Za-z_][A-Za-z0-9_']*"
+    let private declarationPattern =
+        "^//\\s*fsgg:effect-boundary\\s+(?<symbol>" + symbolPattern + ")(?<options>(?:\\s+[a-z][a-z-]*=(?:\"[^\"\\r\\n]+\"|[^\\s\"]+))*)\\s*$"
+    let private optionPattern = "(?<key>[a-z][a-z-]*)=(?:\"(?<quoted>[^\"\\r\\n]+)\"|(?<plain>[^\\s\"]+))"
+    let private bindingPattern =
+        "^(?<indent>[ \\t]*)let\\s+(?:(?:inline|rec|private|internal|mutable)\\s+)*(?<symbol>" + symbolPattern + ")(?=\\s|\\(|=|:)"
+    let private declarationBoundaryPattern = "^(?:let|and|type|module|namespace|exception|open)\\b|^\\[<"
+    let private allowedOptions =
+        Set.ofList
+            [ "kind"; "edge"; "success"; "failure"; "retry"; "idempotency"
+              "exemption-owner"; "exemption-rationale"; "exemption-review-by" ]
+
+    let private indentation (line: string) =
+        line |> Seq.takeWhile (fun c -> c = ' ' || c = '\t') |> Seq.sumBy (fun c -> if c = '\t' then 4 else 1)
+
+    let private isBoundary (line: string) =
+        Regex.IsMatch(line.TrimStart(), declarationBoundaryPattern)
+
+    let private bindings (lines: string array) =
+        lines
+        |> Array.mapi (fun index line -> index, Regex.Match(line, bindingPattern))
+        |> Array.choose (fun (index, binding) -> if binding.Success then Some(index, binding) else None)
+        |> Array.map (fun (index, binding) ->
+            let indent = indentation lines.[index]
+            let finish =
+                [ index + 1 .. lines.Length - 1 ]
+                |> List.tryFind (fun candidate ->
+                    not (String.IsNullOrWhiteSpace lines.[candidate])
+                    && indentation lines.[candidate] <= indent
+                    && isBoundary lines.[candidate])
+                |> Option.defaultValue lines.Length
+            { Symbol = binding.Groups.["symbol"].Value
+              StartLine = index
+              EndLine = finish
+              Body = lines.[index .. finish - 1] |> String.concat "\n" })
+        |> Array.toList
+
+    let private parseDeclaration source lineNumber (line: string) =
+        let trimmed = line.Trim()
+        let declaration = Regex.Match(trimmed, declarationPattern)
+        if not declaration.Success then
+            Error(sprintf "%s:%d has a malformed effect-boundary declaration" source lineNumber)
+        else
+            let pairs =
+                Regex.Matches(declaration.Groups.["options"].Value, optionPattern)
+                |> Seq.cast<Match>
+                |> Seq.map (fun option ->
+                    let value = if option.Groups.["quoted"].Success then option.Groups.["quoted"].Value else option.Groups.["plain"].Value
+                    option.Groups.["key"].Value, value)
+                |> Seq.toList
+            match pairs |> List.groupBy fst |> List.tryFind (fun (_, values) -> values.Length > 1) with
+            | Some(key, _) -> Error(sprintf "%s:%d repeats effect-boundary option '%s'" source lineNumber key)
+            | None ->
+                match pairs |> List.tryFind (fun (key, _) -> not (Set.contains key allowedOptions)) with
+                | Some(key, _) -> Error(sprintf "%s:%d has unknown effect-boundary option '%s'" source lineNumber key)
+                | None ->
+                    Ok
+                        { Symbol = declaration.Groups.["symbol"].Value
+                          Line = lineNumber
+                          Options = pairs |> Map.ofList }
+
+    let private exemption source declaration =
+        let option key = Map.tryFind key declaration.Options
+        let values =
+            [ "exemption-owner", option "exemption-owner"
+              "exemption-rationale", option "exemption-rationale"
+              "exemption-review-by", option "exemption-review-by" ]
+        let present = values |> List.choose (fun (key, value) -> value |> Option.map (fun actual -> key, actual))
+        match present with
+        | [] -> Ok NoExemption
+        | [ (_, owner); (_, rationale); (_, reviewText) ] ->
+            match DateOnly.TryParseExact(reviewText, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None) with
+            | false, _ -> Error(sprintf "%s:%d has invalid exemption-review-by '%s'" source declaration.Line reviewText)
+            | true, reviewBy when reviewBy <= DateOnly.FromDateTime(DateTime.UtcNow) -> Ok(InvalidExemption "review date expired")
+            | true, reviewBy -> Ok(ActiveExemption(owner, rationale, reviewBy))
+        | _ ->
+            let missing = values |> List.choose (fun (key, value) -> if value.IsNone then Some key else None)
+            Error(sprintf "%s:%d has incomplete exemption options; missing %s" source declaration.Line (String.concat ", " missing))
+
+    let private boundaryFact project source (knownBindings: Binding list) declaration binding =
+        let option key = Map.tryFind key declaration.Options
+        let kind = option "kind" |> Option.defaultValue "transition"
+        let applicability =
+            match kind with
+            | "transition" -> Ok(false, false)
+            | "parser" | "validator" -> Ok(true, false)
+            | "thin-adapter" -> Ok(false, true)
+            | invalid -> Error(sprintf "%s:%d has invalid effect-boundary kind '%s'" source declaration.Line invalid)
+        match applicability, exemption source declaration with
+        | Error reason, _ | _, Error reason -> Error reason
+        | Ok(parserOrValidator, thinAdapter), Ok exemptionFact ->
+            match option "edge" with
+            | Some edge when knownBindings |> List.exists (fun candidate -> candidate.Symbol = edge) |> not ->
+                Error(sprintf "%s:%d names unresolved edge interpreter '%s'" source declaration.Line edge)
+            | edge ->
+                let deliveryKeys = [ "success"; "failure"; "retry"; "idempotency" ]
+                let delivery =
+                    if deliveryKeys |> List.exists (fun key -> Map.containsKey key declaration.Options) then
+                        Some
+                            { SuccessMessage = option "success"
+                              FailureMessage = option "failure"
+                              RetryPolicy = option "retry"
+                              Idempotency = option "idempotency" }
+                    else None
+                Ok
+                    { Project = project
+                      Symbol = declaration.Symbol
+                      Source = normalizePath source
+                      IsStatefulWorkflow = true
+                      IsPureParserOrValidator = parserOrValidator
+                      IsThinOneShotAdapter = thinAdapter
+                      DirectEffects = classify binding.Body
+                      CallbackHiddenState = binding.Body.Contains("Async.Start", StringComparison.Ordinal) || binding.Body.Contains("ContinueWith", StringComparison.Ordinal)
+                      ExceptionDrivenContinuation = binding.Body.Contains("try", StringComparison.Ordinal) && binding.Body.Contains("with", StringComparison.Ordinal)
+                      EdgeInterpreter = edge
+                      Delivery = delivery
+                      Exemption = exemptionFact }
+
+    let private senseSource project source (text: string) =
+        let lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n')
+        let knownBindings = bindings lines
+        let markerLines =
+            lines
+            |> Array.mapi (fun index line -> index, line)
+            |> Array.filter (fun (_, line) ->
+                let trimmed = line.Trim()
+                trimmed.StartsWith(markerPrefix, StringComparison.Ordinal)
+                && (trimmed.Length = markerPrefix.Length || Char.IsWhiteSpace trimmed.[markerPrefix.Length]))
+            |> Array.toList
+        let parseMarker (index, line) =
+            match parseDeclaration source (index + 1) line with
+            | Error reason -> Error reason
+            | Ok declaration ->
+                let bindingLine =
+                    [ index + 1 .. lines.Length - 1 ]
+                    |> List.tryFind (fun candidate -> not (String.IsNullOrWhiteSpace lines.[candidate]))
+                match bindingLine with
+                | None -> Error(sprintf "%s:%d declaration '%s' has no following symbol" source declaration.Line declaration.Symbol)
+                | Some candidate ->
+                    match knownBindings |> List.tryFind (fun binding -> binding.StartLine = candidate && binding.Symbol = declaration.Symbol) with
+                    | None -> Error(sprintf "%s:%d declaration '%s' does not bind the immediately following same-named let" source declaration.Line declaration.Symbol)
+                    | Some binding -> boundaryFact project source knownBindings declaration binding
+        ((Ok [], markerLines)
+         ||> List.fold (fun state marker ->
+             match state, parseMarker marker with
+             | Error reason, _ | _, Error reason -> Error reason
+             | Ok facts, Ok fact -> Ok(fact :: facts)))
+        |> Result.map List.rev
+
     let senseProject root project =
         try
             let path = Path.Combine(root, project)
             if not (File.Exists path) then Error(sprintf "F# project was not found: %s" project) else
             let dir = Path.GetDirectoryName(path) |> Option.ofObj |> Option.defaultValue root
-            XDocument.Load(path).Descendants(XName.Get "Compile")
-            |> Seq.choose (fun node -> node.Attribute(XName.Get "Include") |> Option.ofObj |> Option.map (fun a -> a.Value))
-            |> Seq.collect (fun source ->
-                if not (source.EndsWith(".fs", StringComparison.OrdinalIgnoreCase)) || source.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase) then [] else
-                let full = Path.Combine(dir, source)
-                if not (File.Exists full) then raise (FileNotFoundException(source))
-                let text = File.ReadAllText(full)
-                let declarations = Regex.Matches(text, "(?m)^\\s*//\\s*fsgg:effect-boundary\\s+(?<symbol>[A-Za-z_][A-Za-z0-9_']*)(?<options>.*)$") |> Seq.cast<Match> |> Seq.toList
-                declarations
-                |> List.map (fun declaration ->
-                    let start = declaration.Index + declaration.Length
-                    let next = declarations |> List.tryFind (fun other -> other.Index > declaration.Index) |> Option.map (fun other -> other.Index) |> Option.defaultValue text.Length
-                    let body = text.Substring(start, next - start)
-                    let options = declaration.Groups.["options"].Value
-                    let has (option: string) = options.Contains(option, StringComparison.OrdinalIgnoreCase)
-                    let delivery =
-                        if has "edge" then Some { SuccessMessage = Some "success"; FailureMessage = Some "failure"; RetryPolicy = Some "declared"; Idempotency = Some "declared" }
-                        else None
-                    { Project = project; Symbol = declaration.Groups.["symbol"].Value; Source = normalizePath source; IsStatefulWorkflow = true
-                      IsPureParserOrValidator = has "parser" || has "validator"; IsThinOneShotAdapter = has "thin-adapter"
-                      DirectEffects = classify body; CallbackHiddenState = body.Contains("Async.Start", StringComparison.Ordinal) || body.Contains("ContinueWith", StringComparison.Ordinal)
-                      ExceptionDrivenContinuation = body.Contains("try", StringComparison.Ordinal) && body.Contains("with", StringComparison.Ordinal)
-                      EdgeInterpreter = (if has "edge" then Some "declared-edge" else None); Delivery = delivery; Exemption = NoExemption }))
-            |> Seq.toList |> Ok
+            let sources =
+                XDocument.Load(path).Descendants(XName.Get "Compile")
+                |> Seq.choose (fun node -> node.Attribute(XName.Get "Include") |> Option.ofObj |> Option.map (fun a -> a.Value))
+                |> Seq.filter (fun source -> source.EndsWith(".fs", StringComparison.OrdinalIgnoreCase) && not (source.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase)))
+                |> Seq.toList
+            ((Ok [], sources)
+             ||> List.fold (fun state source ->
+                 match state with
+                 | Error reason -> Error reason
+                 | Ok facts ->
+                     let full = Path.Combine(dir, source)
+                     if not (File.Exists full) then Error(sprintf "compiled F# source was not found: %s" source)
+                     else
+                         match senseSource project source (File.ReadAllText full) with
+                         | Error reason -> Error reason
+                         | Ok sensed -> Ok(facts @ sensed)))
         with ex -> Error(sprintf "unable to sense F# effect boundaries for '%s': %s" project ex.Message)
 
     let private emit request fact code detail input message = SC.mkFinding SC.DesignDomain BlockOnPr request fact.Source code detail Blocking input message
@@ -79,5 +233,8 @@ module FSharpEffectBoundary =
             let direct = fact.DirectEffects |> List.map (fun category -> emit request fact "fsharp.effect-in-transition" (names category) false (sprintf "declared pure transition '%s' directly performs %s; emit an effect for its edge interpreter" fact.Symbol (names category)))
             let hidden = [ if fact.CallbackHiddenState then yield emit request fact "fsharp.callback-hidden-state" fact.Symbol false "stateful workflow hides continuation state in a callback; model messages and requested effects explicitly"
                            if fact.ExceptionDrivenContinuation then yield emit request fact "fsharp.exception-continuation" fact.Symbol false "stateful workflow uses exception-driven continuation; return explicit failure messages into the transition" ]
-            direct @ hidden @ (if List.isEmpty fact.DirectEffects then [] else delivery request fact)
+            let deliveryContract =
+                if not (List.isEmpty fact.DirectEffects) || fact.EdgeInterpreter.IsSome || fact.Delivery.IsSome then delivery request fact
+                else []
+            direct @ hidden @ deliveryContract
     let evaluate request boundaries = boundaries |> List.collect (findings request) |> List.sortBy (fun f -> f.Code, f.Location.File, f.Location.Detail)

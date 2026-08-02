@@ -45,4 +45,27 @@ let tests = testList "FSharpEffectBoundary" [
             let finding = evaluate request facts |> List.find (fun f -> f.Code = "fsharp.effect-in-transition")
             Expect.equal finding.Location.Detail "filesystem" "effect is bound to the declared transition"
         finally Directory.Delete(root, true) }
+    test "symbol-local sensing excludes later edge bodies and preserves visible delivery values" {
+        let root = Path.Combine(Path.GetTempPath(), "fsgg-effect-symbol-" + Guid.NewGuid().ToString("N"))
+        Directory.CreateDirectory root |> ignore
+        try
+            File.WriteAllText(Path.Combine(root, "App.fsproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>")
+            File.WriteAllText(Path.Combine(root, "Domain.fs"), "// fsgg:effect-boundary advance edge=interpret success=Saved failure=Failed retry=never idempotency=document-id\nlet advance model = model\nlet interpret text = File.WriteAllText(\"x\", text)")
+            let fact = senseProject root "App.fsproj" |> Result.defaultWith failtest |> List.exactlyOne
+            Expect.isEmpty fact.DirectEffects "the later interpreter body is outside advance"
+            Expect.equal fact.EdgeInterpreter (Some "interpret") "the declared real edge symbol is retained"
+            Expect.equal fact.Delivery (Some { SuccessMessage = Some "Saved"; FailureMessage = Some "Failed"; RetryPolicy = Some "never"; Idempotency = Some "document-id" }) "delivery facts come from exact visible values"
+        finally Directory.Delete(root, true) }
+    test "missing symbols and substring-shaped options fail closed" {
+        let sense (source: string) =
+            let root = Path.Combine(Path.GetTempPath(), "fsgg-effect-malformed-" + Guid.NewGuid().ToString("N"))
+            Directory.CreateDirectory root |> ignore
+            try
+                File.WriteAllText(Path.Combine(root, "App.fsproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>")
+                File.WriteAllText(Path.Combine(root, "Domain.fs"), source)
+                senseProject root "App.fsproj"
+            finally Directory.Delete(root, true)
+        Expect.isError (sense "// fsgg:effect-boundary missing\nlet actual model = model") "a nonexistent declaration symbol is malformed"
+        Expect.isError (sense "// fsgg:effect-boundary transition not-edge\nlet transition model = model") "not-edge is not accepted by substring semantics"
+        Expect.isError (sense "// fsgg:effect-boundary transition edge=missing\nlet transition model = model") "an unresolved edge symbol is malformed" }
 ]

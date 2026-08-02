@@ -37,11 +37,21 @@
       "schemaStatus": "current"
     },
     {
+      "path": "readiness/369-effect-boundary/work-model.json",
+      "kind": "workModel",
+      "digest": {
+        "algorithm": "sha256",
+        "value": "e0559559094ceb4de7cad982a40e8a3340ea5051df8931fed7392246dd11c917"
+      },
+      "schemaVersion": 1,
+      "schemaStatus": "current"
+    },
+    {
       "path": "work/369-effect-boundary/checklist.md",
       "kind": "checklist",
       "digest": {
         "algorithm": "sha256",
-        "value": "9ea583eca19d1da9e832fd6f7e00a11fbc886d372b413b9ad22d322aaecee87d"
+        "value": "5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -51,7 +61,7 @@
       "kind": "clarification",
       "digest": {
         "algorithm": "sha256",
-        "value": "5a1233cb365d4c482d58ea11ca1e174c50020e3a950a99c43c3d3e2846d03527"
+        "value": "bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -61,7 +71,7 @@
       "kind": "plan",
       "digest": {
         "algorithm": "sha256",
-        "value": "3032d047caeaf6434ed64241feffae2ace29f0b3e53f8bc477749ff30f3e3376"
+        "value": "5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -71,7 +81,7 @@
       "kind": "specification",
       "digest": {
         "algorithm": "sha256",
-        "value": "f731900d63f56ac730f7d379189b9e183608edc045a35933335129046c93118a"
+        "value": "fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -81,7 +91,7 @@
       "kind": "tasks",
       "digest": {
         "algorithm": "sha256",
-        "value": "c0adf69b0b7e1086f880187c4a5a7e10166991eae27100ca656990d77ad8af29"
+        "value": "c667ebb342e91177e18df44efda46da7c50c61bbb29641351550169d50b6014a"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -121,6 +131,16 @@
     {
       "id": "AR004",
       "sourcePath": "work/369-effect-boundary/clarifications.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "DEC-001",
+      "targetId": null,
+      "relationship": "clarificationDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR005",
+      "sourcePath": "work/369-effect-boundary/clarifications.md",
       "targetPath": "work/369-effect-boundary/plan.md",
       "sourceId": null,
       "targetId": null,
@@ -129,7 +149,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR005",
+      "id": "AR006",
       "sourcePath": "work/369-effect-boundary/clarifications.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": null,
@@ -139,7 +159,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR006",
+      "id": "AR007",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PC-001",
@@ -149,7 +169,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR007",
+      "id": "AR008",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "GV-001",
@@ -159,7 +179,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR008",
+      "id": "AR009",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PM-001",
@@ -169,7 +189,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR009",
+      "id": "AR010",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PD-001",
@@ -179,7 +199,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR010",
+      "id": "AR011",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PD-002",
@@ -189,7 +209,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR011",
+      "id": "AR012",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PD-003",
@@ -199,7 +219,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR012",
+      "id": "AR013",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "PD-004",
@@ -209,7 +229,27 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR013",
+      "id": "AR014",
+      "sourcePath": "work/369-effect-boundary/plan.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "PD-005",
+      "targetId": null,
+      "relationship": "planDecisionDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR015",
+      "sourcePath": "work/369-effect-boundary/plan.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "PD-006",
+      "targetId": null,
+      "relationship": "planDecisionDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR016",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": null,
@@ -219,7 +259,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR014",
+      "id": "AR017",
       "sourcePath": "work/369-effect-boundary/plan.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "VO-001",
@@ -229,7 +269,17 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR015",
+      "id": "AR018",
+      "sourcePath": "work/369-effect-boundary/plan.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "VO-002",
+      "targetId": null,
+      "relationship": "verificationDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR019",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "AC-001",
@@ -239,7 +289,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR016",
+      "id": "AR020",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/checklist.md",
       "sourceId": null,
@@ -249,7 +299,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR017",
+      "id": "AR021",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/plan.md",
       "sourceId": null,
@@ -259,7 +309,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR018",
+      "id": "AR022",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "FR-001",
@@ -269,7 +319,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR019",
+      "id": "AR023",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "FR-002",
@@ -279,7 +329,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR020",
+      "id": "AR024",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "FR-003",
@@ -289,7 +339,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR021",
+      "id": "AR025",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "FR-004",
@@ -299,7 +349,27 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR022",
+      "id": "AR026",
+      "sourcePath": "work/369-effect-boundary/spec.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "FR-005",
+      "targetId": null,
+      "relationship": "requirementDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR027",
+      "sourcePath": "work/369-effect-boundary/spec.md",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "FR-006",
+      "targetId": null,
+      "relationship": "requirementDisposition",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR028",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/clarifications.md",
       "sourceId": null,
@@ -309,7 +379,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR023",
+      "id": "AR029",
       "sourcePath": "work/369-effect-boundary/spec.md",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": null,
@@ -319,7 +389,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR024",
+      "id": "AR030",
       "sourcePath": "work/369-effect-boundary/tasks.yml",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "T005",
@@ -329,7 +399,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR025",
+      "id": "AR031",
       "sourcePath": "work/369-effect-boundary/tasks.yml",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "T006",
@@ -339,7 +409,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR026",
+      "id": "AR032",
       "sourcePath": "work/369-effect-boundary/tasks.yml",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "T007",
@@ -349,7 +419,7 @@
       "diagnosticIds": []
     },
     {
-      "id": "AR027",
+      "id": "AR033",
       "sourcePath": "work/369-effect-boundary/tasks.yml",
       "targetPath": "work/369-effect-boundary/tasks.yml",
       "sourceId": "T008",
@@ -357,11 +427,41 @@
       "relationship": "taskDependency",
       "state": "current",
       "diagnosticIds": []
+    },
+    {
+      "id": "AR034",
+      "sourcePath": "work/369-effect-boundary/tasks.yml",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "T009",
+      "targetId": "T001",
+      "relationship": "taskDependency",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR035",
+      "sourcePath": "work/369-effect-boundary/tasks.yml",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "T010",
+      "targetId": "T009",
+      "relationship": "taskDependency",
+      "state": "current",
+      "diagnosticIds": []
+    },
+    {
+      "id": "AR036",
+      "sourcePath": "work/369-effect-boundary/tasks.yml",
+      "targetPath": "work/369-effect-boundary/tasks.yml",
+      "sourceId": "T011",
+      "targetId": "T010",
+      "relationship": "taskDependency",
+      "state": "current",
+      "diagnosticIds": []
     }
   ],
   "readiness": {
     "status": "implementationReady",
-    "readyCount": 27,
+    "readyCount": 36,
     "advisoryCount": 0,
     "warningCount": 0,
     "blockingCount": 0,
@@ -376,7 +476,7 @@
     {
       "path": "readiness/369-effect-boundary/work-model.json",
       "kind": "workModel",
-      "currency": "missing",
+      "currency": "current",
       "diagnosticIds": []
     }
   ],

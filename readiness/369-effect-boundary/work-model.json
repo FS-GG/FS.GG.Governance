@@ -53,7 +53,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "9ea583eca19d1da9e832fd6f7e00a11fbc886d372b413b9ad22d322aaecee87d"
+        "value": "5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355"
       }
     },
     {
@@ -65,7 +65,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "5a1233cb365d4c482d58ea11ca1e174c50020e3a950a99c43c3d3e2846d03527"
+        "value": "bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81"
       }
     },
     {
@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "18d532a967acdb14d916cac85681a3c01e86fbf8db4068c7a225c184d5e7fba4"
+        "value": "199afa34c1ec3fda2e1b0e765b9232d4796d1f3995de63d8a8602b2d1354d3a6"
       }
     },
     {
@@ -89,7 +89,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "3032d047caeaf6434ed64241feffae2ace29f0b3e53f8bc477749ff30f3e3376"
+        "value": "5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe"
       }
     },
     {
@@ -101,7 +101,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "f731900d63f56ac730f7d379189b9e183608edc045a35933335129046c93118a"
+        "value": "fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a"
       }
     },
     {
@@ -113,7 +113,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "dd091602e51a117425c65844f3c993d61bdbcb666204dcd1c26a6cabedc77901"
+        "value": "c667ebb342e91177e18df44efda46da7c50c61bbb29641351550169d50b6014a"
       }
     }
   ],
@@ -209,9 +209,69 @@
       "linkedEvidenceIds": [
         "EV004"
       ]
+    },
+    {
+      "id": "FR-005",
+      "title": "Each source declaration uses an exact \u0060key=value\u0060 grammar, binds the immediately following compiled \u0060let\u0060 with the same symbol, and fails closed for missing symbols, unknown or duplicate options, malformed values, and unresolved edge interpreters. (Stories: US-001; Acceptance: AC-001)",
+      "text": "Each source declaration uses an exact \u0060key=value\u0060 grammar, binds the immediately following compiled \u0060let\u0060 with the same symbol, and fails closed for missing symbols, unknown or duplicate options, malformed values, and unresolved edge interpreters. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/369-effect-boundary/spec.md",
+      "sourceLocation": {
+        "line": 35,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T009"
+      ],
+      "linkedEvidenceIds": [
+        "EV009"
+      ]
+    },
+    {
+      "id": "FR-006",
+      "title": "Production Verify sensing proves both directions: a pure declared transition plus explicit edge/delivery contract passes, while symbol-local direct I/O, callbacks, malformed policy, incomplete delivery, and expired exemptions block. (Stories: US-001; Acceptance: AC-001)",
+      "text": "Production Verify sensing proves both directions: a pure declared transition plus explicit edge/delivery contract passes, while symbol-local direct I/O, callbacks, malformed policy, incomplete delivery, and expired exemptions block. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/369-effect-boundary/spec.md",
+      "sourceLocation": {
+        "line": 36,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T010"
+      ],
+      "linkedEvidenceIds": [
+        "EV010"
+      ]
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "title": "\u0060kind=transition\u0060 is the default; \u0060kind=parser\u0060, \u0060kind=validator\u0060, and \u0060kind=thin-adapter\u0060 are the only non-applicable kinds. Delivery values are retained from visible declarations and never synthesized from \u0060edge\u0060.",
+      "decision": "\u0060kind=transition\u0060 is the default; \u0060kind=parser\u0060, \u0060kind=validator\u0060, and \u0060kind=thin-adapter\u0060 are the only non-applicable kinds. Delivery values are retained from visible declarations and never synthesized from \u0060edge\u0060.",
+      "requirementRefs": [],
+      "storyRefs": [],
+      "acceptanceRefs": [],
+      "source": "work/369-effect-boundary/clarifications.md",
+      "sourceLocation": {
+        "line": 24,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T009",
+        "T010"
+      ]
+    }
+  ],
   "tasks": [
     {
       "id": "T001",
@@ -430,6 +490,98 @@
         "line": 8,
         "column": 1
       }
+    },
+    {
+      "id": "T009",
+      "title": "Bind exact declarations to real symbol bodies",
+      "status": "done",
+      "owner": "crake-1738",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [
+        "FR-005"
+      ],
+      "decisions": [
+        "DEC-001"
+      ],
+      "sourceIds": [
+        "AC-001",
+        "FR-005",
+        "PD-005"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV009"
+      ],
+      "source": "work/369-effect-boundary/tasks.yml",
+      "sourceLocation": {
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "id": "T010",
+      "title": "Exercise policy controls through production Verify sensing",
+      "status": "done",
+      "owner": "crake-1738",
+      "dependencies": [
+        "T009"
+      ],
+      "requirements": [
+        "FR-006"
+      ],
+      "decisions": [
+        "DEC-001"
+      ],
+      "sourceIds": [
+        "AC-001",
+        "FR-006",
+        "PD-006",
+        "VO-002"
+      ],
+      "requiredSkills": [
+        "automated-tests",
+        "readiness-evidence"
+      ],
+      "requiredEvidence": [
+        "EV010"
+      ],
+      "source": "work/369-effect-boundary/tasks.yml",
+      "sourceLocation": {
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "id": "T011",
+      "title": "Refresh lifecycle evidence for exact-head CI",
+      "status": "done",
+      "owner": "crake-1738",
+      "dependencies": [
+        "T010"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "GV-001",
+        "VO-002"
+      ],
+      "requiredSkills": [
+        "deterministic-json",
+        "readiness-evidence"
+      ],
+      "requiredEvidence": [
+        "EV011"
+      ],
+      "source": "work/369-effect-boundary/tasks.yml",
+      "sourceLocation": {
+        "line": 11,
+        "column": 1
+      }
     }
   ],
   "evidence": [
@@ -616,6 +768,76 @@
         "line": 8,
         "column": 1
       }
+    },
+    {
+      "id": "EV009",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T009",
+      "taskRefs": [
+        "T009"
+      ],
+      "requirementRefs": [
+        "FR-005"
+      ],
+      "artifactRefs": [],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/369-effect-boundary/evidence.yml",
+      "sourceLocation": {
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV010",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T010",
+      "taskRefs": [
+        "T010"
+      ],
+      "requirementRefs": [
+        "FR-006"
+      ],
+      "artifactRefs": [],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/369-effect-boundary/evidence.yml",
+      "sourceLocation": {
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV011",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T011",
+      "taskRefs": [
+        "T011"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/369-effect-boundary/evidence.yml",
+      "sourceLocation": {
+        "line": 11,
+        "column": 1
+      }
     }
   ],
   "generatedViews": [
@@ -656,7 +878,7 @@
           "path": "work/369-effect-boundary/checklist.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "9ea583eca19d1da9e832fd6f7e00a11fbc886d372b413b9ad22d322aaecee87d"
+            "value": "5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355"
           },
           "schemaVersion": 1
         },
@@ -664,7 +886,7 @@
           "path": "work/369-effect-boundary/clarifications.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "5a1233cb365d4c482d58ea11ca1e174c50020e3a950a99c43c3d3e2846d03527"
+            "value": "bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81"
           },
           "schemaVersion": 1
         },
@@ -672,7 +894,7 @@
           "path": "work/369-effect-boundary/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "18d532a967acdb14d916cac85681a3c01e86fbf8db4068c7a225c184d5e7fba4"
+            "value": "199afa34c1ec3fda2e1b0e765b9232d4796d1f3995de63d8a8602b2d1354d3a6"
           },
           "schemaVersion": 1
         },
@@ -680,7 +902,7 @@
           "path": "work/369-effect-boundary/plan.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "3032d047caeaf6434ed64241feffae2ace29f0b3e53f8bc477749ff30f3e3376"
+            "value": "5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe"
           },
           "schemaVersion": 1
         },
@@ -688,7 +910,7 @@
           "path": "work/369-effect-boundary/spec.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "f731900d63f56ac730f7d379189b9e183608edc045a35933335129046c93118a"
+            "value": "fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a"
           },
           "schemaVersion": 1
         },
@@ -696,14 +918,14 @@
           "path": "work/369-effect-boundary/tasks.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "dd091602e51a117425c65844f3c993d61bdbcb666204dcd1c26a6cabedc77901"
+            "value": "c667ebb342e91177e18df44efda46da7c50c61bbb29641351550169d50b6014a"
           },
           "schemaVersion": 1
         }
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "e77fdc611064386efe55db874ef687c2d0ade5705356243aaa51c03d91c43342"
+        "value": "52c39e14c4284241586dcce2cf5fc428ddfe15ad0bf87625abd6f7c205722fa5"
       },
       "currency": "current"
     }

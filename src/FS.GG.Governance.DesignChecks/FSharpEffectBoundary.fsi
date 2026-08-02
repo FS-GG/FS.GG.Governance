@@ -32,8 +32,9 @@ module FSharpEffectBoundary =
           Delivery: Delivery option
           Exemption: Exemption }
 
-    /// Read declared compiled F# sources and conservatively classify effect symbols.  This sensor does not infer
-    /// a workflow from a module name: callers declare whether the symbol is a stateful transition.
+    /// Read declared compiled F# sources and conservatively classify effect symbols. Each exact key/value
+    /// declaration binds only the immediately following same-named `let`; malformed policy fails closed.
+    /// This sensor does not infer a workflow from a module or function name.
     val senseProject: root: string -> project: string -> Result<BoundaryFacts list, string>
 
     /// PURE/TOTAL policy evaluation.  Findings name both the prohibited category and nearest declared boundary.
