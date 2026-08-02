@@ -49,17 +49,17 @@ evidence:
     artifacts: []
     sourceRefs:
       - kind: verification
-        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
     result: pass
     synthetic: false
     observedRun:
-      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
-      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-verify-production.trx
+      digest: "sha256:76e57abf7d1c8fc01662565920cdabe1193f9e1a5ffb4ab31cbb7fcf12a6348f"
       outcome: passed
-      passed: 6
+      passed: 1
       failed: 0
       skipped: 0
-    notes: [Evidence required before verify.]
+    notes: ["Production Verify sensing exercised over a real temporary F# project."]
   - id: EV002
     kind: verification
     subject:
