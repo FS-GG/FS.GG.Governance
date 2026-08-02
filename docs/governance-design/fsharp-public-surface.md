@@ -17,6 +17,16 @@ The receipt is deterministic JSON with fixed property order:
 `freshnessDigest` covers the project file and every compiled source/signature. An unreadable or malformed
 project emits `malformed` and no digest; callers must treat that as an input failure, never as a clean result.
 
+For a standalone, persisted-artifact workflow use the dedicated command and redirect its only stdout value:
+
+```bash
+dotnet run --project src/FS.GG.Governance.FSharpSurfaceCommand -- \
+  --root . --project src/MyProject/MyProject.fsproj > readiness/fsharp-public-surface.json
+```
+
+It exits `3` for malformed input and `2` for invalid command syntax. Findings are carried in the receipt;
+they are advisory during migration and become enforcement input through `fsgg verify`.
+
 The current policy posture is advisory through **2026-10-01**. Promotion to blocking requires a fresh fixture
 run covering libraries, executables, exemptions, documentation, signature order, malformed project input, and
 the stable receipt contract.
