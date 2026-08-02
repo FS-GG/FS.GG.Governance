@@ -11,7 +11,7 @@ sourceAnalysis: readiness/366-fsharp-surface-governance/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/366-fsharp-surface-governance/analysis.json
-    digest: a2d62715ea37136ac8918582c9e7cb1a898d2064e04b285b8725288a73728b28
+    digest: 03743917f4398b5f2e91b391fa72d35fe72c5bb1b9a47f34e9ead233acdaf7c2
     schemaVersion: 1
   - label: checklist
     path: work/366-fsharp-surface-governance/checklist.md
