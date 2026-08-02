@@ -1,7 +1,7 @@
 schemaVersion: 1
 workId: 369-effect-boundary
 stage: evidence
-status: needsEvidenceCorrection
+status: evidenceReady
 sourceSpec: work/369-effect-boundary/spec.md
 sourceClarifications: work/369-effect-boundary/clarifications.md
 sourceChecklist: work/369-effect-boundary/checklist.md
@@ -31,11 +31,11 @@ sourceSnapshots:
     schemaVersion: 1
   - label: tasks
     path: work/369-effect-boundary/tasks.yml
-    digest: c0adf69b0b7e1086f880187c4a5a7e10166991eae27100ca656990d77ad8af29
+    digest: dd091602e51a117425c65844f3c993d61bdbcb666204dcd1c26a6cabedc77901
     schemaVersion: 1
 evidence:
   - id: EV001
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T001
@@ -50,11 +50,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV002
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T002
@@ -69,11 +76,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV003
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T003
@@ -88,11 +102,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV004
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T004
@@ -107,11 +128,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV005
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T005
@@ -126,11 +154,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV006
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T006
@@ -145,11 +180,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV007
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T007
@@ -164,11 +206,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV008
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T008
@@ -183,8 +232,15 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
 lifecycleNotes:
   - "Next lifecycle action: verify."
