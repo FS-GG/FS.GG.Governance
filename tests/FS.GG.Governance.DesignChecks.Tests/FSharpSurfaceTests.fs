@@ -149,14 +149,15 @@ let tests =
 
           test "versioned receipt is deterministic and malformed project input fails closed" {
               temporaryProject
-                  [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                  [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fsi", "/// value\nval value: int"
                     "Domain.fs", "module Domain\nlet value = 1" ]
                   (fun root ->
                       let first = receipt root "Lib.fsproj" false false true request |> receiptJson
                       let second = receipt root "Lib.fsproj" false false true request |> receiptJson
                       Expect.equal first second "the receipt has no clock or machine-specific fields"
                       Expect.stringContains first "\"kind\":\"fsharp-public-surface\"" "identifies stable contract"
-                      Expect.stringContains first "fsharp.signature-missing" "carries live finding codes"
+                      Expect.stringContains first "\"findings\":[]" "clean signature carries an explicit empty finding set"
                       Expect.stringContains first "\"cardinality\":\"one\"" "one match is explicit"
                       let malformed = receipt root "Missing.fsproj" false false true request
                       Expect.isSome malformed.Malformed "missing project is explicit, never a pass"
@@ -167,8 +168,10 @@ let tests =
               temporaryProject
                   [ "Zero.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Only.fsi\" /></ItemGroup></Project>"
                     "Only.fsi", "/// marker\ntype Marker = class end"
-                    "Many.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"A.fs\" /><Compile Include=\"B.fs\" /></ItemGroup></Project>"
+                    "Many.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"A.fsi\" /><Compile Include=\"A.fs\" /><Compile Include=\"B.fsi\" /><Compile Include=\"B.fs\" /></ItemGroup></Project>"
+                    "A.fsi", "/// a\nval a: int"
                     "A.fs", "module A\nlet a = 1"
+                    "B.fsi", "/// b\nval b: int"
                     "B.fs", "module B\nlet b = 2" ]
                   (fun root ->
                       let zero = receipt root "Zero.fsproj" false false true request
@@ -176,4 +179,15 @@ let tests =
                       Expect.equal (zero.MatchedModuleCount, zero.Cardinality) (0, "zero") "zero is explicit"
                       Expect.equal (many.MatchedModuleCount, many.Cardinality) (2, "many") "many is explicit"
                       Expect.equal (receiptJson many) (receiptJson many) "many output is deterministic")
+          }
+
+          test "Rogue3-shaped many implementations and zero signatures reports applicable zero matches" {
+              temporaryProject
+                  [ "Game.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><OutputType>Exe</OutputType><ItemGroup><Compile Include=\"Program.fs\" /><Compile Include=\"World.fs\" /></ItemGroup></Project>"
+                    "Program.fs", "[<EntryPoint>] let main _ = 0"
+                    "World.fs", "module World\nlet tick = 1" ]
+                  (fun root ->
+                      let result = receipt root "Game.fsproj" false false true request
+                      Expect.isTrue result.Applicable "non-test executable is applicable"
+                      Expect.equal (result.MatchedModuleCount, result.Cardinality) (0, "zero") "matches signatures, not implementations")
           } ]

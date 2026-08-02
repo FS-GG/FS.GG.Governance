@@ -288,7 +288,7 @@ module FSharpSurface =
               Applicable = true
               ApplicabilityReason = "project input must be readable"
               Project = project
-              DeclaredGlob = "**/*.fsproj"
+              DeclaredGlob = "src/**/*.fsi"
               CompiledSources = []
               MatchedModuleCount = 0
               Cardinality = "zero"
@@ -305,13 +305,16 @@ module FSharpSurface =
                 { Code = finding.Code; File = file; Detail = finding.Location.Detail; IsInputState = finding.IsInputState
                   BaseSeverity = "blocking"; EffectiveSeverity = "advisory"
                   Evidence = finding.EvidenceTag |> Option.map (fun (EvidenceTag value) -> value) })
-            let sources = facts |> List.map (fun fact -> let (GovernedPath path) = fact.Source in path) |> List.sort
+            let sources =
+                facts
+                |> List.choose (fun fact -> fact.Signature |> Option.map (fun (GovernedPath path) -> path))
+                |> List.sort
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
               Applicable = not isTestProject
               ApplicabilityReason = if isTestProject then "test projects are excluded" else "compiled non-test F# project"
               Project = project
-              DeclaredGlob = "**/*.fsproj"
+              DeclaredGlob = "src/**/*.fsi"
               CompiledSources = sources
               MatchedModuleCount = List.length sources
               Cardinality = match List.length sources with 0 -> "zero" | 1 -> "one" | _ -> "many"
