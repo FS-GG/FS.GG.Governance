@@ -142,6 +142,14 @@ module FSharpSurface =
         |> snd
         |> List.rev
 
+    let private sourceDeclarationNames (sourceText: string) =
+        Regex.Matches(sourceText, "(?m)^\\s*(?:let|type|module|member)\\s+(?:inline\\s+|rec\\s+|private\\s+|internal\\s+)*(?:``(?<quoted>[^`]+)``|(?<name>[A-Za-z_][A-Za-z0-9_']*))")
+        |> Seq.cast<Match>
+        |> Seq.map (fun matched ->
+            if matched.Groups.["quoted"].Success then matched.Groups.["quoted"].Value
+            else matched.Groups.["name"].Value)
+        |> Set.ofSeq
+
     /// Edge sensor for SDK-style projects.  It reads the declared Compile order rather than globbing source;
     /// this preserves F# compilation semantics and lets the pure evaluator report exact pairing defects.
     let senseProject root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent =
@@ -179,6 +187,10 @@ module FSharpSurface =
                                 if not (File.Exists fullSource) then
                                     raise (FileNotFoundException(sprintf "compiled source was not found: %s" source))
                                 let sourceText = File.ReadAllText fullSource
+                                let declarations = if File.Exists fullSignature then signatureDeclarations fullSignature else []
+                                let sourceNames = sourceDeclarationNames sourceText
+                                let signatureMatchesSource =
+                                    declarations |> List.forall (fun declaration -> Set.contains declaration.Name sourceNames)
                                 let entry = projectIsExecutable && sourceText.Contains("[<EntryPoint>", StringComparison.Ordinal)
                                 Some
                                     { Project = project
@@ -191,8 +203,8 @@ module FSharpSurface =
                                       IsEntryPoint = entry
                                       IsGenerated = isGeneratedPath source
                                       Exemption = NoExemption
-                                      Declarations = if File.Exists fullSignature then signatureDeclarations fullSignature else []
-                                      SignatureMatchesSource = not (File.Exists fullSignature) || signatureIndex = Some(index - 1)
+                                      Declarations = declarations
+                                      SignatureMatchesSource = not (File.Exists fullSignature) || signatureMatchesSource
                                       RequiresSurfaceBaseline = requiresSurfaceBaseline
                                       SurfaceBaselineCurrent = surfaceBaselineCurrent })
                     Ok facts

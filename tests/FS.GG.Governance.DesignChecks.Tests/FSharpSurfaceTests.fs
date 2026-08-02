@@ -112,6 +112,19 @@ let tests =
                       | Ok facts -> Expect.isEmpty (evaluate request facts) "a paired documented source is clean")
           }
 
+          test "project sensor detects an adjacent signature declaration absent from implementation" {
+              temporaryProject
+                  [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fsi\" /><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fsi", "/// Parses input\nval parse: string -> int"
+                    "Domain.fs", "module Domain\nlet format text = text.Length" ]
+                  (fun root ->
+                      match senseProject root "Lib.fsproj" false false true with
+                      | Error error -> failtest error
+                      | Ok facts ->
+                          let codes = evaluate request facts |> List.map (fun finding -> finding.Code)
+                          Expect.contains codes "fsharp.signature-source-mismatch" "compilation adjacency is not mistaken for contract compatibility")
+          }
+
           test "versioned receipt is deterministic and malformed project input fails closed" {
               temporaryProject
                   [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
