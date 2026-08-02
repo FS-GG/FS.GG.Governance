@@ -7,13 +7,13 @@
   "generator": "FS.GG.SDD.Artifacts/0.32.0",
   "sourcesDigest": {
     "algorithm": "sha256",
-    "value": "f3b0cff09b8a170c88cac37e87418500bbb298e0e104a16d1c7c639dfda34b59"
+    "value": "93828e2941c5ca98a4162afadbad5be999f263effd3457a38b87fced9ac3d65e"
   },
   "verificationReadiness": {
     "status": "verificationReady",
-    "evidenceSupportedCount": 8,
+    "evidenceSupportedCount": 11,
     "evidenceSelfAttestedCount": 0,
-    "evidenceObservedCount": 8
+    "evidenceObservedCount": 11
   },
   "disposition": {
     "state": "shipReady",

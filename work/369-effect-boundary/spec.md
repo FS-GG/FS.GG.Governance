@@ -32,6 +32,8 @@ Teams can mechanically enforce functional-core/imperative-shell semantics withou
 - FR-002: A declared transition containing direct effects fails, as do callback-hidden state or exception-driven continuations for stateful workflows. (Stories: US-001; Acceptance: AC-001)
 - FR-003: Edge interpreters declare effect results, retry policy, and idempotency and return success or failure messages to the pure transition. (Stories: US-001; Acceptance: AC-001)
 - FR-004: Pure parsers/validators and explicitly declared thin adapters are non-applicable; exemptions require a symbol, owner, rationale, and unexpired review date. (Stories: US-001; Acceptance: AC-001)
+- FR-005: Each source declaration uses an exact `key=value` grammar, binds the immediately following compiled `let` with the same symbol, and fails closed for missing symbols, unknown or duplicate options, malformed values, and unresolved edge interpreters. (Stories: US-001; Acceptance: AC-001)
+- FR-006: Production Verify sensing proves both directions: a pure declared transition plus explicit edge/delivery contract passes, while symbol-local direct I/O, callbacks, malformed policy, incomplete delivery, and expired exemptions block. (Stories: US-001; Acceptance: AC-001)
 
 ## Ambiguities
 No material ambiguities recorded.

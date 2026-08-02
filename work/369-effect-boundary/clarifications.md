@@ -15,13 +15,13 @@ publicOrToolFacingImpact: true
 - work/369-effect-boundary/spec.md
 
 ## Clarification Questions
-No clarification questions recorded.
+- CQ-001: How are applicability, delivery, and exemptions declared without substring or naming inference?
 
 ## Answers
-No clarification answers recorded.
+- CA-001 [CQ-001]: A marker binds only the immediately following same-named compiled `let`. Options are exact `key=value` tokens: `kind`, `edge`, `success`, `failure`, `retry`, `idempotency`, and the three `exemption-*` fields. Unknown, duplicate, partial exemption, missing-symbol, or unresolved-edge declarations are malformed input.
 
 ## Decisions
-No concrete decisions recorded.
+- DEC-001 [CQ-001]: `kind=transition` is the default; `kind=parser`, `kind=validator`, and `kind=thin-adapter` are the only non-applicable kinds. Delivery values are retained from visible declarations and never synthesized from `edge`.
 
 ## Accepted Deferrals
 No accepted deferrals recorded.

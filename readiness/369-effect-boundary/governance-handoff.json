@@ -6,17 +6,17 @@
   "sources": [
     {
       "path": "readiness/369-effect-boundary/ship.json",
-      "digest": "sha256:fb61e3961b4a3b0c4fcca251be27dbbb4b3227b38eeb7e65bdaf20ba9b559557",
+      "digest": "sha256:675c5c28aad8055ec8e737c101e5bae77e5fab64143c421b7de3b7c74b420521",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/verify.json",
-      "digest": "sha256:9ccab147b233b409cff5f649f8e29dc19added98046c4fba8b6b447ca931a906",
+      "digest": "sha256:45bf32646fb6d86b1c889f6180f5af3dbd213e929a6523570dd85aa18831c3bf",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/work-model.json",
-      "digest": "sha256:8c71e3c2a27d99b3d830a34ad35a62d165a63e251f6021388b39e206d4eb2351",
+      "digest": "sha256:111839e4b4fa84c8260952a62140a062c7977610d13fed6f0bb64bf234845298",
       "schemaVersion": 1
     }
   ],
@@ -63,6 +63,21 @@
         "rationale": null
       },
       {
+        "id": "evidence:EV009",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "evidence:EV010",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "evidence:EV011",
+        "state": "real",
+        "rationale": null
+      },
+      {
         "id": "task:T001",
         "state": "real",
         "rationale": null
@@ -101,6 +116,21 @@
         "id": "task:T008",
         "state": "real",
         "rationale": null
+      },
+      {
+        "id": "task:T009",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "task:T010",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "task:T011",
+        "state": "real",
+        "rationale": null
       }
     ],
     "dependencies": [
@@ -135,6 +165,18 @@
       {
         "dependent": "evidence:EV008",
         "dependency": "task:T008"
+      },
+      {
+        "dependent": "evidence:EV009",
+        "dependency": "task:T009"
+      },
+      {
+        "dependent": "evidence:EV010",
+        "dependency": "task:T010"
+      },
+      {
+        "dependent": "evidence:EV011",
+        "dependency": "task:T011"
       },
       {
         "dependent": "task:T001",
@@ -183,6 +225,30 @@
       {
         "dependent": "task:T008",
         "dependency": "task:T001"
+      },
+      {
+        "dependent": "task:T009",
+        "dependency": "evidence:EV009"
+      },
+      {
+        "dependent": "task:T009",
+        "dependency": "task:T001"
+      },
+      {
+        "dependent": "task:T010",
+        "dependency": "evidence:EV010"
+      },
+      {
+        "dependent": "task:T010",
+        "dependency": "task:T009"
+      },
+      {
+        "dependent": "task:T011",
+        "dependency": "evidence:EV011"
+      },
+      {
+        "dependent": "task:T011",
+        "dependency": "task:T010"
       }
     ]
   },

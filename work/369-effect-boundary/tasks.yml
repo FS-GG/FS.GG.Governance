@@ -13,19 +13,19 @@ work:
 sources:
   - label: spec
     path: work/369-effect-boundary/spec.md
-    digest: f731900d63f56ac730f7d379189b9e183608edc045a35933335129046c93118a
+    digest: fb4206ab9da53b8a6a06c37a05775cceaf0229711620f187119179752b12836a
     schemaVersion: 1
   - label: clarifications
     path: work/369-effect-boundary/clarifications.md
-    digest: 5a1233cb365d4c482d58ea11ca1e174c50020e3a950a99c43c3d3e2846d03527
+    digest: bfaf9ba383146fb5102c7736efbbba986558d4d7a210b5b4be0333cea6e25b81
     schemaVersion: 1
   - label: checklist
     path: work/369-effect-boundary/checklist.md
-    digest: 9ea583eca19d1da9e832fd6f7e00a11fbc886d372b413b9ad22d322aaecee87d
+    digest: 5a7c05c5cc1dd91f57a232d35b5e5b9da2afeb56f6f1a0f4776a8ae8b3532355
     schemaVersion: 1
   - label: plan
     path: work/369-effect-boundary/plan.md
-    digest: 3032d047caeaf6434ed64241feffae2ace29f0b3e53f8bc477749ff30f3e3376
+    digest: 5d939e53c4d55d782743cc8f92302c9150d61c3c140372356816a1d3dd926ebe
     schemaVersion: 1
 tasks:
   - id: T001
@@ -108,6 +108,36 @@ tasks:
     sourceIds: [GV-001, PD-001]
     requiredSkills: [deterministic-json]
     requiredEvidence: [EV008]
+  - id: T009
+    title: Bind exact declarations to real symbol bodies
+    status: done
+    owner: crake-1738
+    dependencies: [T001]
+    requirements: [FR-005]
+    decisions: [DEC-001]
+    sourceIds: [AC-001, FR-005, PD-005]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV009]
+  - id: T010
+    title: Exercise policy controls through production Verify sensing
+    status: done
+    owner: crake-1738
+    dependencies: [T009]
+    requirements: [FR-006]
+    decisions: [DEC-001]
+    sourceIds: [AC-001, FR-006, PD-006, VO-002]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV010]
+  - id: T011
+    title: Refresh lifecycle evidence for exact-head CI
+    status: done
+    owner: crake-1738
+    dependencies: [T010]
+    requirements: []
+    decisions: []
+    sourceIds: [GV-001, VO-002]
+    requiredSkills: [deterministic-json, readiness-evidence]
+    requiredEvidence: [EV011]
 acceptedDeferrals: []
 findings: []
 advisoryNotes:
