@@ -1,6 +1,7 @@
 module FS.GG.Governance.FSharpSurfaceCommand.Program
 
 open System
+open System.IO
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.SurfaceChecks.Model
 open FS.GG.Governance.DesignChecks.FSharpSurface
@@ -36,5 +37,12 @@ let main argv =
               Path = normalizePath project
               EvidenceTag = None }
         let result = receipt root project isTest requiresBaseline baselineCurrent request
-        printfn "%s" (receiptJson result)
+        let json = receiptJson result
+        let receiptDirectory = Path.Combine(root, "readiness")
+        let persisted = Path.Combine(receiptDirectory, "fsharp-public-surface.json")
+        Directory.CreateDirectory(receiptDirectory) |> ignore
+        let temporary = persisted + ".tmp"
+        File.WriteAllText(temporary, json)
+        File.Move(temporary, persisted, true)
+        printfn "%s" json
         if result.Malformed.IsSome then 3 else 0

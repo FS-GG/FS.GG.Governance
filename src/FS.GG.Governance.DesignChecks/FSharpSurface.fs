@@ -44,10 +44,18 @@ module FSharpSurface =
         { SchemaVersion: int
           Kind: string
           Applicable: bool
+          ApplicabilityReason: string
           Project: string
+          DeclaredGlob: string
           CompiledSources: string list
+          MatchedModuleCount: int
+          Cardinality: string
+          Maturity: string
           Findings: string list
           FreshnessDigest: string option
+          ConfigDigest: string option
+          PolicyDigest: string option
+          SourceDigest: string option
           Malformed: string option }
 
     let migrationMaturity = Warn
@@ -267,15 +275,26 @@ module FSharpSurface =
         SHA256.HashData bytes |> Convert.ToHexString |> fun value -> value.ToLowerInvariant()
 
     let receipt root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent request =
+        let digestOptional relative =
+            let path = Path.Combine(root, relative)
+            if File.Exists path then Some(SHA256.HashData(File.ReadAllBytes path) |> Convert.ToHexString |> fun value -> value.ToLowerInvariant()) else None
         match senseProject root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent with
         | Error reason ->
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
               Applicable = true
+              ApplicabilityReason = "project input must be readable"
               Project = project
+              DeclaredGlob = "**/*.fsproj"
               CompiledSources = []
-              Findings = []
+              MatchedModuleCount = 0
+              Cardinality = "zero"
+              Maturity = "warn"
+              Findings = [ "fsharp.surface-malformed" ]
               FreshnessDigest = None
+              ConfigDigest = digestOptional ".fsgg/capabilities.yml"
+              PolicyDigest = digestOptional ".fsgg/fsharp-surface.json"
+              SourceDigest = None
               Malformed = Some reason }
         | Ok facts ->
             let findings = evaluate request facts |> List.map (fun finding -> finding.Code)
@@ -283,10 +302,18 @@ module FSharpSurface =
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
               Applicable = not isTestProject
+              ApplicabilityReason = if isTestProject then "test projects are excluded" else "compiled non-test F# project"
               Project = project
+              DeclaredGlob = "**/*.fsproj"
               CompiledSources = sources
+              MatchedModuleCount = List.length sources
+              Cardinality = match List.length sources with 0 -> "zero" | 1 -> "one" | _ -> "many"
+              Maturity = "warn"
               Findings = findings
               FreshnessDigest = Some(digestFiles root project facts)
+              ConfigDigest = digestOptional ".fsgg/capabilities.yml"
+              PolicyDigest = digestOptional ".fsgg/fsharp-surface.json"
+              SourceDigest = Some(digestFiles root project facts)
               Malformed = None }
 
     let receiptJson receipt =
@@ -296,11 +323,16 @@ module FSharpSurface =
         writer.WriteNumber("schemaVersion", receipt.SchemaVersion)
         writer.WriteString("kind", receipt.Kind)
         writer.WriteBoolean("applicable", receipt.Applicable)
+        writer.WriteString("applicabilityReason", receipt.ApplicabilityReason)
         writer.WriteString("project", receipt.Project)
+        writer.WriteString("declaredGlob", receipt.DeclaredGlob)
         writer.WritePropertyName("compiledSources")
         writer.WriteStartArray()
         receipt.CompiledSources |> List.iter writer.WriteStringValue
         writer.WriteEndArray()
+        writer.WriteNumber("matchedModuleCount", receipt.MatchedModuleCount)
+        writer.WriteString("cardinality", receipt.Cardinality)
+        writer.WriteString("maturity", receipt.Maturity)
         writer.WritePropertyName("findings")
         writer.WriteStartArray()
         receipt.Findings |> List.iter writer.WriteStringValue
@@ -308,6 +340,9 @@ module FSharpSurface =
         match receipt.FreshnessDigest with
         | Some digest -> writer.WriteString("freshnessDigest", digest)
         | None -> writer.WriteNull("freshnessDigest")
+        match receipt.ConfigDigest with Some value -> writer.WriteString("configDigest", value) | None -> writer.WriteNull("configDigest")
+        match receipt.PolicyDigest with Some value -> writer.WriteString("policyDigest", value) | None -> writer.WriteNull("policyDigest")
+        match receipt.SourceDigest with Some value -> writer.WriteString("sourceDigest", value) | None -> writer.WriteNull("sourceDigest")
         match receipt.Malformed with
         | Some reason -> writer.WriteString("malformed", reason)
         | None -> writer.WriteNull("malformed")

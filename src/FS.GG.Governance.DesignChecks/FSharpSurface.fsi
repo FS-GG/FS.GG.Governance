@@ -40,10 +40,18 @@ module FSharpSurface =
         { SchemaVersion: int
           Kind: string
           Applicable: bool
+          ApplicabilityReason: string
           Project: string
+          DeclaredGlob: string
           CompiledSources: string list
+          MatchedModuleCount: int
+          Cardinality: string
+          Maturity: string
           Findings: string list
           FreshnessDigest: string option
+          ConfigDigest: string option
+          PolicyDigest: string option
+          SourceDigest: string option
           Malformed: string option }
 
     /// Read one SDK-style F# project and produce the ordered, compiled-module facts used by the policy.
