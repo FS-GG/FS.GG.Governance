@@ -184,13 +184,17 @@ let tests =
               // This exercises the concrete `Interpreter.realPorts` sense path, including its project
               // enumeration and the ProjectSensing seam; it is not a hand-built BoundaryFacts fixture.
               withTempRepo (fun dir ->
-                  writeFile dir "src/Boundary.fsproj" """<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Boundary.fs\" /></ItemGroup></Project>"""
+                  writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
                   writeFile dir "src/Boundary.fs" """module internal Boundary
 // fsgg:effect-boundary transition
-let transition value = File.WriteAllText(\"out.txt\", value)"""
+let transition value = File.WriteAllText("out.txt", value)"""
 
                   let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
                   let findings = realSurfaceSense dir report
+
+                  Expect.isFalse
+                      (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-boundary-malformed"))
+                      (sprintf "the production sensor accepted the project fixture; findings: %A" findings)
 
                   Expect.isTrue
                       (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-in-transition" && finding.BaseSeverity = Blocking))

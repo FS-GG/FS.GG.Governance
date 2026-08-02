@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="8474f26d-bbb9-4a9b-ab13-56c2d1f83e26" name="@0bc8bbef51b6 2026-08-03 00:11:07" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-08-03T00:11:07.9896444+02:00" queuing="2026-08-03T00:11:07.9896445+02:00" start="2026-08-03T00:11:07.4953651+02:00" finish="2026-08-03T00:11:07.9927941+02:00" />
+  <TestSettings name="default" id="3570f108-b1c4-4c57-8c80-ec27baefe170">
+    <Deployment runDeploymentRoot="_0bc8bbef51b6_2026-08-03_00_11_07" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="d2b02a54-d07b-41b1-b3b7-6d21728626a7" testId="762cc1f3-3e34-adc4-8916-126ef4e5e5b5" testName="SurfaceChecksE2E.declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" computerName="0bc8bbef51b6" duration="00:00:00.0870000" startTime="2026-08-03T00:11:07.8297220+02:00" endTime="2026-08-03T00:11:07.9225945+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d2b02a54-d07b-41b1-b3b7-6d21728626a7" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="SurfaceChecksE2E.declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" storage="/home/developer/projects/fs.gg.governance-369/tests/fs.gg.governance.verifycommand.tests/bin/debug/net10.0/fs.gg.governance.verifycommand.tests.dll" id="762cc1f3-3e34-adc4-8916-126ef4e5e5b5">
+      <Execution id="d2b02a54-d07b-41b1-b3b7-6d21728626a7" />
+      <TestMethod codeBase="/home/developer/projects/FS.GG.Governance-369/tests/FS.GG.Governance.VerifyCommand.Tests/bin/Debug/net10.0/FS.GG.Governance.VerifyCommand.Tests.dll" adapterTypeName="executor://yolodev/expecto" className="SurfaceChecksE2E" name="declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="762cc1f3-3e34-adc4-8916-126ef4e5e5b5" executionId="d2b02a54-d07b-41b1-b3b7-6d21728626a7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>
