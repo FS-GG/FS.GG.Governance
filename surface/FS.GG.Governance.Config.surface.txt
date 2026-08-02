@@ -27,7 +27,7 @@ TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption
   [Property] System.String Owner
   [Property] System.String Rationale
 TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+Facts
-  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption])
+  [Constructor] Void .ctor(System.String, Maturity, Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption])
   [Method] Boolean Equals(Facts)
   [Method] Boolean Equals(Facts, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -37,10 +37,12 @@ TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule+Facts
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Maturity get_Maturity()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption] get_Exemptions()
   [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy] get_Projects()
   [Method] System.String ToString()
   [Method] System.String get_DeclaredGlob()
+  [Property] Maturity Maturity
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.FSharpSurfacePolicyModule+Exemption] Exemptions
   [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.Config.FSharpSurfacePolicyModule+ProjectPolicy] Projects
   [Property] System.String DeclaredGlob

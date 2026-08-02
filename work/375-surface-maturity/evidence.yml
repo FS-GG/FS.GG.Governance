@@ -1,0 +1,272 @@
+schemaVersion: 1
+workId: 375-surface-maturity
+stage: evidence
+status: evidenceReady
+sourceSpec: work/375-surface-maturity/spec.md
+sourceClarifications: work/375-surface-maturity/clarifications.md
+sourceChecklist: work/375-surface-maturity/checklist.md
+sourcePlan: work/375-surface-maturity/plan.md
+sourceTasks: work/375-surface-maturity/tasks.yml
+sourceAnalysis: readiness/375-surface-maturity/analysis.json
+sourceSnapshots:
+  - label: analysis
+    path: readiness/375-surface-maturity/analysis.json
+    digest: d160d9b5067d477612351004f92a86c9d2814129a8b365e9ffb2ef4ce3f24c52
+    schemaVersion: 1
+  - label: checklist
+    path: work/375-surface-maturity/checklist.md
+    digest: 7afbc87d6dbd22c7e88025d5d9525ccc413f667e2daddef5226b43c927d0d703
+    schemaVersion: 1
+  - label: clarifications
+    path: work/375-surface-maturity/clarifications.md
+    digest: b93f64a0d51226041b6e89bc354156cd80e2f0e4d465579da42ee03fb467b763
+    schemaVersion: 1
+  - label: plan
+    path: work/375-surface-maturity/plan.md
+    digest: 55beacb494dae042f1659e051689e229c604854cee4acb15a09e1d403ecbbb91
+    schemaVersion: 1
+  - label: spec
+    path: work/375-surface-maturity/spec.md
+    digest: 02479028745449640f205312c367bf5ec67c0a2ccbc662bf38a62b74ab161618
+    schemaVersion: 1
+  - label: tasks
+    path: work/375-surface-maturity/tasks.yml
+    digest: 1ce72e43880c0309b9c57f1bd35482eb83fd47a64ab7f919040482e953b9528e
+    schemaVersion: 1
+evidence:
+  - id: EV001
+    kind: verification
+    subject:
+      type: task
+      id: T001
+    taskRefs: [T001]
+    requirementRefs: [FR-001]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV001]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV002
+    kind: verification
+    subject:
+      type: task
+      id: T002
+    taskRefs: [T002]
+    requirementRefs: [FR-002]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-002]
+    obligationRefs: [EV002]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV003
+    kind: verification
+    subject:
+      type: task
+      id: T003
+    taskRefs: [T003]
+    requirementRefs: [FR-003]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-003]
+    obligationRefs: [EV003]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV004
+    kind: verification
+    subject:
+      type: task
+      id: T004
+    taskRefs: [T004]
+    requirementRefs: [FR-004]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-004]
+    obligationRefs: [EV004]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV005
+    kind: verification
+    subject:
+      type: task
+      id: T005
+    taskRefs: [T005]
+    requirementRefs: [FR-005]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-005]
+    obligationRefs: [EV005]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV006
+    kind: verification
+    subject:
+      type: task
+      id: T006
+    taskRefs: [T006]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV006]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV007
+    kind: verification
+    subject:
+      type: task
+      id: T007
+    taskRefs: [T007]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV007]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV008
+    kind: verification
+    subject:
+      type: task
+      id: T008
+    taskRefs: [T008]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: []
+    obligationRefs: [EV008]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV009
+    kind: verification
+    subject:
+      type: task
+      id: T009
+    taskRefs: [T009]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV009]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceCommandTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance375.trx
+      digest: "sha256:63f857051385cdbb192268e0bc68aa7b5b033a7dcaad88716a1f1f8a1f21f9fc"
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+lifecycleNotes:
+  - "Next lifecycle action: verify."

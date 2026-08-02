@@ -3,6 +3,7 @@ namespace FS.GG.Governance.Config
 open System
 open System.IO
 open System.Text.Json
+open FS.GG.Governance.Config.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FSharpSurfacePolicy =
@@ -19,6 +20,7 @@ module FSharpSurfacePolicy =
 
     type Facts =
         { DeclaredGlob: string
+          Maturity: Maturity
           Projects: Map<string, ProjectPolicy>
           Exemptions: Exemption list }
 
@@ -29,6 +31,7 @@ module FSharpSurfacePolicy =
 
     let defaultFacts =
         { DeclaredGlob = "src/**/*.fsi"
+          Maturity = Warn
           Projects = Map.empty
           Exemptions = [] }
 
@@ -55,6 +58,18 @@ module FSharpSurfacePolicy =
                             | Some text when not (String.IsNullOrWhiteSpace text) -> Ok text
                             | _ -> Error "declaredGlob must be a non-empty string"
                         | _ -> Error "declaredGlob must be a non-empty string"
+                    let maturity : Result<Maturity, string> =
+                        match tryProperty "maturity" top with
+                        | None -> Ok defaultFacts.Maturity
+                        | Some value when value.ValueKind = JsonValueKind.String ->
+                            match value.GetString() |> Option.ofObj with
+                            | Some "observe" -> Ok Observe
+                            | Some "warn" -> Ok Warn
+                            | Some "block-on-pr" -> Ok BlockOnPr
+                            | Some "block-on-ship" -> Ok BlockOnShip
+                            | Some "block-on-release" -> Ok BlockOnRelease
+                            | _ -> Error "maturity must be observe, warn, block-on-pr, block-on-ship, or block-on-release"
+                        | _ -> Error "maturity must be observe, warn, block-on-pr, block-on-ship, or block-on-release"
                     let projects : Result<Map<string, ProjectPolicy>, string> =
                         match tryProperty "projects" top with
                         | None -> Ok Map.empty
@@ -96,7 +111,8 @@ module FSharpSurfacePolicy =
                                 | Error reason, _ | _, Error reason -> Error reason) (Ok [])
                             |> Result.map List.rev
                         | _ -> Error "exemptions must be an array"
-                    match declaredGlob, projects, exemptions with
-                    | Ok glob, Ok projectFacts, Ok exemptionFacts -> Loaded { DeclaredGlob = glob; Projects = projectFacts; Exemptions = exemptionFacts }
-                    | Error reason, _, _ | _, Error reason, _ | _, _, Error reason -> Invalid reason
+                    match declaredGlob, maturity, projects, exemptions with
+                    | Ok glob, Ok policyMaturity, Ok projectFacts, Ok exemptionFacts ->
+                        Loaded { DeclaredGlob = glob; Maturity = policyMaturity; Projects = projectFacts; Exemptions = exemptionFacts }
+                    | Error reason, _, _, _ | _, Error reason, _, _ | _, _, Error reason, _ | _, _, _, Error reason -> Invalid reason
             with ex -> Invalid ex.Message

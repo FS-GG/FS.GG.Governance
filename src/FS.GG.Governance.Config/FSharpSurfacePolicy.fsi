@@ -1,5 +1,7 @@
 namespace FS.GG.Governance.Config
 
+open FS.GG.Governance.Config.Model
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FSharpSurfacePolicy =
 
@@ -15,6 +17,8 @@ module FSharpSurfacePolicy =
 
     type Facts =
         { DeclaredGlob: string
+          /// The declared enforcement maturity projected by fsharp-public-surface/v1 receipts.
+          Maturity: Maturity
           Projects: Map<string, ProjectPolicy>
           Exemptions: Exemption list }
 
