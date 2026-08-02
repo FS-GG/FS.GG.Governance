@@ -61,8 +61,9 @@ module FSharpSurface =
 
     /// Read one SDK-style F# project and produce the ordered, compiled-module facts used by the policy.
     /// The sensor is deliberately conservative: unreadable project/source/signature input is an error, and
-    /// a signature/source pairing is considered matching only when both files are present and compilable by
-    /// the project in adjacent order.  Callers supply package-baseline facts, so executable projects do not
+    /// a signature/source pairing is considered matching only when both files are present and the owning
+    /// project builds with its real earlier sources, references, defines, options, and adjacent order.
+    /// Callers supply package-baseline facts, so executable projects do not
     /// accidentally acquire a package requirement.
     val senseProject:
         root: string ->

@@ -165,26 +165,49 @@ module FSharpSurface =
             else matched.Groups.["name"].Value)
         |> Set.ofSeq
 
-    let private compilerMatchesSignature signaturePath sourcePath =
-        let sdk =
-            let probe = Process.Start(ProcessStartInfo("dotnet", "--list-sdks", RedirectStandardOutput = true, UseShellExecute = false)) |> Option.ofObj |> Option.defaultWith (fun () -> failwith "dotnet SDK probe failed")
-            let lines = probe.StandardOutput.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            probe.WaitForExit()
-            let line = lines |> Array.last
-            let bracket = line.IndexOf('[')
-            let version = line.Substring(0, line.IndexOf(' '))
-            let root = line.Substring(bracket + 1).TrimEnd(']')
-            Path.Combine(root, version, "FSharp", "fsc.dll")
-        let output = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".dll")
-        try
+    let private projectSignatureMismatches projectPath pairedSources =
+        if Set.isEmpty pairedSources then Ok Set.empty
+        else
             let info = ProcessStartInfo("dotnet", RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false)
-            for argument in [ sdk; "--targetprofile:netcore"; "--target:library"; "--out:" + output; signaturePath; sourcePath ] do
+            for argument in [ "build"; projectPath; "--nologo"; "--verbosity"; "quiet"; "--property:GenerateFullPaths=true" ] do
                 info.ArgumentList.Add argument
-            use compilerProcess = Process.Start info |> Option.ofObj |> Option.defaultWith (fun () -> failwith "F# compiler failed to start")
-            compilerProcess.WaitForExit()
-            compilerProcess.ExitCode = 0
-        finally
-            if File.Exists output then File.Delete output
+            use build = Process.Start info |> Option.ofObj |> Option.defaultWith (fun () -> failwith "dotnet build failed to start")
+            let standardOutput = build.StandardOutput.ReadToEnd()
+            let standardError = build.StandardError.ReadToEnd()
+            build.WaitForExit()
+            if build.ExitCode = 0 then Ok Set.empty
+            else
+                let output = standardOutput + Environment.NewLine + standardError
+                let diagnostics =
+                    Regex.Matches(output, "(?m)^(?<file>.+?\\.[A-Za-z]+)\\(\\d+,\\d+\\): error (?<code>[A-Z]+\\d+): (?<message>.*)$")
+                    |> Seq.cast<Match>
+                    |> Seq.toList
+                let isSignatureMismatch (diagnostic: Match) =
+                    diagnostic.Groups.["code"].Value = "FS0034"
+                    || diagnostic.Groups.["code"].Value = "FS0193"
+                    || diagnostic.Groups.["message"].Value.IndexOf("signature", StringComparison.OrdinalIgnoreCase) >= 0
+                let mismatchDiagnostics, otherErrors =
+                    diagnostics
+                    |> List.partition isSignatureMismatch
+                if List.isEmpty mismatchDiagnostics || not (List.isEmpty otherErrors) then
+                    let detail =
+                        output.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                        |> Array.tryFind (fun line -> line.Contains(": error ", StringComparison.Ordinal))
+                        |> Option.defaultValue "project compilation failed without a signature compatibility diagnostic"
+                    Error detail
+                else
+                    let mismatches =
+                        mismatchDiagnostics
+                        |> List.choose (fun diagnostic ->
+                            let diagnosticPath = Path.GetFullPath(diagnostic.Groups.["file"].Value)
+                            let implementationPath =
+                                if diagnosticPath.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase) then diagnosticPath.Substring(0, diagnosticPath.Length - 1)
+                                else diagnosticPath
+                            pairedSources
+                            |> Seq.tryFind (fun source -> String.Equals(Path.GetFullPath source, implementationPath, StringComparison.Ordinal)))
+                        |> Set.ofList
+                    if Set.isEmpty mismatches then Error "project compilation reported a signature mismatch that could not be mapped to a compiled implementation"
+                    else Ok mismatches
 
     let private policyFor policy project source fallbackRequires fallbackCurrent =
         match policy with
@@ -224,6 +247,17 @@ module FSharpSurface =
 
                 if List.isEmpty compiled then Error(sprintf "F# project declares no explicit Compile items: %s" project)
                 else
+                    let pairedSources =
+                        compiled
+                        |> List.choose (fun source ->
+                            if source.EndsWith(".fs", StringComparison.OrdinalIgnoreCase)
+                               && not (source.EndsWith(".fsi", StringComparison.OrdinalIgnoreCase)) then
+                                let signature = source.Substring(0, source.Length - 3) + ".fsi"
+                                let fullSource = Path.Combine(projectDir, source)
+                                if compiled |> List.contains signature && File.Exists(Path.Combine(projectDir, signature)) then Some fullSource else None
+                            else None)
+                        |> Set.ofList
+                    let signatureMismatches = projectSignatureMismatches projectPath pairedSources |> Result.defaultWith failwith
                     let projectIsExecutable =
                         document.Descendants(XName.Get "OutputType")
                         |> Seq.exists (fun n -> String.Equals(n.Value.Trim(), "Exe", StringComparison.OrdinalIgnoreCase))
@@ -247,7 +281,7 @@ module FSharpSurface =
                                 let signatureMatchesSource =
                                     if File.Exists fullSignature then
                                         declarations |> List.forall (fun declaration -> Set.contains declaration.Name sourceNames)
-                                        && compilerMatchesSignature fullSignature fullSource
+                                        && not (Set.contains fullSource signatureMismatches)
                                     else true
                                 let exemption, configuredRequiresBaseline, configuredBaselineCurrent =
                                     policyFor policy project source requiresSurfaceBaseline surfaceBaselineCurrent
@@ -330,6 +364,37 @@ module FSharpSurface =
                 match load root with
                 | Missing policy | Loaded policy -> policy.DeclaredGlob
                 | Invalid _ -> defaultFacts.DeclaredGlob
+            let globRegex =
+                let pattern = declaredGlob.Replace('\\', '/')
+                let escaped = Text.StringBuilder("^")
+                let mutable index = 0
+                while index < pattern.Length do
+                    if pattern.[index] = '*' && index + 1 < pattern.Length && pattern.[index + 1] = '*' then
+                        if index + 2 < pattern.Length && pattern.[index + 2] = '/' then
+                            escaped.Append("(?:.*/)?") |> ignore
+                            index <- index + 3
+                        else
+                            escaped.Append(".*") |> ignore
+                            index <- index + 2
+                    elif pattern.[index] = '*' then
+                        escaped.Append("[^/]*") |> ignore
+                        index <- index + 1
+                    elif pattern.[index] = '?' then
+                        escaped.Append("[^/]") |> ignore
+                        index <- index + 1
+                    else
+                        escaped.Append(Regex.Escape(string pattern.[index])) |> ignore
+                        index <- index + 1
+                escaped.Append("$") |> ignore
+                Regex(escaped.ToString(), RegexOptions.CultureInvariant)
+            let projectDirectory = Path.GetDirectoryName(project) |> Option.ofObj |> Option.defaultValue ""
+            let repoRelative signature =
+                if String.IsNullOrEmpty projectDirectory then signature
+                else fileName (Path.Combine(projectDirectory, signature))
+            let matchedModules =
+                sources
+                |> List.map repoRelative
+                |> List.filter globRegex.IsMatch
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
               Applicability = if isTestProject then "not-applicable" else "applicable"
@@ -338,9 +403,9 @@ module FSharpSurface =
               Project = project
               DeclaredGlob = declaredGlob
               CompiledSources = sources
-              MatchedModules = sources
-              MatchedModuleCount = List.length sources
-              Cardinality = match List.length sources with 0 -> "zero" | 1 -> "one" | _ -> "many"
+              MatchedModules = matchedModules
+              MatchedModuleCount = List.length matchedModules
+              Cardinality = match List.length matchedModules with 0 -> "zero" | 1 -> "one" | _ -> "many"
               Maturity = "warn"
               Findings = findings
               FreshnessDigest = Some(digestFiles root project facts)
