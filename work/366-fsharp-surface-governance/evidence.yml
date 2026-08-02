@@ -1,7 +1,7 @@
 schemaVersion: 1
 workId: 366-fsharp-surface-governance
 stage: evidence
-status: needsEvidenceCorrection
+status: evidenceReady
 sourceSpec: work/366-fsharp-surface-governance/spec.md
 sourceClarifications: work/366-fsharp-surface-governance/clarifications.md
 sourceChecklist: work/366-fsharp-surface-governance/checklist.md
@@ -31,11 +31,11 @@ sourceSnapshots:
     schemaVersion: 1
   - label: tasks
     path: work/366-fsharp-surface-governance/tasks.yml
-    digest: 5e09e0567e39a3b852a033d33ec880ec3178370fb95d7d345d6a09408ac0e4d3
+    digest: 7b4dfb4406248748de58f7c3d018045ab001f9fcdeb8fafa0de7fc200f5a5651
     schemaVersion: 1
 evidence:
   - id: EV001
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T001
@@ -50,11 +50,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV002
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T002
@@ -69,11 +76,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV003
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T003
@@ -88,11 +102,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV004
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T004
@@ -107,11 +128,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV005
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T005
@@ -126,11 +154,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV006
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T006
@@ -145,11 +180,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV007
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T007
@@ -164,11 +206,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV008
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T008
@@ -183,11 +232,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV009
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T009
@@ -202,11 +258,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV010
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T010
@@ -221,11 +284,18 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
   - id: EV011
-    kind: missing
+    kind: verification
     subject:
       type: task
       id: T011
@@ -240,8 +310,15 @@ evidence:
     sourceRefs:
       - kind: verification
         path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpSurfaceTests.fs
-    result: missing
+    result: pass
     synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
+      digest: "sha256:ae68ffcf97655bd0c82065b5452ebffaf6a88357a9edc63357ce3fc33d1ad7f4"
+      outcome: passed
+      passed: 19
+      failed: 0
+      skipped: 0
     notes: [Evidence required before verify.]
 lifecycleNotes:
   - "Next lifecycle action: verify."
