@@ -291,7 +291,7 @@ module Interpreter =
                     |> Seq.sort
                     |> Seq.collect (fun project ->
                         let isTest = project.IndexOf("test", StringComparison.OrdinalIgnoreCase) >= 0
-                        match FS.GG.Governance.DesignChecks.FSharpSurface.senseProject repo project isTest false true with
+                        match FS.GG.Governance.ProjectSensing.FSharpSurfaceSensing.sense repo project isTest false true with
                         | Ok modules -> FS.GG.Governance.DesignChecks.FSharpSurface.evaluate (fsharpRequest project) modules
                         | Error reason ->
                             [ inputStateFinding SC.DesignDomain "fsharp-public-surface" "fsharp.surface-malformed" reason ])
