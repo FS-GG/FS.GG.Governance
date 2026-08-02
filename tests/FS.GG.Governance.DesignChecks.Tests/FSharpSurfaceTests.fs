@@ -110,4 +110,19 @@ let tests =
                       match senseProject root "Lib.fsproj" false true true with
                       | Error error -> failtest error
                       | Ok facts -> Expect.isEmpty (evaluate request facts) "a paired documented source is clean")
+          }
+
+          test "versioned receipt is deterministic and malformed project input fails closed" {
+              temporaryProject
+                  [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fs", "module Domain\nlet value = 1" ]
+                  (fun root ->
+                      let first = receipt root "Lib.fsproj" false false true request |> receiptJson
+                      let second = receipt root "Lib.fsproj" false false true request |> receiptJson
+                      Expect.equal first second "the receipt has no clock or machine-specific fields"
+                      Expect.stringContains first "\"kind\":\"fsharp-public-surface\"" "identifies stable contract"
+                      Expect.stringContains first "fsharp.signature-missing" "carries live finding codes"
+                      let malformed = receipt root "Missing.fsproj" false false true request
+                      Expect.isSome malformed.Malformed "missing project is explicit, never a pass"
+                      Expect.isNone malformed.FreshnessDigest "malformed input has no freshness digest")
           } ]

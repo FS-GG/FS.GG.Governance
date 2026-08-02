@@ -4,6 +4,9 @@ open System
 open System.IO
 open System.Xml.Linq
 open System.Text.RegularExpressions
+open System.Security.Cryptography
+open System.Text
+open System.Text.Json
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 
@@ -36,6 +39,16 @@ module FSharpSurface =
           SignatureMatchesSource: bool
           RequiresSurfaceBaseline: bool
           SurfaceBaselineCurrent: bool }
+
+    type Receipt =
+        { SchemaVersion: int
+          Kind: string
+          Applicable: bool
+          Project: string
+          CompiledSources: string list
+          Findings: string list
+          FreshnessDigest: string option
+          Malformed: string option }
 
     let migrationMaturity = Warn
 
@@ -184,3 +197,72 @@ module FSharpSurface =
                                       SurfaceBaselineCurrent = surfaceBaselineCurrent })
                     Ok facts
         with ex -> Error(sprintf "unable to sense F# project '%s': %s" project ex.Message)
+
+    let private digestFiles root project (facts: ModuleFacts list) =
+        let paths =
+            project ::
+                (facts
+                 |> List.collect (fun f ->
+                     let (GovernedPath source) = f.Source
+                     match f.Signature with
+                     | Some(GovernedPath signature) -> [ source; signature ]
+                     | None -> [ source ])
+                 |> List.distinct
+                 |> List.sort)
+        let bytes =
+            paths
+            |> List.collect (fun path ->
+                let text = File.ReadAllText(Path.Combine(root, path))
+                [ path; "\u0000"; text; "\u0000" ])
+            |> String.concat ""
+            |> Encoding.UTF8.GetBytes
+        SHA256.HashData bytes |> Convert.ToHexString |> fun value -> value.ToLowerInvariant()
+
+    let receipt root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent request =
+        match senseProject root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent with
+        | Error reason ->
+            { SchemaVersion = 1
+              Kind = "fsharp-public-surface"
+              Applicable = true
+              Project = project
+              CompiledSources = []
+              Findings = []
+              FreshnessDigest = None
+              Malformed = Some reason }
+        | Ok facts ->
+            let findings = evaluate request facts |> List.map (fun finding -> finding.Code)
+            let sources = facts |> List.map (fun fact -> let (GovernedPath path) = fact.Source in path) |> List.sort
+            { SchemaVersion = 1
+              Kind = "fsharp-public-surface"
+              Applicable = not isTestProject
+              Project = project
+              CompiledSources = sources
+              Findings = findings
+              FreshnessDigest = Some(digestFiles root project facts)
+              Malformed = None }
+
+    let receiptJson receipt =
+        use stream = new MemoryStream()
+        use writer = new Utf8JsonWriter(stream, JsonWriterOptions(Indented = false))
+        writer.WriteStartObject()
+        writer.WriteNumber("schemaVersion", receipt.SchemaVersion)
+        writer.WriteString("kind", receipt.Kind)
+        writer.WriteBoolean("applicable", receipt.Applicable)
+        writer.WriteString("project", receipt.Project)
+        writer.WritePropertyName("compiledSources")
+        writer.WriteStartArray()
+        receipt.CompiledSources |> List.iter writer.WriteStringValue
+        writer.WriteEndArray()
+        writer.WritePropertyName("findings")
+        writer.WriteStartArray()
+        receipt.Findings |> List.iter writer.WriteStringValue
+        writer.WriteEndArray()
+        match receipt.FreshnessDigest with
+        | Some digest -> writer.WriteString("freshnessDigest", digest)
+        | None -> writer.WriteNull("freshnessDigest")
+        match receipt.Malformed with
+        | Some reason -> writer.WriteString("malformed", reason)
+        | None -> writer.WriteNull("malformed")
+        writer.WriteEndObject()
+        writer.Flush()
+        Encoding.UTF8.GetString(stream.ToArray())

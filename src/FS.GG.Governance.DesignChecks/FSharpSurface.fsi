@@ -34,6 +34,18 @@ module FSharpSurface =
           RequiresSurfaceBaseline: bool
           SurfaceBaselineCurrent: bool }
 
+    /// Versioned, deterministic evidence for a single F# project evaluation.  `Malformed` is explicit so
+    /// callers can fail closed instead of treating an unreadable project as a clean non-applicable surface.
+    type Receipt =
+        { SchemaVersion: int
+          Kind: string
+          Applicable: bool
+          Project: string
+          CompiledSources: string list
+          Findings: string list
+          FreshnessDigest: string option
+          Malformed: string option }
+
     /// Read one SDK-style F# project and produce the ordered, compiled-module facts used by the policy.
     /// The sensor is deliberately conservative: unreadable project/source/signature input is an error, and
     /// a signature/source pairing is considered matching only when both files are present and compilable by
@@ -46,6 +58,20 @@ module FSharpSurface =
         requiresSurfaceBaseline: bool ->
         surfaceBaselineCurrent: bool ->
             Result<ModuleFacts list, string>
+
+    /// Build deterministic, fail-closed evidence from the live project sensor and the same pure evaluator
+    /// used by the reusable profile.  The digest covers the project and every compiled source/signature.
+    val receipt:
+        root: string ->
+        project: string ->
+        isTestProject: bool ->
+        requiresSurfaceBaseline: bool ->
+        surfaceBaselineCurrent: bool ->
+        request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest ->
+            Receipt
+
+    /// Render the stable `fsharp-public-surface/v1` JSON contract with a fixed property and array order.
+    val receiptJson: receipt: Receipt -> string
 
     /// Evaluate curated F# public-surface hygiene for modules supplied by a project sensor. Findings are
     /// advisory while the dated migration posture is active and identify the exact project and module.
