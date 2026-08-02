@@ -23,6 +23,12 @@
     <Compile Include="Request.fs" />
     <Compile Include="ArtifactReading.fsi" />
     <Compile Include="ArtifactReading.fs" />
+    <Compile Include="FSharpSurfaceSensing.fsi" />
+    <Compile Include="FSharpSurfaceSensing.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

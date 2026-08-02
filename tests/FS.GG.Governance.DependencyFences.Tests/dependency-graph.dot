@@ -30,6 +30,7 @@ digraph Governance {
   "FS.GG.Governance.EvidenceReuse" [label="FS.GG.Governance.EvidenceReuse\npackaging"];
   "FS.GG.Governance.EvidenceReuseStore" [label="FS.GG.Governance.EvidenceReuseStore\npackaging"];
   "FS.GG.Governance.ExecutionRecord" [label="FS.GG.Governance.ExecutionRecord\npackaging"];
+  "FS.GG.Governance.FSharpSurfaceCommand" [label="FS.GG.Governance.FSharpSurfaceCommand\npackaging"];
   "FS.GG.Governance.Findings" [label="FS.GG.Governance.Findings\npackaging"];
   "FS.GG.Governance.FreshnessKey" [label="FS.GG.Governance.FreshnessKey\npackaging"];
   "FS.GG.Governance.FreshnessResolution" [label="FS.GG.Governance.FreshnessResolution\npackaging"];
@@ -201,6 +202,9 @@ digraph Governance {
   "FS.GG.Governance.EvidenceReuseStore" -> "FS.GG.Governance.EvidenceReuse";
   "FS.GG.Governance.EvidenceReuseStore" -> "FS.GG.Governance.JsonText";
   "FS.GG.Governance.ExecutionRecord" -> "FS.GG.Governance.CommandRecord";
+  "FS.GG.Governance.FSharpSurfaceCommand" -> "FS.GG.Governance.Config";
+  "FS.GG.Governance.FSharpSurfaceCommand" -> "FS.GG.Governance.DesignChecks";
+  "FS.GG.Governance.FSharpSurfaceCommand" -> "FS.GG.Governance.SurfaceChecks";
   "FS.GG.Governance.Findings" -> "FS.GG.Governance.Config";
   "FS.GG.Governance.Findings" -> "FS.GG.Governance.Routing";
   "FS.GG.Governance.FreshnessKey" -> "FS.GG.Governance.Config";
@@ -267,6 +271,7 @@ digraph Governance {
   "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.Adapters.SddHandoff";
   "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.Adapters.Spi";
   "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.Config";
+  "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.DesignChecks";
   "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.Host";
   "FS.GG.Governance.ProjectSensing" -> "FS.GG.Governance.Kernel";
   "FS.GG.Governance.PromptIsolation" -> "FS.GG.Governance.AgentReviewKey";
@@ -452,6 +457,7 @@ digraph Governance {
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.PackEvidence";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.PackageChecks";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.ProductSurfaces";
+  "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.ProjectSensing";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.Provenance";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.ProvenanceJson";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.ReleaseDeclaration";

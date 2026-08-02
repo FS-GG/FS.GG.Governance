@@ -1,0 +1,7 @@
+schemaVersion: 1
+project:
+  id: item-366-fsharp-surface-governance
+  defaultWorkRoot: work
+sdd:
+  config: .fsgg/sdd.yml
+  agents: .fsgg/agents.yml

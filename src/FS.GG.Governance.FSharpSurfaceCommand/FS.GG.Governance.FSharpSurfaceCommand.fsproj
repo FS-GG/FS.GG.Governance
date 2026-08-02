@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FS.GG.Governance.FSharpSurfaceCommand</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="Program.fs" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
+  </ItemGroup>
+</Project>

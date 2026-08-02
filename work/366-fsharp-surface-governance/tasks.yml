@@ -1,0 +1,146 @@
+schemaVersion: 1
+work:
+  id: 366-fsharp-surface-governance
+  title: "General F# gate for curated signature surfaces, explicit visibility, and API documentation"
+  stage: tasks
+  status: tasksReady
+  sourceSpec: work/366-fsharp-surface-governance/spec.md
+  sourceClarifications: work/366-fsharp-surface-governance/clarifications.md
+  sourceChecklist: work/366-fsharp-surface-governance/checklist.md
+  sourcePlan: work/366-fsharp-surface-governance/plan.md
+  publicOrToolFacingImpact: true
+
+sources:
+  - label: spec
+    path: work/366-fsharp-surface-governance/spec.md
+    digest: 9d564d1d4c98d549d17d113805e0a8679d43623af50b08d66d7ddc91a2703970
+    schemaVersion: 1
+  - label: clarifications
+    path: work/366-fsharp-surface-governance/clarifications.md
+    digest: 07d5fcee1b8dbc797ad675c69e780e706d2ef087b28769266a629f3408436ea3
+    schemaVersion: 1
+  - label: checklist
+    path: work/366-fsharp-surface-governance/checklist.md
+    digest: 0c815e6a8b96e934c47ff07434779f0a61f149f485b6d2a5f8a342c558362c88
+    schemaVersion: 1
+  - label: plan
+    path: work/366-fsharp-surface-governance/plan.md
+    digest: 6b90d18f1ce155d967c337dfad41f446232382e30ea9fb628538e07846c0b31b
+    schemaVersion: 1
+tasks:
+  - id: T001
+    title: Implement requirement FR-001
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-001]
+    decisions: []
+    sourceIds: [AC-001, FR-001, PD-001]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV001]
+  - id: T002
+    title: Implement requirement FR-002
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-002]
+    decisions: []
+    sourceIds: [AC-002, FR-002, PD-002]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV002]
+  - id: T003
+    title: Implement requirement FR-003
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-003]
+    decisions: []
+    sourceIds: [AC-003, FR-003, PD-003]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV003]
+  - id: T004
+    title: Implement requirement FR-004
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-004]
+    decisions: []
+    sourceIds: [AC-004, FR-004, PD-004]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV004]
+  - id: T005
+    title: Implement requirement FR-005
+    status: done
+    owner: sdd
+    dependencies: []
+    requirements: [FR-005]
+    decisions: []
+    sourceIds: [AC-005, FR-005, PD-005]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV005]
+  - id: T006
+    title: Implement clarification decision DEC-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: [DEC-001]
+    sourceIds: [DEC-001]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV006]
+  - id: T007
+    title: Implement clarification decision DEC-002
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: [DEC-002]
+    sourceIds: [DEC-002]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV007]
+  - id: T008
+    title: Update contract surface PC-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-001]
+    requiredSkills: [fsharp]
+    requiredEvidence: [EV008]
+  - id: T009
+    title: Record verification evidence VO-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-001, VO-001]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV009]
+  - id: T010
+    title: Handle migration posture PM-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PM-001]
+    requiredSkills: [schema-versioning]
+    requiredEvidence: [EV010]
+  - id: T011
+    title: Refresh generated view impact GV-001
+    status: done
+    owner: sdd
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [GV-001, PD-001]
+    requiredSkills: [deterministic-json]
+    requiredEvidence: [EV011]
+acceptedDeferrals: []
+findings: []
+advisoryNotes:
+  - "Optional Governance pointers remain compatibility facts only."
+lifecycleNotes:
+  - "Next lifecycle action: fsgg-sdd analyze --work 366-fsharp-surface-governance."

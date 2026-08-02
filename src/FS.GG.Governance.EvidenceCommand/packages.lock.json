@@ -95,6 +95,13 @@
           "FS.GG.Governance.Gates": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.designchecks": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.SurfaceChecks": "[0.1.0, )"
+        }
+      },
       "fs.gg.governance.enforcement": {
         "type": "Project",
         "dependencies": {
@@ -214,6 +221,7 @@
           "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
           "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.DesignChecks": "[0.1.0, )",
           "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FSharp.Core": "[10.1.302, )"
@@ -252,6 +260,13 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Config": "[0.1.0, )"
+        }
+      },
+      "fs.gg.governance.surfacechecks": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Enforcement": "[0.1.0, )"
         }
       },
       "FS.GG.Contracts": {
