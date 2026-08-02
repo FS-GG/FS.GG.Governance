@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "706078f251deb5d5774d9be0855809c3425e7a9781799dac8973f67962ad8230"
+        "value": "8832cd093a62929ebab77cb6cd44425ad8aeba73b9161b2134dda938f9be5ee2"
       }
     },
     {
@@ -878,7 +878,7 @@
           "path": "work/366-fsharp-surface-governance/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "706078f251deb5d5774d9be0855809c3425e7a9781799dac8973f67962ad8230"
+            "value": "8832cd093a62929ebab77cb6cd44425ad8aeba73b9161b2134dda938f9be5ee2"
           },
           "schemaVersion": 1
         },
@@ -909,7 +909,7 @@
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "5faa6ee8cf0ac9d3ff0ae1ccf5402fe990f1eb71f80972dc921d07ad45ae7cb0"
+        "value": "fe3a9a3a8f369ffbdd83c239625a94c7de1b4ae9e8d168318124ed7a6abe170e"
       },
       "currency": "current"
     }

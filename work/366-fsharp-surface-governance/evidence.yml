@@ -54,9 +54,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -80,9 +80,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -106,9 +106,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -132,9 +132,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -158,9 +158,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -184,9 +184,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -210,9 +210,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -236,9 +236,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -262,9 +262,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -288,9 +288,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -314,9 +314,9 @@ evidence:
     synthetic: false
     observedRun:
       source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance366.trx
-      digest: "sha256:d35d75daec559300fa7ab1fd0f2616f4fc8975dbc90a5cae7c1546573ed324e4"
+      digest: "sha256:6f1d6767ceda613b86d8fc229cedac5d8cfdd1092b2e4d522f7cc28492b15e7c"
       outcome: passed
-      passed: 23
+      passed: 25
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
