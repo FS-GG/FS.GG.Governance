@@ -157,7 +157,23 @@ let tests =
                       Expect.equal first second "the receipt has no clock or machine-specific fields"
                       Expect.stringContains first "\"kind\":\"fsharp-public-surface\"" "identifies stable contract"
                       Expect.stringContains first "fsharp.signature-missing" "carries live finding codes"
+                      Expect.stringContains first "\"cardinality\":\"one\"" "one match is explicit"
                       let malformed = receipt root "Missing.fsproj" false false true request
                       Expect.isSome malformed.Malformed "missing project is explicit, never a pass"
                       Expect.isNone malformed.FreshnessDigest "malformed input has no freshness digest")
+          }
+
+          test "receipt distinguishes zero and many matched modules deterministically" {
+              temporaryProject
+                  [ "Zero.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Only.fsi\" /></ItemGroup></Project>"
+                    "Only.fsi", "/// marker\ntype Marker = class end"
+                    "Many.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"A.fs\" /><Compile Include=\"B.fs\" /></ItemGroup></Project>"
+                    "A.fs", "module A\nlet a = 1"
+                    "B.fs", "module B\nlet b = 2" ]
+                  (fun root ->
+                      let zero = receipt root "Zero.fsproj" false false true request
+                      let many = receipt root "Many.fsproj" false false true request
+                      Expect.equal (zero.MatchedModuleCount, zero.Cardinality) (0, "zero") "zero is explicit"
+                      Expect.equal (many.MatchedModuleCount, many.Cardinality) (2, "many") "many is explicit"
+                      Expect.equal (receiptJson many) (receiptJson many) "many output is deterministic")
           } ]
