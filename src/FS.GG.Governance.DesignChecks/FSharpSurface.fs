@@ -150,6 +150,38 @@ module FSharpSurface =
             else matched.Groups.["name"].Value)
         |> Set.ofSeq
 
+    let private policyFor root project source fallbackRequires fallbackCurrent =
+        let path = Path.Combine(root, ".fsgg", "fsharp-surface.json")
+        if not (File.Exists path) then NoExemption, fallbackRequires, fallbackCurrent
+        else
+            use document = JsonDocument.Parse(File.ReadAllText path)
+            let top = document.RootElement
+            let tryProperty (name: string) (element: JsonElement) =
+                match element.TryGetProperty name with true, value -> Some value | _ -> None
+            let requiresBaseline, baselineCurrent =
+                match tryProperty "projects" top |> Option.bind (tryProperty project) with
+                | Some configured ->
+                    let boolValue (name: string) fallback = tryProperty name configured |> Option.map (fun value -> value.GetBoolean()) |> Option.defaultValue fallback
+                    boolValue "requiresBaseline" fallbackRequires, boolValue "baselineCurrent" fallbackCurrent
+                | None -> fallbackRequires, fallbackCurrent
+            let exemption =
+                match tryProperty "exemptions" top with
+                | None -> NoExemption
+                | Some entries ->
+                    entries.EnumerateArray()
+                    |> Seq.tryFind (fun (entry: JsonElement) -> tryProperty "module" entry |> Option.exists (fun value -> String.Equals(value.GetString(), source, StringComparison.Ordinal)))
+                    |> Option.map (fun entry ->
+                        let text (name: string) = tryProperty name entry |> Option.bind (fun value -> value.GetString() |> Option.ofObj)
+                        match text "owner", text "rationale", text "reviewBy" with
+                        | Some owner, Some rationale, Some reviewBy ->
+                            match DateTime.TryParse reviewBy with
+                            | true, date when date.Date >= DateTime.UtcNow.Date -> ActiveExemption(owner, rationale, reviewBy)
+                            | true, _ -> InvalidExemption("review date has expired")
+                            | _ -> InvalidExemption("reviewBy is not a date")
+                        | _ -> InvalidExemption("owner, rationale, and reviewBy are required"))
+                    |> Option.defaultValue NoExemption
+            exemption, requiresBaseline, baselineCurrent
+
     /// Edge sensor for SDK-style projects.  It reads the declared Compile order rather than globbing source;
     /// this preserves F# compilation semantics and lets the pure evaluator report exact pairing defects.
     let senseProject root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent =
@@ -191,6 +223,8 @@ module FSharpSurface =
                                 let sourceNames = sourceDeclarationNames sourceText
                                 let signatureMatchesSource =
                                     declarations |> List.forall (fun declaration -> Set.contains declaration.Name sourceNames)
+                                let exemption, configuredRequiresBaseline, configuredBaselineCurrent =
+                                    policyFor root project source requiresSurfaceBaseline surfaceBaselineCurrent
                                 let entry = projectIsExecutable && sourceText.Contains("[<EntryPoint>", StringComparison.Ordinal)
                                 Some
                                     { Project = project
@@ -202,11 +236,11 @@ module FSharpSurface =
                                       IsExplicitlyInternal = Regex.IsMatch(sourceText, "^\\s*(?:module|namespace)\\s+internal\\b", RegexOptions.Multiline)
                                       IsEntryPoint = entry
                                       IsGenerated = isGeneratedPath source
-                                      Exemption = NoExemption
+                                      Exemption = exemption
                                       Declarations = declarations
                                       SignatureMatchesSource = not (File.Exists fullSignature) || signatureMatchesSource
-                                      RequiresSurfaceBaseline = requiresSurfaceBaseline
-                                      SurfaceBaselineCurrent = surfaceBaselineCurrent })
+                                      RequiresSurfaceBaseline = configuredRequiresBaseline
+                                      SurfaceBaselineCurrent = configuredBaselineCurrent })
                     Ok facts
         with ex -> Error(sprintf "unable to sense F# project '%s': %s" project ex.Message)
 

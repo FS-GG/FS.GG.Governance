@@ -125,6 +125,28 @@ let tests =
                           Expect.contains codes "fsharp.signature-source-mismatch" "compilation adjacency is not mistaken for contract compatibility")
           }
 
+          test "live policy carries valid exemptions and stale applicable baselines" {
+              temporaryProject
+                  [ "App.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fs", "module Domain\nlet value = 1"
+                    ".fsgg/fsharp-surface.json", "{\"projects\":{\"App.fsproj\":{\"requiresBaseline\":true,\"baselineCurrent\":false}},\"exemptions\":[{\"module\":\"Domain.fs\",\"owner\":\"team\",\"rationale\":\"migration\",\"reviewBy\":\"2099-01-01\"}]}" ]
+                  (fun root ->
+                      let facts = senseProject root "App.fsproj" false false true |> Result.defaultWith failtest
+                      let codes = evaluate request facts |> List.map _.Code
+                      Expect.isFalse (List.contains "fsharp.signature-missing" codes) "valid exemption is reachable"
+                      Expect.contains codes "fsharp.surface-baseline-stale" "configured applicable baseline is reachable")
+          }
+
+          test "expired live exemption fails closed" {
+              temporaryProject
+                  [ "App.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
+                    "Domain.fs", "module Domain\nlet value = 1"
+                    ".fsgg/fsharp-surface.json", "{\"exemptions\":[{\"module\":\"Domain.fs\",\"owner\":\"team\",\"rationale\":\"migration\",\"reviewBy\":\"2000-01-01\"}]}" ]
+                  (fun root ->
+                      let facts = senseProject root "App.fsproj" false false true |> Result.defaultWith failtest
+                      Expect.contains (evaluate request facts |> List.map _.Code) "fsharp.exemption-invalid" "expired exemption is input-state evidence")
+          }
+
           test "versioned receipt is deterministic and malformed project input fails closed" {
               temporaryProject
                   [ "Lib.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>"
