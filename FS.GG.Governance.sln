@@ -359,6 +359,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FS.GG.Governance.Inheritanc
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FS.GG.Governance.Adapters.BuiltIn", "src\FS.GG.Governance.Adapters.BuiltIn\FS.GG.Governance.Adapters.BuiltIn.fsproj", "{BBB2ECBE-6736-4CB7-832D-A8395F5CCF81}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FS.GG.Governance.FSharpSurfaceCommand", "src\FS.GG.Governance.FSharpSurfaceCommand\FS.GG.Governance.FSharpSurfaceCommand.fsproj", "{EEBAB73F-759C-490B-9EF8-6A534FC3A765}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -2457,6 +2459,18 @@ Global
 		{BBB2ECBE-6736-4CB7-832D-A8395F5CCF81}.Release|x64.Build.0 = Release|Any CPU
 		{BBB2ECBE-6736-4CB7-832D-A8395F5CCF81}.Release|x86.ActiveCfg = Release|Any CPU
 		{BBB2ECBE-6736-4CB7-832D-A8395F5CCF81}.Release|x86.Build.0 = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|x64.Build.0 = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Debug|x86.Build.0 = Debug|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|x64.ActiveCfg = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|x64.Build.0 = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|x86.ActiveCfg = Release|Any CPU
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2636,5 +2650,6 @@ Global
 		{B73AA36B-F064-4FB9-8A73-6328467FD8E4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{1DE0E334-3DE7-4F48-98EB-1A84286AE106} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{BBB2ECBE-6736-4CB7-832D-A8395F5CCF81} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{EEBAB73F-759C-490B-9EF8-6A534FC3A765} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

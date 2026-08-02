@@ -199,6 +199,7 @@ module FSharpSurface =
         with ex -> Error(sprintf "unable to sense F# project '%s': %s" project ex.Message)
 
     let private digestFiles root project (facts: ModuleFacts list) =
+        let projectDirectory = Path.GetDirectoryName(Path.Combine(root, project)) |> Option.ofObj |> Option.defaultValue root
         let paths =
             project ::
                 (facts
@@ -212,7 +213,8 @@ module FSharpSurface =
         let bytes =
             paths
             |> List.collect (fun path ->
-                let text = File.ReadAllText(Path.Combine(root, path))
+                let fullPath = if path = project then Path.Combine(root, path) else Path.Combine(projectDirectory, path)
+                let text = File.ReadAllText(fullPath)
                 [ path; "\u0000"; text; "\u0000" ])
             |> String.concat ""
             |> Encoding.UTF8.GetBytes
