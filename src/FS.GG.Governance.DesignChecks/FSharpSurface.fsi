@@ -36,6 +36,9 @@ module FSharpSurface =
 
     /// Versioned, deterministic evidence for a single F# project evaluation.  `Malformed` is explicit so
     /// callers can fail closed instead of treating an unreadable project as a clean non-applicable surface.
+    type ReceiptFinding =
+        { Code: string; File: string; Detail: string; IsInputState: bool
+          BaseSeverity: string; EffectiveSeverity: string; Evidence: string option }
     type Receipt =
         { SchemaVersion: int
           Kind: string
@@ -47,7 +50,7 @@ module FSharpSurface =
           MatchedModuleCount: int
           Cardinality: string
           Maturity: string
-          Findings: string list
+          Findings: ReceiptFinding list
           FreshnessDigest: string option
           ConfigDigest: string option
           PolicyDigest: string option

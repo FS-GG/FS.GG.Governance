@@ -8,6 +8,7 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule
   [NestedType] FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Exemption
   [NestedType] FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts
   [NestedType] FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
+  [NestedType] FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding
   [NestedType] FS.GG.Governance.DesignChecks.FSharpSurfaceModule+SignatureDeclaration
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Exemption
   [Method] Boolean Equals(Exemption)
@@ -90,7 +91,7 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] SignatureCompileIndex
   [Property] System.String Project
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
-  [Constructor] Void .ctor(Int32, System.String, Boolean, System.String, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Int32, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Constructor] Void .ctor(Int32, System.String, Boolean, System.String, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Int32, System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String], Microsoft.FSharp.Core.FSharpOption`1[System.String])
   [Method] Boolean Equals(Receipt)
   [Method] Boolean Equals(Receipt, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -103,8 +104,8 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] Int32 get_MatchedModuleCount()
   [Method] Int32 get_SchemaVersion()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding] get_Findings()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_CompiledSources()
-  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Findings()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_ConfigDigest()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_FreshnessDigest()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Malformed()
@@ -120,8 +121,8 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
   [Property] Boolean Applicable
   [Property] Int32 MatchedModuleCount
   [Property] Int32 SchemaVersion
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding] Findings
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] CompiledSources
-  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Findings
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] ConfigDigest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] FreshnessDigest
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Malformed
@@ -133,6 +134,32 @@ TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+Receipt
   [Property] System.String Kind
   [Property] System.String Maturity
   [Property] System.String Project
+TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ReceiptFinding
+  [Constructor] Void .ctor(System.String, System.String, System.String, Boolean, System.String, System.String, Microsoft.FSharp.Core.FSharpOption`1[System.String])
+  [Method] Boolean Equals(ReceiptFinding)
+  [Method] Boolean Equals(ReceiptFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInputState()
+  [Method] Int32 CompareTo(ReceiptFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Evidence()
+  [Method] System.String ToString()
+  [Method] System.String get_BaseSeverity()
+  [Method] System.String get_Code()
+  [Method] System.String get_Detail()
+  [Method] System.String get_EffectiveSeverity()
+  [Method] System.String get_File()
+  [Property] Boolean IsInputState
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Evidence
+  [Property] System.String BaseSeverity
+  [Property] System.String Code
+  [Property] System.String Detail
+  [Property] System.String EffectiveSeverity
+  [Property] System.String File
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule+SignatureDeclaration
   [Constructor] Void .ctor(System.String, Boolean)
   [Method] Boolean Equals(SignatureDeclaration)

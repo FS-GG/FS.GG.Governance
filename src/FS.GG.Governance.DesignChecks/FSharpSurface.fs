@@ -40,6 +40,9 @@ module FSharpSurface =
           RequiresSurfaceBaseline: bool
           SurfaceBaselineCurrent: bool }
 
+    type ReceiptFinding =
+        { Code: string; File: string; Detail: string; IsInputState: bool
+          BaseSeverity: string; EffectiveSeverity: string; Evidence: string option }
     type Receipt =
         { SchemaVersion: int
           Kind: string
@@ -51,7 +54,7 @@ module FSharpSurface =
           MatchedModuleCount: int
           Cardinality: string
           Maturity: string
-          Findings: string list
+          Findings: ReceiptFinding list
           FreshnessDigest: string option
           ConfigDigest: string option
           PolicyDigest: string option
@@ -290,14 +293,18 @@ module FSharpSurface =
               MatchedModuleCount = 0
               Cardinality = "zero"
               Maturity = "warn"
-              Findings = [ "fsharp.surface-malformed" ]
+              Findings = [ { Code = "fsharp.surface-malformed"; File = project; Detail = reason; IsInputState = true; BaseSeverity = "blocking"; EffectiveSeverity = "blocking"; Evidence = None } ]
               FreshnessDigest = None
               ConfigDigest = digestOptional ".fsgg/capabilities.yml"
               PolicyDigest = digestOptional ".fsgg/fsharp-surface.json"
               SourceDigest = None
               Malformed = Some reason }
         | Ok facts ->
-            let findings = evaluate request facts |> List.map (fun finding -> finding.Code)
+            let findings = evaluate request facts |> List.map (fun finding ->
+                let (GovernedPath file) = finding.Location.File
+                { Code = finding.Code; File = file; Detail = finding.Location.Detail; IsInputState = finding.IsInputState
+                  BaseSeverity = "blocking"; EffectiveSeverity = "advisory"
+                  Evidence = finding.EvidenceTag |> Option.map (fun (EvidenceTag value) -> value) })
             let sources = facts |> List.map (fun fact -> let (GovernedPath path) = fact.Source in path) |> List.sort
             { SchemaVersion = 1
               Kind = "fsharp-public-surface"
@@ -335,7 +342,12 @@ module FSharpSurface =
         writer.WriteString("maturity", receipt.Maturity)
         writer.WritePropertyName("findings")
         writer.WriteStartArray()
-        receipt.Findings |> List.iter writer.WriteStringValue
+        receipt.Findings |> List.iter (fun finding ->
+            writer.WriteStartObject(); writer.WriteString("code", finding.Code); writer.WriteString("file", finding.File)
+            writer.WriteString("detail", finding.Detail); writer.WriteBoolean("isInputState", finding.IsInputState)
+            writer.WriteString("baseSeverity", finding.BaseSeverity); writer.WriteString("effectiveSeverity", finding.EffectiveSeverity)
+            match finding.Evidence with Some value -> writer.WriteString("evidence", value) | None -> writer.WriteNull("evidence")
+            writer.WriteEndObject())
         writer.WriteEndArray()
         match receipt.FreshnessDigest with
         | Some digest -> writer.WriteString("freshnessDigest", digest)
