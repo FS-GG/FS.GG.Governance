@@ -25,6 +25,8 @@
     <Compile Include="ArtifactReading.fs" />
     <Compile Include="FSharpSurfaceSensing.fsi" />
     <Compile Include="FSharpSurfaceSensing.fs" />
+    <Compile Include="FSharpEffectBoundarySensing.fsi" />
+    <Compile Include="FSharpEffectBoundarySensing.fs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,6 +4,12 @@
 `advance`, `decide`, or `update`; the declaration that it is a stateful transition is the applicable
 fact. Pure parsers and validators stay outside the rule, as do a narrowly declared one-shot adapter.
 
+Declare a compiled transition directly above its implementation with
+`// fsgg:effect-boundary <symbol>`. Add `edge` when its explicit interpreter returns success/failure
+messages and declares retry/idempotency behavior. `parser`, `validator`, and `thin-adapter` are narrow
+non-applicability controls. The Verify command senses these declarations from compiled project items and
+folds any finding into its normal blocking result.
+
 The pure transition returns requested effects as data. The edge interpreter performs filesystem,
 process, environment, clock/randomness, network, UI/host, persistence, or mutable-global work and
 returns an explicit success or failure message. A repeatable effect declares both retry and idempotency
@@ -13,6 +19,7 @@ semantics. This keeps callback continuations and exceptions from becoming hidden
 type Message = Saved of Result<unit, string>
 type Effect = Persist of string
 
+// fsgg:effect-boundary advance edge
 let advance model = model, [ Persist model.Document ] // pure: no File.WriteAllText here
 
 let interpret = function

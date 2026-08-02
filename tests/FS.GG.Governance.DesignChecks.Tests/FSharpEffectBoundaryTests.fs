@@ -1,6 +1,7 @@
 module FS.GG.Governance.DesignChecks.Tests.FSharpEffectBoundaryTests
 
 open System
+open System.IO
 open Expecto
 open FS.GG.Governance.Config.Model
 open FS.GG.Governance.DesignChecks.FSharpEffectBoundary
@@ -33,4 +34,15 @@ let tests = testList "FSharpEffectBoundary" [
     test "expired exemption fails closed" {
         let findings = evaluate request [ { baseFact with Exemption = InvalidExemption "review date expired" } ]
         Expect.equal (findings |> List.exactlyOne).Code "fsharp.effect-exemption-invalid" "invalid policy is input state" }
+    test "compiled declared boundary senses only its own transition body" {
+        let root = Path.Combine(Path.GetTempPath(), "fsgg-effect-boundary-" + Guid.NewGuid().ToString("N"))
+        Directory.CreateDirectory root |> ignore
+        try
+            File.WriteAllText(Path.Combine(root, "App.fsproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>")
+            File.WriteAllText(Path.Combine(root, "Domain.fs"), "// fsgg:effect-boundary transition\nlet transition model = File.WriteAllText(\"x\", model)\nlet parser text = text.Length")
+            let facts = senseProject root "App.fsproj" |> Result.defaultWith failtest
+            Expect.equal facts.Length 1 "only declared symbol is applicable"
+            let finding = evaluate request facts |> List.find (fun f -> f.Code = "fsharp.effect-in-transition")
+            Expect.equal finding.Location.Detail "filesystem" "effect is bound to the declared transition"
+        finally Directory.Delete(root, true) }
 ]
