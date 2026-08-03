@@ -1,10 +1,12 @@
 name: publish
 
-# Repo-owned publisher for the two publishable Governance artifacts: the consumer-bearing CLI tool
-# FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28) and the content-only FS.GG.Governance.
-# ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub Packages feed FIRST,
-# then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically, no re-pack
-# (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles Adapters.SddHandoff.dll so the
+# Repo-owned publisher for the three intentionally shipped Governance artifacts: the consumer-bearing
+# CLI tool FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28), the compiler-backed
+# FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), and the content-only
+# FS.GG.Governance.ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub
+# Packages feed FIRST, then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically,
+# no re-pack (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles
+# Adapters.SddHandoff.dll so the
 # installed `fsgg-governance` enforces a produced governance-handoff.json standalone. The other ~70
 # packable FS.GG.Governance.* projects are OUT OF SCOPE here (H4/088-adjacent org-feed baseline).
 #
@@ -15,11 +17,13 @@ name: publish
 # CLI jobs, ordered: resolve-version → cli-tests → enforcement-smoke (the green-by-omission guard,
 # FR-008) → publish (org feed → nuget.org). The push runs ONLY after the smoke proves the packed tool
 # blocks a failing handoff, so a consumer-less build can never reach the feed under the consumer-bearing
-# version. The reference gate set publishes from its own job (publish-reference-gate-set), self-gated on
-# the G1–G7 byte-identity guard inside pack-reference-gate-set.fsx before either push. Trusted
+# version. CodeChecks publishes from its own job after its focused compiler/API suite and a real
+# local-package consumer smoke. The reference gate set publishes from its own job
+# (publish-reference-gate-set), self-gated on the G1–G7 byte-identity guard inside
+# pack-reference-gate-set.fsx before either push. Trusted
 # Publishing login + push live in THIS file (never a reusable workflow — the nuget.org trust policy is
 # registered against FS.GG.Governance/publish.yml; NuGet/login#6, ADR-0013). A dry-run dispatch (no
-# version input) packs both packages but pushes to no feed; a missing trust policy 401s and fails loud.
+# version input) packs all three packages but pushes to no feed; a missing trust policy 401s and fails loud.
 
 on:
   release:
@@ -297,6 +301,152 @@ jobs:
           dotnet nuget push "artifacts/packages/FS.GG.Governance.Cli.*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
             --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+
+  # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
+  # package version is the evaluated CodeChecks fsproj <Version> (currently 0.1.0), independent of the
+  # producer's CLI/tag version just as ReferenceGateSet has its own schema-derived version. The shared
+  # resolve-version job still owns whether this run is a dry run or a real release. The job packs once,
+  # records that exact file's digest, pushes it to the org feed first, verifies the bytes are unchanged,
+  # then pushes the same path to nuget.org. The existing CLI and ReferenceGateSet jobs are untouched.
+  publish-code-checks:
+    name: Pack + publish FS.GG.Governance.CodeChecks
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+          cache: false
+
+      # Validate the committed CodeChecks test graph against cold feed bytes before packing. This suite
+      # includes the committed public-surface baseline, dependency-boundary checks, semantic positives,
+      # and false-positive controls; a surface or compiler-fact regression therefore blocks publishing.
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.CodeChecks.Tests/FS.GG.Governance.CodeChecks.Tests.fsproj
+
+      - name: Test compiler and public API gates
+        run: dotnet test tests/FS.GG.Governance.CodeChecks.Tests/FS.GG.Governance.CodeChecks.Tests.fsproj -c Release --no-restore
+
+      - name: Resolve CodeChecks package version
+        id: code-checks-version
+        run: |
+          set -euo pipefail
+          version="$(dotnet msbuild src/FS.GG.Governance.CodeChecks/FS.GG.Governance.CodeChecks.fsproj -getProperty:Version)"
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$'; then
+            echo "::error::CodeChecks fsproj produced invalid package version '$version'."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved CodeChecks package version: $version"
+
+      - name: Pack once
+        run: |
+          set -euo pipefail
+          dotnet pack src/FS.GG.Governance.CodeChecks/FS.GG.Governance.CodeChecks.fsproj -c Release \
+            -p:Version=${{ steps.code-checks-version.outputs.version }} --no-restore -o artifacts/packages
+
+      # Require exactly one ordinary package, then carry its exact path and SHA-256 through both pushes.
+      # This fails closed on empty or ambiguous pack output instead of letting a wildcard silently publish
+      # the wrong artifact.
+      - name: Assert and identify the CodeChecks package
+        id: code-checks-package
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/packages/FS.GG.Governance.CodeChecks.*.nupkg)
+          if [ ${#packages[@]} -ne 1 ]; then
+            echo "::error::expected exactly one FS.GG.Governance.CodeChecks.*.nupkg, found ${#packages[@]}."
+            exit 1
+          fi
+          package="${packages[0]}"
+          digest="$(sha256sum "$package" | cut -d' ' -f1)"
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$digest" >> "$GITHUB_OUTPUT"
+          printf 'Packed: %s (sha256=%s)\n' "$package" "$digest"
+
+      # Restore and execute a fresh consumer against only the just-packed artifact plus public
+      # nuget.org dependencies. This exercises the package's dependency metadata and public analyze API,
+      # rather than accepting a producer-project test as evidence that consumers can use the .nupkg.
+      - name: Package consumer smoke
+        env:
+          CODE_CHECKS_VERSION: ${{ steps.code-checks-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          consumer_dir="$(mktemp -d)"
+          dotnet new console --language F# --framework net10.0 --output "$consumer_dir" --no-restore
+          dotnet new nugetconfig --output "$consumer_dir" --force
+          dotnet nuget add source "$GITHUB_WORKSPACE/artifacts/packages" \
+            --name packed-code-checks --configfile "$consumer_dir/nuget.config"
+          dotnet add "$consumer_dir" package FS.GG.Governance.CodeChecks \
+            --version "$CODE_CHECKS_VERSION" --no-restore
+          printf '%s\n' \
+            'open FS.GG.Governance.CodeChecks.Model' \
+            'open FS.GG.Governance.CodeChecks.CodeChecks' \
+            '' \
+            'let request: AnalysisRequest =' \
+            '    { Head = "package-consumer-smoke"' \
+            '      Documents = [ { Path = "src/Domain.fs"; Source = "module Domain\ntype State = Ready | Running\nlet next = function Ready -> Running | Running -> Ready\n"; IsGenerated = false } ]' \
+            '      PureDomainPrefixes = []' \
+            '      Thresholds = { ModuleLines = None; TypeLines = None; MemberLines = None; DependencyFanOut = None }' \
+            '      Justifications = []' \
+            '      ApprovedPrimitives = [] }' \
+            '' \
+            'let report = analyze request |> Async.RunSynchronously' \
+            'if not report.Findings.IsEmpty then failwithf "unexpected findings: %A" report.Findings' \
+            'printfn "CodeChecks package consumer smoke: findings=%d diagnostics=%d" report.Findings.Length report.Diagnostics.Length' \
+            > "$consumer_dir/Program.fs"
+          dotnet restore "$consumer_dir" --no-cache --force-evaluate \
+            --configfile "$consumer_dir/nuget.config"
+          dotnet run --project "$consumer_dir" -c Release --no-restore
+
+      # First publication leg. An already-published immutable version is an idempotent success;
+      # authentication, network, and all other failures remain loud.
+      - name: Push to the org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          dotnet nuget push "${{ steps.code-checks-package.outputs.path }}" \
+            --source https://nuget.pkg.github.com/FS-GG/index.json \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      - name: Trusted Publishing login (nuget.org)
+        id: code-checks-nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
+
+      # Verify the local package still has the recorded digest, then send that exact file to nuget.org.
+      # There is deliberately no second pack between the two feeds.
+      - name: Verify bytes + push to nuget.org (Trusted Publishing)
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.code-checks-package.outputs.path }}"
+          actual="$(sha256sum "$package" | cut -d' ' -f1)"
+          expected="${{ steps.code-checks-package.outputs.sha256 }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::CodeChecks package changed between feed pushes ($expected != $actual)."
+            exit 1
+          fi
+          dotnet nuget push "$package" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.code-checks-nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
 
   # 094: publish the content-only FS.GG.Governance.ReferenceGateSet to BOTH feeds. Unlike the CLI, this
