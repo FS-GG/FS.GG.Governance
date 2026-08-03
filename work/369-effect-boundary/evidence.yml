@@ -11,7 +11,7 @@ sourceAnalysis: readiness/369-effect-boundary/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/369-effect-boundary/analysis.json
-    digest: 4d3f6a73a8787e110623654abec52962a36d2f1e57b31eae9517dd7cb5294b65
+    digest: 7220e2877373d33161159c87ffdeebd5fce8909abd2a7d13353203130d8c9c1d
     schemaVersion: 1
   - label: checklist
     path: work/369-effect-boundary/checklist.md

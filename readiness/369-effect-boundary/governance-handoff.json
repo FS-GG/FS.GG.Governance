@@ -6,17 +6,17 @@
   "sources": [
     {
       "path": "readiness/369-effect-boundary/ship.json",
-      "digest": "sha256:f4b16c39835ac6ee7f4d6823d6330bc8a387915d5ad3963577f1416a1a5c879a",
+      "digest": "sha256:eb24c300b5b7cd0f2257f6420718c6a902ce8506bc769ccf7e3279d91f5ffee5",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/verify.json",
-      "digest": "sha256:a78839da8c2560655d8b4ab556430258f40f528431782ef451f5cf6d367102c7",
+      "digest": "sha256:7b9f74de8d2085963602c6d0aa6e0e2f84a550179e56c03ce6643a95cf6cfac5",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/work-model.json",
-      "digest": "sha256:1f549fd23ef53ef8788baf3eb557363f967ba6298441cedba4aed615421202db",
+      "digest": "sha256:93a46fe6d53af39d05f9313cda305d888b0918e0be4424ce7fe038d4a10ad709",
       "schemaVersion": 1
     }
   ],

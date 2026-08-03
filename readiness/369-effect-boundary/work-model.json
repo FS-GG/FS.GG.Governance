@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "c4b4c26056a33ab5f2e8e7d9a0cd356ace782f0e2dcd594ee01763050087ceeb"
+        "value": "6eebcf0e8cbcacdedb2c5c8ad593318833e43d078f5c4cf617b0ba92093ce205"
       }
     },
     {
@@ -1291,7 +1291,7 @@
           "path": "work/369-effect-boundary/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "c4b4c26056a33ab5f2e8e7d9a0cd356ace782f0e2dcd594ee01763050087ceeb"
+            "value": "6eebcf0e8cbcacdedb2c5c8ad593318833e43d078f5c4cf617b0ba92093ce205"
           },
           "schemaVersion": 1
         },
@@ -1322,7 +1322,7 @@
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "313eec1f7049762755579950043d16456918134b89da61c6d6b1da07ab4ac454"
+        "value": "84ae528a0ded8896b66166d03a47a515eda936d219bbbb61ced613a12a4fa6ff"
       },
       "currency": "current"
     }
