@@ -225,6 +225,25 @@ jobs:
       # `kit-materialize.yml`, a `uses:` of a reusable workflow this repo cannot add a step to at all —
       # and reads `$(FsggKitSkillRoots)`/`$(FsggKitViewSkillRoots)` directly because it lives INSIDE the
       # file that IS the declaration: it is the declaration's own resolution, not a third hand-copy.
+      # These are executable boundary controls for the exact receiver declaration used below.  They
+      # must fail before the live call runs: a retired root override, a different receiver project,
+      # or an unrecognised flag must never be accepted and quietly alter generation.
+      - name: Reject malformed skill-view receiver invocations
+        run: |
+          set -euo pipefail
+          receiver=.config/kit/FS.GG.Kit.receiver.proj
+
+          reject() {
+            if bash scripts/skill-view generate "$@"; then
+              echo "::error::skill-view generate unexpectedly accepted: $*"
+              exit 1
+            fi
+          }
+
+          reject --receiver-proj "$receiver" --roots '.claude/skills .agents/skills'
+          reject --receiver-proj .config/kit/not-the-receiver.proj
+          reject --receiver-proj "$receiver" --unknown-flag
+
       - name: Resolve the view roots this tree no longer commits
         run: bash scripts/skill-view generate --receiver-proj .config/kit/FS.GG.Kit.receiver.proj
 
