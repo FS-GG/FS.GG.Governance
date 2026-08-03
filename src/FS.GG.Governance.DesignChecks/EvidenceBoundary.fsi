@@ -39,6 +39,7 @@ module EvidenceBoundary =
     type Request =
         { RequiresProductionJourney: bool
           RequiresObservedOutcome: bool
+          OptionalIntegrations: string list
           Evidence: EvidenceRecord list
           GeneratedArtifacts: GeneratedArtifact list
           Mitigations: Mitigation list

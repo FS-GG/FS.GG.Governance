@@ -18,7 +18,7 @@ module EvidenceBoundary =
     type Mitigation = { Claim: string; ProducerClasses: string list; ReintroducedByMutation: string list }
     type RenderEvidence = { Fixture: string; Executed: bool; ByteReproducible: bool; SemanticReceiptStable: bool }
     type Request =
-        { RequiresProductionJourney: bool; RequiresObservedOutcome: bool; Evidence: EvidenceRecord list
+        { RequiresProductionJourney: bool; RequiresObservedOutcome: bool; OptionalIntegrations: string list; Evidence: EvidenceRecord list
           GeneratedArtifacts: GeneratedArtifact list; Mitigations: Mitigation list; Render: RenderEvidence option }
     type Finding = { Code: string; Subject: string; Correction: string }
 
@@ -43,6 +43,17 @@ module EvidenceBoundary =
         let outcome =
             if request.RequiresObservedOutcome && not (request.Evidence |> List.exists (fun item -> item.Provenance = Real && item.Observation = ObservedOutcome)) then
                 [ finding "evidence.observed-outcome-missing" "native-boundary obligation" "execute a real boundary fixture and record its observed outcome" ] else []
+        let optionalIntegrations =
+            request.OptionalIntegrations
+            |> List.choose (fun subject ->
+                let hasOutcome =
+                    request.Evidence
+                    |> List.exists (fun item ->
+                        item.Subject = subject
+                        && item.Provenance = Real
+                        && (item.Observation = Degraded || item.Observation = ObservedOutcome))
+                if hasOutcome then None
+                else Some(finding "evidence.optional-outcome-missing" subject "record an explicit degraded or observed outcome for this optional integration"))
         let artifacts =
             request.GeneratedArtifacts |> List.collect (fun artifact ->
                 [ if Option.isNone artifact.Source then finding "evidence.generated-source-missing" artifact.Path "name the authored source that generates this artifact"
@@ -62,4 +73,4 @@ module EvidenceBoundary =
             | Some item when not item.Executed -> [ finding "evidence.render-not-executed" item.Fixture "compile and run the declared render fixture in the gate" ]
             | Some item when not item.ByteReproducible && not item.SemanticReceiptStable -> [ finding "evidence.render-receipt-unstable" item.Fixture "persist and compare a stable semantic receipt when bytes are not reproducible" ]
             | _ -> []
-        List.concat [ missing; recordFindings; outcome; artifacts; mitigations; render ] |> List.sortBy (fun item -> item.Code, item.Subject, item.Correction)
+        List.concat [ missing; recordFindings; outcome; optionalIntegrations; artifacts; mitigations; render ] |> List.sortBy (fun item -> item.Code, item.Subject, item.Correction)

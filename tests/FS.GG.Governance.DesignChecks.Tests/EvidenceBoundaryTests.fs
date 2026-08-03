@@ -42,8 +42,14 @@ let private consumeGeneratedContract generatedPath =
     try
         use generated = JsonDocument.Parse(File.ReadAllText generatedPath)
         let root = generated.RootElement
-        Some(sprintf "%s:%d" (root.GetProperty("name").GetString()) (root.GetProperty("version").GetInt32()))
+        match root.GetProperty("name").GetString(), root.GetProperty("version").GetInt32() with
+        | "evidence", 1 -> Some "evidence:1"
+        | _ -> None
     with :? JsonException -> None
+
+let private namedConsumerReceipt generatedPath =
+    consumeGeneratedContract generatedPath
+    |> Option.map (fun _ -> "EvidenceBoundaryTests.consumeGeneratedContract")
 
 let private withRealFixture action =
     let root = Path.Combine(Path.GetTempPath(), "fsgg-evidence-boundary-" + Guid.NewGuid().ToString("N"))
@@ -75,14 +81,12 @@ let private withRealFixture action =
             { Path = "contracts/generated.json"
               Source = Some "contracts/source.json"
               RegenerationDeterministic = first = second
-              Consumer =
-                match consumeGeneratedContract generatedPath with
-                | Some "evidence:1" -> Some "EvidenceBoundaryTests.consumeGeneratedContract"
-                | _ -> None
+              Consumer = namedConsumerReceipt generatedPath
               HasGoldenOrSchema = validatesSchemaAndGolden goldenPath generatedPath }
         let request =
             { RequiresProductionJourney = true
               RequiresObservedOutcome = true
+              OptionalIntegrations = []
               Evidence = [ real SemanticRegression ObservedOutcome; real BoundaryFixture ObservedOutcome; real GoldenOrSchema ObservedOutcome; real ProductionJourney ObservedOutcome ]
               GeneratedArtifacts = [ artifact ]
               Mitigations = [ { Claim = "sound is never requested"; ProducerClasses = [ "native"; "fallback" ]; ReintroducedByMutation = [ "native"; "fallback" ] } ]
@@ -108,10 +112,23 @@ let tests =
                 for observation in [ DispatchOnly; Degraded ] do
                     let request = { clean with Evidence = clean.Evidence |> List.map (fun item -> { item with Observation = observation }) }
                     Expect.contains (codes request) "evidence.observed-outcome-missing" (string observation)) }
-        test "optional degraded receipt is accepted beside an observed real outcome" {
+        test "all degraded optional integrations are accepted as explicit outcomes" {
             withRealFixture (fun (_, _, _, _, real, clean) ->
-                let optional = { real SemanticRegression Degraded with Subject = "optional telemetry boundary" }
-                Expect.isEmpty (evaluate { clean with Evidence = optional :: clean.Evidence }) "an explicit optional degradation does not erase the observed required route") }
+                let subjects = [ "optional semantic"; "optional boundary"; "optional golden"; "optional journey" ]
+                let evidence =
+                    List.zip [ SemanticRegression; BoundaryFixture; GoldenOrSchema; ProductionJourney ] subjects
+                    |> List.map (fun (kind, subject) -> { real kind Degraded with Subject = subject })
+                let request = { clean with RequiresObservedOutcome = false; OptionalIntegrations = subjects; Evidence = evidence }
+                Expect.isEmpty (evaluate request) "explicit degraded outcomes satisfy their named optional integrations") }
+        test "all dispatch only records cannot masquerade as optional degraded outcomes" {
+            withRealFixture (fun (_, _, _, _, real, clean) ->
+                let subjects = [ "optional semantic"; "optional boundary"; "optional golden"; "optional journey" ]
+                let evidence =
+                    List.zip [ SemanticRegression; BoundaryFixture; GoldenOrSchema; ProductionJourney ] subjects
+                    |> List.map (fun (kind, subject) -> { real kind DispatchOnly with Subject = subject })
+                let findings = evaluate { clean with RequiresObservedOutcome = false; OptionalIntegrations = subjects; Evidence = evidence }
+                Expect.equal (findings |> List.map _.Subject |> Set.ofList) (subjects |> Set.ofList) "every named optional integration remains visible"
+                Expect.all findings (fun finding -> finding.Code = "evidence.optional-outcome-missing") "dispatch is not an observed optional outcome") }
         test "explicit malformed nonzero result is a valid safe-failure receipt" {
             withRealFixture (fun (_, sourcePath, _, _, _, clean) ->
                 let exitCode, _, _ = runCommand "dotnet" [ "--definitely-malformed-evidence-boundary-option" ]
@@ -131,10 +148,12 @@ let tests =
             withRealFixture (fun (root, sourcePath, generatedPath, goldenPath, _, clean) ->
                 let nondeterministic = regenerate sourcePath (Path.Combine(root, "contracts", "generated-broken.json")) "-broken" <> File.ReadAllText generatedPath
                 File.WriteAllText(goldenPath, "{\"name\":\"different\",\"version\":1}\n")
+                let brokenConsumer = namedConsumerReceipt goldenPath
+                Expect.isNone brokenConsumer "the real consumer rejects a valid but incompatible changed contract"
                 let mutations =
                     [ { clean.GeneratedArtifacts.Head with Source = None }, "evidence.generated-source-missing"
                       { clean.GeneratedArtifacts.Head with RegenerationDeterministic = not nondeterministic }, "evidence.generated-regeneration-nondeterministic"
-                      { clean.GeneratedArtifacts.Head with Consumer = consumeGeneratedContract goldenPath |> Option.bind (fun _ -> None) }, "evidence.generated-consumer-missing"
+                      { clean.GeneratedArtifacts.Head with Consumer = brokenConsumer }, "evidence.generated-consumer-missing"
                       { clean.GeneratedArtifacts.Head with HasGoldenOrSchema = validatesSchemaAndGolden goldenPath generatedPath }, "evidence.generated-compatibility-missing" ]
                 for artifact, expected in mutations do
                     Expect.contains (codes { clean with GeneratedArtifacts = [ artifact ] }) expected expected) }

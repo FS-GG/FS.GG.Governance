@@ -226,7 +226,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence
   [Property] Boolean SemanticReceiptStable
   [Property] System.String Fixture
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
-  [Constructor] Void .ctor(Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence])
+  [Constructor] Void .ctor(Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence])
   [Method] Boolean Equals(Request)
   [Method] Boolean Equals(Request, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -241,6 +241,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord] get_Evidence()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact] get_GeneratedArtifacts()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation] get_Mitigations()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_OptionalIntegrations()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence] get_Render()
   [Method] System.String ToString()
   [Property] Boolean RequiresObservedOutcome
@@ -248,6 +249,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord] Evidence
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact] GeneratedArtifacts
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation] Mitigations
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] OptionalIntegrations
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence] Render
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts])
