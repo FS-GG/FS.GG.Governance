@@ -6,12 +6,12 @@
   "sources": [
     {
       "path": "readiness/370-evidence-boundaries/ship.json",
-      "digest": "sha256:eb871ac335efe109f4a53a8d9a565444fe8d0d388764c4734677171b39630fbb",
+      "digest": "sha256:4dc33160c5ce9029d979a1cb44573bfe4b752bf4920a2009a24acf7de59351a0",
       "schemaVersion": 1
     },
     {
       "path": "readiness/370-evidence-boundaries/verify.json",
-      "digest": "sha256:c0ca756eafccf7a18b47113b83262fe8e4ec52cbb339a686494e1ca326dd4062",
+      "digest": "sha256:916847f1a7a70b06c6c9d873b41e83a453378fdf0ed1a5bbfc8c0f0878e6bbc9",
       "schemaVersion": 1
     },
     {
