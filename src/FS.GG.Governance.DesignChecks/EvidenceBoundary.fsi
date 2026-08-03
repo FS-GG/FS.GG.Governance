@@ -9,7 +9,8 @@ module EvidenceBoundary =
     type Observation = DispatchOnly | ObservedOutcome | MalformedInput | UnknownInput | PartialWrite | Degraded
 
     type EvidenceRecord =
-        { Kind: EvidenceKind
+        { Subject: string
+          Kind: EvidenceKind
           Provenance: Provenance
           Command: string
           ExitCode: int
@@ -18,17 +19,20 @@ module EvidenceBoundary =
           Observation: Observation }
 
     type GeneratedArtifact =
-        { Source: string option
+        { Path: string
+          Source: string option
           RegenerationDeterministic: bool
           Consumer: string option
           HasGoldenOrSchema: bool }
 
     type Mitigation =
-        { ProducerClasses: string list
+        { Claim: string
+          ProducerClasses: string list
           ReintroducedByMutation: string list }
 
     type RenderEvidence =
-        { Executed: bool
+        { Fixture: string
+          Executed: bool
           ByteReproducible: bool
           SemanticReceiptStable: bool }
 
@@ -40,7 +44,8 @@ module EvidenceBoundary =
           Mitigations: Mitigation list
           Render: RenderEvidence option }
 
-    type Finding = { Code: string; Detail: string }
+    /// One deterministic, actionable unsatisfied evidence fact.
+    type Finding = { Code: string; Subject: string; Correction: string }
 
     /// Evaluate a complete evidence-boundary request deterministically. Missing or malformed facts never
     /// collapse into a clean verdict; a native-boundary obligation requires an observed outcome, not dispatch.

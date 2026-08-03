@@ -53,11 +53,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -80,11 +80,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -107,11 +107,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -134,11 +134,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -161,11 +161,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -188,11 +188,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -215,11 +215,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -242,11 +242,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -269,11 +269,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]
@@ -296,11 +296,11 @@ evidence:
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary.trx
-      digest: "sha256:50fa76c3cad53c04db5bc6cf300e6f3433f47a1c9cb204cdcc81a3ddf0f8ccb4"
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round1.trx
+      digest: "sha256:f305c38f9ec3fa512469eb771cd5c5190a3f43ac85354f591d9ec8c31724f313"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 37
+      passed: 42
       failed: 0
       skipped: 0
     notes: [Evidence required before verify.]

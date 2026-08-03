@@ -47,7 +47,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceKind+Tags
   [Field] Int32 ProductionJourney
   [Field] Int32 SemanticRegression
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord
-  [Constructor] Void .ctor(EvidenceKind, Provenance, System.String, Int32, System.String, Boolean, Observation)
+  [Constructor] Void .ctor(System.String, EvidenceKind, Provenance, System.String, Int32, System.String, Boolean, Observation)
   [Method] Boolean Equals(EvidenceRecord)
   [Method] Boolean Equals(EvidenceRecord, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -65,6 +65,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord
   [Method] System.String ToString()
   [Method] System.String get_Command()
   [Method] System.String get_SourceDigest()
+  [Method] System.String get_Subject()
   [Property] Boolean Fresh
   [Property] EvidenceKind Kind
   [Property] Int32 ExitCode
@@ -72,8 +73,9 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord
   [Property] Provenance Provenance
   [Property] System.String Command
   [Property] System.String SourceDigest
+  [Property] System.String Subject
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Finding
-  [Constructor] Void .ctor(System.String, System.String)
+  [Constructor] Void .ctor(System.String, System.String, System.String)
   [Method] Boolean Equals(Finding)
   [Method] Boolean Equals(Finding, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -85,11 +87,13 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Finding
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] System.String ToString()
   [Method] System.String get_Code()
-  [Method] System.String get_Detail()
+  [Method] System.String get_Correction()
+  [Method] System.String get_Subject()
   [Property] System.String Code
-  [Property] System.String Detail
+  [Property] System.String Correction
+  [Property] System.String Subject
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact
-  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean)
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean)
   [Method] Boolean Equals(GeneratedArtifact)
   [Method] Boolean Equals(GeneratedArtifact, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -104,12 +108,14 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Consumer()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Source()
   [Method] System.String ToString()
+  [Method] System.String get_Path()
   [Property] Boolean HasGoldenOrSchema
   [Property] Boolean RegenerationDeterministic
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Consumer
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Source
+  [Property] System.String Path
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation
-  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] Boolean Equals(Mitigation)
   [Method] Boolean Equals(Mitigation, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -122,8 +128,10 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ProducerClasses()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ReintroducedByMutation()
   [Method] System.String ToString()
+  [Method] System.String get_Claim()
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ProducerClasses
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ReintroducedByMutation
+  [Property] System.String Claim
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Observation
   [Method] Boolean Equals(Observation)
   [Method] Boolean Equals(Observation, System.Collections.IEqualityComparer)
@@ -198,7 +206,7 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance+Tags
   [Field] Int32 Real
   [Field] Int32 Synthetic
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence
-  [Constructor] Void .ctor(Boolean, Boolean, Boolean)
+  [Constructor] Void .ctor(System.String, Boolean, Boolean, Boolean)
   [Method] Boolean Equals(RenderEvidence)
   [Method] Boolean Equals(RenderEvidence, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -212,9 +220,11 @@ TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] System.String ToString()
+  [Method] System.String get_Fixture()
   [Property] Boolean ByteReproducible
   [Property] Boolean Executed
   [Property] Boolean SemanticReceiptStable
+  [Property] System.String Fixture
 TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
   [Constructor] Void .ctor(Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence])
   [Method] Boolean Equals(Request)
