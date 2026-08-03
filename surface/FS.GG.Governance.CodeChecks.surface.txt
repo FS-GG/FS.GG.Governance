@@ -1,0 +1,351 @@
+TYPE FS.GG.Governance.CodeChecks.CodeChecksModule
+  [Method] Microsoft.FSharp.Control.FSharpAsync`1[FS.GG.Governance.CodeChecks.ModelModule+AnalysisReport] analyze(AnalysisRequest)
+  [Method] System.String sourceDigest(System.String)
+TYPE FS.GG.Governance.CodeChecks.ModelModule
+  [Method] System.String categoryToken(FindingCategory)
+  [Method] System.String findingIdToken(FindingId)
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+AnalysisReport
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+AnalysisRequest
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+ApprovedPrimitive
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+ArchitectureFinding
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+ComplexityJustification
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+FindingCategory
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+FindingId
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+JustificationDisposition
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+JustificationReason
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+ReviewThresholds
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+SourceDocument
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+SourceRange
+TYPE FS.GG.Governance.CodeChecks.ModelModule+AnalysisReport
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ArchitectureFinding], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(AnalysisReport)
+  [Method] Boolean Equals(AnalysisReport, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AnalysisReport)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ArchitectureFinding] get_Findings()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Diagnostics()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ArchitectureFinding] Findings
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Diagnostics
+TYPE FS.GG.Governance.CodeChecks.ModelModule+AnalysisRequest
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+SourceDocument], Microsoft.FSharp.Collections.FSharpList`1[System.String], ReviewThresholds, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ComplexityJustification], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ApprovedPrimitive])
+  [Method] Boolean Equals(AnalysisRequest)
+  [Method] Boolean Equals(AnalysisRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(AnalysisRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ApprovedPrimitive] get_ApprovedPrimitives()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ComplexityJustification] get_Justifications()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+SourceDocument] get_Documents()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_PureDomainPrefixes()
+  [Method] ReviewThresholds get_Thresholds()
+  [Method] System.String ToString()
+  [Method] System.String get_Head()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ApprovedPrimitive] ApprovedPrimitives
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+ComplexityJustification] Justifications
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CodeChecks.ModelModule+SourceDocument] Documents
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] PureDomainPrefixes
+  [Property] ReviewThresholds Thresholds
+  [Property] System.String Head
+TYPE FS.GG.Governance.CodeChecks.ModelModule+ApprovedPrimitive
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ApprovedPrimitive)
+  [Method] Boolean Equals(ApprovedPrimitive, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ApprovedPrimitive)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ApprovedSymbols()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_CandidateSymbols()
+  [Method] System.String ToString()
+  [Method] System.String get_Capability()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ApprovedSymbols
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] CandidateSymbols
+  [Property] System.String Capability
+TYPE FS.GG.Governance.CodeChecks.ModelModule+ArchitectureFinding
+  [Constructor] Void .ctor(FindingId, FindingCategory, System.String, System.String, SourceRange, JustificationDisposition, System.String)
+  [Method] Boolean Equals(ArchitectureFinding)
+  [Method] Boolean Equals(ArchitectureFinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] FindingCategory get_Category()
+  [Method] FindingId get_Id()
+  [Method] Int32 CompareTo(ArchitectureFinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] JustificationDisposition get_Justification()
+  [Method] SourceRange get_Range()
+  [Method] System.String ToString()
+  [Method] System.String get_Message()
+  [Method] System.String get_Path()
+  [Method] System.String get_Symbol()
+  [Property] FindingCategory Category
+  [Property] FindingId Id
+  [Property] JustificationDisposition Justification
+  [Property] SourceRange Range
+  [Property] System.String Message
+  [Property] System.String Path
+  [Property] System.String Symbol
+TYPE FS.GG.Governance.CodeChecks.ModelModule+ComplexityJustification
+  [Constructor] Void .ctor(System.String, System.String, System.String, System.String, System.String, JustificationReason, System.String)
+  [Method] Boolean Equals(ComplexityJustification)
+  [Method] Boolean Equals(ComplexityJustification, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ComplexityJustification)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] JustificationReason get_Reason()
+  [Method] System.String ToString()
+  [Method] System.String get_Evidence()
+  [Method] System.String get_Head()
+  [Method] System.String get_Path()
+  [Method] System.String get_SimplerAlternative()
+  [Method] System.String get_SourceDigest()
+  [Method] System.String get_Symbol()
+  [Property] JustificationReason Reason
+  [Property] System.String Evidence
+  [Property] System.String Head
+  [Property] System.String Path
+  [Property] System.String SimplerAlternative
+  [Property] System.String SourceDigest
+  [Property] System.String Symbol
+TYPE FS.GG.Governance.CodeChecks.ModelModule+FindingCategory
+  [Method] Boolean Equals(FindingCategory)
+  [Method] Boolean Equals(FindingCategory, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsComplexityRequiresJustification()
+  [Method] Boolean get_IsProhibitedStructure()
+  [Method] FindingCategory get_ComplexityRequiresJustification()
+  [Method] FindingCategory get_ProhibitedStructure()
+  [Method] Int32 CompareTo(FindingCategory)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+FindingCategory+Tags
+  [Property] Boolean IsComplexityRequiresJustification
+  [Property] Boolean IsProhibitedStructure
+  [Property] FindingCategory ComplexityRequiresJustification
+  [Property] FindingCategory ProhibitedStructure
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CodeChecks.ModelModule+FindingCategory+Tags
+  [Field] Int32 ComplexityRequiresJustification
+  [Field] Int32 ProhibitedStructure
+TYPE FS.GG.Governance.CodeChecks.ModelModule+FindingId
+  [Method] Boolean Equals(FindingId)
+  [Method] Boolean Equals(FindingId, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAbstractClassHierarchy()
+  [Method] Boolean get_IsCompilerAnalysisFailed()
+  [Method] Boolean get_IsDependencyFanOutReview()
+  [Method] Boolean get_IsDuplicateHomeGrownAbstraction()
+  [Method] Boolean get_IsImperativeInPureDomain()
+  [Method] Boolean get_IsInheritanceHierarchy()
+  [Method] Boolean get_IsMemberSizeReview()
+  [Method] Boolean get_IsModuleSizeReview()
+  [Method] Boolean get_IsPublicClassShape()
+  [Method] Boolean get_IsReflectionOrMetaprogramming()
+  [Method] Boolean get_IsSharedMutableState()
+  [Method] Boolean get_IsTypeSizeReview()
+  [Method] FindingId get_AbstractClassHierarchy()
+  [Method] FindingId get_CompilerAnalysisFailed()
+  [Method] FindingId get_DependencyFanOutReview()
+  [Method] FindingId get_DuplicateHomeGrownAbstraction()
+  [Method] FindingId get_ImperativeInPureDomain()
+  [Method] FindingId get_InheritanceHierarchy()
+  [Method] FindingId get_MemberSizeReview()
+  [Method] FindingId get_ModuleSizeReview()
+  [Method] FindingId get_PublicClassShape()
+  [Method] FindingId get_ReflectionOrMetaprogramming()
+  [Method] FindingId get_SharedMutableState()
+  [Method] FindingId get_TypeSizeReview()
+  [Method] Int32 CompareTo(FindingId)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+FindingId+Tags
+  [Property] Boolean IsAbstractClassHierarchy
+  [Property] Boolean IsCompilerAnalysisFailed
+  [Property] Boolean IsDependencyFanOutReview
+  [Property] Boolean IsDuplicateHomeGrownAbstraction
+  [Property] Boolean IsImperativeInPureDomain
+  [Property] Boolean IsInheritanceHierarchy
+  [Property] Boolean IsMemberSizeReview
+  [Property] Boolean IsModuleSizeReview
+  [Property] Boolean IsPublicClassShape
+  [Property] Boolean IsReflectionOrMetaprogramming
+  [Property] Boolean IsSharedMutableState
+  [Property] Boolean IsTypeSizeReview
+  [Property] FindingId AbstractClassHierarchy
+  [Property] FindingId CompilerAnalysisFailed
+  [Property] FindingId DependencyFanOutReview
+  [Property] FindingId DuplicateHomeGrownAbstraction
+  [Property] FindingId ImperativeInPureDomain
+  [Property] FindingId InheritanceHierarchy
+  [Property] FindingId MemberSizeReview
+  [Property] FindingId ModuleSizeReview
+  [Property] FindingId PublicClassShape
+  [Property] FindingId ReflectionOrMetaprogramming
+  [Property] FindingId SharedMutableState
+  [Property] FindingId TypeSizeReview
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.CodeChecks.ModelModule+FindingId+Tags
+  [Field] Int32 AbstractClassHierarchy
+  [Field] Int32 CompilerAnalysisFailed
+  [Field] Int32 DependencyFanOutReview
+  [Field] Int32 DuplicateHomeGrownAbstraction
+  [Field] Int32 ImperativeInPureDomain
+  [Field] Int32 InheritanceHierarchy
+  [Field] Int32 MemberSizeReview
+  [Field] Int32 ModuleSizeReview
+  [Field] Int32 PublicClassShape
+  [Field] Int32 ReflectionOrMetaprogramming
+  [Field] Int32 SharedMutableState
+  [Field] Int32 TypeSizeReview
+TYPE FS.GG.Governance.CodeChecks.ModelModule+JustificationDisposition
+  [Method] Boolean Equals(JustificationDisposition)
+  [Method] Boolean Equals(JustificationDisposition, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInvalid()
+  [Method] Boolean get_IsMissing()
+  [Method] Boolean get_IsNotApplicable()
+  [Method] Boolean get_IsStaleHead()
+  [Method] Boolean get_IsStaleSource()
+  [Method] Int32 CompareTo(JustificationDisposition)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] JustificationDisposition get_Invalid()
+  [Method] JustificationDisposition get_Missing()
+  [Method] JustificationDisposition get_NotApplicable()
+  [Method] JustificationDisposition get_StaleHead()
+  [Method] JustificationDisposition get_StaleSource()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+JustificationDisposition+Tags
+  [Property] Boolean IsInvalid
+  [Property] Boolean IsMissing
+  [Property] Boolean IsNotApplicable
+  [Property] Boolean IsStaleHead
+  [Property] Boolean IsStaleSource
+  [Property] Int32 Tag
+  [Property] JustificationDisposition Invalid
+  [Property] JustificationDisposition Missing
+  [Property] JustificationDisposition NotApplicable
+  [Property] JustificationDisposition StaleHead
+  [Property] JustificationDisposition StaleSource
+TYPE FS.GG.Governance.CodeChecks.ModelModule+JustificationDisposition+Tags
+  [Field] Int32 Invalid
+  [Field] Int32 Missing
+  [Field] Int32 NotApplicable
+  [Field] Int32 StaleHead
+  [Field] Int32 StaleSource
+TYPE FS.GG.Governance.CodeChecks.ModelModule+JustificationReason
+  [Method] Boolean Equals(JustificationReason)
+  [Method] Boolean Equals(JustificationReason, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsInteroperability()
+  [Method] Boolean get_IsMeasured()
+  [Method] Int32 CompareTo(JustificationReason)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] JustificationReason get_Interoperability()
+  [Method] JustificationReason get_Measured()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CodeChecks.ModelModule+JustificationReason+Tags
+  [Property] Boolean IsInteroperability
+  [Property] Boolean IsMeasured
+  [Property] Int32 Tag
+  [Property] JustificationReason Interoperability
+  [Property] JustificationReason Measured
+TYPE FS.GG.Governance.CodeChecks.ModelModule+JustificationReason+Tags
+  [Field] Int32 Interoperability
+  [Field] Int32 Measured
+TYPE FS.GG.Governance.CodeChecks.ModelModule+ReviewThresholds
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[System.Int32], Microsoft.FSharp.Core.FSharpOption`1[System.Int32], Microsoft.FSharp.Core.FSharpOption`1[System.Int32], Microsoft.FSharp.Core.FSharpOption`1[System.Int32])
+  [Method] Boolean Equals(ReviewThresholds)
+  [Method] Boolean Equals(ReviewThresholds, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ReviewThresholds)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_DependencyFanOut()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_MemberLines()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_ModuleLines()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] get_TypeLines()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] DependencyFanOut
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] MemberLines
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] ModuleLines
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] TypeLines
+TYPE FS.GG.Governance.CodeChecks.ModelModule+SourceDocument
+  [Constructor] Void .ctor(System.String, System.String, Boolean)
+  [Method] Boolean Equals(SourceDocument)
+  [Method] Boolean Equals(SourceDocument, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsGenerated()
+  [Method] Int32 CompareTo(SourceDocument)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Path()
+  [Method] System.String get_Source()
+  [Property] Boolean IsGenerated
+  [Property] System.String Path
+  [Property] System.String Source
+TYPE FS.GG.Governance.CodeChecks.ModelModule+SourceRange
+  [Constructor] Void .ctor(Int32, Int32, Int32, Int32)
+  [Method] Boolean Equals(SourceRange)
+  [Method] Boolean Equals(SourceRange, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SourceRange)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_EndColumn()
+  [Method] Int32 get_EndLine()
+  [Method] Int32 get_StartColumn()
+  [Method] Int32 get_StartLine()
+  [Method] System.String ToString()
+  [Property] Int32 EndColumn
+  [Property] Int32 EndLine
+  [Property] Int32 StartColumn
+  [Property] Int32 StartLine

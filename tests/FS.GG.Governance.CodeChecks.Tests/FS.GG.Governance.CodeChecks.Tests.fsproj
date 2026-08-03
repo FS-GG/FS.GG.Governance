@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ArchitectureTests.fs" />
+    <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/FS.GG.Governance.CodeChecks/FS.GG.Governance.CodeChecks.fsproj" />
+  </ItemGroup>
+</Project>
