@@ -4,7 +4,7 @@
   "workId": "369-effect-boundary",
   "stage": "verify",
   "status": "verificationReady",
-  "generator": "FS.GG.SDD.Artifacts/0.32.0",
+  "generator": "FS.GG.SDD.Artifacts/1.0.0",
   "sources": [
     {
       "path": ".fsgg/agents.yml",
@@ -41,7 +41,7 @@
       "kind": "analysis",
       "digest": {
         "algorithm": "sha256",
-        "value": "8c4ee0ab65a3b6fe2d78197d28c2d659ebe43815e9e0d53d8a8723029057d9f3"
+        "value": "4d3f6a73a8787e110623654abec52962a36d2f1e57b31eae9517dd7cb5294b65"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -51,7 +51,7 @@
       "kind": "workModel",
       "digest": {
         "algorithm": "sha256",
-        "value": "cb80ec312674144d7cf28ede34f8b92a5775ed26abbf164e044fbe217b02151d"
+        "value": "1f549fd23ef53ef8788baf3eb557363f967ba6298441cedba4aed615421202db"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -61,7 +61,7 @@
       "kind": "checklist",
       "digest": {
         "algorithm": "sha256",
-        "value": "de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7"
+        "value": "337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -71,7 +71,7 @@
       "kind": "clarification",
       "digest": {
         "algorithm": "sha256",
-        "value": "2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5"
+        "value": "01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -81,7 +81,7 @@
       "kind": "evidence",
       "digest": {
         "algorithm": "sha256",
-        "value": "17320e2d7faee01c0bc1de85c579e3f0308a37c4222f4ebd0eee1b835d64afff"
+        "value": "c4b4c26056a33ab5f2e8e7d9a0cd356ace782f0e2dcd594ee01763050087ceeb"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -91,7 +91,7 @@
       "kind": "plan",
       "digest": {
         "algorithm": "sha256",
-        "value": "dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183"
+        "value": "f6b93d619deab6a8d3ec522cc175877297428308c2d0967476737e14814b5339"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -101,7 +101,7 @@
       "kind": "specification",
       "digest": {
         "algorithm": "sha256",
-        "value": "edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00"
+        "value": "e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -111,7 +111,7 @@
       "kind": "tasks",
       "digest": {
         "algorithm": "sha256",
-        "value": "6988e50ad748e6c8c0d0b06e53f7066a830e753eacaf8d29d424fdb0dc57f928"
+        "value": "c5035af52ba14238d10ee347ade623068729be42ba050c2f79374cc2e1329223"
       },
       "schemaVersion": 1,
       "schemaStatus": "current"
@@ -151,8 +151,8 @@
     ]
   },
   "taskGraph": {
-    "taskCount": 14,
-    "dependencyCount": 10,
+    "taskCount": 16,
+    "dependencyCount": 12,
     "dependenciesValid": true,
     "statusesValid": true,
     "findingIds": []
@@ -468,6 +468,53 @@
       "severity": "ready",
       "diagnosticIds": [],
       "correction": ""
+    },
+    {
+      "id": "ED-EV015",
+      "obligationId": "EV015",
+      "state": "supported",
+      "observed": true,
+      "classifiedRequirement": false,
+      "journeyRequirement": false,
+      "evidenceIds": [
+        "EV015"
+      ],
+      "affectedTaskIds": [
+        "T015"
+      ],
+      "affectedSourceIds": [
+        "AC-001",
+        "DEC-003",
+        "FR-009",
+        "PD-009"
+      ],
+      "severity": "ready",
+      "diagnosticIds": [],
+      "correction": ""
+    },
+    {
+      "id": "ED-EV016",
+      "obligationId": "EV016",
+      "state": "supported",
+      "observed": true,
+      "classifiedRequirement": false,
+      "journeyRequirement": false,
+      "evidenceIds": [
+        "EV016"
+      ],
+      "affectedTaskIds": [
+        "T016"
+      ],
+      "affectedSourceIds": [
+        "AC-001",
+        "DEC-003",
+        "FR-010",
+        "PD-010",
+        "VO-004"
+      ],
+      "severity": "ready",
+      "diagnosticIds": [],
+      "correction": ""
     }
   ],
   "testDispositions": [
@@ -710,6 +757,42 @@
       "severity": "ready",
       "diagnosticIds": [],
       "correction": ""
+    },
+    {
+      "id": "TD-EV015",
+      "obligationId": "EV015",
+      "state": "satisfied",
+      "observed": true,
+      "evidenceIds": [
+        "EV015"
+      ],
+      "affectedTaskIds": [
+        "T015"
+      ],
+      "affectedRequirementIds": [
+        "FR-009"
+      ],
+      "severity": "ready",
+      "diagnosticIds": [],
+      "correction": ""
+    },
+    {
+      "id": "TD-EV016",
+      "obligationId": "EV016",
+      "state": "satisfied",
+      "observed": true,
+      "evidenceIds": [
+        "EV016"
+      ],
+      "affectedTaskIds": [
+        "T016"
+      ],
+      "affectedRequirementIds": [
+        "FR-010"
+      ],
+      "severity": "ready",
+      "diagnosticIds": [],
+      "correction": ""
     }
   ],
   "skillVisibility": [
@@ -718,7 +801,8 @@
       "requiringTaskIds": [
         "T006",
         "T010",
-        "T013"
+        "T013",
+        "T016"
       ],
       "visibility": "visible",
       "sourceArtifactPath": "work/369-effect-boundary/tasks.yml",
@@ -748,7 +832,8 @@
         "T004",
         "T005",
         "T009",
-        "T012"
+        "T012",
+        "T015"
       ],
       "visibility": "visible",
       "sourceArtifactPath": "work/369-effect-boundary/tasks.yml",
@@ -764,7 +849,8 @@
         "T003",
         "T004",
         "T009",
-        "T012"
+        "T012",
+        "T015"
       ],
       "visibility": "visible",
       "sourceArtifactPath": "work/369-effect-boundary/tasks.yml",
@@ -779,7 +865,8 @@
         "T010",
         "T011",
         "T013",
-        "T014"
+        "T014",
+        "T016"
       ],
       "visibility": "visible",
       "sourceArtifactPath": "work/369-effect-boundary/tasks.yml",

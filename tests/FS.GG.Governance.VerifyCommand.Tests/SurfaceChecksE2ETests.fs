@@ -255,6 +255,11 @@ let advance model =
               senseBoundarySource lexicalNoise (fun findings ->
                   Expect.isEmpty (effectCodes findings) "comments, string text, interpolation text, and identifiers are not calls")
 
+              let interpolatedCall = "module internal Boundary\n// fsgg:effect-boundary advance\nlet advance (path: string) (model: string) = $\"{File.WriteAllText(path, model)}\""
+              senseBoundarySource interpolatedCall (fun findings ->
+                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+                  Expect.stringContains effect.Location.Detail "File.WriteAllText@3:49" "production sensing preserves executable call identity inside an interpolation hole")
+
               let actualCall = """module internal Boundary
 // fsgg:effect-boundary advance
 let advance model =

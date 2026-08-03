@@ -62,6 +62,17 @@ let advance model =
             let fact = senseProject root "App.fsproj" |> Result.defaultWith failtest |> List.exactlyOne
             Expect.isEmpty fact.DirectEffects "non-executable text does not produce effect calls"
         finally Directory.Delete(root, true) }
+    test "executable calls inside interpolation holes retain call identity" {
+        let root = Path.Combine(Path.GetTempPath(), "fsgg-effect-interpolation-" + Guid.NewGuid().ToString("N"))
+        Directory.CreateDirectory root |> ignore
+        try
+            File.WriteAllText(Path.Combine(root, "App.fsproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><ItemGroup><Compile Include=\"Domain.fs\" /></ItemGroup></Project>")
+            File.WriteAllText(Path.Combine(root, "Domain.fs"), "// fsgg:effect-boundary advance\nlet advance (path: string) (model: string) = $\"{File.WriteAllText(path, model)}\"")
+            let calls = (senseProject root "App.fsproj" |> Result.defaultWith failtest |> List.exactlyOne).DirectEffects
+            let call = calls |> List.find (fun actual -> actual.Symbol = "File.WriteAllText")
+            Expect.equal call { Category = Filesystem; Symbol = "File.WriteAllText"; Line = 2; Column = 49 } "the executable interpolation expression remains visible to call sensing"
+            Expect.isNonEmpty calls "an executable interpolation call cannot yield empty DirectEffects"
+        finally Directory.Delete(root, true) }
     test "an executable call retains exact identity and one-based location" {
         let root = Path.Combine(Path.GetTempPath(), "fsgg-effect-call-" + Guid.NewGuid().ToString("N"))
         Directory.CreateDirectory root |> ignore

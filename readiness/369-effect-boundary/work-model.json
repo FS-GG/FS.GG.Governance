@@ -53,7 +53,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7"
+        "value": "337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879"
       }
     },
     {
@@ -65,7 +65,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5"
+        "value": "01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07"
       }
     },
     {
@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "17320e2d7faee01c0bc1de85c579e3f0308a37c4222f4ebd0eee1b835d64afff"
+        "value": "c4b4c26056a33ab5f2e8e7d9a0cd356ace782f0e2dcd594ee01763050087ceeb"
       }
     },
     {
@@ -89,7 +89,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183"
+        "value": "f6b93d619deab6a8d3ec522cc175877297428308c2d0967476737e14814b5339"
       }
     },
     {
@@ -101,7 +101,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00"
+        "value": "e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e"
       }
     },
     {
@@ -113,7 +113,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "6988e50ad748e6c8c0d0b06e53f7066a830e753eacaf8d29d424fdb0dc57f928"
+        "value": "c5035af52ba14238d10ee347ade623068729be42ba050c2f79374cc2e1329223"
       }
     }
   ],
@@ -293,6 +293,48 @@
       "linkedEvidenceIds": [
         "EV013"
       ]
+    },
+    {
+      "id": "FR-009",
+      "title": "Interpolated-string literal text remains non-executable, while executable expressions inside interpolation holes are scanned as code with nested brace and literal handling; an effect call in a hole retains call identity/location and cannot yield empty direct-effect facts. (Stories: US-001; Acceptance: AC-001)",
+      "text": "Interpolated-string literal text remains non-executable, while executable expressions inside interpolation holes are scanned as code with nested brace and literal handling; an effect call in a hole retains call identity/location and cannot yield empty direct-effect facts. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/369-effect-boundary/spec.md",
+      "sourceLocation": {
+        "line": 39,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T015"
+      ],
+      "linkedEvidenceIds": [
+        "EV015"
+      ]
+    },
+    {
+      "id": "FR-010",
+      "title": "Focused sensor and production Verify controls prove the exact \u0060$\u0022{File.WriteAllText(path, model)}\u0022\u0060 bypass is blocking while static interpolation text remains clean. (Stories: US-001; Acceptance: AC-001)",
+      "text": "Focused sensor and production Verify controls prove the exact \u0060$\u0022{File.WriteAllText(path, model)}\u0022\u0060 bypass is blocking while static interpolation text remains clean. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/369-effect-boundary/spec.md",
+      "sourceLocation": {
+        "line": 40,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T016"
+      ],
+      "linkedEvidenceIds": [
+        "EV016"
+      ]
     }
   ],
   "decisions": [
@@ -305,7 +347,7 @@
       "acceptanceRefs": [],
       "source": "work/369-effect-boundary/clarifications.md",
       "sourceLocation": {
-        "line": 26,
+        "line": 28,
         "column": 1
       },
       "linkedTaskIds": [
@@ -322,13 +364,30 @@
       "acceptanceRefs": [],
       "source": "work/369-effect-boundary/clarifications.md",
       "sourceLocation": {
-        "line": 27,
+        "line": 29,
         "column": 1
       },
       "linkedTaskIds": [
         "T012",
         "T013",
         "T014"
+      ]
+    },
+    {
+      "id": "DEC-003",
+      "title": "The lexical scanner uses distinct code and interpolated-literal states. Entering an interpolation hole returns to code state with balanced-brace tracking, so executable effect calls preserve their original one-based positions without making surrounding literal text visible.",
+      "decision": "The lexical scanner uses distinct code and interpolated-literal states. Entering an interpolation hole returns to code state with balanced-brace tracking, so executable effect calls preserve their original one-based positions without making surrounding literal text visible.",
+      "requirementRefs": [],
+      "storyRefs": [],
+      "acceptanceRefs": [],
+      "source": "work/369-effect-boundary/clarifications.md",
+      "sourceLocation": {
+        "line": 30,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T015",
+        "T016"
       ]
     }
   ],
@@ -737,6 +796,71 @@
         "line": 14,
         "column": 1
       }
+    },
+    {
+      "id": "T015",
+      "title": "Preserve executable calls inside interpolation holes",
+      "status": "done",
+      "owner": "heron-d733",
+      "dependencies": [
+        "T012"
+      ],
+      "requirements": [
+        "FR-009"
+      ],
+      "decisions": [
+        "DEC-003"
+      ],
+      "sourceIds": [
+        "AC-001",
+        "FR-009",
+        "PD-009"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV015"
+      ],
+      "source": "work/369-effect-boundary/tasks.yml",
+      "sourceLocation": {
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "id": "T016",
+      "title": "Prove interpolation-hole sensing through focused and production routes",
+      "status": "done",
+      "owner": "heron-d733",
+      "dependencies": [
+        "T015"
+      ],
+      "requirements": [
+        "FR-010"
+      ],
+      "decisions": [
+        "DEC-003"
+      ],
+      "sourceIds": [
+        "AC-001",
+        "FR-010",
+        "PD-010",
+        "VO-004"
+      ],
+      "requiredSkills": [
+        "automated-tests",
+        "readiness-evidence"
+      ],
+      "requiredEvidence": [
+        "EV016"
+      ],
+      "source": "work/369-effect-boundary/tasks.yml",
+      "sourceLocation": {
+        "line": 16,
+        "column": 1
+      }
     }
   ],
   "evidence": [
@@ -1063,6 +1187,54 @@
         "line": 14,
         "column": 1
       }
+    },
+    {
+      "id": "EV015",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T015",
+      "taskRefs": [
+        "T015"
+      ],
+      "requirementRefs": [
+        "FR-009"
+      ],
+      "artifactRefs": [],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/369-effect-boundary/evidence.yml",
+      "sourceLocation": {
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV016",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T016",
+      "taskRefs": [
+        "T016"
+      ],
+      "requirementRefs": [
+        "FR-010"
+      ],
+      "artifactRefs": [],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/369-effect-boundary/evidence.yml",
+      "sourceLocation": {
+        "line": 16,
+        "column": 1
+      }
     }
   ],
   "generatedViews": [
@@ -1072,7 +1244,7 @@
       "schemaVersion": 1,
       "generator": {
         "id": "FS.GG.SDD.Artifacts",
-        "version": "0.32.0"
+        "version": "1.0.0"
       },
       "sources": [
         {
@@ -1103,7 +1275,7 @@
           "path": "work/369-effect-boundary/checklist.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7"
+            "value": "337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879"
           },
           "schemaVersion": 1
         },
@@ -1111,7 +1283,7 @@
           "path": "work/369-effect-boundary/clarifications.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5"
+            "value": "01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07"
           },
           "schemaVersion": 1
         },
@@ -1119,7 +1291,7 @@
           "path": "work/369-effect-boundary/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "17320e2d7faee01c0bc1de85c579e3f0308a37c4222f4ebd0eee1b835d64afff"
+            "value": "c4b4c26056a33ab5f2e8e7d9a0cd356ace782f0e2dcd594ee01763050087ceeb"
           },
           "schemaVersion": 1
         },
@@ -1127,7 +1299,7 @@
           "path": "work/369-effect-boundary/plan.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183"
+            "value": "f6b93d619deab6a8d3ec522cc175877297428308c2d0967476737e14814b5339"
           },
           "schemaVersion": 1
         },
@@ -1135,7 +1307,7 @@
           "path": "work/369-effect-boundary/spec.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00"
+            "value": "e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e"
           },
           "schemaVersion": 1
         },
@@ -1143,14 +1315,14 @@
           "path": "work/369-effect-boundary/tasks.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "6988e50ad748e6c8c0d0b06e53f7066a830e753eacaf8d29d424fdb0dc57f928"
+            "value": "c5035af52ba14238d10ee347ade623068729be42ba050c2f79374cc2e1329223"
           },
           "schemaVersion": 1
         }
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "185794ed312ac91e2385d0194edd90347b4bf8917ce857042930de1ab5da8ac4"
+        "value": "313eec1f7049762755579950043d16456918134b89da61c6d6b1da07ab4ac454"
       },
       "currency": "current"
     }

@@ -4,16 +4,16 @@
   "workId": "369-effect-boundary",
   "stage": "ship",
   "status": "shipReady",
-  "generator": "FS.GG.SDD.Artifacts/0.32.0",
+  "generator": "FS.GG.SDD.Artifacts/1.0.0",
   "sourcesDigest": {
     "algorithm": "sha256",
-    "value": "90aadbc3e2da093b71264f80e65fcc7f484ea0effcc77538b4426f2aa0555a39"
+    "value": "f05d7523e85b785b7de90fcbec03bc233e52d58870aa323814a6251fe855c605"
   },
   "verificationReadiness": {
     "status": "verificationReady",
-    "evidenceSupportedCount": 14,
+    "evidenceSupportedCount": 16,
     "evidenceSelfAttestedCount": 0,
-    "evidenceObservedCount": 14
+    "evidenceObservedCount": 16
   },
   "disposition": {
     "state": "shipReady",

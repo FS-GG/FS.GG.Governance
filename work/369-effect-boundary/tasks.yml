@@ -13,19 +13,19 @@ work:
 sources:
   - label: spec
     path: work/369-effect-boundary/spec.md
-    digest: edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00
+    digest: e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e
     schemaVersion: 1
   - label: clarifications
     path: work/369-effect-boundary/clarifications.md
-    digest: 2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5
+    digest: 01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07
     schemaVersion: 1
   - label: checklist
     path: work/369-effect-boundary/checklist.md
-    digest: de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7
+    digest: 337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879
     schemaVersion: 1
   - label: plan
     path: work/369-effect-boundary/plan.md
-    digest: dcb9e5b0ad9e61110041f106020419ac394356ad68f3520796ee6cc2a957b183
+    digest: f6b93d619deab6a8d3ec522cc175877297428308c2d0967476737e14814b5339
     schemaVersion: 1
 tasks:
   - id: T001
@@ -168,6 +168,26 @@ tasks:
     sourceIds: [GV-001, PC-001, VO-003]
     requiredSkills: [deterministic-json, readiness-evidence]
     requiredEvidence: [EV014]
+  - id: T015
+    title: Preserve executable calls inside interpolation holes
+    status: done
+    owner: heron-d733
+    dependencies: [T012]
+    requirements: [FR-009]
+    decisions: [DEC-003]
+    sourceIds: [AC-001, FR-009, PD-009]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV015]
+  - id: T016
+    title: Prove interpolation-hole sensing through focused and production routes
+    status: done
+    owner: heron-d733
+    dependencies: [T015]
+    requirements: [FR-010]
+    decisions: [DEC-003]
+    sourceIds: [AC-001, FR-010, PD-010, VO-004]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV016]
 acceptedDeferrals: []
 findings: []
 advisoryNotes:

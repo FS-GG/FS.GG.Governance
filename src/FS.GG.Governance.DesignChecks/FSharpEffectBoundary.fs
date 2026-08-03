@@ -29,52 +29,82 @@ module FSharpEffectBoundary =
         let visible = text.ToCharArray()
         let mask index = if visible.[index] <> '\n' then visible.[index] <- ' '
         let mutable index = 0
-        while index < text.Length do
-            if index + 1 < text.Length && text.[index] = '/' && text.[index + 1] = '/' then
-                while index < text.Length && text.[index] <> '\n' do mask index; index <- index + 1
-            elif index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
-                let mutable depth = 0
-                while index < text.Length && (depth > 0 || (index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*')) do
-                    if index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
-                        mask index; mask (index + 1); depth <- depth + 1; index <- index + 2
-                    elif index + 1 < text.Length && text.[index] = '*' && text.[index + 1] = ')' then
-                        mask index; mask (index + 1); depth <- depth - 1; index <- index + 2
-                    else mask index; index <- index + 1
-            else
-                let prefixLength, quoteLength, verbatim =
-                    if index + 4 < text.Length && (text.Substring(index, 5) = "$@\"\"\"" || text.Substring(index, 5) = "@$\"\"\"") then 2, 3, false
-                    elif index + 3 < text.Length && text.Substring(index, 4) = "$\"\"\"" then 1, 3, false
-                    elif index + 2 < text.Length && (text.Substring(index, 3) = "$@\"" || text.Substring(index, 3) = "@$\"") then 2, 1, true
-                    elif index + 1 < text.Length && text.Substring(index, 2) = "$\"" then 1, 1, false
-                    elif index + 1 < text.Length && text.Substring(index, 2) = "@\"" then 1, 1, true
-                    elif index + 2 < text.Length && text.Substring(index, 3) = "\"\"\"" then 0, 3, false
-                    elif text.[index] = '"' then 0, 1, false
-                    else -1, 0, false
-                if prefixLength >= 0 then
-                    let opening = prefixLength + quoteLength
-                    for offset in 0 .. opening - 1 do mask (index + offset)
-                    index <- index + opening
-                    let mutable closed = false
-                    while index < text.Length && not closed do
-                        if quoteLength = 3 && index + 2 < text.Length && text.Substring(index, 3) = "\"\"\"" then
-                            mask index; mask (index + 1); mask (index + 2); index <- index + 3; closed <- true
-                        elif quoteLength = 1 && text.[index] = '"' then
-                            if verbatim && index + 1 < text.Length && text.[index + 1] = '"' then
-                                mask index; mask (index + 1); index <- index + 2
-                            else mask index; index <- index + 1; closed <- true
-                        elif not verbatim && text.[index] = '\\' && index + 1 < text.Length then
-                            mask index; mask (index + 1); index <- index + 2
+        let startsWith (value: string) =
+            index + value.Length <= text.Length
+            && String.CompareOrdinal(text, index, value, 0, value.Length) = 0
+        let stringStart () =
+            if startsWith "$@\"\"\"" || startsWith "@$\"\"\"" then Some(2, 3, false, true)
+            elif startsWith "$\"\"\"" then Some(1, 3, false, true)
+            elif startsWith "$@\"" || startsWith "@$\"" then Some(2, 1, true, true)
+            elif startsWith "$\"" then Some(1, 1, false, true)
+            elif startsWith "@\"" then Some(1, 1, true, false)
+            elif startsWith "\"\"\"" then Some(0, 3, false, false)
+            elif text.[index] = '"' then Some(0, 1, false, false)
+            else None
+        let rec scanCode stopAtInterpolationClose =
+            let mutable stopped = false
+            let mutable braceDepth = 0
+            while index < text.Length && not stopped do
+                if stopAtInterpolationClose && text.[index] = '}' then
+                    if braceDepth = 0 then
+                        mask index
+                        index <- index + 1
+                        stopped <- true
+                    else
+                        braceDepth <- braceDepth - 1
+                        index <- index + 1
+                elif stopAtInterpolationClose && text.[index] = '{' then
+                    braceDepth <- braceDepth + 1
+                    index <- index + 1
+                elif index + 1 < text.Length && text.[index] = '/' && text.[index + 1] = '/' then
+                    while index < text.Length && text.[index] <> '\n' do mask index; index <- index + 1
+                elif index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
+                    let mutable depth = 0
+                    while index < text.Length && (depth > 0 || (index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*')) do
+                        if index + 1 < text.Length && text.[index] = '(' && text.[index + 1] = '*' then
+                            mask index; mask (index + 1); depth <- depth + 1; index <- index + 2
+                        elif index + 1 < text.Length && text.[index] = '*' && text.[index + 1] = ')' then
+                            mask index; mask (index + 1); depth <- depth - 1; index <- index + 2
                         else mask index; index <- index + 1
-                elif text.[index] = '\''
-                     && ((index + 2 < text.Length && text.[index + 2] = '\'')
-                         || (index + 3 < text.Length && text.[index + 1] = '\\' && text.[index + 3] = '\'')) then
-                    mask index; index <- index + 1
-                    let mutable closed = false
-                    while index < text.Length && not closed && text.[index] <> '\n' do
-                        if text.[index] = '\\' && index + 1 < text.Length then mask index; mask (index + 1); index <- index + 2
-                        elif text.[index] = '\'' then mask index; index <- index + 1; closed <- true
-                        else mask index; index <- index + 1
-                else index <- index + 1
+                else
+                    match stringStart () with
+                    | Some(prefixLength, quoteLength, verbatim, interpolated) ->
+                        scanString prefixLength quoteLength verbatim interpolated
+                    | None when text.[index] = '\''
+                                && ((index + 2 < text.Length && text.[index + 2] = '\'')
+                                    || (index + 3 < text.Length && text.[index + 1] = '\\' && text.[index + 3] = '\'')) ->
+                        mask index; index <- index + 1
+                        let mutable closed = false
+                        while index < text.Length && not closed && text.[index] <> '\n' do
+                            if text.[index] = '\\' && index + 1 < text.Length then mask index; mask (index + 1); index <- index + 2
+                            elif text.[index] = '\'' then mask index; index <- index + 1; closed <- true
+                            else mask index; index <- index + 1
+                    | None -> index <- index + 1
+        and scanString prefixLength quoteLength verbatim interpolated =
+            let opening = prefixLength + quoteLength
+            for offset in 0 .. opening - 1 do mask (index + offset)
+            index <- index + opening
+            let mutable closed = false
+            while index < text.Length && not closed do
+                if quoteLength = 3 && startsWith "\"\"\"" then
+                    mask index; mask (index + 1); mask (index + 2); index <- index + 3; closed <- true
+                elif quoteLength = 1 && text.[index] = '"' then
+                    if verbatim && index + 1 < text.Length && text.[index + 1] = '"' then
+                        mask index; mask (index + 1); index <- index + 2
+                    else mask index; index <- index + 1; closed <- true
+                elif not verbatim && text.[index] = '\\' && index + 1 < text.Length then
+                    mask index; mask (index + 1); index <- index + 2
+                elif interpolated && text.[index] = '{' then
+                    if index + 1 < text.Length && text.[index + 1] = '{' then
+                        mask index; mask (index + 1); index <- index + 2
+                    else
+                        mask index
+                        index <- index + 1
+                        scanCode true
+                elif interpolated && index + 1 < text.Length && text.[index] = '}' && text.[index + 1] = '}' then
+                    mask index; mask (index + 1); index <- index + 2
+                else mask index; index <- index + 1
+        scanCode false
         String visible
 
     let private effectPatterns =

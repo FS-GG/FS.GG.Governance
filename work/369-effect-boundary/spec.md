@@ -36,6 +36,8 @@ Teams can mechanically enforce functional-core/imperative-shell semantics withou
 - FR-006: Production Verify sensing proves both directions: a pure declared transition plus explicit edge/delivery contract passes, while symbol-local direct I/O, callbacks, malformed policy, incomplete delivery, and expired exemptions block. (Stories: US-001; Acceptance: AC-001)
 - FR-007: Effect sensing recognizes executable call syntax rather than raw substrings, ignores comments, literal contents, and identifier-shaped text, and retains each matched call identity plus its one-based line and column. (Stories: US-001; Acceptance: AC-001)
 - FR-008: Production Verify controls execute the documented pure-comment example and lexical false-positive fixtures as passing cases, and an actual `File.WriteAllText` call as a blocking case whose diagnostic carries call identity and location. (Stories: US-001; Acceptance: AC-001)
+- FR-009: Interpolated-string literal text remains non-executable, while executable expressions inside interpolation holes are scanned as code with nested brace and literal handling; an effect call in a hole retains call identity/location and cannot yield empty direct-effect facts. (Stories: US-001; Acceptance: AC-001)
+- FR-010: Focused sensor and production Verify controls prove the exact `$"{File.WriteAllText(path, model)}"` bypass is blocking while static interpolation text remains clean. (Stories: US-001; Acceptance: AC-001)
 
 ## Ambiguities
 No material ambiguities recorded.

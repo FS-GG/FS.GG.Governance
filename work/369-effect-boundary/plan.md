@@ -16,15 +16,15 @@ publicOrToolFacingImpact: true
 Prose status: planned
 
 ## Source Snapshot
-- spec: work/369-effect-boundary/spec.md sha256:edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00 schemaVersion:1
-- clarifications: work/369-effect-boundary/clarifications.md sha256:2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5 schemaVersion:1
-- checklist: work/369-effect-boundary/checklist.md sha256:de24ab44d65007a84c959676f7398e4bae28313a68c7b1e4318f9d9f84c05cb7 schemaVersion:1
+- spec: work/369-effect-boundary/spec.md sha256:e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e schemaVersion:1
+- clarifications: work/369-effect-boundary/clarifications.md sha256:01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07 schemaVersion:1
+- checklist: work/369-effect-boundary/checklist.md sha256:337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879 schemaVersion:1
 
 ## Plan Scope
 - Work item 369-effect-boundary is planned from the current specification, clarification, and checklist facts.
-- Requirement count: 8.
-- Clarification decision count: 2.
-- Checklist result count: 8.
+- Requirement count: 10.
+- Clarification decision count: 3.
+- Checklist result count: 10.
 
 ## Plan Decisions
 - PD-001 [AC-001] [FR-001] complete: Add a signature-backed DesignChecks fact model and pure evaluator; applicability comes from `IsStatefulWorkflow`, never a literal F# type or function name.
@@ -35,6 +35,8 @@ Prose status: planned
 - PD-006 [AC-001] [FR-006] complete: Drive required controls through `Interpreter.realPorts`: clean functional-core/edge, local direct I/O, missing symbol, malformed/unknown option, parser/thin adapter, callback, delivery completeness, and exemption validity.
 - PD-007 [AC-001] [FR-007] complete: Mask comments and F# literal forms without changing source offsets, match only token-bounded executable call forms, and expose typed effect-call facts containing category, symbol, line, and column.
 - PD-008 [AC-001] [FR-008] complete: Add unit and production controls for the documented pure-line comment, block comments, ordinary/interpolated strings, identifier-only text, and an actual filesystem call with diagnostic identity/location.
+- PD-009 [AC-001] [FR-009] complete: Split lexical scanning into code and interpolated-literal states; mask delimiters/literal segments, return to code scanning inside single-brace holes, and balance nested expression braces without changing source offsets.
+- PD-010 [AC-001] [FR-010] complete: Add exact focused and real Verify-route regression controls for `$"{File.WriteAllText(path, model)}"`, asserting non-empty typed call facts and the production diagnostic identity/location.
 
 ## Contract Impact
 - PC-001 [PD-001] public API: `FSharpEffectBoundary.fsi` is the reusable contract: typed effect categories, delivery facts, exemption facts, project sensor, and pure evaluator.
@@ -43,6 +45,7 @@ Prose status: planned
 - VO-001 [PD-001] [PC-001] semanticTest: Run focused DesignChecks tests proving direct I/O, process, callback, exception, retry/idempotency, pure parser, thin adapter, and expired exemption behavior; build Debug and Release.
 - VO-002 [PD-005] [PD-006] semanticTest: Run focused production Verify tests proving exact parsing and real symbol-local bodies, then require exact-head full Debug and Release CI.
 - VO-003 [PD-007] [PD-008] semanticTest: Capture fresh TRX evidence for lexical call sensing and production Verify controls, re-bless the intentional public effect-call surface, and require exact-head full Debug and Release CI.
+- VO-004 [PD-009] [PD-010] semanticTest: Capture fresh focused and production-route reports proving executable interpolation holes retain `File.WriteAllText` identity and cannot produce an empty direct-effect result; require full branch gates before review.
 
 ## Performance Intent
 No performance intent is declared for this work item.

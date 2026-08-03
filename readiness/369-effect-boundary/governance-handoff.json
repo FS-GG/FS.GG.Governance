@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
   "contractVersion": "2.0.0",
-  "generatorVersion": "FS.GG.SDD.Artifacts/0.32.0",
+  "generatorVersion": "FS.GG.SDD.Artifacts/1.0.0",
   "workId": "369-effect-boundary",
   "sources": [
     {
       "path": "readiness/369-effect-boundary/ship.json",
-      "digest": "sha256:e982310087bdb8fdb0f4741ba43826f56a7199941df7165d606c4dd34d24a823",
+      "digest": "sha256:f4b16c39835ac6ee7f4d6823d6330bc8a387915d5ad3963577f1416a1a5c879a",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/verify.json",
-      "digest": "sha256:9affe20e73e9990602dd1092aa0aad433a66532aa16fb637bf9c874c94d6fb77",
+      "digest": "sha256:a78839da8c2560655d8b4ab556430258f40f528431782ef451f5cf6d367102c7",
       "schemaVersion": 1
     },
     {
       "path": "readiness/369-effect-boundary/work-model.json",
-      "digest": "sha256:cb80ec312674144d7cf28ede34f8b92a5775ed26abbf164e044fbe217b02151d",
+      "digest": "sha256:1f549fd23ef53ef8788baf3eb557363f967ba6298441cedba4aed615421202db",
       "schemaVersion": 1
     }
   ],
@@ -93,6 +93,16 @@
         "rationale": null
       },
       {
+        "id": "evidence:EV015",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "evidence:EV016",
+        "state": "real",
+        "rationale": null
+      },
+      {
         "id": "task:T001",
         "state": "real",
         "rationale": null
@@ -161,6 +171,16 @@
         "id": "task:T014",
         "state": "real",
         "rationale": null
+      },
+      {
+        "id": "task:T015",
+        "state": "real",
+        "rationale": null
+      },
+      {
+        "id": "task:T016",
+        "state": "real",
+        "rationale": null
       }
     ],
     "dependencies": [
@@ -219,6 +239,14 @@
       {
         "dependent": "evidence:EV014",
         "dependency": "task:T014"
+      },
+      {
+        "dependent": "evidence:EV015",
+        "dependency": "task:T015"
+      },
+      {
+        "dependent": "evidence:EV016",
+        "dependency": "task:T016"
       },
       {
         "dependent": "task:T001",
@@ -315,6 +343,22 @@
       {
         "dependent": "task:T014",
         "dependency": "task:T013"
+      },
+      {
+        "dependent": "task:T015",
+        "dependency": "evidence:EV015"
+      },
+      {
+        "dependent": "task:T015",
+        "dependency": "task:T012"
+      },
+      {
+        "dependent": "task:T016",
+        "dependency": "evidence:EV016"
+      },
+      {
+        "dependent": "task:T016",
+        "dependency": "task:T015"
       }
     ]
   },

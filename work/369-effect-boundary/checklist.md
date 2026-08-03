@@ -21,8 +21,8 @@ Prose status: checklistReady
 - work/369-effect-boundary/clarifications.md
 
 ## Source Snapshot
-- spec: work/369-effect-boundary/spec.md sha256:edf03fedd62a5d801115fbbbb70c9ce6f29a27f2530c5351898efb5dc75b5f00 schemaVersion:1
-- clarifications: work/369-effect-boundary/clarifications.md sha256:2a7f5cbcfe7bba28885079a99a10d47b8195935d7239cf24c4e47a70d3e9ccc5 schemaVersion:1
+- spec: work/369-effect-boundary/spec.md sha256:e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e schemaVersion:1
+- clarifications: work/369-effect-boundary/clarifications.md sha256:01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07 schemaVersion:1
 
 ## Checklist Items
 - CHK-001 [FR-001] [AC-001] blocking: Requirement FR-001 is testable and linked to acceptance coverage.
@@ -33,6 +33,8 @@ Prose status: checklistReady
 - CHK-006 [FR-006] [AC-001] blocking: Production Verify fixtures cover the good architecture and every required blocking control.
 - CHK-007 [FR-007] [AC-001] blocking: Lexical controls distinguish executable calls from comments, literals, and identifiers while retaining exact call identity and location.
 - CHK-008 [FR-008] [AC-001] blocking: Production Verify exercises the documented example, false-positive controls, and an actual call diagnostic through real sensing.
+- CHK-009 [FR-009] [AC-001] blocking: Interpolation-hole sensing is position preserving, distinguishes escaped/literal braces from executable holes, and cannot erase a real direct-effect call.
+- CHK-010 [FR-010] [AC-001] blocking: Both focused and production-route controls assert the exact executable interpolation call retains identity and blocks.
 
 ## Review Results
 - CR-001 [CHK:CHK-001] [FR-001] [AC-001] pass: Requirement FR-001 is testable and linked to acceptance coverage.
@@ -43,6 +45,8 @@ Prose status: checklistReady
 - CR-006 [CHK:CHK-006] [FR-006] [AC-001] pass: Production-route coverage names each required control and expected severity.
 - CR-007 [CHK:CHK-007] [FR-007] [AC-001] pass: Unit controls cover line/block comments, string/interpolated-string contents, identifier-shaped text, and an actual call with identity/location.
 - CR-008 [CHK:CHK-008] [FR-008] [AC-001] pass: Production controls assert the exact documented comment passes and a real filesystem call blocks with diagnostic evidence.
+- CR-009 [CHK:CHK-009] [FR-009] [AC-001] pass: The scanner has explicit code/interpolated-literal states and balanced expression braces while preserving source offsets.
+- CR-010 [CHK:CHK-010] [FR-010] [AC-001] pass: Focused sensing asserts non-empty `DirectEffects` and exact call identity/location; production Verify asserts the resulting blocking diagnostic.
 
 ## Accepted Deferrals
 No accepted checklist deferrals recorded.
@@ -54,6 +58,6 @@ No blocking findings recorded.
 No advisory notes recorded.
 
 ## Lifecycle Notes
-- Specification requirements reviewed: 8.
-- Clarification decisions reviewed: 2.
+- Specification requirements reviewed: 10.
+- Clarification decisions reviewed: 3.
 - Next lifecycle action: `fsgg-sdd plan --work 369-effect-boundary`.
