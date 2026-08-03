@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "98ef4d0d6024f7e55be08950df843dd13e227cc7bac3169062c8d5cfca979c4c"
+        "value": "4d1bff12f28d49466d3ccb070f3b12197a0141cc91ccdd1785038c98e77368bc"
       }
     },
     {
@@ -818,7 +818,7 @@
           "path": "work/370-evidence-boundaries/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "98ef4d0d6024f7e55be08950df843dd13e227cc7bac3169062c8d5cfca979c4c"
+            "value": "4d1bff12f28d49466d3ccb070f3b12197a0141cc91ccdd1785038c98e77368bc"
           },
           "schemaVersion": 1
         },
@@ -849,7 +849,7 @@
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "e307eb19cab24ec5d4d191db6a129c1a55716d3192dfc6059eaceea9c8b0f764"
+        "value": "64e3a925145fbf60e6b3d73d01785ba0baaa4a8e93b11fdec83183ed3e05d3ba"
       },
       "currency": "current"
     }
