@@ -42,6 +42,18 @@ let private contentOf (cap: Capture) : string =
     | Some(_, c) -> c
     | None -> failtest "expected a verify.json write"
 
+let private senseBoundarySource (source: string) (assertions: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list -> unit) =
+    withTempRepo (fun dir ->
+        writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+        writeFile dir "src/Boundary.fs" source
+        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+        realSurfaceSense dir report |> assertions)
+
+let private effectCodes (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) =
+    findings
+    |> List.filter (fun finding -> finding.Code.StartsWith("fsharp.effect", StringComparison.Ordinal) || finding.Code = "fsharp.callback-hidden-state")
+    |> List.map _.Code
+
 [<Tests>]
 let tests =
     testList
@@ -179,6 +191,151 @@ let tests =
                   Expect.isTrue (SurfaceFold.surfaceBlocks Strict findings) "the reified finding blocks the verify verdict"
               finally
                   try Directory.Delete(dir, true) with _ -> () }
+
+          test "declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" {
+              // This exercises the concrete `Interpreter.realPorts` sense path, including its project
+              // enumeration and the ProjectSensing seam; it is not a hand-built BoundaryFacts fixture.
+              withTempRepo (fun dir ->
+                  writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+                  writeFile dir "src/Boundary.fs" """module internal Boundary
+// fsgg:effect-boundary transition
+let transition value = File.WriteAllText("out.txt", value)"""
+
+                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+                  let findings = realSurfaceSense dir report
+
+                  Expect.isFalse
+                      (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-boundary-malformed"))
+                      (sprintf "the production sensor accepted the project fixture; findings: %A" findings)
+
+                  Expect.isTrue
+                      (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-in-transition" && finding.BaseSeverity = Blocking))
+                      "a declared transition which performs direct I/O blocks through the production Verify sense") }
+
+          test "effect-boundary production controls use real symbols and exact declaration tokens" {
+              let good = """module internal Boundary
+type Message = Saved | SaveFailed
+type Effect = Persist of string
+// fsgg:effect-boundary advance edge=interpret success=Saved failure=SaveFailed retry=never idempotency=document-id
+let advance model = model, [ Persist model ]
+let interpret effect = task {
+    match effect with
+    | Persist text ->
+        try
+            do! File.WriteAllTextAsync("document.txt", text)
+            return Saved
+        with _ ->
+            return SaveFailed
+}"""
+              senseBoundarySource good (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "a pure transition plus explicit real edge contract passes")
+
+              let documented = """module internal Boundary
+type Message = Saved | SaveFailed
+type Effect = Persist of string
+// fsgg:effect-boundary advance edge=interpret success=Saved failure=SaveFailed retry=never idempotency=document-id
+let advance model = model, [ Persist model.Document ] // pure: no File.WriteAllText here
+let interpret effect = task {
+    match effect with
+    | Persist text ->
+        do! File.WriteAllTextAsync("document.txt", text)
+        return Saved
+}"""
+              senseBoundarySource documented (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "the exact documented pure-line comment does not manufacture an effect")
+
+              let lexicalNoise = """module internal Boundary
+// fsgg:effect-boundary advance
+let advance model =
+    (* Process.Start("ignored") *)
+    let ordinary = "File.WriteAllText(ignored)"
+    let interpolated = $"File.WriteAllText({model})"
+    let FileWriteAllText = ordinary
+    model"""
+              senseBoundarySource lexicalNoise (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "comments, string text, interpolation text, and identifiers are not calls")
+
+              let interpolatedCall = "module internal Boundary\n// fsgg:effect-boundary advance\nlet advance (path: string) (model: string) = $\"{File.WriteAllText(path, model)}\""
+              senseBoundarySource interpolatedCall (fun findings ->
+                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+                  Expect.stringContains effect.Location.Detail "File.WriteAllText@3:49" "production sensing preserves executable call identity inside an interpolation hole")
+
+              let actualCall = """module internal Boundary
+// fsgg:effect-boundary advance
+let advance model =
+    File.WriteAllText("document.txt", model)"""
+              senseBoundarySource actualCall (fun findings ->
+                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+                  Expect.stringContains effect.Location.Detail "File.WriteAllText@4:5" "production diagnostics retain actual call identity and location")
+
+              let unrelatedEdge = """module internal Boundary
+// fsgg:effect-boundary advance
+let advance model = model
+let interpret text = File.WriteAllText("document.txt", text)"""
+              senseBoundarySource unrelatedEdge (fun findings ->
+                  Expect.isFalse (effectCodes findings |> List.contains "fsharp.effect-in-transition") "later edge I/O is outside the declared transition body")
+
+              let missingSymbol = """module internal Boundary
+// fsgg:effect-boundary missing
+let actual model = model"""
+              senseBoundarySource missingSymbol (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "a missing named symbol fails closed")
+
+              let malformed = """module internal Boundary
+// fsgg:effect-boundary transition not-edge
+let transition model = model"""
+              senseBoundarySource malformed (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "bare and substring-shaped options are rejected")
+
+              let unknown = """module internal Boundary
+// fsgg:effect-boundary transition edgy=true
+let transition model = model"""
+              senseBoundarySource unknown (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "unknown exact options are rejected") }
+
+          test "effect-boundary production controls cover applicability delivery callbacks clocks and exemptions" {
+              let nonApplicable kind = sprintf """module internal Boundary
+// fsgg:effect-boundary read kind=%s
+let read value = File.WriteAllText("out.txt", value)""" kind
+              for kind in [ "parser"; "thin-adapter" ] do
+                  senseBoundarySource (nonApplicable kind) (fun findings ->
+                      Expect.isEmpty (effectCodes findings) (sprintf "%s is explicitly non-applicable" kind))
+
+              let callback = """module internal Boundary
+// fsgg:effect-boundary transition
+let transition work = Async.Start work"""
+              senseBoundarySource callback (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.callback-hidden-state" "callback-hidden state blocks")
+
+              let incompleteDelivery = """module internal Boundary
+// fsgg:effect-boundary transition edge=interpret success=Saved
+let transition value = value
+let interpret value = value"""
+              senseBoundarySource incompleteDelivery (fun findings ->
+                  let codes = effectCodes findings
+                  Expect.contains codes "fsharp.effect-result-message-missing" "failure message is required"
+                  Expect.contains codes "fsharp.effect-retry-missing" "retry semantics are required"
+                  Expect.contains codes "fsharp.effect-idempotency-missing" "idempotency semantics are required")
+
+              let injectedClock = """module internal Boundary
+// fsgg:effect-boundary transition
+let transition clock model = clock(), model"""
+              senseBoundarySource injectedClock (fun findings ->
+                  Expect.isFalse (effectCodes findings |> List.contains "fsharp.effect-in-transition") "an injected clock is pure at the transition")
+
+              let exempt reviewBy = sprintf """module internal Boundary
+// fsgg:effect-boundary transition exemption-owner=platform exemption-rationale="legacy bridge" exemption-review-by=%s
+let transition value = File.WriteAllText("out.txt", value)""" reviewBy
+              senseBoundarySource (exempt "2099-01-01") (fun findings ->
+                  Expect.isEmpty (effectCodes findings) "a complete unexpired symbol exemption is narrow and non-applicable")
+              senseBoundarySource (exempt "2000-01-01") (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.effect-exemption-invalid" "an expired exemption blocks")
+
+              let partialExemption = """module internal Boundary
+// fsgg:effect-boundary transition exemption-owner=platform
+let transition model = model"""
+              senseBoundarySource partialExemption (fun findings ->
+                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "a partial exemption schema fails closed") }
 
           // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
           test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {

@@ -1,0 +1,474 @@
+schemaVersion: 1
+workId: 369-effect-boundary
+stage: evidence
+status: evidenceReady
+sourceSpec: work/369-effect-boundary/spec.md
+sourceClarifications: work/369-effect-boundary/clarifications.md
+sourceChecklist: work/369-effect-boundary/checklist.md
+sourcePlan: work/369-effect-boundary/plan.md
+sourceTasks: work/369-effect-boundary/tasks.yml
+sourceAnalysis: readiness/369-effect-boundary/analysis.json
+sourceSnapshots:
+  - label: analysis
+    path: readiness/369-effect-boundary/analysis.json
+    digest: 7220e2877373d33161159c87ffdeebd5fce8909abd2a7d13353203130d8c9c1d
+    schemaVersion: 1
+  - label: checklist
+    path: work/369-effect-boundary/checklist.md
+    digest: 337c0009b7e93edb1fe52dd7fe4c372e777894039ef265ed8251cea407478879
+    schemaVersion: 1
+  - label: clarifications
+    path: work/369-effect-boundary/clarifications.md
+    digest: 01fd36a08292bd9fc0f9f3aa71a147ab375f88a77aaa1d7c183e8fee14de1f07
+    schemaVersion: 1
+  - label: plan
+    path: work/369-effect-boundary/plan.md
+    digest: f6b93d619deab6a8d3ec522cc175877297428308c2d0967476737e14814b5339
+    schemaVersion: 1
+  - label: spec
+    path: work/369-effect-boundary/spec.md
+    digest: e879df7bb2ae8c275b1ab673d812cd588db0289ae5f12c31b5c9326c84c24c8e
+    schemaVersion: 1
+  - label: tasks
+    path: work/369-effect-boundary/tasks.yml
+    digest: c5035af52ba14238d10ee347ade623068729be42ba050c2f79374cc2e1329223
+    schemaVersion: 1
+evidence:
+  - id: EV001
+    kind: verification
+    subject:
+      type: task
+      id: T001
+    taskRefs: [T001]
+    requirementRefs: [FR-001]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV001]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-verify-production.trx
+      digest: "sha256:76e57abf7d1c8fc01662565920cdabe1193f9e1a5ffb4ab31cbb7fcf12a6348f"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 1
+      failed: 0
+      skipped: 0
+    notes: ["Production Verify sensing exercised over a real temporary F# project."]
+  - id: EV002
+    kind: verification
+    subject:
+      type: task
+      id: T002
+    taskRefs: [T002]
+    requirementRefs: [FR-002]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-002]
+    obligationRefs: [EV002]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV003
+    kind: verification
+    subject:
+      type: task
+      id: T003
+    taskRefs: [T003]
+    requirementRefs: [FR-003]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-003]
+    obligationRefs: [EV003]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV004
+    kind: verification
+    subject:
+      type: task
+      id: T004
+    taskRefs: [T004]
+    requirementRefs: [FR-004]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-004]
+    obligationRefs: [EV004]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV005
+    kind: verification
+    subject:
+      type: task
+      id: T005
+    taskRefs: [T005]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV005]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV006
+    kind: verification
+    subject:
+      type: task
+      id: T006
+    taskRefs: [T006]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV006]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV007
+    kind: verification
+    subject:
+      type: task
+      id: T007
+    taskRefs: [T007]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: []
+    obligationRefs: [EV007]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV008
+    kind: verification
+    subject:
+      type: task
+      id: T008
+    taskRefs: [T008]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV008]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-focused.trx
+      digest: "sha256:9dea1dcefc232a855d3369d628c454a3968eccc14b83b2d3cfc8927c3b646278"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 6
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV009
+    kind: verification
+    subject:
+      type: task
+      id: T009
+    taskRefs: [T009]
+    requirementRefs: [FR-005]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-001]
+    checklistResultRefs: [CR-005]
+    planDecisionRefs: [PD-005]
+    obligationRefs: [EV009]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-symbol-grammar.trx
+      digest: "sha256:89513059f13fb467790bb4706312a0eaa372622acd6acafd34496b89695be8ca"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 9
+      failed: 0
+      skipped: 0
+    notes: [Exact grammar and symbol-local facts observed in focused tests.]
+  - id: EV010
+    kind: verification
+    subject:
+      type: task
+      id: T010
+    taskRefs: [T010]
+    requirementRefs: [FR-006]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-001]
+    checklistResultRefs: [CR-006]
+    planDecisionRefs: [PD-006]
+    obligationRefs: [EV010]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-production-controls.trx
+      digest: "sha256:1c115f895ea37e842e3584ecd0cb4e3a205cea3c464abc9e85189451967eb2a4"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 2
+      failed: 0
+      skipped: 0
+    notes: [Production realPorts acceptance-control matrix observed.]
+  - id: EV011
+    kind: verification
+    subject:
+      type: task
+      id: T011
+    taskRefs: [T011]
+    requirementRefs: []
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-001]
+    checklistResultRefs: [CR-005, CR-006]
+    planDecisionRefs: [PD-005, PD-006]
+    obligationRefs: [EV011]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: docs/governance-design/fsharp-effect-boundary.md
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-production-controls.trx
+      digest: "sha256:1c115f895ea37e842e3584ecd0cb4e3a205cea3c464abc9e85189451967eb2a4"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 2
+      failed: 0
+      skipped: 0
+    notes: [Updated documentation example and production fixtures are aligned before exact-head CI.]
+  - id: EV012
+    kind: verification
+    subject:
+      type: task
+      id: T012
+    taskRefs: [T012]
+    requirementRefs: [FR-007]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-007]
+    planDecisionRefs: [PD-007]
+    obligationRefs: [EV012]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-call-syntax.trx
+      digest: "sha256:f358798dbdbae0584c0747d479bd9fbf7dab025a92db1469e3f192ad5779e209"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 11
+      failed: 0
+      skipped: 0
+    notes: [Lexical false-positive controls and exact executable-call identity/location passed.]
+  - id: EV013
+    kind: verification
+    subject:
+      type: task
+      id: T013
+    taskRefs: [T013]
+    requirementRefs: [FR-008]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-008]
+    planDecisionRefs: [PD-008]
+    obligationRefs: [EV013]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-production-call-syntax.trx
+      digest: "sha256:e226b79e26238316bba6b6fc0060e794e08077517ca73858e1f1e0e5f4d8feea"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 90
+      failed: 0
+      skipped: 0
+    notes: [Production realPorts sensing passed documented, and actual-call controls., lexical-noise]
+  - id: EV014
+    kind: verification
+    subject:
+      type: task
+      id: T014
+    taskRefs: [T014]
+    requirementRefs: []
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-002]
+    checklistResultRefs: [CR-007, CR-008]
+    planDecisionRefs: [PD-007, PD-008]
+    obligationRefs: [EV014]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: surface/FS.GG.Governance.DesignChecks.surface.txt
+      - kind: verification
+        path: docs/governance-design/fsharp-effect-boundary.md
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-call-syntax.trx
+      digest: "sha256:f358798dbdbae0584c0747d479bd9fbf7dab025a92db1469e3f192ad5779e209"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 11
+      failed: 0
+      skipped: 0
+    notes: [The signature, and focused evidence are aligned., documentation, public surface baseline]
+  - id: EV015
+    kind: verification
+    subject:
+      type: task
+      id: T015
+    taskRefs: [T015]
+    requirementRefs: [FR-009]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-003]
+    checklistResultRefs: [CR-009]
+    planDecisionRefs: [PD-009]
+    obligationRefs: [EV015]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/FSharpEffectBoundaryTests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.DesignChecks.Tests/TestResults/governance369-repair-interpolation.trx
+      digest: "sha256:325d5fa08caa1e3ec60ec4281d4a2b87a33c94f8413782735d740bf281b72979"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 12
+      failed: 0
+      skipped: 0
+    notes: [Focused sensing preserved File.WriteAllText identity and a non-empty direct-effect result inside the exact interpolation hole.]
+  - id: EV016
+    kind: verification
+    subject:
+      type: task
+      id: T016
+    taskRefs: [T016]
+    requirementRefs: [FR-010]
+    acceptanceScenarioRefs: [AC-001]
+    clarificationDecisionRefs: [DEC-003]
+    checklistResultRefs: [CR-010]
+    planDecisionRefs: [PD-010]
+    obligationRefs: [EV016]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.VerifyCommand.Tests/SurfaceChecksE2ETests.fs
+    result: pass
+    synthetic: false
+    observedRun:
+      source: tests/FS.GG.Governance.VerifyCommand.Tests/TestResults/governance369-repair-production.trx
+      digest: "sha256:58d52dc0e6afea511dc1d915b4d0adcb287bba8b8fa73b5d168cfc6f81f0342b"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 2
+      failed: 0
+      skipped: 0
+    notes: [Production Verify sensing emitted the blocking diagnostic with File.WriteAllText identity and location for the interpolation-hole call.]
+lifecycleNotes:
+  - "Next lifecycle action: verify."
