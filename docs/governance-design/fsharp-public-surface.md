@@ -19,6 +19,7 @@ The optional `.fsgg/fsharp-surface.json` file has this typed shape:
 ```json
 {
   "declaredGlob": "src/**/*.fsi",
+  "maturity": "block-on-ship",
   "projects": {
     "src/MyProject/MyProject.fsproj": {
       "requiresBaseline": true,
@@ -36,7 +37,10 @@ The optional `.fsgg/fsharp-surface.json` file has this typed shape:
 }
 ```
 
-`declaredGlob` is anchored at the repository root and selects only compiled `.fsi` inputs for
+`maturity` is the typed declared policy for this evaluated surface: `observe`, `warn`,
+`block-on-pr`, `block-on-ship`, or `block-on-release`. It defaults to `warn` only when the
+policy is absent or omits the field. A present malformed value makes the whole policy malformed;
+the producer emits input-state evidence and no clean receipt. `declaredGlob` is anchored at the repository root and selects only compiled `.fsi` inputs for
 `matchedModules`; `**/` also matches zero nested directories. For example,
 `src/**/Public*.fsi` matches both `src/PublicApi.fsi` and `src/nested/PublicModel.fsi`, but not a
 root-level `Domain.fsi` or `src/Internal.fsi`. Missing policy uses `src/**/*.fsi`. Present but malformed
@@ -75,7 +79,7 @@ The v1 projection has fixed property order. A clean project with one selected si
   "matchedModules": ["src/MyProject/PublicApi.fsi"],
   "matchedModuleCount": 1,
   "cardinality": "one",
-  "maturity": "warn",
+  "maturity": "block-on-ship",
   "findings": [],
   "freshnessDigest": "…",
   "configDigest": "…",
@@ -90,6 +94,27 @@ selection; cardinality is `zero`, `one`, or `many`. Findings are objects with st
 `detail`, `isInputState`, `baseSeverity`, `effectiveSeverity`, and nullable `evidence` fields. During
 migration, rule findings have blocking base severity and advisory effective severity. Malformed input
 instead emits a blocking `fsharp.surface-malformed` input-state finding.
+
+`maturity` is a v1 field whose semantics are corrected by the compatible Governance 0.2.x producer:
+it is the effective configured policy, not a caller-provided value or a constant advisory placeholder.
+Consumers that already parse v1 can use this value without a schema migration; producers must publish the
+0.2.x Config and DesignChecks packages/tool before a consumer relies on blocking behavior. The SDD#833
+rollout is therefore: publish this producer, invoke the real receipt command, then make `verify` and
+`ship` enforce a `block-on-ship` zero-signature receipt.
+
+An F# consumer should obtain this policy fact only from the producer API; it does not accept a forged
+maturity argument:
+
+```fsharp
+open FS.GG.Governance.DesignChecks
+open FS.GG.Governance.DesignChecks.FSharpSurface
+
+let receipt = receipt repoRoot "src/Game/Game.fsproj" false false true request
+match receipt.Malformed, receipt.Applicable, receipt.Maturity, receipt.Cardinality with
+| None, true, "block-on-ship", "zero" -> failwith "public F# surface is blocking and empty"
+| None, _, _, _ -> ()
+| Some reason, _, _, _ -> failwith $"surface input is malformed: {reason}"
+```
 
 `sourceDigest` and `freshnessDigest` bind the project file and its sensed `.fs`/`.fsi` inputs.
 `configDigest` binds `.fsgg/capabilities.yml` when present, and `policyDigest` binds

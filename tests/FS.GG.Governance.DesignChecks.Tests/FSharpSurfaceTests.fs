@@ -274,4 +274,28 @@ let tests =
                       Expect.isTrue result.Applicable "non-test executable is applicable"
                       Expect.equal result.Applicability "applicable" "disposition is not inferred from count"
                       Expect.equal (result.MatchedModuleCount, result.Cardinality) (0, "zero") "matches signatures, not implementations")
-          } ]
+          }
+
+          test "configured block-on-ship policy is projected by the v1 receipt rather than a hardcoded advisory token" {
+              temporaryProject
+                  [ "Game.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><Compile Include=\"Program.fs\" /><Compile Include=\"World.fs\" /></ItemGroup></Project>"
+                    "Program.fs", "[<EntryPoint>] let main _ = 0"
+                    "World.fs", "module World\nlet tick = 1"
+                    ".fsgg/fsharp-surface.json", "{\"maturity\":\"block-on-ship\",\"declaredGlob\":\"src/**/*.fsi\"}" ]
+                  (fun root ->
+                      let result = receipt root "Game.fsproj" false false true request
+                      Expect.equal result.Maturity "block-on-ship" "receipt carries the effective typed policy maturity"
+                      Expect.equal (result.Applicability, result.Cardinality) ("applicable", "zero") "Rogue3-shaped zero is still applicable evidence")
+          }
+
+          test "malformed policy is input-state evidence, never a clean receipt" {
+              temporaryProject
+                  [ "Game.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><Compile Include=\"Program.fs\" /></ItemGroup></Project>"
+                    "Program.fs", "[<EntryPoint>] let main _ = 0"
+                    ".fsgg/fsharp-surface.json", "{\"maturity\":\"forged\"}" ]
+                  (fun root ->
+                      let result = receipt root "Game.fsproj" false false true request
+                      Expect.isSome result.Malformed "invalid policy cannot become a clean advisory receipt"
+                      Expect.isTrue (result.Findings |> List.forall _.IsInputState) "all malformed findings identify input state")
+          }
+        ]

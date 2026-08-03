@@ -1,0 +1,88 @@
+module FS.GG.Governance.DesignChecks.Tests.FSharpSurfaceCommandTests
+
+open System
+open System.Diagnostics
+open System.IO
+open System.Text.Json
+open Expecto
+open FS.GG.Governance.DesignChecks.Tests.Support
+
+// Real command-edge coverage for the persisted v1 producer.  These fixtures deliberately create
+// actual SDK projects and execute the production command; they are not synthetic receipt JSON.
+let private withTemporaryProject (files: (string * string) list) action =
+    let root = Path.Combine(Path.GetTempPath(), "fsgg-fsharp-surface-command-" + Guid.NewGuid().ToString("N"))
+    Directory.CreateDirectory root |> ignore
+    try
+        for relative, content in files do
+            let path = Path.Combine(root, relative)
+            Path.GetDirectoryName(path) |> Option.ofObj |> Option.iter (Directory.CreateDirectory >> ignore)
+            File.WriteAllText(path, content)
+        action root
+    finally
+        Directory.Delete(root, true)
+
+let private run root project extra =
+    let info = ProcessStartInfo("dotnet")
+    [ "run"; "--project"; Path.Combine(repoRoot, "src", "FS.GG.Governance.FSharpSurfaceCommand"); "--no-restore"; "--"; "--root"; root; "--project"; project ]
+    @ extra
+    |> List.iter info.ArgumentList.Add
+    info.WorkingDirectory <- repoRoot
+    info.RedirectStandardOutput <- true
+    info.RedirectStandardError <- true
+    info.UseShellExecute <- false
+    match Process.Start(info) |> Option.ofObj with
+    | None -> failtest "fsharp-surface command did not start"
+    | Some child ->
+        use child = child
+        let output = child.StandardOutput.ReadToEnd()
+        let error = child.StandardError.ReadToEnd()
+        child.WaitForExit()
+        if String.IsNullOrWhiteSpace output then failtestf "fsharp-surface command emitted no JSON (stderr: %s)" error
+        child.ExitCode, output
+
+let private stringField (name: string) (json: string) =
+    use document = JsonDocument.Parse json
+    document.RootElement.GetProperty(name).GetString()
+
+[<Tests>]
+let tests =
+    testSequenced <|
+        testList
+            "FSharpSurfaceCommand"
+            [ test "production command persists deterministic configured-policy receipts across zero, populated, non-applicable, internal, and malformed fixtures" {
+                  withTemporaryProject
+                      [ "Zero.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><Compile Include=\"Program.fs\" /><Compile Include=\"World.fs\" /></ItemGroup></Project>"
+                        "Program.fs", "[<EntryPoint>] let main _ = 0"
+                        "World.fs", "module World\nlet tick = 1"
+                        "Populated.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Public.fsi\" /><Compile Include=\"Public.fs\" /></ItemGroup></Project>"
+                        "Public.fsi", "/// Public contract\nmodule Public\n/// value\nval value: int"
+                        "Public.fs", "module Public\nlet value = 1"
+                        "Internal.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Internal.fs\" /></ItemGroup></Project>"
+                        "Internal.fs", "module internal Internal\nlet value = 1"
+                        ".fsgg/fsharp-surface.json", "{\"maturity\":\"block-on-ship\",\"declaredGlob\":\"**/*.fsi\"}" ]
+                      (fun root ->
+                          let zeroExit, zeroFirst = run root "Zero.fsproj" []
+                          let _, zeroSecond = run root "Zero.fsproj" []
+                          Expect.equal zeroExit 0 "configured zero-signature project is a valid receipt"
+                          Expect.equal zeroFirst zeroSecond "same production command inputs persist byte-identical JSON"
+                          Expect.equal (stringField "maturity" zeroFirst, stringField "cardinality" zeroFirst) ("block-on-ship", "zero") "zero receipt carries configured blocking maturity"
+                          Expect.equal (File.ReadAllText(Path.Combine(root, "readiness", "fsharp-public-surface.json"))) (zeroSecond.TrimEnd()) "persisted bytes equal stdout aside from CLI line termination"
+
+                          let populatedExit, populated = run root "Populated.fsproj" []
+                          Expect.equal populatedExit 0 "populated project produces a receipt"
+                          Expect.equal (stringField "maturity" populated, stringField "cardinality" populated) ("block-on-ship", "one") "populated receipt keeps configured maturity"
+
+                          let nonApplicableExit, nonApplicable = run root "Populated.fsproj" [ "--test-project" ]
+                          Expect.equal nonApplicableExit 0 "validated test-project exclusion is not malformed"
+                          Expect.equal (stringField "applicability" nonApplicable) "not-applicable" "explicit non-applicability remains distinct"
+
+                          let internalExit, internalReceipt = run root "Internal.fsproj" []
+                          Expect.equal internalExit 0 "internal control is valid"
+                          Expect.equal (stringField "maturity" internalReceipt) "block-on-ship" "internal control cannot forge or erase policy maturity"
+
+                          File.WriteAllText(Path.Combine(root, ".fsgg", "fsharp-surface.json"), "{\"maturity\":\"forged\"}")
+                          let malformedExit, malformed = run root "Zero.fsproj" []
+                          Expect.equal malformedExit 3 "malformed policy produces the documented input exit"
+                          use document = JsonDocument.Parse malformed
+                          Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "malformed input has no clean verdict") }
+            ]

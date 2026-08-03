@@ -235,7 +235,10 @@ module FSharpSurface =
             if not (File.Exists projectPath) then Error(sprintf "F# project was not found: %s" project)
             else
                 let document = XDocument.Load projectPath
-                let policy = load root
+                let policy =
+                    match load root with
+                    | Invalid reason -> failwithf "F# public-surface policy is malformed: %s" reason
+                    | valid -> valid
                 let projectDir = Path.GetDirectoryName(projectPath) |> Option.ofObj |> Option.defaultValue "."
                 let compiled =
                     document.Descendants(XName.Get "Compile")
@@ -326,6 +329,13 @@ module FSharpSurface =
             |> Encoding.UTF8.GetBytes
         SHA256.HashData bytes |> Convert.ToHexString |> fun value -> value.ToLowerInvariant()
 
+    let private receiptMaturity = function
+        | Observe -> "observe"
+        | Warn -> "warn"
+        | BlockOnPr -> "block-on-pr"
+        | BlockOnShip -> "block-on-ship"
+        | BlockOnRelease -> "block-on-release"
+
     let receipt root project isTestProject requiresSurfaceBaseline surfaceBaselineCurrent request =
         let digestOptional relative =
             let path = Path.Combine(root, relative)
@@ -343,6 +353,8 @@ module FSharpSurface =
               MatchedModules = []
               MatchedModuleCount = 0
               Cardinality = "zero"
+              // Malformed policy/project input has no trusted policy verdict; retain the historic
+              // v1 token only as an input-state projection, never as a clean advisory outcome.
               Maturity = "warn"
               Findings = [ { Code = "fsharp.surface-malformed"; File = project; Detail = reason; IsInputState = true; BaseSeverity = "blocking"; EffectiveSeverity = "blocking"; Evidence = None } ]
               FreshnessDigest = None
@@ -360,10 +372,10 @@ module FSharpSurface =
                 facts
                 |> List.choose (fun fact -> fact.Signature |> Option.map (fun (GovernedPath path) -> path))
                 |> List.sort
-            let declaredGlob =
+            let declaredGlob, maturity =
                 match load root with
-                | Missing policy | Loaded policy -> policy.DeclaredGlob
-                | Invalid _ -> defaultFacts.DeclaredGlob
+                | Missing policy | Loaded policy -> policy.DeclaredGlob, receiptMaturity policy.Maturity
+                | Invalid _ -> defaultFacts.DeclaredGlob, receiptMaturity defaultFacts.Maturity
             let globRegex =
                 let pattern = declaredGlob.Replace('\\', '/')
                 let escaped = Text.StringBuilder("^")
@@ -406,7 +418,7 @@ module FSharpSurface =
               MatchedModules = matchedModules
               MatchedModuleCount = List.length matchedModules
               Cardinality = match List.length matchedModules with 0 -> "zero" | 1 -> "one" | _ -> "many"
-              Maturity = "warn"
+              Maturity = maturity
               Findings = findings
               FreshnessDigest = Some(digestFiles root project facts)
               ConfigDigest = digestOptional ".fsgg/capabilities.yml"
