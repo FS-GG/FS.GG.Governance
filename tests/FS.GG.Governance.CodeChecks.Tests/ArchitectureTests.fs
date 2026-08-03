@@ -28,12 +28,27 @@ let tests =
         }
 
         test "Hierarchy shared registry and reflection Synthetic require justification" {
-            let source = "module Domain\nopen System.Reflection\n[<AbstractClass>]\ntype Base() = class end\ntype Child() = inherit Base()\nlet mutable registry : int list = []\nlet inspect () = typeof<Child>.GetMethods()\n"
+            let source = "module Domain\n[<AbstractClass>]\ntype Base() = class end\ntype Child() = inherit Base()\nlet mutable registry : int list = []\nlet inspect () = typeof<Child>.GetMethods()\n"
             let found = request source |> analyzeNow |> ids
             Expect.isTrue (found.Contains AbstractClassHierarchy) "abstract hierarchy"
             Expect.isTrue (found.Contains InheritanceHierarchy) "inheritance"
             Expect.isTrue (found.Contains SharedMutableState) "shared mutation"
             Expect.isTrue (found.Contains ReflectionOrMetaprogramming) "reflection"
+        }
+
+        test "Unused reflection namespace open Synthetic is not reflection use" {
+            let source = "module Domain\nopen System.Reflection\ntype State = Ready | Running\nlet next = function Ready -> Running | Running -> Ready\n"
+            let report = request source |> analyzeNow
+            Expect.isFalse ((ids report).Contains ReflectionOrMetaprogramming) (sprintf "%A" report.Findings)
+        }
+
+        test "System Type reflection call without namespace open Synthetic is detected" {
+            let source = "module Domain\ntype C() = class end\nlet inspect () = typeof<C>.GetMethods()\n"
+            let reflection =
+                request source |> analyzeNow |> fun report ->
+                    report.Findings |> List.filter (fun finding -> finding.Id = ReflectionOrMetaprogramming)
+            Expect.isNonEmpty reflection "actual reflection call is detected"
+            Expect.isTrue (reflection |> List.exists (fun finding -> finding.Symbol = "System.Type.GetMethods")) "finding names the invoked reflection API"
         }
 
         test "Measured array loop Synthetic current justification suppresses exact construct" {

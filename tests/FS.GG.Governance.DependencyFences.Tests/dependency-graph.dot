@@ -13,6 +13,7 @@ digraph Governance {
   "FS.GG.Governance.CacheEligibilityJson" [label="FS.GG.Governance.CacheEligibilityJson\npackaging"];
   "FS.GG.Governance.Calibration" [label="FS.GG.Governance.Calibration\npackaging"];
   "FS.GG.Governance.Cli" [label="FS.GG.Governance.Cli\npackaging"];
+  "FS.GG.Governance.CodeChecks" [label="FS.GG.Governance.CodeChecks\npackaging"];
   "FS.GG.Governance.CommandHost" [label="FS.GG.Governance.CommandHost\npackaging"];
   "FS.GG.Governance.CommandKind" [label="FS.GG.Governance.CommandKind\npackaging"];
   "FS.GG.Governance.CommandRecord" [label="FS.GG.Governance.CommandRecord\npackaging"];

@@ -105,11 +105,33 @@ module CodeChecks =
         |> Array.distinct
         |> Array.sort
 
-    let reflectionPrefixes =
+    let reflectionNamespaces =
         [ "System.Reflection"; "System.Linq.Expressions"; "Microsoft.FSharp.Quotations" ]
 
-    let isReflectionSymbol (name: string) =
-        reflectionPrefixes |> List.exists (fun prefix -> name.StartsWith(prefix, StringComparison.Ordinal))
+    let hasReflectionOwner (name: string) =
+        name = "System.Type"
+        || name.StartsWith("System.Type.", StringComparison.Ordinal)
+        || (reflectionNamespaces |> List.exists (fun prefix -> name = prefix || name.StartsWith(prefix + ".", StringComparison.Ordinal)))
+
+    let isReflectionSymbol (symbol: FSharpSymbol) =
+        match symbol with
+        | :? FSharpEntity as entity ->
+            // An `open System.Reflection` produces namespace entity uses. Namespace presence is not
+            // executable reflection; a referenced reflection type is.
+            not entity.IsNamespace && hasReflectionOwner (entityName entity)
+        | :? FSharpMemberOrFunctionOrValue as memberOrValue ->
+            // Resolved member full names carry their semantic owner (`System.Type.GetMethods`,
+            // `System.Reflection.Assembly.Load`, …). Avoid logical-parent access: FCS correctly has
+            // none for local values and throws when that optional relation is queried.
+            hasReflectionOwner (safeSymbolName memberOrValue)
+        | other -> hasReflectionOwner (safeSymbolName other)
+
+    let positionLe line column otherLine otherColumn =
+        line < otherLine || (line = otherLine && column <= otherColumn)
+
+    let rangeContains (outer: FSharp.Compiler.Text.Range) (inner: FSharp.Compiler.Text.Range) =
+        positionLe outer.StartLine outer.StartColumn inner.StartLine inner.StartColumn
+        && positionLe inner.EndLine inner.EndColumn outer.EndLine outer.EndColumn
 
     let analyzeDocument request (doc: SourceDocument) = async {
         let path = normalizePath doc.Path
@@ -136,6 +158,7 @@ module CodeChecks =
             return [ prohibited CompilerAnalysisFailed path path r first ], optionMessages @ errors
         | FSharpCheckFileAnswer.Succeeded check ->
             let uses = check.GetAllUsesOfAllSymbolsInFile() |> Seq.toArray
+            let openRanges = check.OpenDeclarations |> Seq.choose _.Range |> Seq.toArray
             let lineCount = doc.Source.Replace("\r\n", "\n").Split('\n').Length
             let fullRange = { StartLine = 1; StartColumn = 0; EndLine = lineCount; EndColumn = 0 }
             let findings = ResizeArray<ArchitectureFinding>()
@@ -180,7 +203,8 @@ module CodeChecks =
 
             uses
             |> Array.filter (fun u -> not u.IsFromDefinition)
-            |> Array.filter (fun u -> safeSymbolName u.Symbol |> isReflectionSymbol)
+            |> Array.filter (fun u -> openRanges |> Array.exists (fun openRange -> rangeContains openRange u.Range) |> not)
+            |> Array.filter (fun u -> isReflectionSymbol u.Symbol)
             |> Array.distinctBy (fun u -> safeSymbolName u.Symbol, u.Range.StartLine, u.Range.StartColumn)
             |> Array.iter (fun u ->
                 let symbol = safeSymbolName u.Symbol
