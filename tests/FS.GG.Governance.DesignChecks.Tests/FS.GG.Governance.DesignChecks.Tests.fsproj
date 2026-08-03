@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="Support.fs" />
     <Compile Include="EvaluateTests.fs" />
+    <Compile Include="EvidenceBoundaryTests.fs" />
     <Compile Include="FSharpSurfaceTests.fs" />
     <Compile Include="FSharpSurfaceCommandTests.fs" />
     <Compile Include="DeterminismTests.fs" />
@@ -33,6 +34,8 @@
     <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <!-- Execute the already-built command at the integration edge; do not recursively invoke `dotnet run` from VSTest. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj" />
     <!-- 101 (M-CI-3): the shared SurfaceDrift helper for the consolidated surface-drift check. -->
     <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>

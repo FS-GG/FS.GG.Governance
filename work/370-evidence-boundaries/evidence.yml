@@ -1,0 +1,318 @@
+schemaVersion: 1
+workId: 370-evidence-boundaries
+stage: evidence
+status: evidenceReady
+sourceSpec: work/370-evidence-boundaries/spec.md
+sourceClarifications: work/370-evidence-boundaries/clarifications.md
+sourceChecklist: work/370-evidence-boundaries/checklist.md
+sourcePlan: work/370-evidence-boundaries/plan.md
+sourceTasks: work/370-evidence-boundaries/tasks.yml
+sourceAnalysis: readiness/370-evidence-boundaries/analysis.json
+sourceSnapshots:
+  - label: analysis
+    path: readiness/370-evidence-boundaries/analysis.json
+    digest: 14290d914e77ad0d136c3c2d13ffbae529c61d1e7a617fa35007daa2f68f8dde
+    schemaVersion: 1
+  - label: checklist
+    path: work/370-evidence-boundaries/checklist.md
+    digest: 1fef8caa48c226c3a4bd2f3387acec51864f3bbd6a27cdee58b87240fe692b55
+    schemaVersion: 1
+  - label: clarifications
+    path: work/370-evidence-boundaries/clarifications.md
+    digest: 2cb48401a628d7f8bdd01daec7d621ad5167205eb02940e277116d0f77075ab5
+    schemaVersion: 1
+  - label: plan
+    path: work/370-evidence-boundaries/plan.md
+    digest: 06bc003786d88abf33798c01b59ba903ab841e018397e9fdbd11b085b0f19b57
+    schemaVersion: 1
+  - label: spec
+    path: work/370-evidence-boundaries/spec.md
+    digest: ac926070403354bbd7417ffe969d77446e718220a8b8fba7848eb87ed29f0eef
+    schemaVersion: 1
+  - label: tasks
+    path: work/370-evidence-boundaries/tasks.yml
+    digest: 04f166e30776280c801284869d0c76326d4dae982831279876b1ec19302703cd
+    schemaVersion: 1
+evidence:
+  - id: EV001
+    kind: verification
+    subject:
+      type: task
+      id: T001
+    taskRefs: [T001]
+    requirementRefs: [FR-001]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV001]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV002
+    kind: verification
+    subject:
+      type: task
+      id: T002
+    taskRefs: [T002]
+    requirementRefs: [FR-002]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-002]
+    obligationRefs: [EV002]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV003
+    kind: verification
+    subject:
+      type: task
+      id: T003
+    taskRefs: [T003]
+    requirementRefs: [FR-003]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-003]
+    obligationRefs: [EV003]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV004
+    kind: verification
+    subject:
+      type: task
+      id: T004
+    taskRefs: [T004]
+    requirementRefs: [FR-004]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-004]
+    obligationRefs: [EV004]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV005
+    kind: verification
+    subject:
+      type: task
+      id: T005
+    taskRefs: [T005]
+    requirementRefs: [FR-005]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-005]
+    obligationRefs: [EV005]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV006
+    kind: verification
+    subject:
+      type: task
+      id: T006
+    taskRefs: [T006]
+    requirementRefs: [FR-006]
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-006]
+    obligationRefs: [EV006]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV007
+    kind: verification
+    subject:
+      type: task
+      id: T007
+    taskRefs: [T007]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV007]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV008
+    kind: verification
+    subject:
+      type: task
+      id: T008
+    taskRefs: [T008]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV008]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV009
+    kind: verification
+    subject:
+      type: task
+      id: T009
+    taskRefs: [T009]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: []
+    obligationRefs: [EV009]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+  - id: EV010
+    kind: verification
+    subject:
+      type: task
+      id: T010
+    taskRefs: [T010]
+    requirementRefs: []
+    acceptanceScenarioRefs: []
+    clarificationDecisionRefs: []
+    checklistResultRefs: []
+    planDecisionRefs: [PD-001]
+    obligationRefs: [EV010]
+    artifacts: []
+    sourceRefs:
+      - kind: verification
+        path: tests/FS.GG.Governance.DesignChecks.Tests/EvidenceBoundaryTests.fs
+        digest: "sha256:0e78b21a616940a5bc5a3df4ec570118481d002f8118a00c60b19db47c2cb105"
+    result: pass
+    synthetic: false
+    observedRun:
+      source: readiness/370-evidence-boundaries/TestResults/evidence-boundary-round5.trx
+      digest: "sha256:9795fbbb15815fa10845f618a9a4bd112a5a0f1159880fe41703f22d27ea0ba0"
+      digestContract: exact-bytes-v1
+      outcome: passed
+      passed: 43
+      failed: 0
+      skipped: 0
+    notes: [Evidence required before verify.]
+lifecycleNotes:
+  - "Next lifecycle action: verify."
