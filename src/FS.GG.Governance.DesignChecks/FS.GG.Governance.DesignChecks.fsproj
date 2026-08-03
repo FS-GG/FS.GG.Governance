@@ -18,6 +18,8 @@
     <Compile Include="Model.fs" />
     <Compile Include="DesignChecks.fsi" />
     <Compile Include="DesignChecks.fs" />
+    <Compile Include="EvidenceBoundary.fsi" />
+    <Compile Include="EvidenceBoundary.fs" />
     <Compile Include="FSharpSurface.fsi" />
     <Compile Include="FSharpSurface.fs" />
     <Compile Include="Interpreter.fsi" />

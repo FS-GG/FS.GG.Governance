@@ -1,5 +1,244 @@
 TYPE FS.GG.Governance.DesignChecks.DesignChecksModule
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, DesignFacts)
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Finding] evaluate(Request)
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceKind
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Finding
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Observation
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceKind
+  [Method] Boolean Equals(EvidenceKind)
+  [Method] Boolean Equals(EvidenceKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsBoundaryFixture()
+  [Method] Boolean get_IsGoldenOrSchema()
+  [Method] Boolean get_IsProductionJourney()
+  [Method] Boolean get_IsSemanticRegression()
+  [Method] EvidenceKind get_BoundaryFixture()
+  [Method] EvidenceKind get_GoldenOrSchema()
+  [Method] EvidenceKind get_ProductionJourney()
+  [Method] EvidenceKind get_SemanticRegression()
+  [Method] Int32 CompareTo(EvidenceKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceKind+Tags
+  [Property] Boolean IsBoundaryFixture
+  [Property] Boolean IsGoldenOrSchema
+  [Property] Boolean IsProductionJourney
+  [Property] Boolean IsSemanticRegression
+  [Property] EvidenceKind BoundaryFixture
+  [Property] EvidenceKind GoldenOrSchema
+  [Property] EvidenceKind ProductionJourney
+  [Property] EvidenceKind SemanticRegression
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceKind+Tags
+  [Field] Int32 BoundaryFixture
+  [Field] Int32 GoldenOrSchema
+  [Field] Int32 ProductionJourney
+  [Field] Int32 SemanticRegression
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord
+  [Constructor] Void .ctor(EvidenceKind, Provenance, System.String, Int32, System.String, Boolean, Observation)
+  [Method] Boolean Equals(EvidenceRecord)
+  [Method] Boolean Equals(EvidenceRecord, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Fresh()
+  [Method] EvidenceKind get_Kind()
+  [Method] Int32 CompareTo(EvidenceRecord)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_ExitCode()
+  [Method] Observation get_Observation()
+  [Method] Provenance get_Provenance()
+  [Method] System.String ToString()
+  [Method] System.String get_Command()
+  [Method] System.String get_SourceDigest()
+  [Property] Boolean Fresh
+  [Property] EvidenceKind Kind
+  [Property] Int32 ExitCode
+  [Property] Observation Observation
+  [Property] Provenance Provenance
+  [Property] System.String Command
+  [Property] System.String SourceDigest
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Finding
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(Finding)
+  [Method] Boolean Equals(Finding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Finding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Code()
+  [Method] System.String get_Detail()
+  [Property] System.String Code
+  [Property] System.String Detail
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String], Boolean)
+  [Method] Boolean Equals(GeneratedArtifact)
+  [Method] Boolean Equals(GeneratedArtifact, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_HasGoldenOrSchema()
+  [Method] Boolean get_RegenerationDeterministic()
+  [Method] Int32 CompareTo(GeneratedArtifact)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Consumer()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[System.String] get_Source()
+  [Method] System.String ToString()
+  [Property] Boolean HasGoldenOrSchema
+  [Property] Boolean RegenerationDeterministic
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Consumer
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[System.String] Source
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(Mitigation)
+  [Method] Boolean Equals(Mitigation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Mitigation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ProducerClasses()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ReintroducedByMutation()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ProducerClasses
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ReintroducedByMutation
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Observation
+  [Method] Boolean Equals(Observation)
+  [Method] Boolean Equals(Observation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDegraded()
+  [Method] Boolean get_IsDispatchOnly()
+  [Method] Boolean get_IsMalformedInput()
+  [Method] Boolean get_IsObservedOutcome()
+  [Method] Boolean get_IsPartialWrite()
+  [Method] Boolean get_IsUnknownInput()
+  [Method] Int32 CompareTo(Observation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Observation get_Degraded()
+  [Method] Observation get_DispatchOnly()
+  [Method] Observation get_MalformedInput()
+  [Method] Observation get_ObservedOutcome()
+  [Method] Observation get_PartialWrite()
+  [Method] Observation get_UnknownInput()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Observation+Tags
+  [Property] Boolean IsDegraded
+  [Property] Boolean IsDispatchOnly
+  [Property] Boolean IsMalformedInput
+  [Property] Boolean IsObservedOutcome
+  [Property] Boolean IsPartialWrite
+  [Property] Boolean IsUnknownInput
+  [Property] Int32 Tag
+  [Property] Observation Degraded
+  [Property] Observation DispatchOnly
+  [Property] Observation MalformedInput
+  [Property] Observation ObservedOutcome
+  [Property] Observation PartialWrite
+  [Property] Observation UnknownInput
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Observation+Tags
+  [Field] Int32 Degraded
+  [Field] Int32 DispatchOnly
+  [Field] Int32 MalformedInput
+  [Field] Int32 ObservedOutcome
+  [Field] Int32 PartialWrite
+  [Field] Int32 UnknownInput
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance
+  [Method] Boolean Equals(Provenance)
+  [Method] Boolean Equals(Provenance, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsReal()
+  [Method] Boolean get_IsSynthetic()
+  [Method] Int32 CompareTo(Provenance)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Provenance NewSynthetic(System.String)
+  [Method] Provenance get_Real()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance+Synthetic
+  [NestedType] FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance+Tags
+  [Property] Boolean IsReal
+  [Property] Boolean IsSynthetic
+  [Property] Int32 Tag
+  [Property] Provenance Real
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance+Synthetic
+  [Method] System.String get_representedSeam()
+  [Property] System.String representedSeam
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Provenance+Tags
+  [Field] Int32 Real
+  [Field] Int32 Synthetic
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence
+  [Constructor] Void .ctor(Boolean, Boolean, Boolean)
+  [Method] Boolean Equals(RenderEvidence)
+  [Method] Boolean Equals(RenderEvidence, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ByteReproducible()
+  [Method] Boolean get_Executed()
+  [Method] Boolean get_SemanticReceiptStable()
+  [Method] Int32 CompareTo(RenderEvidence)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Property] Boolean ByteReproducible
+  [Property] Boolean Executed
+  [Property] Boolean SemanticReceiptStable
+TYPE FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Request
+  [Constructor] Void .ctor(Boolean, Boolean, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence])
+  [Method] Boolean Equals(Request)
+  [Method] Boolean Equals(Request, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_RequiresObservedOutcome()
+  [Method] Boolean get_RequiresProductionJourney()
+  [Method] Int32 CompareTo(Request)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord] get_Evidence()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact] get_GeneratedArtifacts()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation] get_Mitigations()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence] get_Render()
+  [Method] System.String ToString()
+  [Property] Boolean RequiresObservedOutcome
+  [Property] Boolean RequiresProductionJourney
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+EvidenceRecord] Evidence
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+GeneratedArtifact] GeneratedArtifacts
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+Mitigation] Mitigations
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.DesignChecks.EvidenceBoundaryModule+RenderEvidence] Render
 TYPE FS.GG.Governance.DesignChecks.FSharpSurfaceModule
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding] evaluate(SurfaceCheckRequest, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts])
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.DesignChecks.FSharpSurfaceModule+ModuleFacts],System.String] senseProject(System.String, System.String, Boolean, Boolean, Boolean)

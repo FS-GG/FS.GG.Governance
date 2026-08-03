@@ -228,6 +228,13 @@ real path tracked in <issue>`), MUST carry the token `Synthetic` in the test
 name, and MUST be listed in the PR description. Prefer explicit, ugly literals
 over clever factories that make synthetic data feel real.
 
+Evidence that proves an emitted request MUST NOT be described as evidence that a
+native boundary observed its result. Boundary obligations require an explicit
+observed-outcome fixture. Generated or tool-facing artifacts MUST name their
+source, deterministic regeneration check, consumer, and golden/schema check.
+Mitigation claims MUST inventory every producer class and include a mutation that
+reintroduces each class; changing an unrelated input is not mutation evidence.
+
 Rationale: Synthetic evidence is the quiet failure mode of "passing" tests.
 Visible disclosure keeps it honest without requiring a governance platform — a
 property this repository values doubly, since it builds the very tooling others
@@ -244,6 +251,11 @@ forbidden in critical paths.
 Diagnostics MUST distinguish a genuine tool defect from missing or malformed
 input (an absent file, an unparseable rule, an external customer whose layout
 this tool does not recognize), rather than reporting one as the other.
+
+Unknown or malformed input, partial writes, and optional integrations MUST carry
+an explicit non-passing or degraded outcome; they may never collapse into an
+empty collection or successful verdict. Render evidence MUST state whether byte
+identity is promised; if it is not, a stable semantic/render receipt is required.
 
 ## Change Classification
 
