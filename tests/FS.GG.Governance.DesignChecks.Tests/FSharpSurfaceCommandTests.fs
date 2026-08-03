@@ -23,7 +23,31 @@ let private withTemporaryProject (files: (string * string) list) action =
 
 let private run root project extra =
     let info = ProcessStartInfo("dotnet")
-    [ "run"; "--project"; Path.Combine(repoRoot, "src", "FS.GG.Governance.FSharpSurfaceCommand"); "--no-restore"; "--"; "--root"; root; "--project"; project ]
+    let assemblyDirectory =
+        System.Reflection.Assembly.GetExecutingAssembly().Location
+        |> Path.GetDirectoryName
+        |> Option.ofObj
+        |> Option.defaultWith (fun () -> failtest "could not determine the test assembly directory")
+
+    let configuration =
+        assemblyDirectory
+        |> Path.GetDirectoryName
+        |> Option.ofObj
+        |> Option.bind (Path.GetFileName >> Option.ofObj)
+        |> Option.defaultWith (fun () -> failtest "could not determine the active test configuration")
+
+    let commandAssembly =
+        Path.Combine(
+            repoRoot,
+            "src",
+            "FS.GG.Governance.FSharpSurfaceCommand",
+            "bin",
+            configuration,
+            "net10.0",
+            "FS.GG.Governance.FSharpSurfaceCommand.dll"
+        )
+
+    [ commandAssembly; "--root"; root; "--project"; project ]
     @ extra
     |> List.iter info.ArgumentList.Add
     info.WorkingDirectory <- repoRoot
