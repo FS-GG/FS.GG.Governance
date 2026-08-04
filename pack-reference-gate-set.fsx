@@ -159,6 +159,17 @@ let gateConfiguration =
 // tool can derive — so it is edited HERE on every change to samples/sdd-reference-gate-set/.fsgg/.
 // The `--print-version` hook emits it so the guard asserts the ACTUAL shipped version.
 //
+// 1.6.0 (MINOR, 2026-08-04): #386 / docs/decisions/0011. Two package-shape changes, both additive.
+// (a) The package gains `buildTransitive/FS.GG.Governance.ReferenceGateSet.targets` — the CONSUMER
+// RESOLUTION CONTRACT (`dotnet msbuild -t:FsggResolveReferenceGateSet`). Until now the payload sat
+// only under `contentFiles/any/any/`, which a modern SDK-style `PackageReference` does not
+// materialize, so there was no verb by which an ordinary repository could obtain the profile.
+// (b) The `game` gameplay-floor entries in `capabilities.yml` are now a GENERATED region derived
+// from the authoritative embedded F# profile (`ReferenceProfile.checksFor`); the CHECK VALUES are
+// byte-identical to 1.5.0's — only surrounding comments changed — but the packed bytes are not, and
+// this version is what a consumer pins to get the resolution verb. MINOR: the package shape grows
+// by a first-class MSBuild asset and exact-pin consumers must re-pin deliberately to adopt it.
+//
 // 1.5.0 (MINOR, 2026-07-26): adds the command-free `gameplay:production-journey`
 // block-on-ship check. Exact-pin consumers must re-pin to adopt the stronger game-profile floor.
 //
@@ -171,7 +182,7 @@ let gateConfiguration =
 // byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
 // --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
 // re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
-let private packageVersion = "1.5.0"
+let private packageVersion = "1.6.0"
 
 // ── Schema manifest (ADR-0055) ──
 // The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the

@@ -6,6 +6,21 @@
 [`docs/adr/README.md`](../adr/README.md)). **Item**: FS-GG/FS.GG.Governance#275 (WI-5 of epic
 FS-GG/.github#1190).
 
+> **§Decision 1 is AMENDED by [`0011-generated-reference-gate-set.md`](0011-generated-reference-gate-set.md)
+> (2026-08-04, FS-GG/FS.GG.Governance#386) — not superseded.**
+>
+> §1's rejection of resolving the floor from the installed `FS.GG.Governance.ReferenceGateSet`
+> package **stands unchanged**: enforcement still reads no file, and a product cannot escape the
+> floor by deleting or editing one. §§2–4 are untouched.
+>
+> What 0011 adds is the answer to the question §1 left open — *what, then, is the published
+> package?* §1 produced a second, independently-authored copy of the org profile with no defined
+> derivation (see this record's own last Consequence, which anticipated it). 0011 names the embedded
+> F# profile as the ONE authoritative source, makes the published YAML a **generated** artifact
+> derived from it, and adds a gate that fails closed when the two disagree. The in-code table moved
+> from `Inheritance.referenceChecks` to `ReferenceProfile.checksFor`; `referenceChecks` now calls it,
+> so the enforcement path described below is unchanged.
+
 ## Context
 
 Until now every product's enforcement derived **solely from its own local `.fsgg/`**. `TemplateProfile`
@@ -71,4 +86,7 @@ untouched here.
 - The canonical ADR-0049 text is authored in `FS-GG/.github` (filed as a cross-repo request); this
   repo carries the index row and this record.
 - Expressing profile bindings in the reference set's own `.fsgg/` (rather than embedded F#) is a
-  possible later hardening once WI-8 lands the gameplay gate in the sample.
+  possible later hardening once WI-8 lands the gameplay gate in the sample. **Resolved the other
+  way round by [`0011`](0011-generated-reference-gate-set.md)**: the bindings stay embedded and
+  authoritative, and the reference set's `.fsgg/` is *generated from them* — which keeps the
+  un-escapable floor this record argued for while removing the duplicate authority it created.

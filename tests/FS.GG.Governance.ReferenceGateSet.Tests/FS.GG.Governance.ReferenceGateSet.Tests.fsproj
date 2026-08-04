@@ -20,11 +20,27 @@
   <ItemGroup>
     <Compile Include="ReferenceGateSetGuardTests.fs" />
     <Compile Include="ControlledImportGateTests.fs" />
+    <!-- #386: the shared "produce the REAL .nupkg once" fixture. It compiles before its two
+         consumers (the packed-artifact guard and the resolution proof) so the gate+pack runs once
+         and both suites assert over the same bytes. -->
+    <Compile Include="PackFixture.fs" />
+    <!-- #386 / docs/decisions/0011: the DRIFT GATE. The published capabilities region is generated
+         from the authoritative embedded F# profile, and this fails closed when the two disagree —
+         including when the region's markers are missing, duplicated, or inverted. Its test list is
+         named `ReferenceGateSetGuardDerivation` so pack-reference-gate-set.fsx's pre-pack
+         `~ReferenceGateSetGuard` filter runs it: a drifted derivation cannot be packed at all. -->
+    <Compile Include="ReferenceGateSetDerivationTests.fs" />
     <!-- 086: the published-artifact guard (byte-identity / content-only / gated / schema-versioned).
          It shells the checked-in pack script to produce the REAL .nupkg; it adds NO project
          reference to the packaging project (it asserts over the produced archive and the script's
          emitted version), so the restore graph is unchanged (research D6). -->
     <Compile Include="ReferenceGateSetPackageTests.fs" />
+    <!-- #386 AC2/AC4: the CONSUMER RESOLUTION proof. Restores the produced package into a temp
+         consumer with a cleared source list and a fresh NUGET_PACKAGES store, runs the documented
+         resolution verb, and asserts over the INSTALLED package — never the on-disk samples. Not
+         named `…ReferenceGateSetGuard…` deliberately: it packs the package, so the pre-pack gate
+         must not select it or the pack would recurse. -->
+    <Compile Include="ReferenceGateSetResolutionTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -41,6 +57,11 @@
     <ProjectReference Include="../../src/FS.GG.Governance.Findings/FS.GG.Governance.Findings.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.Enforcement/FS.GG.Governance.Enforcement.fsproj" />
+    <!-- #386 / docs/decisions/0011: the AUTHORITATIVE org profile and the projection the published
+         YAML is derived from both live here, so the drift gate compares against the real source
+         rather than a copy of it — and the resolution proof executes the real inheritance fold to
+         show a deleted local copy still cannot escape the floor. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.Inheritance/FS.GG.Governance.Inheritance.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 

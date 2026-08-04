@@ -30,6 +30,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- docs/decisions/0011: ReferenceProfile is the AUTHORITATIVE org profile (the table that was
+         `Inheritance.referenceChecks`) plus the projection that derives the published
+         `FS.GG.Governance.ReferenceGateSet` YAML from it. It compiles FIRST because Inheritance
+         consumes it — the direction of the arrow is the decision: enforcement reads the source, and
+         the YAML is generated from that same source, never the other way round. -->
+    <Compile Include="ReferenceProfile.fsi" />
+    <Compile Include="ReferenceProfile.fs" />
     <Compile Include="Inheritance.fsi" />
     <Compile Include="Inheritance.fs" />
   </ItemGroup>
