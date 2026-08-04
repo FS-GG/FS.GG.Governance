@@ -9,6 +9,7 @@ open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Enforcement.Enforcement
 
 module SC = FS.GG.Governance.SurfaceChecks.Model
+module CP = FS.GG.Governance.SurfaceChecks.Profile
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FSharpEffectBoundary =
@@ -326,7 +327,13 @@ module FSharpEffectBoundary =
                          | Ok sensed -> Ok(facts @ sensed)))
         with ex -> Error(sprintf "unable to sense F# effect boundaries for '%s': %s" project ex.Message)
 
-    let private emit request fact code detail input message = SC.mkFinding SC.DesignDomain BlockOnPr request fact.Source code detail Blocking input message
+    // #385: this pack's maturity is READ from the composed F# constitution profile
+    // (`SurfaceChecks.Profile`, docs/decisions/0012), not restated here. It still evaluates to
+    // `BlockOnPr` — #369's shipped posture is preserved — but the profile now records WHY this pack
+    // blocks while #366's warns (applicability: this one fires only on an opted-in transition), so
+    // the difference is a decision a reader can find rather than an accident of two emit sites.
+    let private packMaturity = CP.declaredMaturity CP.EffectBoundary
+    let private emit request fact code detail input message = SC.mkFinding SC.DesignDomain packMaturity request fact.Source code detail Blocking input message
     let private excluded fact = fact.IsPureParserOrValidator || fact.IsThinOneShotAdapter || match fact.Exemption with ActiveExemption _ -> true | _ -> false
     let private delivery request fact =
         match fact.EdgeInterpreter, fact.Delivery with

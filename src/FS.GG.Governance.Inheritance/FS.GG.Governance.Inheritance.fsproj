@@ -22,7 +22,10 @@
        Inheritance.fs: the curated public surface, then the pure composition. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Inheritance</RootNamespace>
-    <Version>0.1.0</Version>
+    <!-- 0.2.0 (MINOR, ADR-0055): `boundProfiles` grows a second profile and the package gains a
+         FS.GG.Governance.SurfaceChecks dependency (#385). No existing member changed shape, so
+         current consumers are source-compatible; the new dependency is why it is not a PATCH. -->
+    <Version>0.2.0</Version>
     <!-- Optional library, but packable like Config/Gates/Route/Enforcement/Ship (overrides
          Directory.Build.props). -->
     <IsPackable>true</IsPackable>
@@ -45,6 +48,11 @@
     <ProjectReference Include="../FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Gates/FS.GG.Governance.Gates.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Route/FS.GG.Governance.Route.fsproj" />
+    <!-- #385 / docs/decisions/0012: the composed F# constitution profile's rule table lives in
+         SurfaceChecks (the lowest project epic #367's four packs can all reach). `ReferenceProfile`
+         BINDS it rather than restating it, so the org profile keeps one authority. Acyclic:
+         SurfaceChecks references only Config and Enforcement, neither of which reaches Inheritance. -->
+    <ProjectReference Include="../FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
   </ItemGroup>
 
 </Project>

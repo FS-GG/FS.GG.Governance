@@ -28,7 +28,7 @@ let private manifestEntry = "contentFiles/any/any/schema-manifest.json"
 let private buildTransitiveEntry =
     "buildTransitive/FS.GG.Governance.ReferenceGateSet.targets"
 // The pinned plain SemVer (ADR-0055), no longer derived from the contained schemaVersions.
-let private expectedVersion = "1.6.0"
+let private expectedVersion = "1.7.0"
 
 /// The test's OWN independent parse of a sample's `schemaVersion:` — so an assertion over the packed
 /// manifest is evidence about the real on-disk generations, not a re-scrape of the script's rule

@@ -4,7 +4,7 @@ Repo-local decision records for **FS.GG.Governance**. These capture design choic
 this repository (why a boundary sits where it does, why a duplication is intentional, why a
 unification is deferred). Each file is self-contained; this page is the index.
 
-> **Two distinct series — do not conflate the numbers.** These local records (`0001`–`0011`, filed
+> **Two distinct series — do not conflate the numbers.** These local records (`0001`–`0012`, filed
 > under `docs/decisions/`) are separate from the **org-level ADRs** that live in
 > [`FS-GG/.github`](https://github.com/FS-GG/.github) and are indexed by
 > [`docs/adr/README.md`](../adr/README.md). The two sequences reuse some numbers for *different*
@@ -27,6 +27,7 @@ unification is deferred). Each file is self-contained; this page is the index.
 | [0009](0009-profile-bound-gate-inheritance.md) | Profile-bound gate inheritance is embedded, pre-rollup, and non-lowerable |
 | [0010](0010-production-journey-floor.md) | Production-journey evidence is an inherited, non-lowerable game-profile floor |
 | [0011](0011-generated-reference-gate-set.md) | The embedded F# profile is the single source of the org gate set; the published YAML is generated from it (amends 0009 §1) |
+| [0012](0012-composed-fsharp-constitution-profile.md) | Epic #367's four F# constitution rule packs are composed into one named profile, single-sourced in `SurfaceChecks.Profile` (builds on 0011) |
 
 ## Org-level ADRs
 

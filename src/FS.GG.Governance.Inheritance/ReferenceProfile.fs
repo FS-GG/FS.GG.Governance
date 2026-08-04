@@ -17,12 +17,22 @@ module ReferenceProfile =
     // all cite. Enforcement still reaches it exactly as before, through
     // `Inheritance.referenceGatesFor -> Gates.buildRegistry`.
 
-    let boundProfiles: TemplateProfile list = [ TemplateProfile "game" ]
+    let boundProfiles: TemplateProfile list =
+        [ FS.GG.Governance.SurfaceChecks.Profile.profileKey
+          TemplateProfile "game" ]
 
     let checksFor (profile: TemplateProfile) : Check list =
         let (TemplateProfile p) = profile
+        let (TemplateProfile constitution) = FS.GG.Governance.SurfaceChecks.Profile.profileKey
 
         match p with
+        // The composed F# constitution profile (FS-GG/FS.GG.Governance#385, docs/decisions/0012):
+        // epic #367's four rule packs — #366, #368, #369, #370 — as ONE named gate set. The table
+        // itself is NOT restated here. It lives in `SurfaceChecks.Profile`, which is where the
+        // packs themselves read their declared maturity from, so the composition has exactly one
+        // authority — the same property docs/decisions/0011 gave the `game` floor, applied to the
+        // constitution packs. This case is the binding, not a second copy.
+        | _ when p = constitution -> FS.GG.Governance.SurfaceChecks.Profile.checks
         | "game" ->
             // The per-FR gameplay-obligation gate every `game` product inherits as a floor (epic
             // FS-GG/.github#1190). Command left unbound (no `tooling.yml` dependency). WI-8
@@ -130,7 +140,8 @@ module ReferenceProfile =
           sprintf
               "%s# (src/FS.GG.Governance.Inheritance/ReferenceProfile.fs, `ReferenceProfile.checksFor`) by"
               indent
-          sprintf "%s# `ReferenceProfile.capabilitiesRegion`. Decision: docs/decisions/0011." indent
+          sprintf "%s# `ReferenceProfile.capabilitiesRegion`. Decisions: docs/decisions/0011 (the" indent
+          sprintf "%s# derivation) and docs/decisions/0012 (the composed F# constitution profile)." indent
           sprintf "%s# Regenerate:" indent
           sprintf
               "%s#   BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests"

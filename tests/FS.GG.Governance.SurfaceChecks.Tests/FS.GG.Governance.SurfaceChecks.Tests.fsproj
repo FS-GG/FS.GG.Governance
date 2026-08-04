@@ -19,6 +19,8 @@
     <Compile Include="ReuseGuardTests.fs" />
     <Compile Include="NeutralityTests.fs" />
     <Compile Include="StandaloneTests.fs" />
+    <!-- #385: the composed F# constitution profile, tested AS COMPOSITION (docs/decisions/0012). -->
+    <Compile Include="ProfileCompositionTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -41,6 +43,8 @@
     <ProjectReference Include="../../src/FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
     <ProjectReference Include="../../src/FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+    <!-- #385: the composition tests drive #368's REAL compiler-service sensor, not a stand-in. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.CodeChecks/FS.GG.Governance.CodeChecks.fsproj" />
     <!-- 101 (M-CI-3): the shared SurfaceDrift helper for the consolidated surface-drift check. -->
     <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>

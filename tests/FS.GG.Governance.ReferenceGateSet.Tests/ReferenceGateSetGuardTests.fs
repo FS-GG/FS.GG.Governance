@@ -42,8 +42,16 @@ let private requireFacts () =
 // evidence glob even though the skeleton ships no such file on disk (SC-004 is a property of the
 // path-map, not of physical files — research D3). `specs/**` exercises the `gameplay` glob that
 // selects the command-free `gameplay:fr-covered` floor (ADR-0049 / WI-8).
+// `surface/**` and `readiness/**` exercise the `fsharp` globs that select the four command-free
+// composed F# constitution gates (#385, docs/decisions/0012) — the same shape as `specs/**` above.
 let private candidatePaths =
-    [ "src/App/Program.fs"; "App.sln"; "tests/App.Tests/Tests.fs"; "build.fsx"; "specs/001-example/spec.md" ]
+    [ "src/App/Program.fs"
+      "App.sln"
+      "tests/App.Tests/Tests.fs"
+      "build.fsx"
+      "specs/001-example/spec.md"
+      "surface/App.surface.txt"
+      "readiness/fsharp-public-surface.json" ]
 
 /// Drive the real F018->F015->F017->F019 chain over the loaded facts, exactly as `fsgg route` would.
 let private routeResultOf (f: TypedFacts) : RouteResult =
@@ -73,15 +81,26 @@ let private decideUnder (profile: Enforcement.Profile) (gate: Gate) : Enforcemen
     decision.EffectiveSeverity
 
 // build/test/evidence each declare a `tooling.yml` command; the gameplay floor is command-free
-// (satisfied by per-FR handoff evidence, ADR-0049 / WI-8), so it carries no command prerequisite —
-// G3 counts command prerequisites against the 3 command-bound gates, not all 4.
+// (satisfied by per-FR handoff evidence, ADR-0049 / WI-8), so it carries no command prerequisite.
+//
+// #385 added the composed F# constitution profile's four gates (docs/decisions/0012): epic #367's
+// rule packs — #366 public surface, #368 idiomatic simplicity, #369 effect boundary, #370 evidence
+// boundary — as one named gate set. They are COMMAND-FREE for the same reason the gameplay floor
+// is: each pack's own sensing and the handoff evidence satisfy them, and binding them to a
+// `tooling.yml` command would put a dangling reference in every repository that resolves the
+// published set without adopting this repo's tooling. So G3 still counts command prerequisites
+// against the 3 command-bound gates, not all 9.
 let private expectedGateIds =
     set
         [ "build:build"
           "test:test"
           "evidence:evidence"
           "gameplay:fr-covered"
-          "gameplay:production-journey" ]
+          "gameplay:production-journey"
+          "fsharp:public-surface"
+          "fsharp:idiomatic-simplicity"
+          "fsharp:effect-boundary"
+          "fsharp:evidence-boundary" ]
 
 [<Tests>]
 let guard =
@@ -97,14 +116,15 @@ let guard =
               | Invalid diags -> failtestf "expected Valid with 0 diagnostics; got %d: %A" (List.length diags) diags
           }
 
-          // G2 (FR-002/FR-003/SC-001) — exactly 4 gates: build:build, test:test, evidence:evidence,
-          // and the gameplay:fr-covered floor (ADR-0049 / WI-8). Surfaces are NOT projected into the
-          // registry (buildRegistry reads only Capabilities.Checks).
-          test "G2 Routes registry has exactly 5 gates including both gameplay floors" {
+          // G2 (FR-002/FR-003/SC-001) — exactly the 9 gates in `expectedGateIds`: the three
+          // command-bound ones, the two gameplay floors (ADR-0049 / WI-8, docs/decisions/0010) and
+          // the four composed F# constitution gates (#385, docs/decisions/0012). Surfaces are NOT
+          // projected into the registry (buildRegistry reads only Capabilities.Checks).
+          test "G2 Routes registry has exactly the 9 reference gates including both floors" {
               let f = requireFacts ()
               let registry = FS.GG.Governance.Gates.Gates.buildRegistry f
               let ids = registry.Gates |> List.map (fun g -> gateIdValue g.Id) |> Set.ofList
-              Expect.equal ids expectedGateIds "registry must hold exactly the 5 reference gates (guards 'rots to empty')"
+              Expect.equal ids expectedGateIds "registry must hold exactly the 9 reference gates — 3 command-bound, the 2 gameplay floors, and the 4 composed F# constitution gates (guards 'rots to empty')"
           }
 
           // G3 (FR-004/SC-001/SC-007) — every command-BOUND gate's prerequisite resolves to a declared

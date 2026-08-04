@@ -36,5 +36,14 @@ let tests =
                   || n = "FS.GG.Governance.Gates"
                   || n = "FS.GG.Governance.Route"
                   || n = "FS.GG.Governance.Findings"
-                  || n = "FS.GG.Governance.Routing")
+                  || n = "FS.GG.Governance.Routing"
+                  // #385 / docs/decisions/0012: `ReferenceProfile.checksFor` BINDS the composed F#
+                  // constitution profile (`SurfaceChecks.Profile.checks`) rather than restating it,
+                  // so the org profile keeps one authority. `SurfaceChecks` is a pure vocabulary
+                  // project referencing only Config and Enforcement — it reaches no verdict, no
+                  // ship rollup and no I/O, so this edge does not widen what the assertions above
+                  // fence. Acyclic: nothing in SurfaceChecks reaches Inheritance.
+                  || n = "FS.GG.Governance.SurfaceChecks"
+                  // …and Enforcement arrives transitively through it.
+                  || n = "FS.GG.Governance.Enforcement")
               asm ]

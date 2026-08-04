@@ -13,6 +13,7 @@ open FS.GG.Governance.Config.FSharpSurfacePolicy
 open FS.GG.Governance.Enforcement.Enforcement
 
 module SC = FS.GG.Governance.SurfaceChecks.Model
+module CP = FS.GG.Governance.SurfaceChecks.Profile
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FSharpSurface =
@@ -65,7 +66,12 @@ module FSharpSurface =
           SourceDigest: string option
           Malformed: string option }
 
-    let migrationMaturity = Warn
+    // #385: READ, not restated. This pack's maturity is declared once, in the composed F#
+    // constitution profile (`SurfaceChecks.Profile`, docs/decisions/0012), alongside #368's, #369's
+    // and #370's and the recorded reason each differs. It still evaluates to `Warn` — #366's
+    // shipped migration posture is preserved byte-for-byte, not revised — but the value now has one
+    // home, so this pack and #369's can no longer drift apart with nothing able to see it.
+    let migrationMaturity = CP.declaredMaturity CP.PublicSurface
 
     let mkFinding request source code detail isInput message =
         SC.mkFinding SC.DesignDomain migrationMaturity request source code detail Blocking isInput message

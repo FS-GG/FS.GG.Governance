@@ -68,6 +68,13 @@ specs/*/readiness/
 # sample/fixture .fsgg/ dir.
 **/.fsgg/*.json
 !samples/sdd-reference-gate-set/.fsgg/controlled-imports.json
+# #385: the captured `fsgg-sdd init` scaffold is an AUTHORED INPUT to ReferenceGateSetResolution R7,
+# not a CLI-emitted run output. Without this exception the rule above silently swallowed
+# scaffold-provenance.json, leaving the committed fixture at 5 of the 6 files its README claimed —
+# so on CI, where R7 falls back to the fixture, "every SDD-authored byte survives" was proven over a
+# capture that was missing one. A scoped negation (rather than a one-off `git add -f`) is what makes
+# a RE-capture keep the file too.
+!fixtures/generated-product-scaffold/.fsgg/scaffold-provenance.json
 
 # --- SDD shared transient-artifact fragment (ADR-0018) — adopted -------------
 # Convergence per FS.GG.SDD#110: the SDD lifecycle owns the durable-vs-

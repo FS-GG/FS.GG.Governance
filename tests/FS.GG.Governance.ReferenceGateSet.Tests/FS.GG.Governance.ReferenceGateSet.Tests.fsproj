@@ -62,6 +62,8 @@
          rather than a copy of it — and the resolution proof executes the real inheritance fold to
          show a deleted local copy still cannot escape the floor. -->
     <ProjectReference Include="../../src/FS.GG.Governance.Inheritance/FS.GG.Governance.Inheritance.fsproj" />
+    <!-- #385: R6/R7 assert the resolved profile against `SurfaceChecks.Profile`, the composed table itself. -->
+    <ProjectReference Include="../../src/FS.GG.Governance.SurfaceChecks/FS.GG.Governance.SurfaceChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.Tests.Common/FS.GG.Governance.Tests.Common.fsproj" />
   </ItemGroup>
 

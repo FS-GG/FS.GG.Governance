@@ -4,6 +4,7 @@ domains:
   - test
   - evidence
   - gameplay
+  - fsharp
 pathMap:
   - glob: "src/**"
     capability: build
@@ -15,6 +16,26 @@ pathMap:
     capability: evidence
   - glob: "specs/**"
     capability: gameplay
+  # The composed F# constitution profile (#385) routes on the artifacts its packs PRODUCE and
+  # GOVERN, exactly as the `gameplay` floor routes on `specs/**` — where its requirements live, not
+  # where gameplay code does.
+  #
+  # It is not a free choice. A path map is a PARTITION: `Routing.route` returns `Routed of domain`,
+  # ONE domain per path, resolved by specificity with an ordinal tiebreak. `src/**/*.fs` and
+  # `src/**` are CO-SPECIFIC (one literal segment and one `**` each), so adding the former would not
+  # give F# sources to this profile — it would lose the tiebreak to `src/**` and raise an
+  # `AmbiguousRoute` diagnostic for every source file. A cross-cutting domain cannot share a path
+  # with `build`, so the skeleton routes the profile through `surface/` (the curated public-surface
+  # baselines #366 governs) and `readiness/` (where #366's receipt and #370's evidence records
+  # land). The gates are command-free and evidence-satisfied, so this is the territory that matters.
+  #
+  # A consuming repository that wants its F# sources routed here replaces `src/**` in ITS OWN map;
+  # the published skeleton does not make that choice on its behalf, because doing so would take
+  # `build` away from source changes in every repository that resolved the set.
+  - glob: "surface/**"
+    capability: fsharp
+  - glob: "readiness/**"
+    capability: fsharp
 surfaces:
   - id: public-api
     kind: package
@@ -62,7 +83,8 @@ checks:
   # BEGIN GENERATED: fsgg-reference-profile:game
   # DO NOT EDIT — GENERATED from the authoritative embedded F# reference profile
   # (src/FS.GG.Governance.Inheritance/ReferenceProfile.fs, `ReferenceProfile.checksFor`) by
-  # `ReferenceProfile.capabilitiesRegion`. Decision: docs/decisions/0011.
+  # `ReferenceProfile.capabilitiesRegion`. Decisions: docs/decisions/0011 (the
+  # derivation) and docs/decisions/0012 (the composed F# constitution profile).
   # Regenerate:
   #   BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests
   # A hand edit is caught by the `ReferenceGateSetGuard` derivation gate, which
@@ -80,3 +102,61 @@ checks:
     environment: ci
     maturity: block-on-ship
   # END GENERATED: fsgg-reference-profile:game
+  # ── The composed F# constitution profile ─────────────────────────────────────────────────────
+  # Hand-authored CONTEXT for the machine-authored region below; the region itself is generated.
+  #
+  # Epic FS-GG/FS.GG.Governance#367 named six F# constitution principles and shipped them as FOUR
+  # separate rule packs — #366 (curated `.fsi` surfaces, visibility, XML docs, surface baselines),
+  # #368 (idiomatic simplicity, evidence-bound exceptions), #369 (functional core / effect edge) and
+  # #370 (behavior evidence, generated-contract goldens, safe failure). Its integration criterion —
+  # "integrated into one reusable F# profile/reference gate consumed by generated products and
+  # ordinary repositories" — was owned by no child, and all four packs shipped separately.
+  # FS-GG/FS.GG.Governance#385 composed them; docs/decisions/0012 records how.
+  #
+  # These four gates are the composed profile. They are command-unbound by design — satisfied by
+  # each pack's own sensing and by handoff evidence, not by a `tooling.yml` command a consumer could
+  # redefine — exactly like the gameplay floor above.
+  #
+  # `effect-boundary` binds at `block-on-pr` while the other three bind at `warn`. That difference
+  # is DECIDED, not accidental: #369's pack is applicable only where an author opted a transition in
+  # with an in-source marker, so it blocks only work that declared itself in scope, while #366's
+  # sweeps every compiled project unconditionally and is a dated migration at `warn`. The reason for
+  # each is carried as data in `SurfaceChecks.Profile.maturityRationale`.
+  #
+  # The region is DERIVED from `SurfaceChecks.Profile.checks`, which is also where the packs read
+  # their maturity from — one authority, per docs/decisions/0011's precedent. Enforcement reads no
+  # file: a product that deletes or edits its resolved copy still inherits whatever it binds.
+  # BEGIN GENERATED: fsgg-reference-profile:fsharp-constitution
+  # DO NOT EDIT — GENERATED from the authoritative embedded F# reference profile
+  # (src/FS.GG.Governance.Inheritance/ReferenceProfile.fs, `ReferenceProfile.checksFor`) by
+  # `ReferenceProfile.capabilitiesRegion`. Decisions: docs/decisions/0011 (the
+  # derivation) and docs/decisions/0012 (the composed F# constitution profile).
+  # Regenerate:
+  #   BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests
+  # A hand edit is caught by the `ReferenceGateSetGuard` derivation gate, which
+  # fails closed — and pack-reference-gate-set.fsx refuses to pack while it is red.
+  - id: effect-boundary
+    domain: fsharp
+    owner: platform
+    cost: medium
+    environment: ci
+    maturity: block-on-pr
+  - id: evidence-boundary
+    domain: fsharp
+    owner: platform
+    cost: cheap
+    environment: ci
+    maturity: warn
+  - id: idiomatic-simplicity
+    domain: fsharp
+    owner: platform
+    cost: high
+    environment: ci
+    maturity: warn
+  - id: public-surface
+    domain: fsharp
+    owner: platform
+    cost: medium
+    environment: ci
+    maturity: warn
+  # END GENERATED: fsgg-reference-profile:fsharp-constitution

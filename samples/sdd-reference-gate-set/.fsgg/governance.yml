@@ -6,6 +6,7 @@ domains:
   - test
   - evidence
   - gameplay
+  - fsharp
 packageSurfaces:
   - src
 policyRef: .fsgg/policy.yml

@@ -112,3 +112,78 @@ TYPE FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding
   [Property] SurfaceId Surface
   [Property] System.String Code
   [Property] System.String Message
+TYPE FS.GG.Governance.SurfaceChecks.ProfileModule
+  [Method] Check checkFor(Pack)
+  [Method] DomainId get_domain()
+  [Method] Maturity composeMaturity(Maturity, Maturity)
+  [Method] Maturity declaredMaturity(Pack)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] get_checks()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Collision] collisions(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]])
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] get_packs()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] ruleIds(Pack)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]] get_declarations()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity] maturityOf(System.String)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] ruleOwner(System.String)
+  [Method] SurfaceFinding findingOf(Pack, System.String, SurfaceCheckRequest, GovernedPath, System.String, System.String)
+  [Method] System.String authoringItem(Pack)
+  [Method] System.String maturityRationale(Pack)
+  [Method] System.String packToken(Pack)
+  [Method] TemplateProfile get_profileKey()
+  [NestedType] FS.GG.Governance.SurfaceChecks.ProfileModule+Collision
+  [NestedType] FS.GG.Governance.SurfaceChecks.ProfileModule+Pack
+  [Property] DomainId domain
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] checks
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] packs
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]] declarations
+  [Property] TemplateProfile profileKey
+TYPE FS.GG.Governance.SurfaceChecks.ProfileModule+Collision
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack])
+  [Method] Boolean Equals(Collision)
+  [Method] Boolean Equals(Collision, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(Collision)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] get_Packs()
+  [Method] System.String ToString()
+  [Method] System.String get_RuleId()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] Packs
+  [Property] System.String RuleId
+TYPE FS.GG.Governance.SurfaceChecks.ProfileModule+Pack
+  [Method] Boolean Equals(Pack)
+  [Method] Boolean Equals(Pack, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsEffectBoundary()
+  [Method] Boolean get_IsEvidenceBoundary()
+  [Method] Boolean get_IsIdiomaticSimplicity()
+  [Method] Boolean get_IsPublicSurface()
+  [Method] Int32 CompareTo(Pack)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Pack get_EffectBoundary()
+  [Method] Pack get_EvidenceBoundary()
+  [Method] Pack get_IdiomaticSimplicity()
+  [Method] Pack get_PublicSurface()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.SurfaceChecks.ProfileModule+Pack+Tags
+  [Property] Boolean IsEffectBoundary
+  [Property] Boolean IsEvidenceBoundary
+  [Property] Boolean IsIdiomaticSimplicity
+  [Property] Boolean IsPublicSurface
+  [Property] Int32 Tag
+  [Property] Pack EffectBoundary
+  [Property] Pack EvidenceBoundary
+  [Property] Pack IdiomaticSimplicity
+  [Property] Pack PublicSurface
+TYPE FS.GG.Governance.SurfaceChecks.ProfileModule+Pack+Tags
+  [Field] Int32 EffectBoundary
+  [Field] Int32 EvidenceBoundary
+  [Field] Int32 IdiomaticSimplicity
+  [Field] Int32 PublicSurface
