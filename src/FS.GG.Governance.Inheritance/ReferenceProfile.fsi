@@ -29,6 +29,13 @@ module ReferenceProfile =
     /// Every template-profile this org profile binds, in a deterministic order. `checksFor` returns
     /// a NON-empty list for exactly these and the EMPTY list for anything else, so a caller can
     /// enumerate the whole authoritative profile without knowing the table's shape.
+    ///
+    /// TWO profiles are bound: `fsharp-constitution` — epic FS-GG/FS.GG.Governance#367's four rule
+    /// packs composed into one gate set by #385 (docs/decisions/0012) — and `game`, the gameplay
+    /// floor of ADR-0049 / docs/decisions/0010. Adding a profile here is a FAIL-CLOSED act: the
+    /// derivation gate's D3 requires every bound profile to have a generated region in the
+    /// published `.fsgg/capabilities.yml`, and the marker pair that names the region must be placed
+    /// in that file before the bless path can render into it.
     val boundProfiles: TemplateProfile list
 
     /// THE authoritative org reference profile for one template-profile: the checks every product
@@ -36,6 +43,11 @@ module ReferenceProfile =
     /// docs/decisions/0011 names — `Inheritance.referenceGatesFor` projects it into gates for
     /// enforcement, and `capabilitiesRegion` renders it into the published YAML. An unbound or
     /// unknown profile yields the EMPTY list — never an error, never a fabricated check.
+    ///
+    /// The `fsharp-constitution` case DELEGATES to `SurfaceChecks.Profile.checks` rather than
+    /// restating it. That is deliberate and is the whole point of #385: the four packs read their
+    /// declared maturity from the same table, so the composed profile has one authority in exactly
+    /// the sense docs/decisions/0011 established for the `game` floor.
     val checksFor: profile: TemplateProfile -> Check list
 
     /// The exact line that opens the generated region for a profile in a `.fsgg/capabilities.yml`

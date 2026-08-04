@@ -73,28 +73,51 @@ let derivationGuard =
     <| testList
         "ReferenceGateSetGuardDerivation"
         [
-          // ── D1 — the published region IS the projection, byte for byte ──
+          // ── D1 — the published region IS the projection, byte for byte, for EVERY bound profile ──
+          // #385 gave the org profile a second bound profile (`fsharp-constitution`), and this test
+          // used to name `game` in three places. It now iterates `boundProfiles`, so the set it
+          // checks and the set D3 requires a region for are THE SAME LIST — a third profile is
+          // covered by adding it to `boundProfiles`, with no second edit here that could be
+          // forgotten. Bless likewise regenerates every bound region rather than only the first.
+          //
+          // What bless still cannot do, on purpose: CREATE a marker pair. `replaceRegion` fails
+          // closed on an absent one, so a newly bound profile reds D1/D3 until a human places the
+          // markers (and the surrounding hand-authored context) in `capabilities.yml`. That is the
+          // right direction to fail — a generator that invented its own insertion point would be
+          // choosing where an org gate set lands in a consumer's file.
           test "D1 the generated capabilities region equals the projection of the embedded profile" {
-              let text = capabilitiesText ()
-
               if blessing then
-                  match ReferenceProfile.replaceRegion gameProfile text with
-                  | Ok rewritten -> File.WriteAllText(capabilitiesPath, rewritten)
-                  | Error e -> failtestf "BLESS_REFERENCE_GATE_SET=1 could not locate the region to rewrite: %s" e
+                  for profile in ReferenceProfile.boundProfiles do
+                      match ReferenceProfile.replaceRegion profile (capabilitiesText ()) with
+                      | Ok rewritten -> File.WriteAllText(capabilitiesPath, rewritten)
+                      | Error e ->
+                          let (TemplateProfile name) = profile
+
+                          failtestf
+                              "BLESS_REFERENCE_GATE_SET=1 could not locate the region to rewrite for profile '%s': %s\nA newly bound profile needs its marker pair placed in %s by hand first — bless replaces a region, it never invents one."
+                              name
+                              e
+                              capabilitiesPath
 
               // Re-read: under bless this asserts over what was just written, so a broken splice is
               // still caught rather than blessed away.
-              match ReferenceProfile.extractRegion gameProfile (capabilitiesText ()) with
-              | Error e ->
-                  failtestf
-                      "the generated region could not be located in %s: %s\nThe published gate set must carry the marked, generated region — an unlocatable region is drift, not an exemption. Regenerate with BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests"
-                      capabilitiesPath
-                      e
-              | Ok onDisk ->
-                  Expect.equal
-                      onDisk
-                      (ReferenceProfile.capabilitiesRegion gameProfile)
-                      "the published capabilities region drifted from the authoritative embedded F# profile (docs/decisions/0011) — it is GENERATED; edit ReferenceProfile.checksFor and regenerate with BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests"
+              for profile in ReferenceProfile.boundProfiles do
+                  let (TemplateProfile name) = profile
+
+                  match ReferenceProfile.extractRegion profile (capabilitiesText ()) with
+                  | Error e ->
+                      failtestf
+                          "the generated region for profile '%s' could not be located in %s: %s\nThe published gate set must carry the marked, generated region — an unlocatable region is drift, not an exemption. Regenerate with BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests"
+                          name
+                          capabilitiesPath
+                          e
+                  | Ok onDisk ->
+                      Expect.equal
+                          onDisk
+                          (ReferenceProfile.capabilitiesRegion profile)
+                          (sprintf
+                              "the published capabilities region for profile '%s' drifted from the authoritative embedded F# profile (docs/decisions/0011, and docs/decisions/0012 for `fsharp-constitution`) — it is GENERATED; edit the authoritative table and regenerate with BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests"
+                              name)
           }
 
           // ── D2 — the round trip through the REAL loader agrees field for field ──

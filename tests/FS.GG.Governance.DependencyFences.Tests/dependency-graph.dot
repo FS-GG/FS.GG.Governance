@@ -244,6 +244,7 @@ digraph Governance {
   "FS.GG.Governance.Inheritance" -> "FS.GG.Governance.Config";
   "FS.GG.Governance.Inheritance" -> "FS.GG.Governance.Gates";
   "FS.GG.Governance.Inheritance" -> "FS.GG.Governance.Route";
+  "FS.GG.Governance.Inheritance" -> "FS.GG.Governance.SurfaceChecks";
   "FS.GG.Governance.JsonTokens" -> "FS.GG.Governance.Config";
   "FS.GG.Governance.JsonTokens" -> "FS.GG.Governance.Enforcement";
   "FS.GG.Governance.JsonTokens" -> "FS.GG.Governance.GateRun";

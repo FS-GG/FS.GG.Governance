@@ -124,7 +124,7 @@ consumer resolution contract recorded in
 Add the package reference to any project in the repository:
 
 ```xml
-<PackageReference Include="FS.GG.Governance.ReferenceGateSet" Version="1.6.0" />
+<PackageReference Include="FS.GG.Governance.ReferenceGateSet" Version="1.7.0" />
 ```
 
 then resolve:
@@ -157,6 +157,56 @@ Set `-p:FsggReferenceGateSetOverwrite=false` to refuse overwriting files you hav
 > product *inherits* (ADR-0009 §Decision 3, preserved by `docs/decisions/0011`). Resolve it
 > because a populated, validated starting point is useful — not because skipping it would
 > lower a gate.
+
+## Resolving it into a generated product
+
+A **generated product** already has a `.fsgg/`: `fsgg-sdd init` owns that directory and writes
+`project.yml`, `sdd.yml`, `agents.yml`, `constitution.md`, `early-stage-guidance.md` and
+`scaffold-provenance.json` into it — and **no Governance file at all**. So the destination is
+populated and has another owner, which makes this a different resolution than the one above.
+
+Resolve in the non-clobbering mode, so nothing the scaffolder wrote can be rewritten:
+
+```bash
+fsgg-sdd init --root .
+dotnet msbuild -t:FsggResolveReferenceGateSet -p:FsggReferenceGateSetOverwrite=false
+```
+
+The published `governance.yml` / `capabilities.yml` / `policy.yml` / `tooling.yml` land alongside
+SDD's files, every SDD-authored byte survives, and the merged directory loads `Valid`. This is
+executed end-to-end — real `fsgg-sdd init`, real installed package — by `ReferenceGateSetResolution`
+R7.
+
+Teaching `init` to perform that resolve for you is
+[FS-GG/FS.GG.SDD#845](https://github.com/FS-GG/FS.GG.SDD/issues/845), owned by that repository. Until
+it lands, the two commands above are the route.
+
+## What you get: the composed F# constitution profile
+
+Since **1.7.0** the published set carries epic
+[#367](https://github.com/FS-GG/FS.GG.Governance/issues/367)'s four F# constitution rule packs as one
+profile — a new `fsharp` capability domain with four command-free gates:
+
+| gate | what it governs | maturity |
+|---|---|---|
+| `fsharp:public-surface` | curated `.fsi` surfaces, explicit visibility, XML docs, surface baselines | `warn` |
+| `fsharp:idiomatic-simplicity` | idiomatic simplicity and evidence-bound exceptions | `warn` |
+| `fsharp:effect-boundary` | functional core / effect edge | `block-on-pr` |
+| `fsharp:evidence-boundary` | behavior evidence, contract goldens, safe failure | `warn` |
+
+**Adopting 1.7.0 cannot red a repository that was green.** Three of the four are advisory, and
+`fsharp:effect-boundary` is applicable only to a transition you opted in yourself with an in-source
+`// fsgg:effect-boundary` marker. No existing check changed, so your current gate set is unaffected.
+
+One thing to know about the path map. Routing assigns each path to **one** capability domain, so the
+published skeleton routes `fsharp` on `surface/**` and `readiness/**` rather than on `src/**` — taking
+`src/**` would have removed it from `build` in every repository that resolved the set. If you want
+your F# sources routed to the constitution gates, change that in **your** `capabilities.yml`; it is
+your map to make.
+
+`reference-gates/README.md` in this repository is the profile's front door, and
+[`docs/decisions/0012`](../decisions/0012-composed-fsharp-constitution-profile.md) records why each
+gate binds where it does.
 
 For how the scaffolded workspace's SDD readiness feeds the Governance loop, see
 [sdd-governance-handoff.md](./sdd-governance-handoff.md). To author your **own**

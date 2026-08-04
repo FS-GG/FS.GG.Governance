@@ -246,7 +246,8 @@
         "dependencies": {
           "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FS.GG.Governance.Route": "[0.1.0, )"
+          "FS.GG.Governance.Route": "[0.1.0, )",
+          "FS.GG.Governance.SurfaceChecks": "[0.2.0, )"
         }
       },
       "fs.gg.governance.jsontext": {
@@ -328,6 +329,13 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Config": "[0.2.0, )"
+        }
+      },
+      "fs.gg.governance.surfacechecks": {
+        "type": "Project",
+        "dependencies": {
+          "FS.GG.Governance.Config": "[0.2.0, )",
+          "FS.GG.Governance.Enforcement": "[0.1.0, )"
         }
       },
       "fs.gg.governance.tests.common": {

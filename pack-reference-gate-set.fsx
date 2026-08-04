@@ -159,6 +159,22 @@ let gateConfiguration =
 // tool can derive — so it is edited HERE on every change to samples/sdd-reference-gate-set/.fsgg/.
 // The `--print-version` hook emits it so the guard asserts the ACTUAL shipped version.
 //
+// 1.7.0 (MINOR, 2026-08-04): #385 / docs/decisions/0012. The published set gains the COMPOSED F#
+// CONSTITUTION PROFILE — epic #367's four rule packs (#366 curated `.fsi` surfaces, #368 idiomatic
+// simplicity, #369 functional core / effect edge, #370 behavior evidence and safe failure) as ONE
+// named gate set. Concretely: a new `fsharp` capability domain in `governance.yml` and
+// `capabilities.yml`, two `pathMap` globs binding it, and a second GENERATED region carrying four
+// command-free checks (`fsharp:public-surface`, `fsharp:idiomatic-simplicity`,
+// `fsharp:effect-boundary`, `fsharp:evidence-boundary`), derived from `SurfaceChecks.Profile.checks`
+// through the same `ReferenceProfile.capabilitiesRegion` projection the `game` floor uses. Until now
+// the four packs shipped separately and nothing composed them; `reference-gates/` — declared in all
+// four children's touch-sets — did not exist.
+// MINOR: the set grows by a domain and four checks, all additive, and exact-pin consumers re-pin
+// deliberately to adopt them. No existing check changed: the `game` floor's values are untouched, so
+// no consumer's current gate set changes. Three of the four new checks bind at `warn` and the fourth
+// (`effect-boundary`) at `block-on-pr` only for work that opted in with an in-source marker, so
+// re-pinning does not block a repository that was green.
+//
 // 1.6.0 (MINOR, 2026-08-04): #386 / docs/decisions/0011. Two package-shape changes, both additive.
 // (a) The package gains `buildTransitive/FS.GG.Governance.ReferenceGateSet.targets` — the CONSUMER
 // RESOLUTION CONTRACT (`dotnet msbuild -t:FsggResolveReferenceGateSet`). Until now the payload sat
@@ -182,7 +198,7 @@ let gateConfiguration =
 // byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
 // --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
 // re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
-let private packageVersion = "1.6.0"
+let private packageVersion = "1.7.0"
 
 // ── Schema manifest (ADR-0055) ──
 // The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the
