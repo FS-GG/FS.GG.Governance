@@ -139,8 +139,9 @@ let private restoredConsumer =
          consumerDir, packagesDir)
 
 /// Resolve into a FRESH copy of the restored consumer, so a test that edits the resolved profile
-/// cannot leak into another test. Returns the new consumer directory.
-let private resolveIntoFreshConsumer () : string =
+/// cannot leak into another test. Returns the new consumer directory. `extraArgs` passes MSBuild
+/// properties through so the target's documented options are exercised, not just its defaults.
+let private resolveIntoFreshConsumerWith (extraArgs: string list) : string =
     let sourceDir, packagesDir = restoredConsumer.Value
     let target = Path.Combine(Path.GetTempPath(), "fsgg-resolve-" + Guid.NewGuid().ToString("N"))
     Directory.CreateDirectory target |> ignore
@@ -166,7 +167,7 @@ let private resolveIntoFreshConsumer () : string =
     copyDir sourceDir target
 
     let code, out, err =
-        runDotnet target packagesDir [ "msbuild"; "Consumer.csproj"; "-t:FsggResolveReferenceGateSet" ]
+        runDotnet target packagesDir ([ "msbuild"; "Consumer.csproj"; "-t:FsggResolveReferenceGateSet" ] @ extraArgs)
 
     if code <> 0 then
         failtestf
@@ -176,6 +177,19 @@ let private resolveIntoFreshConsumer () : string =
             err
 
     target
+
+/// The plain, documented invocation.
+let private resolveIntoFreshConsumer () : string = resolveIntoFreshConsumerWith []
+
+/// Re-run the resolution verb in a consumer that has already resolved once.
+let private reResolve (consumerDir: string) (extraArgs: string list) =
+    let _, packagesDir = restoredConsumer.Value
+
+    let code, out, err =
+        runDotnet consumerDir packagesDir ([ "msbuild"; "Consumer.csproj"; "-t:FsggResolveReferenceGateSet" ] @ extraArgs)
+
+    if code <> 0 then
+        failtestf "re-resolving failed (exit %d)\nSTDOUT:\n%s\nSTDERR:\n%s" code out err
 
 /// The package's own payload, read out of the produced archive — the comparison basis for "what the
 /// consumer got is what the package shipped". Never the on-disk samples: this item exists because
@@ -254,6 +268,35 @@ let resolutionGuard =
                       "the resolved profile must load Valid from a clean consumer; got %d diagnostic(s): %A"
                       (List.length diags)
                       diags
+          }
+
+          // ── R5 — both documented overwrite modes actually behave as documented ──
+          // `FsggReferenceGateSetOverwrite` is a consumer-facing knob on a SHIPPED package asset, and
+          // an untested branch there costs an adopter their local edits. Both arms are executed
+          // against a real re-resolve of an already-resolved consumer.
+          test "R5 re-resolving overwrites by default and preserves local edits when asked not to" {
+              let consumerDir = resolveIntoFreshConsumer ()
+              let policy = Path.Combine(consumerDir, ".fsgg", "policy.yml")
+              let pristine = File.ReadAllText policy
+              let edited = pristine + "\n# a local edit\n"
+
+              // (a) overwrite=false must NOT clobber the edit.
+              File.WriteAllText(policy, edited)
+              reResolve consumerDir [ "-p:FsggReferenceGateSetOverwrite=false" ]
+
+              Expect.equal
+                  (File.ReadAllText policy)
+                  edited
+                  "FsggReferenceGateSetOverwrite=false must refuse to overwrite a file the consumer edited"
+
+              // (b) the default must re-resolve in place, so a version bump is adoptable by re-running
+              // the same verb rather than by deleting the directory first.
+              reResolve consumerDir []
+
+              Expect.equal
+                  (File.ReadAllText policy)
+                  pristine
+                  "the default (overwrite=true) must restore the published bytes on a re-resolve"
           }
 
           // ── R4 — ADR-0009 §Decision 3 survives the resolution route ──
