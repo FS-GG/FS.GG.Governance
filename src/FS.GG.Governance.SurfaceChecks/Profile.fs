@@ -147,14 +147,16 @@ module Profile =
     // ── Ownership lookup ─────────────────────────────────────────────────────────────────────
     // Built by folding `packs`, so it cannot name a pack the profile does not contain. On a
     // collision the FIRST pack in `packs` order wins the map entry — deterministic rather than
-    // arbitrary — but the well-formedness of the table does not rest on that: `collisions()` is
+    // arbitrary — but the well-formedness of the table does not rest on that: `collisions` is
     // asserted empty, so the tie-break is unreachable in a valid profile and exists only so this
     // lookup stays total if one is ever introduced.
 
+    let declarations: (Pack * string) list =
+        packs |> List.collect (fun pack -> ruleIds pack |> List.map (fun id -> pack, id))
+
     let ownerByRuleId: Map<string, Pack> =
-        packs
-        |> List.collect (fun pack -> ruleIds pack |> List.map (fun id -> id, pack))
-        |> List.fold (fun acc (id, pack) -> if Map.containsKey id acc then acc else Map.add id pack acc) Map.empty
+        declarations
+        |> List.fold (fun acc (pack, id) -> if Map.containsKey id acc then acc else Map.add id pack acc) Map.empty
 
     let ruleOwner (ruleId: string) : Pack option = Map.tryFind ruleId ownerByRuleId
 
@@ -192,12 +194,11 @@ module Profile =
 
     type Collision = { RuleId: string; Packs: Pack list }
 
-    let collisions () : Collision list =
-        packs
-        |> List.collect (fun pack -> ruleIds pack |> List.map (fun id -> id, pack))
-        |> List.groupBy fst
+    let collisions (declarations: (Pack * string) list) : Collision list =
+        declarations
+        |> List.groupBy snd
         |> List.choose (fun (id, entries) ->
-            match entries |> List.map snd with
+            match entries |> List.map fst with
             | _ :: _ :: _ as owners -> Some { RuleId = id; Packs = owners }
             | _ -> None)
         |> List.sortBy (fun c -> c.RuleId)

@@ -118,9 +118,10 @@ TYPE FS.GG.Governance.SurfaceChecks.ProfileModule
   [Method] Maturity composeMaturity(Maturity, Maturity)
   [Method] Maturity declaredMaturity(Pack)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] get_checks()
-  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Collision] collisions()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Collision] collisions(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]])
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] get_packs()
   [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] ruleIds(Pack)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]] get_declarations()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Maturity] maturityOf(System.String)
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] ruleOwner(System.String)
   [Method] SurfaceFinding findingOf(Pack, System.String, SurfaceCheckRequest, GovernedPath, System.String, System.String)
@@ -133,6 +134,7 @@ TYPE FS.GG.Governance.SurfaceChecks.ProfileModule
   [Property] DomainId domain
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] checks
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack] packs
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack,System.String]] declarations
   [Property] TemplateProfile profileKey
 TYPE FS.GG.Governance.SurfaceChecks.ProfileModule+Collision
   [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ProfileModule+Pack])

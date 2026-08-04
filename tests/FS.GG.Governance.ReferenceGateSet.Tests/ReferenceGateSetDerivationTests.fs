@@ -37,7 +37,10 @@ let private referenceDir =
 
 let private capabilitiesPath = Path.Combine(referenceDir, ".fsgg", "capabilities.yml")
 
-let private gameProfile = TemplateProfile "game"
+// #385: no test in this file names a single profile any more. D1, D2 and D3 all iterate
+// `ReferenceProfile.boundProfiles`, so the set the derivation is GUARDED over and the set it is
+// GENERATED from are one list, and a profile cannot be added to the org table while remaining
+// outside the gate that checks it.
 
 /// `BLESS_REFERENCE_GATE_SET=1` regenerates the region in place — the same deliberate, opt-in bless
 /// idiom this repo already uses for the public-surface baselines (`BLESS_SURFACE=1`). It is not a
@@ -126,10 +129,16 @@ let derivationGuard =
           // one parses the SHIPPED file back and compares the resulting records to the authoritative
           // table, which is what makes the second token vocabulary in ReferenceProfile.fs safe to
           // have: a wrong token reds this test instead of publishing a quietly wrong profile.
+          //
+          // It iterates `boundProfiles` for the same reason D1 and the bless path do, and #385's
+          // critic measured why it must: while this test bound `game` alone, mis-mapping the
+          // `costToken` cases that ONLY the `fsharp-constitution` profile uses (`Cheap`/`Medium`)
+          // left the whole suite green while shipping `cost: exhaustive` on three of four
+          // `fsharp:*` gates. The control — mis-mapping `High`, a `game` token — did red. So the
+          // guard covered the old profile and not the added one, which is precisely the claim
+          // `ReferenceProfile.fs`'s token-renderer comment makes on this test's behalf. Binding the
+          // same list D1 and D3 bind means a future profile is covered by adding one entry.
           test "D2 the loaded reference set reproduces the authoritative checks field-for-field" {
-              let authoritative = authoritativeById gameProfile
-              Expect.isNonEmpty (Map.toList authoritative) "the `game` profile must bind at least one check, or this gate has no subject"
-
               let loadedById =
                   loadedChecks ()
                   |> List.map (fun c ->
@@ -137,22 +146,45 @@ let derivationGuard =
                       id, c)
                   |> Map.ofList
 
-              for KeyValue(id, expected) in authoritative do
-                  match Map.tryFind id loadedById with
-                  | None ->
-                      failtestf
-                          "the published reference set declares no check '%s', but the authoritative embedded profile binds it — the derived artifact is missing a rule it must carry"
-                          id
-                  | Some actual ->
-                      // Compare the whole record. `Check` is a plain record of closed unions, so
-                      // structural equality covers every field including ones added later — a new
-                      // field cannot slip past this by not being named here.
-                      Expect.equal
-                          actual
-                          expected
-                          (sprintf
-                              "check '%s' as PARSED from the published YAML must equal the authoritative embedded record exactly (a renderer/parser vocabulary mismatch shows up here)"
-                              id)
+              let mutable compared = 0
+
+              for profile in ReferenceProfile.boundProfiles do
+                  let (TemplateProfile name) = profile
+                  let authoritative = authoritativeById profile
+
+                  Expect.isNonEmpty
+                      (Map.toList authoritative)
+                      (sprintf
+                          "profile '%s' is in boundProfiles but binds no check — this gate would have no subject for it"
+                          name)
+
+                  for KeyValue(id, expected) in authoritative do
+                      match Map.tryFind id loadedById with
+                      | None ->
+                          failtestf
+                              "the published reference set declares no check '%s', but the authoritative embedded profile '%s' binds it — the derived artifact is missing a rule it must carry"
+                              id
+                              name
+                      | Some actual ->
+                          // Compare the whole record. `Check` is a plain record of closed unions, so
+                          // structural equality covers every field including ones added later — a new
+                          // field cannot slip past this by not being named here.
+                          Expect.equal
+                              actual
+                              expected
+                              (sprintf
+                                  "check '%s' of profile '%s' as PARSED from the published YAML must equal the authoritative embedded record exactly (a renderer/parser vocabulary mismatch shows up here)"
+                                  id
+                                  name)
+
+                          compared <- compared + 1
+
+              // A loop that compared nothing is a gate that passed by absence. `boundProfiles` being
+              // empty, or every profile's checks silently vanishing, would otherwise read as green.
+              Expect.isGreaterThan
+                  compared
+                  0
+                  "D2 must actually compare at least one check, or it is asserting over an empty iteration"
           }
 
           // ── D3 — one authority, not two ──
@@ -203,29 +235,59 @@ let derivationGuard =
           // indistinguishable from one that quietly no-ops when its subject disappears (#266).
           test "D4 a missing, duplicated, or inverted marker pair is an error, never a silent pass" {
               let text = capabilitiesText ()
-              let beginLine = ReferenceProfile.beginMarker gameProfile
-              let endLine = ReferenceProfile.endMarker gameProfile
 
-              let expectError (label: string) (candidate: string) =
-                  match ReferenceProfile.extractRegion gameProfile candidate with
-                  | Ok _ -> failtestf "%s must fail closed, but the region was located" label
-                  | Error _ -> ()
+              // Per profile, for the same reason D1/D2/D3 iterate: the marker mechanics are what
+              // make a NEWLY bound profile fail closed until its pair is hand-placed, so proving
+              // them on one profile and not on the other would leave exactly the added case
+              // unproven.
+              for profile in ReferenceProfile.boundProfiles do
+                  let (TemplateProfile name) = profile
+                  let beginLine = ReferenceProfile.beginMarker profile
+                  let endLine = ReferenceProfile.endMarker profile
 
-              expectError "a removed BEGIN marker" (text.Replace(beginLine + "\n", ""))
-              expectError "a removed END marker" (text.Replace(endLine + "\n", ""))
-              expectError "a duplicated BEGIN marker" (text.Replace(beginLine, beginLine + "\n" + beginLine))
-              expectError "a duplicated END marker" (text.Replace(endLine, endLine + "\n" + endLine))
+                  let expectError (label: string) (candidate: string) =
+                      match ReferenceProfile.extractRegion profile candidate with
+                      | Ok _ -> failtestf "%s (profile '%s') must fail closed, but the region was located" label name
+                      | Error _ -> ()
 
-              // An inverted pair: markers present exactly once each, but in the wrong order.
-              let inverted =
-                  text.Replace(beginLine, " BEGIN ").Replace(endLine, beginLine).Replace(" BEGIN ", endLine)
+                  expectError "a removed BEGIN marker" (text.Replace(beginLine + "\n", ""))
+                  expectError "a removed END marker" (text.Replace(endLine + "\n", ""))
+                  expectError "a duplicated BEGIN marker" (text.Replace(beginLine, beginLine + "\n" + beginLine))
+                  expectError "a duplicated END marker" (text.Replace(endLine, endLine + "\n" + endLine))
 
-              expectError "an inverted marker pair" inverted
+                  // An inverted pair: both markers present exactly once, in the wrong order. Built
+                  // by SWAPPING THE TWO LINES BY INDEX rather than by a three-step string replace
+                  // through a sentinel. #385: the sentinel this test used was a literal NUL
+                  // (`"\u0000BEGIN\u0000"`), chosen so it could not collide with file content — it
+                  // cannot, but it also made this source file binary to every ordinary tool
+                  // (`file` reports `data`, `grep` refuses it as binary, and exact-string editors
+                  // cannot match it). Swapping by index needs no sentinel at all, so the collision
+                  // question does not arise. Behaviour is identical: markers present once each, in
+                  // the wrong order.
+                  let inverted =
+                      let lines = (text.Replace("\r\n", "\n")).Split '\n'
+                      let indexOf (marker: string) =
+                          match lines |> Array.tryFindIndex (fun l -> l.TrimEnd() = marker) with
+                          | Some i -> i
+                          | None -> failtestf "profile '%s' must have a %s marker to invert" name marker
 
-              // …and the untouched file is located, so the four assertions above are not all passing
-              // for the trivial reason that nothing ever matches.
-              match ReferenceProfile.extractRegion gameProfile text with
-              | Ok _ -> ()
-              | Error e -> failtestf "the unmodified reference set must locate its region (control case): %s" e
+                      let bi = indexOf beginLine
+                      let ei = indexOf endLine
+                      let swapped = Array.copy lines
+                      swapped.[bi] <- endLine
+                      swapped.[ei] <- beginLine
+                      String.concat "\n" swapped
+
+                  expectError "an inverted marker pair" inverted
+
+                  // …and the untouched file is located, so the five assertions above are not all
+                  // passing for the trivial reason that nothing ever matches.
+                  match ReferenceProfile.extractRegion profile text with
+                  | Ok _ -> ()
+                  | Error e ->
+                      failtestf
+                          "the unmodified reference set must locate profile '%s''s region (control case): %s"
+                          name
+                          e
           }
         ]

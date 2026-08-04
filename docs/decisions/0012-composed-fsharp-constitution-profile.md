@@ -136,11 +136,24 @@ Where two packs would declare the **same** identity, `Profile.composeMaturity` t
 higher-`maturityRank` one — ADR-0009 §Decision 3's non-lowerable rule reused verbatim, not a second
 precedence invented here. It is commutative, so the result cannot depend on fold order.
 
-But that tie-break is a safety net, not the design. `Profile.collisions()` reports every identity
-declared by more than one pack, and **C3 asserts it is empty**: if no two packs ever share an
-identity, there is no last-writer to be, and "whichever pack loads last" is unrepresentable rather
-than merely discouraged. C4 plants a duplicate to prove the detector detects, because an empty list
-is also what a broken detector returns.
+But that tie-break is a safety net, not the design. `Profile.collisions` reports every identity
+declared by more than one pack in the declarations it is given, and **C3 asserts
+`collisions declarations` is empty**: if no two packs ever share an identity, there is no last-writer
+to be, and "whichever pack loads last" is unrepresentable rather than merely discouraged. C4 passes
+it a *planted* duplicate to prove the detector detects, because an empty list is also what a broken
+detector returns.
+
+`collisions` takes its input rather than reading the table, and that signature is load-bearing: as a
+nullary `unit -> Collision list` over the fixed table it could only ever return `[]`, so the test
+claiming to prove it had to re-implement the grouping locally — and breaking the real function left
+that test green (measured in #385's first review round). A detector that cannot be handed a positive
+case is not a detector anybody has checked.
+
+Note which test carries which guarantee, because they are not the same one. The property *"no
+identity is silently owned by two packs"* is enforced by **C3's ownership loop**, which asserts
+`ruleOwner id = Some pack` for every declared identity; a planted duplicate reds C3 even with the
+detector fully broken. C4's job is narrower and still necessary: it proves the reported diagnostic —
+the thing a human reads when arbitration is needed — is real.
 
 ### 6. The published gate set gains four command-free gates, and a second generated region
 
@@ -199,9 +212,14 @@ mode 0011 exists to prevent — and the README says so.
   four checks — all additive. **No existing check changed**, so no consumer's current gate set changes;
   three of the four new gates are advisory and the fourth blocks only opted-in work, so re-pinning
   cannot red a repository that was green.
-- The bless path now regenerates **every** profile in `boundProfiles` rather than only `game`, and D1
-  iterates the same list D3 requires regions for — so a third profile is covered by adding one entry,
-  with no second edit that could be forgotten. What bless still cannot do, on purpose, is **create** a
+- The bless path and **all four** derivation invariants now iterate `boundProfiles` rather than naming
+  `game` — so the set the derivation is generated from and the set it is guarded over are one list,
+  and a third profile is covered by adding one entry with no second edit that could be forgotten.
+  D2's generalization was found by #385's first review round and matters most: while D2 alone bound
+  `game`, mis-mapping the `costToken` cases only the new profile uses (`Cheap`/`Medium`) and
+  regenerating shipped `cost: exhaustive` on three of four `fsharp:*` gates with the whole suite
+  green. The token-renderer comment in `ReferenceProfile.fs` claims this test prevents exactly that,
+  and for the added profile it did not. What bless still cannot do, on purpose, is **create** a
   marker pair: a newly bound profile reds D1/D3 until a human places the markers and the surrounding
   hand-authored context, because a generator choosing its own insertion point in a consumer's file is
   a worse contract than a fail-closed one.

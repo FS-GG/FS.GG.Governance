@@ -166,6 +166,37 @@ let rec private copyTree (src: string) (dst: string) =
 /// repo's `.config/dotnet-tools.json`, because restoring it would couple this gate to the org's
 /// credentialed feed that these tests blank on purpose. So the REAL tool runs when it is on PATH,
 /// and the captured-real fixture stands in when it is not. Never a skip, and never silent.
+/// Exactly the files `fsgg-sdd init` 1.0.0 writes into `.fsgg/`. Asserted on BOTH branches below,
+/// which is what keeps the captured fixture honest rather than merely claimed.
+///
+/// #385, repair round 1: the fixture was committed at FIVE of these six. `.gitignore`'s
+/// `**/.fsgg/*.json` silently swallowed `scaffold-provenance.json`, and since CI has no `fsgg-sdd`
+/// on PATH, CI is exactly where R7 takes the fixture branch — so "every SDD-authored byte survives"
+/// was being proven over a capture that was missing a file, while the README claimed six. A scoped
+/// negation in `.gitignore` restored it; this list is what stops it silently regressing, and it also
+/// reds when the real tool's output shape changes, which is the signal that the fixture is stale.
+let private expectedScaffoldFiles =
+    set
+        [ "agents.yml"
+          "constitution.md"
+          "early-stage-guidance.md"
+          "project.yml"
+          "scaffold-provenance.json"
+          "sdd.yml" ]
+
+let private assertScaffoldComplete (source: string) (dir: string) =
+    let actual =
+        Directory.GetFiles(dir, "*", SearchOption.TopDirectoryOnly)
+        |> Array.map nameOf
+        |> Set.ofArray
+
+    if actual <> expectedScaffoldFiles then
+        failtestf
+            "the generated-product scaffold from %s does not carry the expected file set.\nexpected: %A\nactual:   %A\nIf the REAL tool changed shape, re-capture fixtures/generated-product-scaffold/ and update expectedScaffoldFiles. If the FIXTURE is short, a .gitignore rule is probably eating a file (#385)."
+            source
+            expectedScaffoldFiles
+            actual
+
 let private generatedProductScaffold () : string * string =
     let target = Path.Combine(Path.GetTempPath(), "fsgg-scaffold-" + Guid.NewGuid().ToString("N"))
     Directory.CreateDirectory target |> ignore
@@ -186,7 +217,10 @@ let private generatedProductScaffold () : string * string =
             false
 
     if ran then
-        "real `fsgg-sdd init`", Path.Combine(target, ".fsgg")
+        let dir = Path.Combine(target, ".fsgg")
+        let source = "real `fsgg-sdd init`"
+        assertScaffoldComplete source dir
+        source, dir
     else
         let fixtureDir =
             Path.Combine(
@@ -203,7 +237,12 @@ let private generatedProductScaffold () : string * string =
 
         let copy = Path.Combine(target, ".fsgg")
         copyTree fixtureDir copy
-        "captured real `fsgg-sdd init` 1.0.0 fixture (fixtures/generated-product-scaffold)", copy
+
+        let source =
+            "captured real `fsgg-sdd init` 1.0.0 fixture (fixtures/generated-product-scaffold)"
+
+        assertScaffoldComplete source copy
+        source, copy
 
 let private resolveIntoFreshConsumerWith (extraArgs: string list) : string =
     let sourceDir, packagesDir = restoredConsumer.Value

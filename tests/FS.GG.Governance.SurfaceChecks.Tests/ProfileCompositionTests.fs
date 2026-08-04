@@ -244,7 +244,7 @@ let composition =
           // total lookup that depends on it.
           test "C3 the four packs' rule identities are disjoint" {
               Expect.isEmpty
-                  (CP.collisions ())
+                  (CP.collisions CP.declarations)
                   "two packs declare the same rule identity — the composed profile would have to pick one owner, which is exactly the load-order accident #385 exists to prevent. Rename one identity or record an explicit precedence."
 
               for pack in CP.packs do
@@ -257,24 +257,38 @@ let composition =
 
           // ── C4 — the collision detector actually detects (AC6) ──
           // C3 asserts an empty list, and an empty list is also what a broken detector returns.
-          // This one plants a duplicate and requires it to be SEEN, and pins the precedence that
-          // would then apply.
+          // This one plants a duplicate and requires the REAL `collisions` to see it.
+          //
+          // #385 repair round 1: this test used to re-implement the grouping locally and assert its
+          // own pipeline, so breaking `collisions` outright left it green — it proved a copy of the
+          // detector, not the detector. The root cause was the nullary signature: over the fixed
+          // table the function could only ever return `[]`, so there was no way to hand it a
+          // positive case. `collisions` now takes the declarations it inspects, and C3 passes the
+          // profile's own (`CP.declarations`) while this passes a planted set — the same function
+          // on both paths.
           test "C4 a planted duplicate identity is reported, and the stricter maturity wins" {
               let planted =
                   [ CP.PublicSurface, "fsharp.shared-identity"
                     CP.EffectBoundary, "fsharp.shared-identity"
                     CP.EvidenceBoundary, "evidence.unique" ]
 
-              let detected =
-                  planted
-                  |> List.groupBy snd
-                  |> List.filter (fun (_, entries) -> List.length entries > 1)
-                  |> List.map fst
+              let detected = CP.collisions planted
 
               Expect.equal
-                  detected
+                  (detected |> List.map (fun c -> c.RuleId))
                   [ "fsharp.shared-identity" ]
-                  "the same grouping `collisions` performs must find a planted duplicate — otherwise C3's empty result proves nothing"
+                  "the REAL `collisions` must report a planted duplicate — and only it; otherwise C3's empty result proves nothing"
+
+              Expect.equal
+                  (detected |> List.exactlyOne).Packs
+                  [ CP.PublicSurface; CP.EffectBoundary ]
+                  "and it must name every pack declaring the identity, in declaration order, so a reader can see who to arbitrate between"
+
+              // The negative control: the same function over a duplicate-free set is empty, so C4
+              // is not passing merely because `collisions` returns everything it is given.
+              Expect.isEmpty
+                  (CP.collisions [ CP.PublicSurface, "a"; CP.EffectBoundary, "b" ])
+                  "a duplicate-free declaration set must produce no collision"
 
               // ADR-0009 §Decision 3 reused verbatim: a shared identity resolves UP, never down.
               Expect.equal

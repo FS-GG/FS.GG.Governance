@@ -106,11 +106,21 @@ module Profile =
         { RuleId: string
           Packs: Pack list }
 
-    /// Every rule identity declared by more than one pack. The composed profile is well-formed
-    /// exactly when this is EMPTY, and `ReferenceProfileComposition` C3 asserts that it is. It is a
-    /// FUNCTION, not a constant: a collision is a fact about the current table, and a caller that
-    /// wants to know must ask rather than trust that somebody checked.
-    val collisions: unit -> Collision list
+    /// Every `(pack, ruleId)` pair the composed profile declares — `ruleIds` flattened over `packs`,
+    /// in `packs` order. This is the input `collisions` and `ruleOwner` are both computed from, so a
+    /// caller can inspect exactly what they inspect.
+    val declarations: (Pack * string) list
+
+    /// Every rule identity declared by more than one pack in `declarations`, ascending. The composed
+    /// profile is well-formed exactly when `collisions declarations` is EMPTY, and
+    /// `ReferenceProfileComposition` C3 asserts that it is.
+    ///
+    /// It takes its input rather than reading the table directly, and #385's repair round 1 is why:
+    /// as a nullary `unit -> Collision list` over the fixed table it could only ever return `[]`,
+    /// so the test claiming to prove the detector had to re-implement the grouping locally and
+    /// assert its own pipeline — breaking the real function outright left that test green. A
+    /// detector that cannot be handed a positive case is not a detector anybody has checked.
+    val collisions: declarations: (Pack * string) list -> Collision list
 
     /// Resolve two maturities declared for the SAME rule identity: the HIGHER-ranked wins. This is
     /// ADR-0009 §Decision 3's non-lowerable rule reused verbatim (`Model.maturityRank`), not a

@@ -12,6 +12,19 @@ FS-GG/FS.GG.Governance#385. Nothing was edited, trimmed, or hand-written afterwa
 `id` (`generatedproduct`) is derived by the tool from the directory leaf, which is why the capture
 directory has a fixed name; there is no timestamp or other nondeterministic field in the output.
 
+**All six files the tool writes are here** — `agents.yml`, `constitution.md`,
+`early-stage-guidance.md`, `project.yml`, `scaffold-provenance.json`, `sdd.yml` — and that is
+enforced, not asserted: `expectedScaffoldFiles` in `ReferenceGateSetResolutionTests.fs` is checked
+against **both** the real tool's output and this capture, so a short fixture reds and a change in the
+tool's output shape reds as "the fixture is stale".
+
+> **Re-capturing?** `scaffold-provenance.json` is under the repo's `**/.fsgg/*.json` ignore rule,
+> which is meant for CLI-emitted run outputs. A scoped negation in `.gitignore` keeps this one
+> tracked. It was added because the first capture committed **five** of the six files while this
+> README claimed all of them — and since CI has no `fsgg-sdd` on `PATH`, CI is precisely where R7
+> reads the fixture, so the missing file was invisible exactly where it mattered
+> (#385, repair round 1).
+
 ## Why it exists
 
 `#385` AC3 requires a **generated product** to consume the composed F# constitution profile, proven
