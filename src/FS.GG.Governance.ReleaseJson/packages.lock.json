@@ -13,7 +13,7 @@
         "dependencies": {
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.PackEvidence": "[0.1.0, )",
           "FS.GG.Governance.Provenance": "[0.1.0, )"
@@ -45,7 +45,7 @@
       "fs.gg.governance.commandrecord": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.config": {
@@ -58,7 +58,7 @@
       "fs.gg.governance.enforcement": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.evidencereuse": {
@@ -76,14 +76,14 @@
       "fs.gg.governance.findings": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
       "fs.gg.governance.freshnesskey": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -96,7 +96,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.GateExecution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )"
@@ -105,7 +105,7 @@
       "fs.gg.governance.gates": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.jsontext": {
@@ -114,7 +114,7 @@
       "fs.gg.governance.jsontokens": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )"
@@ -126,7 +126,7 @@
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
@@ -140,7 +140,7 @@
         "dependencies": {
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )"
         }
@@ -149,14 +149,14 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )"
         }
       },
       "fs.gg.governance.releasefactssensing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.PackEvidence": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )"
         }
@@ -174,7 +174,7 @@
       "fs.gg.governance.releaserules": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )"
         }
@@ -190,7 +190,7 @@
       "fs.gg.governance.routing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.ship": {

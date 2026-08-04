@@ -234,7 +234,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.Config": "[0.2.0, )",
-          "FS.GG.Governance.DesignChecks": "[0.2.0, )",
+          "FS.GG.Governance.DesignChecks": "[0.3.0, )",
           "FS.GG.Governance.SurfaceChecks": "[0.1.0, )"
         }
       },
