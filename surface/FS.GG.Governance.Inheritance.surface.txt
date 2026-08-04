@@ -4,3 +4,12 @@ TYPE FS.GG.Governance.Inheritance.InheritanceModule
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] inheritedGatesFor(TypedFacts)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate] referenceGatesFor(TemplateProfile)
   [Method] RouteResult applyInheritance(TypedFacts, RouteResult)
+TYPE FS.GG.Governance.Inheritance.ReferenceProfileModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+Check] checksFor(TemplateProfile)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+TemplateProfile] get_boundProfiles()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] extractRegion(TemplateProfile, System.String)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[System.String,System.String] replaceRegion(TemplateProfile, System.String)
+  [Method] System.String beginMarker(TemplateProfile)
+  [Method] System.String capabilitiesRegion(TemplateProfile)
+  [Method] System.String endMarker(TemplateProfile)
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+TemplateProfile] boundProfiles

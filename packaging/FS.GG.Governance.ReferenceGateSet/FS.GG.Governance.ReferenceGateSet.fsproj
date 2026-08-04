@@ -79,6 +79,26 @@
           PackagePath="contentFiles/any/any/" />
   </ItemGroup>
 
+  <!-- #386 AC2 (docs/decisions/0011): the CONSUMER RESOLUTION CONTRACT. Until now the package had
+       no `build`/`buildTransitive` assets at all, and `contentFiles/any/any/` is not materialized by
+       a modern SDK-style `PackageReference` — so an ordinary repository had no verb by which to
+       obtain the published profile, only a hand copy out of a clone. `buildTransitive/` (not
+       `build/`) deliberately: buildTransitive assets are imported by the DIRECT consumer AND flow
+       to projects that reference it transitively, and shipping only one of the two folders avoids
+       the duplicate-target-definition MSBuild error that shipping both under the same file name
+       causes. No TFM subfolder: this package is framework-agnostic and the targets touch no
+       framework asset.
+
+       It adds no assembly and no dependency group, so the content-only invariant (FR-007/SC-005)
+       still holds — a `.targets` file is neither. It is DISTRIBUTION, never enforcement: ADR-0009
+       §1's rejection of package-resolved enforcement is preserved, and the target's own header
+       says so. -->
+  <ItemGroup>
+    <None Include="buildTransitive/FS.GG.Governance.ReferenceGateSet.targets"
+          Pack="true"
+          PackagePath="buildTransitive/" />
+  </ItemGroup>
+
   <!-- 094: pack the root README and the shared icon at the package root for the nuget.org listing
        (PackageReadmeFile / PackageIcon). These are additive package-root files only — they add no
        assembly and no dependency group, so the content-only invariant (and the G1–G7 byte-identity

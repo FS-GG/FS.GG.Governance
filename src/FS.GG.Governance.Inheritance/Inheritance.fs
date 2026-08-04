@@ -17,38 +17,18 @@ module Inheritance =
     // ── The embedded org-owned reference floor (hidden; absent from the .fsi) ──
 
     // The reference checks bound to a template-profile. `buildRegistry` projects these into gates
-    // identically to a product's own declared checks (FR-009). publish-before-flip (FR-008): the `game`
-    // gameplay gate binds at `warn` — non-blocking, so this contract changes no product's ship verdict;
-    // WI-8 (FS-GG/FS.GG.Governance#276) raises it to `block-on-ship`. An unknown/unbound profile yields
+    // identically to a product's own declared checks (FR-009). An unknown/unbound profile yields
     // `[]` — never a fabricated gate.
-    let referenceChecks (profile: TemplateProfile) : Check list =
-        let (TemplateProfile p) = profile
-
-        match p with
-        | "game" ->
-            // The per-FR gameplay-obligation gate every `game` product inherits as a floor (epic
-            // FS-GG/.github#1190). Command left unbound (no `tooling.yml` dependency) — the reference
-            // sample's `gameplay:fr-covered` check carries the identical command-free, `block-on-ship`
-            // shape. WI-8 (FS-GG/FS.GG.Governance#276) flipped the maturity from `warn` to
-            // `block-on-ship`, the ADR-0049 profile binding at full teeth (WI-7's reference-game proof
-            // green): every `game` product now inherits this gate as a NON-LOWERABLE block-on-ship floor.
-            [ { Id = CheckId "fr-covered"
-                Domain = DomainId "gameplay"
-                Command = None
-                Owner = Owner "platform"
-                Cost = High
-                Environment = Ci
-                Maturity = BlockOnShip
-                Tier = None }
-              { Id = CheckId "production-journey"
-                Domain = DomainId "gameplay"
-                Command = None
-                Owner = Owner "platform"
-                Cost = High
-                Environment = Ci
-                Maturity = BlockOnShip
-                Tier = None } ]
-        | _ -> []
+    //
+    // The TABLE itself no longer lives here. docs/decisions/0011 gave the org profile ONE
+    // authoritative home — `ReferenceProfile.checksFor` — precisely so the published
+    // `FS.GG.Governance.ReferenceGateSet` YAML could be GENERATED from it rather than remain a
+    // second copy kept in step by convention. This is a move with a decision behind it, not a new
+    // layer: enforcement reaches the same records through the same `Gates.buildRegistry`
+    // projection, and the floor is still EMBEDDED — ADR-0009 §1 preserved, nothing here reads a
+    // file. WI-8 (FS-GG/FS.GG.Governance#276) already flipped the `game` gameplay gates to
+    // `block-on-ship`; publish-before-flip (FR-008) is history, not a current state.
+    let referenceChecks (profile: TemplateProfile) : Check list = ReferenceProfile.checksFor profile
 
     // A minimal `TypedFacts` carrying ONLY the reference checks. `Gates.buildRegistry` reads only
     // `Capabilities.Checks` (and `Tooling.Commands`, absent here) — everything else is ignored — so the

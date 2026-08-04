@@ -13,25 +13,22 @@ module FS.GG.Governance.ReferenceGateSet.Tests.ReferenceGateSetPackageTests
 open System
 open System.IO
 open System.IO.Compression
-open System.Diagnostics
-open System.Reflection
 open Expecto
-open FS.GG.Governance.Tests.Common
+open FS.GG.Governance.ReferenceGateSet.Tests.PackFixture
 
-let private repoRoot = RepositoryHelpers.repoRoot
-let private packScript = Path.Combine(repoRoot, "pack-reference-gate-set.fsx")
-let private samplesFsgg = Path.Combine(repoRoot, "samples", "sdd-reference-gate-set", ".fsgg")
-let private packagingProject =
-    Path.Combine(repoRoot, "packaging", "FS.GG.Governance.ReferenceGateSet", "FS.GG.Governance.ReferenceGateSet.fsproj")
-
-// Fixed YAML order — the schema-manifest field order (must match the pack script and ADR-0055).
-let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
+// The "produce the REAL artifact" fixture moved to PackFixture when #386 added a second consumer
+// (ReferenceGateSetResolutionTests, which installs the produced package into a temp consumer).
+// Sharing it means both suites assert over the SAME produced bytes and the gate+pack runs once.
 let private shippedFiles = orderedFiles @ [ "controlled-imports.fsx"; "controlled-imports.json" ]
 let private contentPrefix = "contentFiles/any/any/.fsgg/"
 // ADR-0055: the in-package schema manifest sits ALONGSIDE the .fsgg set (a sibling of .fsgg/).
 let private manifestEntry = "contentFiles/any/any/schema-manifest.json"
+// #386 AC2 / docs/decisions/0011: the consumer resolution contract ships as a buildTransitive
+// MSBuild asset, which is what makes the package RESOLVABLE by an ordinary repository at all.
+let private buildTransitiveEntry =
+    "buildTransitive/FS.GG.Governance.ReferenceGateSet.targets"
 // The pinned plain SemVer (ADR-0055), no longer derived from the contained schemaVersions.
-let private expectedVersion = "1.5.0"
+let private expectedVersion = "1.6.0"
 
 /// The test's OWN independent parse of a sample's `schemaVersion:` — so an assertion over the packed
 /// manifest is evidence about the real on-disk generations, not a re-scrape of the script's rule
@@ -45,73 +42,6 @@ let private schemaVersionOf (fileName: string) : int =
             System.Text.RegularExpressions.RegexOptions.Multiline)
     if not m.Success then failtestf "no schemaVersion in %s" fileName
     int m.Groups.[1].Value
-
-/// The configuration THIS assembly was built in, read from the attribute the SDK generates from
-/// $(Configuration) — the real build fact, not a guess (`#if DEBUG` would re-encode the assumption
-/// that the symbol implies the configuration; a path scrape would re-encode the output layout).
-/// The pack gate is shelled from inside our own `dotnet test` run and must target the tree the
-/// caller actually built, so it needs this (#148). Fail loud rather than assume a default: a silent
-/// "Debug" here is exactly the mismatch that made `dotnet test -c Release` red on a clean tree.
-///
-/// A function, not a module-level value, deliberately: a `let`-bound value would be computed in the
-/// module initializer, so this failure would throw at test DISCOVERY — no failed test, no `Failed!`
-/// line, just a crashed suite and a non-zero exit (the invisible failure mode of #149). Called from
-/// runPack, it fails as a red test that names the cause.
-let private buildConfiguration () =
-    match Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>() with
-    | null ->
-        failwith
-            "no AssemblyConfigurationAttribute on the test assembly — cannot tell the pack gate which configuration to run in (is GenerateAssemblyInfo disabled?)"
-    | attr -> attr.Configuration
-
-/// Run `dotnet fsi pack-reference-gate-set.fsx <args>` from the repo root; capture (exit, out, err).
-let private runPack (args: string list) : int * string * string =
-    let psi = ProcessStartInfo "dotnet"
-    psi.ArgumentList.Add "fsi"
-    psi.ArgumentList.Add packScript
-    args |> List.iter psi.ArgumentList.Add
-    psi.WorkingDirectory <- repoRoot
-    psi.RedirectStandardOutput <- true
-    psi.RedirectStandardError <- true
-    psi.UseShellExecute <- false
-    // We are already running under `dotnet test` for THIS project; tell the pack gate to run the
-    // guard with --no-build so a nested run does not contend on rebuilding the loaded assembly.
-    psi.Environment.["FSGG_PACK_GATE_NO_BUILD"] <- "1"
-    // …and --no-build only resolves against the tree we were actually built into, so the gate must
-    // run in OUR configuration, not a hard-coded one. Set here rather than per call site so every
-    // runPack is correct by construction (#148).
-    psi.Environment.["FSGG_PACK_GATE_CONFIGURATION"] <- buildConfiguration ()
-    match Process.Start psi with
-    | null -> failwith "dotnet fsi did not start"
-    | p ->
-        let out = p.StandardOutput.ReadToEnd()
-        let err = p.StandardError.ReadToEnd()
-        p.WaitForExit()
-        p.ExitCode, out, err
-
-/// Copy the four canonical YAML reference files into a fresh temp `<dir>/.fsgg/`; return <dir> (the
-/// directory that CONTAINS `.fsgg/`, i.e. the `--source` value). Real I/O, no mock.
-let private copyReferenceTo () : string =
-    let tmp = Path.Combine(Path.GetTempPath(), "fsgg-pack-test-" + Guid.NewGuid().ToString("N"))
-    let fsgg = Path.Combine(tmp, ".fsgg")
-    Directory.CreateDirectory fsgg |> ignore
-    for f in orderedFiles do
-        File.Copy(Path.Combine(samplesFsgg, f), Path.Combine(fsgg, f))
-    tmp
-
-// ── Shared fixture: produce the REAL .nupkg once, gated on G1–G7, into a temp feed dir ──
-// Packs through the actual production path (gate + pack). Output goes to a temp dir so the run
-// neither depends on nor pollutes the shared ~/.local/share/nuget-local feed.
-let private producedNupkg =
-    lazy
-        (let outDir = Path.Combine(Path.GetTempPath(), "fsgg-pack-out-" + Guid.NewGuid().ToString("N"))
-         Directory.CreateDirectory outDir |> ignore
-         let code, out, err = runPack [ "--output"; outDir ]
-         if code <> 0 then
-             failtestf "pack-reference-gate-set.fsx failed (exit %d)\nSTDOUT:\n%s\nSTDERR:\n%s" code out err
-         match Directory.GetFiles(outDir, "FS.GG.Governance.ReferenceGateSet.*.nupkg") with
-         | [| p |] -> p
-         | other -> failtestf "expected exactly one produced .nupkg in %s; got %A" outDir other)
 
 let private entryNames (archive: ZipArchive) : string list =
     archive.Entries |> Seq.map (fun e -> e.FullName) |> List.ofSeq
@@ -151,6 +81,29 @@ let packageGuard =
               use archive = ZipFile.OpenRead producedNupkg.Value
               let lib = entryNames archive |> List.filter (fun n -> n.StartsWith "lib/")
               Expect.isEmpty lib "a content-only package must carry no lib/<tfm>/ assembly"
+          }
+
+          // #386 AC2 (docs/decisions/0011): the package carries the consumer resolution contract as a
+          // buildTransitive MSBuild asset. Before this, the package had NO build/buildTransitive
+          // assets and its payload lived only under contentFiles/any/any/, which a modern SDK-style
+          // PackageReference does not materialize — so there was no verb by which an ordinary
+          // repository could obtain the profile. Asserted over the REAL produced archive, and the
+          // resolution is then EXECUTED end-to-end against an installed copy of this same package by
+          // ReferenceGateSetResolutionTests; this test is the presence half, not the proof.
+          test "AC2 Package carries the buildTransitive resolution target" {
+              use archive = ZipFile.OpenRead producedNupkg.Value
+              let names = entryNames archive
+              Expect.contains names buildTransitiveEntry "the resolution target must ship at buildTransitive/<PackageId>.targets"
+              let targets = System.Text.Encoding.UTF8.GetString(readEntryBytes archive buildTransitiveEntry)
+              Expect.stringContains
+                  targets
+                  "FsggResolveReferenceGateSet"
+                  "the packed targets file must define the resolution verb"
+              // buildTransitive ONLY. Shipping the same file name under build/ as well makes MSBuild
+              // import both for a direct PackageReference and fail on the duplicate target.
+              Expect.isEmpty
+                  (names |> List.filter (fun n -> n.StartsWith "build/"))
+                  "the package must ship its MSBuild asset under buildTransitive/ alone (duplicate-import guard)"
           }
 
           // SC-005: empty dependency group — installing imposes no runtime/assembly dependency.
@@ -208,7 +161,7 @@ let packageGuard =
 
           // ADR-0055: --print-version emits the pinned plain SemVer verbatim (no clock/env, no
           // derivation from the contained schemaVersions).
-          test "T011 print-version emits the pinned plain SemVer 1.5.0" {
+          test "T011 print-version emits the pinned plain SemVer" {
               let code, out, err = runPack [ "--print-version" ]
               Expect.equal code 0 (sprintf "--print-version must succeed; stderr:\n%s" err)
               Expect.equal (out.Trim()) expectedVersion "the version is the pinned plain SemVer (ADR-0055), not a schema-derived tuple"

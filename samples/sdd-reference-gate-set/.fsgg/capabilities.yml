@@ -45,22 +45,38 @@ checks:
     cost: medium
     environment: local-or-ci
     maturity: warn
-  # The per-FR gameplay-obligation gate (epic FS-GG/.github#1190, ADR-0049 / WI-8). Command-unbound
-  # by design: satisfied by per-FR gameplay test evidence in the SDD handoff, not by a local tooling
-  # command — the identical shape the embedded reference floor (Inheritance.referenceChecks) inherits
-  # onto every `game` product. Binds at `block-on-ship`: a non-lowerable floor (WI-8 flip).
+  # ── The `game` profile's inherited gameplay floor ────────────────────────────────────────────
+  # Hand-authored CONTEXT for the machine-authored region below; the region itself is generated.
+  #
+  # `gameplay:fr-covered` is the per-FR gameplay-obligation gate (epic FS-GG/.github#1190,
+  # ADR-0049 / WI-8). `gameplay:production-journey` is stronger than generic observed gameplay
+  # coverage: when SDD classifies a requirement as a production journey, only a compatible
+  # runner-issued boot/input/update receipt satisfies it (docs/decisions/0010). Both are
+  # command-unbound by design — satisfied by evidence in the SDD handoff, not by a local tooling
+  # command — and both bind at `block-on-ship` as a floor a product cannot lower.
+  #
+  # These entries used to be a SECOND, hand-maintained copy of the embedded floor, agreeing with it
+  # only by convention. docs/decisions/0011 ended that: the embedded F# profile is authoritative and
+  # this region is DERIVED from it. Enforcement is unchanged and still reads no file — a product
+  # that deletes or edits its resolved copy of this YAML still inherits the floor (ADR-0009 §1).
+  # BEGIN GENERATED: fsgg-reference-profile:game
+  # DO NOT EDIT — GENERATED from the authoritative embedded F# reference profile
+  # (src/FS.GG.Governance.Inheritance/ReferenceProfile.fs, `ReferenceProfile.checksFor`) by
+  # `ReferenceProfile.capabilitiesRegion`. Decision: docs/decisions/0011.
+  # Regenerate:
+  #   BLESS_REFERENCE_GATE_SET=1 dotnet test tests/FS.GG.Governance.ReferenceGateSet.Tests
+  # A hand edit is caught by the `ReferenceGateSetGuard` derivation gate, which
+  # fails closed — and pack-reference-gate-set.fsx refuses to pack while it is red.
   - id: fr-covered
     domain: gameplay
     owner: platform
     cost: high
     environment: ci
     maturity: block-on-ship
-  # Stronger than generic observed gameplay coverage: when SDD classifies a requirement as a
-  # production journey, only a compatible runner-issued boot/input/update receipt satisfies it.
-  # The game profile inherits this organization-owned floor and local products cannot lower it.
   - id: production-journey
     domain: gameplay
     owner: platform
     cost: high
     environment: ci
     maturity: block-on-ship
+  # END GENERATED: fsgg-reference-profile:game

@@ -1,0 +1,94 @@
+<Project>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       THE CONSUMER RESOLUTION CONTRACT for FS.GG.Governance.ReferenceGateSet
+       (FS-GG/FS.GG.Governance#386 AC2; docs/decisions/0011-generated-reference-gate-set.md).
+
+       WHAT WAS BROKEN. This package publishes its payload under `contentFiles/any/any/`. A modern
+       SDK-style `PackageReference` does NOT materialize `contentFiles` into the consumer's working
+       tree — that is a `packages.config`/`PackageReference`-with-`contentFiles`-assets legacy — and
+       the package shipped no `build`/`buildTransitive` targets either. So there was no verb at all
+       by which an ordinary repository could OBTAIN the published profile; the only documented route
+       was copying `samples/sdd-reference-gate-set/` by hand out of a clone of this repo, which is
+       not a resolution of the PACKAGE and could not be pinned, verified, or re-resolved.
+
+       WHAT THIS IS. One explicit, idempotent MSBuild target that copies the package's published
+       `.fsgg/` into the consuming repository:
+
+         dotnet restore
+         dotnet msbuild -t:FsggResolveReferenceGateSet
+
+       It is deliberately NOT hooked to `Build`, `Restore`, or any other event. Resolving writes
+       files into the consumer's SOURCE tree, and a build that silently rewrites tracked files is a
+       worse contract than a missing one. The consumer runs the verb when it wants the profile, and
+       the write shows up in its diff where it can be reviewed.
+
+       WHAT THIS IS NOT — and this is the load-bearing part. This is DISTRIBUTION, never
+       ENFORCEMENT. ADR-0009 §Decision 1 rejected resolving the org floor from an installed package
+       because a floor a product can escape by deleting a file is not a floor, and
+       docs/decisions/0011 PRESERVES that rejection rather than overturning it. The enforced floor
+       remains the embedded F# profile (`ReferenceProfile.checksFor`), which
+       `Inheritance.applyInheritance` unions into every `game` product's gate set before
+       `Ship.rollup` with no file read anywhere in the path. Deleting, editing, or never resolving
+       the `.fsgg/` this target writes changes what a product DECLARES; it cannot change what the
+       product INHERITS. That is why an escapable copy is safe here and would not have been safe as
+       the enforcement input.
+
+       Properties a consumer may set:
+
+         FsggReferenceGateSetDestination   where to write. Default: `$(MSBuildProjectDirectory)/.fsgg`.
+                                           An ordinary repository usually wants its REPO ROOT, e.g.
+                                           `-p:FsggReferenceGateSetDestination=$(MSBuildProjectDirectory)/../.fsgg`.
+         FsggReferenceGateSetOverwrite     `true` (default) re-resolves in place; `false` refuses to
+                                           overwrite existing files so a local edit is never lost.
+
+       Read-only properties this file publishes for a consumer's own gates:
+
+         FsggReferenceGateSetSource          the package's `.fsgg/` directory.
+         FsggReferenceGateSetSchemaManifest  the in-package `schema-manifest.json` (ADR-0055) — the
+                                             four contained `schemaVersion` generations, so a
+                                             consumer can pin against the schema generation rather
+                                             than scraping the package version string.
+       ═══════════════════════════════════════════════════════════════════════════════════════════ -->
+
+  <PropertyGroup>
+    <!-- This file is imported from `<package-root>/buildTransitive/`, so the payload is one level
+         up. NormalizeDirectory keeps the trailing slash and collapses the `..` so the value is a
+         real path in diagnostics rather than a path with a `..` in the middle of it. -->
+    <FsggReferenceGateSetPackageRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</FsggReferenceGateSetPackageRoot>
+    <FsggReferenceGateSetSource>$([MSBuild]::NormalizeDirectory('$(FsggReferenceGateSetPackageRoot)', 'contentFiles', 'any', 'any', '.fsgg'))</FsggReferenceGateSetSource>
+    <FsggReferenceGateSetSchemaManifest>$([MSBuild]::NormalizePath('$(FsggReferenceGateSetPackageRoot)', 'contentFiles', 'any', 'any', 'schema-manifest.json'))</FsggReferenceGateSetSchemaManifest>
+
+    <FsggReferenceGateSetDestination Condition="'$(FsggReferenceGateSetDestination)' == ''">$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '.fsgg'))</FsggReferenceGateSetDestination>
+    <FsggReferenceGateSetOverwrite Condition="'$(FsggReferenceGateSetOverwrite)' == ''">true</FsggReferenceGateSetOverwrite>
+  </PropertyGroup>
+
+  <!-- Resolve the published reference gate set into this repository's `.fsgg/`. -->
+  <Target Name="FsggResolveReferenceGateSet">
+
+    <ItemGroup>
+      <FsggReferenceGateSetFile Include="$(FsggReferenceGateSetSource)**\*" />
+    </ItemGroup>
+
+    <!-- Fail LOUD and CLOSED on an empty payload. A `Copy` of nothing succeeds, so without this the
+         verb would report success and leave the consumer with no `.fsgg/` at all — the exact
+         "resolved, apparently" failure this contract exists to remove. -->
+    <Error Condition="'@(FsggReferenceGateSetFile)' == ''"
+           Code="FSGG0386"
+           Text="FS.GG.Governance.ReferenceGateSet: no files found under '$(FsggReferenceGateSetSource)'. The package payload is missing or the package layout changed; refusing to report a resolution that produced nothing." />
+
+    <Copy SourceFiles="@(FsggReferenceGateSetFile)"
+          DestinationFolder="$(FsggReferenceGateSetDestination)%(RecursiveDir)"
+          SkipUnchangedFiles="false"
+          Condition="'$(FsggReferenceGateSetOverwrite)' == 'true'" />
+
+    <Copy SourceFiles="@(FsggReferenceGateSetFile)"
+          DestinationFolder="$(FsggReferenceGateSetDestination)%(RecursiveDir)"
+          SkipUnchangedFiles="false"
+          Condition="'$(FsggReferenceGateSetOverwrite)' != 'true' And !Exists('$(FsggReferenceGateSetDestination)%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <Message Importance="high"
+             Text="FS.GG.Governance.ReferenceGateSet: resolved @(FsggReferenceGateSetFile->Count()) file(s) into $(FsggReferenceGateSetDestination) (schema manifest: $(FsggReferenceGateSetSchemaManifest)). This is the DECLARED profile; the enforced floor stays embedded in the governance runtime (docs/decisions/0011, ADR-0009 §1)." />
+  </Target>
+
+</Project>

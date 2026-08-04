@@ -106,14 +106,67 @@ Once the runtime app builds, the governed lifecycle proceeds with the
 Governance commands shipped by prior features:
 
 - **Govern** — author/refresh the `.fsgg` policy and routing inputs. For a curated,
-  populated starting point you can copy unedited, see the reference gate set at
+  populated starting point, **resolve the published reference gate set** (see below)
+  rather than copying files by hand. Its on-disk source is
   [`samples/sdd-reference-gate-set/`](../../samples/sdd-reference-gate-set/README.md) —
   a full `project`/`policy`/`capabilities`/`tooling` set with `build`/`test`/`evidence`
   gates and a non-blocking-by-default (`light`) posture.
 - **Verify** — `fsgg verify` runs the product-surface checks (feature 067/F24).
 - **Ship** — `fsgg ship` evaluates the release rules against the gathered evidence.
 
+## Resolving the reference gate set into an ordinary repository
+
+An **ordinary repository** — one that is not a generated product, so nothing scaffolded a
+`.fsgg/` for it — obtains the published profile with one MSBuild verb. This is the
+consumer resolution contract recorded in
+[`docs/decisions/0011`](../decisions/0011-generated-reference-gate-set.md) (FS.GG.Governance#386).
+
+Add the package reference to any project in the repository:
+
+```xml
+<PackageReference Include="FS.GG.Governance.ReferenceGateSet" Version="1.6.0" />
+```
+
+then resolve:
+
+```bash
+dotnet restore
+dotnet msbuild -t:FsggResolveReferenceGateSet
+```
+
+That writes the published `.fsgg/` — `governance.yml`, `capabilities.yml`, `policy.yml`,
+`tooling.yml`, and the controlled-import contract files — into
+`$(MSBuildProjectDirectory)/.fsgg`, and the result loads `Valid` through the same
+`Config.Loader.loadAndValidate` the CLI uses. To land it somewhere else (a repo root, say):
+
+```bash
+dotnet msbuild -t:FsggResolveReferenceGateSet \
+  -p:FsggReferenceGateSetDestination=$PWD/.fsgg
+```
+
+Set `-p:FsggReferenceGateSetOverwrite=false` to refuse overwriting files you have edited.
+
+> **Note.** `PackageReference` alone does **not** produce a `.fsgg/`. The payload ships as
+> package content, which a modern SDK-style reference does not materialize into your
+> working tree; the target above is what resolves it. Re-run the verb after bumping the
+> pinned version to adopt a newer profile.
+
+> **This is distribution, not enforcement.** The org's inherited gate floor is embedded in
+> the governance runtime and is read from no file. Editing, downgrading, deleting, or never
+> resolving this `.fsgg/` changes what your product *declares*; it cannot change what your
+> product *inherits* (ADR-0009 §Decision 3, preserved by `docs/decisions/0011`). Resolve it
+> because a populated, validated starting point is useful — not because skipping it would
+> lower a gate.
+
 For how the scaffolded workspace's SDD readiness feeds the Governance loop, see
 [sdd-governance-handoff.md](./sdd-governance-handoff.md). To author your **own**
 provider instead of the reference one, see
 [provider-author.md](./provider-author.md).
+
+> **Generated products** take a different route: their `.fsgg/` is authored by
+> `fsgg-sdd init`, owned by [`FS-GG/FS.GG.SDD`](https://github.com/FS-GG/FS.GG.SDD), which
+> today writes `project.yml` and `sdd.yml` there and leaves the Governance files optional.
+> Teaching that generator to emit or resolve this profile is sequenced as
+> [FS-GG/FS.GG.SDD#845](https://github.com/FS-GG/FS.GG.SDD/issues/845)
+> (FS.GG.Governance#385 AC3); until it lands, a generated product resolves the profile with
+> the same verb as above.
