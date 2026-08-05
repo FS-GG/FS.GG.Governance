@@ -638,6 +638,134 @@ let transition value = File.WriteAllText("out.txt", value)"""
               escapeCase "/" (fun outside ->
                   File.WriteAllText(Path.Combine(outside, "Out1.fs"), outsideHierarchy)) }
 
+          // #390 repair round 2 (F3): the leading separator run is normalized, and no diagnostic quotes a
+          // path the author did not write.
+          //
+          // Round 1 stripped a fixed two characters, which broke BOTH directions: `.//src/Planted.fs` — a
+          // valid in-repo path — became `/src/Planted.fs` and was FALSELY REFUSED with a message quoting a
+          // path nobody wrote, byte-identical to the correct refusal of a genuinely absolute declaration;
+          // and a bare `/` slipped through to the directory arm, where `TrimEnd('/')` emptied it and the
+          // whole repository was swept SILENTLY.
+          test "#390 F3 a leading separator run normalizes — './/src/Planted.fs' declares 'src/Planted.fs'" {
+              let codesFor (declared: string) =
+                  withTempRepo (fun dir ->
+                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                      writeFile dir "src/Planted.fs" outsideHierarchy
+
+                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+
+                      realSurfaceSense dir report
+                      |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
+                      |> List.map (fun f -> f.Code)
+                      |> List.sort)
+
+              let plain = codesFor "src/Planted.fs"
+
+              Expect.isNonEmpty plain "the control declaration must actually analyse the planted source"
+              Expect.isFalse (plain |> List.contains "surface.sense-error") "the control is accepted, not refused"
+
+              // The decisive equality: a redundant separator run changes NOTHING about what was declared.
+              for noisy in [ ".//src/Planted.fs"; "././src/Planted.fs"; "./src/Planted.fs" ] do
+                  Expect.equal
+                      (codesFor noisy)
+                      plain
+                      (sprintf "'%s' is the same declaration as 'src/Planted.fs' — no false refusal" noisy) }
+
+          test "#390 F3 an absolute declaration is refused, quoting exactly what the author wrote" {
+              let refusalFor (declared: string) =
+                  withTempRepo (fun dir ->
+                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                      writeFile dir "src/Planted.fs" outsideHierarchy
+
+                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+                      let findings = realSurfaceSense dir report
+
+                      let refusal =
+                          findings
+                          |> List.tryFind (fun f ->
+                              f.Surface = SurfaceId "fsharp-idiomatic-simplicity" && f.Code = "surface.sense-error")
+
+                      Expect.isSome refusal (sprintf "'%s' must be refused; findings: %A" declared findings)
+
+                      // Nothing was analysed — a bare `/` must NOT be reinterpreted as the repository root.
+                      Expect.isEmpty
+                          (findings |> List.filter (fun f -> f.Code = "inheritance-hierarchy"))
+                          (sprintf "'%s' must not sweep anything" declared)
+
+                      (Option.get refusal).Message)
+
+              // An absolute path, as written, is refused — and the diagnostic quotes it verbatim.
+              let absolute = refusalFor "/src/Planted.fs"
+              Expect.stringContains absolute "'/src/Planted.fs'" "the diagnostic quotes the declaration as written"
+              Expect.stringContains absolute "absolute path" "and names the actual defect"
+
+              // A bare `/` is refused rather than silently reinterpreted as the repo root.
+              let root = refusalFor "/"
+              Expect.stringContains root "'/'" "the bare-root declaration is quoted as written"
+
+              // And the shape that USED to collide with it is now accepted outright, so there is no longer
+              // any pair of declarations sharing one diagnostic while meaning different things.
+              Expect.notEqual absolute root "an absolute file and a bare root are distinguishable"
+
+              // And the entry-quoting rule itself: a declaration that normalizes to something SHORTER must
+              // still be reported as the author wrote it. Quoting the normalized form is exactly how round 1
+              // told an operator about a path they never typed.
+              let missing = refusalFor ".//src/Missing.fs"
+
+              Expect.stringContains
+                  missing
+                  "'.//src/Missing.fs'"
+                  "the diagnostic quotes the declaration as written, not its normalized form" }
+
+          // #390 repair round 2: the directory arm's reattached over-refusal control.
+          //
+          // Every accepted-declaration case in this suite was the FILE form, so the directory arm had an
+          // escape test and no counterpart — an over-refusing directory arm would have passed. This is the
+          // missing half: an in-repo directory is ACCEPTED and yields the same findings the file form does.
+          test "#390 F3 the directory form accepts an in-repo directory, analyses it, and stays inside it" {
+              // The fixture deliberately carries a SECOND source OUTSIDE the declared directory. A one-file
+              // fixture cannot tell "swept src/" from "swept the whole repository": mutating the arm to
+              // resolve `src/..` survived that shape, because the widened scope enumerated the same single
+              // file. `tools/Widened.fs` is the discriminator.
+              let sense (declared: string) (locate: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding -> bool) =
+                  withTempRepo (fun dir ->
+                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                      writeFile dir "src/Planted.fs" outsideHierarchy
+                      writeFile dir "tools/Widened.fs" outsideHierarchy
+
+                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+
+                      realSurfaceSense dir report
+                      |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
+                      |> List.filter locate)
+
+              let anyFinding (_: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) = true
+              let viaDirectory = sense "src/" anyFinding
+
+              Expect.isFalse
+                  (viaDirectory |> List.exists (fun f -> f.Code = "surface.sense-error"))
+                  "an in-repo directory declaration is accepted, not refused"
+
+              Expect.isTrue
+                  (viaDirectory |> List.exists (fun f -> f.Code = "inheritance-hierarchy"))
+                  "and the directory's own sources are analysed"
+
+              // Scope, not merely acceptance: the declared directory bounds what is swept.
+              let located (f: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) =
+                  let (GovernedPath file) = f.Location.File
+                  file
+
+              Expect.isTrue
+                  (viaDirectory |> List.forall (fun f -> (located f).StartsWith("src/", StringComparison.Ordinal)))
+                  (sprintf
+                      "'src/' must sweep only src/**; found %A"
+                      (viaDirectory |> List.map located |> List.distinct))
+
+              Expect.equal
+                  (viaDirectory |> List.map (fun f -> f.Code) |> List.sort)
+                  (sense "src/Planted.fs" anyFinding |> List.map (fun f -> f.Code) |> List.sort)
+                  "the directory form and the file form agree over the same source" }
+
           // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
           test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {
               withDriftedPackageRepo (fun dir ->

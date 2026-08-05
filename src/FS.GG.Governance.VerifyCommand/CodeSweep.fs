@@ -197,8 +197,8 @@ module internal CodeSweep =
 
     /// Resolve a declared entry against the governed root and REFUSE anything that lands outside it.
     /// Returns the canonical absolute path so the caller does not resolve it a second time (and cannot
-    /// resolve it differently).
-    let private contained (repo: string) (relative: string) : string =
+    /// resolve it differently). `entry` is the declaration AS WRITTEN and is used only for the diagnostic.
+    let private contained (repo: string) (entry: string) (relative: string) : string =
         let root = governedRoot repo
         let candidate = Path.GetFullPath(Path.Combine(root, relative))
 
@@ -213,31 +213,58 @@ module internal CodeSweep =
                 PolicyError(
                     sprintf
                         "declared source '%s' resolves outside the repository; a declaration governs this repository's own sources only"
-                        relative
+                        entry
                 )
             )
 
         candidate
 
-    /// Strip a leading `./` only. The old `TrimStart('.', '/')` also swallowed `../` and a leading `/`,
-    /// silently REWRITING an escape into a different path instead of refusing it — `"../x"` became `"x"`.
-    /// Leaving them intact lets `contained` see, and reject, what was actually written.
+    // NORMALIZE THE WHOLE `./` SEGMENT, SEPARATOR RUN AND ALL (review round 2, F3).
+    //
+    // Round 1 replaced `TrimStart('.', '/')` with a fixed 2-character `./` strip, which was wrong in BOTH
+    // directions and regressed two shapes that round 1's own comment claimed to fix:
+    //
+    //   `.//src/Dirty.fs`  a valid in-repo relative path. Stripping exactly two characters left
+    //                      `/src/Dirty.fs`, which `contained` then refused as absolute — a FALSE REFUSAL
+    //                      whose diagnostic quoted `/src/Dirty.fs`, a path the author never wrote and
+    //                      byte-identical to the message for a genuinely absolute declaration.
+    //   `/`                left untouched, so it reached the directory arm, `TrimEnd('/')` made it empty,
+    //                      and `Path.Combine(root, "")` resolved to the repository root: the whole tree
+    //                      swept SILENTLY — precisely the reinterpretation this widening set out to remove.
+    //
+    // Neither was a containment escape (the first fails closed, the second stays inside the repo), but a
+    // false refusal on valid input and a silent reinterpretation are both defects in their own right.
+    //
+    // So: consume `./` as a SEGMENT — the dot plus the separator run behind it — and leave a leading
+    // separator the author actually wrote in place, where `expand` refuses it explicitly.
     let rec private stripLeadingCurrent (value: string) =
         if value.StartsWith("./", StringComparison.Ordinal) then
-            stripLeadingCurrent (value.Substring 2)
+            stripLeadingCurrent ((value.Substring 1).TrimStart('/'))
         else
             value
 
+    // EVERY DIAGNOSTIC QUOTES THE ENTRY AS WRITTEN. Normalization is an internal step; quoting its OUTPUT
+    // is how round 1 told an operator their declaration was `/src/Dirty.fs` when they had written
+    // `.//src/Dirty.fs`, and made a false refusal indistinguishable from a correct one.
     let private expand (repo: string) (entry: string) : string list =
         let normalized = entry.Replace('\\', '/') |> stripLeadingCurrent
 
         if normalized = "" then
-            raise (PolicyError "'sources' contains an empty entry")
+            raise (PolicyError(sprintf "declared source '%s' does not name a source" entry))
+        elif normalized.StartsWith("/", StringComparison.Ordinal) then
+            // Absolute, as written — including a bare `/`. Refused, never reinterpreted as the repo root.
+            raise (
+                PolicyError(
+                    sprintf
+                        "declared source '%s' is an absolute path; a declaration names this repository's own sources, relative to its root"
+                        entry
+                )
+            )
         elif normalized.EndsWith("/", StringComparison.Ordinal) then
-            let directory = contained repo (normalized.TrimEnd('/'))
+            let directory = contained repo entry (normalized.TrimEnd('/'))
 
             if not (Directory.Exists directory) then
-                raise (PolicyError(sprintf "declared source directory '%s' does not exist" normalized))
+                raise (PolicyError(sprintf "declared source directory '%s' does not exist" entry))
 
             Directory.EnumerateFiles(directory, "*.fs", SearchOption.AllDirectories)
             |> Seq.map (fun path -> Path.GetRelativePath(repo, path).Replace('\\', '/'))
@@ -248,11 +275,11 @@ module internal CodeSweep =
                 PolicyError(
                     sprintf
                         "declared source '%s' is neither an F# implementation file nor a directory prefix ending in '/'"
-                        normalized
+                        entry
                 )
             )
-        elif not (File.Exists(contained repo normalized)) then
-            raise (PolicyError(sprintf "declared source '%s' does not exist" normalized))
+        elif not (File.Exists(contained repo entry normalized)) then
+            raise (PolicyError(sprintf "declared source '%s' does not exist" entry))
         else
             [ normalized ]
 
