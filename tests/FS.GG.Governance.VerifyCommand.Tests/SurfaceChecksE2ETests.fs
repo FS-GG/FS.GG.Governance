@@ -49,6 +49,67 @@ let private senseBoundarySource (source: string) (assertions: FS.GG.Governance.S
         let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
         realSurfaceSense dir report |> assertions)
 
+// #390 repair round 1 (F1) — the shared driver for the two escape arms.
+//
+// `TrimStart('.', '/')` + `Path.Combine` touched only the START of a declared entry, so a MID-path `..`
+// walked out of the repository. Both arms were measured escaping through the real binary: the FILE form
+// analysed an outside file, and the DIRECTORY form reported findings whose `file` looked repo-relative
+// while naming a file that is not in the repository. Each arm is its OWN test, so a mutation that
+// restores the hole reds both rather than stopping at the first.
+//
+// Both plant a real inheritance hierarchy OUTSIDE the tree, so before containment they produced
+// `inheritance-hierarchy` findings rather than a refusal — the decisive observable.
+let private outsideHierarchy = """module Outside
+
+type Base() =
+    member _.Name = "base"
+
+type Derived() =
+    inherit Base()
+"""
+
+let private escapeCase (suffix: string) (plant: string -> unit) =
+    withTempRepo (fun dir ->
+        let parent = Path.GetFullPath(Path.Combine(dir, ".."))
+        let outside = Path.Combine(parent, "fsgg-390-" + Guid.NewGuid().ToString("N"))
+        Directory.CreateDirectory outside |> ignore
+
+        try
+            plant outside
+
+            // The declaration walks out of `dir` and back down into `outside` — a mid-path `..`, which is
+            // exactly what leading-character trimming cannot see.
+            let relative = "src/../../" + Path.GetFileName outside + suffix
+            writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" relative)
+
+            let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+            let findings = realSurfaceSense dir report
+
+            let refusal =
+                findings
+                |> List.tryFind (fun f ->
+                    f.Surface = SurfaceId "fsharp-idiomatic-simplicity" && f.Code = "surface.sense-error")
+
+            Expect.isSome
+                refusal
+                (sprintf "an escaping declaration ('%s') must be REFUSED, not analysed; findings: %A" relative findings)
+
+            let finding = Option.get refusal
+            Expect.isTrue finding.IsInputState "a refused declaration is an input-state finding"
+            Expect.equal finding.BaseSeverity Blocking "reified as Blocking so verify fails closed"
+
+            Expect.stringContains
+                finding.Message
+                "resolves outside the repository"
+                "the diagnostic names the actual defect"
+
+            // The decisive property: nothing outside the repository was ever analysed.
+            Expect.isEmpty
+                (findings |> List.filter (fun f -> f.Code = "inheritance-hierarchy"))
+                "no rule finding may be produced from a file outside the governed root"
+        finally
+            try Directory.Delete(outside, true) with _ -> ())
+
 let private effectCodes (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) =
     findings
     |> List.filter (fun finding -> finding.Code.StartsWith("fsharp.effect", StringComparison.Ordinal) || finding.Code = "fsharp.callback-hidden-state")
@@ -564,6 +625,18 @@ let transition value = File.WriteAllText("out.txt", value)"""
                       (findings
                        |> List.exists (fun f -> f.Code = "fsharp.effect-in-transition"))
                       "a malformed declaration for one pack does not erase another pack's real findings") }
+
+          // #390 repair round 1 (F1): a declared source must not leave the governed root. One case each,
+          // as separate tests so a mutation restoring the hole reds BOTH arms.
+          test "#390 F1 file form: a declared source escaping the repository is refused" {
+              escapeCase "/Escape.fs" (fun outside ->
+                  File.WriteAllText(Path.Combine(outside, "Escape.fs"), outsideHierarchy)) }
+
+          test "#390 F1 directory form: a declared source directory escaping the repository is refused" {
+              // This arm previously produced findings carrying a governed-LOOKING relative path
+              // ("outdir/Out1.fs") for a file that is not in the repository — an invisible escape.
+              escapeCase "/" (fun outside ->
+                  File.WriteAllText(Path.Combine(outside, "Out1.fs"), outsideHierarchy)) }
 
           // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
           test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {

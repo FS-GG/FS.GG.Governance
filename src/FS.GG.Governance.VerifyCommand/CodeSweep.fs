@@ -169,13 +169,72 @@ module internal CodeSweep =
     let private isGenerated (relative: string) =
         relative.EndsWith(".g.fs", StringComparison.OrdinalIgnoreCase)
 
+    // A DECLARATION GOVERNS ITS OWN REPOSITORY, AND THE PARSER ENFORCES THAT.
+    //
+    // Round 1 of independent review measured the hole this closes. Stripping leading `.`/`/` characters
+    // and then `Path.Combine`-ing is NOT containment: it touches only the START of the entry, so a
+    // MID-path `..` survives it and walks straight out of the tree. `"src/../../outside.fs"` was accepted
+    // and analysed, and the DIRECTORY form was worse — `"src/../../outdir/"` yielded findings whose
+    // `file` read `outdir/Out1.fs`, a governed-LOOKING path naming a file that is not in the repository,
+    // so nothing downstream could see that the escape had happened.
+    //
+    // #366's and #369's sweeps cannot do this: they enumerate outward from `repo` and never resolve a
+    // caller-supplied path. This pack takes declared paths, so it owns the check they never needed.
+    //
+    // The check is CANONICAL, not textual: resolve against the governed root and require the result to
+    // stay under it. A rejection is the same `PolicyError` every other declaration defect raises, so it
+    // fails closed through the existing Blocking input-state finding rather than silently dropping the entry.
+
+    /// The governed root, canonicalized once and terminated with a separator, so a prefix test cannot
+    /// match a SIBLING whose name merely starts with the root's (`/w/repo` must not admit `/w/repo-other`).
+    let private governedRoot (repo: string) =
+        let full = Path.GetFullPath repo
+
+        if full.EndsWith(string Path.DirectorySeparatorChar, StringComparison.Ordinal) then
+            full
+        else
+            full + string Path.DirectorySeparatorChar
+
+    /// Resolve a declared entry against the governed root and REFUSE anything that lands outside it.
+    /// Returns the canonical absolute path so the caller does not resolve it a second time (and cannot
+    /// resolve it differently).
+    let private contained (repo: string) (relative: string) : string =
+        let root = governedRoot repo
+        let candidate = Path.GetFullPath(Path.Combine(root, relative))
+
+        let terminated =
+            if candidate.EndsWith(string Path.DirectorySeparatorChar, StringComparison.Ordinal) then
+                candidate
+            else
+                candidate + string Path.DirectorySeparatorChar
+
+        if not (terminated.StartsWith(root, StringComparison.Ordinal)) then
+            raise (
+                PolicyError(
+                    sprintf
+                        "declared source '%s' resolves outside the repository; a declaration governs this repository's own sources only"
+                        relative
+                )
+            )
+
+        candidate
+
+    /// Strip a leading `./` only. The old `TrimStart('.', '/')` also swallowed `../` and a leading `/`,
+    /// silently REWRITING an escape into a different path instead of refusing it — `"../x"` became `"x"`.
+    /// Leaving them intact lets `contained` see, and reject, what was actually written.
+    let rec private stripLeadingCurrent (value: string) =
+        if value.StartsWith("./", StringComparison.Ordinal) then
+            stripLeadingCurrent (value.Substring 2)
+        else
+            value
+
     let private expand (repo: string) (entry: string) : string list =
-        let normalized = entry.Replace('\\', '/').TrimStart('.', '/')
+        let normalized = entry.Replace('\\', '/') |> stripLeadingCurrent
 
         if normalized = "" then
             raise (PolicyError "'sources' contains an empty entry")
         elif normalized.EndsWith("/", StringComparison.Ordinal) then
-            let directory = Path.Combine(repo, normalized.TrimEnd('/'))
+            let directory = contained repo (normalized.TrimEnd('/'))
 
             if not (Directory.Exists directory) then
                 raise (PolicyError(sprintf "declared source directory '%s' does not exist" normalized))
@@ -192,7 +251,7 @@ module internal CodeSweep =
                         normalized
                 )
             )
-        elif not (File.Exists(Path.Combine(repo, normalized))) then
+        elif not (File.Exists(contained repo normalized)) then
             raise (PolicyError(sprintf "declared source '%s' does not exist" normalized))
         else
             [ normalized ]
