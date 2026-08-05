@@ -120,11 +120,15 @@ module Profile =
     //   sensed fact). `BlockOnPr` therefore binds only work that declared itself in scope, and no
     //   repository acquires a blocking gate by resolving the profile.
     //
-    // #368 and #370 join at `Warn`: both are new to the composed profile and neither has a
-    // production consumer yet (docs/decisions/0011 §Consequences records that gap), so advisory
-    // first, per #366's precedent. None of the four is a permanent blanket exemption — the dated
-    // route to blocking is the profile's own maturity, raised here and republished, which every
-    // consumer picks up by re-pinning.
+    // #368 and #370 join at `Warn`. They were composed here WITHOUT a production consumer, and
+    // #390 supplied it: `VerifyCommand`'s `CodeSweep`/`EvidenceSweep` now reach `CodeChecks.analyze`
+    // and `EvidenceBoundary.evaluate` from the `fsgg verify` sweep. Both are applicable only where a
+    // repository DECLARES their scope (`.fsgg/fsharp-simplicity.json`, `.fsgg/evidence-boundary.json`)
+    // — #369's shape, and for these two a correctness requirement rather than a taste, recorded at
+    // the call sites. They stay at `Warn` because adoption is dated, not because nothing evaluates
+    // them. None of the four is a permanent blanket exemption — the dated route to blocking is the
+    // profile's own maturity, raised here and republished, which every consumer picks up by
+    // re-pinning.
 
     let declaredMaturity (pack: Pack) =
         match pack with
@@ -138,11 +142,11 @@ module Profile =
         | PublicSurface ->
             "advisory during migration: the pack sweeps every compiled project unconditionally, so blocking on adoption would block every adopting repository (#366's shipped posture)"
         | IdiomaticSimplicity ->
-            "advisory: composed into the profile by #385 and not yet reached by a production consumer, so it is surfaced before it blocks (#366's precedent)"
+            "advisory during a dated migration: the pack IS evaluated by the `fsgg verify` sweep (#390), but only over sources a repository declares in `.fsgg/fsharp-simplicity.json`, so no repository acquires findings merely by resolving the profile (#366's precedent)"
         | EffectBoundary ->
             "blocking on PR: the pack is applicable only where an author opted a transition in with an in-source effect-boundary marker, so no repository acquires a blocking gate merely by resolving the profile (#369's shipped posture)"
         | EvidenceBoundary ->
-            "advisory: composed into the profile by #385 and not yet reached by a production consumer, so it is surfaced before it blocks (#366's precedent)"
+            "advisory during a dated migration: the pack IS evaluated by the `fsgg verify` sweep (#390), but only where a repository declares an evidence obligation in `.fsgg/evidence-boundary.json`, so no repository acquires findings merely by resolving the profile (#366's precedent)"
 
     // ── Ownership lookup ─────────────────────────────────────────────────────────────────────
     // Built by folding `packs`, so it cannot name a pack the profile does not contain. On a

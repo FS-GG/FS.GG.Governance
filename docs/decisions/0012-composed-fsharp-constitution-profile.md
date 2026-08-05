@@ -172,9 +172,35 @@ the "incompatible finding shapes" 0011 deferred. An identity the profile does no
 produces a finding, marked `IsInputState` and naming the id: unattributable is **malformed input**,
 never a silent pass and never a fabricated rule violation (C8).
 
-**Still open, and recorded rather than implied:** #368 and #370 have no production consumer. Nothing
-in `src/` calls `CodeChecks.analyze` or `EvidenceBoundary.evaluate`; #385 composes and publishes them,
-and wiring them into the `fsgg verify` sweep the way #366 and #369 are wired is separate work.
+**Closed by FS-GG/FS.GG.Governance#390.** This paragraph recorded that #368 and #370 had no production
+consumer — nothing in `src/` called `CodeChecks.analyze` or `EvidenceBoundary.evaluate`, so two of the
+four published gates could not produce a finding at all. `VerifyCommand`'s `CodeSweep` and
+`EvidenceSweep` are those callers, reached from `Interpreter.senseSurfacesReal` in the same sweep and
+folded through the same `SurfaceFold` as #366's and #369's evaluators, with findings normalized through
+`Profile.findingOf` so they carry this profile's declared maturity.
+
+Both packs are **applicable only where a repository declares their scope** — `.fsgg/fsharp-simplicity.json`
+for #368, `.fsgg/evidence-boundary.json` for #370 — which is #369's shape rather than #366's unconditional
+sweep, and for these two it is a correctness requirement rather than a preference:
+
+- `CodeChecks.analyzeDocument` type-checks each document **standalone, as a script**
+  (`GetProjectOptionsFromScript`), with no project references. An unconditional sweep would report
+  `compiler-analysis-failed` for every source that references a sibling project — noise, not governance.
+- `EvidenceBoundary.evaluate` requires semantic-regression, boundary-fixture and golden-or-schema evidence
+  **unconditionally**, so an unconditional sweep would give every repository three findings for having no
+  evidence obligation at all.
+
+A malformed declaration is reified as a Blocking, input-state `surface.sense-error` finding on the pack's
+own surface, per-pack, so it neither collapses that pack to `[]` (ADPT-1) nor erases the other packs'
+findings from the same run. No declaration ⇒ no findings, which is the repository's recorded choice rather
+than a silent skip. The published gate set is unchanged by #390: the same four checks, the same ids, the
+same maturities — what changed is that all four are now evaluated.
+
+*Still open, and filed rather than implied:* `CodeChecks.analyze` type-checks each document as a
+standalone script, so a source that references a sibling project short-circuits to
+`compiler-analysis-failed` instead of being governed by the pack's real rules. That bounds what #368 can
+govern in a multi-project repository. It is tracked at its root cause as
+FS-GG/FS.GG.Governance#391; the declared-scope applicability above contains it, and does not fix it.
 
 ### 7. The composed profile's path map is its own territory, because routing is a partition
 

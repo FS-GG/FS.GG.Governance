@@ -433,6 +433,7 @@ digraph Governance {
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.Adapters.SddHandoff";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.Attestation";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.CacheEligibility";
+  "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.CodeChecks";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.CommandHost";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.CommandKind";
   "FS.GG.Governance.VerifyCommand" -> "FS.GG.Governance.Config";

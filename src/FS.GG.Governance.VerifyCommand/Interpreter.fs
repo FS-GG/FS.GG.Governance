@@ -317,15 +317,64 @@ module Interpreter =
                         | Error reason -> [ inputStateFinding SC.DesignDomain "fsharp-effect-boundary" "fsharp.effect-boundary-malformed" reason ])
                     |> Seq.toList
 
+                // #390: the two packs #385 composed and published but nothing evaluated. `fsharp:idiomatic-simplicity`
+                // (#368) and `fsharp:evidence-boundary` (#370) shipped complete evaluators with no production
+                // caller, so the published gate set claimed four governed capabilities and looked for two. These
+                // are the missing call sites, in the same sweep and the same fold as #366's and #369's above.
+                //
+                // Both packs are APPLICABLE ONLY WHERE DECLARED (`.fsgg/fsharp-simplicity.json`,
+                // `.fsgg/evidence-boundary.json`) — #369's posture, and for these two a correctness requirement:
+                // #368 type-checks each document standalone as a script, so an undeclared sweep would report
+                // `compiler-analysis-failed` for every source that references a sibling project, and #370's
+                // evaluator requires three evidence classes unconditionally, so an undeclared sweep would find
+                // three violations in a repository that has no evidence obligation at all. Each module's header
+                // records the measurement.
+                //
+                // Their findings are normalized through `Profile.findingOf`, so they carry the composed profile's
+                // DECLARED maturity for their pack and reach `deriveEffectiveSeverity` through `SurfaceFold`
+                // exactly like every other surface finding — the severity axis 0012 §6 says #385 gave them.
+                //
+                // A malformed declaration is reified here as a Blocking input-state finding rather than thrown:
+                // an unreadable policy must not collapse THIS pack to `[]` (ADPT-1) and must not erase the other
+                // three packs' real findings either, which is what letting it reach the outer handler would do.
+                let sweepFindings (surface: string) (result: Result<SC.SurfaceFinding list, string>) =
+                    match result with
+                    | Ok found -> found
+                    | Error reason ->
+                        [ inputStateFinding
+                              SC.DesignDomain
+                              surface
+                              "surface.sense-error"
+                              (sprintf
+                                  "the declared scope for this rule pack could not be read (%s); reported blocking, not silently skipped"
+                                  reason) ]
+
+                let simplicityFindings =
+                    sweepFindings CodeSweep.SurfaceName (CodeSweep.findings repo)
+
+                let evidenceFindings =
+                    sweepFindings EvidenceSweep.SurfaceName (EvidenceSweep.findings repo)
+
                 // On the happy path there are no reified failures ⇒ return `Composition.run`'s output verbatim
                 // (already sorted, no re-sort work, structurally byte-identical to the pre-ADPT-1 output). Only
                 // when a domain sense threw do we merge and re-establish the SAME deterministic order
                 // `Composition.run` guarantees (surface id, domain ordinal, file, detail, code — Composition.fs)
                 // so a reified failure interleaves stably alongside real findings.
                 match senseFailures with
-                | [] when List.isEmpty fsharpFindings && List.isEmpty effectFindings -> composed
+                | [] when
+                    List.isEmpty fsharpFindings
+                    && List.isEmpty effectFindings
+                    && List.isEmpty simplicityFindings
+                    && List.isEmpty evidenceFindings
+                    ->
+                    composed
                 | _ ->
-                    composed @ fsharpFindings @ effectFindings @ senseFailures
+                    composed
+                    @ fsharpFindings
+                    @ effectFindings
+                    @ simplicityFindings
+                    @ evidenceFindings
+                    @ senseFailures
                     |> List.sortBy (fun (f: SC.SurfaceFinding) ->
                         let (SurfaceId sid) = f.Surface
                         let (GovernedPath file) = f.Location.File

@@ -68,6 +68,12 @@
           "FS.GG.Governance.Gates": "[0.1.0, )"
         }
       },
+      "fs.gg.governance.codechecks": {
+        "type": "Project",
+        "dependencies": {
+          "FSharp.Compiler.Service": "[43.11.302, )"
+        }
+      },
       "fs.gg.governance.commandhost": {
         "type": "Project",
         "dependencies": {
@@ -530,6 +536,15 @@
         "contentHash": "rKLirb5qpv/+Y+U/sp8tEr3NaJNZHVL9S0trxNdsKdPJ8FR/WvdmQyZqlSNbp1T2dClynHcQQBtRq9IX9A/fmg==",
         "dependencies": {
           "FSharp.Core": "10.1.302"
+        }
+      },
+      "FSharp.Compiler.Service": {
+        "type": "CentralTransitive",
+        "requested": "[43.11.302, )",
+        "resolved": "43.11.302",
+        "contentHash": "tOyFJ3e2hk2EK5hIHwx+Zsxly9Rr/TdTC8WQxjteziYg303ZdvJezWelzehrKxsfFKAIUOghJntPcwpABaXfpQ==",
+        "dependencies": {
+          "FSharp.Core": "[10.1.302]"
         }
       },
       "Spectre.Console": {

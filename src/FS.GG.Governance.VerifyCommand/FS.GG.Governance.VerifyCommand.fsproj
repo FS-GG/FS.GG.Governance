@@ -37,6 +37,11 @@
     <Compile Include="ViewCurrencyFold.fs" />
     <Compile Include="ReleasePreview.fsi" />
     <Compile Include="ReleasePreview.fs" />
+    <!-- #390: the two production callers #368 and #370 never had. `module internal` (no .fsi) — they are
+         private sense edges consumed only by `Interpreter.senseSurfacesReal`, NOT new public seams, so the
+         command's exported surface is unchanged (SurfaceDriftTests). -->
+    <Compile Include="CodeSweep.fs" />
+    <Compile Include="EvidenceSweep.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
@@ -119,6 +124,7 @@
     <ProjectReference Include="../FS.GG.Governance.DocsChecks/FS.GG.Governance.DocsChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.SkillChecks/FS.GG.Governance.SkillChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.DesignChecks/FS.GG.Governance.DesignChecks.fsproj" />
+    <ProjectReference Include="../FS.GG.Governance.CodeChecks/FS.GG.Governance.CodeChecks.fsproj" />
     <ProjectReference Include="../FS.GG.Governance.ProjectSensing/FS.GG.Governance.ProjectSensing.fsproj" />
     <!-- F070 (stale-view blocking): the pure CurrencyEnforcement leaf (the Loop folds its findings) + the
          impure CurrencySensing core (the shared refresh.yml parse + lock read + source digest at the edge —
