@@ -78,9 +78,9 @@ tooling has no dangling command reference.
 | gate | pack | authored by | maturity | posture |
 |---|---|---|---|---|
 | `fsharp:public-surface` | curated `.fsi` surfaces, visibility, XML docs, surface baselines | [#366](https://github.com/FS-GG/FS.GG.Governance/issues/366) | `warn` | sweeps every compiled project unconditionally, so it is a dated migration |
-| `fsharp:idiomatic-simplicity` | idiomatic simplicity, evidence-bound exceptions | [#368](https://github.com/FS-GG/FS.GG.Governance/issues/368) | `warn` | advisory first; no production consumer yet |
+| `fsharp:idiomatic-simplicity` | idiomatic simplicity, evidence-bound exceptions | [#368](https://github.com/FS-GG/FS.GG.Governance/issues/368) | `warn` | evaluated by the `fsgg verify` sweep, over the sources a repository declares in `.fsgg/fsharp-simplicity.json` |
 | `fsharp:effect-boundary` | functional core / effect edge | [#369](https://github.com/FS-GG/FS.GG.Governance/issues/369) | `block-on-pr` | applies only where an author opted a transition in with an in-source marker |
-| `fsharp:evidence-boundary` | behavior evidence, contract goldens, safe failure | [#370](https://github.com/FS-GG/FS.GG.Governance/issues/370) | `warn` | advisory first; no production consumer yet |
+| `fsharp:evidence-boundary` | behavior evidence, contract goldens, safe failure | [#370](https://github.com/FS-GG/FS.GG.Governance/issues/370) | `warn` | evaluated by the `fsgg verify` sweep, where a repository declares an obligation in `.fsgg/evidence-boundary.json` |
 
 The exact rule identities each pack contributes are `Profile.ruleIds`; they are the packs' own codes,
 unchanged. `Profile.ruleOwner` maps any identity back to its pack and `Profile.authoringItem` to its
