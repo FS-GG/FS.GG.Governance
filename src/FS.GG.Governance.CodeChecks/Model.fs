@@ -6,7 +6,10 @@ module Model =
     type SourceDocument =
         { Path: string
           Source: string
-          IsGenerated: bool }
+          IsGenerated: bool
+          /// Assembly paths supplied by the caller for this document's project reference set.
+          /// The analyzer consumes these as compiler options and never discovers them from disk.
+          References: string list }
 
     type ReviewThresholds =
         { ModuleLines: int option

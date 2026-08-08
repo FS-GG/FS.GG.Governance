@@ -6,14 +6,11 @@
 // repository was clean. This module is the missing call site, reached from `Interpreter.senseSurfacesReal`
 // exactly where #366's `FSharpSurface.evaluate` and #369's `FSharpEffectBoundary.evaluate` are reached.
 //
-// APPLICABILITY IS DECLARED, NOT ASSUMED — the #369 posture, and here it is a correctness requirement rather
-// than a taste. `CodeChecks.analyzeDocument` type-checks each document STANDALONE, as a script
-// (`GetProjectOptionsFromScript` over `<path>.fsx`), with no project references. Swept unconditionally over a
-// multi-project repository it would therefore report `compiler-analysis-failed` for essentially every source
-// that references a sibling project — hundreds of findings that say nothing about the code. That boundary is
-// MEASURED and filed at its root cause as FS-GG/FS.GG.Governance#391; the declared scope below CONTAINS it,
-// and deliberately does not pretend to fix it. The pack is
-// applicable exactly where a repository DECLARES the sources it wants analysed, in
+// APPLICABILITY IS DECLARED, NOT ASSUMED — the #369 posture. `CodeChecks.analyzeDocument` type-checks a
+// document through the reference set its caller supplies; it never discovers project files or assemblies. The
+// declared `references` map below binds each selected source to its repository-relative assembly paths, so a
+// multi-project repository can opt into real compiler analysis without giving this I/O-free pack a repository
+// discovery seam. The pack is applicable exactly where a repository DECLARES the sources it wants analysed, in
 // `.fsgg/fsharp-simplicity.json`, the same shape `.fsgg/fsharp-surface.json` already has for #366's policy.
 // No declaration ⇒ no documents ⇒ no findings, and nothing is silently skipped: the absence is the
 // repository's own recorded choice.
@@ -283,7 +280,40 @@ module internal CodeSweep =
         else
             [ normalized ]
 
-    let private documents (repo: string) (entries: string list) : CM.SourceDocument list =
+    let private referenceMap (repo: string) (root: JsonElement) : Map<string, string list> =
+        match prop root "references" with
+        | None -> Map.empty
+        | Some value when value.ValueKind = JsonValueKind.Object ->
+            value.EnumerateObject()
+            |> Seq.map (fun property ->
+                let references =
+                    if property.Value.ValueKind <> JsonValueKind.Array then
+                        raise (PolicyError(sprintf "references for '%s' must be an array; found %O" property.Name property.Value.ValueKind))
+
+                    property.Value.EnumerateArray()
+                    |> Seq.map (fun item ->
+                        if item.ValueKind <> JsonValueKind.String then
+                            raise (PolicyError(sprintf "references for '%s' must contain only strings; found %O" property.Name item.ValueKind))
+
+                        let declared = text item
+                        let normalized = declared.Replace('\\', '/') |> stripLeadingCurrent
+
+                        if normalized = "" || normalized.StartsWith("/", StringComparison.Ordinal) then
+                            raise (PolicyError(sprintf "declared reference '%s' must name a repository-relative assembly path" declared))
+
+                        let full = contained repo declared normalized
+
+                        if not (File.Exists full) then
+                            raise (PolicyError(sprintf "declared reference '%s' does not exist" declared))
+
+                        full)
+                    |> Seq.toList
+
+                normalizePath property.Name, references)
+            |> Map.ofSeq
+        | Some value -> raise (PolicyError(sprintf "'references' must be an object; found %O" value.ValueKind))
+
+    let private documents (repo: string) (entries: string list) (references: Map<string, string list>) : CM.SourceDocument list =
         entries
         |> List.collect (expand repo)
         |> List.distinct
@@ -291,7 +321,8 @@ module internal CodeSweep =
         |> List.map (fun relative ->
             { Path = relative
               Source = File.ReadAllText(Path.Combine(repo, relative))
-              IsGenerated = isGenerated relative })
+              IsGenerated = isGenerated relative
+              References = references |> Map.tryFind relative |> Option.defaultValue [] })
 
     /// Read the repository's declaration. `Ok None` means the pack is not applicable here (no policy file,
     /// or a policy that declares no sources — an empty declaration is still a declaration).
@@ -311,16 +342,24 @@ module internal CodeSweep =
                     match stringList root "sources" with
                     | [] -> Ok None
                     | sources ->
-                        Ok(
-                            Some
-                                { Head = optionalString root "head"
-                                  Documents = documents repo sources
-                                  PureDomainPrefixes = stringList root "pureDomainPrefixes"
-                                  Thresholds = thresholds root
-                                  Justifications = objects root "justifications" |> List.map justification
-                                  ApprovedPrimitives =
-                                    objects root "approvedPrimitives" |> List.map approvedPrimitive }
-                        )
+                        let references = referenceMap repo root
+                        let documents = documents repo sources references
+                        let selected = documents |> List.map _.Path |> Set.ofList
+                        let undeclared = references |> Map.keys |> Seq.filter (fun path -> not (Set.contains path selected)) |> Seq.toList
+
+                        if not undeclared.IsEmpty then
+                            Error(sprintf "references declare source(s) outside 'sources': %s" (String.concat ", " undeclared))
+                        else
+                            Ok(
+                                Some
+                                    { Head = optionalString root "head"
+                                      Documents = documents
+                                      PureDomainPrefixes = stringList root "pureDomainPrefixes"
+                                      Thresholds = thresholds root
+                                      Justifications = objects root "justifications" |> List.map justification
+                                      ApprovedPrimitives =
+                                        objects root "approvedPrimitives" |> List.map approvedPrimitive }
+                            )
         with
         | PolicyError detail -> Error(sprintf "%s is malformed: %s" PolicyPath detail)
         | ex -> Error(sprintf "%s could not be read: %s" PolicyPath ex.Message)

@@ -463,6 +463,39 @@ type Derived() =
                       (SurfaceFold.surfaceBlocks Strict findings)
                       "an advisory pack surfaces without blocking a repository that was green") }
 
+          test "#391 a declared sibling assembly reference reaches #368 rules through the production verify sense" {
+              withTempRepo (fun dir ->
+                  let referenceDirectory = Path.Combine(dir, "refs")
+                  Directory.CreateDirectory referenceDirectory |> ignore
+                  let reference = Path.Combine(referenceDirectory, "FS.GG.Governance.CodeChecks.dll")
+                  File.Copy(typeof<FS.GG.Governance.CodeChecks.Model.FindingId>.Assembly.Location, reference)
+
+                  writeFile dir ".fsgg/fsharp-simplicity.json" """{
+  "sources": [ "src/Planted.fs" ],
+  "references": { "src/Planted.fs": [ "refs/FS.GG.Governance.CodeChecks.dll" ] }
+}"""
+                  writeFile dir "src/Planted.fs" """module Planted
+open FS.GG.Governance.CodeChecks.Model
+
+type Base() = class end
+type Derived() =
+    inherit Base()
+
+let token = CompilerAnalysisFailed
+"""
+
+                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+                  let findings = realSurfaceSense dir report
+
+                  Expect.contains
+                      (findings |> List.map _.Code)
+                      "inheritance-hierarchy"
+                      "the declared reference enables real compiler-rule analysis"
+
+                  Expect.isFalse
+                      (findings |> List.exists (fun finding -> finding.Code = "compiler-analysis-failed"))
+                      "a source using the declared sibling assembly must not short-circuit") }
+
           test "#390 the planted-clean counterpart of #368's pack passes through the same route" {
               withTempRepo (fun dir ->
                   writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": [ "src/Planted.fs" ] }"""

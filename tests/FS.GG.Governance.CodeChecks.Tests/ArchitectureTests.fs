@@ -9,7 +9,7 @@ let thresholds = { ModuleLines = None; TypeLines = None; MemberLines = None; Dep
 let request source =
     { Head = "abc123"
       // SYNTHETIC: planted compiler input isolates architecture facts; packed public-route smoke is T009.
-      Documents = [ { Path = "src/Domain.fs"; Source = source; IsGenerated = false } ]
+      Documents = [ { Path = "src/Domain.fs"; Source = source; IsGenerated = false; References = [] } ]
       PureDomainPrefixes = [ "src/" ]
       Thresholds = thresholds
       Justifications = []
@@ -115,8 +115,23 @@ let tests =
             Expect.isNonEmpty report.Diagnostics "actionable compiler diagnostics"
         }
 
+        test "Declared project reference Synthetic reaches real compiler rules and removal fails closed" {
+            let source =
+                "module Domain\nopen FS.GG.Governance.CodeChecks.Model\ntype Base() = class end\ntype Child() = inherit Base()\nlet token = CompilerAnalysisFailed\n"
+            let reference = typeof<FindingId>.Assembly.Location
+            let withReference =
+                { request source with
+                    Documents = [ { Path = "src/Domain.fs"; Source = source; IsGenerated = false; References = [ reference ] } ] }
+                |> analyzeNow
+            Expect.isTrue ((ids withReference).Contains InheritanceHierarchy) "declared sibling assembly enables real inheritance analysis"
+            Expect.isFalse ((ids withReference).Contains CompilerAnalysisFailed) "declared sibling assembly does not short-circuit"
+
+            let withoutReference = request source |> analyzeNow
+            Expect.equal withoutReference.Findings.Head.Id CompilerAnalysisFailed "removing the declared reference remains fail-closed"
+        }
+
         test "Generated document Synthetic is explicitly excluded" {
-            let req = { request "module Domain\nlet mutable registry = 0" with Documents = [ { Path = "src/G.fs"; Source = "module Domain\nlet mutable registry = 0"; IsGenerated = true } ] }
+            let req = { request "module Domain\nlet mutable registry = 0" with Documents = [ { Path = "src/G.fs"; Source = "module Domain\nlet mutable registry = 0"; IsGenerated = true; References = [] } ] }
             Expect.isEmpty (analyzeNow req).Findings "explicit generated exclusion"
         }
     ]

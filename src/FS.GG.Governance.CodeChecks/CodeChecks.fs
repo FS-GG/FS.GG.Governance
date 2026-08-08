@@ -137,8 +137,14 @@ module CodeChecks =
         let path = normalizePath doc.Path
         let digest = sourceDigest doc.Source
         let text = SourceText.ofString doc.Source
-        let! options, optionDiagnostics =
+        let! scriptOptions, optionDiagnostics =
             checker.GetProjectOptionsFromScript(path + ".fsx", text, assumeDotNetFramework = false, useSdkRefs = true)
+        let options =
+            { scriptOptions with
+                OtherOptions =
+                    Array.append
+                        scriptOptions.OtherOptions
+                        (doc.References |> List.map (fun reference -> "-r:" + reference) |> List.toArray) }
         let! parsed, checkedAnswer = checker.ParseAndCheckFileInProject(path + ".fsx", 0, text, options)
         let optionMessages = optionDiagnostics |> Seq.map _.Message |> Seq.toList
         let parseErrors = parsed.Diagnostics |> Array.filter (fun d -> d.Severity = FSharpDiagnosticSeverity.Error)
