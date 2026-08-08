@@ -334,7 +334,7 @@ jobs:
     name: materialize-skill-roots write set
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Deliberately does NOT generate the view first. Leg 1's whole subject is that a FRESH checkout —
       # where a git-ignored view root is absent by construction (ADR-0067 §6.1) — is not a
