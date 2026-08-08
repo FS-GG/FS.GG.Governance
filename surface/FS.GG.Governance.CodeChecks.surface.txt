@@ -312,7 +312,7 @@ TYPE FS.GG.Governance.CodeChecks.ModelModule+ReviewThresholds
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] ModuleLines
   [Property] Microsoft.FSharp.Core.FSharpOption`1[System.Int32] TypeLines
 TYPE FS.GG.Governance.CodeChecks.ModelModule+SourceDocument
-  [Constructor] Void .ctor(System.String, System.String, Boolean)
+  [Constructor] Void .ctor(System.String, System.String, Boolean, Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] Boolean Equals(SourceDocument)
   [Method] Boolean Equals(SourceDocument, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -323,10 +323,12 @@ TYPE FS.GG.Governance.CodeChecks.ModelModule+SourceDocument
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_References()
   [Method] System.String ToString()
   [Method] System.String get_Path()
   [Method] System.String get_Source()
   [Property] Boolean IsGenerated
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] References
   [Property] System.String Path
   [Property] System.String Source
 TYPE FS.GG.Governance.CodeChecks.ModelModule+SourceRange
