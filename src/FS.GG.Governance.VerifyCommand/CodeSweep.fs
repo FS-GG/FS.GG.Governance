@@ -309,7 +309,8 @@ module internal CodeSweep =
                         full)
                     |> Seq.toList
 
-                normalizePath property.Name, references)
+                let (GovernedPath sourcePath) = normalizePath property.Name
+                sourcePath, references)
             |> Map.ofSeq
         | Some value -> raise (PolicyError(sprintf "'references' must be an object; found %O" value.ValueKind))
 

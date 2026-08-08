@@ -304,7 +304,7 @@ jobs:
             --skip-duplicate
 
   # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
-  # package version is the evaluated CodeChecks fsproj <Version> (currently 0.1.0), independent of the
+  # package version is the evaluated CodeChecks fsproj <Version> (currently 1.0.0), independent of the
   # producer's CLI/tag version just as ReferenceGateSet has its own schema-derived version. The shared
   # resolve-version job still owns whether this run is a dry run or a real release. The job packs once,
   # records that exact file's digest, pushes it to the org feed first, verifies the bytes are unchanged,
@@ -399,7 +399,7 @@ jobs:
             '' \
             'let request: AnalysisRequest =' \
             '    { Head = "package-consumer-smoke"' \
-            '      Documents = [ { Path = "src/Domain.fs"; Source = "module Domain\ntype State = Ready | Running\nlet next = function Ready -> Running | Running -> Ready\n"; IsGenerated = false } ]' \
+            '      Documents = [ { Path = "src/Domain.fs"; Source = "module Domain\ntype State = Ready | Running\nlet next = function Ready -> Running | Running -> Ready\n"; IsGenerated = false; References = [] } ]' \
             '      PureDomainPrefixes = []' \
             '      Thresholds = { ModuleLines = None; TypeLines = None; MemberLines = None; DependencyFanOut = None }' \
             '      Justifications = []' \
