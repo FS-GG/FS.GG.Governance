@@ -12,20 +12,20 @@
       "fs.gg.governance.enforcement": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.findings": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
       "fs.gg.governance.gates": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.route": {
@@ -39,7 +39,7 @@
       "fs.gg.governance.routing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.ship": {
