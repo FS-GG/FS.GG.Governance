@@ -19,20 +19,20 @@
       "fs.gg.governance.commandrecord": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.config": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Contracts": "[7.0.0, )",
+          "FS.GG.Contracts": "[7.5.2, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
       "fs.gg.governance.currencyenforcement": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.RefreshJson": "[0.1.0, )"
@@ -41,7 +41,7 @@
       "fs.gg.governance.enforcement": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.evidencereuse": {
@@ -59,14 +59,14 @@
       "fs.gg.governance.findings": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Routing": "[0.1.0, )"
         }
       },
       "fs.gg.governance.freshnesskey": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -79,7 +79,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.GateExecution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )"
@@ -88,7 +88,7 @@
       "fs.gg.governance.gates": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.generatedviewsjson": {
@@ -105,7 +105,7 @@
       "fs.gg.governance.jsontokens": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.Enforcement": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )"
@@ -117,7 +117,7 @@
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.EvidenceReuse": "[0.1.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.GateRun": "[0.1.0, )",
@@ -130,14 +130,14 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )"
         }
       },
       "fs.gg.governance.refreshjson": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )",
+          "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
           "FSharp.Core": "[10.1.302, )"
@@ -154,7 +154,7 @@
       "fs.gg.governance.routing": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Config": "[0.1.0, )"
+          "FS.GG.Governance.Config": "[0.2.0, )"
         }
       },
       "fs.gg.governance.ruleidentity": {
@@ -169,9 +169,9 @@
       },
       "FS.GG.Contracts": {
         "type": "CentralTransitive",
-        "requested": "[7.0.0, )",
-        "resolved": "7.0.0",
-        "contentHash": "rKLirb5qpv/+Y+U/sp8tEr3NaJNZHVL9S0trxNdsKdPJ8FR/WvdmQyZqlSNbp1T2dClynHcQQBtRq9IX9A/fmg==",
+        "requested": "[7.5.2, )",
+        "resolved": "7.5.2",
+        "contentHash": "1Y2r/C1ibQTY1pJP6RzJdsUrV2d2PccLm+mTrOg74Okz6RgxXmogYrLWqv7Cq7pm+IhVyXSiFsfVAytBVzJU4A==",
         "dependencies": {
           "FSharp.Core": "10.1.302"
         }
