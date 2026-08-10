@@ -655,7 +655,7 @@
           "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
           "FS.GG.Governance.Attestation": "[0.1.0, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
-          "FS.GG.Governance.CodeChecks": "[0.1.0, )",
+          "FS.GG.Governance.CodeChecks": "[1.0.0, )",
           "FS.GG.Governance.CommandHost": "[0.2.0, )",
           "FS.GG.Governance.CommandKind": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.2.0, )",
