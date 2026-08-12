@@ -349,7 +349,18 @@ jobs:
           set -euo pipefail
           tool_dir="$(mktemp -d)"
           consumer="$(mktemp -d)"
-          dotnet tool install --tool-path "$tool_dir" --add-source "$GITHUB_WORKSPACE/artifacts/packages" FS.GG.Governance.FSharpSurfaceCommand --version "$FSHARP_SURFACE_VERSION"
+          # The repository config maps FS.GG.* exclusively to GitHub Packages, so `--add-source`
+          # is rejected by NuGet before it can inspect this packed tool.  Give the clean consumer
+          # its own explicit local-only source and matching map: this retains the package-only
+          # proof while making the captured nupkg the sole resolution candidate.
+          cat > "$consumer/NuGet.config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources><clear /><add key="packed-producer" value="$GITHUB_WORKSPACE/artifacts/packages" /></packageSources>
+            <packageSourceMapping><packageSource key="packed-producer"><package pattern="FS.GG.Governance.FSharpSurfaceCommand" /></packageSource></packageSourceMapping>
+          </configuration>
+          EOF
+          dotnet tool install --tool-path "$tool_dir" --configfile "$consumer/NuGet.config" FS.GG.Governance.FSharpSurfaceCommand --version "$FSHARP_SURFACE_VERSION"
           printf '%s\n' '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Api.fsi" /><Compile Include="Api.fs" /></ItemGroup></Project>' > "$consumer/Consumer.fsproj"
           printf '%s\n' 'module Api' 'val value: int' > "$consumer/Api.fsi"
           printf '%s\n' 'module Api' 'let value = 1' > "$consumer/Api.fs"
