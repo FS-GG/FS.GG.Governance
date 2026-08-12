@@ -68,6 +68,22 @@ let private stringField (name: string) (json: string) =
     use document = JsonDocument.Parse json
     document.RootElement.GetProperty(name).GetString()
 
+let private runProcess workingDirectory executable arguments =
+    let info = ProcessStartInfo(executable)
+    arguments |> List.iter info.ArgumentList.Add
+    info.WorkingDirectory <- workingDirectory
+    info.RedirectStandardOutput <- true
+    info.RedirectStandardError <- true
+    info.UseShellExecute <- false
+    match Process.Start(info) |> Option.ofObj with
+    | None -> failtestf "process did not start: %s" executable
+    | Some child ->
+        use child = child
+        let output = child.StandardOutput.ReadToEnd()
+        let error = child.StandardError.ReadToEnd()
+        child.WaitForExit()
+        child.ExitCode, output, error
+
 [<Tests>]
 let tests =
     testSequenced <|
@@ -109,4 +125,33 @@ let tests =
                           Expect.equal malformedExit 3 "malformed policy produces the documented input exit"
                           use document = JsonDocument.Parse malformed
                           Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "malformed input has no clean verdict") }
+
+              test "packed global tool runs in a clean consumer and carries its runtime closure" {
+                  let packageDirectory = Path.Combine(Path.GetTempPath(), "fsgg-fsharp-surface-package-" + Guid.NewGuid().ToString("N"))
+                  let toolDirectory = Path.Combine(packageDirectory, "tool")
+                  Directory.CreateDirectory packageDirectory |> ignore
+                  try
+                      let packExit, _, packError =
+                          runProcess repoRoot "dotnet"
+                              [ "pack"; "src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj"; "-c"; "Debug"; "--no-restore"; "-o"; packageDirectory ]
+                      Expect.equal packExit 0 (sprintf "packed tool succeeds: %s" packError)
+                      let package = Directory.GetFiles(packageDirectory, "FS.GG.Governance.FSharpSurfaceCommand.*.nupkg") |> Array.exactlyOne
+                      use archive = System.IO.Compression.ZipFile.OpenRead package
+                      let paths = archive.Entries |> Seq.map (fun entry -> entry.FullName) |> Set.ofSeq
+                      Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.FSharpSurfaceCommand.dll", StringComparison.Ordinal))) "package contains producer"
+                      Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.DesignChecks.dll", StringComparison.Ordinal))) "package contains runtime dependency"
+                      File.WriteAllText(Path.Combine(packageDirectory, "NuGet.config"), "<?xml version=\"1.0\"?><configuration><packageSources><clear /><add key=\"local\" value=\"" + packageDirectory + "\" /></packageSources></configuration>")
+                      let installExit, _, installError =
+                          runProcess repoRoot "dotnet" [ "tool"; "install"; "--tool-path"; toolDirectory; "--configfile"; Path.Combine(packageDirectory, "NuGet.config"); "FS.GG.Governance.FSharpSurfaceCommand"; "--version"; "1.12.1" ]
+                      Expect.equal installExit 0 (sprintf "clean tool install succeeds: %s" installError)
+                      withTemporaryProject
+                          [ "Consumer.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Api.fsi\" /><Compile Include=\"Api.fs\" /></ItemGroup></Project>"
+                            "Api.fsi", "module Api\nval value: int"
+                            "Api.fs", "module Api\nlet value = 1" ]
+                          (fun root ->
+                              let command = Path.Combine(toolDirectory, "fsgg-fsharp-surface")
+                              let exitCode, output, error = runProcess root command [ "--root"; root; "--project"; "Consumer.fsproj" ]
+                              Expect.equal exitCode 0 (sprintf "installed producer runs: %s" error)
+                              Expect.equal output (File.ReadAllText(Path.Combine(root, "readiness", "fsharp-public-surface.json")) + Environment.NewLine) "installed stdout exactly projects the receipt")
+                  finally Directory.Delete(packageDirectory, true) }
             ]

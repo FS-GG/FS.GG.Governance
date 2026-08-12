@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
+    <!-- #396: this is the supported package-only producer.  Keep the source-project
+         invocation for maintainers, but publish the same executable as a global tool
+         so consumers never need a Governance project reference. -->
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fsgg-fsharp-surface</ToolCommandName>
+    <PackageId>FS.GG.Governance.FSharpSurfaceCommand</PackageId>
+    <Version>1.12.1</Version>
+    <Description>FS.GG F# public-surface v1 receipt producer for package-only consumers.</Description>
+    <PackageTags>fs-gg;governance;fsharp;public-surface;dotnet-tool</PackageTags>
     <RootNamespace>FS.GG.Governance.FSharpSurfaceCommand</RootNamespace>
   </PropertyGroup>
   <ItemGroup><Compile Include="Program.fs" /></ItemGroup>

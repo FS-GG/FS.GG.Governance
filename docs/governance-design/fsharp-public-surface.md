@@ -49,7 +49,16 @@ policy fails closed. Exemptions require all four fields and an unexpired `review
 ## Persisted receipt
 
 The dedicated command writes one deterministic receipt atomically to the stable path
-`readiness/fsharp-public-surface.json` and also prints the same JSON to stdout:
+`readiness/fsharp-public-surface.json` and also prints the same JSON to stdout. Package-only
+consumers install the supported global tool (minimum version `1.12.1`) and do not need a
+Governance source checkout or project reference:
+
+```bash
+dotnet tool install --tool-path ./.tools FS.GG.Governance.FSharpSurfaceCommand --version 1.12.1
+./.tools/fsgg-fsharp-surface --root . --project src/MyProject/MyProject.fsproj
+```
+
+Maintainers may equivalently use the source-project form:
 
 ```bash
 dotnet run --project src/FS.GG.Governance.FSharpSurfaceCommand -- \
@@ -59,7 +68,7 @@ jq . readiness/fsharp-public-surface.json
 ```
 
 Do not redirect stdout to the readiness path: the command owns that file and replaces it through a
-temporary file. It exits `3` for malformed project/config/compiler input and `2` for invalid command
+temporary file. It exits `0` for a valid applicable or explicitly non-applicable receipt, `3` for malformed project/config/compiler input, and `2` for invalid command
 syntax. `--test-project` emits an explicit `not-applicable` disposition and bounded reason. The
 `--requires-baseline` and `--baseline-current` flags supply fallback baseline facts; per-project policy
 overrides them.
