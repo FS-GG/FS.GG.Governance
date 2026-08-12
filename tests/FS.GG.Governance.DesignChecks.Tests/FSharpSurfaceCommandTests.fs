@@ -69,13 +69,19 @@ let private stringField (name: string) (json: string) =
     document.RootElement.GetProperty(name).GetString()
 
 let private requiredPublicationRoute (workflow: string) =
-    [ "publish-fsharp-surface-command:"
-      "FS.GG.Governance.FSharpSurfaceCommand"
-      "Package-only installed-tool smoke before publication"
-      "fsgg-fsharp-surface"
-      "Push to the org feed"
-      "Push same bytes to nuget.org" ]
-    |> List.forall workflow.Contains
+    let job = workflow.IndexOf("  publish-fsharp-surface-command:", StringComparison.Ordinal)
+    let section = if job < 0 then "" else workflow.Substring job
+    let index (token: string) = section.IndexOf(token, StringComparison.Ordinal)
+    let pack = index "FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj"
+    let smoke = index "Package-only installed-tool smoke before publication"
+    let install = index "dotnet tool install --tool-path \"$tool_dir\" --add-source \"$GITHUB_WORKSPACE/artifacts/packages\" FS.GG.Governance.FSharpSurfaceCommand"
+    let executable = index "\"$tool_dir/fsgg-fsharp-surface\" --root \"$consumer\" --project Consumer.fsproj"
+    let identity = index "artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg"
+    let orgPush = index "Push to the org feed"
+    let nugetPush = index "Push same bytes to nuget.org"
+    job >= 0
+    && [ pack; smoke; install; executable; identity; orgPush; nugetPush ] |> List.forall (fun position -> position >= 0)
+    && pack < smoke && smoke < orgPush && orgPush < nugetPush
 
 let private runProcess workingDirectory executable arguments =
     let info = ProcessStartInfo(executable)
@@ -188,7 +194,9 @@ let tests =
 
               test "release workflow publishes and smoke-gates the package-only producer" {
                   let workflow = File.ReadAllText(Path.Combine(repoRoot, ".github", "workflows", "publish.yml"))
-                  Expect.isTrue (requiredPublicationRoute workflow) "the release topology includes pack, installed-tool smoke, and both feed pushes"
-                  let mutation = workflow.Replace("publish-fsharp-surface-command:", "publish-fsharp-surface-command-removed:")
-                  Expect.isFalse (requiredPublicationRoute mutation) "MUTATION: removing the producer publication route makes the release topology guard red" }
+                  Expect.isTrue (requiredPublicationRoute workflow) "the release topology binds the actual package identity, installed executable, smoke ordering, and both feed pushes"
+                  let removedJob = workflow.Replace("publish-fsharp-surface-command:", "publish-fsharp-surface-command-removed:")
+                  Expect.isFalse (requiredPublicationRoute removedJob) "MUTATION: removing or renaming the producer publication route makes the release topology guard red"
+                  let wrongRoute = workflow.Replace("$tool_dir/fsgg-fsharp-surface", "$tool_dir/not-fsharp-surface")
+                  Expect.isFalse (requiredPublicationRoute wrongRoute) "MUTATION: changing the installed executable route makes the release topology guard red" }
             ]

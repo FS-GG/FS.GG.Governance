@@ -345,7 +345,16 @@ jobs:
           printf '%s\n' 'module Api' 'val value: int' > "$consumer/Api.fsi"
           printf '%s\n' 'module Api' 'let value = 1' > "$consumer/Api.fs"
           "$tool_dir/fsgg-fsharp-surface" --root "$consumer" --project Consumer.fsproj > "$consumer/stdout.json"
-          cmp "$consumer/stdout.json" "$consumer/readiness/fsharp-public-surface.json"
+          # `printfn` owns exactly one terminal LF on stdout; the atomically persisted JSON deliberately
+          # has none. Normalize ONLY that documented terminal byte — any extra/different byte is red.
+          python3 - "$consumer/stdout.json" "$consumer/readiness/fsharp-public-surface.json" <<'PY'
+          import sys
+          stdout, receipt = map(open, sys.argv[1:])
+          out = stdout.buffer.read()
+          persisted = receipt.buffer.read()
+          if not out.endswith(b"\n") or out[:-1] != persisted or out[:-1].endswith(b"\n"):
+              raise SystemExit("installed producer stdout must equal persisted receipt plus exactly one terminal LF")
+          PY
       - name: Push to the org feed
         if: needs.resolve-version.outputs.push == 'true'
         run: dotnet nuget push "artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg" --source https://nuget.pkg.github.com/FS-GG/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
