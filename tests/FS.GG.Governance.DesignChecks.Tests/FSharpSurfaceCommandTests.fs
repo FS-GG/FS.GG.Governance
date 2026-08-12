@@ -152,6 +152,12 @@ let tests =
                               let command = Path.Combine(toolDirectory, "fsgg-fsharp-surface")
                               let exitCode, output, error = runProcess root command [ "--root"; root; "--project"; "Consumer.fsproj" ]
                               Expect.equal exitCode 0 (sprintf "installed producer runs: %s" error)
-                              Expect.equal output (File.ReadAllText(Path.Combine(root, "readiness", "fsharp-public-surface.json")) + Environment.NewLine) "installed stdout exactly projects the receipt")
+                              Expect.equal output (File.ReadAllText(Path.Combine(root, "readiness", "fsharp-public-surface.json")) + Environment.NewLine) "installed stdout exactly projects the receipt"
+                              Directory.CreateDirectory(Path.Combine(root, ".fsgg")) |> ignore
+                              File.WriteAllText(Path.Combine(root, ".fsgg", "fsharp-surface.json"), "{\"maturity\":\"forged\"}")
+                              let malformedExit, malformed, _ = runProcess root command [ "--root"; root; "--project"; "Consumer.fsproj" ]
+                              Expect.equal malformedExit 3 "installed producer keeps malformed input as exit 3"
+                              use document = JsonDocument.Parse malformed
+                              Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "installed producer emits no clean verdict for malformed policy")
                   finally Directory.Delete(packageDirectory, true) }
             ]
