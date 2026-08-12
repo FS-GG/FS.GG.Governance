@@ -45,10 +45,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          # The public-surface baselines were produced with global.json's exact SDK.
-          # Reading that file here makes the CI policy executable: a new 10.0.x
-          # patch cannot silently change reflection-rendered F# surfaces.
-          global-json-file: global.json
+          # `global-json-file` resolves a channel in setup-dotnet rather than installing
+          # global.json's exact baseline. Keep this literal aligned with global.json;
+          # the verification step below fails if either policy diverges.
+          dotnet-version: "10.0.302"
           # NO NuGet cache, deliberately (#169, FS-GG/.github#429, ADR-0031).
           #
           # This previously read `cache: true`, justified as "speed only — --locked-mode still
@@ -106,7 +106,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -150,7 +150,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -204,7 +204,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          dotnet-version: "10.0.302"
 
       # Build config now ships as the FS.GG.Kit package (ADR-0062, FS-GG/.github#1262): this repo
       # materializes Directory.Build.props / Directory.Packages.props from its pinned FS.GG.Kit, and
@@ -245,7 +245,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -301,7 +301,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          global-json-file: global.json
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
