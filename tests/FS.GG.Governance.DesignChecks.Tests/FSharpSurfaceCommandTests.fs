@@ -76,12 +76,18 @@ let private requiredPublicationRoute (workflow: string) =
     let smoke = index "Package-only installed-tool smoke before publication"
     let install = index "dotnet tool install --tool-path \"$tool_dir\" --add-source \"$GITHUB_WORKSPACE/artifacts/packages\" FS.GG.Governance.FSharpSurfaceCommand"
     let executable = index "\"$tool_dir/fsgg-fsharp-surface\" --root \"$consumer\" --project Consumer.fsproj"
-    let identity = index "artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg"
-    let orgPush = index "Push to the org feed"
-    let nugetPush = index "Push same bytes to nuget.org"
+    let captured = index "id: fsharp-surface-package"
+    let orgPush = index "id: fsharp-surface-org-push"
+    let nugetPush = index "id: fsharp-surface-nuget-push"
+    let capturedPath = "${{ steps.fsharp-surface-package.outputs.path }}"
+    let count (token: string) = section.Split([| token |], StringSplitOptions.None).Length - 1
+    let exactPushCount = count capturedPath
+    let uniqueId (id: string) = count ("id: " + id + "\n") = 1
     job >= 0
-    && [ pack; smoke; install; executable; identity; orgPush; nugetPush ] |> List.forall (fun position -> position >= 0)
+    && [ pack; smoke; install; executable; captured; orgPush; nugetPush ] |> List.forall (fun position -> position >= 0)
     && pack < smoke && smoke < orgPush && orgPush < nugetPush
+    && exactPushCount = 2
+    && [ "fsharp-surface-pack"; "fsharp-surface-package"; "fsharp-surface-org-push"; "fsharp-surface-nuget-push" ] |> List.forall uniqueId
 
 let private runProcess workingDirectory executable arguments =
     let info = ProcessStartInfo(executable)
@@ -198,5 +204,11 @@ let tests =
                   let removedJob = workflow.Replace("publish-fsharp-surface-command:", "publish-fsharp-surface-command-removed:")
                   Expect.isFalse (requiredPublicationRoute removedJob) "MUTATION: removing or renaming the producer publication route makes the release topology guard red"
                   let wrongRoute = workflow.Replace("$tool_dir/fsgg-fsharp-surface", "$tool_dir/not-fsharp-surface")
-                  Expect.isFalse (requiredPublicationRoute wrongRoute) "MUTATION: changing the installed executable route makes the release topology guard red" }
+                  Expect.isFalse (requiredPublicationRoute wrongRoute) "MUTATION: changing the installed executable route makes the release topology guard red"
+                  let wrongOrg = workflow.Replace("${{ steps.fsharp-surface-package.outputs.path }}\" --source https://nuget.pkg.github.com", "wrong.nupkg\" --source https://nuget.pkg.github.com")
+                  Expect.isFalse (requiredPublicationRoute wrongOrg) "MUTATION: changing the org-feed package subject makes the release topology guard red"
+                  let wrongNuget = workflow.Replace("package=\"${{ steps.fsharp-surface-package.outputs.path }}\"", "package=\"wrong.nupkg\"")
+                  Expect.isFalse (requiredPublicationRoute wrongNuget) "MUTATION: changing the nuget.org package subject makes the release topology guard red"
+                  let duplicate = workflow.Replace("id: fsharp-surface-org-push", "id: fsharp-surface-org-push\nid: fsharp-surface-org-push")
+                  Expect.isFalse (requiredPublicationRoute duplicate) "MUTATION: duplicate production push step id makes the release topology guard red" }
             ]

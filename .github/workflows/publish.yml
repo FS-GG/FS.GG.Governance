@@ -332,7 +332,16 @@ jobs:
       - name: Test packaged producer contract
         run: dotnet test tests/FS.GG.Governance.DesignChecks.Tests/FS.GG.Governance.DesignChecks.Tests.fsproj -c Release --no-restore --filter FSharpSurfaceCommand
       - name: Pack once at the resolved release version
+        id: fsharp-surface-pack
         run: dotnet pack src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj -c Release -p:Version=${{ needs.resolve-version.outputs.version }} --no-restore -o artifacts/packages
+      - name: Capture exactly one producer package
+        id: fsharp-surface-package
+        run: |
+          set -euo pipefail
+          packages=(artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg)
+          [ ${#packages[@]} -eq 1 ] || { echo "::error::expected exactly one producer nupkg"; exit 1; }
+          echo "path=${packages[0]}" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "${packages[0]}" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
       - name: Package-only installed-tool smoke before publication
         env:
           FSHARP_SURFACE_VERSION: ${{ needs.resolve-version.outputs.version }}
@@ -355,18 +364,24 @@ jobs:
           if not out.endswith(b"\n") or out[:-1] != persisted or out[:-1].endswith(b"\n"):
               raise SystemExit("installed producer stdout must equal persisted receipt plus exactly one terminal LF")
           PY
-      - name: Push to the org feed
+      - name: Push exact producer package to the org feed
+        id: fsharp-surface-org-push
         if: needs.resolve-version.outputs.push == 'true'
-        run: dotnet nuget push "artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg" --source https://nuget.pkg.github.com/FS-GG/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+        run: dotnet nuget push "${{ steps.fsharp-surface-package.outputs.path }}" --source https://nuget.pkg.github.com/FS-GG/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
       - name: Trusted Publishing login (nuget.org)
         id: fsharp-surface-nuget-login
         if: needs.resolve-version.outputs.push == 'true'
         uses: NuGet/login@v1
         with:
           user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
-      - name: Push same bytes to nuget.org (Trusted Publishing)
+      - name: Verify exact producer bytes + push to nuget.org (Trusted Publishing)
+        id: fsharp-surface-nuget-push
         if: needs.resolve-version.outputs.push == 'true'
-        run: dotnet nuget push "artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.fsharp-surface-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
+        run: |
+          set -euo pipefail
+          package="${{ steps.fsharp-surface-package.outputs.path }}"
+          [ "$(sha256sum "$package" | cut -d' ' -f1)" = "${{ steps.fsharp-surface-package.outputs.sha256 }}" ] || { echo "::error::producer bytes changed before nuget.org push"; exit 1; }
+          dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.fsharp-surface-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
 
   # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
   # package version is the evaluated CodeChecks fsproj <Version> (currently 1.0.0), independent of the
