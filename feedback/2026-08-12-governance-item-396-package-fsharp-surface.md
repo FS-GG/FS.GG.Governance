@@ -12,7 +12,7 @@ commit: pending-final-handoff
 
 - **activation:** active
 - **phases:** onboarding-first-build, lifecycle-authoring-or-not-used, implementation-test-evidence, verify-ship-pr
-- **material events:** 1
+- **material events:** 2
 - **zero-event reason:** n/a
 - **Checkpoint:** `feedback/checkpoints/item-396-package-fsharp-surface-producer.jsonl` (1 event)
 - **Boundary:** #396, draft PR #397; standard Spec Kit spec/plan/tasks were authored before implementation.
@@ -24,7 +24,7 @@ The existing source executable already owned deterministic v1 rendering and atom
 
 ## §3 What did not
 
-The coordination client attempted to resolve the explicitly named Governance PR through the host default owner, requiring a direct-diff fallback for path evidence.
+The coordination client attempted to resolve the explicitly named Governance PR through the host default owner, requiring a direct-diff fallback for path evidence. Independent review also found that a locally package-consumable tool had no coherent release publication route until this repair.
 
 ## §4 Findings
 
