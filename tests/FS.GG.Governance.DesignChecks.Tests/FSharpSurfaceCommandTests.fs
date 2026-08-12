@@ -68,6 +68,43 @@ let private stringField (name: string) (json: string) =
     use document = JsonDocument.Parse json
     document.RootElement.GetProperty(name).GetString()
 
+let private requiredPublicationRoute (workflow: string) =
+    let job = workflow.IndexOf("  publish-fsharp-surface-command:", StringComparison.Ordinal)
+    let section = if job < 0 then "" else workflow.Substring job
+    let index (token: string) = section.IndexOf(token, StringComparison.Ordinal)
+    let pack = index "FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj"
+    let smoke = index "Package-only installed-tool smoke before publication"
+    let install = index "dotnet tool install --tool-path \"$tool_dir\" --add-source \"$GITHUB_WORKSPACE/artifacts/packages\" FS.GG.Governance.FSharpSurfaceCommand"
+    let executable = index "\"$tool_dir/fsgg-fsharp-surface\" --root \"$consumer\" --project Consumer.fsproj"
+    let captured = index "id: fsharp-surface-package"
+    let orgPush = index "id: fsharp-surface-org-push"
+    let nugetPush = index "id: fsharp-surface-nuget-push"
+    let capturedPath = "${{ steps.fsharp-surface-package.outputs.path }}"
+    let count (token: string) = section.Split([| token |], StringSplitOptions.None).Length - 1
+    let exactPushCount = count capturedPath
+    let uniqueId (id: string) = count ("id: " + id + "\n") = 1
+    job >= 0
+    && [ pack; smoke; install; executable; captured; orgPush; nugetPush ] |> List.forall (fun position -> position >= 0)
+    && pack < smoke && smoke < orgPush && orgPush < nugetPush
+    && exactPushCount = 2
+    && [ "fsharp-surface-pack"; "fsharp-surface-package"; "fsharp-surface-org-push"; "fsharp-surface-nuget-push" ] |> List.forall uniqueId
+
+let private runProcess workingDirectory executable arguments =
+    let info = ProcessStartInfo(executable)
+    arguments |> List.iter info.ArgumentList.Add
+    info.WorkingDirectory <- workingDirectory
+    info.RedirectStandardOutput <- true
+    info.RedirectStandardError <- true
+    info.UseShellExecute <- false
+    match Process.Start(info) |> Option.ofObj with
+    | None -> failtestf "process did not start: %s" executable
+    | Some child ->
+        use child = child
+        let output = child.StandardOutput.ReadToEnd()
+        let error = child.StandardError.ReadToEnd()
+        child.WaitForExit()
+        child.ExitCode, output, error
+
 [<Tests>]
 let tests =
     testSequenced <|
@@ -109,4 +146,69 @@ let tests =
                           Expect.equal malformedExit 3 "malformed policy produces the documented input exit"
                           use document = JsonDocument.Parse malformed
                           Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "malformed input has no clean verdict") }
+
+              test "packed global tool runs in a clean consumer and carries its runtime closure" {
+                  let packageDirectory = Path.Combine(Path.GetTempPath(), "fsgg-fsharp-surface-package-" + Guid.NewGuid().ToString("N"))
+                  let toolDirectory = Path.Combine(packageDirectory, "tool")
+                  Directory.CreateDirectory packageDirectory |> ignore
+                  try
+                      let packExit, _, packError =
+                          runProcess repoRoot "dotnet"
+                              [ "pack"; "src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj"; "-c"; "Debug"; "--no-restore"; "-o"; packageDirectory ]
+                      Expect.equal packExit 0 (sprintf "packed tool succeeds: %s" packError)
+                      let package = Directory.GetFiles(packageDirectory, "FS.GG.Governance.FSharpSurfaceCommand.*.nupkg") |> Array.exactlyOne
+                      let paths =
+                          use archive = System.IO.Compression.ZipFile.OpenRead package
+                          archive.Entries |> Seq.map (fun entry -> entry.FullName) |> Set.ofSeq
+                      Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.FSharpSurfaceCommand.dll", StringComparison.Ordinal))) "package contains producer"
+                      Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.DesignChecks.dll", StringComparison.Ordinal))) "package contains runtime dependency"
+                      File.WriteAllText(Path.Combine(packageDirectory, "NuGet.config"), "<?xml version=\"1.0\"?><configuration><packageSources><clear /><add key=\"local\" value=\"" + packageDirectory + "\" /></packageSources></configuration>")
+                      let installExit, _, installError =
+                          runProcess repoRoot "dotnet" [ "tool"; "install"; "--tool-path"; toolDirectory; "--configfile"; Path.Combine(packageDirectory, "NuGet.config"); "FS.GG.Governance.FSharpSurfaceCommand"; "--version"; "1.12.1" ]
+                      Expect.equal installExit 0 (sprintf "clean tool install succeeds: %s" installError)
+                      withTemporaryProject
+                          [ "Consumer.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Api.fsi\" /><Compile Include=\"Api.fs\" /></ItemGroup></Project>"
+                            "Api.fsi", "module Api\nval value: int"
+                            "Api.fs", "module Api\nlet value = 1" ]
+                          (fun root ->
+                              let command = Path.Combine(toolDirectory, "fsgg-fsharp-surface")
+                              let exitCode, output, error = runProcess root command [ "--root"; root; "--project"; "Consumer.fsproj" ]
+                              Expect.equal exitCode 0 (sprintf "installed producer runs: %s" error)
+                              Expect.equal output (File.ReadAllText(Path.Combine(root, "readiness", "fsharp-public-surface.json")) + Environment.NewLine) "installed stdout exactly projects the receipt"
+                              Directory.CreateDirectory(Path.Combine(root, ".fsgg")) |> ignore
+                              File.WriteAllText(Path.Combine(root, ".fsgg", "fsharp-surface.json"), "{\"maturity\":\"forged\"}")
+                              let malformedExit, malformed, _ = runProcess root command [ "--root"; root; "--project"; "Consumer.fsproj" ]
+                              Expect.equal malformedExit 3 "installed producer keeps malformed input as exit 3"
+                              use document = JsonDocument.Parse malformed
+                              Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "installed producer emits no clean verdict for malformed policy")
+                      let mutated = System.IO.Compression.ZipFile.Open(package, System.IO.Compression.ZipArchiveMode.Update)
+                      match mutated.GetEntry("tools/net10.0/any/FS.GG.Governance.DesignChecks.dll") |> Option.ofObj with
+                      | None -> failtest "mutation target is packaged before removal"
+                      | Some dependency -> dependency.Delete()
+                      mutated.Dispose()
+                      let brokenInstallExit, _, _ =
+                          runProcess repoRoot "dotnet" [ "tool"; "install"; "--tool-path"; Path.Combine(packageDirectory, "broken-tool"); "--configfile"; Path.Combine(packageDirectory, "NuGet.config"); "FS.GG.Governance.FSharpSurfaceCommand"; "--version"; "1.12.1" ]
+                      Expect.equal brokenInstallExit 0 "NuGet can install a structurally incomplete package, so the command smoke must prove the closure"
+                      withTemporaryProject
+                          [ "Broken.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Api.fs\" /></ItemGroup></Project>"
+                            "Api.fs", "module Api\nlet value = 1" ]
+                          (fun root ->
+                              let brokenCommand = Path.Combine(packageDirectory, "broken-tool", "fsgg-fsharp-surface")
+                              let brokenExit, _, _ = runProcess root brokenCommand [ "--root"; root; "--project"; "Broken.fsproj" ]
+                              Expect.notEqual brokenExit 0 "a package with its required DesignChecks dependency removed cannot execute the producer")
+                  finally Directory.Delete(packageDirectory, true) }
+
+              test "release workflow publishes and smoke-gates the package-only producer" {
+                  let workflow = File.ReadAllText(Path.Combine(repoRoot, ".github", "workflows", "publish.yml"))
+                  Expect.isTrue (requiredPublicationRoute workflow) "the release topology binds the actual package identity, installed executable, smoke ordering, and both feed pushes"
+                  let removedJob = workflow.Replace("publish-fsharp-surface-command:", "publish-fsharp-surface-command-removed:")
+                  Expect.isFalse (requiredPublicationRoute removedJob) "MUTATION: removing or renaming the producer publication route makes the release topology guard red"
+                  let wrongRoute = workflow.Replace("$tool_dir/fsgg-fsharp-surface", "$tool_dir/not-fsharp-surface")
+                  Expect.isFalse (requiredPublicationRoute wrongRoute) "MUTATION: changing the installed executable route makes the release topology guard red"
+                  let wrongOrg = workflow.Replace("${{ steps.fsharp-surface-package.outputs.path }}\" --source https://nuget.pkg.github.com", "wrong.nupkg\" --source https://nuget.pkg.github.com")
+                  Expect.isFalse (requiredPublicationRoute wrongOrg) "MUTATION: changing the org-feed package subject makes the release topology guard red"
+                  let wrongNuget = workflow.Replace("package=\"${{ steps.fsharp-surface-package.outputs.path }}\"", "package=\"wrong.nupkg\"")
+                  Expect.isFalse (requiredPublicationRoute wrongNuget) "MUTATION: changing the nuget.org package subject makes the release topology guard red"
+                  let duplicate = workflow.Replace("id: fsharp-surface-org-push", "id: fsharp-surface-org-push\nid: fsharp-surface-org-push")
+                  Expect.isFalse (requiredPublicationRoute duplicate) "MUTATION: duplicate production push step id makes the release topology guard red" }
             ]

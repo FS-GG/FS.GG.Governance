@@ -303,6 +303,86 @@ jobs:
             --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
 
+  # #396: this producer is a consumer-facing global tool, not a source-only maintainer executable.
+  # It follows the same coherent release ordering as the CLI: resolve the evaluated version, pack once,
+  # install from only that local artifact, run the external-project receipt smoke, then push the identical
+  # bytes to the org feed first and nuget.org second. The smoke is deliberately before either publication.
+  publish-fsharp-surface-command:
+    name: Pack + publish FS.GG.Governance.FSharpSurfaceCommand (fsgg-fsharp-surface tool)
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+          cache: false
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.DesignChecks.Tests/FS.GG.Governance.DesignChecks.Tests.fsproj
+      - name: Test packaged producer contract
+        run: dotnet test tests/FS.GG.Governance.DesignChecks.Tests/FS.GG.Governance.DesignChecks.Tests.fsproj -c Release --no-restore --filter FSharpSurfaceCommand
+      - name: Pack once at the resolved release version
+        id: fsharp-surface-pack
+        run: dotnet pack src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj -c Release -p:Version=${{ needs.resolve-version.outputs.version }} --no-restore -o artifacts/packages
+      - name: Capture exactly one producer package
+        id: fsharp-surface-package
+        run: |
+          set -euo pipefail
+          packages=(artifacts/packages/FS.GG.Governance.FSharpSurfaceCommand.*.nupkg)
+          [ ${#packages[@]} -eq 1 ] || { echo "::error::expected exactly one producer nupkg"; exit 1; }
+          echo "path=${packages[0]}" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "${packages[0]}" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Package-only installed-tool smoke before publication
+        env:
+          FSHARP_SURFACE_VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tool_dir="$(mktemp -d)"
+          consumer="$(mktemp -d)"
+          dotnet tool install --tool-path "$tool_dir" --add-source "$GITHUB_WORKSPACE/artifacts/packages" FS.GG.Governance.FSharpSurfaceCommand --version "$FSHARP_SURFACE_VERSION"
+          printf '%s\n' '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Api.fsi" /><Compile Include="Api.fs" /></ItemGroup></Project>' > "$consumer/Consumer.fsproj"
+          printf '%s\n' 'module Api' 'val value: int' > "$consumer/Api.fsi"
+          printf '%s\n' 'module Api' 'let value = 1' > "$consumer/Api.fs"
+          "$tool_dir/fsgg-fsharp-surface" --root "$consumer" --project Consumer.fsproj > "$consumer/stdout.json"
+          # `printfn` owns exactly one terminal LF on stdout; the atomically persisted JSON deliberately
+          # has none. Normalize ONLY that documented terminal byte — any extra/different byte is red.
+          python3 - "$consumer/stdout.json" "$consumer/readiness/fsharp-public-surface.json" <<'PY'
+          import sys
+          stdout, receipt = map(open, sys.argv[1:])
+          out = stdout.buffer.read()
+          persisted = receipt.buffer.read()
+          if not out.endswith(b"\n") or out[:-1] != persisted or out[:-1].endswith(b"\n"):
+              raise SystemExit("installed producer stdout must equal persisted receipt plus exactly one terminal LF")
+          PY
+      - name: Push exact producer package to the org feed
+        id: fsharp-surface-org-push
+        if: needs.resolve-version.outputs.push == 'true'
+        run: dotnet nuget push "${{ steps.fsharp-surface-package.outputs.path }}" --source https://nuget.pkg.github.com/FS-GG/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+      - name: Trusted Publishing login (nuget.org)
+        id: fsharp-surface-nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
+      - name: Verify exact producer bytes + push to nuget.org (Trusted Publishing)
+        id: fsharp-surface-nuget-push
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.fsharp-surface-package.outputs.path }}"
+          [ "$(sha256sum "$package" | cut -d' ' -f1)" = "${{ steps.fsharp-surface-package.outputs.sha256 }}" ] || { echo "::error::producer bytes changed before nuget.org push"; exit 1; }
+          dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.fsharp-surface-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
+
   # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
   # package version is the evaluated CodeChecks fsproj <Version> (currently 1.0.0), independent of the
   # producer's CLI/tag version just as ReferenceGateSet has its own schema-derived version. The shared
