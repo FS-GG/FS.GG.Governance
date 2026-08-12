@@ -45,7 +45,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          # `global-json-file` resolves a channel in setup-dotnet rather than installing
+          # global.json's exact baseline. Keep this literal aligned with global.json;
+          # the verification step below fails if either policy diverges.
+          dotnet-version: "10.0.302"
           # NO NuGet cache, deliberately (#169, FS-GG/.github#429, ADR-0031).
           #
           # This previously read `cache: true`, justified as "speed only — --locked-mode still
@@ -58,6 +61,16 @@ jobs:
           # HTTP cache cleared, so this job's package folder is cold by construction and a
           # setup-dotnet cache would be pure overhead (restored, then never read).
           cache: false
+
+      - name: Verify selected .NET SDK
+        run: |
+          set -euo pipefail
+          expected="$(jq -r '.sdk.version' global.json)"
+          actual="$(dotnet --version)"
+          test "$actual" = "$expected" || {
+            echo "::error::global.json requires .NET SDK $expected, but the gate selected $actual."
+            exit 1
+          }
 
       # Locked restore is the single enforcement point, and it is COLD — see the action. It restores
       # into a fresh package folder against the real feed, so a lock file no fresh clone could
@@ -93,7 +106,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -137,7 +150,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -191,7 +204,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: "10.0.302"
 
       # Build config now ships as the FS.GG.Kit package (ADR-0062, FS-GG/.github#1262): this repo
       # materializes Directory.Build.props / Directory.Packages.props from its pinned FS.GG.Kit, and
@@ -232,7 +245,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
@@ -288,7 +301,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.302"
           # No NuGet cache: the locked restore below is cold by construction, so a cache would be
           # restored and never read. See the `gate` job for why a warm folder breaks the gate (#169).
           cache: false
