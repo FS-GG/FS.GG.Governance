@@ -68,6 +68,15 @@ let private stringField (name: string) (json: string) =
     use document = JsonDocument.Parse json
     document.RootElement.GetProperty(name).GetString()
 
+let private requiredPublicationRoute (workflow: string) =
+    [ "publish-fsharp-surface-command:"
+      "FS.GG.Governance.FSharpSurfaceCommand"
+      "Package-only installed-tool smoke before publication"
+      "fsgg-fsharp-surface"
+      "Push to the org feed"
+      "Push same bytes to nuget.org" ]
+    |> List.forall workflow.Contains
+
 let private runProcess workingDirectory executable arguments =
     let info = ProcessStartInfo(executable)
     arguments |> List.iter info.ArgumentList.Add
@@ -176,4 +185,10 @@ let tests =
                               let brokenExit, _, _ = runProcess root brokenCommand [ "--root"; root; "--project"; "Broken.fsproj" ]
                               Expect.notEqual brokenExit 0 "a package with its required DesignChecks dependency removed cannot execute the producer")
                   finally Directory.Delete(packageDirectory, true) }
+
+              test "release workflow publishes and smoke-gates the package-only producer" {
+                  let workflow = File.ReadAllText(Path.Combine(repoRoot, ".github", "workflows", "publish.yml"))
+                  Expect.isTrue (requiredPublicationRoute workflow) "the release topology includes pack, installed-tool smoke, and both feed pushes"
+                  let mutation = workflow.Replace("publish-fsharp-surface-command:", "publish-fsharp-surface-command-removed:")
+                  Expect.isFalse (requiredPublicationRoute mutation) "MUTATION: removing the producer publication route makes the release topology guard red" }
             ]
