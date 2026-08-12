@@ -12,7 +12,7 @@ commit: pending-final-handoff
 
 - **activation:** active
 - **phases:** onboarding-first-build, lifecycle-authoring-or-not-used, implementation-test-evidence, verify-ship-pr
-- **material events:** 2
+- **material events:** 3
 - **zero-event reason:** n/a
 - **Checkpoint:** `feedback/checkpoints/item-396-package-fsharp-surface-producer.jsonl` (1 event)
 - **Boundary:** #396, draft PR #397; standard Spec Kit spec/plan/tasks were authored before implementation.

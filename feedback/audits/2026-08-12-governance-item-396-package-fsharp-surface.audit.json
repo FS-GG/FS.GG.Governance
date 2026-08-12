@@ -1,7 +1,7 @@
 {
   "auditSchema": 1,
   "report": "feedback/2026-08-12-governance-item-396-package-fsharp-surface.md",
-  "reportSha256": "b23c019edec5434952287693c0d04cc5f4560a2ccffb0c625ac3306e9a8eae8d",
+  "reportSha256": "db5c232d194c2c9114675d1243225fcb558e703936908bb8beeca6122fa399f2",
   "criticMode": "separated-critic-pass",
   "criticPromptVersion": "actionability-v1",
   "findings": [
