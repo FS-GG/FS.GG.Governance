@@ -136,8 +136,9 @@ let tests =
                               [ "pack"; "src/FS.GG.Governance.FSharpSurfaceCommand/FS.GG.Governance.FSharpSurfaceCommand.fsproj"; "-c"; "Debug"; "--no-restore"; "-o"; packageDirectory ]
                       Expect.equal packExit 0 (sprintf "packed tool succeeds: %s" packError)
                       let package = Directory.GetFiles(packageDirectory, "FS.GG.Governance.FSharpSurfaceCommand.*.nupkg") |> Array.exactlyOne
-                      use archive = System.IO.Compression.ZipFile.OpenRead package
-                      let paths = archive.Entries |> Seq.map (fun entry -> entry.FullName) |> Set.ofSeq
+                      let paths =
+                          use archive = System.IO.Compression.ZipFile.OpenRead package
+                          archive.Entries |> Seq.map (fun entry -> entry.FullName) |> Set.ofSeq
                       Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.FSharpSurfaceCommand.dll", StringComparison.Ordinal))) "package contains producer"
                       Expect.isTrue (paths |> Set.exists (fun path -> path.EndsWith("/FS.GG.Governance.DesignChecks.dll", StringComparison.Ordinal))) "package contains runtime dependency"
                       File.WriteAllText(Path.Combine(packageDirectory, "NuGet.config"), "<?xml version=\"1.0\"?><configuration><packageSources><clear /><add key=\"local\" value=\"" + packageDirectory + "\" /></packageSources></configuration>")
@@ -159,5 +160,20 @@ let tests =
                               Expect.equal malformedExit 3 "installed producer keeps malformed input as exit 3"
                               use document = JsonDocument.Parse malformed
                               Expect.equal (document.RootElement.GetProperty("malformed").ValueKind) JsonValueKind.String "installed producer emits no clean verdict for malformed policy")
+                      let mutated = System.IO.Compression.ZipFile.Open(package, System.IO.Compression.ZipArchiveMode.Update)
+                      match mutated.GetEntry("tools/net10.0/any/FS.GG.Governance.DesignChecks.dll") |> Option.ofObj with
+                      | None -> failtest "mutation target is packaged before removal"
+                      | Some dependency -> dependency.Delete()
+                      mutated.Dispose()
+                      let brokenInstallExit, _, _ =
+                          runProcess repoRoot "dotnet" [ "tool"; "install"; "--tool-path"; Path.Combine(packageDirectory, "broken-tool"); "--configfile"; Path.Combine(packageDirectory, "NuGet.config"); "FS.GG.Governance.FSharpSurfaceCommand"; "--version"; "1.12.1" ]
+                      Expect.equal brokenInstallExit 0 "NuGet can install a structurally incomplete package, so the command smoke must prove the closure"
+                      withTemporaryProject
+                          [ "Broken.fsproj", "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include=\"Api.fs\" /></ItemGroup></Project>"
+                            "Api.fs", "module Api\nlet value = 1" ]
+                          (fun root ->
+                              let brokenCommand = Path.Combine(packageDirectory, "broken-tool", "fsgg-fsharp-surface")
+                              let brokenExit, _, _ = runProcess root brokenCommand [ "--root"; root; "--project"; "Broken.fsproj" ]
+                              Expect.notEqual brokenExit 0 "a package with its required DesignChecks dependency removed cannot execute the producer")
                   finally Directory.Delete(packageDirectory, true) }
             ]

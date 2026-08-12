@@ -1,0 +1,23 @@
+{
+  "auditSchema": 1,
+  "report": "feedback/2026-08-12-governance-item-396-package-fsharp-surface.md",
+  "reportSha256": "8f34a693af109fd9ca22ebd094c2f03df9023848db42521e3973034e17bb4a2d",
+  "criticMode": "separated-critic-pass",
+  "criticPromptVersion": "actionability-v1",
+  "findings": [
+    {
+      "id": "§4.1",
+      "status": "actionable",
+      "missingFacts": [],
+      "checkedEvidence": [
+        {
+          "locator": "command:scripts/fsgg-coord verify-paths --pr 397 --repo FS-GG/FS.GG.Governance --issue FS-GG/FS.GG.Governance#396",
+          "result": "verified"
+        }
+      ],
+      "confidenceLimits": [
+        "The coordinator's own query error identifies the wrong owner; the direct GitHub diff is separate handoff evidence."
+      ]
+    }
+  ]
+}
