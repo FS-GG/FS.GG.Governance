@@ -15,6 +15,7 @@
     <Compile Include="AdapterTests.fs" />
     <Compile Include="CompositionTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="PackageConsumerTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
