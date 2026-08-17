@@ -2,8 +2,8 @@ name: publish
 
 # Repo-owned publisher for the intentionally shipped Governance artifacts: the consumer-bearing
 # CLI tool FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28), the compiler-backed
-# FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), the package-only adapter SDK
-# FS.GG.Governance.Adapters.Spi (#413), and the content-only
+# FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), the pure Kernel foundation
+# plus package-only FS.GG.Governance.Adapters.Spi SDK (#413), and the content-only
 # FS.GG.Governance.ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub
 # Packages feed FIRST, then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically,
 # no re-pack (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles
@@ -395,6 +395,94 @@ jobs:
           [ "$(sha256sum "$package" | cut -d' ' -f1)" = "${{ steps.fsharp-surface-package.outputs.sha256 }}" ] || { echo "::error::producer bytes changed before nuget.org push"; exit 1; }
           dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.fsharp-surface-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
 
+  # #413: the SPI's supported package graph includes Kernel, so Kernel must exist on both feeds before
+  # the SPI publisher attempts its clean transitive consumer. Pack Kernel once, send those bytes to the
+  # org feed first, then send the same bytes to nuget.org. A repeated run is idempotent.
+  publish-kernel:
+    name: Pack + publish FS.GG.Governance.Kernel
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+          cache: false
+
+      - name: Restore Kernel (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj
+
+      - name: Resolve Kernel package version
+        id: kernel-version
+        run: |
+          set -euo pipefail
+          version="$(dotnet msbuild src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj -getProperty:Version)"
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Kernel fsproj produced invalid package version '$version'."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Pack Kernel once
+        run: |
+          set -euo pipefail
+          dotnet pack src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj -c Release \
+            -p:Version=${{ steps.kernel-version.outputs.version }} --no-restore -o artifacts/packages
+
+      - name: Assert and identify the Kernel package
+        id: kernel-package
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/packages/FS.GG.Governance.Kernel.*.nupkg)
+          if [ ${#packages[@]} -ne 1 ]; then
+            echo "::error::expected exactly one Kernel nupkg, found ${#packages[@]}."
+            exit 1
+          fi
+          package="${packages[0]}"
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Push exact Kernel package to the org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          dotnet nuget push "${{ steps.kernel-package.outputs.path }}" \
+            --source https://nuget.pkg.github.com/FS-GG/index.json \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      - name: Trusted Publishing login for Kernel (nuget.org)
+        id: kernel-nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
+
+      - name: Verify bytes + push Kernel to nuget.org
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.kernel-package.outputs.path }}"
+          actual="$(sha256sum "$package" | cut -d' ' -f1)"
+          expected="${{ steps.kernel-package.outputs.sha256 }}"
+          [ "$actual" = "$expected" ] || { echo "::error::Kernel package changed between feed pushes"; exit 1; }
+          dotnet nuget push "$package" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.kernel-nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+
   # #413: publish the existing pure adapter SPI as a supported compile-time SDK. Its package version
   # is owned by the SPI fsproj, while `resolve-version` supplies only this run's dry-run/push decision.
   # The focused test packs Kernel + SPI, proves a locked package-only external F# consumer, inspects the
@@ -403,7 +491,7 @@ jobs:
   # cold consumer through that published feed before sending the byte-identical nupkg to nuget.org.
   publish-adapter-spi:
     name: Pack + publish FS.GG.Governance.Adapters.Spi
-    needs: [resolve-version]
+    needs: [resolve-version, publish-kernel]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.repository == 'FS-GG/FS.GG.Governance'
