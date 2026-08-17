@@ -1,13 +1,14 @@
 name: publish
 
-# Repo-owned publisher for the three intentionally shipped Governance artifacts: the consumer-bearing
+# Repo-owned publisher for the intentionally shipped Governance artifacts: the consumer-bearing
 # CLI tool FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28), the compiler-backed
-# FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), and the content-only
+# FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), the package-only adapter SDK
+# FS.GG.Governance.Adapters.Spi (#413), and the content-only
 # FS.GG.Governance.ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub
 # Packages feed FIRST, then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically,
 # no re-pack (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles
 # Adapters.SddHandoff.dll so the
-# installed `fsgg-governance` enforces a produced governance-handoff.json standalone. The other ~70
+# installed `fsgg-governance` enforces a produced governance-handoff.json standalone. The remaining
 # packable FS.GG.Governance.* projects are OUT OF SCOPE here (H4/088-adjacent org-feed baseline).
 #
 # THE CONTRACTS are specs/089-publish-governance-cli/contracts/publish-workflow.md (base: triggers +
@@ -23,7 +24,7 @@ name: publish
 # pack-reference-gate-set.fsx before either push. Trusted
 # Publishing login + push live in THIS file (never a reusable workflow — the nuget.org trust policy is
 # registered against FS.GG.Governance/publish.yml; NuGet/login#6, ADR-0013). A dry-run dispatch (no
-# version input) packs all three packages but pushes to no feed; a missing trust policy 401s and fails loud.
+# version input) packs all selected packages but pushes to no feed; a missing trust policy 401s and fails loud.
 
 on:
   release:
@@ -393,6 +394,134 @@ jobs:
           package="${{ steps.fsharp-surface-package.outputs.path }}"
           [ "$(sha256sum "$package" | cut -d' ' -f1)" = "${{ steps.fsharp-surface-package.outputs.sha256 }}" ] || { echo "::error::producer bytes changed before nuget.org push"; exit 1; }
           dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.fsharp-surface-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
+
+  # #413: publish the existing pure adapter SPI as a supported compile-time SDK. Its package version
+  # is owned by the SPI fsproj, while `resolve-version` supplies only this run's dry-run/push decision.
+  # The focused test packs Kernel + SPI, proves a locked package-only external F# consumer, inspects the
+  # exact Kernel dependency/no-host boundary, and demonstrates its package mutation reds before this job
+  # packs the candidate once. A real publish sends those bytes to the org feed first, then verifies a
+  # cold consumer through that published feed before sending the byte-identical nupkg to nuget.org.
+  publish-adapter-spi:
+    name: Pack + publish FS.GG.Governance.Adapters.Spi
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+          cache: false
+
+      - name: Restore adapter package gate (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.Adapters.Spi.Tests/FS.GG.Governance.Adapters.Spi.Tests.fsproj
+
+      - name: Test package-only consumer, dependency boundary, and negative mutation
+        run: dotnet test tests/FS.GG.Governance.Adapters.Spi.Tests/FS.GG.Governance.Adapters.Spi.Tests.fsproj -c Release --no-restore --filter PackageConsumer
+
+      - name: Resolve adapter SPI package version
+        id: adapter-spi-version
+        run: |
+          set -euo pipefail
+          version="$(dotnet msbuild src/FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj -getProperty:Version)"
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$'; then
+            echo "::error::adapter SPI fsproj produced invalid package version '$version'."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Pack adapter SPI once
+        run: |
+          set -euo pipefail
+          dotnet pack src/FS.GG.Governance.Adapters.Spi/FS.GG.Governance.Adapters.Spi.fsproj -c Release \
+            -p:Version=${{ steps.adapter-spi-version.outputs.version }} --no-restore -o artifacts/packages
+
+      - name: Assert and identify the adapter SPI package
+        id: adapter-spi-package
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/packages/FS.GG.Governance.Adapters.Spi.*.nupkg)
+          if [ ${#packages[@]} -ne 1 ]; then
+            echo "::error::expected exactly one adapter SPI nupkg, found ${#packages[@]}."
+            exit 1
+          fi
+          package="${packages[0]}"
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Push exact adapter SPI package to the org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          dotnet nuget push "${{ steps.adapter-spi-package.outputs.path }}" \
+            --source https://nuget.pkg.github.com/FS-GG/index.json \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      - name: Verify a cold locked consumer through the published org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        env:
+          ADAPTER_SPI_VERSION: ${{ steps.adapter-spi-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          consumer="$(mktemp -d)"
+          cp tests/fixtures/adapter-spi-package-consumer/{AdapterSpiConsumer.fsproj,Program.fs,expected.txt} "$consumer/"
+          cat > "$consumer/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="fsgg-github" value="https://nuget.pkg.github.com/FS-GG/index.json" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+            </packageSources>
+            <packageSourceCredentials>
+              <fsgg-github><add key="Username" value="${{ github.actor }}" /><add key="ClearTextPassword" value="${{ secrets.GITHUB_TOKEN }}" /></fsgg-github>
+            </packageSourceCredentials>
+            <packageSourceMapping>
+              <packageSource key="fsgg-github"><package pattern="FS.GG.Governance.*" /></packageSource>
+              <packageSource key="nuget.org"><package pattern="FSharp.Core" /></packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+          sed -i "s/Version=\"\[0.1.0\]\"/Version=\"[$ADAPTER_SPI_VERSION]\"/" "$consumer/AdapterSpiConsumer.fsproj"
+          first_packages="$(mktemp -d)"
+          NUGET_PACKAGES="$first_packages" dotnet restore "$consumer/AdapterSpiConsumer.fsproj" --use-lock-file --configfile "$consumer/NuGet.Config"
+          rm -rf "$consumer/obj" "$first_packages"
+          locked_packages="$(mktemp -d)"
+          NUGET_PACKAGES="$locked_packages" dotnet restore "$consumer/AdapterSpiConsumer.fsproj" --locked-mode --configfile "$consumer/NuGet.Config"
+          NUGET_PACKAGES="$locked_packages" dotnet run --project "$consumer/AdapterSpiConsumer.fsproj" -c Release --no-restore > "$consumer/actual.txt"
+          diff -u "$consumer/expected.txt" "$consumer/actual.txt"
+
+      - name: Trusted Publishing login (nuget.org)
+        id: adapter-spi-nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
+
+      - name: Verify bytes + push adapter SPI to nuget.org
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.adapter-spi-package.outputs.path }}"
+          actual="$(sha256sum "$package" | cut -d' ' -f1)"
+          expected="${{ steps.adapter-spi-package.outputs.sha256 }}"
+          [ "$actual" = "$expected" ] || { echo "::error::adapter SPI package changed between feed pushes"; exit 1; }
+          dotnet nuget push "$package" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.adapter-spi-nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
 
   # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
   # package version is the evaluated CodeChecks fsproj <Version> (currently 1.0.0), independent of the

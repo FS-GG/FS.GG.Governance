@@ -1,0 +1,7 @@
+render=policy-present(rules:policy)
+hash=8b1e38cd2f6303d0e2bbd4dbf998dfa18daca82129f48cfb1d917459867a5a26
+verdict=Pass
+explanation=Pass
+evaluated-facts=2
+route-stakes=Fenced "rules-corpus"
+route-blocking=1

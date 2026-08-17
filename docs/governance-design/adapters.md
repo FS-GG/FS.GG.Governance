@@ -74,6 +74,33 @@ is total, never silently partial. A single adapter governs itself through the ke
 `FixedPoint.evaluate`, `Route.route`, and `Check.render`/`explain` — the adapter contains
 none of those facilities.
 
+### Package-only adapter authoring
+
+The supported compile-time SDK is the NuGet package
+`FS.GG.Governance.Adapters.Spi` `0.1.0`. Pin it exactly in the product repository;
+its package metadata brings the compatible `FS.GG.Governance.Kernel` `0.1.1`
+dependency transitively:
+
+```xml
+<PackageReference Include="FS.GG.Governance.Adapters.Spi" Version="[0.1.0]" />
+```
+
+The product can then declare its closed fact union, construct
+`Adapter<'fact,'artifact,'change>`, author reified `Check<'fact>` values, evaluate
+and explain them through Kernel, and route its fences through the same package
+reference. It does not need a separate Kernel reference unless it intentionally
+wants to pin that transitive API directly.
+
+This is a pure authoring surface: the SPI package depends on Kernel and FSharp.Core,
+not on `FS.GG.Governance.Cli`, CommandHost, Host, command projects, filesystem or
+process adapters. Do not use a sibling `ProjectReference`, DLL `HintPath`, the CLI
+tool package, or a dotnet-tool installation directory as a substitute for the SDK.
+Those routes are not supported package contracts.
+
+Producer and consumer changes are sequenced. Publish and publicly verify the SPI
+package first; only then update the product's exact package pin and lock file. A
+source build or a locally bundled CLI assembly does not prove that rollout complete.
+
 ## Design-system adapter (the first adapter)
 
 The design-system adapter governs adherence to a design language (the worked

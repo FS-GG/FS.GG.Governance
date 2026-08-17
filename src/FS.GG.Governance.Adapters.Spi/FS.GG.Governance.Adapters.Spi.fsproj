@@ -5,10 +5,16 @@
        and adds ZERO PackageReference (FR-015): BCL + FSharp.Core + Kernel only. The
        kernel does NOT reference this project (dependency direction adapters -> kernel,
        SC-008). It is PURE — values and total folds, no I/O, no Model/Msg/Effect, no
-       interpreter (Principle IV N/A). Does NOT pack (the kernel packs at F06; the CLI
-       tool packs at F12) — IsPackable=false inherited from Directory.Build.props. -->
+       interpreter (Principle IV N/A). #413 publishes this existing curated assembly as
+       the supported package-only adapter-authoring SDK; its packed dependency graph is
+       therefore Kernel + FSharp.Core only. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Adapters.Spi</RootNamespace>
+    <Version>0.1.0</Version>
+    <IsPackable>true</IsPackable>
+    <PackageId>FS.GG.Governance.Adapters.Spi</PackageId>
+    <Description>Pure F# adapter-authoring SPI for composing typed product facts and Governance checks over FS.GG.Governance.Kernel.</Description>
+    <PackageTags>fs-gg;governance;fsharp;adapter;spi;sdk</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,5 +29,20 @@
   <ItemGroup>
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
   </ItemGroup>
+
+  <!-- NuGet serializes a bare project-reference version as a minimum range. The
+       supported SDK contract is stricter: it consumes the exact Kernel package
+       produced by this source graph. Derive the value from Kernel's evaluated
+       PackageVersion, then make the interval exact before GenerateNuspec reads it. -->
+  <Target Name="PinAdapterSpiKernelPackageDependency"
+          AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_ProjectReferencesWithVersions
+          Update="@(_ProjectReferencesWithVersions)"
+          Condition="'%(_ProjectReferencesWithVersions.Filename)' == 'FS.GG.Governance.Kernel'">
+        <ProjectVersion>[%(_ProjectReferencesWithVersions.ProjectVersion)]</ProjectVersion>
+      </_ProjectReferencesWithVersions>
+    </ItemGroup>
+  </Target>
 
 </Project>
