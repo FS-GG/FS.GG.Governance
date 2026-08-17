@@ -16,7 +16,7 @@
       "fs.gg.governance.adapters.builtin": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.1, )"
         }
       },
       "fs.gg.governance.adapters.sddhandoff": {
@@ -363,7 +363,7 @@
         "dependencies": {
           "FS.GG.Governance.Adapters.BuiltIn": "[0.1.0, )",
           "FS.GG.Governance.Adapters.SddHandoff": "[0.1.0, )",
-          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )",
+          "FS.GG.Governance.Adapters.Spi": "[0.1.1, )",
           "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.DesignChecks": "[0.3.0, )",
           "FS.GG.Governance.Host": "[0.1.0, )",
