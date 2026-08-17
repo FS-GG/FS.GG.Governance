@@ -126,7 +126,7 @@
       "fs.gg.governance.adapters.builtin": {
         "type": "Project",
         "dependencies": {
-          "FS.GG.Governance.Adapters.Spi": "[0.1.0, )"
+          "FS.GG.Governance.Adapters.Spi": "[0.1.1, )"
         }
       },
       "fs.gg.governance.adapters.spi": {
