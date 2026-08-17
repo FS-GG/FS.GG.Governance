@@ -463,6 +463,83 @@ jobs:
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --skip-duplicate
 
+      - name: Retrieve the org-accepted Kernel package
+        id: kernel-org-package
+        if: needs.resolve-version.outputs.push == 'true'
+        env:
+          KERNEL_VERSION: ${{ steps.kernel-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          restore_root="$(mktemp -d)"
+          packages_root="$(mktemp -d)"
+          cat > "$restore_root/AcceptedPackage.csproj" <<EOF
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+            <ItemGroup><PackageReference Include="FS.GG.Governance.Kernel" Version="[$KERNEL_VERSION]" /></ItemGroup>
+          </Project>
+          EOF
+          cat > "$restore_root/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="fsgg-github" value="https://nuget.pkg.github.com/FS-GG/index.json" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+            </packageSources>
+            <packageSourceCredentials>
+              <fsgg-github><add key="Username" value="${{ github.actor }}" /><add key="ClearTextPassword" value="${{ secrets.GITHUB_TOKEN }}" /></fsgg-github>
+            </packageSourceCredentials>
+            <packageSourceMapping>
+              <packageSource key="fsgg-github"><package pattern="FS.GG.Governance.*" /></packageSource>
+              <packageSource key="nuget.org"><package pattern="FSharp.Core" /></packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+          for attempt in 1 2 3 4 5; do
+            if NUGET_PACKAGES="$packages_root" dotnet restore "$restore_root/AcceptedPackage.csproj" \
+              --configfile "$restore_root/NuGet.Config" --no-cache; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep 5
+          done
+          package="$packages_root/fs.gg.governance.kernel/$KERNEL_VERSION/fs.gg.governance.kernel.$KERNEL_VERSION.nupkg"
+          [ -f "$package" ] || { echo "::error::org restore did not retain the accepted Kernel nupkg"; exit 1; }
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Canonicalize Kernel bytes from org acceptance
+        id: kernel-canonical-package
+        env:
+          PUSH: ${{ needs.resolve-version.outputs.push }}
+          ACCEPTED_PATH: ${{ steps.kernel-org-package.outputs.path }}
+        run: |
+          set -euo pipefail
+          select_org_accepted() {
+            local candidate="$1" accepted="$2" outbound="$3"
+            cp "$accepted" "$outbound"
+            cmp -s "$accepted" "$outbound" || { echo "::error::outbound bytes differ from org-accepted bytes"; exit 1; }
+            if cmp -s "$candidate" "$accepted"; then
+              echo "candidate already matches the org-accepted package"
+            else
+              echo "candidate differs; retaining org-accepted bytes for the public feed"
+            fi
+          }
+
+          # Subject-mutation proof for a partial-publication retry: deliberately unequal candidate
+          # bytes must never displace the bytes already accepted by the org feed.
+          probe="$(mktemp -d)"
+          printf 'repacked-candidate' > "$probe/candidate.nupkg"
+          printf 'previously-accepted' > "$probe/accepted.nupkg"
+          select_org_accepted "$probe/candidate.nupkg" "$probe/accepted.nupkg" "$probe/outbound.nupkg"
+          cmp -s "$probe/accepted.nupkg" "$probe/outbound.nupkg"
+          ! cmp -s "$probe/candidate.nupkg" "$probe/outbound.nupkg"
+
+          if [ "$PUSH" != 'true' ]; then exit 0; fi
+          canonical="artifacts/packages/FS.GG.Governance.Kernel.org-accepted.nupkg"
+          select_org_accepted "${{ steps.kernel-package.outputs.path }}" "$ACCEPTED_PATH" "$canonical"
+          echo "path=$canonical" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$canonical" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
       - name: Trusted Publishing login for Kernel (nuget.org)
         id: kernel-nuget-login
         if: needs.resolve-version.outputs.push == 'true'
@@ -474,10 +551,10 @@ jobs:
         if: needs.resolve-version.outputs.push == 'true'
         run: |
           set -euo pipefail
-          package="${{ steps.kernel-package.outputs.path }}"
+          package="${{ steps.kernel-canonical-package.outputs.path }}"
           actual="$(sha256sum "$package" | cut -d' ' -f1)"
-          expected="${{ steps.kernel-package.outputs.sha256 }}"
-          [ "$actual" = "$expected" ] || { echo "::error::Kernel package changed between feed pushes"; exit 1; }
+          expected="${{ steps.kernel-canonical-package.outputs.sha256 }}"
+          [ "$actual" = "$expected" ] || { echo "::error::org-accepted Kernel package changed before public push"; exit 1; }
           dotnet nuget push "$package" \
             --source https://api.nuget.org/v3/index.json \
             --api-key "${{ steps.kernel-nuget-login.outputs.NUGET_API_KEY }}" \
@@ -557,6 +634,78 @@ jobs:
             --api-key ${{ secrets.GITHUB_TOKEN }} \
             --skip-duplicate
 
+      - name: Retrieve the org-accepted adapter SPI package
+        id: adapter-spi-org-package
+        if: needs.resolve-version.outputs.push == 'true'
+        env:
+          ADAPTER_SPI_VERSION: ${{ steps.adapter-spi-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          restore_root="$(mktemp -d)"
+          packages_root="$(mktemp -d)"
+          cp tests/fixtures/adapter-spi-package-consumer/{AdapterSpiConsumer.fsproj,Program.fs} "$restore_root/"
+          sed -i "s/Version=\"\[0.1.0\]\"/Version=\"[$ADAPTER_SPI_VERSION]\"/" "$restore_root/AdapterSpiConsumer.fsproj"
+          cat > "$restore_root/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="fsgg-github" value="https://nuget.pkg.github.com/FS-GG/index.json" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+            </packageSources>
+            <packageSourceCredentials>
+              <fsgg-github><add key="Username" value="${{ github.actor }}" /><add key="ClearTextPassword" value="${{ secrets.GITHUB_TOKEN }}" /></fsgg-github>
+            </packageSourceCredentials>
+            <packageSourceMapping>
+              <packageSource key="fsgg-github"><package pattern="FS.GG.Governance.*" /></packageSource>
+              <packageSource key="nuget.org"><package pattern="FSharp.Core" /></packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+          for attempt in 1 2 3 4 5; do
+            if NUGET_PACKAGES="$packages_root" dotnet restore "$restore_root/AdapterSpiConsumer.fsproj" \
+              --configfile "$restore_root/NuGet.Config" --no-cache; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then exit 1; fi
+            sleep 5
+          done
+          package="$packages_root/fs.gg.governance.adapters.spi/$ADAPTER_SPI_VERSION/fs.gg.governance.adapters.spi.$ADAPTER_SPI_VERSION.nupkg"
+          [ -f "$package" ] || { echo "::error::org restore did not retain the accepted adapter SPI nupkg"; exit 1; }
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Canonicalize adapter SPI bytes from org acceptance
+        id: adapter-spi-canonical-package
+        env:
+          PUSH: ${{ needs.resolve-version.outputs.push }}
+          ACCEPTED_PATH: ${{ steps.adapter-spi-org-package.outputs.path }}
+        run: |
+          set -euo pipefail
+          select_org_accepted() {
+            local candidate="$1" accepted="$2" outbound="$3"
+            cp "$accepted" "$outbound"
+            cmp -s "$accepted" "$outbound" || { echo "::error::outbound bytes differ from org-accepted bytes"; exit 1; }
+            if cmp -s "$candidate" "$accepted"; then
+              echo "candidate already matches the org-accepted package"
+            else
+              echo "candidate differs; retaining org-accepted bytes for the public feed"
+            fi
+          }
+
+          # The same production selection function proves the partial-publication retry case.
+          probe="$(mktemp -d)"
+          printf 'repacked-candidate' > "$probe/candidate.nupkg"
+          printf 'previously-accepted' > "$probe/accepted.nupkg"
+          select_org_accepted "$probe/candidate.nupkg" "$probe/accepted.nupkg" "$probe/outbound.nupkg"
+          cmp -s "$probe/accepted.nupkg" "$probe/outbound.nupkg"
+          ! cmp -s "$probe/candidate.nupkg" "$probe/outbound.nupkg"
+
+          if [ "$PUSH" != 'true' ]; then exit 0; fi
+          canonical="artifacts/packages/FS.GG.Governance.Adapters.Spi.org-accepted.nupkg"
+          select_org_accepted "${{ steps.adapter-spi-package.outputs.path }}" "$ACCEPTED_PATH" "$canonical"
+          echo "path=$canonical" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$canonical" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
       - name: Verify a cold locked consumer through the published org feed
         if: needs.resolve-version.outputs.push == 'true'
         env:
@@ -602,10 +751,10 @@ jobs:
         if: needs.resolve-version.outputs.push == 'true'
         run: |
           set -euo pipefail
-          package="${{ steps.adapter-spi-package.outputs.path }}"
+          package="${{ steps.adapter-spi-canonical-package.outputs.path }}"
           actual="$(sha256sum "$package" | cut -d' ' -f1)"
-          expected="${{ steps.adapter-spi-package.outputs.sha256 }}"
-          [ "$actual" = "$expected" ] || { echo "::error::adapter SPI package changed between feed pushes"; exit 1; }
+          expected="${{ steps.adapter-spi-canonical-package.outputs.sha256 }}"
+          [ "$actual" = "$expected" ] || { echo "::error::org-accepted adapter SPI package changed before public push"; exit 1; }
           dotnet nuget push "$package" \
             --source https://api.nuget.org/v3/index.json \
             --api-key "${{ steps.adapter-spi-nuget-login.outputs.NUGET_API_KEY }}" \
