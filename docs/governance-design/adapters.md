@@ -77,12 +77,12 @@ none of those facilities.
 ### Package-only adapter authoring
 
 The supported compile-time SDK is the NuGet package
-`FS.GG.Governance.Adapters.Spi` `0.1.0`. Pin it exactly in the product repository;
+`FS.GG.Governance.Adapters.Spi` `0.1.1`. Pin it exactly in the product repository;
 its package metadata brings the compatible `FS.GG.Governance.Kernel` `0.1.1`
 dependency transitively:
 
 ```xml
-<PackageReference Include="FS.GG.Governance.Adapters.Spi" Version="[0.1.0]" />
+<PackageReference Include="FS.GG.Governance.Adapters.Spi" Version="[0.1.1]" />
 ```
 
 The product can then declare its closed fact union, construct

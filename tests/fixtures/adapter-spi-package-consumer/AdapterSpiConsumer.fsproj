@@ -9,6 +9,6 @@
   <ItemGroup>
     <Compile Include="Program.fs" />
     <!-- Deliberately the only explicit dependency: Kernel must arrive transitively. -->
-    <PackageReference Include="FS.GG.Governance.Adapters.Spi" Version="[0.1.0]" />
+    <PackageReference Include="FS.GG.Governance.Adapters.Spi" Version="[0.1.1]" />
   </ItemGroup>
 </Project>

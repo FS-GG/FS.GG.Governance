@@ -10,7 +10,10 @@
        therefore Kernel + FSharp.Core only. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Adapters.Spi</RootNamespace>
-    <Version>0.1.0</Version>
+    <!-- 0.1.0 was accepted by the org feed with stale Kernel 0.1.0 metadata before
+         the supported exact Kernel 0.1.1 dependency was established. NuGet package
+         versions are immutable, so the first publishable corrected contract is 0.1.1. -->
+    <Version>0.1.1</Version>
     <IsPackable>true</IsPackable>
     <PackageId>FS.GG.Governance.Adapters.Spi</PackageId>
     <Description>Pure F# adapter-authoring SPI for composing typed product facts and Governance checks over FS.GG.Governance.Kernel.</Description>

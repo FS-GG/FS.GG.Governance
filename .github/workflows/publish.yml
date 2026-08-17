@@ -644,7 +644,7 @@ jobs:
           restore_root="$(mktemp -d)"
           packages_root="$(mktemp -d)"
           cp tests/fixtures/adapter-spi-package-consumer/{AdapterSpiConsumer.fsproj,Program.fs} "$restore_root/"
-          sed -i "s/Version=\"\[0.1.0\]\"/Version=\"[$ADAPTER_SPI_VERSION]\"/" "$restore_root/AdapterSpiConsumer.fsproj"
+          sed -i -E "s|(Include=\"FS.GG.Governance.Adapters.Spi\" Version=\")\[[^\"]+\]|\1[$ADAPTER_SPI_VERSION]|" "$restore_root/AdapterSpiConsumer.fsproj"
           cat > "$restore_root/NuGet.Config" <<EOF
           <?xml version="1.0" encoding="utf-8"?>
           <configuration>
@@ -731,7 +731,7 @@ jobs:
             </packageSourceMapping>
           </configuration>
           EOF
-          sed -i "s/Version=\"\[0.1.0\]\"/Version=\"[$ADAPTER_SPI_VERSION]\"/" "$consumer/AdapterSpiConsumer.fsproj"
+          sed -i -E "s|(Include=\"FS.GG.Governance.Adapters.Spi\" Version=\")\[[^\"]+\]|\1[$ADAPTER_SPI_VERSION]|" "$consumer/AdapterSpiConsumer.fsproj"
           first_packages="$(mktemp -d)"
           NUGET_PACKAGES="$first_packages" dotnet restore "$consumer/AdapterSpiConsumer.fsproj" --use-lock-file --configfile "$consumer/NuGet.Config"
           rm -rf "$consumer/obj" "$first_packages"
