@@ -6,17 +6,17 @@
   "sources": [
     {
       "path": "readiness/413-adapter-spi-package/ship.json",
-      "digest": "sha256:0053e39c4397968f69812471cbb3f8965680ca9d0cc5669b02f6e43beee156a5",
+      "digest": "sha256:409efec20b68188dd7c51598413e5cf97ac7035821205a48236c710672ddfe8e",
       "schemaVersion": 1
     },
     {
       "path": "readiness/413-adapter-spi-package/verify.json",
-      "digest": "sha256:8e2c9c255de185e474a5d421c6cff271ae9c8f65857eded49c26072293a135c4",
+      "digest": "sha256:5f941b15a37f68a048039891f1f4f6809b851b337af109bfc1e3d9b5c1d45231",
       "schemaVersion": 1
     },
     {
       "path": "readiness/413-adapter-spi-package/work-model.json",
-      "digest": "sha256:6218f3e8864d71e332a58a7fd4beab0ba8fd32556f111bde1cb3c9a1350f6eea",
+      "digest": "sha256:9ea49df69e61867912f5cc1de1f07db043c067a0c3df8cbb7ea8e9f9100417c8",
       "schemaVersion": 1
     }
   ],

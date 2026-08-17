@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "787cc8fd5d20a8c2bb88725cdb1d5e66e9264850db5b45c35b83946ae7315b11"
+        "value": "4f152ee8c0ef8040714367f82abf55343bdafaf30c052841d44fc22554333a66"
       }
     },
     {
@@ -1424,7 +1424,7 @@
           "path": "work/413-adapter-spi-package/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "787cc8fd5d20a8c2bb88725cdb1d5e66e9264850db5b45c35b83946ae7315b11"
+            "value": "4f152ee8c0ef8040714367f82abf55343bdafaf30c052841d44fc22554333a66"
           },
           "schemaVersion": 1
         },
@@ -1455,7 +1455,7 @@
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "b40014fff59fa889ae00e095e7050a958411d856cb656a787e0a4a9c89475157"
+        "value": "d7a75a477aa3a6914649b0eef54fe8c7c35313a65b2b71f93c6bef768e7bb11b"
       },
       "currency": "current"
     }

@@ -61,6 +61,9 @@ let private writeNuGetConfig path feed =
 let private deleteIfPresent path =
     if Directory.Exists path then Directory.Delete(path, true)
 
+let private deleteFileIfPresent path =
+    if File.Exists path then File.Delete path
+
 let private packagePath feed id version = Path.Combine(feed, $"{id}.{version}.nupkg")
 
 let private inspectSpiPackage nupkg =
@@ -84,7 +87,7 @@ let private inspectSpiPackage nupkg =
         |> Seq.toList
 
     let governanceDependencies = dependencies |> List.filter (fun (id, _) -> id.StartsWith("FS.GG.Governance.", StringComparison.Ordinal))
-    Expect.equal governanceDependencies [ "FS.GG.Governance.Kernel", "0.1.1" ] "Kernel is the sole exact Governance package dependency"
+    Expect.equal governanceDependencies [ "FS.GG.Governance.Kernel", "[0.1.1]" ] "Kernel is the sole exact Governance package dependency"
     Expect.isFalse (dependencies |> List.exists (fun (id, _) -> id.Contains("Command", StringComparison.OrdinalIgnoreCase))) "command packages are absent"
     Expect.isFalse (dependencies |> List.exists (fun (id, _) -> id.Contains("Host", StringComparison.OrdinalIgnoreCase))) "host packages are absent"
 
@@ -104,12 +107,14 @@ let packageTests =
             let tempRoot = Path.Combine(Path.GetTempPath(), "fsgg-adapter-spi-package-" + Guid.NewGuid().ToString("N"))
             let feed = Path.Combine(tempRoot, "feed")
             let negativeFeed = Path.Combine(tempRoot, "negative-feed")
+            let substitutionFeed = Path.Combine(tempRoot, "substitution-feed")
             let consumer = Path.Combine(tempRoot, "consumer")
             let project = Path.Combine(consumer, "AdapterSpiConsumer.fsproj")
 
             try
                 Directory.CreateDirectory feed |> ignore
                 Directory.CreateDirectory negativeFeed |> ignore
+                Directory.CreateDirectory substitutionFeed |> ignore
                 copyDirectory fixtureSource consumer
 
                 let kernelProject = Path.Combine(repoRoot, "src/FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj")
@@ -142,20 +147,40 @@ let packageTests =
 
                 let kernelName = match Path.GetFileName kernelPackage with null -> failwith "Kernel package has no file name" | value -> value
                 let spiName = match Path.GetFileName spiPackage with null -> failwith "SPI package has no file name" | value -> value
+
+                requireGreen "pack non-matching Kernel" (run repoRoot [] [ "pack"; kernelProject; "-c"; "Release"; "--no-restore"; "-p:PackageVersion=0.1.2"; "-o"; substitutionFeed ])
+                File.Copy(spiPackage, Path.Combine(substitutionFeed, spiName), true)
+                let substitutionConsumer = Path.Combine(tempRoot, "substitution-consumer")
+                copyDirectory fixtureSource substitutionConsumer
+                let substitutionConfig = Path.Combine(tempRoot, "NuGet.Substitution.Config")
+                writeNuGetConfig substitutionConfig substitutionFeed
+                let substitutionPackages = Path.Combine(tempRoot, "packages-substitution")
+                let substitution =
+                    run substitutionConsumer [ "NUGET_PACKAGES", substitutionPackages ]
+                        [ "restore"; Path.Combine(substitutionConsumer, "AdapterSpiConsumer.fsproj"); "--use-lock-file"; "--configfile"; substitutionConfig ]
+                Expect.notEqual substitution.ExitCode 0 "Kernel 0.1.2 must not substitute for the exact 0.1.1 dependency"
+                Expect.stringContains substitution.Output "NU1102" "exact Kernel resolution rejects a feed without version 0.1.1"
+
                 File.Copy(kernelPackage, Path.Combine(negativeFeed, kernelName), true)
                 mutateSpiPackage spiPackage (Path.Combine(negativeFeed, spiName))
+                let negativeConsumer = Path.Combine(tempRoot, "negative-consumer")
+                copyDirectory fixtureSource negativeConsumer
+                let negativeProject = Path.Combine(negativeConsumer, "AdapterSpiConsumer.fsproj")
                 let negativeConfig = Path.Combine(tempRoot, "NuGet.Negative.Config")
                 writeNuGetConfig negativeConfig negativeFeed
-                deleteIfPresent (Path.Combine(consumer, "obj"))
                 let negativePackages = Path.Combine(tempRoot, "packages-negative")
-                let negative = run consumer [ "NUGET_PACKAGES", negativePackages ] [ "restore"; project; "--locked-mode"; "--configfile"; negativeConfig ]
-                Expect.notEqual negative.ExitCode 0 "a package whose compile-time SPI assembly was removed must fail locked restore"
-                Expect.stringContains negative.Output "NU1403" "the subject mutation is rejected as a locked package content mismatch"
+                let negative =
+                    run negativeConsumer [ "NUGET_PACKAGES", negativePackages ]
+                        [ "restore"; negativeProject; "--use-lock-file"; "--configfile"; negativeConfig ]
+                Expect.notEqual negative.ExitCode 0 "a package whose compile-time SPI assembly was removed must fail fresh restore"
+                Expect.stringContains negative.Output "NU1202" "the subject mutation is rejected because the SPI has no compatible compile surface"
 
                 File.Copy(spiPackage, Path.Combine(negativeFeed, spiName), true)
-                deleteIfPresent (Path.Combine(consumer, "obj"))
+                deleteIfPresent (Path.Combine(negativeConsumer, "obj"))
                 deleteIfPresent negativePackages
-                requireGreen "reattached locked control" (run consumer [ "NUGET_PACKAGES", negativePackages ] [ "restore"; project; "--locked-mode"; "--configfile"; negativeConfig ])
+                deleteFileIfPresent (Path.Combine(negativeConsumer, "packages.lock.json"))
+                requireGreen "reattached lock generation" (run negativeConsumer [ "NUGET_PACKAGES", negativePackages ] [ "restore"; negativeProject; "--use-lock-file"; "--configfile"; negativeConfig ])
+                requireGreen "reattached compile control" (run negativeConsumer [ "NUGET_PACKAGES", negativePackages ] [ "build"; negativeProject; "--no-restore"; "-c"; "Release" ])
             finally
                 if Directory.Exists tempRoot then Directory.Delete(tempRoot, true)
     ]

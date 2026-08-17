@@ -30,4 +30,19 @@
     <ProjectReference Include="../FS.GG.Governance.Kernel/FS.GG.Governance.Kernel.fsproj" />
   </ItemGroup>
 
+  <!-- NuGet serializes a bare project-reference version as a minimum range. The
+       supported SDK contract is stricter: it consumes the exact Kernel package
+       produced by this source graph. Derive the value from Kernel's evaluated
+       PackageVersion, then make the interval exact before GenerateNuspec reads it. -->
+  <Target Name="PinAdapterSpiKernelPackageDependency"
+          AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_ProjectReferencesWithVersions
+          Update="@(_ProjectReferencesWithVersions)"
+          Condition="'%(_ProjectReferencesWithVersions.Filename)' == 'FS.GG.Governance.Kernel'">
+        <ProjectVersion>[%(_ProjectReferencesWithVersions.ProjectVersion)]</ProjectVersion>
+      </_ProjectReferencesWithVersions>
+    </ItemGroup>
+  </Target>
+
 </Project>
