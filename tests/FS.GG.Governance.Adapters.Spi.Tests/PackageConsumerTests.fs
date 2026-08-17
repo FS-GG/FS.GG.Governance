@@ -123,7 +123,7 @@ let packageTests =
                 requireGreen "pack adapter SPI" (run repoRoot [] [ "pack"; spiProject; "-c"; "Release"; "--no-restore"; "-o"; feed ])
 
                 let kernelPackage = packagePath feed "FS.GG.Governance.Kernel" "0.1.1"
-                let spiPackage = packagePath feed "FS.GG.Governance.Adapters.Spi" "0.1.0"
+                let spiPackage = packagePath feed "FS.GG.Governance.Adapters.Spi" "0.1.1"
                 Expect.isTrue (File.Exists kernelPackage) "Kernel package was produced"
                 Expect.isTrue (File.Exists spiPackage) "SPI package was produced"
                 inspectSpiPackage spiPackage
