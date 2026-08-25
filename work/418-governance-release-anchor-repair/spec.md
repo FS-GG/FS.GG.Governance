@@ -28,16 +28,16 @@ Restore trustworthy source provenance for the already-published Governance CLI a
 
 ## Acceptance Scenarios
 - AC-001 [US-001] [FR-001] [FR-002]: Given the four feed artifacts are read before delivery, each nuspec names version `1.12.1` and repository commit `388819d0e060c11f53e5ca2df3277a54a13f9e75`, and the two feeds have identical unsigned payload content per package identity.
-- AC-002 [US-001] [FR-003] [FR-004]: Given `v1.12.1` is absent and `publish.yml` is active, when the repair is authorized, the workflow is disabled before the ref is created, the tag resolves exactly to the artifact commit, and the workflow is restored active afterward.
-- AC-003 [US-001] [FR-005] [FR-006]: Given a complete before/after workflow-run census and feed snapshot, the repair creates no publish run and changes no package version or payload.
+- AC-002 [US-001] [FR-003] [FR-004]: Given `v1.12.1` is absent and `publish.yml` is active, when the reviewed runner is authorized, it disables before ref creation, restores and verifies `active` on every post-disable exit, and preserves the primary error if cleanup also fails.
+- AC-003 [US-001] [FR-005] [FR-006]: Given the persisted complete baseline run-ID set and feed snapshot, bounded run-set convergence while disabled and after re-enable proves no delayed publish run, every verifier/cleanup refusal has a negative control, and no package version or payload changes.
 
 ## Functional Requirements
 - FR-001: The `FS.GG.Governance.Cli` and `FS.GG.Governance.FSharpSurfaceCommand` 1.12.1 nuspecs from both GitHub Packages and nuget.org MUST identify repository commit `388819d0e060c11f53e5ca2df3277a54a13f9e75`. (Stories: US-001; Acceptance: AC-001)
 - FR-002: For each package identity, the GitHub Packages archive and nuget.org archive MUST have identical unsigned package entries and bytes; nuget.org's signing-only additions are excluded explicitly. (Stories: US-001; Acceptance: AC-001)
 - FR-003: Delivery MUST verify `v1.12.1` is absent, verify a known-present tag with the same complete remote-tag census, and create only `refs/tags/v1.12.1` at the exact artifact commit. (Stories: US-001; Acceptance: AC-002)
-- FR-004: Because the current workflow subscribes to `push.tags: ['v*']`, delivery MUST disable `publish.yml` before creating the tag and MUST restore its prior active state after the tag is verified; any failure after disablement MUST restore the workflow before returning. (Stories: US-001; Acceptance: AC-002)
-- FR-005: A complete publish-workflow run census before and after delivery MUST show no run created for the `v1.12.1` repair event. (Stories: US-001; Acceptance: AC-003)
-- FR-006: The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. (Stories: US-001; Acceptance: AC-003)
+- FR-004: Because the current workflow subscribes to `push.tags: ['v*']`, one reviewable runner MUST disable `publish.yml` before creating the tag and MUST retry re-enable plus verify `active` on every exit after a disable attempt; its receipt MUST preserve the primary error ahead of any cleanup error and MUST never report recovered cleanup disturbance as success. (Stories: US-001; Acceptance: AC-002)
+- FR-005: The complete baseline workflow run-ID set MUST be persisted. The runner MUST reject any new ID and require at least 60 seconds plus three stable complete samples, bounded by 180 seconds, both while disabled and after verified re-enable. (Stories: US-001; Acceptance: AC-003)
+- FR-006: The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. All six pre-delivery gates and every post-disable runner step MUST carry independent failure-injection evidence, including unreadable and known-present non-vacuity controls. (Stories: US-001; Acceptance: AC-003)
 
 ## Ambiguities
 No material ambiguities recorded.

@@ -53,7 +53,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353"
+        "value": "7d1de3b1d769539b93c965cb3fb005a7c015575b9eb4e3078eef2379d07a835d"
       }
     },
     {
@@ -65,7 +65,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0"
+        "value": "1b9e03d2185fbc75922cdb4e88b73dbe88e3b192a754326c0139c343a3a23ea0"
       }
     },
     {
@@ -77,7 +77,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "7181750525beb1d590e39361aa29582178932beb728cf2488e2fce3a35d51de7"
+        "value": "d02b4fe5d375e1481607c9ad74afe8d2dd54e1238c6d0d274143630038992a53"
       }
     },
     {
@@ -89,7 +89,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c"
+        "value": "42084e54965709092750cb26fc8f51634bf85198c2a8d950745b0a2246e7cfb2"
       }
     },
     {
@@ -101,7 +101,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6"
+        "value": "9e61c5a0b0eb77cc97a76d3eb90c058d6f7becec3a005fe8defaba52608d865b"
       }
     },
     {
@@ -113,7 +113,7 @@
       "schemaStatus": "current",
       "sourceDigest": {
         "algorithm": "sha256",
-        "value": "0fb5c82d3a31767943524d0d586696665509c54e0604f4a53046a79262b31fd5"
+        "value": "eb8cb34e4dc19a7d1068d891cbba3c4c7e05851399ddb25fd173ff2ddd5149d9"
       }
     }
   ],
@@ -191,8 +191,8 @@
     },
     {
       "id": "FR-004",
-      "title": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, delivery MUST disable \u0060publish.yml\u0060 before creating the tag and MUST restore its prior active state after the tag is verified; any failure after disablement MUST restore the workflow before returning. (Stories: US-001; Acceptance: AC-002)",
-      "text": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, delivery MUST disable \u0060publish.yml\u0060 before creating the tag and MUST restore its prior active state after the tag is verified; any failure after disablement MUST restore the workflow before returning. (Stories: US-001; Acceptance: AC-002)",
+      "title": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, one reviewable runner MUST disable \u0060publish.yml\u0060 before creating the tag and MUST retry re-enable plus verify \u0060active\u0060 on every exit after a disable attempt; its receipt MUST preserve the primary error ahead of any cleanup error and MUST never report recovered cleanup disturbance as success. (Stories: US-001; Acceptance: AC-002)",
+      "text": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, one reviewable runner MUST disable \u0060publish.yml\u0060 before creating the tag and MUST retry re-enable plus verify \u0060active\u0060 on every exit after a disable attempt; its receipt MUST preserve the primary error ahead of any cleanup error and MUST never report recovered cleanup disturbance as success. (Stories: US-001; Acceptance: AC-002)",
       "acceptanceCriteria": [
         "AC-002"
       ],
@@ -213,8 +213,8 @@
     },
     {
       "id": "FR-005",
-      "title": "A complete publish-workflow run census before and after delivery MUST show no run created for the \u0060v1.12.1\u0060 repair event. (Stories: US-001; Acceptance: AC-003)",
-      "text": "A complete publish-workflow run census before and after delivery MUST show no run created for the \u0060v1.12.1\u0060 repair event. (Stories: US-001; Acceptance: AC-003)",
+      "title": "The complete baseline workflow run-ID set MUST be persisted. The runner MUST reject any new ID and require at least 60 seconds plus three stable complete samples, bounded by 180 seconds, both while disabled and after verified re-enable. (Stories: US-001; Acceptance: AC-003)",
+      "text": "The complete baseline workflow run-ID set MUST be persisted. The runner MUST reject any new ID and require at least 60 seconds plus three stable complete samples, bounded by 180 seconds, both while disabled and after verified re-enable. (Stories: US-001; Acceptance: AC-003)",
       "acceptanceCriteria": [
         "AC-003"
       ],
@@ -235,8 +235,8 @@
     },
     {
       "id": "FR-006",
-      "title": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. (Stories: US-001; Acceptance: AC-003)",
-      "text": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. (Stories: US-001; Acceptance: AC-003)",
+      "title": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. All six pre-delivery gates and every post-disable runner step MUST carry independent failure-injection evidence, including unreadable and known-present non-vacuity controls. (Stories: US-001; Acceptance: AC-003)",
+      "text": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. All six pre-delivery gates and every post-disable runner step MUST carry independent failure-injection evidence, including unreadable and known-present non-vacuity controls. (Stories: US-001; Acceptance: AC-003)",
       "acceptanceCriteria": [
         "AC-003"
       ],
@@ -278,8 +278,8 @@
     },
     {
       "id": "DEC-002",
-      "title": "Use temporary Actions workflow disablement as the non-publishing fence, and make re-enablement an unconditional cleanup obligation.",
-      "decision": "Use temporary Actions workflow disablement as the non-publishing fence, and make re-enablement an unconditional cleanup obligation.",
+      "title": "Use temporary Actions workflow disablement as the non-publishing fence through one executable failure-atomic runner; preserve the primary error, retry and verify cleanup, and require bounded asynchronous run-set convergence on both sides of re-enable.",
+      "decision": "Use temporary Actions workflow disablement as the non-publishing fence through one executable failure-atomic runner; preserve the primary error, retry and verify cleanup, and require bounded asynchronous run-set convergence on both sides of re-enable.",
       "requirementRefs": [
         "FR-003",
         "FR-004",
@@ -1225,7 +1225,7 @@
           "path": "work/418-governance-release-anchor-repair/checklist.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353"
+            "value": "7d1de3b1d769539b93c965cb3fb005a7c015575b9eb4e3078eef2379d07a835d"
           },
           "schemaVersion": 1
         },
@@ -1233,7 +1233,7 @@
           "path": "work/418-governance-release-anchor-repair/clarifications.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0"
+            "value": "1b9e03d2185fbc75922cdb4e88b73dbe88e3b192a754326c0139c343a3a23ea0"
           },
           "schemaVersion": 1
         },
@@ -1241,7 +1241,7 @@
           "path": "work/418-governance-release-anchor-repair/evidence.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "7181750525beb1d590e39361aa29582178932beb728cf2488e2fce3a35d51de7"
+            "value": "d02b4fe5d375e1481607c9ad74afe8d2dd54e1238c6d0d274143630038992a53"
           },
           "schemaVersion": 1
         },
@@ -1249,7 +1249,7 @@
           "path": "work/418-governance-release-anchor-repair/plan.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c"
+            "value": "42084e54965709092750cb26fc8f51634bf85198c2a8d950745b0a2246e7cfb2"
           },
           "schemaVersion": 1
         },
@@ -1257,7 +1257,7 @@
           "path": "work/418-governance-release-anchor-repair/spec.md",
           "digest": {
             "algorithm": "sha256",
-            "value": "9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6"
+            "value": "9e61c5a0b0eb77cc97a76d3eb90c058d6f7becec3a005fe8defaba52608d865b"
           },
           "schemaVersion": 1
         },
@@ -1265,14 +1265,14 @@
           "path": "work/418-governance-release-anchor-repair/tasks.yml",
           "digest": {
             "algorithm": "sha256",
-            "value": "0fb5c82d3a31767943524d0d586696665509c54e0604f4a53046a79262b31fd5"
+            "value": "eb8cb34e4dc19a7d1068d891cbba3c4c7e05851399ddb25fd173ff2ddd5149d9"
           },
           "schemaVersion": 1
         }
       ],
       "outputDigest": {
         "algorithm": "sha256",
-        "value": "8b7836062f209d80b6aed773a1ff21cf73d093ddebed0ff33d6458f6385a1cf0"
+        "value": "62fede02f9cd34cf97b2fa2d4b81dd604619e5c2d92c51472097591e4bafb40d"
       },
       "currency": "current"
     }
