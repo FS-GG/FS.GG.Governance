@@ -1,0 +1,196 @@
+schemaVersion: 1
+work:
+  id: 418-governance-release-anchor-repair
+  title: "Governance v1.12.1 release anchor repair"
+  stage: tasks
+  status: tasksReady
+  sourceSpec: work/418-governance-release-anchor-repair/spec.md
+  sourceClarifications: work/418-governance-release-anchor-repair/clarifications.md
+  sourceChecklist: work/418-governance-release-anchor-repair/checklist.md
+  sourcePlan: work/418-governance-release-anchor-repair/plan.md
+  publicOrToolFacingImpact: true
+
+sources:
+  - label: spec
+    path: work/418-governance-release-anchor-repair/spec.md
+    digest: 9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6
+    schemaVersion: 1
+  - label: clarifications
+    path: work/418-governance-release-anchor-repair/clarifications.md
+    digest: 9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0
+    schemaVersion: 1
+  - label: checklist
+    path: work/418-governance-release-anchor-repair/checklist.md
+    digest: 1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353
+    schemaVersion: 1
+  - label: plan
+    path: work/418-governance-release-anchor-repair/plan.md
+    digest: cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c
+    schemaVersion: 1
+tasks:
+  - id: T001
+    title: Implement requirement FR-001
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-001]
+    decisions: []
+    sourceIds: [AC-001, FR-001, PD-001]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV001]
+  - id: T002
+    title: Implement requirement FR-002
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-002]
+    decisions: []
+    sourceIds: [AC-001, FR-002, PD-002]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV002]
+  - id: T003
+    title: Implement requirement FR-003
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-003]
+    decisions: []
+    sourceIds: [AC-002, FR-003, PD-003]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV003]
+  - id: T004
+    title: Implement requirement FR-004
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-004]
+    decisions: []
+    sourceIds: [AC-002, FR-004]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV004]
+  - id: T005
+    title: Implement requirement FR-005
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-005]
+    decisions: []
+    sourceIds: [AC-003, FR-005]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV005]
+  - id: T006
+    title: Implement requirement FR-006
+    status: done
+    owner: teal-38f5
+    dependencies: []
+    requirements: [FR-006]
+    decisions: []
+    sourceIds: [AC-003, FR-006]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV006]
+  - id: T007
+    title: Implement clarification decision DEC-001
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: [DEC-001]
+    sourceIds: [DEC-001]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV007]
+  - id: T008
+    title: Implement clarification decision DEC-002
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: [DEC-002]
+    sourceIds: [DEC-002]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV008]
+  - id: T009
+    title: Implement clarification decision DEC-003
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: [DEC-003]
+    sourceIds: [DEC-003]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV009]
+  - id: T010
+    title: Implement plan decision PD-004
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [AC-002, DEC-001, DEC-002, FR-004, PD-004]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV010]
+  - id: T011
+    title: Implement plan decision PD-005
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [AC-003, DEC-002, FR-005, PD-005]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV011]
+  - id: T012
+    title: Implement plan decision PD-006
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [AC-003, DEC-003, FR-006, PD-006]
+    requiredSkills: [fsharp, implementation]
+    requiredEvidence: [EV012]
+  - id: T013
+    title: Update contract surface PC-001
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-003, PD-004]
+    requiredSkills: [fsharp]
+    requiredEvidence: [EV013]
+  - id: T014
+    title: Record verification evidence VO-001
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PD-001, PD-002, PD-003, PD-004, PD-005, PD-006, VO-001]
+    requiredSkills: [automated-tests, readiness-evidence]
+    requiredEvidence: [EV014]
+  - id: T015
+    title: Handle migration posture PM-001
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [PC-001, PM-001]
+    requiredSkills: [schema-versioning]
+    requiredEvidence: [EV015]
+  - id: T016
+    title: Refresh generated view impact GV-001
+    status: done
+    owner: teal-38f5
+    dependencies: [T001]
+    requirements: []
+    decisions: []
+    sourceIds: [GV-001, PD-001, PD-005]
+    requiredSkills: [deterministic-json]
+    requiredEvidence: [EV016]
+acceptedDeferrals: []
+findings: []
+advisoryNotes:
+  - "Optional Governance pointers remain compatibility facts only."
+lifecycleNotes:
+  - "Next lifecycle action: fsgg-sdd analyze --work 418-governance-release-anchor-repair."
