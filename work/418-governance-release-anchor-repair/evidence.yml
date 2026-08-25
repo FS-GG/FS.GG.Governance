@@ -11,27 +11,27 @@ sourceAnalysis: readiness/418-governance-release-anchor-repair/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/418-governance-release-anchor-repair/analysis.json
-    digest: ccccd1c0bb9c9e5ebd86d0a8e36b203e88f0067e0e3886bba9fd11a0ea2a4ff3
+    digest: 362b09146b3f01dc9ff29999efe3bf0ef3b62ae9e7c3e3e9938aa3608a3c0161
     schemaVersion: 1
   - label: checklist
     path: work/418-governance-release-anchor-repair/checklist.md
-    digest: 1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353
+    digest: 7d1de3b1d769539b93c965cb3fb005a7c015575b9eb4e3078eef2379d07a835d
     schemaVersion: 1
   - label: clarifications
     path: work/418-governance-release-anchor-repair/clarifications.md
-    digest: 9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0
+    digest: 1b9e03d2185fbc75922cdb4e88b73dbe88e3b192a754326c0139c343a3a23ea0
     schemaVersion: 1
   - label: plan
     path: work/418-governance-release-anchor-repair/plan.md
-    digest: cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c
+    digest: 42084e54965709092750cb26fc8f51634bf85198c2a8d950745b0a2246e7cfb2
     schemaVersion: 1
   - label: spec
     path: work/418-governance-release-anchor-repair/spec.md
-    digest: 9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6
+    digest: 9e61c5a0b0eb77cc97a76d3eb90c058d6f7becec3a005fe8defaba52608d865b
     schemaVersion: 1
   - label: tasks
     path: work/418-governance-release-anchor-repair/tasks.yml
-    digest: 0fb5c82d3a31767943524d0d586696665509c54e0604f4a53046a79262b31fd5
+    digest: eb8cb34e4dc19a7d1068d891cbba3c4c7e05851399ddb25fd173ff2ddd5149d9
     schemaVersion: 1
 evidence:
   - id: EV001
@@ -50,18 +50,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -81,18 +96,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -112,18 +142,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -143,18 +188,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -174,18 +234,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -205,18 +280,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -236,18 +326,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -267,18 +372,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -298,18 +418,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -329,18 +464,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -360,18 +510,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -391,18 +556,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -422,18 +602,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -453,18 +648,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -484,18 +694,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]
@@ -515,18 +740,33 @@ evidence:
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
-        digest: "sha256:e715fd119536b83ac72f8aaf507b583adb1088e178d65cd26e8c8f8a1b11e158"
+        digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:11205972d838d6e2c83cac72636e2e70497a204a18569522fed2b7c8a0bb837b"
+        digest: "sha256:5c5d7ef64eb61518de7b428cd24616b80f2ccb06ad1767bb8ce2df813a1823c7"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
+        digest: "sha256:183c8ebe8c648c57997eb8b2a555ff170da1efd76b6e8e4c4af8378e130c5295"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/release_anchor_runner.py
+        digest: "sha256:592eecfc50d33df9bf3d3900bbe9daadca0b38f155a837ada7dc7984fcbf6998"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_verifier_controls.py
+        digest: "sha256:0eded11b43d668e6b594b67714c3660dc4dd9a7ee8717659738c5e5354ff44b5"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/test_release_anchor_runner.py
+        digest: "sha256:d50fd7b2f3c9127afed435aa0dceda6808ee263ce27b806a48784743a28f148f"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/run_readonly_checks.py
+        digest: "sha256:34ac165070af3e2351aa48471afce6e4702b61ce4059450acc138d29b2594748"
     result: pass
     synthetic: false
     observedRun:
-      source: readiness/418-governance-release-anchor-repair/pre-delivery.junit.xml
-      digest: "sha256:a5e4d6cda755993b196f832f1c1865f32c687312ef3024575d71da37eb1ca017"
+      source: readiness/418-governance-release-anchor-repair/all-readonly-checks.junit.xml
+      digest: "sha256:9b858140fb06075452daeb1acc263cbab97fe58c9bb447b0aa296ec2862357cf"
       digestContract: exact-bytes-v1
       outcome: passed
-      passed: 6
+      passed: 31
       failed: 0
       skipped: 0
     notes: [Machine-read pre-delivery census and failure-atomic delivery recipe verify this obligation.]

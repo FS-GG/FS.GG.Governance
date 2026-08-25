@@ -13,19 +13,19 @@ work:
 sources:
   - label: spec
     path: work/418-governance-release-anchor-repair/spec.md
-    digest: 9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6
+    digest: 9e61c5a0b0eb77cc97a76d3eb90c058d6f7becec3a005fe8defaba52608d865b
     schemaVersion: 1
   - label: clarifications
     path: work/418-governance-release-anchor-repair/clarifications.md
-    digest: 9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0
+    digest: 1b9e03d2185fbc75922cdb4e88b73dbe88e3b192a754326c0139c343a3a23ea0
     schemaVersion: 1
   - label: checklist
     path: work/418-governance-release-anchor-repair/checklist.md
-    digest: 1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353
+    digest: 7d1de3b1d769539b93c965cb3fb005a7c015575b9eb4e3078eef2379d07a835d
     schemaVersion: 1
   - label: plan
     path: work/418-governance-release-anchor-repair/plan.md
-    digest: cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c
+    digest: 42084e54965709092750cb26fc8f51634bf85198c2a8d950745b0a2246e7cfb2
     schemaVersion: 1
 tasks:
   - id: T001

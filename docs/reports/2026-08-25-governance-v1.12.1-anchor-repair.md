@@ -30,19 +30,37 @@ target has host authorization.
 3. Read Actions workflow id `303994065`; require its state to be `active`.
    Enumerate all pages of its runs and save the complete set of run ids. The
    authority's `total_count` must equal the enumerated count.
-4. Establish a cleanup handler that runs `gh workflow enable publish.yml --repo
-   FS-GG/FS.GG.Governance` on every exit after the next step, including failure.
-5. Run `gh workflow disable publish.yml --repo FS-GG/FS.GG.Governance`, then
-   re-read workflow id `303994065` and require state `disabled_manually`.
-6. Push only the lightweight ref with `git push origin
-   388819d0e060c11f53e5ca2df3277a54a13f9e75:refs/tags/v1.12.1`. Do not create
-   a GitHub Release.
-7. Read `refs/tags/v1.12.1` from the remote and require it to resolve exactly to
-   the target commit. Re-enumerate workflow runs while the workflow remains
-   disabled and require no new run id and no `head_branch=v1.12.1` run.
-8. Re-enable `publish.yml`, require workflow state `active`, and repeat the
-   complete run census. Re-download the four feed artifacts and require the
-   pre-delivery nuspec and unsigned-content digests unchanged.
+4. Use the reviewed `release_anchor_runner.py`; do not reproduce its sequence
+   interactively. It refuses live operation unless both `--apply` and the exact
+   `--confirm-target` value are present:
+
+   ```console
+   python3 readiness/418-governance-release-anchor-repair/release_anchor_runner.py \
+     --apply \
+     --confirm-target 388819d0e060c11f53e5ca2df3277a54a13f9e75 \
+     --baseline readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json \
+     --receipt readiness/418-governance-release-anchor-repair/delivery-receipt.json
+   ```
+
+5. The runner requires the live run-ID set to equal the 36 IDs persisted in the
+   reviewed baseline. It disables workflow `303994065`, verifies
+   `disabled_manually`, pushes only the lightweight ref, and verifies the exact
+   target.
+6. While the workflow remains disabled, it polls the complete run set for at
+   least 60 seconds, requiring at least three unchanged complete samples and no
+   ID outside the baseline. The poll is bounded at 180 seconds; unreadable,
+   incomplete, growing, or non-convergent observations fail.
+7. Every exit after a disable attempt enters cleanup. Enablement is retried up
+   to five times with bounded backoff and each attempt is followed by an API
+   read requiring `active`. A recovered cleanup disturbance still returns a
+   failure receipt; it is not silently converted to success. If primary work and
+   cleanup both fail, the receipt and exception preserve the primary failure
+   first and append the cleanup failure.
+8. After verified re-enable, the runner repeats the same 60/180-second bounded
+   unchanged-run-set convergence before success. Its receipt records all step
+   facts, both complete run-ID sets, tag target, primary/cleanup errors, and
+   `workflowActiveAtExit`. Re-download the four feed artifacts afterward and
+   require the pre-delivery nuspec and unsigned-content digests unchanged.
 
 If tag creation fails, restore the workflow and leave the item incomplete. If
 tag creation succeeds but any later check fails, restore the workflow, retain
@@ -65,9 +83,18 @@ At candidate base `b20edb3c6b4b19d658ab7ee1208356972d8728cf`, it records:
 
 The tracked read-only verifier
 `readiness/418-governance-release-anchor-repair/verify_pre_delivery.py` produced
-`pre-delivery.junit.xml`: 6 passed, 0 failed. A bounded mutation changed the
-complete remote-tag baseline from 20 to 21 in a temporary copy of that verifier;
-the same command produced `pre-delivery-inversion.junit.xml` with exactly one
-failure, “expected complete 20-ref baseline, got 20”. This proves the census
-gate rejects the measured drift it is designed to catch; the mutation is not in
-the candidate source.
+`pre-delivery.junit.xml`: 6 passed, 0 failed. `test_verifier_controls.py`
+produced `verifier-controls.junit.xml`: 12 passed, 0 failed. Those controls
+independently invert all six live gates and additionally exercise known-present
+tag/run/package non-vacuity plus unreadable tag, run, and package authorities;
+each nested verifier run had exactly its intended one red case.
+
+`test_release_anchor_runner.py` produced `runner-controls.junit.xml`: 13 passed,
+0 failed. It injects a failure after every post-disable boundary, proves cleanup
+restores and verifies `active`, proves transient enable errors are retried but
+still reported, proves a primary error remains first when cleanup also exhausts,
+and proves a delayed new run is rejected. These controls use an in-memory
+operations adapter and never disable a live workflow, push a tag, or publish.
+`run_readonly_checks.py` reruns and combines all three suites into
+`all-readonly-checks.junit.xml`: 31 passed, 0 failed; this combined report is
+the SDD observed-run authority for the repaired candidate.

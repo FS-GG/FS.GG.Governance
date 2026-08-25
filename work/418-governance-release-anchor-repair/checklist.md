@@ -21,8 +21,8 @@ Prose status: checklistReady
 - work/418-governance-release-anchor-repair/clarifications.md
 
 ## Source Snapshot
-- spec: work/418-governance-release-anchor-repair/spec.md sha256:9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6 schemaVersion:1
-- clarifications: work/418-governance-release-anchor-repair/clarifications.md sha256:9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0 schemaVersion:1
+- spec: work/418-governance-release-anchor-repair/spec.md sha256:9e61c5a0b0eb77cc97a76d3eb90c058d6f7becec3a005fe8defaba52608d865b schemaVersion:1
+- clarifications: work/418-governance-release-anchor-repair/clarifications.md sha256:1b9e03d2185fbc75922cdb4e88b73dbe88e3b192a754326c0139c343a3a23ea0 schemaVersion:1
 
 ## Checklist Items
 - CHK-001 [FR-001] [AC-001] blocking: Requirement FR-001 is testable and linked to acceptance coverage.
