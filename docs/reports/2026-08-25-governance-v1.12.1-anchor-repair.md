@@ -86,8 +86,8 @@ At candidate base `b20edb3c6b4b19d658ab7ee1208356972d8728cf`, it records:
 
 `claim-generation-invalidation.json` preserves the typed claim rotation. The
 append-only premature merge election comment `5410445829` remains intact and
-names retired generation `5410004630`; the live winning claim is comment and
-generation `5410840630`. Since those generations differ, the old election no
+names retired generation `5410004630`; the repair-phase live winning claim is
+comment and generation `5411612366`. Since those generations differ, the old election no
 longer matches the live winner and cannot authorize its merge.
 
 The tracked read-only verifier

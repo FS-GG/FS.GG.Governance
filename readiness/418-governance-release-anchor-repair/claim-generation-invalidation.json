@@ -1,7 +1,7 @@
 {
   "schema": "fsgg.governance.claim-generation-invalidation/v1",
   "item": "FS-GG/FS.GG.Governance#418",
-  "observedAt": "2026-08-25T13:09:01Z",
+  "observedAt": "2026-08-25T14:08:16Z",
   "prematureElection": {
     "commentId": 5410445829,
     "generation": 5410004630,
@@ -11,11 +11,11 @@
     "url": "https://github.com/FS-GG/FS.GG.Governance/issues/418#issuecomment-5410445829"
   },
   "liveWinningClaim": {
-    "commentId": 5410840630,
-    "generation": 5410840630,
+    "commentId": 5411612366,
+    "generation": 5411612366,
     "state": "held",
-    "worker": "teal-38f5",
-    "url": "https://github.com/FS-GG/FS.GG.Governance/issues/418#issuecomment-5410840630"
+    "worker": "osprey-9ce3",
+    "url": "https://github.com/FS-GG/FS.GG.Governance/issues/418#issuecomment-5411612366"
   },
   "verdict": "invalidated",
   "reason": "The append-only election generation does not equal the live winning claim generation; it cannot authorize this generation."
