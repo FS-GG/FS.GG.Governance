@@ -6,17 +6,17 @@
   "sources": [
     {
       "path": "readiness/418-governance-release-anchor-repair/ship.json",
-      "digest": "sha256:9f623ccf9ecbcd036769751b5a7c3fcd9f5d4ef6336049c0a63dab24f7d002d7",
+      "digest": "sha256:6102060ff3605ec17a988b55a9ee4bfa2724492c8920311d707253022834f8bf",
       "schemaVersion": 1
     },
     {
       "path": "readiness/418-governance-release-anchor-repair/verify.json",
-      "digest": "sha256:08ce877b5dcb958543038413eab536e05feee7abb42c0ad5ceef4a67c3fb25e3",
+      "digest": "sha256:47c81a3cc9a75e534c7630f59b865223440377011fdaa0a99d07cfcc372d2ba6",
       "schemaVersion": 1
     },
     {
       "path": "readiness/418-governance-release-anchor-repair/work-model.json",
-      "digest": "sha256:d62eaaf383fbae7d584b7820e9797db861169c672080ca2affa5958b5fbe760a",
+      "digest": "sha256:3c9e21315389829a16c5599deef0df443e11b4ca0301dca3e6fc058855f0043a",
       "schemaVersion": 1
     }
   ],
