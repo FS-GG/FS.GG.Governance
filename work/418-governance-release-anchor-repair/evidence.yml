@@ -11,7 +11,7 @@ sourceAnalysis: readiness/418-governance-release-anchor-repair/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/418-governance-release-anchor-repair/analysis.json
-    digest: ca729bdbed3e1f1d845b59159d12346f98a5d6aec5bc363841998a2f29ee9932
+    digest: 9c7795a468b09af2b85f6c8f98407717722cabdf18a1ec004c297fce8f1d5dbb
     schemaVersion: 1
   - label: checklist
     path: work/418-governance-release-anchor-repair/checklist.md
@@ -46,14 +46,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-001]
     obligationRefs: [EV001]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -92,14 +95,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-002]
     obligationRefs: [EV002]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -138,14 +144,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-003]
     obligationRefs: [EV003]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -184,14 +193,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV004]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -230,14 +242,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV005]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -276,14 +291,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV006]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -322,14 +340,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV007]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -368,14 +389,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV008]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -414,14 +438,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV009]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -460,14 +487,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-004]
     obligationRefs: [EV010]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -506,14 +536,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-005]
     obligationRefs: [EV011]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -552,14 +585,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-006]
     obligationRefs: [EV012]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -598,14 +634,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-003, PD-004]
     obligationRefs: [EV013]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -644,14 +683,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-001, PD-002, PD-003, PD-004, PD-005, PD-006]
     obligationRefs: [EV014]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -690,14 +732,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: []
     obligationRefs: [EV015]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"
@@ -736,14 +781,17 @@ evidence:
     checklistResultRefs: []
     planDecisionRefs: [PD-001, PD-005]
     obligationRefs: [EV016]
-    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
+    artifacts: [docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md, readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json, readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json]
     sourceRefs:
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json
         digest: "sha256:69dd85e9152a4d59f72ea66dccf372f09cf708394be17069f6ecfb0d76518d66"
       - kind: verification
         path: docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md
-        digest: "sha256:79fd502bc916ee8bae8c6227176d54f1fd3085eee0e9bc4429e8ef485ca6a545"
+        digest: "sha256:bb4c74d27a7a304df58d622e1ec9756d10bef2d6063b75437bc7b48bbb7046e6"
+      - kind: verification
+        path: readiness/418-governance-release-anchor-repair/claim-generation-invalidation.json
+        digest: "sha256:c2c27c34eb0ccbf97231670780faa70b4d2f792fcd83d6ab9b45c9bc0f708278"
       - kind: verification
         path: readiness/418-governance-release-anchor-repair/verify_pre_delivery.py
         digest: "sha256:87f694d9bb226f120f6933a0186ee4f9849a9f98e7e252687a1b0227f99f2795"

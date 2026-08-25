@@ -47,9 +47,11 @@ target has host authorization.
    `disabled_manually`, pushes only the lightweight ref, and verifies the exact
    target.
 6. While the workflow remains disabled, it polls the complete run set for at
-   least 60 seconds, requiring at least three unchanged complete samples and no
-   run set exactly equal to the baseline. The poll is bounded at 180 seconds;
-   unreadable, incomplete, growing, shrinking, or non-convergent observations fail.
+   least 60 seconds. Every observed run-ID set must exactly equal the persisted
+   baseline: no additions and no removals. At least three unchanged complete
+   samples are required, but stable samples never excuse a baseline difference.
+   The poll is bounded at 180 seconds; unreadable, incomplete, growing,
+   shrinking, or non-convergent observations fail.
 7. Every exit after a disable attempt enters cleanup. Enablement is retried up
    to five times with bounded backoff and each attempt is followed by an API
    read requiring `active`. A recovered cleanup disturbance still returns a
@@ -81,6 +83,12 @@ At candidate base `b20edb3c6b4b19d658ab7ee1208356972d8728cf`, it records:
 - workflow id `303994065` in `active` state;
 - identical unsigned package trees across feeds: 174 entries for the CLI and
   38 for the surface command.
+
+`claim-generation-invalidation.json` preserves the typed claim rotation. The
+append-only premature merge election comment `5410445829` remains intact and
+names retired generation `5410004630`; the live winning claim is comment and
+generation `5410840630`. Since those generations differ, the old election no
+longer matches the live winner and cannot authorize its merge.
 
 The tracked read-only verifier
 `readiness/418-governance-release-anchor-repair/verify_pre_delivery.py` produced
