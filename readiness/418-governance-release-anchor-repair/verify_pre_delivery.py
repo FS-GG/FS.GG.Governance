@@ -7,6 +7,7 @@ import argparse
 import contextlib
 import hashlib
 import json
+import shutil
 import subprocess
 import tempfile
 import time
@@ -47,6 +48,32 @@ def unsigned_tree(package: Path) -> tuple[int, str, str]:
         return len(names), hashlib.sha256(manifest).hexdigest(), archive.read(nuspec).decode()
 
 
+def mutate_package(package: Path, mutation: str) -> None:
+    """Apply a production-shaped mutation to a disposable package subject."""
+    if mutation == "unreadable":
+        package.write_bytes(b"not-a-zip")
+        return
+    if mutation == "empty":
+        with zipfile.ZipFile(package, "w"):
+            pass
+        return
+    with zipfile.ZipFile(package) as archive:
+        entries = [(info.filename, archive.read(info.filename)) for info in archive.infolist()]
+    if mutation == "payload":
+        candidate = next(name for name, _ in entries if not name.endswith(".nuspec") and name != ".signature.p7s")
+        entries = [(name, data + b"\0" if name == candidate else data) for name, data in entries]
+    elif mutation == "provenance":
+        entries = [
+            (name, data.replace(TARGET.encode(), ("0" * 40).encode()) if name.endswith(".nuspec") else data)
+            for name, data in entries
+        ]
+    else:
+        raise ValueError(f"unknown package mutation: {mutation}")
+    with zipfile.ZipFile(package, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, data in entries:
+            archive.writestr(name, data)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--junit", required=True)
@@ -54,9 +81,12 @@ def main() -> int:
     parser.add_argument(
         "--mutation",
         choices=(
-            "commit", "tags", "tags-positive", "tags-unreadable", "workflow",
-            "runs", "runs-positive", "runs-unreadable", "cli-package",
-            "surface-package", "package-nonvacuity", "package-unreadable",
+            "commit-missing", "commit-unreadable",
+            "tags-target-present", "tags-positive-missing", "tags-unreadable", "tags-empty",
+            "workflow-disabled", "workflow-trigger-missing", "workflow-unreadable",
+            "runs-target-present", "runs-positive-missing", "runs-unreadable", "runs-empty",
+            "cli-payload", "cli-provenance", "cli-unreadable", "cli-empty",
+            "surface-payload", "surface-provenance", "surface-unreadable", "surface-empty",
         ),
         help="Test-only negative control; the named gate must reject.",
     )
@@ -72,45 +102,75 @@ def main() -> int:
             detail = str(error) or error.__class__.__name__
             cases.append((name, time.monotonic() - started, detail))
 
-    commit_target = "0" * 40 if args.mutation == "commit" else TARGET
-    check("target commit exists", lambda: run("git", "cat-file", "-e", f"{commit_target}^{{commit}}"))
+    def commit() -> None:
+        exists = subprocess.run(
+            ["git", "cat-file", "-e", f"{TARGET}^{{commit}}"], capture_output=True
+        ).returncode == 0
+        if args.mutation == "commit-missing":
+            exists = False
+        if args.mutation == "commit-unreadable":
+            raise RuntimeError("injected unreadable commit subject")
+        assert exists, f"target commit is absent: {TARGET}"
+
+    check("target commit exists", commit)
 
     def tags() -> None:
-        remote = "missing-fsgg-418-remote" if args.mutation == "tags-unreadable" else "origin"
-        lines = run("git", "ls-remote", "--tags", remote).splitlines()
+        lines = run("git", "ls-remote", "--tags", "origin").splitlines()
         refs = {line.split("\t", 1)[1]: line.split("\t", 1)[0] for line in lines}
-        expected_count = 21 if args.mutation == "tags" else 20
-        expected_positive = "0" * 40 if args.mutation == "tags-positive" else "05279a3092294b0765b1d1ce82d53b3432520362"
-        assert len(refs) == expected_count, f"expected complete {expected_count}-ref baseline, got {len(refs)}"
-        assert refs.get("refs/tags/v1.12.0") == expected_positive, "known-present v1.12.0 control did not match"
+        if args.mutation == "tags-target-present":
+            refs.pop(next(ref for ref in refs if ref not in ("refs/tags/v1.12.0", "refs/tags/v1.12.1")))
+            refs["refs/tags/v1.12.1"] = TARGET
+        elif args.mutation == "tags-positive-missing":
+            positive = refs.pop("refs/tags/v1.12.0", None)
+            refs["refs/tags/subject-positive-removed"] = positive or TARGET
+        elif args.mutation == "tags-unreadable":
+            raise RuntimeError("injected unreadable tag subject")
+        elif args.mutation == "tags-empty":
+            refs.clear()
+        assert len(refs) == 20, f"expected complete 20-ref baseline, got {len(refs)}"
+        assert refs.get("refs/tags/v1.12.0") == "05279a3092294b0765b1d1ce82d53b3432520362", "known-present v1.12.0 control did not match"
         assert "refs/tags/v1.12.1" not in refs
 
     check("remote tag census has positive and negative controls", tags)
 
     def workflow() -> None:
         value = json.loads(run("gh", "api", f"repos/{REPOSITORY}/actions/workflows/publish.yml"))
-        assert value["id"] == WORKFLOW_ID
-        expected_state = "disabled_manually" if args.mutation == "workflow" else "active"
-        assert value["state"] == expected_state, f"expected workflow state {expected_state}, got {value['state']}"
         historical = run("git", "show", f"{TARGET}:.github/workflows/publish.yml")
+        if args.mutation == "workflow-disabled":
+            value["state"] = "disabled_manually"
+        elif args.mutation == "workflow-trigger-missing":
+            historical = historical.replace("tags: ['v*']", "tags: ['never']")
+        elif args.mutation == "workflow-unreadable":
+            raise RuntimeError("injected unreadable workflow subject")
+        assert value["id"] == WORKFLOW_ID
+        assert value["state"] == "active", f"expected workflow state active, got {value['state']}"
         assert "tags: ['v*']" in historical
 
     check("publisher is active and historical workflow matches v-star tags", workflow)
 
     def runs() -> None:
-        workflow_id = 0 if args.mutation == "runs-unreadable" else WORKFLOW_ID
         pages = json.loads(run(
             "gh", "api", "--paginate", "--slurp",
-            f"repos/{REPOSITORY}/actions/workflows/{workflow_id}/runs?per_page=100",
+            f"repos/{REPOSITORY}/actions/workflows/{WORKFLOW_ID}/runs?per_page=100",
         ))
         values = [item for page in pages for item in page["workflow_runs"]]
         first = json.loads(run(
-            "gh", "api", f"repos/{REPOSITORY}/actions/workflows/{workflow_id}/runs?per_page=1"
+            "gh", "api", f"repos/{REPOSITORY}/actions/workflows/{WORKFLOW_ID}/runs?per_page=1"
         ))
-        expected_count = 37 if args.mutation == "runs" else 36
-        assert len(values) == first["total_count"] == expected_count
-        expected_positive = 2 if args.mutation == "runs-positive" else 1
-        assert len([item for item in values if item["head_branch"] == "v1.12.0"]) == expected_positive
+        if args.mutation == "runs-target-present":
+            index = next(i for i, item in enumerate(values) if item["head_branch"] != "v1.12.0" and item["head_sha"] != TARGET)
+            values[index] = {"id": 99999999999, "head_branch": "v1.12.1", "head_sha": TARGET, "event": "push"}
+        elif args.mutation == "runs-positive-missing":
+            for item in values:
+                if item["head_branch"] == "v1.12.0":
+                    item["head_branch"] = "subject-positive-removed"
+        elif args.mutation == "runs-unreadable":
+            raise RuntimeError("injected unreadable run-census subject")
+        elif args.mutation == "runs-empty":
+            values = []
+            first["total_count"] = 0
+        assert len(values) == first["total_count"] == 36
+        assert len([item for item in values if item["head_branch"] == "v1.12.0"]) == 1
         assert not [item for item in values if item["head_branch"] == "v1.12.1"]
         at_target = [item for item in values if item["head_sha"] == TARGET]
         assert [(item["id"], item["event"]) for item in at_target] == [(31563788761, "workflow_dispatch")]
@@ -118,40 +178,42 @@ def main() -> int:
     check("complete workflow-run census contains no repair-tag run", runs)
 
     token = run("gh", "auth", "token").strip()
-    package_context = (
-        contextlib.nullcontext(Path(args.package_cache))
-        if args.package_cache else tempfile.TemporaryDirectory(prefix="fsgg-418-packages-")
+    package_cache_context = (
+        contextlib.nullcontext(Path(args.package_cache)) if args.package_cache
+        else tempfile.TemporaryDirectory(prefix="fsgg-418-package-cache-")
     )
-    with package_context as directory:
-        root = Path(directory)
-        root.mkdir(parents=True, exist_ok=True)
+    with package_cache_context as cache_directory, tempfile.TemporaryDirectory(prefix="fsgg-418-package-subjects-") as subject_directory:
+        cache = Path(cache_directory)
+        root = Path(subject_directory)
+        cache.mkdir(parents=True, exist_ok=True)
         for package_id, nuspec_name, expected_count, expected_digest in PACKAGES:
             def package_check(package_id=package_id, nuspec_name=nuspec_name,
                               expected_count=expected_count, expected_digest=expected_digest) -> None:
-                if args.mutation == "cli-package" and package_id == "fs.gg.governance.cli":
-                    expected_digest = "0" * 64
-                if args.mutation == "surface-package" and package_id == "fs.gg.governance.fsharpsurfacecommand":
-                    expected_digest = "0" * 64
-                if args.mutation == "package-nonvacuity" and package_id == "fs.gg.governance.cli":
-                    expected_count = 0
-                request_id = package_id
-                if args.mutation == "package-unreadable" and package_id == "fs.gg.governance.cli":
-                    request_id = "fs.gg.governance.missing-418"
-                github = root / f"github-{request_id}.nupkg"
-                public = root / f"public-{request_id}.nupkg"
-                if not github.exists():
+                github_source = cache / f"github-{package_id}.nupkg"
+                public_source = cache / f"public-{package_id}.nupkg"
+                if not github_source.exists():
                     download(
-                        f"https://nuget.pkg.github.com/FS-GG/download/{request_id}/1.12.1/{request_id}.1.12.1.nupkg",
-                        github, token,
+                        f"https://nuget.pkg.github.com/FS-GG/download/{package_id}/1.12.1/{package_id}.1.12.1.nupkg",
+                        github_source, token,
                     )
-                if not public.exists():
+                if not public_source.exists():
                     download(
-                        f"https://api.nuget.org/v3-flatcontainer/{request_id}/1.12.1/{request_id}.1.12.1.nupkg",
-                        public,
+                        f"https://api.nuget.org/v3-flatcontainer/{package_id}/1.12.1/{package_id}.1.12.1.nupkg",
+                        public_source,
                     )
+                github = root / f"github-{package_id}.nupkg"
+                public = root / f"public-{package_id}.nupkg"
+                shutil.copy2(github_source, github)
+                shutil.copy2(public_source, public)
+                prefix = "cli" if package_id == "fs.gg.governance.cli" else "surface"
+                if args.mutation and args.mutation.startswith(prefix + "-"):
+                    package_mutation = args.mutation.removeprefix(prefix + "-")
+                    mutate_package(github, package_mutation)
+                    if package_mutation == "provenance":
+                        mutate_package(public, package_mutation)
                 github_tree = unsigned_tree(github)
                 public_tree = unsigned_tree(public)
-                assert github_tree[:2] == public_tree[:2] == (expected_count, expected_digest)
+                assert github_tree[0] > 0 and public_tree[0] > 0
                 assert f'<repository type="git" url="https://github.com/{REPOSITORY}" commit="{TARGET}" />' in github_tree[2]
                 assert f'<repository type="git" url="https://github.com/{REPOSITORY}" commit="{TARGET}" />' in public_tree[2]
                 with zipfile.ZipFile(github) as archive:
@@ -159,6 +221,7 @@ def main() -> int:
                     assert nuspec_name in archive.namelist()
                 with zipfile.ZipFile(public) as archive:
                     assert ".signature.p7s" in archive.namelist()
+                assert github_tree[:2] == public_tree[:2] == (expected_count, expected_digest)
 
             check(f"{package_id} feed provenance and unsigned payload match", package_check)
 

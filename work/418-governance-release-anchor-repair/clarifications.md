@@ -21,12 +21,12 @@ publicOrToolFacingImpact: true
 
 ## Answers
 - CQ-001 → no. The current workflow subscribes to every `v*` push, and the workflow definition is read from the historical tagged commit. Duplicate skipping prevents replacement, but it does not prevent a workflow run, package build, authentication, or publish attempts.
-- CQ-002 → persist the complete baseline run-ID set and use one reviewed runner: disable `publish.yml`; create only the exact tag; require bounded stable run-set convergence while disabled; retry enablement and verify `active` on every exit; then require the same bounded convergence after re-enable and re-census packages.
+- CQ-002 → persist the complete baseline run-ID set and use one reviewed runner: disable `publish.yml`; create only the exact tag; require bounded stable equality (no additions or removals) while disabled; contain backoff failures inside retried enablement and verify `active` on every exit; then require the same bounded equality after re-enable and re-census packages.
 - CQ-003 → no. This is a metadata-only delivery obligation. The branch contains only SDD/readiness evidence for independent review; delivery creates no product-source commit, workflow edit, package, release, or version change.
 
 ## Decisions
 - **DEC-001** [CQ-001] [FR-004] [FR-005]: A direct tag push while `publish.yml` is active is prohibited even though package pushes are duplicate-safe.
-- **DEC-002** [CQ-002] [FR-003] [FR-004] [FR-005]: Use temporary Actions workflow disablement as the non-publishing fence through one executable failure-atomic runner; preserve the primary error, retry and verify cleanup, and require bounded asynchronous run-set convergence on both sides of re-enable.
+- **DEC-002** [CQ-002] [FR-003] [FR-004] [FR-005]: Use temporary Actions workflow disablement as the non-publishing fence through one executable failure-atomic runner; preserve the primary error, contain backoff failures while retrying and verifying cleanup, and require bounded exact run-set convergence on both sides of re-enable.
 - **DEC-003** [CQ-003] [FR-006]: Keep implementation tag-only; commit and review only the SDD/readiness proof and typed delivery recipe.
 
 ## Accepted Deferrals
