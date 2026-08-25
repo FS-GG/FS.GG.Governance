@@ -48,14 +48,15 @@ target has host authorization.
    target.
 6. While the workflow remains disabled, it polls the complete run set for at
    least 60 seconds, requiring at least three unchanged complete samples and no
-   ID outside the baseline. The poll is bounded at 180 seconds; unreadable,
-   incomplete, growing, or non-convergent observations fail.
+   run set exactly equal to the baseline. The poll is bounded at 180 seconds;
+   unreadable, incomplete, growing, shrinking, or non-convergent observations fail.
 7. Every exit after a disable attempt enters cleanup. Enablement is retried up
    to five times with bounded backoff and each attempt is followed by an API
    read requiring `active`. A recovered cleanup disturbance still returns a
    failure receipt; it is not silently converted to success. If primary work and
    cleanup both fail, the receipt and exception preserve the primary failure
-   first and append the cleanup failure.
+   first and append the cleanup failure. Backoff-sleep failures are contained
+   and recorded inside cleanup, never allowed to strand the workflow.
 8. After verified re-enable, the runner repeats the same 60/180-second bounded
    unchanged-run-set convergence before success. Its receipt records all step
    facts, both complete run-ID sets, tag target, primary/cleanup errors, and
@@ -84,17 +85,21 @@ At candidate base `b20edb3c6b4b19d658ab7ee1208356972d8728cf`, it records:
 The tracked read-only verifier
 `readiness/418-governance-release-anchor-repair/verify_pre_delivery.py` produced
 `pre-delivery.junit.xml`: 6 passed, 0 failed. `test_verifier_controls.py`
-produced `verifier-controls.junit.xml`: 12 passed, 0 failed. Those controls
-independently invert all six live gates and additionally exercise known-present
-tag/run/package non-vacuity plus unreadable tag, run, and package authorities;
+produced `verifier-controls.junit.xml`: 21 passed, 0 failed. Those controls alter
+production-shaped commit, tag, workflow, run-census, and package subjects while
+leaving every expected constant unchanged. They independently falsify all six
+live gates and exercise known-present, unreadable, empty/non-vacuous,
+provenance, and payload refusal paths where applicable;
 each nested verifier run had exactly its intended one red case.
 
-`test_release_anchor_runner.py` produced `runner-controls.junit.xml`: 13 passed,
+`test_release_anchor_runner.py` produced `runner-controls.junit.xml`: 16 passed,
 0 failed. It injects a failure after every post-disable boundary, proves cleanup
 restores and verifies `active`, proves transient enable errors are retried but
 still reported, proves a primary error remains first when cleanup also exhausts,
-and proves a delayed new run is rejected. These controls use an in-memory
+and proves delayed run additions and removals are rejected on both sides of
+re-enable. A backoff-sleep exception is contained inside retried cleanup and
+the receipt proves the publisher is active at exit. These controls use an in-memory
 operations adapter and never disable a live workflow, push a tag, or publish.
 `run_readonly_checks.py` reruns and combines all three suites into
-`all-readonly-checks.junit.xml`: 31 passed, 0 failed; this combined report is
+`all-readonly-checks.junit.xml`: 43 passed, 0 failed; this combined report is
 the SDD observed-run authority for the repaired candidate.

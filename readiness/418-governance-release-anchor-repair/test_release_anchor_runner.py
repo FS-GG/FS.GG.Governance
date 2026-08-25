@@ -19,13 +19,16 @@ POINTS = (
 
 
 class FakeOps:
-    def __init__(self, *, enable_failures: int = 0, new_run_after: int | None = None):
+    def __init__(self, *, enable_failures: int = 0, run_change_after: int | None = None,
+                 run_change: list[int] | None = None, sleep_failures: int = 0):
         self.state = "active"
         self.tag: str | None = None
         self.enable_failures = enable_failures
         self.enable_attempts = 0
         self.run_reads = 0
-        self.new_run_after = new_run_after
+        self.run_change_after = run_change_after
+        self.run_change = run_change
+        self.sleep_failures = sleep_failures
 
     def workflow_state(self) -> str: return self.state
     def disable(self) -> None: self.state = "disabled_manually"
@@ -36,17 +39,22 @@ class FakeOps:
         self.state = "active"
     def run_ids(self) -> list[int]:
         self.run_reads += 1
-        return BASELINE + ([44] if self.new_run_after is not None and self.run_reads >= self.new_run_after else [])
+        if self.run_change_after is not None and self.run_reads >= self.run_change_after:
+            return list(self.run_change if self.run_change is not None else BASELINE + [44])
+        return list(BASELINE)
     def tag_target(self) -> str | None: return self.tag
     def push_tag(self) -> None: self.tag = TARGET
     def commit_exists(self) -> bool: return True
-    def sleep(self, _seconds: float) -> None: return None
+    def sleep(self, _seconds: float) -> None:
+        if self.sleep_failures:
+            self.sleep_failures -= 1
+            raise RuntimeError("injected backoff sleep failure")
 
 
 def fast_execute(ops: FakeOps, inject=lambda _: None):
     return execute(
         ops, BASELINE, inject=inject, interval=0, timeout=1,
-        minimum_wait=0, stable_samples=2, enable_attempts=5,
+        minimum_wait=0, stable_samples=1, enable_attempts=5,
     )
 
 
@@ -112,27 +120,60 @@ def main() -> int:
     check("primary failure is preserved when cleanup also exhausts", primary_and_cleanup)
 
     def delayed_run() -> None:
-        ops = FakeOps(new_run_after=3)
+        ops = FakeOps(run_change_after=2)
         try:
             fast_execute(ops)
             raise AssertionError("delayed run unexpectedly accepted")
         except DeliveryFailure as error:
-            assert "new publish workflow run ids observed: [44]" in str(error)
+            assert "run set changed: added=[44]; removed=[]" in str(error)
             assert error.receipt is not None and error.receipt.workflowActiveAtExit is True
     check("asynchronous new run is rejected before re-enable and cleanup restores active", delayed_run)
 
     def delayed_run_after_enable() -> None:
-        ops = FakeOps(new_run_after=5)
+        ops = FakeOps(run_change_after=3)
         try:
             fast_execute(ops)
             raise AssertionError("post-enable delayed run unexpectedly accepted")
         except DeliveryFailure as error:
-            assert "enabled-run-set: new publish workflow run ids observed: [44]" in str(error)
+            assert "enabled-run-set: publish workflow run set changed: added=[44]; removed=[]" in str(error)
             assert error.receipt is not None and error.receipt.workflowActiveAtExit is True
     check("asynchronous new run is rejected after verified re-enable", delayed_run_after_enable)
 
+    def disappeared_run() -> None:
+        ops = FakeOps(run_change_after=2, run_change=[11, 22])
+        try:
+            fast_execute(ops)
+            raise AssertionError("disappearing run unexpectedly accepted")
+        except DeliveryFailure as error:
+            assert "disabled-run-set: publish workflow run set changed: added=[]; removed=[33]" in str(error)
+            assert error.receipt is not None and error.receipt.workflowActiveAtExit is True
+    check("asynchronous run disappearance is rejected before re-enable", disappeared_run)
+
+    def disappeared_run_after_enable() -> None:
+        ops = FakeOps(run_change_after=3, run_change=[11, 22])
+        try:
+            fast_execute(ops)
+            raise AssertionError("post-enable disappearing run unexpectedly accepted")
+        except DeliveryFailure as error:
+            assert "enabled-run-set: publish workflow run set changed: added=[]; removed=[33]" in str(error)
+            assert error.receipt is not None and error.receipt.workflowActiveAtExit is True
+    check("asynchronous run disappearance is rejected after verified re-enable", disappeared_run_after_enable)
+
+    def backoff_failure_is_contained() -> None:
+        ops = FakeOps(enable_failures=1, sleep_failures=1)
+        try:
+            fast_execute(ops)
+            raise AssertionError("recovered cleanup disturbance unexpectedly passed")
+        except DeliveryFailure as error:
+            assert ops.enable_attempts == 2
+            assert ops.state == "active"
+            assert error.receipt is not None and error.receipt.workflowActiveAtExit is True
+            assert error.receipt.primaryError == "transient enable failure 1"
+            assert any(step["name"] == "enable-backoff-failed" for step in error.receipt.steps)
+    check("backoff sleep failure cannot escape cleanup or leave publisher disabled", backoff_failure_is_contained)
+
     def changed_baseline() -> None:
-        ops = FakeOps(new_run_after=1)
+        ops = FakeOps(run_change_after=1)
         try:
             fast_execute(ops)
             raise AssertionError("changed preflight baseline unexpectedly accepted")

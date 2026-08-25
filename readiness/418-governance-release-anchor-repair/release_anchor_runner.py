@@ -123,9 +123,13 @@ def converge_runs(
     previous: list[int] | None = None
     while True:
         current = ops.run_ids()
-        new_ids = sorted(set(current) - set(baseline))
-        if new_ids:
-            raise DeliveryFailure(f"{phase}: new publish workflow run ids observed: {new_ids}")
+        added_ids = sorted(set(current) - set(baseline))
+        removed_ids = sorted(set(baseline) - set(current))
+        if added_ids or removed_ids:
+            raise DeliveryFailure(
+                f"{phase}: publish workflow run set changed: "
+                f"added={added_ids}; removed={removed_ids}"
+            )
         stable = stable + 1 if current == previous else 1
         elapsed = time.monotonic() - started
         if elapsed >= minimum_wait and stable >= stable_samples:
@@ -211,7 +215,15 @@ def execute(
                     first_cleanup_error = first_cleanup_error or error
                     last = error
                     receipt.step("enable-attempt-failed", attempt=attempt, error=error_text(error))
-                    ops.sleep(min(2 ** (attempt - 1), 10))
+                    try:
+                        ops.sleep(min(2 ** (attempt - 1), 10))
+                    except BaseException as backoff_error:
+                        first_cleanup_error = first_cleanup_error or backoff_error
+                        last = backoff_error
+                        receipt.step(
+                            "enable-backoff-failed", attempt=attempt,
+                            error=error_text(backoff_error),
+                        )
             cleanup = last
             if cleanup is None and first_cleanup_error is not None and primary is None:
                 primary = first_cleanup_error

@@ -11,18 +11,27 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 MUTATIONS = {
-    "commit": "target commit exists",
-    "tags": "remote tag census has positive and negative controls",
-    "tags-positive": "remote tag census has positive and negative controls",
+    "commit-missing": "target commit exists",
+    "commit-unreadable": "target commit exists",
+    "tags-target-present": "remote tag census has positive and negative controls",
+    "tags-positive-missing": "remote tag census has positive and negative controls",
     "tags-unreadable": "remote tag census has positive and negative controls",
-    "workflow": "publisher is active and historical workflow matches v-star tags",
-    "runs": "complete workflow-run census contains no repair-tag run",
-    "runs-positive": "complete workflow-run census contains no repair-tag run",
+    "tags-empty": "remote tag census has positive and negative controls",
+    "workflow-disabled": "publisher is active and historical workflow matches v-star tags",
+    "workflow-trigger-missing": "publisher is active and historical workflow matches v-star tags",
+    "workflow-unreadable": "publisher is active and historical workflow matches v-star tags",
+    "runs-target-present": "complete workflow-run census contains no repair-tag run",
+    "runs-positive-missing": "complete workflow-run census contains no repair-tag run",
     "runs-unreadable": "complete workflow-run census contains no repair-tag run",
-    "cli-package": "fs.gg.governance.cli feed provenance and unsigned payload match",
-    "surface-package": "fs.gg.governance.fsharpsurfacecommand feed provenance and unsigned payload match",
-    "package-nonvacuity": "fs.gg.governance.cli feed provenance and unsigned payload match",
-    "package-unreadable": "fs.gg.governance.cli feed provenance and unsigned payload match",
+    "runs-empty": "complete workflow-run census contains no repair-tag run",
+    "cli-payload": "fs.gg.governance.cli feed provenance and unsigned payload match",
+    "cli-provenance": "fs.gg.governance.cli feed provenance and unsigned payload match",
+    "cli-unreadable": "fs.gg.governance.cli feed provenance and unsigned payload match",
+    "cli-empty": "fs.gg.governance.cli feed provenance and unsigned payload match",
+    "surface-payload": "fs.gg.governance.fsharpsurfacecommand feed provenance and unsigned payload match",
+    "surface-provenance": "fs.gg.governance.fsharpsurfacecommand feed provenance and unsigned payload match",
+    "surface-unreadable": "fs.gg.governance.fsharpsurfacecommand feed provenance and unsigned payload match",
+    "surface-empty": "fs.gg.governance.fsharpsurfacecommand feed provenance and unsigned payload match",
 }
 
 
