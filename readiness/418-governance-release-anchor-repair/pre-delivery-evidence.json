@@ -1,0 +1,84 @@
+{
+  "schema": "fsgg.governance.release-anchor-evidence/v1",
+  "subject": "FS-GG/FS.GG.Governance#418",
+  "observedAt": "2026-08-25T12:01:39Z",
+  "repository": {
+    "baseSha": "b20edb3c6b4b19d658ab7ee1208356972d8728cf",
+    "targetCommit": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+    "targetCommitObjectPresent": true,
+    "remoteTagCensus": {
+      "authority": "git ls-remote --tags origin",
+      "completeCount": 20,
+      "positiveControl": {
+        "ref": "refs/tags/v1.12.0",
+        "object": "05279a3092294b0765b1d1ce82d53b3432520362",
+        "kind": "commit"
+      },
+      "targetRef": "refs/tags/v1.12.1",
+      "targetPresent": false
+    }
+  },
+  "workflow": {
+    "id": 303994065,
+    "path": ".github/workflows/publish.yml",
+    "state": "active",
+    "mainWorkflowBlob": "5833ff63ff6103f04daa8305bd120f34da1e040a",
+    "artifactCommitWorkflowBlob": "c1e3c92751ae7db7d5b06019b222d24f9a2940e7",
+    "artifactCommitHasVStarPushTrigger": true,
+    "runCensus": {
+      "authorityTotalCount": 36,
+      "enumeratedAcrossAllPages": 36,
+      "runIds": [
+        28366408723, 28367316665, 28375008437, 28376202121, 28376702956,
+        28377734248, 28533770845, 28533770939, 28718703107, 28742491335,
+        28853098553, 29145673027, 29503992337, 29503992648, 29699153829,
+        29704423323, 29741542081, 29845168117, 29977440772, 30181876988,
+        30187767069, 30189672641, 30190043566, 30215484433, 30564242724,
+        30804956631, 30805898005, 30902595815, 30915354917, 31247035513,
+        31562489079, 31562498027, 31563788761, 31982087539, 31983512604,
+        31984717906
+      ],
+      "positiveControlV1_12_0Runs": 1,
+      "targetTagRuns": 0,
+      "targetCommitRuns": 1,
+      "existingTargetCommitRun": {
+        "id": 31563788761,
+        "event": "workflow_dispatch",
+        "headBranch": "main",
+        "createdAt": "2026-08-12T04:36:14Z",
+        "conclusion": "success"
+      }
+    }
+  },
+  "packages": [
+    {
+      "id": "FS.GG.Governance.Cli",
+      "version": "1.12.1",
+      "repositoryCommitOnGitHubPackages": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+      "repositoryCommitOnNugetOrg": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+      "unsignedEntryCount": 174,
+      "unsignedTreeDigestOnGitHubPackages": "9cb856b0db677510cd07e0ff9d6fad8c9b7895fa40d2b1f74e3f4aa2db56b56e",
+      "unsignedTreeDigestOnNugetOrg": "9cb856b0db677510cd07e0ff9d6fad8c9b7895fa40d2b1f74e3f4aa2db56b56e",
+      "onlyNugetOrgAddition": ".signature.p7s"
+    },
+    {
+      "id": "FS.GG.Governance.FSharpSurfaceCommand",
+      "version": "1.12.1",
+      "repositoryCommitOnGitHubPackages": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+      "repositoryCommitOnNugetOrg": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+      "unsignedEntryCount": 38,
+      "unsignedTreeDigestOnGitHubPackages": "06db164952a6b07b967c6386a9a44a641f7a64d0a53159966022cfd868d1ea7a",
+      "unsignedTreeDigestOnNugetOrg": "06db164952a6b07b967c6386a9a44a641f7a64d0a53159966022cfd868d1ea7a",
+      "onlyNugetOrgAddition": ".signature.p7s"
+    }
+  ],
+  "intendedDelta": {
+    "createRef": "refs/tags/v1.12.1",
+    "createRefTarget": "388819d0e060c11f53e5ca2df3277a54a13f9e75",
+    "sourceChanges": false,
+    "versionBump": false,
+    "pack": false,
+    "publish": false,
+    "githubRelease": false
+  }
+}
