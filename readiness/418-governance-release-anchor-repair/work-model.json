@@ -1,0 +1,1282 @@
+{
+  "schemaVersion": 1,
+  "modelVersion": "1.2.0",
+  "workId": "418-governance-release-anchor-repair",
+  "project": {
+    "id": "item-366-fsharp-surface-governance",
+    "defaultWorkRoot": "work",
+    "profile": null
+  },
+  "sources": [
+    {
+      "path": ".fsgg/agents.yml",
+      "kind": "agentsConfig",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "c67035b1cf31b6fa802c10f761eeb1e5bf5d198c38d159b54fac299957b5aac3"
+      }
+    },
+    {
+      "path": ".fsgg/project.yml",
+      "kind": "projectConfig",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "fac08b6ce382c7d53752bfa7729fb4a4ddf04d46694b68cdc8599e363d98e9ab"
+      }
+    },
+    {
+      "path": ".fsgg/sdd.yml",
+      "kind": "sddConfig",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "fe5a7c270a975153e80ab0d08a610c9b302585dcb0b5f7c654841ceced9272cb"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/checklist.md",
+      "kind": "checklist",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/clarifications.md",
+      "kind": "clarifications",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/evidence.yml",
+      "kind": "evidence",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "7181750525beb1d590e39361aa29582178932beb728cf2488e2fce3a35d51de7"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/plan.md",
+      "kind": "plan",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/spec.md",
+      "kind": "spec",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6"
+      }
+    },
+    {
+      "path": "work/418-governance-release-anchor-repair/tasks.yml",
+      "kind": "tasks",
+      "owner": "sdd",
+      "schemaVersion": 1,
+      "rawSchemaVersion": "1",
+      "schemaStatus": "current",
+      "sourceDigest": {
+        "algorithm": "sha256",
+        "value": "0fb5c82d3a31767943524d0d586696665509c54e0604f4a53046a79262b31fd5"
+      }
+    }
+  ],
+  "workItem": {
+    "id": "418-governance-release-anchor-repair",
+    "title": "Governance v1.12.1 release anchor repair",
+    "stage": "specify",
+    "changeTier": "tier1",
+    "status": "specified"
+  },
+  "performanceIntent": null,
+  "requirements": [
+    {
+      "id": "FR-001",
+      "title": "The \u0060FS.GG.Governance.Cli\u0060 and \u0060FS.GG.Governance.FSharpSurfaceCommand\u0060 1.12.1 nuspecs from both GitHub Packages and nuget.org MUST identify repository commit \u0060388819d0e060c11f53e5ca2df3277a54a13f9e75\u0060. (Stories: US-001; Acceptance: AC-001)",
+      "text": "The \u0060FS.GG.Governance.Cli\u0060 and \u0060FS.GG.Governance.FSharpSurfaceCommand\u0060 1.12.1 nuspecs from both GitHub Packages and nuget.org MUST identify repository commit \u0060388819d0e060c11f53e5ca2df3277a54a13f9e75\u0060. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 35,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T001"
+      ],
+      "linkedEvidenceIds": [
+        "EV001"
+      ]
+    },
+    {
+      "id": "FR-002",
+      "title": "For each package identity, the GitHub Packages archive and nuget.org archive MUST have identical unsigned package entries and bytes; nuget.org\u0027s signing-only additions are excluded explicitly. (Stories: US-001; Acceptance: AC-001)",
+      "text": "For each package identity, the GitHub Packages archive and nuget.org archive MUST have identical unsigned package entries and bytes; nuget.org\u0027s signing-only additions are excluded explicitly. (Stories: US-001; Acceptance: AC-001)",
+      "acceptanceCriteria": [
+        "AC-001"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 36,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T002"
+      ],
+      "linkedEvidenceIds": [
+        "EV002"
+      ]
+    },
+    {
+      "id": "FR-003",
+      "title": "Delivery MUST verify \u0060v1.12.1\u0060 is absent, verify a known-present tag with the same complete remote-tag census, and create only \u0060refs/tags/v1.12.1\u0060 at the exact artifact commit. (Stories: US-001; Acceptance: AC-002)",
+      "text": "Delivery MUST verify \u0060v1.12.1\u0060 is absent, verify a known-present tag with the same complete remote-tag census, and create only \u0060refs/tags/v1.12.1\u0060 at the exact artifact commit. (Stories: US-001; Acceptance: AC-002)",
+      "acceptanceCriteria": [
+        "AC-002"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 37,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T003"
+      ],
+      "linkedEvidenceIds": [
+        "EV003"
+      ]
+    },
+    {
+      "id": "FR-004",
+      "title": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, delivery MUST disable \u0060publish.yml\u0060 before creating the tag and MUST restore its prior active state after the tag is verified; any failure after disablement MUST restore the workflow before returning. (Stories: US-001; Acceptance: AC-002)",
+      "text": "Because the current workflow subscribes to \u0060push.tags: [\u0027v*\u0027]\u0060, delivery MUST disable \u0060publish.yml\u0060 before creating the tag and MUST restore its prior active state after the tag is verified; any failure after disablement MUST restore the workflow before returning. (Stories: US-001; Acceptance: AC-002)",
+      "acceptanceCriteria": [
+        "AC-002"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 38,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T004"
+      ],
+      "linkedEvidenceIds": [
+        "EV004",
+        "EV010"
+      ]
+    },
+    {
+      "id": "FR-005",
+      "title": "A complete publish-workflow run census before and after delivery MUST show no run created for the \u0060v1.12.1\u0060 repair event. (Stories: US-001; Acceptance: AC-003)",
+      "text": "A complete publish-workflow run census before and after delivery MUST show no run created for the \u0060v1.12.1\u0060 repair event. (Stories: US-001; Acceptance: AC-003)",
+      "acceptanceCriteria": [
+        "AC-003"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 39,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T005"
+      ],
+      "linkedEvidenceIds": [
+        "EV005",
+        "EV011"
+      ]
+    },
+    {
+      "id": "FR-006",
+      "title": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. (Stories: US-001; Acceptance: AC-003)",
+      "text": "The two package versions and their feed payload snapshots MUST remain unchanged; the repair MUST NOT invoke pack, publish, release creation, or a version mutation. (Stories: US-001; Acceptance: AC-003)",
+      "acceptanceCriteria": [
+        "AC-003"
+      ],
+      "priority": null,
+      "classification": [],
+      "source": "work/418-governance-release-anchor-repair/spec.md",
+      "sourceLocation": {
+        "line": 40,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T006"
+      ],
+      "linkedEvidenceIds": [
+        "EV006",
+        "EV012"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "title": "A direct tag push while \u0060publish.yml\u0060 is active is prohibited even though package pushes are duplicate-safe.",
+      "decision": "A direct tag push while \u0060publish.yml\u0060 is active is prohibited even though package pushes are duplicate-safe.",
+      "requirementRefs": [
+        "FR-004",
+        "FR-005"
+      ],
+      "storyRefs": [],
+      "acceptanceRefs": [],
+      "source": "work/418-governance-release-anchor-repair/clarifications.md",
+      "sourceLocation": {
+        "line": 28,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T007"
+      ]
+    },
+    {
+      "id": "DEC-002",
+      "title": "Use temporary Actions workflow disablement as the non-publishing fence, and make re-enablement an unconditional cleanup obligation.",
+      "decision": "Use temporary Actions workflow disablement as the non-publishing fence, and make re-enablement an unconditional cleanup obligation.",
+      "requirementRefs": [
+        "FR-003",
+        "FR-004",
+        "FR-005"
+      ],
+      "storyRefs": [],
+      "acceptanceRefs": [],
+      "source": "work/418-governance-release-anchor-repair/clarifications.md",
+      "sourceLocation": {
+        "line": 29,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T008"
+      ]
+    },
+    {
+      "id": "DEC-003",
+      "title": "Keep implementation tag-only; commit and review only the SDD/readiness proof and typed delivery recipe.",
+      "decision": "Keep implementation tag-only; commit and review only the SDD/readiness proof and typed delivery recipe.",
+      "requirementRefs": [
+        "FR-006"
+      ],
+      "storyRefs": [],
+      "acceptanceRefs": [],
+      "source": "work/418-governance-release-anchor-repair/clarifications.md",
+      "sourceLocation": {
+        "line": 30,
+        "column": 1
+      },
+      "linkedTaskIds": [
+        "T009"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Implement requirement FR-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-001"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-001",
+        "FR-001",
+        "PD-001"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV001"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "id": "T002",
+      "title": "Implement requirement FR-002",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-002"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-001",
+        "FR-002",
+        "PD-002"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV002"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 2,
+        "column": 1
+      }
+    },
+    {
+      "id": "T003",
+      "title": "Implement requirement FR-003",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-003"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-002",
+        "FR-003",
+        "PD-003"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV003"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "id": "T004",
+      "title": "Implement requirement FR-004",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-004"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-002",
+        "FR-004"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV004"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 4,
+        "column": 1
+      }
+    },
+    {
+      "id": "T005",
+      "title": "Implement requirement FR-005",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-005"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-003",
+        "FR-005"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV005"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "T006",
+      "title": "Implement requirement FR-006",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [],
+      "requirements": [
+        "FR-006"
+      ],
+      "decisions": [],
+      "sourceIds": [
+        "AC-003",
+        "FR-006"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV006"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "T007",
+      "title": "Implement clarification decision DEC-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [
+        "DEC-001"
+      ],
+      "sourceIds": [
+        "DEC-001"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV007"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "id": "T008",
+      "title": "Implement clarification decision DEC-002",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [
+        "DEC-002"
+      ],
+      "sourceIds": [
+        "DEC-002"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV008"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "id": "T009",
+      "title": "Implement clarification decision DEC-003",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [
+        "DEC-003"
+      ],
+      "sourceIds": [
+        "DEC-003"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV009"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "id": "T010",
+      "title": "Implement plan decision PD-004",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "AC-002",
+        "DEC-001",
+        "DEC-002",
+        "FR-004",
+        "PD-004"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV010"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "id": "T011",
+      "title": "Implement plan decision PD-005",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "AC-003",
+        "DEC-002",
+        "FR-005",
+        "PD-005"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV011"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "id": "T012",
+      "title": "Implement plan decision PD-006",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "AC-003",
+        "DEC-003",
+        "FR-006",
+        "PD-006"
+      ],
+      "requiredSkills": [
+        "fsharp",
+        "implementation"
+      ],
+      "requiredEvidence": [
+        "EV012"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "id": "T013",
+      "title": "Update contract surface PC-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "PC-001",
+        "PD-003",
+        "PD-004"
+      ],
+      "requiredSkills": [
+        "fsharp"
+      ],
+      "requiredEvidence": [
+        "EV013"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "id": "T014",
+      "title": "Record verification evidence VO-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "PC-001",
+        "PD-001",
+        "PD-002",
+        "PD-003",
+        "PD-004",
+        "PD-005",
+        "PD-006",
+        "VO-001"
+      ],
+      "requiredSkills": [
+        "automated-tests",
+        "readiness-evidence"
+      ],
+      "requiredEvidence": [
+        "EV014"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "id": "T015",
+      "title": "Handle migration posture PM-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "PC-001",
+        "PM-001"
+      ],
+      "requiredSkills": [
+        "schema-versioning"
+      ],
+      "requiredEvidence": [
+        "EV015"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "id": "T016",
+      "title": "Refresh generated view impact GV-001",
+      "status": "done",
+      "owner": "teal-38f5",
+      "dependencies": [
+        "T001"
+      ],
+      "requirements": [],
+      "decisions": [],
+      "sourceIds": [
+        "GV-001",
+        "PD-001",
+        "PD-005"
+      ],
+      "requiredSkills": [
+        "deterministic-json"
+      ],
+      "requiredEvidence": [
+        "EV016"
+      ],
+      "source": "work/418-governance-release-anchor-repair/tasks.yml",
+      "sourceLocation": {
+        "line": 16,
+        "column": 1
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV001",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T001",
+      "taskRefs": [
+        "T001"
+      ],
+      "requirementRefs": [
+        "FR-001"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 1,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV002",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T002",
+      "taskRefs": [
+        "T002"
+      ],
+      "requirementRefs": [
+        "FR-002"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 2,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV003",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T003",
+      "taskRefs": [
+        "T003"
+      ],
+      "requirementRefs": [
+        "FR-003"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 3,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV004",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T004",
+      "taskRefs": [
+        "T004"
+      ],
+      "requirementRefs": [
+        "FR-004"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 4,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV005",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T005",
+      "taskRefs": [
+        "T005"
+      ],
+      "requirementRefs": [
+        "FR-005"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 5,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV006",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T006",
+      "taskRefs": [
+        "T006"
+      ],
+      "requirementRefs": [
+        "FR-006"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 6,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV007",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T007",
+      "taskRefs": [
+        "T007"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 7,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV008",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T008",
+      "taskRefs": [
+        "T008"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 8,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV009",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T009",
+      "taskRefs": [
+        "T009"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 9,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV010",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T010",
+      "taskRefs": [
+        "T010"
+      ],
+      "requirementRefs": [
+        "FR-004"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 10,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV011",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T011",
+      "taskRefs": [
+        "T011"
+      ],
+      "requirementRefs": [
+        "FR-005"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 11,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV012",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T012",
+      "taskRefs": [
+        "T012"
+      ],
+      "requirementRefs": [
+        "FR-006"
+      ],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 12,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV013",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T013",
+      "taskRefs": [
+        "T013"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 13,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV014",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T014",
+      "taskRefs": [
+        "T014"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 14,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV015",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T015",
+      "taskRefs": [
+        "T015"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 15,
+        "column": 1
+      }
+    },
+    {
+      "id": "EV016",
+      "kind": "verification",
+      "subjectType": "task",
+      "subjectId": "T016",
+      "taskRefs": [
+        "T016"
+      ],
+      "requirementRefs": [],
+      "artifactRefs": [
+        "docs/reports/2026-08-25-governance-v1.12.1-anchor-repair.md",
+        "readiness/418-governance-release-anchor-repair/pre-delivery-evidence.json"
+      ],
+      "result": "pass",
+      "synthetic": false,
+      "performanceBudget": null,
+      "performanceEvidenceArtifact": null,
+      "performanceMeasurements": [],
+      "rationale": null,
+      "source": "work/418-governance-release-anchor-repair/evidence.yml",
+      "sourceLocation": {
+        "line": 16,
+        "column": 1
+      }
+    }
+  ],
+  "generatedViews": [
+    {
+      "path": "readiness/418-governance-release-anchor-repair/work-model.json",
+      "kind": "workModel",
+      "schemaVersion": 1,
+      "generator": {
+        "id": "FS.GG.SDD.Artifacts",
+        "version": "1.2.5"
+      },
+      "sources": [
+        {
+          "path": ".fsgg/agents.yml",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "c67035b1cf31b6fa802c10f761eeb1e5bf5d198c38d159b54fac299957b5aac3"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": ".fsgg/project.yml",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "fac08b6ce382c7d53752bfa7729fb4a4ddf04d46694b68cdc8599e363d98e9ab"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": ".fsgg/sdd.yml",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "fe5a7c270a975153e80ab0d08a610c9b302585dcb0b5f7c654841ceced9272cb"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/checklist.md",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "1f6195fa85b97b93bd0652f196249ef21823f57acd20d37a3edf48467326a353"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/clarifications.md",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "9b4614020fb9cf22254622261d8e90ad23298cc58de3fca7aef4de10c8bd45b0"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/evidence.yml",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "7181750525beb1d590e39361aa29582178932beb728cf2488e2fce3a35d51de7"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/plan.md",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "cb277a46e329783ac85e36bafcc4d121417d175f122cb3796f7e9b8a53a9720c"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/spec.md",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "9de246dff54a55d9f1d907062a881d8c25b541072b71529a70cb885083676dc6"
+          },
+          "schemaVersion": 1
+        },
+        {
+          "path": "work/418-governance-release-anchor-repair/tasks.yml",
+          "digest": {
+            "algorithm": "sha256",
+            "value": "0fb5c82d3a31767943524d0d586696665509c54e0604f4a53046a79262b31fd5"
+          },
+          "schemaVersion": 1
+        }
+      ],
+      "outputDigest": {
+        "algorithm": "sha256",
+        "value": "8b7836062f209d80b6aed773a1ff21cf73d093ddebed0ff33d6458f6385a1cf0"
+      },
+      "currency": "current"
+    }
+  ],
+  "diagnostics": [],
+  "governanceBoundaries": []
+}
