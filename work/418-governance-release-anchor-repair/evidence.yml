@@ -11,7 +11,7 @@ sourceAnalysis: readiness/418-governance-release-anchor-repair/analysis.json
 sourceSnapshots:
   - label: analysis
     path: readiness/418-governance-release-anchor-repair/analysis.json
-    digest: 9c7795a468b09af2b85f6c8f98407717722cabdf18a1ec004c297fce8f1d5dbb
+    digest: 29c74cfacc23532f751b7c2caffb8934aacd9ddc542a6436c9a8ac9397703b1c
     schemaVersion: 1
   - label: checklist
     path: work/418-governance-release-anchor-repair/checklist.md
