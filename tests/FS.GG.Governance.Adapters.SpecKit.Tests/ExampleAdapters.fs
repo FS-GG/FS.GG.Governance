@@ -28,7 +28,11 @@ open FS.GG.Governance.Adapters.SpecKit
 //     in its name (see LiftTests.fs), and it is listed in the PR description.
 // ─────────────────────────────────────────────────────────────────────────────
 
-let judge: JudgeId = { ModelId = "speckit-judge"; Version = "1" }
+let judge: JudgeId =
+    {
+        ModelId = "speckit-judge"
+        Version = "1"
+    }
 
 /// The assembled Spec Kit adapter under test — the REAL adopter (not synthetic).
 let specKitAdapter: Adapter<SpecKitFact, SpecKitArtifact, SpecKitChange> =
@@ -38,10 +42,10 @@ let specKitAdapter: Adapter<SpecKitFact, SpecKitArtifact, SpecKitChange> =
 /// `Identify` so an embedded `RuleOutcome` is identified uniformly.
 let govKey (o: RuleOutcome) : string =
     match o with
-    | Decided (RuleId r, _) -> "decided:" + r
+    | Decided(RuleId r, _) -> "decided:" + r
     | NeedsReview req -> "needs:" + req.Key
     | Reviewed rr -> "reviewed:" + rr.Key
-    | Escalated (RuleId r) -> "escalated:" + r
+    | Escalated(RuleId r) -> "escalated:" + r
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SYNTHETIC: example domain — illustrative, not a real adopter (the real adopter
@@ -64,15 +68,29 @@ let memoToRef (a: MemoArtifact) : ArtifactRef =
     | MemoDoc -> { Kind = "memo"; Key = "doc" }
 
 let memoApprovedProbe: Probe<MemoFact> =
-    { Name = "memo-approved"
-      Reads = [ memoToRef MemoDoc ]
-      Args = []
-      Eval = fun fs -> if fs |> List.exists (fun f -> f.Value = MemoApproved true) then Met else Unmet "memo not approved" }
+    {
+        Name = "memo-approved"
+        Reads = [ memoToRef MemoDoc ]
+        Args = []
+        Eval =
+            fun fs ->
+                if fs |> List.exists (fun f -> f.Value = MemoApproved true) then
+                    Met
+                else
+                    Unmet "memo not approved"
+    }
 
 let memoApproved: Check<MemoFact> = Atom memoApprovedProbe
 
 let memoRule: CheckRule<MemoFact> =
-    CheckRule.rule (RuleId "memo-approved") Deterministic { Document = "memo-policy"; Section = "approval" } memoApproved
+    CheckRule.rule
+        (RuleId "memo-approved")
+        Deterministic
+        {
+            Document = "memo-policy"
+            Section = "approval"
+        }
+        memoApproved
     |> function
         | Ok r -> CheckRule.blocking r
         | Error e -> failwithf "memo-approved: %A" e
@@ -83,25 +101,31 @@ let memoIdentify (f: MemoFact) : FactId =
     | MemoGov o -> FactId("memo:gov:" + govKey o)
 
 let memoBridge: Bridge<MemoFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = MemoGov
-      Project =
-        function
-        | MemoGov o -> Some o
-        | MemoApproved _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = MemoGov
+        Project =
+            function
+            | MemoGov o -> Some o
+            | MemoApproved _ -> None
+    }
 
 let memoFence: Fence<MemoChange> =
-    { Name = "memo-board"
-      Trips = fun c -> c.MemoIds.Contains "M-1" }
+    {
+        Name = "memo-board"
+        Trips = fun c -> c.MemoIds.Contains "M-1"
+    }
 
 let memoAdapter: Adapter<MemoFact, MemoArtifact, MemoChange> =
-    { Identify = memoIdentify
-      ToRef = memoToRef
-      Probes = [ memoApprovedProbe ]
-      Rules = [ memoRule ]
-      Fences = [ memoFence ]
-      Bridge = memoBridge }
+    {
+        Identify = memoIdentify
+        ToRef = memoToRef
+        Probes = [ memoApprovedProbe ]
+        Rules = [ memoRule ]
+        Fences = [ memoFence ]
+        Bridge = memoBridge
+    }
 
 // ═════════════════════════════════════════════════════════════════════════════
 // The composition root (consumer-authored): the CLOSED `ProjectFact` coproduct with
@@ -132,8 +156,10 @@ let injectSk: SpecKitFact -> ProjectFact = Sk
 let injectMemo: MemoFact -> ProjectFact = Memo
 
 type ProjectChange =
-    { SpecKitChange: SpecKitChange
-      MemoChange: MemoChange }
+    {
+        SpecKitChange: SpecKitChange
+        MemoChange: MemoChange
+    }
 
 let narrowSk (c: ProjectChange) : SpecKitChange = c.SpecKitChange
 let narrowMemo (c: ProjectChange) : MemoChange = c.MemoChange
@@ -148,28 +174,36 @@ let projIdentify (f: ProjectFact) : FactId =
     | Governance o -> FactId("proj:gov:" + govKey o)
 
 let projBridge: Bridge<ProjectFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = Governance
-      Project =
-        function
-        | Governance o -> Some o
-        | Sk _
-        | Memo _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = Governance
+        Project =
+            function
+            | Governance o -> Some o
+            | Sk _
+            | Memo _ -> None
+    }
 
 // ── Shared test helpers ──
 
 /// Every phase in lifecycle order — the finite domain the phase-guard laws quantify over.
 let allPhases: Phase list =
-    [ Phase.Constitution
-      Phase.Specify
-      Phase.Clarify
-      Phase.Plan
-      Phase.Tasks
-      Phase.Analyze
-      Phase.Implement
-      Phase.Merge ]
+    [
+        Phase.Constitution
+        Phase.Specify
+        Phase.Clarify
+        Phase.Plan
+        Phase.Tasks
+        Phase.Analyze
+        Phase.Implement
+        Phase.Merge
+    ]
 
 /// A supplied SpecKitFact with the adapter's own identity (provenance empty — it is asserted).
 let fact (v: SpecKitFact) : FactAssertion<SpecKitFact> =
-    { Id = SpecKit.identify v; Value = v; Provenance = [] }
+    {
+        Id = SpecKit.identify v
+        Value = v
+        Provenance = []
+    }

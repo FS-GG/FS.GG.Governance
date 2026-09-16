@@ -40,11 +40,13 @@ module internal EvidenceSweep =
     let SurfaceName = "fsharp-evidence-boundary"
 
     let request: SC.SurfaceCheckRequest =
-        { Domain = SC.DesignDomain
-          Surface = SurfaceId SurfaceName
-          Class = DesignSurface
-          Path = normalizePath PolicyPath
-          EvidenceTag = None }
+        {
+            Domain = SC.DesignDomain
+            Surface = SurfaceId SurfaceName
+            Class = DesignSurface
+            Path = normalizePath PolicyPath
+            EvidenceTag = None
+        }
 
     /// A defect in the declaration. Raised only by the parser below and caught only by `sense`.
     exception private PolicyError of string
@@ -150,36 +152,44 @@ module internal EvidenceSweep =
             raise (PolicyError(sprintf "unknown evidence provenance '%s' (expected 'real' or 'synthetic')" other))
 
     let private record (element: JsonElement) : EB.EvidenceRecord =
-        { Subject = optionalString element "subject"
-          Kind = kind element
-          Provenance = provenance element
-          Command = optionalString element "command"
-          ExitCode = optionalInt element "exitCode"
-          SourceDigest = optionalString element "sourceDigest"
-          Fresh = flag element "fresh"
-          Observation = observation element }
+        {
+            Subject = optionalString element "subject"
+            Kind = kind element
+            Provenance = provenance element
+            Command = optionalString element "command"
+            ExitCode = optionalInt element "exitCode"
+            SourceDigest = optionalString element "sourceDigest"
+            Fresh = flag element "fresh"
+            Observation = observation element
+        }
 
     let private artifact (element: JsonElement) : EB.GeneratedArtifact =
-        { Path = optionalString element "path"
-          Source = optionalStringOption element "source"
-          RegenerationDeterministic = flag element "regenerationDeterministic"
-          Consumer = optionalStringOption element "consumer"
-          HasGoldenOrSchema = flag element "hasGoldenOrSchema" }
+        {
+            Path = optionalString element "path"
+            Source = optionalStringOption element "source"
+            RegenerationDeterministic = flag element "regenerationDeterministic"
+            Consumer = optionalStringOption element "consumer"
+            HasGoldenOrSchema = flag element "hasGoldenOrSchema"
+        }
 
     let private mitigation (element: JsonElement) : EB.Mitigation =
-        { Claim = optionalString element "claim"
-          ProducerClasses = stringList element "producerClasses"
-          ReintroducedByMutation = stringList element "reintroducedByMutation" }
+        {
+            Claim = optionalString element "claim"
+            ProducerClasses = stringList element "producerClasses"
+            ReintroducedByMutation = stringList element "reintroducedByMutation"
+        }
 
     let private render (root: JsonElement) : EB.RenderEvidence option =
         match prop root "render" with
         | None -> None
         | Some value when value.ValueKind = JsonValueKind.Object ->
             Some
-                { Fixture = optionalString value "fixture"
-                  Executed = flag value "executed"
-                  ByteReproducible = flag value "byteReproducible"
-                  SemanticReceiptStable = flag value "semanticReceiptStable" }
+                {
+                    Fixture = optionalString value "fixture"
+                    Executed = flag value "executed"
+                    ByteReproducible = flag value "byteReproducible"
+                    SemanticReceiptStable = flag value "semanticReceiptStable"
+                }
         | Some value -> raise (PolicyError(sprintf "'render' must be an object; found %O" value.ValueKind))
 
     /// Read the repository's declared evidence obligation. `Ok None` ⇒ the pack is not applicable here.
@@ -198,13 +208,15 @@ module internal EvidenceSweep =
                 else
                     Ok(
                         Some
-                            { RequiresProductionJourney = flag root "requiresProductionJourney"
-                              RequiresObservedOutcome = flag root "requiresObservedOutcome"
-                              OptionalIntegrations = stringList root "optionalIntegrations"
-                              Evidence = objects root "evidence" |> List.map record
-                              GeneratedArtifacts = objects root "generatedArtifacts" |> List.map artifact
-                              Mitigations = objects root "mitigations" |> List.map mitigation
-                              Render = render root }
+                            {
+                                RequiresProductionJourney = flag root "requiresProductionJourney"
+                                RequiresObservedOutcome = flag root "requiresObservedOutcome"
+                                OptionalIntegrations = stringList root "optionalIntegrations"
+                                Evidence = objects root "evidence" |> List.map record
+                                GeneratedArtifacts = objects root "generatedArtifacts" |> List.map artifact
+                                Mitigations = objects root "mitigations" |> List.map mitigation
+                                Render = render root
+                            }
                     )
         with
         | PolicyError detail -> Error(sprintf "%s is malformed: %s" PolicyPath detail)

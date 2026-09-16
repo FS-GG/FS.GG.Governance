@@ -9,12 +9,18 @@ open FS.GG.Governance.ValidationMatrix.Model
 // Shared REAL builders for the F26 ValidationMatrix tests. CostBudget is the F25 ordered-Cost ceiling value.
 
 let exhaustiveMatrix: ExhaustiveMatrix =
-    { Name = "pack-all-targets"
-      Cost = Exhaustive
-      Dimensions = [ "packableProjects"; "targetFrameworks" ] }
+    {
+        Name = "pack-all-targets"
+        Cost = Exhaustive
+        Dimensions = [ "packableProjects"; "targetFrameworks" ]
+    }
 
 let cheapMatrix: ExhaustiveMatrix =
-    { Name = "smoke"; Cost = Cheap; Dimensions = [ "one" ] }
+    {
+        Name = "smoke"
+        Cost = Cheap
+        Dimensions = [ "one" ]
+    }
 
 /// An inner-loop budget whose ceiling is below Exhaustive.
 let innerLoopBudget: CostBudget = { Ceiling = Medium }

@@ -22,8 +22,10 @@ module Model =
         | OutOfScope
 
     type PathRouting =
-        { Path: GovernedPath
-          Result: RoutingResult }
+        {
+            Path: GovernedPath
+            Result: RoutingResult
+        }
 
     type RoutingDiagnosticId =
         | AmbiguousRoute
@@ -31,14 +33,18 @@ module Model =
         | UnsupportedGlobSyntax
 
     type RoutingDiagnostic =
-        { Id: RoutingDiagnosticId
-          Path: GovernedPath option
-          Globs: GovernedPath list
-          Message: string }
+        {
+            Id: RoutingDiagnosticId
+            Path: GovernedPath option
+            Globs: GovernedPath list
+            Message: string
+        }
 
     type RouteReport =
-        { Routings: PathRouting list
-          Diagnostics: RoutingDiagnostic list }
+        {
+            Routings: PathRouting list
+            Diagnostics: RoutingDiagnostic list
+        }
 
     // The stable wire token for each diagnostic id (FR-013). Total: every case is named, so
     // adding a case is a compile error here rather than a silent fall-through.

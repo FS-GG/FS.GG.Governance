@@ -17,16 +17,20 @@ module DesignPack = FS.GG.Governance.DesignChecks.DesignChecks
 module Composition =
 
     type DomainFactBundle =
-        { Package: Map<SurfaceId, FS.GG.Governance.PackageChecks.Model.PackageFacts>
-          Docs: Map<SurfaceId, FS.GG.Governance.DocsChecks.Model.DocsFacts>
-          Skill: Map<SurfaceId, FS.GG.Governance.SkillChecks.Model.SkillFacts>
-          Design: Map<SurfaceId, FS.GG.Governance.DesignChecks.Model.DesignFacts> }
+        {
+            Package: Map<SurfaceId, FS.GG.Governance.PackageChecks.Model.PackageFacts>
+            Docs: Map<SurfaceId, FS.GG.Governance.DocsChecks.Model.DocsFacts>
+            Skill: Map<SurfaceId, FS.GG.Governance.SkillChecks.Model.SkillFacts>
+            Design: Map<SurfaceId, FS.GG.Governance.DesignChecks.Model.DesignFacts>
+        }
 
     let emptyBundle: DomainFactBundle =
-        { Package = Map.empty
-          Docs = Map.empty
-          Skill = Map.empty
-          Design = Map.empty }
+        {
+            Package = Map.empty
+            Docs = Map.empty
+            Skill = Map.empty
+            Design = Map.empty
+        }
 
     let domainOf (cls: SurfaceClass) : Model.CheckDomain option =
         match cls with
@@ -54,17 +58,15 @@ module Composition =
                     |> Option.bind (fun s -> s.EvidenceTag)
 
                 Some
-                    { Domain = domain
-                      Surface = c.Surface
-                      Class = c.Class
-                      Path = c.Path
-                      EvidenceTag = tag })
+                    {
+                        Domain = domain
+                        Surface = c.Surface
+                        Class = c.Class
+                        Path = c.Path
+                        EvidenceTag = tag
+                    })
 
-    let run
-        (facts: TypedFacts)
-        (report: ProductSurfaceReport)
-        (bundle: DomainFactBundle)
-        : Model.SurfaceFinding list =
+    let run (facts: TypedFacts) (report: ProductSurfaceReport) (bundle: DomainFactBundle) : Model.SurfaceFinding list =
         requestsOf facts report
         |> List.collect (fun req ->
             match req.Domain with

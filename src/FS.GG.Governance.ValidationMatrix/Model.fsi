@@ -12,9 +12,11 @@ module Model =
 
     /// A declared broad validation matrix (product-neutral; the axes are opaque tokens).
     type ExhaustiveMatrix =
-        { Name: string
-          Cost: Cost
-          Dimensions: string list }
+        {
+            Name: string
+            Cost: Cost
+            Dimensions: string list
+        }
 
     /// Which run boundary is executing.
     type MatrixBoundary =
@@ -22,8 +24,7 @@ module Model =
         | ScheduledOrRelease
 
     /// Why a declared matrix did not run now (named, deterministic).
-    type DeferReason =
-        | DeferredToScheduledBoundary of name: string * cost: Cost
+    type DeferReason = DeferredToScheduledBoundary of name: string * cost: Cost
 
     /// The decision.
     type MatrixPlan =

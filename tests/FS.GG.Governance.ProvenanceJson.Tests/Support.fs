@@ -20,7 +20,17 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         (Executable "gcc")
         [ Argument "-c"; Argument "main.c" ]
         (WorkingDirectory "/work")
-        { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]; Changed = []; Removed = [] }
+        {
+            Added =
+                [
+                    {
+                        Name = EnvVarName "CI"
+                        Value = EnvVarValue "1"
+                    }
+                ]
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 30)
         (ExitCode exit)
         (OutputDigest "sha-out")
@@ -28,9 +38,23 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         NoCapturedOutput
         (SensedDuration duration)
 
-let runBuild = { Kind = Build; Record = makeRecord 0 111L }
-let runTest = { Kind = Test; Record = makeRecord 0 222L }
-let runFailed = { Kind = Pack; Record = makeRecord 137 333L } // a non-zero (sentinel-style) exit
+let runBuild =
+    {
+        Kind = Build
+        Record = makeRecord 0 111L
+    }
+
+let runTest =
+    {
+        Kind = Test
+        Record = makeRecord 0 222L
+    }
+
+let runFailed =
+    {
+        Kind = Pack
+        Record = makeRecord 137 333L
+    } // a non-zero (sentinel-style) exit
 
 let srcCommit = Revision "c0ffee"
 let baseRev = Revision "base1"

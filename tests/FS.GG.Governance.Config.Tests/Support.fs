@@ -11,4 +11,5 @@ let fixtureDir (name: string) =
     Path.Combine(repoRoot, "tests", "FS.GG.Governance.Config.Tests", "fixtures", name)
 
 /// Validate a named fixture through the real Loader edge (real filesystem read).
-let validateFixture (name: string) = Loader.loadAndValidate (fixtureDir name)
+let validateFixture (name: string) =
+    Loader.loadAndValidate (fixtureDir name)

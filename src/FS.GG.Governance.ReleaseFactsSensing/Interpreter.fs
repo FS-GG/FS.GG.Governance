@@ -15,12 +15,14 @@ open FS.GG.Governance.ReleaseFactsSensing.Model
 module Interpreter =
 
     type RepositoryPort =
-        { ReadVersion: unit -> Result<VersionEvidence, string>
-          ReadMetadata: unit -> Result<MetadataEvidence, string>
-          ReadPins: unit -> Result<PinsEvidence, string>
-          ReadPublishPlan: unit -> Result<PostureEvidence, string>
-          ReadTrustedPublishing: unit -> Result<PostureEvidence, string>
-          ReadProvenance: unit -> Result<PostureEvidence, string> }
+        {
+            ReadVersion: unit -> Result<VersionEvidence, string>
+            ReadMetadata: unit -> Result<MetadataEvidence, string>
+            ReadPins: unit -> Result<PinsEvidence, string>
+            ReadPublishPlan: unit -> Result<PostureEvidence, string>
+            ReadTrustedPublishing: unit -> Result<PostureEvidence, string>
+            ReadProvenance: unit -> Result<PostureEvidence, string>
+        }
 
     // ── Local-file readers + neutral-format parsers (the ONLY filesystem touch) — research D3/D4 ──
 
@@ -79,22 +81,36 @@ module Interpreter =
                     else
                         Error line)
 
-            match parsed |> Array.tryPick (function Error l -> Some l | Ok _ -> None) with
+            match
+                parsed
+                |> Array.tryPick (function
+                    | Error l -> Some l
+                    | Ok _ -> None)
+            with
             | Some bad -> Error(sprintf "pins source has an unparseable line (expected name=version): %s" bad)
             | None ->
-                let map = parsed |> Array.choose (function Ok kv -> Some kv | Error _ -> None) |> Map.ofArray
+                let map =
+                    parsed
+                    |> Array.choose (function
+                        | Ok kv -> Some kv
+                        | Error _ -> None)
+                    |> Map.ofArray
+
                 Ok { Resolved = map }
 
     let readPosture (repoDir: string) (path: string) () : Result<PostureEvidence, string> =
-        readAllText repoDir path |> Result.map (fun text -> { Observed = splitTokens text })
+        readAllText repoDir path
+        |> Result.map (fun text -> { Observed = splitTokens text })
 
     let realPort (repoDir: string) (layout: SourceLayout) : RepositoryPort =
-        { ReadVersion = readVersion repoDir layout
-          ReadMetadata = readMetadata repoDir layout
-          ReadPins = readPins repoDir layout
-          ReadPublishPlan = readPosture repoDir layout.PublishPlanPath
-          ReadTrustedPublishing = readPosture repoDir layout.TrustedPublishingPath
-          ReadProvenance = readPosture repoDir layout.ProvenancePath }
+        {
+            ReadVersion = readVersion repoDir layout
+            ReadMetadata = readMetadata repoDir layout
+            ReadPins = readPins repoDir layout
+            ReadPublishPlan = readPosture repoDir layout.PublishPlanPath
+            ReadTrustedPublishing = readPosture repoDir layout.TrustedPublishingPath
+            ReadProvenance = readPosture repoDir layout.ProvenancePath
+        }
 
     let gather (port: RepositoryPort) : RecoveredEvidence =
         // Reify ANY thrown exception as `Error` so a port that throws still yields a well-formed bundle
@@ -105,12 +121,14 @@ module Interpreter =
             with ex ->
                 Error(sprintf "read threw: %s" ex.Message)
 
-        { Version = safe port.ReadVersion
-          Metadata = safe port.ReadMetadata
-          Pins = safe port.ReadPins
-          PublishPlan = safe port.ReadPublishPlan
-          TrustedPublishing = safe port.ReadTrustedPublishing
-          Provenance = safe port.ReadProvenance }
+        {
+            Version = safe port.ReadVersion
+            Metadata = safe port.ReadMetadata
+            Pins = safe port.ReadPins
+            PublishPlan = safe port.ReadPublishPlan
+            TrustedPublishing = safe port.ReadTrustedPublishing
+            Provenance = safe port.ReadProvenance
+        }
 
     let senseRelease (port: RepositoryPort) (expectations: ReleaseExpectations) : SensedRelease =
         gather port |> Sensing.deriveFacts expectations

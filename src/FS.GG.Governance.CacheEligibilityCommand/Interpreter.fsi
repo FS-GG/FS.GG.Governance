@@ -33,10 +33,12 @@ module Interpreter =
     /// resolves unresolved on command version (no-hide, FR-005) — never fabricated. The real port computes
     /// real BCL-crypto digests over real on-disk bytes; tests back it with fixed literal values (Synthetic).
     type FreshnessSensor =
-        { SenseRuleHash: unit -> RuleHash option
-          SenseGeneratorVersion: unit -> GeneratorVersion option
-          SenseCoveredArtifacts: Gate -> ArtifactHash list option
-          SenseCommandVersion: CommandId -> CommandVersion option }
+        {
+            SenseRuleHash: unit -> RuleHash option
+            SenseGeneratorVersion: unit -> GeneratorVersion option
+            SenseCoveredArtifacts: Gate -> ArtifactHash list option
+            SenseCommandVersion: CommandId -> CommandVersion option
+        }
 
     /// The injected READ-ONLY evidence-reuse store port (D6). `Ok None` = the file is ABSENT ⇒ the caller
     /// treats it as `EvidenceReuse.empty` (FR-006); `Ok (Some store)` = a present, well-formed store;
@@ -48,20 +50,22 @@ module Interpreter =
     /// REUSED F014/F016 ports; `Freshness`/`Store` are new; `Write`/`Out` mirror the RouteCommand edges.
     /// Wholly faked in tests so no real `git`/hash/filesystem is reached (FR-012, SC-007).
     type Ports =
-        { Files: Loader.FileReader
-          Git: FS.GG.Governance.Snapshot.Ports
-          Freshness: FreshnessSensor
-          Store: StoreReader
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit
-          /// F27 wiring (063) US2: sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag
-          /// into a `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires
-          /// `Capability.senseCapability`; tests inject a synthetic capability to exercise the Rich path.
-          SenseCapability: bool -> RenderMode.ColorCapability
-          /// F27 wiring (063) US2: render the report view richly to the terminal (the `Rich` path). `realPorts`
-          /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
-          /// inject a capturing renderer. Plain/Json still go via `Out`.
-          RenderReport: ReportView.ReportView -> unit }
+        {
+            Files: Loader.FileReader
+            Git: FS.GG.Governance.Snapshot.Ports
+            Freshness: FreshnessSensor
+            Store: StoreReader
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+            /// F27 wiring (063) US2: sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag
+            /// into a `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires
+            /// `Capability.senseCapability`; tests inject a synthetic capability to exercise the Rich path.
+            SenseCapability: bool -> RenderMode.ColorCapability
+            /// F27 wiring (063) US2: render the report view richly to the terminal (the `Rich` path). `realPorts`
+            /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
+            /// inject a capturing renderer. Plain/Json still go via `Out`.
+            RenderReport: ReportView.ReportView -> unit
+        }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a real BCL-crypto `FreshnessSensor` (real SHA-256 over the

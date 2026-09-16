@@ -6,9 +6,9 @@
 namespace FS.GG.Governance.VerifyJson
 
 open System.Text.Json
-open FS.GG.Governance.Config.Model         // SurfaceId, EvidenceTag, GovernedPath
-open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
-open FS.GG.Governance.JsonTokens           // 073: severityToken
+open FS.GG.Governance.Config.Model // SurfaceId, EvidenceTag, GovernedPath
+open FS.GG.Governance.RuleIdentity // 068: the additive per-finding `ruleId` source-prefixed token
+open FS.GG.Governance.JsonTokens // 073: severityToken
 
 module SC = FS.GG.Governance.SurfaceChecks.Model // F24: the additive surfaceChecks section
 

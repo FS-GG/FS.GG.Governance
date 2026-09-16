@@ -14,10 +14,10 @@
 
 namespace FS.GG.Governance.RouteCommand
 
-open FS.GG.Governance.Config.Model       // GovernedPath
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot
-open FS.GG.Governance.Route.Model          // RouteResult
-open FS.GG.Governance.Config              // Validation (Config.Model)
+open FS.GG.Governance.Config.Model // GovernedPath
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot
+open FS.GG.Governance.Route.Model // RouteResult
+open FS.GG.Governance.Config // Validation (Config.Model)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -37,11 +37,13 @@ module Loop =
     /// The normalized invocation (data-model §2). Defaults: `Repo = "."`,
     /// `GatesOut = <repo>/.fsgg/gates.json`, `RouteOut = <repo>/readiness/route.json` (research D5).
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Format: OutputFormat
-          GatesOut: string
-          RouteOut: string }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Format: OutputFormat
+            GatesOut: string
+            RouteOut: string
+        }
 
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
@@ -82,8 +84,10 @@ module Loop =
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
     /// NO clock, machine-absolute path, or environment value (FR-006, SC-005).
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed (data-model §3).
     type Phase =
@@ -98,14 +102,16 @@ module Loop =
     /// The durable state the workflow owns. `GatesDoc`/`RouteDoc` are the F021/F020 projection strings,
     /// both computed before any write effect is emitted (research D9).
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Result: RouteResult option
-          GatesDoc: string option
-          RouteDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Result: RouteResult option
+            GatesDoc: string option
+            RouteDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values,
     /// never exceptions (research D8). `--paths` and `--since` together ⇒ `PathsAndSinceTogether`.

@@ -16,10 +16,16 @@ module Verdict =
 
     // Reasons attached to the cases of a given kind, in list order.
     let failReasons verdicts =
-        verdicts |> List.choose (function Fail r -> Some r | _ -> None)
+        verdicts
+        |> List.choose (function
+            | Fail r -> Some r
+            | _ -> None)
 
     let uncertainReasons verdicts =
-        verdicts |> List.choose (function Uncertain r -> Some r | _ -> None)
+        verdicts
+        |> List.choose (function
+            | Uncertain r -> Some r
+            | _ -> None)
 
     // Reason aggregation (FR-006, SC-001 — the Hazard-2 mitigation): make a combined
     // reason a function of the SET of "; "-delimited components, not their order or
@@ -42,9 +48,19 @@ module Verdict =
     let all (verdicts: Verdict list) : Verdict =
         // Kleene "strong" conjunction (FR-002), first-match priority over a single
         // pass: any Fail ⇒ Fail; else any Uncertain ⇒ Uncertain; else Pass.
-        if verdicts |> List.exists (function Fail _ -> true | _ -> false) then
+        if
+            verdicts
+            |> List.exists (function
+                | Fail _ -> true
+                | _ -> false)
+        then
             Fail(combineReasons (failReasons verdicts))
-        elif verdicts |> List.exists (function Uncertain _ -> true | _ -> false) then
+        elif
+            verdicts
+            |> List.exists (function
+                | Uncertain _ -> true
+                | _ -> false)
+        then
             Uncertain(combineReasons (uncertainReasons verdicts))
         else
             Pass
@@ -52,9 +68,19 @@ module Verdict =
     let any (verdicts: Verdict list) : Verdict =
         // Kleene "strong" disjunction (FR-003): any Pass ⇒ Pass; else any Uncertain
         // ⇒ Uncertain; else Fail (the empty list ⇒ Fail "").
-        if verdicts |> List.exists (function Pass -> true | _ -> false) then
+        if
+            verdicts
+            |> List.exists (function
+                | Pass -> true
+                | _ -> false)
+        then
             Pass
-        elif verdicts |> List.exists (function Uncertain _ -> true | _ -> false) then
+        elif
+            verdicts
+            |> List.exists (function
+                | Uncertain _ -> true
+                | _ -> false)
+        then
             Uncertain(combineReasons (uncertainReasons verdicts))
         else
             Fail(combineReasons (failReasons verdicts))

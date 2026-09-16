@@ -39,101 +39,106 @@ module SddReferenceProvider =
     /// indentation and backslash paths (MSBuild normalizes the separators per platform).
     let solutionFile (app: string) : string =
         let proj name path guid =
-            sprintf
-                "Project(\"{%s}\") = \"%s\", \"%s\", \"{%s}\"\nEndProject"
-                fsharpProjectTypeGuid
-                name
-                path
-                guid
+            sprintf "Project(\"{%s}\") = \"%s\", \"%s\", \"{%s}\"\nEndProject" fsharpProjectTypeGuid name path guid
 
         let cfg guid =
-            [ sprintf "\t\t{%s}.Debug|Any CPU.ActiveCfg = Debug|Any CPU" guid
-              sprintf "\t\t{%s}.Debug|Any CPU.Build.0 = Debug|Any CPU" guid
-              sprintf "\t\t{%s}.Release|Any CPU.ActiveCfg = Release|Any CPU" guid
-              sprintf "\t\t{%s}.Release|Any CPU.Build.0 = Release|Any CPU" guid ]
+            [
+                sprintf "\t\t{%s}.Debug|Any CPU.ActiveCfg = Debug|Any CPU" guid
+                sprintf "\t\t{%s}.Debug|Any CPU.Build.0 = Debug|Any CPU" guid
+                sprintf "\t\t{%s}.Release|Any CPU.ActiveCfg = Release|Any CPU" guid
+                sprintf "\t\t{%s}.Release|Any CPU.Build.0 = Release|Any CPU" guid
+            ]
             |> String.concat "\n"
 
-        [ "Microsoft Visual Studio Solution File, Format Version 12.00"
-          "# Visual Studio Version 17"
-          proj app (sprintf "src\\%s\\%s.fsproj" app app) appProjectGuid
-          proj (app + ".Tests") (sprintf "tests\\%s.Tests\\%s.Tests.fsproj" app app) testProjectGuid
-          "Global"
-          "\tGlobalSection(SolutionConfigurationPlatforms) = preSolution"
-          "\t\tDebug|Any CPU = Debug|Any CPU"
-          "\t\tRelease|Any CPU = Release|Any CPU"
-          "\tEndGlobalSection"
-          "\tGlobalSection(ProjectConfigurationPlatforms) = postSolution"
-          cfg appProjectGuid
-          cfg testProjectGuid
-          "\tEndGlobalSection"
-          "EndGlobal"
-          "" ]
+        [
+            "Microsoft Visual Studio Solution File, Format Version 12.00"
+            "# Visual Studio Version 17"
+            proj app (sprintf "src\\%s\\%s.fsproj" app app) appProjectGuid
+            proj (app + ".Tests") (sprintf "tests\\%s.Tests\\%s.Tests.fsproj" app app) testProjectGuid
+            "Global"
+            "\tGlobalSection(SolutionConfigurationPlatforms) = preSolution"
+            "\t\tDebug|Any CPU = Debug|Any CPU"
+            "\t\tRelease|Any CPU = Release|Any CPU"
+            "\tEndGlobalSection"
+            "\tGlobalSection(ProjectConfigurationPlatforms) = postSolution"
+            cfg appProjectGuid
+            cfg testProjectGuid
+            "\tEndGlobalSection"
+            "EndGlobal"
+            ""
+        ]
         |> String.concat "\n"
 
     /// The runtime source project: an `Exe`, `net10.0`, FSharp.Core only (implicitly referenced by the
     /// F# SDK — no `PackageReference`), so the dependency closure is empty beyond the SDK.
-    let sourceProject : string =
-        [ "<Project Sdk=\"Microsoft.NET.Sdk\">"
-          ""
-          "  <PropertyGroup>"
-          "    <OutputType>Exe</OutputType>"
-          "    <TargetFramework>net10.0</TargetFramework>"
-          "  </PropertyGroup>"
-          ""
-          "  <ItemGroup>"
-          "    <Compile Include=\"Program.fs\" />"
-          "  </ItemGroup>"
-          ""
-          "</Project>"
-          "" ]
+    let sourceProject: string =
+        [
+            "<Project Sdk=\"Microsoft.NET.Sdk\">"
+            ""
+            "  <PropertyGroup>"
+            "    <OutputType>Exe</OutputType>"
+            "    <TargetFramework>net10.0</TargetFramework>"
+            "  </PropertyGroup>"
+            ""
+            "  <ItemGroup>"
+            "    <Compile Include=\"Program.fs\" />"
+            "  </ItemGroup>"
+            ""
+            "</Project>"
+            ""
+        ]
         |> String.concat "\n"
 
     /// The trivial buildable entry point ([<EntryPoint>] returning 0). An implicit module named after the
     /// file carries the attribute.
-    let programFile : string = "[<EntryPoint>]\nlet main _ = 0\n"
+    let programFile: string = "[<EntryPoint>]\nlet main _ = 0\n"
 
     /// The test project: a `net10.0` library that references the source project + FSharp.Core only.
     let testProject (app: string) : string =
-        [ "<Project Sdk=\"Microsoft.NET.Sdk\">"
-          ""
-          "  <PropertyGroup>"
-          "    <TargetFramework>net10.0</TargetFramework>"
-          "  </PropertyGroup>"
-          ""
-          "  <ItemGroup>"
-          "    <Compile Include=\"Tests.fs\" />"
-          "  </ItemGroup>"
-          ""
-          "  <ItemGroup>"
-          sprintf "    <ProjectReference Include=\"../../src/%s/%s.fsproj\" />" app app
-          "  </ItemGroup>"
-          ""
-          "</Project>"
-          "" ]
+        [
+            "<Project Sdk=\"Microsoft.NET.Sdk\">"
+            ""
+            "  <PropertyGroup>"
+            "    <TargetFramework>net10.0</TargetFramework>"
+            "  </PropertyGroup>"
+            ""
+            "  <ItemGroup>"
+            "    <Compile Include=\"Tests.fs\" />"
+            "  </ItemGroup>"
+            ""
+            "  <ItemGroup>"
+            sprintf "    <ProjectReference Include=\"../../src/%s/%s.fsproj\" />" app app
+            "  </ItemGroup>"
+            ""
+            "</Project>"
+            ""
+        ]
         |> String.concat "\n"
 
     /// The trivial buildable test body.
-    let testFile : string = "module Tests\n\nlet answer = 42\n"
+    let testFile: string = "module Tests\n\nlet answer = 42\n"
 
     /// Provenance: the generated-path list + the documented build command.
     let readmeFile (app: string) : string =
-        [ sprintf "# %s (generated by fsgg.sample.sdd-reference)" app
-          ""
-          "Generated runtime skeleton:"
-          ""
-          sprintf "- `%s.sln`" app
-          sprintf "- `src/%s/%s.fsproj`" app app
-          sprintf "- `src/%s/Program.fs`" app
-          sprintf "- `tests/%s.Tests/%s.Tests.fsproj`" app app
-          sprintf "- `tests/%s.Tests/Tests.fs`" app
-          "- `README.md`"
-          ""
-          "Build:"
-          ""
-          "```"
-          sprintf "dotnet build %s.sln" app
-          "```"
-          "" ]
+        [
+            sprintf "# %s (generated by fsgg.sample.sdd-reference)" app
+            ""
+            "Generated runtime skeleton:"
+            ""
+            sprintf "- `%s.sln`" app
+            sprintf "- `src/%s/%s.fsproj`" app app
+            sprintf "- `src/%s/Program.fs`" app
+            sprintf "- `tests/%s.Tests/%s.Tests.fsproj`" app app
+            sprintf "- `tests/%s.Tests/Tests.fs`" app
+            "- `README.md`"
+            ""
+            "Build:"
+            ""
+            "```"
+            sprintf "dotnet build %s.sln" app
+            "```"
+            ""
+        ]
         |> String.concat "\n"
 
     /// PURE, deterministic emission: derive `<App>`, return the fixed buildable file set in a stable
@@ -142,18 +147,28 @@ module SddReferenceProvider =
     let emit (request: ScaffoldRequest) : Result<ProviderEmission, ProviderError> =
         let app = appName request.Target
 
-        let file path contents = { RelativePath = path; Contents = contents }
+        let file path contents =
+            {
+                RelativePath = path
+                Contents = contents
+            }
 
         Ok
-            { Files =
-                [ file (sprintf "%s.sln" app) (solutionFile app)
-                  file (sprintf "src/%s/%s.fsproj" app app) sourceProject
-                  file (sprintf "src/%s/Program.fs" app) programFile
-                  file (sprintf "tests/%s.Tests/%s.Tests.fsproj" app app) (testProject app)
-                  file (sprintf "tests/%s.Tests/Tests.fs" app) testFile
-                  file "README.md" (readmeFile app) ] }
+            {
+                Files =
+                    [
+                        file (sprintf "%s.sln" app) (solutionFile app)
+                        file (sprintf "src/%s/%s.fsproj" app app) sourceProject
+                        file (sprintf "src/%s/Program.fs" app) programFile
+                        file (sprintf "tests/%s.Tests/%s.Tests.fsproj" app app) (testProject app)
+                        file (sprintf "tests/%s.Tests/Tests.fs" app) testFile
+                        file "README.md" (readmeFile app)
+                    ]
+            }
 
     let provider =
-        { Id = providerId
-          ContractVersion = { Major = 1; Minor = 0 }
-          Emit = emit }
+        {
+            Id = providerId
+            ContractVersion = { Major = 1; Minor = 0 }
+            Emit = emit
+        }

@@ -6,21 +6,27 @@ open FS.GG.Governance.Config.Model
 module FSharpSurfacePolicy =
 
     type Exemption =
-        { Module: string
-          Owner: string
-          Rationale: string
-          ReviewBy: System.DateOnly }
+        {
+            Module: string
+            Owner: string
+            Rationale: string
+            ReviewBy: System.DateOnly
+        }
 
     type ProjectPolicy =
-        { RequiresBaseline: bool
-          BaselineCurrent: bool }
+        {
+            RequiresBaseline: bool
+            BaselineCurrent: bool
+        }
 
     type Facts =
-        { DeclaredGlob: string
-          /// The declared enforcement maturity projected by fsharp-public-surface/v1 receipts.
-          Maturity: Maturity
-          Projects: Map<string, ProjectPolicy>
-          Exemptions: Exemption list }
+        {
+            DeclaredGlob: string
+            /// The declared enforcement maturity projected by fsharp-public-surface/v1 receipts.
+            Maturity: Maturity
+            Projects: Map<string, ProjectPolicy>
+            Exemptions: Exemption list
+        }
 
     type LoadResult =
         | Missing of Facts

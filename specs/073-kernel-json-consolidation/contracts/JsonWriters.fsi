@@ -10,12 +10,12 @@
 namespace FS.GG.Governance.JsonWriters
 
 open System.Text.Json
-open FS.GG.Governance.Gates.Model              // GateId, GateDisposition
-open FS.GG.Governance.GateRun.Model            // GateOutcome
-open FS.GG.Governance.CommandRecord.Model      // ExitCode
-open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause
-open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, CacheEligibilityVerdict
-open FS.GG.Governance.Enforcement.Model        // EnforcementDecision
+open FS.GG.Governance.Gates.Model // GateId, GateDisposition
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.CommandRecord.Model // ExitCode
+open FS.GG.Governance.EvidenceReuse.Model // RecomputeCause
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport, CacheEligibilityVerdict
+open FS.GG.Governance.Enforcement.Model // EnforcementDecision
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module JsonWriters =

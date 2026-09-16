@@ -21,27 +21,31 @@ module CurrencyEnforcement =
         | Undeterminable of reason: string
 
     type CurrencyFinding =
-        { ViewId: string
-          Kind: ViewKind
-          Cause: StaleCause
-          BaseSeverity: Severity
-          Maturity: Maturity }
+        {
+            ViewId: string
+            Kind: ViewKind
+            Cause: StaleCause
+            BaseSeverity: Severity
+            Maturity: Maturity
+        }
 
     // Hidden (absent from the .fsi): a `FreshnessInputs` whose 8 non-source fields are fixed filler so that
     // `FreshnessKey.diff` of two comparands differs ONLY in the source-digest set + generator version — the
     // two currency-relevant categories for a generated view (research D1/D4: revisions held equal). Both
     // comparands share identical filler, so diff can only report CoveredArtifactsCat / GeneratorVersionCat.
     let currencyComparand (artifacts: ArtifactHash list) (version: GeneratorVersion) : FreshnessInputs =
-        { Check = CheckId "view-currency"
-          Domain = DomainId "view-currency"
-          Command = None
-          Environment = LocalOrCi
-          RuleHash = RuleHash ""
-          CoveredArtifacts = artifacts
-          CommandVersion = None
-          GeneratorVersion = version
-          Base = Revision ""
-          Head = Revision "" }
+        {
+            Check = CheckId "view-currency"
+            Domain = DomainId "view-currency"
+            Command = None
+            Environment = LocalOrCi
+            RuleHash = RuleHash ""
+            CoveredArtifacts = artifacts
+            CommandVersion = None
+            GeneratorVersion = version
+            Base = Revision ""
+            Head = Revision ""
+        }
 
     let decideCurrency
         (entry: GenerationEntry)
@@ -49,9 +53,11 @@ module CurrencyEnforcement =
         (sensed: Result<ArtifactHash list * GeneratorVersion, string>)
         : ViewDecision =
         let decide status drifted =
-            { Entry = entry
-              Status = status
-              Drifted = drifted }
+            {
+                Entry = entry
+                Status = status
+                Drifted = drifted
+            }
 
         match recorded, sensed with
         // Never fabricate currency (FR-008): a sense failure is StaleUnresolved, never Current.
@@ -77,11 +83,13 @@ module CurrencyEnforcement =
             |> List.choose (fun view ->
                 let finding cause =
                     Some
-                        { ViewId = view.Entry.ViewId
-                          Kind = view.Entry.Kind
-                          Cause = cause
-                          BaseSeverity = Blocking
-                          Maturity = configured }
+                        {
+                            ViewId = view.Entry.ViewId
+                            Kind = view.Entry.Kind
+                            Cause = cause
+                            BaseSeverity = Blocking
+                            Maturity = configured
+                        }
 
                 match view.Status with
                 | Current
@@ -97,17 +105,21 @@ module CurrencyEnforcement =
     // is unknowable when the file can't be read — a corrupt manifest must block from PR onward until fixed,
     // rather than be trusted at an also-unknowable severity. Not gated by `findingsOf` (which needs a dial).
     let manifestUnreadableFinding (reason: string) : CurrencyFinding =
-        { ViewId = ".fsgg/refresh.yml"
-          Kind = Other "refresh-manifest"
-          Cause = Undeterminable reason
-          BaseSeverity = Blocking
-          Maturity = BlockOnPr }
+        {
+            ViewId = ".fsgg/refresh.yml"
+            Kind = Other "refresh-manifest"
+            Cause = Undeterminable reason
+            BaseSeverity = Blocking
+            Maturity = BlockOnPr
+        }
 
     let enforcementInputOf (finding: CurrencyFinding) (mode: RunMode) (profile: Profile) : EnforcementInput =
-        { BaseSeverity = finding.BaseSeverity
-          Maturity = finding.Maturity
-          Mode = mode
-          Profile = profile }
+        {
+            BaseSeverity = finding.BaseSeverity
+            Maturity = finding.Maturity
+            Mode = mode
+            Profile = profile
+        }
 
     let decisionOf (finding: CurrencyFinding) (mode: RunMode) (profile: Profile) : EnforcementDecision =
         deriveEffectiveSeverity (enforcementInputOf finding mode profile)

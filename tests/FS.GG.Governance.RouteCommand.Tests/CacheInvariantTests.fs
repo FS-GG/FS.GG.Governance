@@ -60,34 +60,42 @@ let private fixture () =
 let tests =
     testList
         "CacheInvariant"
-        [ test "Some report vs None: every NON-cache field of route.json is byte-identical (L1, SC-004)" {
-              let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
-              let withNone = RouteJson.ofRouteResult result None []
+        [
+            test "Some report vs None: every NON-cache field of route.json is byte-identical (L1, SC-004)" {
+                let result, cacheReport = fixture ()
+                let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
+                let withNone = RouteJson.ofRouteResult result None []
 
-              Expect.notEqual withSome withNone "the cache section IS a real delta (Some ≠ None)"
-              Expect.equal (withoutCache withSome) (withoutCache withNone) "all NON-cache fields are identical — the cache section is the only delta"
-          }
+                Expect.notEqual withSome withNone "the cache section IS a real delta (Some ≠ None)"
 
-          test "the cache section flips evaluated false→true; schemaVersion stays fsgg.route/v2 (L1)" {
-              let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
-              let withNone = RouteJson.ofRouteResult result None []
+                Expect.equal
+                    (withoutCache withSome)
+                    (withoutCache withNone)
+                    "all NON-cache fields are identical — the cache section is the only delta"
+            }
 
-              Expect.stringContains withNone "\"cacheEligibilityEvaluated\":false" "None ⇒ not evaluated"
-              Expect.stringContains withSome "\"cacheEligibilityEvaluated\":true" "Some ⇒ evaluated"
-              Expect.stringContains withSome "fsgg.route/v2" "schema unchanged (no bump)"
-          }
+            test "the cache section flips evaluated false→true; schemaVersion stays fsgg.route/v2 (L1)" {
+                let result, cacheReport = fixture ()
+                let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
+                let withNone = RouteJson.ofRouteResult result None []
 
-          test "FR-013: no raw freshness input / hash / freshness key leaks into route.json (C1, L6)" {
-              let result, cacheReport = fixture ()
-              let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
+                Expect.stringContains withNone "\"cacheEligibilityEvaluated\":false" "None ⇒ not evaluated"
+                Expect.stringContains withSome "\"cacheEligibilityEvaluated\":true" "Some ⇒ evaluated"
+                Expect.stringContains withSome "fsgg.route/v2" "schema unchanged (no bump)"
+            }
 
-              // The faked sensor's literal digests must NEVER appear — the commands render no raw freshness input.
-              for tok in [ "rule-synthetic"; "gen-synthetic"; "art-synthetic"; "cmd-synthetic" ] do
-                  Expect.isFalse (withSome.Contains tok) (sprintf "raw freshness input %s must not appear in route.json" tok)
+            test "FR-013: no raw freshness input / hash / freshness key leaks into route.json (C1, L6)" {
+                let result, cacheReport = fixture ()
+                let withSome = RouteJson.ofRouteResult result (Some cacheReport) []
 
-              // No freshness-key fingerprint vocabulary leaks (the embed renders verdicts, not inputs).
-              Expect.isFalse (withSome.Contains "generatorVersion") "no raw generatorVersion field"
-              Expect.isFalse (withSome.Contains "coveredArtifacts") "no raw coveredArtifacts field"
-          } ]
+                // The faked sensor's literal digests must NEVER appear — the commands render no raw freshness input.
+                for tok in [ "rule-synthetic"; "gen-synthetic"; "art-synthetic"; "cmd-synthetic" ] do
+                    Expect.isFalse
+                        (withSome.Contains tok)
+                        (sprintf "raw freshness input %s must not appear in route.json" tok)
+
+                // No freshness-key fingerprint vocabulary leaks (the embed renders verdicts, not inputs).
+                Expect.isFalse (withSome.Contains "generatorVersion") "no raw generatorVersion field"
+                Expect.isFalse (withSome.Contains "coveredArtifacts") "no raw coveredArtifacts field"
+            }
+        ]

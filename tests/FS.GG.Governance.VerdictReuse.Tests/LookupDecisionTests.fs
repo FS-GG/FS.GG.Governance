@@ -16,52 +16,61 @@ open FS.GG.Governance.VerdictReuse.Tests.Support
 let tests =
     testList
         "LookupDecision (US1 — Valid iff all seven inputs match)"
-        [ test "request equal on all seven inputs ⇒ Valid carrying that entry's reference" {
-              let store = handStore [ baseInputs, refV1 ]
-              Expect.equal (VerdictReuse.lookup baseInputs store) (Valid refV1) "exact-match request reuses V1"
-          }
+        [
+            test "request equal on all seven inputs ⇒ Valid carrying that entry's reference" {
+                let store = handStore [ baseInputs, refV1 ]
+                Expect.equal (VerdictReuse.lookup baseInputs store) (Valid refV1) "exact-match request reuses V1"
+            }
 
-          test "request equal up to reviewed-artifact SET (reordered/deduped) ⇒ still Valid (set semantics)" {
-              let store = handStore [ baseInputs, refV1 ]
-              // same set {h1,h2}, reordered and without the duplicate
-              let request = { baseInputs with ReviewedArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2" ] }
-              Expect.equal (VerdictReuse.lookup request store) (Valid refV1) "artifact reorder/dedup still matches"
-          }
+            test "request equal up to reviewed-artifact SET (reordered/deduped) ⇒ still Valid (set semantics)" {
+                let store = handStore [ baseInputs, refV1 ]
+                // same set {h1,h2}, reordered and without the duplicate
+                let request =
+                    { baseInputs with
+                        ReviewedArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2" ]
+                    }
 
-          test "single-field change ⇒ Invalidated — table-driven over EVERY one of the seven inputs" {
-              let store = handStore [ baseInputs, refV1 ]
+                Expect.equal (VerdictReuse.lookup request store) (Valid refV1) "artifact reorder/dedup still matches"
+            }
 
-              for (ri, variant) in allInputs do
-                  let request = variant baseInputs
+            test "single-field change ⇒ Invalidated — table-driven over EVERY one of the seven inputs" {
+                let store = handStore [ baseInputs, refV1 ]
 
-                  match VerdictReuse.lookup request store with
-                  | Invalidated _ -> ()
-                  | Valid _ ->
-                      failtestf "changing %s alone must invalidate, got Valid" (Model.inputToken ri)
-          }
+                for (ri, variant) in allInputs do
+                    let request = variant baseInputs
 
-          test "selection among several entries ⇒ Valid with the one that fully matches" {
-              // newest-first: a judge-changed entry, then the exact match, then a prompt-changed entry.
-              let store =
-                  handStore
-                      [ variantModelVersion baseInputs, refV2
-                        baseInputs, refV1
-                        variantPromptHash baseInputs, refV3 ]
+                    match VerdictReuse.lookup request store with
+                    | Invalidated _ -> ()
+                    | Valid _ -> failtestf "changing %s alone must invalidate, got Valid" (Model.inputToken ri)
+            }
 
-              Expect.equal
-                  (VerdictReuse.lookup baseInputs store)
-                  (Valid refV1)
-                  "the single fully-matching entry's reference is reused regardless of the others"
-          }
+            test "selection among several entries ⇒ Valid with the one that fully matches" {
+                // newest-first: a judge-changed entry, then the exact match, then a prompt-changed entry.
+                let store =
+                    handStore
+                        [
+                            variantModelVersion baseInputs, refV2
+                            baseInputs, refV1
+                            variantPromptHash baseInputs, refV3
+                        ]
 
-          testPropertyWithConfig fscheckConfig "Valid iff some entry matches (and carries the head-most match's verdict)"
-          <| fun (request: AgentReviewInputs) (store: VerdictStore) ->
-              let firstMatch =
-                  VerdictReuse.entries store
-                  |> List.tryFind (fun e -> AgentReviewKey.matches request e.Inputs)
+                Expect.equal
+                    (VerdictReuse.lookup baseInputs store)
+                    (Valid refV1)
+                    "the single fully-matching entry's reference is reused regardless of the others"
+            }
 
-              match VerdictReuse.lookup request store, firstMatch with
-              | Valid ref, Some e -> ref = e.Verdict
-              | Valid _, None -> false
-              | Invalidated _, None -> true
-              | Invalidated _, Some _ -> false ]
+            testPropertyWithConfig
+                fscheckConfig
+                "Valid iff some entry matches (and carries the head-most match's verdict)"
+            <| fun (request: AgentReviewInputs) (store: VerdictStore) ->
+                let firstMatch =
+                    VerdictReuse.entries store
+                    |> List.tryFind (fun e -> AgentReviewKey.matches request e.Inputs)
+
+                match VerdictReuse.lookup request store, firstMatch with
+                | Valid ref, Some e -> ref = e.Verdict
+                | Valid _, None -> false
+                | Invalidated _, None -> true
+                | Invalidated _, Some _ -> false
+        ]

@@ -56,18 +56,22 @@ type JudgeId = { ModelId: string; Version: string }
 /// interpreter (F08) to dispatch to an agent. The bridge produces it but never acts on
 /// it (Principle IV: I/O represented as data). `Key` is the content-hash cache key.
 type ReviewRequest =
-    { Rule: RuleId
-      Question: string option
-      Key: string }
+    {
+        Rule: RuleId
+        Question: string option
+        Key: string
+    }
 
 /// A frozen agent verdict, recorded by F08 against its cache `Key` (carried as the
 /// `Reviewed` case of `RuleOutcome`). `toRule` RECOGNISES one (via `Bridge.Project`) to
 /// short-circuit an `AgentReviewed` rule on a cache HIT (FR-009/FR-014); recording it is
 /// F08's job, recognising it is the bridge's.
 type RecordedReview =
-    { Rule: RuleId
-      Key: string
-      Verdict: Verdict }
+    {
+        Rule: RuleId
+        Key: string
+        Verdict: Verdict
+    }
 
 /// The governance outcome a bridged rule asserts each run — the domain-neutral payload
 /// the kernel carries. An adapter embeds it into its own `'fact` (`Bridge.Embed`) and
@@ -93,17 +97,18 @@ type RuleOutcome =
 /// research D1.) Build it with the `rule`/`blocking`/`asking` constructors, not by hand,
 /// so the `Deterministic`-tier reified-ness guardrail (FR-006) cannot be bypassed.
 type CheckRule<'fact> =
-    { Id: RuleId
-      Tier: CheckTier
-      Spec: SpecSource
-      Severity: Severity
-      Check: Check<'fact>
-      Question: string option }
+    {
+        Id: RuleId
+        Tier: CheckTier
+        Spec: SpecSource
+        Severity: Severity
+        Check: Check<'fact>
+        Question: string option
+    }
 
 /// Why authoring a rule was refused. The only refusal is the reified-ness guardrail:
 /// an `Opaque` check cannot masquerade as `Deterministic` (FR-006, SC-001).
-type RuleRejection =
-    | OpaqueCannotBeDeterministic of RuleId
+type RuleRejection = OpaqueCannotBeDeterministic of RuleId
 
 /// The caller-supplied bridge between the domain-neutral `RuleOutcome` and an adapter's
 /// own `'fact` vocabulary, plus the judge identity and the artifact-content lookup. This
@@ -112,16 +117,18 @@ type RuleRejection =
 /// content hash is read FROM THE FACTS (no live I/O — an adapter asserts artifact-content
 /// facts; the bridge looks them up, so `toRule` stays pure).
 type Bridge<'fact> =
-    { /// Identity of the judge, folded into every agent-review cache key (decision #1).
-      Judge: JudgeId
-      /// Content hash of an artifact, read from the current facts. Total: an unknown
-      /// artifact yields a fixed sentinel (e.g. ""), never an exception.
-      ArtifactHash: FactSet<'fact> -> ArtifactRef -> string
-      /// Lift a governance outcome into the adapter's fact value.
-      Embed: RuleOutcome -> 'fact
-      /// Recover a governance outcome from an adapter fact (None if it is not one) — used
-      /// to find a `RecordedReview` whose `Key` matches, for the cache-hit short-circuit.
-      Project: 'fact -> RuleOutcome option }
+    {
+        /// Identity of the judge, folded into every agent-review cache key (decision #1).
+        Judge: JudgeId
+        /// Content hash of an artifact, read from the current facts. Total: an unknown
+        /// artifact yields a fixed sentinel (e.g. ""), never an exception.
+        ArtifactHash: FactSet<'fact> -> ArtifactRef -> string
+        /// Lift a governance outcome into the adapter's fact value.
+        Embed: RuleOutcome -> 'fact
+        /// Recover a governance outcome from an adapter fact (None if it is not one) — used
+        /// to find a `RecordedReview` whose `Key` matches, for the cache-hit short-circuit.
+        Project: 'fact -> RuleOutcome option
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CheckRule =
@@ -134,7 +141,10 @@ module CheckRule =
     /// `Error (OpaqueCannotBeDeterministic id)` — an `Opaque` check is forced to
     /// `AgentReviewed`/`HumanOnly` (FR-006, SC-001). All other tiers always succeed.
     val rule:
-        id: RuleId -> tier: CheckTier -> spec: SpecSource -> check: Check<'fact> ->
+        id: RuleId ->
+        tier: CheckTier ->
+        spec: SpecSource ->
+        check: Check<'fact> ->
             Result<CheckRule<'fact>, RuleRejection>
 
     /// Promote a rule's severity to `Blocking` (leaves its tier unchanged) (FR-005).
@@ -155,8 +165,7 @@ module CheckRule =
     /// changing → a different key (SC-002). Kept separate from `toRule` so each ingredient
     /// can be varied in isolation under test. Encoding (a SHA-256 hex digest) is a detail.
     val cacheKey:
-        judge: JudgeId -> checkHash: string -> artifactHashes: string list -> question: string option ->
-            string
+        judge: JudgeId -> checkHash: string -> artifactHashes: string list -> question: string option -> string
 
     // ── The bridge to the executable kernel rule (FR-007 … FR-010) ──
 

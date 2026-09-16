@@ -47,11 +47,13 @@ type NodeFreshness =
 /// One evidence node in a well-formed graph. `Declared` AND `Effective` are BOTH present (FR-002): taint
 /// surfaces as the delta between them, never as a silent overwrite of `Declared`.
 type EvidenceNode =
-    { Id: string
-      Declared: EvidenceState
-      Effective: EvidenceState
-      Freshness: NodeFreshness
-      Source: string }
+    {
+        Id: string
+        Declared: EvidenceState
+        Effective: EvidenceState
+        Freshness: NodeFreshness
+        Source: string
+    }
 
 /// The well-formed/malformed content split. A graph failure means the per-node effective map is NOT emitted
 /// (FR-004): the document carries the named failure INSTEAD of a partial/guessed map.
@@ -63,8 +65,10 @@ type EvidenceContent =
 /// `Disclosures` are already-rendered `(rule, justification)` pairs carried through from the report; `[]` when
 /// none.
 type EvidenceDocument =
-    { Content: EvidenceContent
-      Disclosures: (string * string) list }
+    {
+        Content: EvidenceContent
+        Disclosures: (string * string) list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module EvidenceJson =

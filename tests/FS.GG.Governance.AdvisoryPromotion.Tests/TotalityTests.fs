@@ -20,18 +20,25 @@ let private wellFormed (d: PromotionDecision) =
 let tests =
     testList
         "Totality"
-        [ test "the degenerate-extreme cross-product all decide without throwing" {
-              let evidences = [ None; Some(evidence "") ]
-              let signs = [ None; Some(signOff "") ]
-              let ints = [ Int32.MinValue; -1; 0; 1; 2; Int32.MaxValue ]
+        [
+            test "the degenerate-extreme cross-product all decide without throwing" {
+                let evidences = [ None; Some(evidence "") ]
+                let signs = [ None; Some(signOff "") ]
+                let ints = [ Int32.MinValue; -1; 0; 1; 2; Int32.MaxValue ]
 
-              for e in evidences do
-                  for s in signs do
-                      for c in ints do
-                          for t in ints do
-                              let d = AdvisoryPromotion.decide (facts e c t s)
-                              Expect.isTrue (wellFormed d) (sprintf "decide threw or mis-shaped for e=%A c=%d t=%d s=%A" e c t s)
-          }
+                for e in evidences do
+                    for s in signs do
+                        for c in ints do
+                            for t in ints do
+                                let d = AdvisoryPromotion.decide (facts e c t s)
 
-          testPropertyWithConfig fscheckConfig "decide returns a decision and never throws over the full cross-product (SC-004, L-D11)" (fun (f: PromotionFacts) ->
-              wellFormed (AdvisoryPromotion.decide f)) ]
+                                Expect.isTrue
+                                    (wellFormed d)
+                                    (sprintf "decide threw or mis-shaped for e=%A c=%d t=%d s=%A" e c t s)
+            }
+
+            testPropertyWithConfig
+                fscheckConfig
+                "decide returns a decision and never throws over the full cross-product (SC-004, L-D11)"
+                (fun (f: PromotionFacts) -> wellFormed (AdvisoryPromotion.decide f))
+        ]

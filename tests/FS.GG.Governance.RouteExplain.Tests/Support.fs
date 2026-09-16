@@ -28,21 +28,25 @@ let check
     (cost: Cost)
     (environment: EnvironmentClass)
     : Check =
-    { Id = CheckId checkId
-      Domain = DomainId domain
-      Command = command |> Option.map CommandId
-      Owner = Owner "fixture"
-      Cost = cost
-      Environment = environment
-      Maturity = Observe
-      Tier = None }
+    {
+        Id = CheckId checkId
+        Domain = DomainId domain
+        Command = command |> Option.map CommandId
+        Owner = Owner "fixture"
+        Cost = cost
+        Environment = environment
+        Maturity = Observe
+        Tier = None
+    }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults.
 let command (commandId: string) (timeoutSeconds: int) : CommandSpec =
-    { Id = CommandId commandId
-      Command = "fixture --run"
-      Timeout = TimeoutLimit timeoutSeconds
-      Environment = Local }
+    {
+        Id = CommandId commandId
+        Command = "fixture --run"
+        Timeout = TimeoutLimit timeoutSeconds
+        Environment = Local
+    }
 
 /// Assemble a real `TypedFacts` with a governed root, a `glob -> domain` path map, declared checks, and
 /// commands — the genuine input to the F015/F017/F018 producers (the Route `Support.fs` shape). No
@@ -54,36 +58,50 @@ let facts
     (commands: CommandSpec list)
     : TypedFacts =
     let entries =
-        pathMap |> List.map (fun (g, d) -> { Glob = GovernedPath g; Capability = DomainId d })
+        pathMap
+        |> List.map (fun (g, d) ->
+            {
+                Glob = GovernedPath g
+                Capability = DomainId d
+            })
 
     let domains =
-        (entries |> List.map (fun e -> e.Capability)) @ (checks |> List.map (fun c -> c.Domain))
+        (entries |> List.map (fun e -> e.Capability))
+        @ (checks |> List.map (fun c -> c.Domain))
         |> List.distinct
 
-    { Project =
-        { SchemaVersion = SchemaVersion 1
-          Id = ProjectId "fixture"
-          Domains = domains
-          GovernedRoot = GovernedPath root
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 1
-          Domains = domains
-          PathMap = entries
-          Surfaces = []
-          Checks = checks }
-      Tooling =
-        match commands with
-        | [] -> None
-        | cs ->
-            Some
-                { SchemaVersion = SchemaVersion 1
-                  Commands = cs
-                  EnvironmentClasses = []
-                  ExternalTools = [] } }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 1
+                Id = ProjectId "fixture"
+                Domains = domains
+                GovernedRoot = GovernedPath root
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 1
+                Domains = domains
+                PathMap = entries
+                Surfaces = []
+                Checks = checks
+            }
+        Tooling =
+            match commands with
+            | [] -> None
+            | cs ->
+                Some
+                    {
+                        SchemaVersion = SchemaVersion 1
+                        Commands = cs
+                        EnvironmentClasses = []
+                        ExternalTools = []
+                    }
+    }
 
 /// The real F018 registry for these facts — `Gates.buildRegistry`, the genuine producer.
 let registryOf (facts: TypedFacts) : GateRegistry =
@@ -114,26 +132,32 @@ let selectOf (facts: TypedFacts) (rawPaths: string list) : RouteResult =
 let gate (domain: string) (checkId: string) (cost: Cost) (environment: EnvironmentClass) : Gate =
     let gid = domain + ":" + checkId
 
-    { Id = GateId gid
-      Domain = DomainId domain
-      Description = sprintf "fixture gate %s" gid
-      Prerequisites = []
-      Cost = cost
-      Timeout = TimeoutLimit 60
-      Owner = Owner "fixture"
-      Maturity = Observe
-      ProductCheck = (environment = Release)
-      FreshnessKey =
-        { Check = CheckId checkId
-          Domain = DomainId domain
-          Cost = cost
-          Environment = environment
-          Command = None } }
+    {
+        Id = GateId gid
+        Domain = DomainId domain
+        Description = sprintf "fixture gate %s" gid
+        Prerequisites = []
+        Cost = cost
+        Timeout = TimeoutLimit 60
+        Owner = Owner "fixture"
+        Maturity = Observe
+        ProductCheck = (environment = Release)
+        FreshnessKey =
+            {
+                Check = CheckId checkId
+                Domain = DomainId domain
+                Cost = cost
+                Environment = environment
+                Command = None
+            }
+    }
 
 /// A literal `SelectingPath` (changed path + the glob it won on).
 let sp (path: string) (glob: string) : SelectingPath =
-    { Path = GovernedPath path
-      MatchedGlob = GovernedPath glob }
+    {
+        Path = GovernedPath path
+        MatchedGlob = GovernedPath glob
+    }
 
 /// A literal `SelectedGate` — a gate plus its route trace.
 let selGate (g: Gate) (paths: SelectingPath list) : SelectedGate = { Gate = g; SelectingPaths = paths }
@@ -145,28 +169,33 @@ let catalog (gates: Gate list) : GateRegistry = { Gates = gates }
 /// `Findings`/`Cost` are inert here (an empty report + the all-zero rollup), present only to type the
 /// value.
 let routeOf (selected: SelectedGate list) : RouteResult =
-    { SelectedGates = selected
-      Findings = { Findings = [] }
-      Cost =
-        { Cheap = 0
-          Medium = 0
-          High = 0
-          Exhaustive = 0 } }
+    {
+        SelectedGates = selected
+        Findings = { Findings = [] }
+        Cost =
+            {
+                Cheap = 0
+                Medium = 0
+                High = 0
+                Exhaustive = 0
+            }
+    }
 
 /// The F031 worked-example catalog (contracts/explanation-semantics.md §2): domain `build` spanning every
 /// `Cost` tier and the local/non-local `EnvironmentClass`es, plus a cross-domain `docs:links`.
 let workedExampleGates: Gate list =
-    [ gate "build" "full" Exhaustive Ci // the high-cost finding gate
-      gate "build" "unit" Cheap Local // same domain, cheaper, local  -> candidate
-      gate "build" "integration" Medium LocalOrCi // same domain, cheaper, local  -> candidate
-      gate "build" "smoke-ci" Medium Ci // same domain, cheaper, NOT local
-      gate "build" "release-verify" Exhaustive Local // same domain, local, NOT strictly cheaper
-      gate "docs" "links" Cheap Local ] // different domain
+    [
+        gate "build" "full" Exhaustive Ci // the high-cost finding gate
+        gate "build" "unit" Cheap Local // same domain, cheaper, local  -> candidate
+        gate "build" "integration" Medium LocalOrCi // same domain, cheaper, local  -> candidate
+        gate "build" "smoke-ci" Medium Ci // same domain, cheaper, NOT local
+        gate "build" "release-verify" Exhaustive Local // same domain, local, NOT strictly cheaper
+        gate "docs" "links" Cheap Local
+    ] // different domain
 
 // ── FsCheck generators (real values, no mocks) ──
 
-let private genCost: Gen<Cost> =
-    Gen.elements [ Cheap; Medium; High; Exhaustive ]
+let private genCost: Gen<Cost> = Gen.elements [ Cheap; Medium; High; Exhaustive ]
 
 let private genEnvironment: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -218,4 +247,5 @@ type Generators =
 /// FsCheck config registering the real `RouteResult` / `GateRegistry` generators.
 let fscheckConfig =
     { FsCheckConfig.defaultConfig with
-        arbitrary = [ typeof<Generators> ] }
+        arbitrary = [ typeof<Generators> ]
+    }

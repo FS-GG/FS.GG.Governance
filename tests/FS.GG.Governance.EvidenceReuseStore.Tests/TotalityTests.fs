@@ -15,24 +15,40 @@ open FS.GG.Governance.EvidenceReuseStore.Tests.Support
 let tests =
     testList
         "Totality"
-        [ testPropertyWithConfig fscheckConfig "serialise always returns a parseable fsgg.evidence-reuse-store/v1 document" (fun (store: ReuseStore) ->
-              let text = EvidenceReuseStore.serialise store
-              use doc = JsonDocument.Parse text
-              doc.RootElement.GetProperty("schemaVersion").GetString() = EvidenceReuseStore.schemaVersion
-              && doc.RootElement.GetProperty("recorded").ValueKind = JsonValueKind.Array)
+        [
+            testPropertyWithConfig
+                fscheckConfig
+                "serialise always returns a parseable fsgg.evidence-reuse-store/v1 document"
+                (fun (store: ReuseStore) ->
+                    let text = EvidenceReuseStore.serialise store
+                    use doc = JsonDocument.Parse text
 
-          testPropertyWithConfig fscheckConfig "retain always returns a well-formed ReuseStore, never throws (any n incl. negatives)" (fun (store: ReuseStore) (n: int) ->
-              let (ReuseStore es) = EvidenceReuseStore.retain n store
-              // value returned; length within the requested bound
-              List.length es <= max 0 n)
+                    doc.RootElement.GetProperty("schemaVersion").GetString() = EvidenceReuseStore.schemaVersion
+                    && doc.RootElement.GetProperty("recorded").ValueKind = JsonValueKind.Array)
 
-          testPropertyWithConfig fscheckConfig "prune always returns a well-formed ReuseStore, never throws" (fun (store: ReuseStore) ->
-              let (ReuseStore es) = EvidenceReuseStore.prune store
-              // value returned; never larger than the input
-              List.length es <= (EvidenceReuse.entries store |> List.length))
+            testPropertyWithConfig
+                fscheckConfig
+                "retain always returns a well-formed ReuseStore, never throws (any n incl. negatives)"
+                (fun (store: ReuseStore) (n: int) ->
+                    let (ReuseStore es) = EvidenceReuseStore.retain n store
+                    // value returned; length within the requested bound
+                    List.length es <= max 0 n)
 
-          test "operations are total over the empty / singleton edges" {
-              Expect.equal (EvidenceReuseStore.serialise EvidenceReuse.empty) """{"schemaVersion":"fsgg.evidence-reuse-store/v1","recorded":[]}""" "empty serialises"
-              Expect.equal (EvidenceReuseStore.retain 0 EvidenceReuse.empty) EvidenceReuse.empty "empty retains"
-              Expect.equal (EvidenceReuseStore.prune EvidenceReuse.empty) EvidenceReuse.empty "empty prunes"
-          } ]
+            testPropertyWithConfig
+                fscheckConfig
+                "prune always returns a well-formed ReuseStore, never throws"
+                (fun (store: ReuseStore) ->
+                    let (ReuseStore es) = EvidenceReuseStore.prune store
+                    // value returned; never larger than the input
+                    List.length es <= (EvidenceReuse.entries store |> List.length))
+
+            test "operations are total over the empty / singleton edges" {
+                Expect.equal
+                    (EvidenceReuseStore.serialise EvidenceReuse.empty)
+                    """{"schemaVersion":"fsgg.evidence-reuse-store/v1","recorded":[]}"""
+                    "empty serialises"
+
+                Expect.equal (EvidenceReuseStore.retain 0 EvidenceReuse.empty) EvidenceReuse.empty "empty retains"
+                Expect.equal (EvidenceReuseStore.prune EvidenceReuse.empty) EvidenceReuse.empty "empty prunes"
+            }
+        ]

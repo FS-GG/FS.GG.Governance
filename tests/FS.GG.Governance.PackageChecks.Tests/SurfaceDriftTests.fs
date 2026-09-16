@@ -13,6 +13,8 @@ let private library = typeof<PackageFacts>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "PackageChecks" "FS.GG.Governance.PackageChecks" library
+        [
+            SurfaceDrift.surfaceTest "PackageChecks" "FS.GG.Governance.PackageChecks" library
 
-          SurfaceDrift.referencesOnly "PackageChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library ]
+            SurfaceDrift.referencesOnly "PackageChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library
+        ]

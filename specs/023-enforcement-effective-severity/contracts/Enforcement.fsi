@@ -69,22 +69,26 @@ module Enforcement =
     /// The four levers for one finding (research D5). `BaseSeverity` and `Maturity` come from the
     /// rule engine / F014 facts; `Mode` and `Profile` come from the run context.
     type EnforcementInput =
-        { BaseSeverity: Severity
-          Maturity: Maturity
-          Mode: RunMode
-          Profile: Profile }
+        {
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Mode: RunMode
+            Profile: Profile
+        }
 
     /// The explainable per-finding decision (FR-010). Carries all six required fields: the unchanged
     /// base severity (echoed byte-identical, FR-009), run mode, profile, maturity, the derived
     /// effective severity, and a non-empty reason naming the responsible levers. No rollup, verdict,
     /// blockers, or exit code (FR-013).
     type EnforcementDecision =
-        { BaseSeverity: Severity
-          Maturity: Maturity
-          Mode: RunMode
-          Profile: Profile
-          EffectiveSeverity: Severity
-          Reason: string }
+        {
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Mode: RunMode
+            Profile: Profile
+            EffectiveSeverity: Severity
+            Reason: string
+        }
 
     // ── Ordering & profile/ProfileId mapping ──
 

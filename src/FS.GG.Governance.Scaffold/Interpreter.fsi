@@ -25,10 +25,12 @@ module Interpreter =
     /// tests (a fake in-proc provider, an in-memory probe/write recorder) so no real filesystem is
     /// reached for the pure-edge assertions; the real-filesystem tests use `realPorts` against a temp dir.
     type Ports =
-        { Invoke: TemplateProvider -> ScaffoldRequest -> Result<ProviderEmission, ProviderError>
-          Probe: string list -> Result<string list, string>
-          Write: (string * string) list -> Result<unit, string>
-          Out: string -> unit }
+        {
+            Invoke: TemplateProvider -> ScaffoldRequest -> Result<ProviderEmission, ProviderError>
+            Probe: string list -> Result<string list, string>
+            Write: (string * string) list -> Result<unit, string>
+            Out: string -> unit
+        }
 
     /// Build the REAL ports for an operator-chosen `target` directory: invoke the provider in-process,
     /// `Probe` the filesystem for the existing subset of target-relative paths, `Write` every file

@@ -28,45 +28,70 @@ let gid (domain: string) (check: string) : GateId = GateId(domain + ":" + check)
 /// A complete, literal `FreshnessInputs` — every category present and distinct so a single-field change is
 /// unambiguous. The worked-example values from contracts/cache-eligibility-api.md (gate ("build", "tests")).
 let baseInputs: FreshnessInputs =
-    { Check = CheckId "build:tests"
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId "build:tests"
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 // ── One representative single-field variant per comparable category ──
 // Each takes `baseInputs` and changes EXACTLY the named category to a distinct value (option categories flip
 // present↔absent). Paired with its `InputCategory` for table-driven tests.
 
-let private variantCheck (i: FreshnessInputs) = { i with Check = CheckId "build:other" }
+let private variantCheck (i: FreshnessInputs) =
+    { i with Check = CheckId "build:other" }
+
 let private variantDomain (i: FreshnessInputs) = { i with Domain = DomainId "release" }
-let private variantCommand (i: FreshnessInputs) = { i with Command = None; CommandVersion = None }
+
+let private variantCommand (i: FreshnessInputs) =
+    { i with
+        Command = None
+        CommandVersion = None
+    }
+
 let private variantEnvironment (i: FreshnessInputs) = { i with Environment = Ci }
 let private variantRuleHash (i: FreshnessInputs) = { i with RuleHash = RuleHash "r2" }
-let private variantCoveredArtifacts (i: FreshnessInputs) = { i with CoveredArtifacts = [ ArtifactHash "h3" ] }
-let private variantCommandVersion (i: FreshnessInputs) = { i with CommandVersion = Some(CommandVersion "9.0") }
-let private variantGeneratorVersion (i: FreshnessInputs) = { i with GeneratorVersion = GeneratorVersion "g2" }
+
+let private variantCoveredArtifacts (i: FreshnessInputs) =
+    { i with
+        CoveredArtifacts = [ ArtifactHash "h3" ]
+    }
+
+let private variantCommandVersion (i: FreshnessInputs) =
+    { i with
+        CommandVersion = Some(CommandVersion "9.0")
+    }
+
+let private variantGeneratorVersion (i: FreshnessInputs) =
+    { i with
+        GeneratorVersion = GeneratorVersion "g2"
+    }
+
 let private variantBase (i: FreshnessInputs) = { i with Base = Revision "ccc" }
 let private variantHead (i: FreshnessInputs) = { i with Head = Revision "ddd" }
 
 /// The 10 comparable categories, each paired with a single-field variation function. Table-driven
 /// recompute-cause tests iterate this so EVERY category drives a `MustRecompute` when changed.
 let allCategories: (InputCategory * (FreshnessInputs -> FreshnessInputs)) list =
-    [ CheckIdentity, variantCheck
-      DomainIdentity, variantDomain
-      CommandIdentity, variantCommand
-      EnvironmentClassCat, variantEnvironment
-      RuleHashCat, variantRuleHash
-      CoveredArtifactsCat, variantCoveredArtifacts
-      CommandVersionCat, variantCommandVersion
-      GeneratorVersionCat, variantGeneratorVersion
-      BaseRevisionCat, variantBase
-      HeadRevisionCat, variantHead ]
+    [
+        CheckIdentity, variantCheck
+        DomainIdentity, variantDomain
+        CommandIdentity, variantCommand
+        EnvironmentClassCat, variantEnvironment
+        RuleHashCat, variantRuleHash
+        CoveredArtifactsCat, variantCoveredArtifacts
+        CommandVersionCat, variantCommandVersion
+        GeneratorVersionCat, variantGeneratorVersion
+        BaseRevisionCat, variantBase
+        HeadRevisionCat, variantHead
+    ]
 
 /// The NON-identity categories — those that change WITHOUT touching the gate identity (Check/Domain), so a
 /// single-field change of one of these against a recorded base entry keeps the entry same-gate ⇒ the
@@ -93,7 +118,21 @@ let storeOf (entries: (FreshnessInputs * EvidenceRef) list) : ReuseStore =
 // ── FsCheck generators (real values, no mocks) ──
 
 let private shortStringGen: Gen<string> =
-    Gen.elements [ ""; "a"; "b"; "h1"; "h2"; "r1"; "build:tests"; "8.0"; "g1"; "aaa"; "héllo"; "x:y=z" ]
+    Gen.elements
+        [
+            ""
+            "a"
+            "b"
+            "h1"
+            "h2"
+            "r1"
+            "build:tests"
+            "8.0"
+            "g1"
+            "aaa"
+            "héllo"
+            "x:y=z"
+        ]
 
 let private genEnvironment: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -114,16 +153,22 @@ let private genFreshnessInputs: Gen<FreshnessInputs> =
         let! headRev = shortStringGen
 
         return
-            { Check = CheckId check
-              Domain = DomainId domain
-              Command = (if hasCommand then Some(CommandId command) else None)
-              Environment = env
-              RuleHash = RuleHash ruleHash
-              CoveredArtifacts = arts |> List.map ArtifactHash
-              CommandVersion = (if hasCmdVersion then Some(CommandVersion cmdVersion) else None)
-              GeneratorVersion = GeneratorVersion genVersion
-              Base = Revision baseRev
-              Head = Revision headRev }
+            {
+                Check = CheckId check
+                Domain = DomainId domain
+                Command = (if hasCommand then Some(CommandId command) else None)
+                Environment = env
+                RuleHash = RuleHash ruleHash
+                CoveredArtifacts = arts |> List.map ArtifactHash
+                CommandVersion =
+                    (if hasCmdVersion then
+                         Some(CommandVersion cmdVersion)
+                     else
+                         None)
+                GeneratorVersion = GeneratorVersion genVersion
+                Base = Revision baseRev
+                Head = Revision headRev
+            }
     }
 
 let private genEvidenceRef: Gen<EvidenceRef> =
@@ -133,7 +178,8 @@ let private genEvidenceRef: Gen<EvidenceRef> =
 /// (attribution keeps duplicates, the structural tiebreak orders them). Includes empty + multi-byte +
 /// ordinal-edge strings.
 let private genGateId: Gen<GateId> =
-    Gen.elements [ ""; "a:a"; "a:b"; "z:a"; "build:tests"; "Z:a"; "héllo:x" ] |> Gen.map GateId
+    Gen.elements [ ""; "a:a"; "a:b"; "z:a"; "build:tests"; "Z:a"; "héllo:x" ]
+    |> Gen.map GateId
 
 let private genCandidate: Gen<CandidateGate> =
     gen {
@@ -170,6 +216,8 @@ type Generators =
 
 /// FsCheck config registering the real generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

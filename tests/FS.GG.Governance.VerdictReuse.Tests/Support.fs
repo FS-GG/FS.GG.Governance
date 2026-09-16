@@ -21,13 +21,15 @@ open FS.GG.Governance.VerdictReuse.Model
 /// A complete, literal `AgentReviewInputs` — every input present and distinct so a single-input change is
 /// unambiguous. The F035 worked-example values (contracts/lookup-decision-semantics.md base request `R`).
 let baseInputs: AgentReviewInputs =
-    { Model = ModelId "claude-opus-4"
-      ModelVersion = ModelVersion "20260101"
-      Config = ModelConfig "temp=0"
-      PromptHash = ReviewerPromptHash "p1"
-      Question = QuestionText "explains API?"
-      Check = RuleHash "c1"
-      ReviewedArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ] }
+    {
+        Model = ModelId "claude-opus-4"
+        ModelVersion = ModelVersion "20260101"
+        Config = ModelConfig "temp=0"
+        PromptHash = ReviewerPromptHash "p1"
+        Question = QuestionText "explains API?"
+        Check = RuleHash "c1"
+        ReviewedArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+    }
 
 // ── Literal verdict references (opaque, edge-minted; incl. an empty-string ref) ──
 
@@ -40,24 +42,48 @@ let refEmpty = VerdictRef ""
 // Each takes `baseInputs` and changes EXACTLY the named input to a distinct value, paired with its
 // `ReviewInput`. Reviewed-artifact variant uses a genuinely different SET (not a reorder/dup).
 
-let variantModel (i: AgentReviewInputs) = { i with Model = ModelId "claude-sonnet-4" }
-let variantModelVersion (i: AgentReviewInputs) = { i with ModelVersion = ModelVersion "20260202" }
-let variantPromptHash (i: AgentReviewInputs) = { i with PromptHash = ReviewerPromptHash "p2" }
-let variantConfig (i: AgentReviewInputs) = { i with Config = ModelConfig "temp=1" }
+let variantModel (i: AgentReviewInputs) =
+    { i with
+        Model = ModelId "claude-sonnet-4"
+    }
+
+let variantModelVersion (i: AgentReviewInputs) =
+    { i with
+        ModelVersion = ModelVersion "20260202"
+    }
+
+let variantPromptHash (i: AgentReviewInputs) =
+    { i with
+        PromptHash = ReviewerPromptHash "p2"
+    }
+
+let variantConfig (i: AgentReviewInputs) =
+    { i with Config = ModelConfig "temp=1" }
+
 let variantCheck (i: AgentReviewInputs) = { i with Check = RuleHash "c2" }
-let variantArtifacts (i: AgentReviewInputs) = { i with ReviewedArtifacts = [ ArtifactHash "h3" ] }
-let variantQuestion (i: AgentReviewInputs) = { i with Question = QuestionText "different?" }
+
+let variantArtifacts (i: AgentReviewInputs) =
+    { i with
+        ReviewedArtifacts = [ ArtifactHash "h3" ]
+    }
+
+let variantQuestion (i: AgentReviewInputs) =
+    { i with
+        Question = QuestionText "different?"
+    }
 
 /// All 7 comparable inputs, each paired with a single-input variation function. Table-driven
 /// validity/distinction tests iterate this so EVERY input is covered (SC-001).
 let allInputs: (ReviewInput * (AgentReviewInputs -> AgentReviewInputs)) list =
-    [ ModelIdInput, variantModel
-      ModelVersionInput, variantModelVersion
-      PromptHashInput, variantPromptHash
-      ModelConfigInput, variantConfig
-      CheckHashInput, variantCheck
-      ReviewedArtifactsInput, variantArtifacts
-      QuestionTextInput, variantQuestion ]
+    [
+        ModelIdInput, variantModel
+        ModelVersionInput, variantModelVersion
+        PromptHashInput, variantPromptHash
+        ModelConfigInput, variantConfig
+        CheckHashInput, variantCheck
+        ReviewedArtifactsInput, variantArtifacts
+        QuestionTextInput, variantQuestion
+    ]
 
 /// The SIX non-check inputs (a same-check entry differing in exactly one of these ⇒ `InputsChanged
 /// [thatInput]`). Drives the located-cause / attribution tests (SC-002, SC-003); `CheckHashInput` is
@@ -68,13 +94,15 @@ let nonCheckInputs: (ReviewInput * (AgentReviewInputs -> AgentReviewInputs)) lis
 /// All 7 `ReviewInput` cases paired with their expected `inputGroup` (the data-model table) — drives the
 /// total `inputGroup` coverage test.
 let inputGroupTable: (ReviewInput * IdentityGroup) list =
-    [ ModelIdInput, JudgeIdentity
-      ModelVersionInput, JudgeIdentity
-      ModelConfigInput, JudgeIdentity
-      PromptHashInput, PromptIdentity
-      QuestionTextInput, PromptIdentity
-      CheckHashInput, CheckArtifactIdentity
-      ReviewedArtifactsInput, CheckArtifactIdentity ]
+    [
+        ModelIdInput, JudgeIdentity
+        ModelVersionInput, JudgeIdentity
+        ModelConfigInput, JudgeIdentity
+        PromptHashInput, PromptIdentity
+        QuestionTextInput, PromptIdentity
+        CheckHashInput, CheckArtifactIdentity
+        ReviewedArtifactsInput, CheckArtifactIdentity
+    ]
 
 // ── Store builders ──
 
@@ -82,7 +110,8 @@ let inputGroupTable: (ReviewInput * IdentityGroup) list =
 /// newest/head). NOTE: `record`'s store parameter is LAST, so it cannot be the fold accumulator directly —
 /// wrap it (plan T008 note).
 let storeOf (pairs: (AgentReviewInputs * VerdictRef) list) : VerdictStore =
-    pairs |> List.fold (fun s (i, v) -> VerdictReuse.record i v s) VerdictReuse.empty
+    pairs
+    |> List.fold (fun s (i, v) -> VerdictReuse.record i v s) VerdictReuse.empty
 
 /// Direct hand-built store (newest-first as given) — for tests that must bypass `record`'s de-dup, e.g.
 /// multiple full-match entries.
@@ -93,7 +122,22 @@ let handStore (pairs: (AgentReviewInputs * VerdictRef) list) : VerdictStore =
 
 let private shortStringGen: Gen<string> =
     Gen.elements
-        [ ""; "a"; "b"; "h1"; "h2"; "h3"; "c1"; "c2"; "p1"; "p2"; "temp=0"; "claude-opus-4"; "20260101"; "héllo" ]
+        [
+            ""
+            "a"
+            "b"
+            "h1"
+            "h2"
+            "h3"
+            "c1"
+            "c2"
+            "p1"
+            "p2"
+            "temp=0"
+            "claude-opus-4"
+            "20260101"
+            "héllo"
+        ]
 
 let private genAgentReviewInputs: Gen<AgentReviewInputs> =
     gen {
@@ -106,17 +150,20 @@ let private genAgentReviewInputs: Gen<AgentReviewInputs> =
         let! arts = Gen.listOf shortStringGen
 
         return
-            { Model = ModelId model
-              ModelVersion = ModelVersion modelVersion
-              Config = ModelConfig config
-              PromptHash = ReviewerPromptHash promptHash
-              Question = QuestionText question
-              Check = RuleHash check
-              ReviewedArtifacts = arts |> List.map ArtifactHash }
+            {
+                Model = ModelId model
+                ModelVersion = ModelVersion modelVersion
+                Config = ModelConfig config
+                PromptHash = ReviewerPromptHash promptHash
+                Question = QuestionText question
+                Check = RuleHash check
+                ReviewedArtifacts = arts |> List.map ArtifactHash
+            }
     }
 
 let private genVerdictRef: Gen<VerdictRef> =
-    Gen.elements [ ""; "verdict:v1"; "verdict:v2"; "verdict:v3"; "x"; "héllo" ] |> Gen.map VerdictRef
+    Gen.elements [ ""; "verdict:v1"; "verdict:v2"; "verdict:v3"; "x"; "héllo" ]
+    |> Gen.map VerdictRef
 
 let private genCachedVerdict: Gen<CachedVerdict> =
     gen {
@@ -127,7 +174,8 @@ let private genCachedVerdict: Gen<CachedVerdict> =
 
 // A hand-built `VerdictStore` (a list of cached entries, newest-first). Built directly so the generator does
 // not depend on the `record` implementation under test.
-let private genVerdictStore: Gen<VerdictStore> = Gen.listOf genCachedVerdict |> Gen.map VerdictStore
+let private genVerdictStore: Gen<VerdictStore> =
+    Gen.listOf genCachedVerdict |> Gen.map VerdictStore
 
 /// A permutation+duplication of an `ArtifactHash list` that preserves its SET (for order/dup invariance
 /// properties). Same distinct elements, possibly-different order, possibly with repeats.
@@ -150,7 +198,9 @@ type Generators =
 
 /// FsCheck config registering the real `AgentReviewInputs` / `VerdictRef` / `VerdictStore` generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 
 /// Build a same-set permutation generator for a given input's reviewed artifacts (used by the set-semantics
 /// order/dup invariance properties).

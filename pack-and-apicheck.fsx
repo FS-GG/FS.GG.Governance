@@ -61,7 +61,9 @@ let rec readFlag flag dflt args =
     | [] -> dflt
 
 let baselineFeed = readFlag "--baseline-feed" nugetLocal rawArgs
-let outputDir = readFlag "--output" (Path.Combine(Path.GetTempPath(), "fsgg-apicheck-" + string (Environment.ProcessId))) rawArgs
+
+let outputDir =
+    readFlag "--output" (Path.Combine(Path.GetTempPath(), "fsgg-apicheck-" + string (Environment.ProcessId))) rawArgs
 
 // ── Process edge ──
 let runDotnet (args: string list) : int * string =
@@ -88,8 +90,13 @@ let private nupkgStem (file: string) = Path.GetFileNameWithoutExtension file
 
 /// Split a `Some.Package.Id.1.2.3` stem into (id, version) — version is the trailing semver-ish suffix.
 let private splitIdVersion (stem: string) : (string * string) option =
-    let m = System.Text.RegularExpressions.Regex.Match(stem, @"^(?<id>.+?)\.(?<ver>\d+\.\d+(\.\d+)?([-+].*)?)$")
-    if m.Success then Some(m.Groups.["id"].Value, m.Groups.["ver"].Value) else None
+    let m =
+        System.Text.RegularExpressions.Regex.Match(stem, @"^(?<id>.+?)\.(?<ver>\d+\.\d+(\.\d+)?([-+].*)?)$")
+
+    if m.Success then
+        Some(m.Groups.["id"].Value, m.Groups.["ver"].Value)
+    else
+        None
 
 let private feedVersions (feed: string) : Map<string, string list> =
     if not (Directory.Exists feed) then
@@ -124,7 +131,10 @@ let private baselineFor (feed: Map<string, string list>) (id: string) (packed: s
         |> List.filter (fun cand -> isAhead cand packed)
     with
     | [] -> None
-    | candidates -> candidates |> List.reduce (fun best cand -> if isAhead best cand then cand else best) |> Some
+    | candidates ->
+        candidates
+        |> List.reduce (fun best cand -> if isAhead best cand then cand else best)
+        |> Some
 
 // ── ApiCompat invocation (fail-safe) ──
 // Runs the SDK ApiCompat tool by its OWN executable name so it resolves off PATH (the job-scoped
@@ -177,16 +187,20 @@ let private normalizeApiCompat (exit: int) (out: string) : string =
 let private apiCompatOutput (baselineNupkg: string) (packedNupkg: string) : string =
     // `apicompat package <new> --baseline-package <old>` — `--baseline-package` alone drives the baseline
     // comparison (no `--run-api-compat` needed; that flag is for a package's own cross-TFM assets).
-    let exit, out = runApiCompat [ "package"; packedNupkg; "--baseline-package"; baselineNupkg ]
+    let exit, out =
+        runApiCompat [ "package"; packedNupkg; "--baseline-package"; baselineNupkg ]
+
     normalizeApiCompat exit out
 
 // ── Per-package sensing ──
 type PackageResult =
-    { Surface: SurfaceId
-      Packed: string
-      Baseline: string option
-      Signal: ApiBreakSignal
-      Delta: VersionDelta }
+    {
+        Surface: SurfaceId
+        Packed: string
+        Baseline: string option
+        Signal: ApiBreakSignal
+        Delta: VersionDelta
+    }
 
 let private senseOne (feed: Map<string, string list>) (nupkg: string) : PackageResult option =
     match splitIdVersion (nupkgStem nupkg) with
@@ -199,17 +213,18 @@ let private senseOne (feed: Map<string, string list>) (nupkg: string) : PackageR
             match baseline with
             | None -> ApiBreakSignal.NoBaseline
             | Some b ->
-                let baselineNupkg =
-                    Path.Combine(baselineFeed, sprintf "%s.%s.nupkg" id b)
+                let baselineNupkg = Path.Combine(baselineFeed, sprintf "%s.%s.nupkg" id b)
 
                 Sensing.parseApiCompatOutput (apiCompatOutput baselineNupkg nupkg)
 
         Some
-            { Surface = SurfaceId id
-              Packed = packed
-              Baseline = baseline
-              Signal = signal
-              Delta = delta }
+            {
+                Surface = SurfaceId id
+                Packed = packed
+                Baseline = baseline
+                Signal = signal
+                Delta = delta
+            }
 
 // ── Rendering ──
 let private signalToken (s: ApiBreakSignal) =
@@ -228,7 +243,8 @@ let private outcomeToken (o: ApiCompatCoverageOutcome) =
     | NoBaselineYet -> "no-baseline-yet"
     | NotCovered r -> sprintf "not-covered(%s)" r
 
-let private jsonEscape (s: string) = System.Text.Json.JsonSerializer.Serialize s
+let private jsonEscape (s: string) =
+    System.Text.Json.JsonSerializer.Serialize s
 
 let private breakOriginToken (o: ApiBreakOrigin) =
     match o with
@@ -241,11 +257,16 @@ let private renderJson (results: PackageResult list) (coverage: ApiCompatCoverag
             match r.Signal with
             | ApiBreakSignal.BreakingChanges bs ->
                 bs
-                |> List.map (fun b -> sprintf "{\"member\":%s,\"origin\":%s}" (jsonEscape b.Member) (jsonEscape (breakOriginToken b.Origin)))
+                |> List.map (fun b ->
+                    sprintf
+                        "{\"member\":%s,\"origin\":%s}"
+                        (jsonEscape b.Member)
+                        (jsonEscape (breakOriginToken b.Origin)))
                 |> String.concat ","
             | _ -> ""
 
         let (SurfaceId sid) = r.Surface
+
         sprintf
             "{\"surface\":%s,\"packed\":%s,\"baseline\":%s,\"signal\":%s,\"breaks\":[%s]}"
             (jsonEscape sid)
@@ -285,38 +306,71 @@ let private renderHuman (results: PackageResult list) (coverage: ApiCompatCovera
             match Pack.apiCompatibilityFact r.Signal r.Delta with
             | Some Unmet ->
                 let (SurfaceId sid) = r.Surface
-                Some(sprintf "  %s: breaking change(s) detected vs published %s; requires a MAJOR version bump or revert" sid (Option.defaultValue "?" r.Baseline))
+
+                Some(
+                    sprintf
+                        "  %s: breaking change(s) detected vs published %s; requires a MAJOR version bump or revert"
+                        sid
+                        (Option.defaultValue "?" r.Baseline)
+                )
             | Some Unrecoverable ->
                 let (SurfaceId sid) = r.Surface
                 Some(sprintf "  %s: API comparison indeterminate (%s)" sid (signalToken r.Signal))
             | _ -> None)
 
     let counts =
-        let checkedN = coverage |> List.filter (fun c -> match c.Outcome with Checked _ -> true | _ -> false) |> List.length
-        let noBase = coverage |> List.filter (fun c -> c.Outcome = NoBaselineYet) |> List.length
-        let notCov = coverage |> List.filter (fun c -> match c.Outcome with NotCovered _ -> true | _ -> false) |> List.length
-        sprintf "coverage: %d checked, %d no-baseline-yet, %d not-covered (of %d packages)" checkedN noBase notCov coverage.Length
+        let checkedN =
+            coverage
+            |> List.filter (fun c ->
+                match c.Outcome with
+                | Checked _ -> true
+                | _ -> false)
+            |> List.length
 
-    [ header
-      ""
-      counts
-      ""
-      "per-package coverage:" ]
+        let noBase =
+            coverage |> List.filter (fun c -> c.Outcome = NoBaselineYet) |> List.length
+
+        let notCov =
+            coverage
+            |> List.filter (fun c ->
+                match c.Outcome with
+                | NotCovered _ -> true
+                | _ -> false)
+            |> List.length
+
+        sprintf
+            "coverage: %d checked, %d no-baseline-yet, %d not-covered (of %d packages)"
+            checkedN
+            noBase
+            notCov
+            coverage.Length
+
+    [ header; ""; counts; ""; "per-package coverage:" ]
     @ covLines
-    @ (if List.isEmpty breaches then [ ""; "findings: none (advisory)" ] else [ ""; "findings (advisory — visible, non-blocking):" ] @ breaches)
+    @ (if List.isEmpty breaches then
+           [ ""; "findings: none (advisory)" ]
+       else
+           [ ""; "findings (advisory — visible, non-blocking):" ] @ breaches)
     |> String.concat "\n"
 
 // ── Selftest: exercise the pure grading path on representative signals (real-evidence of the grading) ──
 let private runSelftest () : int =
-    let localBreak = { Member = "X.foo"; Kind = MemberRemoved; Origin = ApiBreakOrigin.Local }
+    let localBreak =
+        {
+            Member = "X.foo"
+            Kind = MemberRemoved
+            Origin = ApiBreakOrigin.Local
+        }
 
     let cases =
-        [ ApiBreakSignal.NoBreakingChanges, MinorOrPatchBump, Some Met
-          ApiBreakSignal.BreakingChanges [ localBreak ], MajorBump, Some Met
-          ApiBreakSignal.BreakingChanges [ localBreak ], MinorOrPatchBump, Some Unmet
-          ApiBreakSignal.NoBaseline, NoBaselineDelta, Some Met
-          ApiBreakSignal.Indeterminate "x", MajorBump, Some Unrecoverable
-          ApiBreakSignal.NotPackable, NoBaselineDelta, None ]
+        [
+            ApiBreakSignal.NoBreakingChanges, MinorOrPatchBump, Some Met
+            ApiBreakSignal.BreakingChanges [ localBreak ], MajorBump, Some Met
+            ApiBreakSignal.BreakingChanges [ localBreak ], MinorOrPatchBump, Some Unmet
+            ApiBreakSignal.NoBaseline, NoBaselineDelta, Some Met
+            ApiBreakSignal.Indeterminate "x", MajorBump, Some Unrecoverable
+            ApiBreakSignal.NotPackable, NoBaselineDelta, None
+        ]
 
     let mutable ok = true
 
@@ -327,19 +381,24 @@ let private runSelftest () : int =
         printfn "  %s  %A %A ⇒ %A (expected %A)" (if pass then "PASS" else "FAIL") s d actual expected
 
     // parser fail-safe
-    let pf = Sensing.parseApiCompatOutput "" = ApiBreakSignal.Indeterminate "empty detector output"
+    let pf =
+        Sensing.parseApiCompatOutput "" = ApiBreakSignal.Indeterminate "empty detector output"
+
     ok <- ok && pf
     printfn "  %s  parser empty ⇒ Indeterminate (fail-safe)" (if pf then "PASS" else "FAIL")
 
     // M-CI-2: baselineFor picks the HIGHEST feed version strictly below packed (multi-candidate choice).
     // The old sortWith+tryLast returned the SMALLEST — e.g. it would have picked 1.0.0 below, not 1.2.0.
-    let feedFixture = Map.ofList [ ("Pkg", [ "1.0.0"; "1.2.0"; "1.1.0"; "2.0.0"; "1.2.0" ]) ]
+    let feedFixture =
+        Map.ofList [ ("Pkg", [ "1.0.0"; "1.2.0"; "1.1.0"; "2.0.0"; "1.2.0" ]) ]
 
     let baselineCases =
-        [ "1.5.0", Some "1.2.0" // candidates below: 1.0.0/1.1.0/1.2.0 ⇒ highest 1.2.0
-          "2.0.0", Some "1.2.0" // 2.0.0 not strictly below itself ⇒ highest below is 1.2.0
-          "3.0.0", Some "2.0.0" // candidates below include 2.0.0 ⇒ highest 2.0.0
-          "1.0.0", None ] // nothing strictly below 1.0.0 ⇒ NoBaseline
+        [
+            "1.5.0", Some "1.2.0" // candidates below: 1.0.0/1.1.0/1.2.0 ⇒ highest 1.2.0
+            "2.0.0", Some "1.2.0" // 2.0.0 not strictly below itself ⇒ highest below is 1.2.0
+            "3.0.0", Some "2.0.0" // candidates below include 2.0.0 ⇒ highest 2.0.0
+            "1.0.0", None
+        ] // nothing strictly below 1.0.0 ⇒ NoBaseline
 
     for (packed, expected) in baselineCases do
         let actual = baselineFor feedFixture "Pkg" packed
@@ -355,8 +414,14 @@ let private runSelftest () : int =
         "API compatibility errors ...:\nCP0003: lib/net10.0/X.dll assembly version ...\nAPI breaking changes found."
 
     let normCases =
-        [ "clean-run ⇒ NoBreakingChanges", Sensing.parseApiCompatOutput (normalizeApiCompat 0 cleanBanner), ApiBreakSignal.NoBreakingChanges
-          "missing tool ⇒ Indeterminate", Sensing.parseApiCompatOutput (normalizeApiCompat 127 "Win32Exception: apicompat not found"), ApiBreakSignal.Indeterminate "apicompat unavailable or inconclusive (exit 127)" ]
+        [
+            "clean-run ⇒ NoBreakingChanges",
+            Sensing.parseApiCompatOutput (normalizeApiCompat 0 cleanBanner),
+            ApiBreakSignal.NoBreakingChanges
+            "missing tool ⇒ Indeterminate",
+            Sensing.parseApiCompatOutput (normalizeApiCompat 127 "Win32Exception: apicompat not found"),
+            ApiBreakSignal.Indeterminate "apicompat unavailable or inconclusive (exit 127)"
+        ]
 
     for (name, actual, expected) in normCases do
         let pass = actual = expected
@@ -384,10 +449,21 @@ printfn "pack-and-apicheck: packing the solution (Release) to %s" outputDir
 Directory.CreateDirectory outputDir |> ignore
 
 // Bound MSBuild node count like build.fsx — the 162-project solution thrashes under default parallelism.
-let private maxNodes = max 2 (min 12 (int (ceil (float Environment.ProcessorCount / 4.0))))
+let private maxNodes =
+    max 2 (min 12 (int (ceil (float Environment.ProcessorCount / 4.0))))
 
 let packExit, packLog =
-    runDotnet [ "pack"; "FS.GG.Governance.sln"; "-c"; "Release"; sprintf "-m:%d" maxNodes; "-o"; outputDir; "--nologo" ]
+    runDotnet
+        [
+            "pack"
+            "FS.GG.Governance.sln"
+            "-c"
+            "Release"
+            sprintf "-m:%d" maxNodes
+            "-o"
+            outputDir
+            "--nologo"
+        ]
 
 if packExit <> 0 then
     // A pack failure is reported but does NOT redden THIS step (the gate decides). Emit an honest signal.
@@ -397,7 +473,10 @@ if packExit <> 0 then
 let feed = feedVersions baselineFeed
 
 let producedNupkgs =
-    if Directory.Exists outputDir then Directory.GetFiles(outputDir, "*.nupkg") |> Array.toList else []
+    if Directory.Exists outputDir then
+        Directory.GetFiles(outputDir, "*.nupkg") |> Array.toList
+    else
+        []
 
 let results = producedNupkgs |> List.choose (senseOne feed)
 

@@ -15,8 +15,8 @@
 
 namespace FS.GG.Governance.RefreshCommand
 
-open FS.GG.Governance.FreshnessKey.Model            // ArtifactHash, GeneratorVersion
-open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationManifest, GenerationEntry, ViewKind, ...
+open FS.GG.Governance.FreshnessKey.Model // ArtifactHash, GeneratorVersion
+open FS.GG.Governance.RefreshJson.RefreshModel // GenerationManifest, GenerationEntry, ViewKind, ...
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -39,11 +39,13 @@ module Loop =
     /// The normalized invocation (data-model §`RunRequest`). Defaults: `Repo = "."`, `DryRun = false`,
     /// `Scope = AllViews`, `Format = Text`, `RefreshOut = None`.
     type RunRequest =
-        { Repo: string
-          DryRun: bool
-          Scope: Scope
-          Format: OutputFormat
-          RefreshOut: string option }
+        {
+            Repo: string
+            DryRun: bool
+            Scope: Scope
+            Format: OutputFormat
+            RefreshOut: string option
+        }
 
     /// Pure-parser rejection — a single carried actionable message. Maps to `UsageError'`/exit 2: a usage
     /// problem is decided BEFORE any port is built, so a typo writes nothing.
@@ -85,8 +87,10 @@ module Loop =
     /// value, tagged with the `RefreshOutcome` category so a missing/malformed INPUT is distinguishable from
     /// a TOOL defect on stderr (Constitution VI).
     type Diagnostic =
-        { Category: RefreshOutcome
-          Message: string }
+        {
+            Category: RefreshOutcome
+            Message: string
+        }
 
     /// How far the pipeline has progressed (data-model §state transitions).
     type Phase =
@@ -101,19 +105,21 @@ module Loop =
     /// `PendingProv` counts outstanding provenance writes; `Views` accumulates per-view decisions in declared
     /// order; `Decision`/`RefreshDoc` are set at finalize. `update` is pure; only the interpreter performs I/O.
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Manifest: GenerationManifest option
-          InScope: GenerationEntry list
-          Sensed: Map<string, Result<ArtifactHash list * GeneratorVersion, string>>
-          Recorded: Map<string, (ArtifactHash list * GeneratorVersion) option>
-          ExpectedRegen: Set<string>
-          PendingProv: int
-          Views: ViewDecision list
-          Decision: RefreshDecision option
-          RefreshDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: RefreshOutcome }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Manifest: GenerationManifest option
+            InScope: GenerationEntry list
+            Sensed: Map<string, Result<ArtifactHash list * GeneratorVersion, string>>
+            Recorded: Map<string, (ArtifactHash list * GeneratorVersion) option>
+            ExpectedRegen: Set<string>
+            PendingProv: int
+            Views: ViewDecision list
+            Decision: RefreshDecision option
+            RefreshDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: RefreshOutcome
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
     /// exceptions. A leading bare `refresh` token is TOLERATED (no central dispatcher — command precedent).

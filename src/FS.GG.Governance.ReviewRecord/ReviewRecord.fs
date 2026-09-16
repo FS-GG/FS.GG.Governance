@@ -68,15 +68,19 @@ module ReviewRecord =
         : ReviewRecord =
         // Assemble the supplied facts verbatim — NO reorder, dedup, normalization, capture, hashing, or I/O
         // (L-B4, FR-005). Plain record construction; sensed held structurally apart (L-B3).
-        { Reproducible =
-            { Request = request
-              Model = model
-              ModelVersion = modelVersion
-              PromptHash = promptHash
-              ReviewedArtifacts = reviewedArtifacts
-              ResponseDigest = responseDigest
-              Verdict = verdict }
-          Sensed = sensed }
+        {
+            Reproducible =
+                {
+                    Request = request
+                    Model = model
+                    ModelVersion = modelVersion
+                    PromptHash = promptHash
+                    ReviewedArtifacts = reviewedArtifacts
+                    ResponseDigest = responseDigest
+                    Verdict = verdict
+                }
+            Sensed = sensed
+        }
 
     let canonicalId (record: ReviewRecord) : RecordIdentity =
         // Render record.Reproducible (NEVER record.Sensed, L-I2) as length-prefixed tagged segments joined by
@@ -91,13 +95,15 @@ module ReviewRecord =
         let (ResponseDigest responseDigest) = r.ResponseDigest
         let (RecordedVerdict verdict) = r.Verdict
 
-        [ seg "req" rendered
-          seg "mid" modelId
-          seg "mver" modelVersion
-          seg "pph" promptHash
-          artSegment r.ReviewedArtifacts
-          seg "resp" responseDigest
-          seg "vdt" verdict ]
+        [
+            seg "req" rendered
+            seg "mid" modelId
+            seg "mver" modelVersion
+            seg "pph" promptHash
+            artSegment r.ReviewedArtifacts
+            seg "resp" responseDigest
+            seg "vdt" verdict
+        ]
         |> String.concat "\n"
         |> RecordIdentity
 

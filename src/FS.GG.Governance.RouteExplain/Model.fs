@@ -16,7 +16,9 @@ module Model =
         | NoCheaperLocalAlternative
 
     type HighCostFinding =
-        { Selected: SelectedGate
-          Alternative: AlternativeOutcome }
+        {
+            Selected: SelectedGate
+            Alternative: AlternativeOutcome
+        }
 
     type RouteExplanation = { Findings: HighCostFinding list }

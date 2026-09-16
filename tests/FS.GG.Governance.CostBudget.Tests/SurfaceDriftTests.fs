@@ -13,16 +13,18 @@ let private costBudgetAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CostBud
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "CostBudget" "FS.GG.Governance.CostBudget" costBudgetAsm
+        [
+            SurfaceDrift.surfaceTest "CostBudget" "FS.GG.Governance.CostBudget" costBudgetAsm
 
-          SurfaceDrift.referencesOnly
-              "CostBudget"
-              (fun n ->
-                  n = "FS.GG.Governance.Config"
-                  || n = "FS.GG.Governance.Enforcement"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.EvidenceReuse"
-                  || n = "FS.GG.Governance.CacheEligibility"
-                  || n = "FS.GG.Governance.FreshnessKey"
-                  || n = "FS.GG.Governance.AgentReviewKey")
-              costBudgetAsm ]
+            SurfaceDrift.referencesOnly
+                "CostBudget"
+                (fun n ->
+                    n = "FS.GG.Governance.Config"
+                    || n = "FS.GG.Governance.Enforcement"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.EvidenceReuse"
+                    || n = "FS.GG.Governance.CacheEligibility"
+                    || n = "FS.GG.Governance.FreshnessKey"
+                    || n = "FS.GG.Governance.AgentReviewKey")
+                costBudgetAsm
+        ]

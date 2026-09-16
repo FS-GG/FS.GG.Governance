@@ -25,10 +25,12 @@ module RenderMode =
     /// in a pure function. `Width = None` means unknown ⇒ a safe default is chosen at render time
     /// (it is NOT part of the mode decision).
     type ColorCapability =
-        { IsTty: bool
-          NoColorEnv: bool
-          ExplicitPlain: bool
-          Width: int option }
+        {
+            IsTty: bool
+            NoColorEnv: bool
+            ExplicitPlain: bool
+            Width: int option
+        }
 
     /// Decide the render mode (pure, total). `explicitJson = true` ⇒ `Json` (always wins, whatever
     /// the capability); else `Rich` iff `IsTty && not NoColorEnv && not ExplicitPlain`; else `Plain`.

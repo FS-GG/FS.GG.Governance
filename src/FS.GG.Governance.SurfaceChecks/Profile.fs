@@ -21,8 +21,7 @@ module Profile =
 
     // Ascending by `packToken`, so `checks` is sorted by construction and the generated YAML region
     // is byte-stable without a sort at the render edge.
-    let packs =
-        [ EffectBoundary; EvidenceBoundary; IdiomaticSimplicity; PublicSurface ]
+    let packs = [ EffectBoundary; EvidenceBoundary; IdiomaticSimplicity; PublicSurface ]
 
     let packToken (pack: Pack) =
         match pack with
@@ -51,58 +50,66 @@ module Profile =
     let ruleIds (pack: Pack) =
         match pack with
         | PublicSurface ->
-            [ "fsharp.exemption-invalid"
-              "fsharp.signature-compile-order"
-              "fsharp.signature-docs"
-              "fsharp.signature-missing"
-              "fsharp.signature-source-mismatch"
-              "fsharp.surface-baseline-stale"
-              "fsharp.surface-malformed" ]
+            [
+                "fsharp.exemption-invalid"
+                "fsharp.signature-compile-order"
+                "fsharp.signature-docs"
+                "fsharp.signature-missing"
+                "fsharp.signature-source-mismatch"
+                "fsharp.surface-baseline-stale"
+                "fsharp.surface-malformed"
+            ]
         | IdiomaticSimplicity ->
             // `CodeChecks.Model.findingIdToken` is the pack's own closed DU projection; these are
             // its twelve tokens verbatim. C2 asserts the two lists are equal, so a case added to
             // the DU without a row here reds the composition rather than shipping a profile that
             // silently under-declares the pack.
-            [ "abstract-class-hierarchy"
-              "compiler-analysis-failed"
-              "dependency-fan-out-review"
-              "duplicate-home-grown-abstraction"
-              "imperative-in-pure-domain"
-              "inheritance-hierarchy"
-              "member-size-review"
-              "module-size-review"
-              "public-class-shape"
-              "reflection-or-metaprogramming"
-              "shared-mutable-state"
-              "type-size-review" ]
+            [
+                "abstract-class-hierarchy"
+                "compiler-analysis-failed"
+                "dependency-fan-out-review"
+                "duplicate-home-grown-abstraction"
+                "imperative-in-pure-domain"
+                "inheritance-hierarchy"
+                "member-size-review"
+                "module-size-review"
+                "public-class-shape"
+                "reflection-or-metaprogramming"
+                "shared-mutable-state"
+                "type-size-review"
+            ]
         | EffectBoundary ->
-            [ "fsharp.callback-hidden-state"
-              "fsharp.effect-boundary-malformed"
-              "fsharp.effect-delivery-missing"
-              "fsharp.effect-edge-missing"
-              "fsharp.effect-exemption-invalid"
-              "fsharp.effect-idempotency-missing"
-              "fsharp.effect-in-transition"
-              "fsharp.effect-result-message-missing"
-              "fsharp.effect-retry-missing"
-              "fsharp.exception-continuation" ]
+            [
+                "fsharp.callback-hidden-state"
+                "fsharp.effect-boundary-malformed"
+                "fsharp.effect-delivery-missing"
+                "fsharp.effect-edge-missing"
+                "fsharp.effect-exemption-invalid"
+                "fsharp.effect-idempotency-missing"
+                "fsharp.effect-in-transition"
+                "fsharp.effect-result-message-missing"
+                "fsharp.effect-retry-missing"
+                "fsharp.exception-continuation"
+            ]
         | EvidenceBoundary ->
-            [ "evidence.command-failed"
-              "evidence.generated-compatibility-missing"
-              "evidence.generated-consumer-missing"
-              "evidence.generated-regeneration-nondeterministic"
-              "evidence.generated-source-missing"
-              "evidence.observed-outcome-missing"
-              "evidence.optional-outcome-missing"
-              "evidence.partial-write"
-              "evidence.producer-inventory-empty"
-              "evidence.producer-mutation-incomplete"
-              "evidence.provenance-incomplete"
-              "evidence.real-boundary-required"
-              "evidence.render-not-executed"
-              "evidence.render-receipt-unstable"
-              "evidence.synthetic-undisclosed"
-              "evidence.unknown-input" ]
+            [
+                "evidence.command-failed"
+                "evidence.generated-compatibility-missing"
+                "evidence.generated-consumer-missing"
+                "evidence.generated-regeneration-nondeterministic"
+                "evidence.generated-source-missing"
+                "evidence.observed-outcome-missing"
+                "evidence.optional-outcome-missing"
+                "evidence.partial-write"
+                "evidence.producer-inventory-empty"
+                "evidence.producer-mutation-incomplete"
+                "evidence.provenance-incomplete"
+                "evidence.real-boundary-required"
+                "evidence.render-not-executed"
+                "evidence.render-receipt-unstable"
+                "evidence.synthetic-undisclosed"
+                "evidence.unknown-input"
+            ]
 
     // ── Maturity: the packs' declared disagreement, resolved as APPLICABILITY ─────────────────
     // #366 binds at `Warn` and #369 at `BlockOnPr`. That is not a conflict to break by precedence,
@@ -156,7 +163,8 @@ module Profile =
     // lookup stays total if one is ever introduced.
 
     let declarations: (Pack * string) list =
-        packs |> List.collect (fun pack -> ruleIds pack |> List.map (fun id -> pack, id))
+        packs
+        |> List.collect (fun pack -> ruleIds pack |> List.map (fun id -> pack, id))
 
     let ownerByRuleId: Map<string, Pack> =
         declarations
@@ -178,21 +186,25 @@ module Profile =
         | EvidenceBoundary -> Cheap
 
     let checkFor (pack: Pack) : Check =
-        { Id = CheckId(packToken pack)
-          Domain = domain
-          // Command-unbound by design, exactly like the `gameplay` floor: the pack's own sensing
-          // and the handoff evidence satisfy it, not a `tooling.yml` command a consumer could
-          // redefine. It also keeps the published set free of a dangling command reference in every
-          // repository that resolves it without adopting this repo's tooling.
-          Command = None
-          Owner = Owner "platform"
-          Cost = packCost pack
-          Environment = Ci
-          Maturity = declaredMaturity pack
-          Tier = None }
+        {
+            Id = CheckId(packToken pack)
+            Domain = domain
+            // Command-unbound by design, exactly like the `gameplay` floor: the pack's own sensing
+            // and the handoff evidence satisfy it, not a `tooling.yml` command a consumer could
+            // redefine. It also keeps the published set free of a dangling command reference in every
+            // repository that resolves it without adopting this repo's tooling.
+            Command = None
+            Owner = Owner "platform"
+            Cost = packCost pack
+            Environment = Ci
+            Maturity = declaredMaturity pack
+            Tier = None
+        }
 
     let checks: Check list =
-        packs |> List.map checkFor |> List.sortBy (fun c -> let (CheckId id) = c.Id in id)
+        packs
+        |> List.map checkFor
+        |> List.sortBy (fun c -> let (CheckId id) = c.Id in id)
 
     // ── Conflict resolution ──────────────────────────────────────────────────────────────────
 
@@ -208,7 +220,10 @@ module Profile =
         |> List.sortBy (fun c -> c.RuleId)
 
     let composeMaturity (left: Maturity) (right: Maturity) : Maturity =
-        if maturityRank right > maturityRank left then right else left
+        if maturityRank right > maturityRank left then
+            right
+        else
+            left
 
     // ── Normalization ────────────────────────────────────────────────────────────────────────
 

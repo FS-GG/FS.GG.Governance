@@ -36,48 +36,67 @@ let mkGate (id: GateId) (maturity: Maturity) : Gate =
     let domain = DomainId "build"
     let cost = Cheap
 
-    { Id = id
-      Domain = domain
-      Description = sprintf "gate %s" raw
-      Prerequisites = []
-      Cost = cost
-      Timeout = TimeoutLimit 60
-      Owner = Owner "team"
-      Maturity = maturity
-      ProductCheck = false
-      FreshnessKey =
-        { Check = CheckId raw
-          Domain = domain
-          Cost = cost
-          Environment = Local
-          Command = None } }
+    {
+        Id = id
+        Domain = domain
+        Description = sprintf "gate %s" raw
+        Prerequisites = []
+        Cost = cost
+        Timeout = TimeoutLimit 60
+        Owner = Owner "team"
+        Maturity = maturity
+        ProductCheck = false
+        FreshnessKey =
+            {
+                Check = CheckId raw
+                Domain = domain
+                Cost = cost
+                Environment = Local
+                Command = None
+            }
+    }
 
 let mkSelectedGate (gate: Gate) : SelectedGate =
-    { Gate = gate
-      SelectingPaths =
-        [ { Path = GovernedPath "src/a.fs"
-            MatchedGlob = GovernedPath "src/**" } ] }
+    {
+        Gate = gate
+        SelectingPaths =
+            [
+                {
+                    Path = GovernedPath "src/a.fs"
+                    MatchedGlob = GovernedPath "src/**"
+                }
+            ]
+    }
 
 let mkFinding (id: FindingId) (path: GovernedPath) (zone: FindingZone) : UnknownGovernedPathFinding =
     let (GovernedPath p) = path
 
-    { Id = id
-      Path = path
-      Zone = zone
-      Message = sprintf "unclassified path %s" p }
+    {
+        Id = id
+        Path = path
+        Zone = zone
+        Message = sprintf "unclassified path %s" p
+    }
 
 let mkRoute (gates: SelectedGate list) (findings: UnknownGovernedPathFinding list) : RouteResult =
-    { SelectedGates = gates
-      Findings = { Findings = findings }
-      Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+    {
+        SelectedGates = gates
+        Findings = { Findings = findings }
+        Cost =
+            {
+                Cheap = 0
+                Medium = 0
+                High = 0
+                Exhaustive = 0
+            }
+    }
 
 let emptyRoute: RouteResult = mkRoute [] []
 
 let allModes: RunMode list =
     [ Sandbox; Inner; Focused; Verify; Gate; RunMode.Release ]
 
-let allProfiles: Profile list =
-    [ Light; Standard; Strict; Profile.Release ]
+let allProfiles: Profile list = [ Light; Standard; Strict; Profile.Release ]
 
 let allMaturities: Maturity list =
     [ Observe; Warn; BlockOnPr; BlockOnShip; BlockOnRelease ]
@@ -108,63 +127,103 @@ let emptyCleanDecision: ShipDecision = decisionOf emptyRoute Verify Standard
 let richDecision: ShipDecision =
     decisionOf
         (mkRoute
-            [ mkSelectedGate (mkGate (GateId "build:ship") BlockOnShip)
-              mkSelectedGate (mkGate (GateId "build:rel") BlockOnRelease)
-              mkSelectedGate (mkGate (GateId "docs:lint") Observe) ]
-            [ mkFinding UnknownProtectedBoundaryPath (GovernedPath "src/boundary/Api.fs") (ProtectedBoundaryUnknown(SurfaceId "api"))
-              mkFinding UnknownGovernedPath (GovernedPath "src/new/Thing.fs") GovernedRootUnknown ])
+            [
+                mkSelectedGate (mkGate (GateId "build:ship") BlockOnShip)
+                mkSelectedGate (mkGate (GateId "build:rel") BlockOnRelease)
+                mkSelectedGate (mkGate (GateId "docs:lint") Observe)
+            ]
+            [
+                mkFinding
+                    UnknownProtectedBoundaryPath
+                    (GovernedPath "src/boundary/Api.fs")
+                    (ProtectedBoundaryUnknown(SurfaceId "api"))
+                mkFinding UnknownGovernedPath (GovernedPath "src/new/Thing.fs") GovernedRootUnknown
+            ])
         Verify
         Strict
 
 // ── Real cache-eligibility report builders (real FreshnessInputs + real ReuseStore + real evaluate) ──
 
 let baseInputs: FreshnessInputs =
-    { Check = CheckId "ship"
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId "ship"
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 let shipInputs = baseInputs
-let relInputs = { baseInputs with Check = CheckId "rel"; Domain = DomainId "build" }
-let lintInputs = { baseInputs with Check = CheckId "lint"; Domain = DomainId "docs" }
+
+let relInputs =
+    { baseInputs with
+        Check = CheckId "rel"
+        Domain = DomainId "build"
+    }
+
+let lintInputs =
+    { baseInputs with
+        Check = CheckId "lint"
+        Domain = DomainId "docs"
+    }
 
 let candidate (gate: string) (inputs: FreshnessInputs) : CandidateGate = { Gate = GateId gate; Inputs = inputs }
 
 let storeOf (entries: (FreshnessInputs * EvidenceRef) list) : ReuseStore =
-    entries |> List.fold (fun s (i, e) -> EvidenceReuse.record i e s) EvidenceReuse.empty
+    entries
+    |> List.fold (fun s (i, e) -> EvidenceReuse.record i e s) EvidenceReuse.empty
 
-let recordedStore = storeOf [ shipInputs, EvidenceRef "ev-A"; relInputs, EvidenceRef "ev-R"; lintInputs, EvidenceRef "ev-L" ]
+let recordedStore =
+    storeOf
+        [
+            shipInputs, EvidenceRef "ev-A"
+            relInputs, EvidenceRef "ev-R"
+            lintInputs, EvidenceRef "ev-L"
+        ]
 
-let reportOf (cands: CandidateGate list) (store: ReuseStore) : CacheEligibilityReport = CacheEligibility.evaluate cands store
+let reportOf (cands: CandidateGate list) (store: ReuseStore) : CacheEligibilityReport =
+    CacheEligibility.evaluate cands store
 
 /// build:ship exact ⇒ Reusable ev-A; build:rel RuleHash moved ⇒ MustRecompute (InputsChanged [ruleHash]);
 /// docs:lint ABSENT (unresolved/notEvaluated).
 let mixedReport =
     reportOf
-        [ candidate "build:ship" shipInputs
-          candidate "build:rel" { relInputs with RuleHash = RuleHash "r2" } ]
+        [
+            candidate "build:ship" shipInputs
+            candidate
+                "build:rel"
+                { relInputs with
+                    RuleHash = RuleHash "r2"
+                }
+        ]
         recordedStore
 
 /// A report where build:ship has no prior evidence ⇒ MustRecompute NoPriorEvidence.
-let noPriorReport = reportOf [ candidate "build:ship" shipInputs ] EvidenceReuse.empty
+let noPriorReport =
+    reportOf [ candidate "build:ship" shipInputs ] EvidenceReuse.empty
 
 // ── Real execution-outcome builders ──
 
 let outcome (gate: string) (disposition: GateDisposition) : GateId * GateOutcome =
-    GateId gate, { GateId = GateId gate; Disposition = disposition }
+    GateId gate,
+    {
+        GateId = GateId gate
+        Disposition = disposition
+    }
 
 /// Execution outcomes for richDecision's gates: build:ship reused-pass, build:rel executed-fail,
 /// docs:lint not-executed.
 let mixedOutcomes: (GateId * GateOutcome) list =
-    [ outcome "build:ship" (Reused(ExitCode 0, true))
-      outcome "build:rel" (Executed(ExitCode 1, false))
-      outcome "docs:lint" NotExecuted ]
+    [
+        outcome "build:ship" (Reused(ExitCode 0, true))
+        outcome "build:rel" (Executed(ExitCode 1, false))
+        outcome "docs:lint" NotExecuted
+    ]
 
 // ── FsCheck generators over the finite enumerations (real `RouteResult`s, real `rollup` at Verify) ──
 
@@ -203,7 +262,9 @@ type VerifyArbs =
     static member ShipDecision() = Arb.fromGen genDecision
 
 let fsCheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<VerifyArbs> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<VerifyArbs> ]
+    }
 
 // ── JsonDocument read helpers (read-only inspection of the emitted bytes) ──
 
@@ -225,7 +286,9 @@ let section (doc: JsonDocument) (name: string) : JsonElement list =
     [ for it in doc.RootElement.GetProperty(name).EnumerateArray() -> it ]
 
 let currency (doc: JsonDocument) (name: string) : JsonElement list =
-    [ for it in (doc.RootElement.GetProperty("currency").GetProperty name).EnumerateArray() -> it ]
+    [
+        for it in (doc.RootElement.GetProperty("currency").GetProperty name).EnumerateArray() -> it
+    ]
 
 let hasField (el: JsonElement) (name: string) : bool =
     match el.TryGetProperty name with

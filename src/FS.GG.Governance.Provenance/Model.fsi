@@ -44,12 +44,14 @@ module Model =
     /// via `provenance.CommandRecords.[i].Duration` and structurally excluded from `canonicalId` (D3). There
     /// is no provenance-level sensed field — no wall-clock timestamp this row.
     type Provenance =
-        { SourceCommit: Revision
-          Base: Revision
-          Head: Revision
-          RuleHash: RuleHash
-          GeneratorVersion: GeneratorVersion
-          ArtifactDigests: ArtifactHash list
-          CommandRecords: CommandRecord list
-          Environment: EnvironmentClass
-          Builder: BuilderIdentity }
+        {
+            SourceCommit: Revision
+            Base: Revision
+            Head: Revision
+            RuleHash: RuleHash
+            GeneratorVersion: GeneratorVersion
+            ArtifactDigests: ArtifactHash list
+            CommandRecords: CommandRecord list
+            Environment: EnvironmentClass
+            Builder: BuilderIdentity
+        }

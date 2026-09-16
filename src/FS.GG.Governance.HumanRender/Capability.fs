@@ -13,7 +13,10 @@ module Capability =
 
     // stdout attached to a console (interactive) iff it is NOT redirected/piped to a file or pipe.
     let senseTty () : bool =
-        try not Console.IsOutputRedirected with _ -> false
+        try
+            not Console.IsOutputRedirected
+        with _ ->
+            false
 
     // NO_COLOR is honored when SET TO ANY non-empty value (the de-facto convention).
     let senseNoColor () : bool =
@@ -33,7 +36,9 @@ module Capability =
             None
 
     let senseCapability (explicitPlain: bool) : RenderMode.ColorCapability =
-        { IsTty = senseTty ()
-          NoColorEnv = senseNoColor ()
-          ExplicitPlain = explicitPlain
-          Width = senseWidth () }
+        {
+            IsTty = senseTty ()
+            NoColorEnv = senseNoColor ()
+            ExplicitPlain = explicitPlain
+            Width = senseWidth ()
+        }

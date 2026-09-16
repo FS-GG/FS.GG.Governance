@@ -60,13 +60,15 @@ module AgentReviewKey =
         let (QuestionText question) = inputs.Question
 
         // Fixed field order, joined by '\n', no trailing newline (contracts/agent-review-key-format.md).
-        [ seg "mid" modelId
-          seg "mver" modelVersion
-          seg "prompt" promptHash
-          seg "cfg" config
-          seg "chk" check
-          artSegment inputs.ReviewedArtifacts
-          seg "q" question ]
+        [
+            seg "mid" modelId
+            seg "mver" modelVersion
+            seg "prompt" promptHash
+            seg "cfg" config
+            seg "chk" check
+            artSegment inputs.ReviewedArtifacts
+            seg "q" question
+        ]
         |> String.concat "\n"
         |> CacheKey
 
@@ -75,13 +77,22 @@ module AgentReviewKey =
     let diff (a: AgentReviewInputs) (b: AgentReviewInputs) : ReviewInput list =
         // Compare input-by-input in the fixed encoding order; reviewed artifacts compared as a SET so a
         // reorder/duplicate is never reported. Returns exactly the differing inputs (FR-005).
-        [ if a.Model <> b.Model then ModelIdInput
-          if a.ModelVersion <> b.ModelVersion then ModelVersionInput
-          if a.PromptHash <> b.PromptHash then PromptHashInput
-          if a.Config <> b.Config then ModelConfigInput
-          if a.Check <> b.Check then CheckHashInput
-          if artifactSet a.ReviewedArtifacts <> artifactSet b.ReviewedArtifacts then ReviewedArtifactsInput
-          if a.Question <> b.Question then QuestionTextInput ]
+        [
+            if a.Model <> b.Model then
+                ModelIdInput
+            if a.ModelVersion <> b.ModelVersion then
+                ModelVersionInput
+            if a.PromptHash <> b.PromptHash then
+                PromptHashInput
+            if a.Config <> b.Config then
+                ModelConfigInput
+            if a.Check <> b.Check then
+                CheckHashInput
+            if artifactSet a.ReviewedArtifacts <> artifactSet b.ReviewedArtifacts then
+                ReviewedArtifactsInput
+            if a.Question <> b.Question then
+                QuestionTextInput
+        ]
 
     let value (key: CacheKey) : string =
         let (CacheKey s) = key

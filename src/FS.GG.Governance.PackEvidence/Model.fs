@@ -13,10 +13,12 @@ open FS.GG.Governance.ReleaseRules.Model
 module Model =
 
     type PackArtifact =
-        { Surface: SurfaceId
-          ArtifactPath: string
-          PackedVersion: string
-          Digest: ArtifactHash }
+        {
+            Surface: SurfaceId
+            ArtifactPath: string
+            PackedVersion: string
+            Digest: ArtifactHash
+        }
 
     type NoArtifactReason =
         | NoArtifactEmitted
@@ -35,15 +37,19 @@ module Model =
         | NotPackable
 
     type PackVerdict =
-        { Surface: SurfaceId
-          Outcome: PackOutcome
-          Version: VersionVerdict
-          Reason: string }
+        {
+            Surface: SurfaceId
+            Outcome: PackOutcome
+            Version: VersionVerdict
+            Reason: string
+        }
 
     type PackEvidenceSet =
-        { Verdicts: PackVerdict list
-          Runs: KindedCommandRun list
-          NoPackableProjects: bool }
+        {
+            Verdicts: PackVerdict list
+            Runs: KindedCommandRun list
+            NoPackableProjects: bool
+        }
 
     // ── 088 Breaking-Change (API-Compat) gate vocabulary (surface in Model.fsi) ──
 
@@ -59,9 +65,11 @@ module Model =
         | OtherIncompatibility of label: string
 
     type ApiBreak =
-        { Member: string
-          Kind: ApiBreakKind
-          Origin: ApiBreakOrigin }
+        {
+            Member: string
+            Kind: ApiBreakKind
+            Origin: ApiBreakOrigin
+        }
 
     [<RequireQualifiedAccess>]
     type ApiBreakSignal =
@@ -83,5 +91,7 @@ module Model =
         | NotCovered of reason: string
 
     type ApiCompatCoverage =
-        { Surface: SurfaceId
-          Outcome: ApiCompatCoverageOutcome }
+        {
+            Surface: SurfaceId
+            Outcome: ApiCompatCoverageOutcome
+        }

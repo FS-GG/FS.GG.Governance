@@ -10,7 +10,7 @@
 namespace FS.GG.Governance.RefreshCommand
 
 open YamlDotNet.RepresentationModel
-open FS.GG.Governance.Config.Model            // Maturity (F070 currency-enforcement dial)
+open FS.GG.Governance.Config.Model // Maturity (F070 currency-enforcement dial)
 open FS.GG.Governance.RefreshJson.RefreshModel
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -89,7 +89,13 @@ module Declaration =
                     match scalarField m "kind" with
                     | None -> Error(sprintf "view '%s' is missing its 'kind'" viewId)
                     | Some kindRaw ->
-                        match scalarField m "output" |> Option.bind (fun s -> match nonEmpty "output" s with Ok v -> Some v | Error _ -> None) with
+                        match
+                            scalarField m "output"
+                            |> Option.bind (fun s ->
+                                match nonEmpty "output" s with
+                                | Ok v -> Some v
+                                | Error _ -> None)
+                        with
                         | None -> Error(sprintf "view '%s' is missing/empty its 'output'" viewId)
                         | Some output ->
                             // `sources` is optional (an absent/empty sequence ⇒ a source-less view); a present
@@ -100,25 +106,43 @@ module Declaration =
                                 | Some node ->
                                     match scalarList node with
                                     | Some xs -> Ok xs
-                                    | None -> Error(sprintf "view '%s' has a malformed 'sources' (expected a list of paths)" viewId)
+                                    | None ->
+                                        Error(
+                                            sprintf
+                                                "view '%s' has a malformed 'sources' (expected a list of paths)"
+                                                viewId
+                                        )
 
                             match sourcesResult with
                             | Error e -> Error e
                             | Ok sources ->
                                 match childByKey m "generator" |> Option.bind scalarList with
-                                | None -> Error(sprintf "view '%s' is missing/malformed its 'generator' (expected a non-empty command list)" viewId)
+                                | None ->
+                                    Error(
+                                        sprintf
+                                            "view '%s' is missing/malformed its 'generator' (expected a non-empty command list)"
+                                            viewId
+                                    )
                                 | Some [] -> Error(sprintf "view '%s' has an empty 'generator' command" viewId)
                                 | Some generator ->
-                                    match scalarField m "generatorBasis" |> Option.bind (fun s -> match nonEmpty "generatorBasis" s with Ok v -> Some v | Error _ -> None) with
+                                    match
+                                        scalarField m "generatorBasis"
+                                        |> Option.bind (fun s ->
+                                            match nonEmpty "generatorBasis" s with
+                                            | Ok v -> Some v
+                                            | Error _ -> None)
+                                    with
                                     | None -> Error(sprintf "view '%s' is missing/empty its 'generatorBasis'" viewId)
                                     | Some basis ->
                                         Ok
-                                            { ViewId = viewId
-                                              Kind = viewKindOfToken kindRaw
-                                              OutputPath = output
-                                              Sources = sources
-                                              Generator = generator
-                                              GeneratorBasis = basis }
+                                            {
+                                                ViewId = viewId
+                                                Kind = viewKindOfToken kindRaw
+                                                OutputPath = output
+                                                Sources = sources
+                                                Generator = generator
+                                                GeneratorBasis = basis
+                                            }
 
     /// Fold a `Result` list into a `Result` of the list, first error wins (total, no exceptions).
     let sequenceResults (rs: Result<'a, string> list) : Result<'a list, string> =
@@ -173,21 +197,34 @@ module Declaration =
                     | Error e -> Error e
                     | Ok entries ->
                         let ids = entries |> List.map (fun e -> e.ViewId)
-                        let duplicated = ids |> List.countBy id |> List.filter (fun (_, n) -> n > 1) |> List.map fst
+
+                        let duplicated =
+                            ids |> List.countBy id |> List.filter (fun (_, n) -> n > 1) |> List.map fst
 
                         if not (List.isEmpty duplicated) then
-                            Error(sprintf "refresh.yml declares a view id more than once (%s)" (String.concat ", " duplicated))
+                            Error(
+                                sprintf
+                                    "refresh.yml declares a view id more than once (%s)"
+                                    (String.concat ", " duplicated)
+                            )
                         else
                             // F070: an absent `currency-enforcement` key ⇒ None (opt-in); a present unknown
                             // value is a hard error, not a silent advisory default.
                             match scalarField root "currency-enforcement" with
-                            | None -> Ok { Entries = entries; CurrencyEnforcement = None }
+                            | None ->
+                                Ok
+                                    {
+                                        Entries = entries
+                                        CurrencyEnforcement = None
+                                    }
                             | Some raw ->
                                 match recognizeMaturity raw with
                                 | Error e -> Error e
                                 | Ok maturity ->
                                     Ok
-                                        { Entries = entries
-                                          CurrencyEnforcement = Some maturity }
+                                        {
+                                            Entries = entries
+                                            CurrencyEnforcement = Some maturity
+                                        }
 
         result |> Result.mapError (fun reason -> { Reason = reason })

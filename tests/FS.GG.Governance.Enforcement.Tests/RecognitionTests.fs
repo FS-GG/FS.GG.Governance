@@ -14,59 +14,81 @@ open FS.GG.Governance.Enforcement.Tests.Support
 let tests =
     testList
         "Recognition"
-        [ test "each canonical run-mode token recognizes to its RunMode (SC-005)" {
-              for (tok, expected) in canonicalModeTokens do
-                  Expect.equal (recognizeMode tok) (Recognized expected) (sprintf "recognizeMode %A" tok)
-          }
+        [
+            test "each canonical run-mode token recognizes to its RunMode (SC-005)" {
+                for (tok, expected) in canonicalModeTokens do
+                    Expect.equal (recognizeMode tok) (Recognized expected) (sprintf "recognizeMode %A" tok)
+            }
 
-          test "each canonical profile token recognizes to its Profile (SC-005)" {
-              for (tok, expected) in canonicalProfileTokens do
-                  Expect.equal (recognizeProfile tok) (Recognized expected) (sprintf "recognizeProfile %A" tok)
-          }
+            test "each canonical profile token recognizes to its Profile (SC-005)" {
+                for (tok, expected) in canonicalProfileTokens do
+                    Expect.equal (recognizeProfile tok) (Recognized expected) (sprintf "recognizeProfile %A" tok)
+            }
 
-          test "every representative invalid string => Unrecognized carrying the exact input (FR-011)" {
-              for raw in invalidTokens do
-                  Expect.equal (recognizeMode raw) (Unrecognized raw) (sprintf "recognizeMode %A is Unrecognized verbatim" raw)
-                  Expect.equal (recognizeProfile raw) (Unrecognized raw) (sprintf "recognizeProfile %A is Unrecognized verbatim" raw)
-          }
+            test "every representative invalid string => Unrecognized carrying the exact input (FR-011)" {
+                for raw in invalidTokens do
+                    Expect.equal
+                        (recognizeMode raw)
+                        (Unrecognized raw)
+                        (sprintf "recognizeMode %A is Unrecognized verbatim" raw)
 
-          test "recognition is exact-token: no trim, no case-fold, no default" {
-              // case-variant, whitespace-pad, and a near-miss all fail rather than silently mapping.
-              Expect.equal (recognizeMode "Gate") (Unrecognized "Gate") "no case-fold"
-              Expect.equal (recognizeMode "  inner ") (Unrecognized "  inner ") "no trim"
-              Expect.equal (recognizeProfile "lite") (Unrecognized "lite") "no near-miss default"
-              Expect.equal (recognizeMode "ship") (Unrecognized "ship") "ship is not a run mode"
-          }
+                    Expect.equal
+                        (recognizeProfile raw)
+                        (Unrecognized raw)
+                        (sprintf "recognizeProfile %A is Unrecognized verbatim" raw)
+            }
 
-          test "the recognized sets are exactly six modes and four profiles (SC-005)" {
-              let recognizedModes =
-                  canonicalModeTokens
-                  |> List.choose (fun (tok, _) -> match recognizeMode tok with Recognized m -> Some m | _ -> None)
-                  |> List.distinct
+            test "recognition is exact-token: no trim, no case-fold, no default" {
+                // case-variant, whitespace-pad, and a near-miss all fail rather than silently mapping.
+                Expect.equal (recognizeMode "Gate") (Unrecognized "Gate") "no case-fold"
+                Expect.equal (recognizeMode "  inner ") (Unrecognized "  inner ") "no trim"
+                Expect.equal (recognizeProfile "lite") (Unrecognized "lite") "no near-miss default"
+                Expect.equal (recognizeMode "ship") (Unrecognized "ship") "ship is not a run mode"
+            }
 
-              let recognizedProfiles =
-                  canonicalProfileTokens
-                  |> List.choose (fun (tok, _) -> match recognizeProfile tok with Recognized p -> Some p | _ -> None)
-                  |> List.distinct
+            test "the recognized sets are exactly six modes and four profiles (SC-005)" {
+                let recognizedModes =
+                    canonicalModeTokens
+                    |> List.choose (fun (tok, _) ->
+                        match recognizeMode tok with
+                        | Recognized m -> Some m
+                        | _ -> None)
+                    |> List.distinct
 
-              Expect.equal recognizedModes.Length 6 "exactly six modes recognized"
-              Expect.equal recognizedProfiles.Length 4 "exactly four profiles recognized"
-          }
+                let recognizedProfiles =
+                    canonicalProfileTokens
+                    |> List.choose (fun (tok, _) ->
+                        match recognizeProfile tok with
+                        | Recognized p -> Some p
+                        | _ -> None)
+                    |> List.distinct
 
-          test "profileOfProfileId recognizes the four canonical ids and rejects others (FR-011)" {
-              Expect.equal (profileOfProfileId (ProfileId "light")) (Recognized Light) "light"
-              Expect.equal (profileOfProfileId (ProfileId "standard")) (Recognized Standard) "standard"
-              Expect.equal (profileOfProfileId (ProfileId "strict")) (Recognized Strict) "strict"
-              Expect.equal (profileOfProfileId (ProfileId "release")) (Recognized Profile.Release) "release"
-              Expect.equal (profileOfProfileId (ProfileId "experimental")) (Unrecognized "experimental") "non-canonical id carried"
-          }
+                Expect.equal recognizedModes.Length 6 "exactly six modes recognized"
+                Expect.equal recognizedProfiles.Length 4 "exactly four profiles recognized"
+            }
 
-          test "Profile<->ProfileId is a total bijection over the four canonical profiles (FR-003)" {
-              for p in allProfiles do
-                  Expect.equal (profileOfProfileId (profileToProfileId p)) (Recognized p) (sprintf "round-trip %A" p)
+            test "profileOfProfileId recognizes the four canonical ids and rejects others (FR-011)" {
+                Expect.equal (profileOfProfileId (ProfileId "light")) (Recognized Light) "light"
+                Expect.equal (profileOfProfileId (ProfileId "standard")) (Recognized Standard) "standard"
+                Expect.equal (profileOfProfileId (ProfileId "strict")) (Recognized Strict) "strict"
+                Expect.equal (profileOfProfileId (ProfileId "release")) (Recognized Profile.Release) "release"
 
-              let tokens =
-                  allProfiles |> List.map (fun p -> let (ProfileId s) = profileToProfileId p in s)
+                Expect.equal
+                    (profileOfProfileId (ProfileId "experimental"))
+                    (Unrecognized "experimental")
+                    "non-canonical id carried"
+            }
 
-              Expect.equal (List.sort tokens) [ "light"; "release"; "standard"; "strict" ] "exactly the four canonical tokens"
-          } ]
+            test "Profile<->ProfileId is a total bijection over the four canonical profiles (FR-003)" {
+                for p in allProfiles do
+                    Expect.equal (profileOfProfileId (profileToProfileId p)) (Recognized p) (sprintf "round-trip %A" p)
+
+                let tokens =
+                    allProfiles |> List.map (fun p -> let (ProfileId s) = profileToProfileId p in s)
+
+                Expect.equal
+                    (List.sort tokens)
+                    [ "light"; "release"; "standard"; "strict" ]
+                    "exactly the four canonical tokens"
+            }
+        ]

@@ -40,13 +40,15 @@ module Loop =
         | Json
 
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          StorePath: string
-          CacheOut: string
-          UnresolvedOut: string
-          Format: OutputFormat
-          ExplicitPlain: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            StorePath: string
+            CacheOut: string
+            UnresolvedOut: string
+            Format: OutputFormat
+            ExplicitPlain: bool
+        }
 
     type UsageError =
         | UnknownFlag of string
@@ -84,8 +86,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -99,17 +103,19 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          Resolution: FreshnessResolutionReport option
-          CacheDoc: string option
-          UnresolvedDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            Resolution: FreshnessResolutionReport option
+            CacheDoc: string option
+            UnresolvedDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     let unresolvedSchemaVersion = "fsgg.cache-eligibility.unresolved/v1"
 
@@ -127,22 +133,26 @@ module Loop =
     // Hidden accumulator (absent from Loop.fsi). `Paths = Some []` marks an explicit but empty `--paths`
     // (an EmptyPaths usage error); `Paths = None` means no `--paths` flag was given.
     type ParseAcc =
-        { Repo: string option
-          Paths: string list option
-          Since: string option
-          Store: string option
-          Out: string option
-          Format: string option
-          Plain: bool }
+        {
+            Repo: string option
+            Paths: string list option
+            Since: string option
+            Store: string option
+            Out: string option
+            Format: string option
+            Plain: bool
+        }
 
     let emptyAcc =
-        { Repo = None
-          Paths = None
-          Since = None
-          Store = None
-          Out = None
-          Format = None
-          Plain = false }
+        {
+            Repo = None
+            Paths = None
+            Since = None
+            Store = None
+            Out = None
+            Format = None
+            Plain = false
+        }
 
 
     // Derive the sidecar path from the cache-eligibility.json path: same directory, `…unresolved.json`
@@ -207,7 +217,8 @@ module Loop =
                     // `cache-eligibility --format text` no longer errors. `human` stays canonical/default;
                     // backward-compatible, and consistent with ADR-0006's deferred convergence direction
                     // (nothing renamed/removed). See docs/decisions/0006-cli-format-flag-vocabularies.md.
-                    | Some "human" | Some "text" -> Ok Human
+                    | Some "human"
+                    | Some "text" -> Ok Human
                     | Some "json" -> Ok Json
                     | Some other -> Error(BadFormat other)
 
@@ -222,32 +233,40 @@ module Loop =
                         | None, Some rev -> Since rev
                         | _ -> DefaultRange
 
-                    let cacheOut = acc.Out |> Option.defaultValue (CommandHost.under repo "readiness/cache-eligibility.json")
+                    let cacheOut =
+                        acc.Out
+                        |> Option.defaultValue (CommandHost.under repo "readiness/cache-eligibility.json")
 
                     Ok
-                        { Repo = repo
-                          Scope = scope
-                          StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
-                          CacheOut = cacheOut
-                          UnresolvedOut = deriveUnresolved cacheOut
-                          Format = format
-                          ExplicitPlain = acc.Plain }
+                        {
+                            Repo = repo
+                            Scope = scope
+                            StorePath =
+                                acc.Store
+                                |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
+                            CacheOut = cacheOut
+                            UnresolvedOut = deriveUnresolved cacheOut
+                            Format = format
+                            ExplicitPlain = acc.Plain
+                        }
 
     // ── init — initial Model + first effect ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Snapshot = None
-              SelectedGates = []
-              Sensed = None
-              Store = None
-              Resolution = None
-              CacheDoc = None
-              UnresolvedDoc = None
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Snapshot = None
+                SelectedGates = []
+                Sensed = None
+                Store = None
+                Resolution = None
+                CacheDoc = None
+                UnresolvedDoc = None
+                Diagnostics = []
+                Exit = Success
+            }
 
         match request.Scope with
         // ExplicitPaths bypasses git diff entirely: no snapshot, so base/head resolve to None (L2) and the
@@ -262,17 +281,27 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     let describeCatalog (diags: FS.GG.Governance.Config.Model.Diagnostic list) : string =
-        let one (d: FS.GG.Governance.Config.Model.Diagnostic) = sprintf "%s (%s)" d.Message (diagnosticIdToken d.Id)
+        let one (d: FS.GG.Governance.Config.Model.Diagnostic) =
+            sprintf "%s (%s)" d.Message (diagnosticIdToken d.Id)
 
         match diags with
         | [] -> "catalog invalid"
         | _ -> "catalog invalid: " + (diags |> List.map one |> String.concat "; ")
 
-    let jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
+    let jstr (s: string) =
+        System.Text.Json.JsonSerializer.Serialize s
 
     let candidatesFromModel (model: Model) : GovernedPath list =
         match model.Snapshot with
@@ -308,7 +337,10 @@ module Loop =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             let cacheReport = CacheEligibility.evaluate candidates store
             let cacheDoc = CacheEligibilityJson.ofReport cacheReport
             let unresolvedDoc = renderUnresolved report
@@ -317,9 +349,12 @@ module Loop =
                 Phase = Projected
                 Resolution = Some report
                 CacheDoc = Some cacheDoc
-                UnresolvedDoc = Some unresolvedDoc },
-            [ WriteArtifact(CacheArtifact, model.Request.CacheOut, cacheDoc)
-              WriteArtifact(UnresolvedArtifact, model.Request.UnresolvedOut, unresolvedDoc) ]
+                UnresolvedDoc = Some unresolvedDoc
+            },
+            [
+                WriteArtifact(CacheArtifact, model.Request.CacheOut, cacheDoc)
+                WriteArtifact(UnresolvedArtifact, model.Request.UnresolvedOut, unresolvedDoc)
+            ]
         | _ -> model, []
 
     // The F041 verdict entries for the resolved gates (recomputed purely from the report + store for the
@@ -327,7 +362,9 @@ module Loop =
     let cacheEntriesOf (model: Model) : CacheEligibilityEntry list =
         match model.Resolution, model.Store with
         | Some report, Some store ->
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             CacheEligibility.evaluate candidates store |> CacheEligibility.entries
         | _ -> []
 
@@ -341,7 +378,10 @@ module Loop =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             Some(CacheEligibility.evaluate candidates store)
         | _ -> None
 
@@ -350,14 +390,19 @@ module Loop =
         | Some report ->
             FreshnessResolution.entries report
             |> List.filter (fun e -> not (FreshnessResolution.isResolved e.Outcome))
-            |> List.map (fun e -> gateIdValue e.Gate, FreshnessResolution.missingFacts e.Outcome |> List.map FreshnessResolution.missingFactToken)
+            |> List.map (fun e ->
+                gateIdValue e.Gate,
+                FreshnessResolution.missingFacts e.Outcome
+                |> List.map FreshnessResolution.missingFactToken)
         | None -> []
 
     let causeJson (cause: RecomputeCause) : string =
         match cause with
         | NoPriorEvidence -> "{\"kind\":\"noPriorEvidence\"}"
         | InputsChanged cats ->
-            sprintf "{\"kind\":\"inputsChanged\",\"categories\":[%s]}" (cats |> List.map (categoryToken >> jstr) |> String.concat ",")
+            sprintf
+                "{\"kind\":\"inputsChanged\",\"categories\":[%s]}"
+                (cats |> List.map (categoryToken >> jstr) |> String.concat ",")
 
     // ── update — the whole composition; TOTAL, never throws (FR-013) ──
 
@@ -373,7 +418,8 @@ module Loop =
             | Sensed(Ok snapshot) ->
                 { model with
                     Phase = Sensed'
-                    Snapshot = Some snapshot },
+                    Snapshot = Some snapshot
+                },
                 [ LoadCatalog model.Request.Repo ]
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
@@ -383,7 +429,10 @@ module Loop =
                 // (InputUnavailable/3); a present-but-INVALID catalog is a tool-level failure (ToolError/4) —
                 // C2, distinguishing missing input from a defect (Constitution VI).
                 let category =
-                    if not (List.isEmpty diags) && diags |> List.forall (fun d -> d.Id = MissingRequiredFile) then
+                    if
+                        not (List.isEmpty diags)
+                        && diags |> List.forall (fun d -> d.Id = MissingRequiredFile)
+                    then
                         InputUnavailable
                     else
                         ToolError
@@ -398,13 +447,15 @@ module Loop =
                 let findings = Findings.findUnknownGovernedPaths facts report
                 let result = Route.select registry report findings
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
-                let baseHead = CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
+
+                let baseHead =
+                    CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
 
                 { model with
                     Phase = Selected
-                    SelectedGates = selectedGates },
-                [ SenseFreshness(selectedGates, baseHead)
-                  LoadStore model.Request.StorePath ]
+                    SelectedGates = selectedGates
+                },
+                [ SenseFreshness(selectedGates, baseHead); LoadStore model.Request.StorePath ]
 
             | FreshnessSensed(Ok sensed) -> tryProject { model with Sensed = Some sensed }
 
@@ -423,7 +474,12 @@ module Loop =
                 | Projected -> { model with Phase = Persisted }, []
                 | _ -> model, [ emitEffect model ]
 
-            | Emitted -> { model with Phase = Done; Exit = Success }, []
+            | Emitted ->
+                { model with
+                    Phase = Done
+                    Exit = Success
+                },
+                []
 
     // ── render — the deterministic summary, separate from the persisted artifacts ──
 
@@ -440,11 +496,14 @@ module Loop =
                 | [] -> []
                 | unresolved ->
                     "recompute by default (unresolved):"
-                    :: (unresolved |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts)))
+                    :: (unresolved
+                        |> List.map (fun (g, facts) -> sprintf "  %s   missing: %s" g (String.concat "," facts)))
 
             let wroteLines =
-                [ sprintf "wrote %s    (%s)" model.Request.CacheOut CacheEligibilityJson.schemaVersion
-                  sprintf "wrote %s    (%s)" model.Request.UnresolvedOut unresolvedSchemaVersion ]
+                [
+                    sprintf "wrote %s    (%s)" model.Request.CacheOut CacheEligibilityJson.schemaVersion
+                    sprintf "wrote %s    (%s)" model.Request.UnresolvedOut unresolvedSchemaVersion
+                ]
 
             [ unresolvedLines; wroteLines ] |> List.concat |> String.concat "\n"
 
@@ -473,7 +532,12 @@ module Loop =
         | Json -> EmitSummary(renderJson model, None, false)
         | Human ->
             match cacheReportOf model with
-            | Some report -> EmitSummary(renderHuman model, Some(ReportView.viewOfCacheEligibilityReport report, operationalLines model), model.Request.ExplicitPlain)
+            | Some report ->
+                EmitSummary(
+                    renderHuman model,
+                    Some(ReportView.viewOfCacheEligibilityReport report, operationalLines model),
+                    model.Request.ExplicitPlain
+                )
             | None -> EmitSummary(renderHuman model, None, model.Request.ExplicitPlain)
 
     // "Json is contract" (M-CLI-5): unlike route/ship/verify — whose `--json` stdout IS a single persisted
@@ -487,7 +551,9 @@ module Loop =
     and renderJson (model: Model) : string =
         match model.Resolution with
         | None ->
-            let errs = model.Diagnostics |> List.map (fun d -> jstr d.Message) |> String.concat ","
+            let errs =
+                model.Diagnostics |> List.map (fun d -> jstr d.Message) |> String.concat ","
+
             sprintf "{\"errors\":[%s]}" errs
         | Some _ ->
             let entries = cacheEntriesOf model
@@ -496,7 +562,13 @@ module Loop =
                 entries
                 |> List.choose (fun e ->
                     match e.Verdict with
-                    | Reusable ref -> Some(sprintf "{\"gate\":%s,\"evidence\":%s}" (jstr (gateIdValue e.Gate)) (jstr (EvidenceReuse.referenceValue ref)))
+                    | Reusable ref ->
+                        Some(
+                            sprintf
+                                "{\"gate\":%s,\"evidence\":%s}"
+                                (jstr (gateIdValue e.Gate))
+                                (jstr (EvidenceReuse.referenceValue ref))
+                        )
                     | MustRecompute _ -> None)
                 |> String.concat ","
 
@@ -504,7 +576,8 @@ module Loop =
                 entries
                 |> List.choose (fun e ->
                     match e.Verdict with
-                    | MustRecompute cause -> Some(sprintf "{\"gate\":%s,\"cause\":%s}" (jstr (gateIdValue e.Gate)) (causeJson cause))
+                    | MustRecompute cause ->
+                        Some(sprintf "{\"gate\":%s,\"cause\":%s}" (jstr (gateIdValue e.Gate)) (causeJson cause))
                     | Reusable _ -> None)
                 |> String.concat ","
 

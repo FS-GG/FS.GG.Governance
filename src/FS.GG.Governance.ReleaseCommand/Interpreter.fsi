@@ -14,14 +14,14 @@
 
 namespace FS.GG.Governance.ReleaseCommand
 
-open FS.GG.Governance.Config                       // Loader.FileReader
-open FS.GG.Governance.Config.Model                  // SurfaceId, EnvironmentClass
-open FS.GG.Governance.FreshnessKey.Model            // Revision
-open FS.GG.Governance.Provenance.Model              // BuilderIdentity
-open FS.GG.Governance.GateExecution.Model           // ExecutionPort
-open FS.GG.Governance.CommandKind.Model             // KindedCommandRun
-open FS.GG.Governance.PackEvidence.Model            // PackOutcome
-open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
+open FS.GG.Governance.Config // Loader.FileReader
+open FS.GG.Governance.Config.Model // SurfaceId, EnvironmentClass
+open FS.GG.Governance.FreshnessKey.Model // Revision
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model // ExecutionPort
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun
+open FS.GG.Governance.PackEvidence.Model // PackOutcome
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -39,15 +39,17 @@ module Interpreter =
     /// `PackedNoArtifact` / `PackFailed` — a non-zero exit ⇒ `PackFailed`, an unreadable artifact ⇒
     /// `PackedNoArtifact (ArtifactUnreadable …)`, never a throw), and the three normalized provenance senses.
     type Ports =
-        { Files: Loader.FileReader
-          Sense: SourceLayout -> ReleaseExpectations -> SensedRelease
-          Execute: ExecutionPort
-          PackRead: SurfaceId -> KindedCommandRun -> PackOutcome
-          SenseHead: unit -> Revision
-          SenseEnvironment: unit -> EnvironmentClass
-          SenseBuilder: unit -> BuilderIdentity
-          Write: ArtifactWriter
-          Out: OutputSink }
+        {
+            Files: Loader.FileReader
+            Sense: SourceLayout -> ReleaseExpectations -> SensedRelease
+            Execute: ExecutionPort
+            PackRead: SurfaceId -> KindedCommandRun -> PackOutcome
+            SenseHead: unit -> Revision
+            SenseEnvironment: unit -> EnvironmentClass
+            SenseBuilder: unit -> BuilderIdentity
+            Write: ArtifactWriter
+            Out: OutputSink
+        }
 
     /// M-CLI-4: choose THIS surface's `.nupkg` out of a shared-feed file listing (the shared
     /// `~/.local/share/nuget-local` accumulates every package's artifacts). `SurfaceId` doubles as the NuGet

@@ -12,4 +12,6 @@ let private asm = SurfaceDrift.assemblyNamed "FS.GG.Governance.AttestationJson"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "AttestationJson" "FS.GG.Governance.AttestationJson" asm ]
+        [
+            SurfaceDrift.surfaceTest "AttestationJson" "FS.GG.Governance.AttestationJson" asm
+        ]

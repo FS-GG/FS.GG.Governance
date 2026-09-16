@@ -10,22 +10,23 @@ open FS.GG.Governance.Tests.Common
 // Unlike the JsonWriters leaf (a deny-list that forbids every `*Json` edge), this leaf MAY reference the
 // RefreshJson leaf on purpose — that edge is exactly why it cannot fold into JsonWriters.
 
-let private asm =
-    SurfaceDrift.assemblyNamed "FS.GG.Governance.GeneratedViewsJson"
+let private asm = SurfaceDrift.assemblyNamed "FS.GG.Governance.GeneratedViewsJson"
 
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "GeneratedViewsJson" "FS.GG.Governance.GeneratedViewsJson" asm
+        [
+            SurfaceDrift.surfaceTest "GeneratedViewsJson" "FS.GG.Governance.GeneratedViewsJson" asm
 
-          SurfaceDrift.referencesOnly
-              "GeneratedViewsJson"
-              (fun n ->
-                  n = "FS.GG.Governance.CurrencyEnforcement"
-                  || n = "FS.GG.Governance.Enforcement"
-                  || n = "FS.GG.Governance.FreshnessKey"
-                  || n = "FS.GG.Governance.RefreshJson"
-                  || n = "FS.GG.Governance.JsonTokens"
-                  || n = "FS.GG.Governance.Config")
-              asm ]
+            SurfaceDrift.referencesOnly
+                "GeneratedViewsJson"
+                (fun n ->
+                    n = "FS.GG.Governance.CurrencyEnforcement"
+                    || n = "FS.GG.Governance.Enforcement"
+                    || n = "FS.GG.Governance.FreshnessKey"
+                    || n = "FS.GG.Governance.RefreshJson"
+                    || n = "FS.GG.Governance.JsonTokens"
+                    || n = "FS.GG.Governance.Config")
+                asm
+        ]

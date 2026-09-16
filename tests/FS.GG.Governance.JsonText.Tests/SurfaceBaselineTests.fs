@@ -13,9 +13,11 @@ let private jsonTextAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.JsonText"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "JsonText" "FS.GG.Governance.JsonText" jsonTextAsm
+        [
+            SurfaceDrift.surfaceTest "JsonText" "FS.GG.Governance.JsonText" jsonTextAsm
 
-          // Scope guard: the leaf has NO governance ProjectReference — it references only FSharp.Core/BCL,
-          // so it cannot introduce a cycle and any projection may reference it without pulling in the
-          // kernel/host capability the pure projections exclude.
-          SurfaceDrift.referencesOnly "JsonText" (fun _ -> false) jsonTextAsm ]
+            // Scope guard: the leaf has NO governance ProjectReference — it references only FSharp.Core/BCL,
+            // so it cannot introduce a cycle and any projection may reference it without pulling in the
+            // kernel/host capability the pure projections exclude.
+            SurfaceDrift.referencesOnly "JsonText" (fun _ -> false) jsonTextAsm
+        ]

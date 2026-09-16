@@ -24,28 +24,32 @@ open FS.GG.Governance.EvidenceReuse // empty
 open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, RecordedEvidence, EvidenceRef
 open FS.GG.Governance.HumanText // RenderMode (selectMode), ReportView (F27 wiring 063 US2)
 open FS.GG.Governance.HumanRender // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
-open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
+open FS.GG.Governance.CommandHost // 049: shared host-loop combinators (guard/drive)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
     type FreshnessSensor =
-        { SenseRuleHash: unit -> RuleHash option
-          SenseGeneratorVersion: unit -> GeneratorVersion option
-          SenseCoveredArtifacts: FS.GG.Governance.Gates.Model.Gate -> ArtifactHash list option
-          SenseCommandVersion: CommandId -> CommandVersion option }
+        {
+            SenseRuleHash: unit -> RuleHash option
+            SenseGeneratorVersion: unit -> GeneratorVersion option
+            SenseCoveredArtifacts: FS.GG.Governance.Gates.Model.Gate -> ArtifactHash list option
+            SenseCommandVersion: CommandId -> CommandVersion option
+        }
 
     type StoreReader = string -> Result<ReuseStore option, string>
 
     type Ports =
-        { Files: Loader.FileReader
-          Git: FS.GG.Governance.Snapshot.Ports
-          Freshness: FreshnessSensor
-          Store: StoreReader
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit
-          SenseCapability: bool -> RenderMode.ColorCapability
-          RenderReport: ReportView.ReportView -> unit }
+        {
+            Files: Loader.FileReader
+            Git: FS.GG.Governance.Snapshot.Ports
+            Freshness: FreshnessSensor
+            Store: StoreReader
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+            SenseCapability: bool -> RenderMode.ColorCapability
+            RenderReport: ReportView.ReportView -> unit
+        }
 
     // ── safety helpers (mirror RouteCommand) ──
 
@@ -53,7 +57,10 @@ module Interpreter =
 
     let sha256Hex (bytes: byte[]) : string =
         use sha = SHA256.Create()
-        sha.ComputeHash bytes |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+        sha.ComputeHash bytes
+        |> Array.map (fun b -> b.ToString("x2"))
+        |> String.concat ""
 
     // The rule-pack hash: a SHA-256 over the repo's `.fsgg/*.yml` catalog bytes (filename + content, sorted),
     // so it is content-addressed and working-directory independent. `None` when no catalog is present.
@@ -135,32 +142,38 @@ module Interpreter =
     let strArr (el: JsonElement) (name: string) : string list =
         match el.TryGetProperty name with
         | true, v when v.ValueKind = JsonValueKind.Array ->
-            [ for x in v.EnumerateArray() ->
-                  match x.ValueKind with
-                  | JsonValueKind.String ->
-                      match x.GetString() with
-                      | null -> failwithf "null element in %s" name
-                      | s -> s
-                  | _ -> failwithf "non-string element in %s" name ]
+            [
+                for x in v.EnumerateArray() ->
+                    match x.ValueKind with
+                    | JsonValueKind.String ->
+                        match x.GetString() with
+                        | null -> failwithf "null element in %s" name
+                        | s -> s
+                    | _ -> failwithf "non-string element in %s" name
+            ]
         | _ -> failwithf "missing or non-array field: %s" name
 
     let parseEntry (el: JsonElement) : RecordedEvidence =
         // Built via the public F029/F030 constructors only — computes NO hash/key/digest (FR-013); the
         // opaque newtype strings are taken verbatim from the document.
         let inputs: FreshnessInputs =
-            { Check = CheckId(reqStr el "check")
-              Domain = DomainId(reqStr el "domain")
-              Command = optStr el "command" |> Option.map CommandId
-              Environment = parseEnv (reqStr el "environment")
-              RuleHash = RuleHash(reqStr el "ruleHash")
-              CoveredArtifacts = strArr el "coveredArtifacts" |> List.map ArtifactHash
-              CommandVersion = optStr el "commandVersion" |> Option.map CommandVersion
-              GeneratorVersion = GeneratorVersion(reqStr el "generatorVersion")
-              Base = Revision(reqStr el "base")
-              Head = Revision(reqStr el "head") }
+            {
+                Check = CheckId(reqStr el "check")
+                Domain = DomainId(reqStr el "domain")
+                Command = optStr el "command" |> Option.map CommandId
+                Environment = parseEnv (reqStr el "environment")
+                RuleHash = RuleHash(reqStr el "ruleHash")
+                CoveredArtifacts = strArr el "coveredArtifacts" |> List.map ArtifactHash
+                CommandVersion = optStr el "commandVersion" |> Option.map CommandVersion
+                GeneratorVersion = GeneratorVersion(reqStr el "generatorVersion")
+                Base = Revision(reqStr el "base")
+                Head = Revision(reqStr el "head")
+            }
 
-        { Inputs = inputs
-          Evidence = EvidenceRef(reqStr el "evidence") }
+        {
+            Inputs = inputs
+            Evidence = EvidenceRef(reqStr el "evidence")
+        }
 
     let parseStore (json: string) : Result<ReuseStore, string> =
         try
@@ -201,9 +214,19 @@ module Interpreter =
         | Loop.SenseScope scope ->
             let options =
                 match scope with
-                | Loop.Since rev -> { Since = Some(GitRef rev); Base = None; Head = None }
+                | Loop.Since rev ->
+                    {
+                        Since = Some(GitRef rev)
+                        Base = None
+                        Head = None
+                    }
                 | Loop.ExplicitPaths _
-                | Loop.DefaultRange -> { Since = None; Base = None; Head = None }
+                | Loop.DefaultRange ->
+                    {
+                        Since = None
+                        Base = None
+                        Head = None
+                    }
 
             Loop.Sensed(CommandHost.senseSnapshotResult ports.Git options)
 
@@ -220,23 +243,27 @@ module Interpreter =
 
                     let covered =
                         gates
-                        |> List.choose (fun g -> ports.Freshness.SenseCoveredArtifacts g |> Option.map (fun hs -> g.Id, hs))
+                        |> List.choose (fun g ->
+                            ports.Freshness.SenseCoveredArtifacts g |> Option.map (fun hs -> g.Id, hs))
                         |> Map.ofList
 
                     let commandVersions =
                         gates
                         |> List.choose (fun g -> g.FreshnessKey.Command)
                         |> List.distinct
-                        |> List.choose (fun cid -> ports.Freshness.SenseCommandVersion cid |> Option.map (fun v -> cid, v))
+                        |> List.choose (fun cid ->
+                            ports.Freshness.SenseCommandVersion cid |> Option.map (fun v -> cid, v))
                         |> Map.ofList
 
                     let facts: SensedFacts =
-                        { RuleHash = ruleHash
-                          GeneratorVersion = genVer
-                          Base = baseOpt
-                          Head = headOpt
-                          CoveredArtifacts = covered
-                          CommandVersions = commandVersions }
+                        {
+                            RuleHash = ruleHash
+                            GeneratorVersion = genVer
+                            Base = baseOpt
+                            Head = headOpt
+                            CoveredArtifacts = covered
+                            CommandVersions = commandVersions
+                        }
 
                     Ok facts
                 with e ->
@@ -256,7 +283,8 @@ module Interpreter =
 
             Loop.StoreLoaded result
 
-        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(kind, path, content) ->
+            Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
 
         // F27 wiring (063) US2: the render-mode dispatch lives HERE at the edge (FR-004). Json (human = None)
         // and the ANSI-free Plain path go via the existing `Out` sink (byte-stable, captured in tests); only
@@ -269,7 +297,9 @@ module Interpreter =
                 match RenderMode.selectMode false (ports.SenseCapability explicitPlain) with
                 | RenderMode.Rich ->
                     ports.RenderReport view
-                    if operational <> "" then ports.Out operational
+
+                    if operational <> "" then
+                        ports.Out operational
                 | RenderMode.Plain
                 | RenderMode.Json -> ports.Out text
 
@@ -284,26 +314,31 @@ module Interpreter =
         let gv = toolVersion ()
 
         let sensor =
-            { SenseRuleHash = fun () -> catalogHash |> Option.map RuleHash
-              SenseGeneratorVersion = fun () -> Some(GeneratorVersion gv)
-              // MVP: a gate covers the repo's `src/**` surface (finer per-gate scoping deferred).
-              SenseCoveredArtifacts = fun _gate -> Some covered
-              // MVP coarse command version: a short digest of the command id stamped against the rule pack
-              // it is declared in (changes when the rule pack changes). Cheap, real, deterministic; richer
-              // command-version sensing is a later refinement. `None` when no catalog (unsensed, no-hide).
-              SenseCommandVersion =
-                fun (CommandId c) ->
-                    catalogHash
-                    |> Option.map (fun h -> CommandVersion((sha256Hex (Encoding.UTF8.GetBytes(c + "@" + h))).Substring(0, 12))) }
+            {
+                SenseRuleHash = fun () -> catalogHash |> Option.map RuleHash
+                SenseGeneratorVersion = fun () -> Some(GeneratorVersion gv)
+                // MVP: a gate covers the repo's `src/**` surface (finer per-gate scoping deferred).
+                SenseCoveredArtifacts = fun _gate -> Some covered
+                // MVP coarse command version: a short digest of the command id stamped against the rule pack
+                // it is declared in (changes when the rule pack changes). Cheap, real, deterministic; richer
+                // command-version sensing is a later refinement. `None` when no catalog (unsensed, no-hide).
+                SenseCommandVersion =
+                    fun (CommandId c) ->
+                        catalogHash
+                        |> Option.map (fun h ->
+                            CommandVersion((sha256Hex (Encoding.UTF8.GetBytes(c + "@" + h))).Substring(0, 12)))
+            }
 
-        { Files = Loader.fileSystemReader repo
-          Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
-          Freshness = sensor
-          Store = realStoreReader
-          Write = CommandHost.writeAtomic
-          Out = fun text -> Console.Out.WriteLine text
-          SenseCapability = Capability.senseCapability
-          RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view "" }
+        {
+            Files = Loader.fileSystemReader repo
+            Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
+            Freshness = sensor
+            Store = realStoreReader
+            Write = CommandHost.writeAtomic
+            Out = fun text -> Console.Out.WriteLine text
+            SenseCapability = Capability.senseCapability
+            RenderReport = fun view -> RichRender.emitStdout RenderMode.Rich view ""
+        }
 
     // ── run — drive init → update* to Done ──
 

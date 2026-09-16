@@ -12,4 +12,6 @@ let private asm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CostBudgetJson"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "CostBudgetJson" "FS.GG.Governance.CostBudgetJson" asm ]
+        [
+            SurfaceDrift.surfaceTest "CostBudgetJson" "FS.GG.Governance.CostBudgetJson" asm
+        ]

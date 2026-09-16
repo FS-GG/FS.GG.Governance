@@ -15,20 +15,22 @@ let private manifestJson =
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "ScaffoldManifestJson" "FS.GG.Governance.ScaffoldManifestJson" manifestJson
+        [
+            SurfaceDrift.surfaceTest "ScaffoldManifestJson" "FS.GG.Governance.ScaffoldManifestJson" manifestJson
 
-          test "ScaffoldManifestJson exports exactly one module, nothing private" {
-              let typeNames =
-                  manifestJson.GetExportedTypes()
-                  |> Array.choose (fun t -> Option.ofObj t.FullName)
-                  |> Array.sort
+            test "ScaffoldManifestJson exports exactly one module, nothing private" {
+                let typeNames =
+                    manifestJson.GetExportedTypes()
+                    |> Array.choose (fun t -> Option.ofObj t.FullName)
+                    |> Array.sort
 
-              Expect.equal typeNames.Length 1 "exactly one exported type (the ScaffoldManifestJson module)"
-          }
+                Expect.equal typeNames.Length 1 "exactly one exported type (the ScaffoldManifestJson module)"
+            }
 
-          // Leaf scope guard: ScaffoldManifestJson -> Scaffold, plus the 073 JsonText leaf. No kernel/
-          // host/Cli/adapter edge.
-          SurfaceDrift.referencesOnly
-              "ScaffoldManifestJson"
-              (fun n -> n = "FS.GG.Governance.Scaffold" || n = "FS.GG.Governance.JsonText")
-              manifestJson ]
+            // Leaf scope guard: ScaffoldManifestJson -> Scaffold, plus the 073 JsonText leaf. No kernel/
+            // host/Cli/adapter edge.
+            SurfaceDrift.referencesOnly
+                "ScaffoldManifestJson"
+                (fun n -> n = "FS.GG.Governance.Scaffold" || n = "FS.GG.Governance.JsonText")
+                manifestJson
+        ]

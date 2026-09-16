@@ -29,8 +29,10 @@ module Model =
     /// resolve, fabricate, or re-hash the inputs, and does not derive, parse, or cross-check the `GateId`
     /// against `Inputs.Check` / `Inputs.Domain` (FR-009). The unit of input to the roll-up.
     type CandidateGate =
-        { Gate: GateId
-          Inputs: FreshnessInputs }
+        {
+            Gate: GateId
+            Inputs: FreshnessInputs
+        }
 
     /// The CLOSED two-outcome per-gate verdict (FR-001/FR-002/FR-010). Exactly one of two outcomes, so a
     /// threshold-unmet or opaque yes/no verdict is UNREPRESENTABLE (FR-001). `Reusable` carries the F030
@@ -47,8 +49,10 @@ module Model =
     /// One candidate gate's verdict attributed to its originating `GateId`, so a later projection can place it
     /// under the correct gate (FR-005). The entry carries no `FreshnessInputs` (only the gate id and verdict).
     type CacheEligibilityEntry =
-        { Gate: GateId
-          Verdict: CacheEligibilityVerdict }
+        {
+            Gate: GateId
+            Verdict: CacheEligibilityVerdict
+        }
 
     /// The per-change roll-up: one entry per candidate gate, every gate preserved (none dropped, merged, or
     /// duplicated), in deterministic `GateId`-ordinal order independent of supply order (FR-006). Single-case

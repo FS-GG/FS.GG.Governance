@@ -30,12 +30,16 @@ module Model =
         | FindingItem of FindingId * GovernedPath
 
     type EnforcedItem =
-        { Id: EnforcedItemId
-          Decision: EnforcementDecision }
+        {
+            Id: EnforcedItemId
+            Decision: EnforcementDecision
+        }
 
     type ShipDecision =
-        { Verdict: Verdict
-          Blockers: EnforcedItem list
-          Warnings: EnforcedItem list
-          Passing: EnforcedItem list
-          ExitCodeBasis: ExitCodeBasis }
+        {
+            Verdict: Verdict
+            Blockers: EnforcedItem list
+            Warnings: EnforcedItem list
+            Passing: EnforcedItem list
+            ExitCodeBasis: ExitCodeBasis
+        }

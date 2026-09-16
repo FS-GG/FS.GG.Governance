@@ -54,12 +54,18 @@ module Model =
     type CommandIdentity = CommandIdentity of string
 
     /// A variable the run ADDED (absent in the baseline, present after).
-    type AddedVar = { Name: EnvVarName; Value: EnvVarValue }
+    type AddedVar =
+        { Name: EnvVarName; Value: EnvVarValue }
 
     /// A variable the run CHANGED (present in both baseline and run, with a different value). It carries
     /// BOTH its baseline `Old` and run `New` value and appears exactly ONCE, in `Changed` — never split into
     /// a `Removed` + `Added` pair (FR-002, D4).
-    type ChangedVar = { Name: EnvVarName; Old: EnvVarValue; New: EnvVarValue }
+    type ChangedVar =
+        {
+            Name: EnvVarName
+            Old: EnvVarValue
+            New: EnvVarValue
+        }
 
     /// A variable the run REMOVED (present in the baseline, absent after). Carries its baseline `Old` value.
     type RemovedVar = { Name: EnvVarName; Old: EnvVarValue }
@@ -69,9 +75,11 @@ module Model =
     /// an error. For the canonical identity each class is compared as a SET (entries rendered to a canonical
     /// string, deduplicated, ordinal-sorted) so supply order and duplicates never affect the identity (D6).
     type EnvironmentDelta =
-        { Added: AddedVar list
-          Changed: ChangedVar list
-          Removed: RemovedVar list }
+        {
+            Added: AddedVar list
+            Changed: ChangedVar list
+            Removed: RemovedVar list
+        }
 
     /// The captured-output outcome (FR-011, D5). `NoCapturedOutput` is the EXPLICIT, total, locatable "no
     /// captured-output file" — never an empty string that could collide with a real path. It and
@@ -85,20 +93,24 @@ module Model =
     /// SOLE input to `canonicalId` (the sensed duration is deliberately absent). Every field is reproducible
     /// from the command and its context (FR-005). `Timeout` is the F014 `TimeoutLimit`, reused verbatim.
     type ReproducibleFacts =
-        { Executable: Executable
-          Arguments: Argument list
-          WorkingDirectory: WorkingDirectory
-          Environment: EnvironmentDelta
-          Timeout: TimeoutLimit
-          ExitCode: ExitCode
-          StdoutDigest: OutputDigest
-          StderrDigest: OutputDigest
-          CapturedOutput: CapturedOutput }
+        {
+            Executable: Executable
+            Arguments: Argument list
+            WorkingDirectory: WorkingDirectory
+            Environment: EnvironmentDelta
+            Timeout: TimeoutLimit
+            ExitCode: ExitCode
+            StdoutDigest: OutputDigest
+            StderrDigest: OutputDigest
+            CapturedOutput: CapturedOutput
+        }
 
     /// The complete command record (FR-001) — all ten declared facts, none dropped or optional-by-omission.
     /// The sensed `Duration` is a SEPARATE field of a distinct type (D2): reachable as sensed metadata via
     /// `record.Duration`, structurally apart from `record.Reproducible`, and structurally impossible to fold
     /// into the canonical identity. A consumer reads `record.Reproducible.*` for the reproducible facts.
     type CommandRecord =
-        { Reproducible: ReproducibleFacts
-          Duration: SensedDuration }
+        {
+            Reproducible: ReproducibleFacts
+            Duration: SensedDuration
+        }

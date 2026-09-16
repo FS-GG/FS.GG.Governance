@@ -66,10 +66,12 @@ module Model =
     /// constructor placing artifact content into `Instructions` — separation BY CONSTRUCTION (FR-001).
     /// Artifacts preserve supplied order and duplicates (research D6).
     type ReviewRequest =
-        { /// The one channel an artifact may never enter (reused F035 `QuestionText`).
-          Instructions: QuestionText
-          /// The data channel — ordered, duplicate-preserving.
-          Artifacts: ArtifactPayload list }
+        {
+            /// The one channel an artifact may never enter (reused F035 `QuestionText`).
+            Instructions: QuestionText
+            /// The data channel — ordered, duplicate-preserving.
+            Artifacts: ArtifactPayload list
+        }
 
     /// The deterministic, byte-stable, INJECTIVE serialization of a `ReviewRequest`, with an explicit,
     /// unspoofable fence between the instruction channel and the data channel (the F029/F032/F035 tagged,

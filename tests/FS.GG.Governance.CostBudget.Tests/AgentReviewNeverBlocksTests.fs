@@ -18,15 +18,22 @@ let private allKinds = [ Stale [ RuleHashCat ]; SyntheticTaint; NoEvidence ]
 let tests =
     testList
         "AgentReviewNeverBlocks"
-        [ test "an agent-reviewed gate's finding derives Advisory under EVERY mode/profile (never blocks)" {
-              for kind in allKinds do
-                  let finding =
-                      { Gate = gid "ai" "review"
-                        Kind = kind
-                        BaseSeverity = Advisory
-                        Message = "agent-reviewed advisory" }
+        [
+            test "an agent-reviewed gate's finding derives Advisory under EVERY mode/profile (never blocks)" {
+                for kind in allKinds do
+                    let finding =
+                        {
+                            Gate = gid "ai" "review"
+                            Kind = kind
+                            BaseSeverity = Advisory
+                            Message = "agent-reviewed advisory"
+                        }
 
-                  for p in profiles do
-                      for m in modes do
-                          Expect.equal (Findings.enforce m p finding).EffectiveSeverity Advisory (sprintf "%A at %A/%A advisory" kind p m)
-          } ]
+                    for p in profiles do
+                        for m in modes do
+                            Expect.equal
+                                (Findings.enforce m p finding).EffectiveSeverity
+                                Advisory
+                                (sprintf "%A at %A/%A advisory" kind p m)
+            }
+        ]

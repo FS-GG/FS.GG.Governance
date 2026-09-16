@@ -14,17 +14,19 @@ open FS.GG.Governance.Attestation.Tests.Support
 let tests =
     testList
         "identity-reuse-guard"
-        [ test "Identity equals Audit.snapshotIdentity verbatim (no new fingerprint)" {
-              let snapshot = snapshotOf [ packRun ]
-              let summary = Attestation.summarize snapshot twoPacked
-              Expect.equal summary.Identity (Audit.snapshotIdentity snapshot) ""
-          }
+        [
+            test "Identity equals Audit.snapshotIdentity verbatim (no new fingerprint)" {
+                let snapshot = snapshotOf [ packRun ]
+                let summary = Attestation.summarize snapshot twoPacked
+                Expect.equal summary.Identity (Audit.snapshotIdentity snapshot) ""
+            }
 
-          test "a kind-only change (Build vs Pack on the same record) leaves Identity equal" {
-              let record = makeRecord 0 100L
-              let asBuild = snapshotOf [ { Kind = Build; Record = record } ]
-              let asPack = snapshotOf [ { Kind = Pack; Record = record } ]
-              let idBuild = (Attestation.summarize asBuild twoPacked).Identity
-              let idPack = (Attestation.summarize asPack twoPacked).Identity
-              Expect.equal idBuild idPack "the descriptive kind never participates in identity"
-          } ]
+            test "a kind-only change (Build vs Pack on the same record) leaves Identity equal" {
+                let record = makeRecord 0 100L
+                let asBuild = snapshotOf [ { Kind = Build; Record = record } ]
+                let asPack = snapshotOf [ { Kind = Pack; Record = record } ]
+                let idBuild = (Attestation.summarize asBuild twoPacked).Identity
+                let idPack = (Attestation.summarize asPack twoPacked).Identity
+                Expect.equal idBuild idPack "the descriptive kind never participates in identity"
+            }
+        ]

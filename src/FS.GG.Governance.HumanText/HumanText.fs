@@ -22,7 +22,9 @@ module HumanText =
             match node with
             | Leaf(label, detail) ->
                 match detail with
-                | Some d -> sb.Append(indent).Append("- ").Append(label).Append(": ").Append(d).Append('\n') |> ignore
+                | Some d ->
+                    sb.Append(indent).Append("- ").Append(label).Append(": ").Append(d).Append('\n')
+                    |> ignore
                 | None -> sb.Append(indent).Append("- ").Append(label).Append('\n') |> ignore
             | Group(title, children) ->
                 sb.Append(indent).Append(title).Append('\n') |> ignore
@@ -61,8 +63,7 @@ module HumanText =
         : string =
         render (viewOfVerifyDecision decision cache outcomes)
 
-    let ofReleaseReport (report: ReleaseReport) : string =
-        render (viewOfReleaseReport report)
+    let ofReleaseReport (report: ReleaseReport) : string = render (viewOfReleaseReport report)
 
     let ofCacheEligibilityReport (report: CacheEligibilityReport) : string =
         render (viewOfCacheEligibilityReport report)

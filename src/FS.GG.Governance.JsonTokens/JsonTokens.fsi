@@ -15,10 +15,10 @@
 
 namespace FS.GG.Governance.JsonTokens
 
-open FS.GG.Governance.Config.Model              // Cost, Maturity, EnvironmentClass
-open FS.GG.Governance.GateRun.Model             // GateDisposition
-open FS.GG.Governance.Enforcement.Enforcement   // Severity, Profile
-open FS.GG.Governance.Ship.Model                // ExitCodeBasis
+open FS.GG.Governance.Config.Model // Cost, Maturity, EnvironmentClass
+open FS.GG.Governance.GateRun.Model // GateDisposition
+open FS.GG.Governance.Enforcement.Enforcement // Severity, Profile
+open FS.GG.Governance.Ship.Model // ExitCodeBasis
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module JsonTokens =

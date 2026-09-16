@@ -14,9 +14,11 @@ module Interpreter =
     /// Injected port: read the manifest, resolve a claimed path (existence; bounds checked in the sensor),
     /// read a declared mirror (`None` ⇒ declared-absent). The ONLY filesystem seam.
     type SkillPort =
-        { ReadManifest: GovernedPath -> Result<string, string>
-          ResolvePath: string -> Result<bool, string>
-          ReadMirror: string -> Result<string option, string> }
+        {
+            ReadManifest: GovernedPath -> Result<string, string>
+            ResolvePath: string -> Result<bool, string>
+            ReadMirror: string -> Result<string option, string>
+        }
 
     val realPort: repo: string -> SkillPort
 
@@ -24,6 +26,4 @@ module Interpreter =
     /// declarations, resolves each claimed path (resolves? within bounds?), assesses task-list consistency,
     /// and reads the mirror; every exception is caught into `Unreadable` (FR-012). DETERMINISTIC.
     val senseSkill:
-        port: SkillPort ->
-        request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest ->
-            Model.SkillFacts
+        port: SkillPort -> request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest -> Model.SkillFacts

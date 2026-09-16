@@ -14,31 +14,37 @@ open FS.GG.Governance.CommandRecord.Tests.Support
 let tests =
     testList
         "Purity"
-        [ test "record and identity are unchanged across cwd / filesystem changes" {
-              let r0 = rebuild baseRecord.Reproducible baseDuration
-              let id0 = CommandRecord.canonicalId r0
+        [
+            test "record and identity are unchanged across cwd / filesystem changes" {
+                let r0 = rebuild baseRecord.Reproducible baseDuration
+                let id0 = CommandRecord.canonicalId r0
 
-              let originalCwd = Directory.GetCurrentDirectory()
-              let tempDir = Path.GetTempPath()
-              let tempFile = Path.Combine(tempDir, sprintf "f032-purity-%s.tmp" (Guid.NewGuid().ToString("N")))
+                let originalCwd = Directory.GetCurrentDirectory()
+                let tempDir = Path.GetTempPath()
 
-              try
-                  // Change cwd and touch an unrelated file — neither must influence the pure functions.
-                  Directory.SetCurrentDirectory tempDir
-                  File.WriteAllText(tempFile, "unrelated")
+                let tempFile =
+                    Path.Combine(tempDir, sprintf "f032-purity-%s.tmp" (Guid.NewGuid().ToString("N")))
 
-                  let r1 = rebuild baseRecord.Reproducible baseDuration
-                  let id1 = CommandRecord.canonicalId r1
+                try
+                    // Change cwd and touch an unrelated file — neither must influence the pure functions.
+                    Directory.SetCurrentDirectory tempDir
+                    File.WriteAllText(tempFile, "unrelated")
 
-                  File.Delete tempFile
-                  let r2 = rebuild baseRecord.Reproducible baseDuration
-                  let id2 = CommandRecord.canonicalId r2
+                    let r1 = rebuild baseRecord.Reproducible baseDuration
+                    let id1 = CommandRecord.canonicalId r1
 
-                  Expect.equal r1 r0 "record unaffected by cwd / filesystem state"
-                  Expect.equal r2 r0 "record unaffected after deleting the temp file"
-                  Expect.equal id1 id0 "identity unaffected by cwd / filesystem state"
-                  Expect.equal id2 id0 "identity unaffected after deleting the temp file"
-              finally
-                  Directory.SetCurrentDirectory originalCwd
-                  if File.Exists tempFile then File.Delete tempFile
-          } ]
+                    File.Delete tempFile
+                    let r2 = rebuild baseRecord.Reproducible baseDuration
+                    let id2 = CommandRecord.canonicalId r2
+
+                    Expect.equal r1 r0 "record unaffected by cwd / filesystem state"
+                    Expect.equal r2 r0 "record unaffected after deleting the temp file"
+                    Expect.equal id1 id0 "identity unaffected by cwd / filesystem state"
+                    Expect.equal id2 id0 "identity unaffected after deleting the temp file"
+                finally
+                    Directory.SetCurrentDirectory originalCwd
+
+                    if File.Exists tempFile then
+                        File.Delete tempFile
+            }
+        ]

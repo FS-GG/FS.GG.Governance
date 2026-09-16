@@ -40,24 +40,31 @@ module Route =
         | Cheap -> { roll with Cheap = roll.Cheap + 1 }
         | Medium -> { roll with Medium = roll.Medium + 1 }
         | High -> { roll with High = roll.High + 1 }
-        | Exhaustive -> { roll with Exhaustive = roll.Exhaustive + 1 }
+        | Exhaustive ->
+            { roll with
+                Exhaustive = roll.Exhaustive + 1
+            }
 
-    let private zeroCost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 }
+    let private zeroCost =
+        {
+            Cheap = 0
+            Medium = 0
+            High = 0
+            Exhaustive = 0
+        }
 
-    let select
-        (registry: GateRegistry)
-        (report: RouteReport)
-        (findings: FindingReport)
-        : RouteResult =
+    let select (registry: GateRegistry) (report: RouteReport) (findings: FindingReport) : RouteResult =
 
         // ── (T011) The domain -> gates index: one O(1) lookup per routed path, keyed on the DECLARED
         //    `Gate.Domain` (FR-010 — the key IS the domain; the `GateId` string is never re-parsed to
         //    recover a domain). Each bucket is in `GateId` ordinal order.
-        let indexByDomain : Map<DomainId, Gate list> =
+        let indexByDomain: Map<DomainId, Gate list> =
             registry.Gates
             |> List.groupBy (fun g -> g.Domain)
             |> List.map (fun (d, gates) ->
-                d, gates |> List.sortWith (fun a b -> String.CompareOrdinal(gateIdValue a.Id, gateIdValue b.Id)))
+                d,
+                gates
+                |> List.sortWith (fun a b -> String.CompareOrdinal(gateIdValue a.Id, gateIdValue b.Id)))
             |> Map.ofList
 
         // ── (T012/T014) Per-path union + dedup. Fold the routings (read only `report.Routings`;
@@ -74,7 +81,12 @@ module Route =
                 match Map.tryFind d indexByDomain with
                 | None -> acc
                 | Some gates ->
-                    let selecting = { Path = routing.Path; MatchedGlob = glob }
+                    let selecting =
+                        {
+                            Path = routing.Path
+                            MatchedGlob = glob
+                        }
+
                     gates
                     |> List.fold
                         (fun (a: Map<GateId, Gate * SelectingPath list>) (g: Gate) ->
@@ -94,17 +106,22 @@ module Route =
             selectedMap
             |> Map.toList
             |> List.map (fun (_, (gate, paths)) ->
-                { Gate = gate
-                  SelectingPaths = paths |> List.distinct |> List.sortWith bySelectingPath })
+                {
+                    Gate = gate
+                    SelectingPaths = paths |> List.distinct |> List.sortWith bySelectingPath
+                })
             |> List.sortWith bySelectedGateId
 
         // ── (T020) Cost rollup: the per-tier multiset over the DISTINCT selected gates (each gate
         //    counted once — the dedup already collapsed multi-path gates). No summed scalar, no
         //    invented tier weights (research D5, FR-006). Empty selection -> the all-zero identity.
-        let cost = selectedGates |> List.fold (fun roll sg -> addCost roll sg.Gate.Cost) zeroCost
+        let cost =
+            selectedGates |> List.fold (fun roll sg -> addCost roll sg.Gate.Cost) zeroCost
 
         // ── (T018) Findings carried through VERBATIM — no re-derive, re-sort, re-classify, or filter
         //    (FR-005). The F017 report is already deterministically ordered.
-        { SelectedGates = selectedGates
-          Findings = findings
-          Cost = cost }
+        {
+            SelectedGates = selectedGates
+            Findings = findings
+            Cost = cost
+        }

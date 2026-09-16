@@ -61,8 +61,10 @@ module GatesJson =
 
         w.WritePropertyName "prerequisites"
         w.WriteStartArray()
+
         for prereq in gate.Prerequisites do
             JsonWriters.writePrerequisite w prereq
+
         w.WriteEndArray()
 
         w.WritePropertyName "freshnessKey"
@@ -84,8 +86,10 @@ module GatesJson =
 
             w.WritePropertyName "gates"
             w.WriteStartArray()
+
             for gate in registry.Gates do
                 writeGate w gate
+
             w.WriteEndArray()
 
             w.WriteEndObject())

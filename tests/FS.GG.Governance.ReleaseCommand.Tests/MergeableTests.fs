@@ -74,7 +74,8 @@ let private shipExit (repo: string) : int =
     | Ok req ->
         let ports =
             { FS.GG.Governance.ShipCommand.Interpreter.realPorts repo with
-                Out = ignore }
+                Out = ignore
+            }
 
         let model = FS.GG.Governance.ShipCommand.Interpreter.run ports req
         FS.GG.Governance.ShipCommand.Loop.exitCode model.Exit
@@ -85,12 +86,18 @@ let private runRelease (repo: string) : Loop.Model * string =
     let releaseOut = Path.Combine(repo, "readiness", "release.json")
 
     let req =
-        { Loop.Repo = repo
-          Loop.Format = Loop.Json
-          Loop.ReleaseOut = releaseOut
-          Loop.AttestationOut = Path.Combine(repo, "readiness", "attestation.json") }
+        {
+            Loop.Repo = repo
+            Loop.Format = Loop.Json
+            Loop.ReleaseOut = releaseOut
+            Loop.AttestationOut = Path.Combine(repo, "readiness", "attestation.json")
+        }
 
-    let ports = { Interpreter.realPorts repo with Out = ignore }
+    let ports =
+        { Interpreter.realPorts repo with
+            Out = ignore
+        }
+
     let model = Interpreter.run ports req
     model, File.ReadAllText releaseOut
 
@@ -100,7 +107,13 @@ let private missingCount (releaseJson: string) (family: string) : int =
     use doc = JsonDocument.Parse releaseJson
     let evidence = doc.RootElement.GetProperty "evidence"
     let fam = evidence.GetProperty family
-    let arr = if family = "pins" then fam.GetProperty "drifted" else fam.GetProperty "missing"
+
+    let arr =
+        if family = "pins" then
+            fam.GetProperty "drifted"
+        else
+            fam.GetProperty "missing"
+
     arr.GetArrayLength()
 
 let private hasEvidenceFamily (releaseJson: string) (family: string) : bool =
@@ -137,58 +150,68 @@ let private ruleReason (releaseJson: string) (kindToken: string) : string option
 let tests =
     testList
         "Mergeable"
-        [ test "boundary distinction: a mergeable product ships (exit 0) but is not releasable (exit 1, distinct basis)" {
-              // FR-003, SC-002, AS-1.
-              withMergeableRepo writeUnmetPublishPlan (fun repo ->
-                  let ship = shipExit repo
-                  Expect.equal ship 0 "the real `fsgg ship` host merges clean (exit 0)"
+        [
+            test
+                "boundary distinction: a mergeable product ships (exit 0) but is not releasable (exit 1, distinct basis)" {
+                // FR-003, SC-002, AS-1.
+                withMergeableRepo writeUnmetPublishPlan (fun repo ->
+                    let ship = shipExit repo
+                    Expect.equal ship 0 "the real `fsgg ship` host merges clean (exit 0)"
 
-                  let model, releaseJson = runRelease repo
-                  Expect.equal model.Exit Loop.Blocked "the real `fsgg release` host blocks"
-                  Expect.equal (Loop.exitCode model.Exit) 1 "release exits 1 — distinct from the clean ship"
+                    let model, releaseJson = runRelease repo
+                    Expect.equal model.Exit Loop.Blocked "the real `fsgg release` host blocks"
+                    Expect.equal (Loop.exitCode model.Exit) 1 "release exits 1 — distinct from the clean ship"
 
-                  // The concrete release exit-code basis recorded in release.json v2 (the unmet-precondition
-                  // basis), not merely 'the two exit codes differ'.
-                  Expect.stringContains releaseJson "\"exitCodeBasis\":\"blocked\"" "release records the blocked basis"
-                  Expect.stringContains releaseJson "\"verdict\":\"fail\"" "release records a fail verdict")
-          }
+                    // The concrete release exit-code basis recorded in release.json v2 (the unmet-precondition
+                    // basis), not merely 'the two exit codes differ'.
+                    Expect.stringContains
+                        releaseJson
+                        "\"exitCodeBasis\":\"blocked\""
+                        "release records the blocked basis"
 
-          test "named preconditions — unmet: publishPlan/trustedPublishing/pins appear; the failing one is unmet with a named reason" {
-              // FR-004, AS-2.
-              withMergeableRepo writeUnmetPublishPlan (fun repo ->
-                  let _, releaseJson = runRelease repo
+                    Expect.stringContains releaseJson "\"verdict\":\"fail\"" "release records a fail verdict")
+            }
 
-                  for family in [ "publishPlan"; "trustedPublishing"; "pins" ] do
-                      Expect.isTrue
-                          (hasEvidenceFamily releaseJson family)
-                          (sprintf "%s appears as a named precondition entry" family)
+            test
+                "named preconditions — unmet: publishPlan/trustedPublishing/pins appear; the failing one is unmet with a named reason" {
+                // FR-004, AS-2.
+                withMergeableRepo writeUnmetPublishPlan (fun repo ->
+                    let _, releaseJson = runRelease repo
 
-                  Expect.isGreaterThan
-                      (missingCount releaseJson "publishPlan")
-                      0
-                      "the publish-plan precondition is UNMET (missing is non-empty)"
+                    for family in [ "publishPlan"; "trustedPublishing"; "pins" ] do
+                        Expect.isTrue
+                            (hasEvidenceFamily releaseJson family)
+                            (sprintf "%s appears as a named precondition entry" family)
 
-                  // The satisfied siblings stay satisfied (only publish-plan is unmet here).
-                  Expect.equal (missingCount releaseJson "trustedPublishing") 0 "trusted-publishing stays satisfied"
-                  Expect.equal (missingCount releaseJson "pins") 0 "template-pins stay satisfied"
+                    Expect.isGreaterThan
+                        (missingCount releaseJson "publishPlan")
+                        0
+                        "the publish-plan precondition is UNMET (missing is non-empty)"
 
-                  match ruleReason releaseJson "publishPlan" with
-                  | Some reason -> Expect.isNotEmpty reason "the unmet publish-plan carries a named reason, not a bare verdict"
-                  | None -> failtest "expected a publishPlan rule with a reason in release.json")
-          }
+                    // The satisfied siblings stay satisfied (only publish-plan is unmet here).
+                    Expect.equal (missingCount releaseJson "trustedPublishing") 0 "trusted-publishing stays satisfied"
+                    Expect.equal (missingCount releaseJson "pins") 0 "template-pins stay satisfied"
 
-          test "named preconditions — satisfied: a fully-releasable product ships AND releases clean, all three satisfied" {
-              // FR-004, SC-002, AS-3.
-              withMergeableRepo writeMetSources (fun repo ->
-                  Expect.equal (shipExit repo) 0 "the fully-releasable product ships clean"
+                    match ruleReason releaseJson "publishPlan" with
+                    | Some reason ->
+                        Expect.isNotEmpty reason "the unmet publish-plan carries a named reason, not a bare verdict"
+                    | None -> failtest "expected a publishPlan rule with a reason in release.json")
+            }
 
-                  let model, releaseJson = runRelease repo
-                  Expect.equal model.Exit Loop.Success "the fully-releasable product releases clean (exit 0)"
-                  Expect.equal (Loop.exitCode model.Exit) 0 "release exits 0"
+            test
+                "named preconditions — satisfied: a fully-releasable product ships AND releases clean, all three satisfied" {
+                // FR-004, SC-002, AS-3.
+                withMergeableRepo writeMetSources (fun repo ->
+                    Expect.equal (shipExit repo) 0 "the fully-releasable product ships clean"
 
-                  for family in [ "publishPlan"; "trustedPublishing"; "pins" ] do
-                      Expect.equal
-                          (missingCount releaseJson family)
-                          0
-                          (sprintf "%s is in a satisfied state (nothing missing/drifted)" family))
-          } ]
+                    let model, releaseJson = runRelease repo
+                    Expect.equal model.Exit Loop.Success "the fully-releasable product releases clean (exit 0)"
+                    Expect.equal (Loop.exitCode model.Exit) 0 "release exits 0"
+
+                    for family in [ "publishPlan"; "trustedPublishing"; "pins" ] do
+                        Expect.equal
+                            (missingCount releaseJson family)
+                            0
+                            (sprintf "%s is in a satisfied state (nothing missing/drifted)" family))
+            }
+        ]

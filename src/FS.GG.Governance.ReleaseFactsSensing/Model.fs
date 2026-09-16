@@ -13,21 +13,25 @@ open FS.GG.Governance.ReleaseRules.Model
 module Model =
 
     type ReleaseExpectations =
-        { Surface: SurfaceId
-          VersionBaseline: string option
-          RequiredMetadataFields: string list option
-          ExpectedPins: Map<string, string> option
-          RequiredPublishPosture: string list option
-          RequiredTrustedPublishing: string list option
-          RequiredProvenance: string list option }
+        {
+            Surface: SurfaceId
+            VersionBaseline: string option
+            RequiredMetadataFields: string list option
+            ExpectedPins: Map<string, string> option
+            RequiredPublishPosture: string list option
+            RequiredTrustedPublishing: string list option
+            RequiredProvenance: string list option
+        }
 
     type SourceLayout =
-        { VersionPath: string
-          MetadataPath: string
-          PinsPath: string
-          PublishPlanPath: string
-          TrustedPublishingPath: string
-          ProvenancePath: string }
+        {
+            VersionPath: string
+            MetadataPath: string
+            PinsPath: string
+            PublishPlanPath: string
+            TrustedPublishingPath: string
+            ProvenancePath: string
+        }
 
     type VersionEvidence = { Declared: string }
 
@@ -38,41 +42,57 @@ module Model =
     type PostureEvidence = { Observed: string list }
 
     type RecoveredEvidence =
-        { Version: Result<VersionEvidence, string>
-          Metadata: Result<MetadataEvidence, string>
-          Pins: Result<PinsEvidence, string>
-          PublishPlan: Result<PostureEvidence, string>
-          TrustedPublishing: Result<PostureEvidence, string>
-          Provenance: Result<PostureEvidence, string> }
+        {
+            Version: Result<VersionEvidence, string>
+            Metadata: Result<MetadataEvidence, string>
+            Pins: Result<PinsEvidence, string>
+            PublishPlan: Result<PostureEvidence, string>
+            TrustedPublishing: Result<PostureEvidence, string>
+            Provenance: Result<PostureEvidence, string>
+        }
 
     type VersionFact = { Observed: string; Baseline: string }
 
-    type MetadataFact = { Present: string list; Missing: string list }
+    type MetadataFact =
+        {
+            Present: string list
+            Missing: string list
+        }
 
     type PinsFact =
-        { Resolved: (string * string) list
-          Expected: (string * string) list
-          Drifted: string list }
+        {
+            Resolved: (string * string) list
+            Expected: (string * string) list
+            Drifted: string list
+        }
 
     type PostureFact =
-        { Observed: string list
-          Required: string list
-          Missing: string list }
+        {
+            Observed: string list
+            Required: string list
+            Missing: string list
+        }
 
     type SensingDiagnostic =
-        { Family: ReleaseRuleKind
-          Reason: string }
+        {
+            Family: ReleaseRuleKind
+            Reason: string
+        }
 
     type ReleaseSnapshot =
-        { Surface: SurfaceId
-          Version: VersionFact option
-          Metadata: MetadataFact option
-          Pins: PinsFact option
-          PublishPlan: PostureFact option
-          TrustedPublishing: PostureFact option
-          Provenance: PostureFact option
-          Diagnostics: SensingDiagnostic list }
+        {
+            Surface: SurfaceId
+            Version: VersionFact option
+            Metadata: MetadataFact option
+            Pins: PinsFact option
+            PublishPlan: PostureFact option
+            TrustedPublishing: PostureFact option
+            Provenance: PostureFact option
+            Diagnostics: SensingDiagnostic list
+        }
 
     type SensedRelease =
-        { Facts: ReleaseFacts
-          Snapshot: ReleaseSnapshot }
+        {
+            Facts: ReleaseFacts
+            Snapshot: ReleaseSnapshot
+        }

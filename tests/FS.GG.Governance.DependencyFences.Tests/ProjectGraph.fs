@@ -18,14 +18,16 @@ open System.Xml.Linq
 // ---------------------------------------------------------------------------------------------------
 
 type ProjectNode =
-    { Name: string // file name without extension, e.g. "FS.GG.Governance.RouteCommand"
-      Path: string // repo-relative, forward-slash
-      OutputType: string // "Exe" / "WinExe" / "Library" (absent ⇒ "Library")
-      PackAsTool: bool
-      ToolCommandName: string option
-      IsPackable: bool
-      PackageReferences: Set<string> // direct <PackageReference Include=...>
-      ProjectReferences: Set<string> } // direct <ProjectReference>, resolved to a node Name
+    {
+        Name: string // file name without extension, e.g. "FS.GG.Governance.RouteCommand"
+        Path: string // repo-relative, forward-slash
+        OutputType: string // "Exe" / "WinExe" / "Library" (absent ⇒ "Library")
+        PackAsTool: bool
+        ToolCommandName: string option
+        IsPackable: bool
+        PackageReferences: Set<string> // direct <PackageReference Include=...>
+        ProjectReferences: Set<string>
+    } // direct <ProjectReference>, resolved to a node Name
 
 /// The reason a source-project assembly boundary exists. Packaging boundaries are independently
 /// shipped tools/libraries; security-or-purity boundaries enforce dependency direction or isolate an
@@ -40,19 +42,22 @@ let isExe (n: ProjectNode) : bool =
     n.OutputType = "Exe" || n.OutputType = "WinExe"
 
 let sourceNodes (nodes: ProjectNode list) : ProjectNode list =
-    nodes |> List.filter (fun n -> n.Path.StartsWith("src/", StringComparison.Ordinal))
+    nodes
+    |> List.filter (fun n -> n.Path.StartsWith("src/", StringComparison.Ordinal))
 
 // These internal assemblies are load-bearing boundaries even though they are not independently
 // packaged. Keep this set explicit: a new non-packable project must make its reason reviewable.
 let private securityOrPurityBoundaries =
     Set.ofList
-        [ "FS.GG.Governance.Adapters.SddHandoff"
-          "FS.GG.Governance.Adapters.Spi"
-          "FS.GG.Governance.FreshnessSensing"
-          "FS.GG.Governance.Host"
-          "FS.GG.Governance.HumanRender"
-          "FS.GG.Governance.ProjectSensing"
-          "FS.GG.Governance.RoutePipeline" ]
+        [
+            "FS.GG.Governance.Adapters.SddHandoff"
+            "FS.GG.Governance.Adapters.Spi"
+            "FS.GG.Governance.FreshnessSensing"
+            "FS.GG.Governance.Host"
+            "FS.GG.Governance.HumanRender"
+            "FS.GG.Governance.ProjectSensing"
+            "FS.GG.Governance.RoutePipeline"
+        ]
 
 // The two built-in adapter namespaces intentionally share this one low-cost organizational assembly.
 let private organizationalBoundaries =
@@ -99,16 +104,23 @@ let renderClassifiedDot (nodes: ProjectNode list) : string =
             |> List.sort
             |> List.map (fun target -> sprintf "  \"%s\" -> \"%s\";" n.Name target))
 
-    String.concat Environment.NewLine ([ "digraph Governance {"; "  rankdir=LR;" ] @ nodeLines @ edgeLines @ [ "}"; "" ])
+    String.concat
+        Environment.NewLine
+        ([ "digraph Governance {"; "  rankdir=LR;" ]
+         @ nodeLines
+         @ edgeLines
+         @ [ "}"; "" ])
 
 // ---------------------------------------------------------------------------------------------------
 // data-model §Violation — the per-failure value the matchers emit; drives the actionable diagnostic.
 // ---------------------------------------------------------------------------------------------------
 
 type Violation =
-    { Rule: string
-      Project: string
-      Detail: string }
+    {
+        Rule: string
+        Project: string
+        Detail: string
+    }
 
 let render (v: Violation) : string =
     sprintf "[%s] %s — %s" v.Rule v.Project v.Detail
@@ -139,17 +151,29 @@ let private packageOwnerViolations
         Set.difference owners allowed
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = rule
-              Project = name
-              Detail = sprintf "declares a direct %s reference but is not in the documented %s-owner allowlist" package label })
+            {
+                Rule = rule
+                Project = name
+                Detail =
+                    sprintf
+                        "declares a direct %s reference but is not in the documented %s-owner allowlist"
+                        package
+                        label
+            })
 
     let missing =
         Set.difference allowed owners
         |> Set.toList
         |> List.map (fun name ->
-            { Rule = rule
-              Project = name
-              Detail = sprintf "is a documented %s owner but no longer declares a direct %s reference (update the allowlist)" label package })
+            {
+                Rule = rule
+                Project = name
+                Detail =
+                    sprintf
+                        "is a documented %s owner but no longer declares a direct %s reference (update the allowlist)"
+                        label
+                        package
+            })
 
     undocumented @ missing
 
@@ -185,16 +209,20 @@ let exeExeEdges (nodes: ProjectNode list) : Violation list =
 
         walk Set.empty (start.ProjectReferences |> Set.toList)
 
-    [ for n in nodes do
-          if isExe n then
-              for target in reachable n |> Set.toList |> List.sort do
-                  match Map.tryFind target byName with
-                  | Some t when isExe t ->
-                      yield
-                          { Rule = "exe-leaf"
-                            Project = n.Name
-                            Detail = sprintf "executable reaches another executable: %s → %s" n.Name target }
-                  | _ -> () ]
+    [
+        for n in nodes do
+            if isExe n then
+                for target in reachable n |> Set.toList |> List.sort do
+                    match Map.tryFind target byName with
+                    | Some t when isExe t ->
+                        yield
+                            {
+                                Rule = "exe-leaf"
+                                Project = n.Name
+                                Detail = sprintf "executable reaches another executable: %s → %s" n.Name target
+                            }
+                    | _ -> ()
+    ]
 
 /// INV-3 — at most one project may claim ToolCommandName=fsgg.
 let fsggClaimants (nodes: ProjectNode list) : string list =
@@ -219,14 +247,16 @@ let toolCommandCollisions (nodes: ProjectNode list) : Violation list =
         match pairs |> List.map snd |> List.sort with
         | _ :: _ :: _ as claimants ->
             Some
-                { Rule = "tool-command-owner"
-                  Project = String.concat ", " claimants
-                  Detail =
-                    sprintf
-                        "ToolCommandName '%s' is claimed by %d publishable projects: %s"
-                        tcn
-                        (List.length claimants)
-                        (String.concat ", " claimants) }
+                {
+                    Rule = "tool-command-owner"
+                    Project = String.concat ", " claimants
+                    Detail =
+                        sprintf
+                            "ToolCommandName '%s' is claimed by %d publishable projects: %s"
+                            tcn
+                            (List.length claimants)
+                            (String.concat ", " claimants)
+                }
         | _ -> None)
 
 // ---------------------------------------------------------------------------------------------------
@@ -274,9 +304,7 @@ let private elements (doc: XDocument) (name: string) =
     doc.Descendants() |> Seq.filter (fun e -> localName e = name)
 
 let private firstValue (doc: XDocument) (name: string) : string option =
-    elements doc name
-    |> Seq.tryHead
-    |> Option.map (fun e -> e.Value.Trim())
+    elements doc name |> Seq.tryHead |> Option.map (fun e -> e.Value.Trim())
 
 let private includeAttrs (doc: XDocument) (name: string) : string list =
     elements doc name
@@ -301,14 +329,16 @@ let private parseProject (repoRel: string) : ProjectNode =
         |> List.map (fun inc -> fileNameNoExt (inc.Replace('\\', '/')))
         |> Set.ofList
 
-    { Name = fileNameNoExt repoRel
-      Path = repoRel
-      OutputType = firstValue doc "OutputType" |> Option.defaultValue "Library"
-      PackAsTool = parseBool (firstValue doc "PackAsTool") false
-      ToolCommandName = firstValue doc "ToolCommandName"
-      IsPackable = parseBool (firstValue doc "IsPackable") true
-      PackageReferences = includeAttrs doc "PackageReference" |> Set.ofList
-      ProjectReferences = projectRefs }
+    {
+        Name = fileNameNoExt repoRel
+        Path = repoRel
+        OutputType = firstValue doc "OutputType" |> Option.defaultValue "Library"
+        PackAsTool = parseBool (firstValue doc "PackAsTool") false
+        ToolCommandName = firstValue doc "ToolCommandName"
+        IsPackable = parseBool (firstValue doc "IsPackable") true
+        PackageReferences = includeAttrs doc "PackageReference" |> Set.ofList
+        ProjectReferences = projectRefs
+    }
 
 /// The real project graph, parsed from the tracked tree. Deterministic (tracked files only).
 let load () : ProjectNode list =

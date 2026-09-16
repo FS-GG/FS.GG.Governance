@@ -55,17 +55,18 @@ module Model =
     /// F014 newtypes verbatim (FR-009).
     type FreshnessInputs =
         { // ── carried gate identity (F014 newtypes, research D1/D5) ──
-          Check: CheckId
-          Domain: DomainId
-          Command: CommandId option
-          Environment: EnvironmentClass
-          // ── Phase-11 additions ──
-          RuleHash: RuleHash
-          CoveredArtifacts: ArtifactHash list
-          CommandVersion: CommandVersion option
-          GeneratorVersion: GeneratorVersion
-          Base: Revision
-          Head: Revision }
+            Check: CheckId
+            Domain: DomainId
+            Command: CommandId option
+            Environment: EnvironmentClass
+            // ── Phase-11 additions ──
+            RuleHash: RuleHash
+            CoveredArtifacts: ArtifactHash list
+            CommandVersion: CommandVersion option
+            GeneratorVersion: GeneratorVersion
+            Base: Revision
+            Head: Revision
+        }
 
     // ── Key entity: the computed fingerprint ──
 

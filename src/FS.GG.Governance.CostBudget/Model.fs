@@ -21,21 +21,25 @@ module Model =
         | AgentReviewed of CacheKey
 
     type CandidateCost =
-        { Gate: GateId
-          Cost: Cost
-          Verdict: CacheEligibilityVerdict
-          Review: AgentReviewMark }
+        {
+            Gate: GateId
+            Cost: Cost
+            Verdict: CacheEligibilityVerdict
+            Review: AgentReviewMark
+        }
 
     type DeferralClass =
         | Skipped
         | Deferred
 
     type BudgetReason =
-        { Gate: GateId
-          Cost: Cost
-          Ceiling: Cost
-          Class: DeferralClass
-          Cause: RecomputeCause }
+        {
+            Gate: GateId
+            Cost: Cost
+            Ceiling: Cost
+            Class: DeferralClass
+            Cause: RecomputeCause
+        }
 
     type CacheDecision =
         | Reuse of EvidenceRef
@@ -43,9 +47,11 @@ module Model =
         | OverBudget of BudgetReason
 
     type CacheDecisionEntry =
-        { Gate: GateId
-          Cost: Cost
-          Review: AgentReviewMark
-          Decision: CacheDecision }
+        {
+            Gate: GateId
+            Cost: Cost
+            Review: AgentReviewMark
+            Decision: CacheDecision
+        }
 
     type CacheDecisionReport = CacheDecisionReport of CacheDecisionEntry list

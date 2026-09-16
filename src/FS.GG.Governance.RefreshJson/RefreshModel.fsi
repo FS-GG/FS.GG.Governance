@@ -15,8 +15,8 @@
 
 namespace FS.GG.Governance.RefreshJson
 
-open FS.GG.Governance.FreshnessKey.Model    // InputCategory
-open FS.GG.Governance.Config.Model          // Maturity (F070 additive currency-enforcement dial)
+open FS.GG.Governance.FreshnessKey.Model // InputCategory
+open FS.GG.Governance.Config.Model // Maturity (F070 additive currency-enforcement dial)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RefreshModel =
@@ -41,12 +41,14 @@ module RefreshModel =
     /// the edge to regenerate the view (research D3); `GeneratorBasis` is how the generator version is sensed
     /// (a product-neutral token read from the file).
     type GenerationEntry =
-        { ViewId: string
-          Kind: ViewKind
-          OutputPath: string
-          Sources: string list
-          Generator: string list
-          GeneratorBasis: string }
+        {
+            ViewId: string
+            Kind: ViewKind
+            OutputPath: string
+            Sources: string list
+            Generator: string list
+            GeneratorBasis: string
+        }
 
     /// The whole authored generation manifest. An EMPTY entry list is VALID ("nothing to refresh", FR-012).
     /// `CurrencyEnforcement` is the F070 ADDITIVE opt-in stale-view blocking dial (the manifest-level
@@ -55,8 +57,10 @@ module RefreshModel =
     /// through the existing F023 truth table. It is NOT projected into `refresh.json` (the projection renders
     /// only the fields it already renders), so `refresh.json` stays byte-identical.
     type GenerationManifest =
-        { Entries: GenerationEntry list
-          CurrencyEnforcement: Maturity option }
+        {
+            Entries: GenerationEntry list
+            CurrencyEnforcement: Maturity option
+        }
 
     /// A closed, explained rejection of a malformed/unreadable `refresh.yml` (the `ReleaseCommand.DeclError`
     /// spirit). Parsing is PURE and TOTAL — malformed input is an `Error DeclError`, never an exception.
@@ -76,9 +80,11 @@ module RefreshModel =
     /// current / not-evaluated). `Drifted` mirrors the categories carried in `Regenerated`/`WouldRegenerate`
     /// and is the projection's `drifted` field.
     type ViewDecision =
-        { Entry: GenerationEntry
-          Status: CurrencyStatus
-          Drifted: InputCategory list }
+        {
+            Entry: GenerationEntry
+            Status: CurrencyStatus
+            Drifted: InputCategory list
+        }
 
     /// The overall run category that drives the exit code (cli.md exit-code table, research D5). Six
     /// distinguishable outcomes; the trailing `'` on the colliding constructor names disambiguates them from
@@ -95,13 +101,15 @@ module RefreshModel =
     /// order (deterministic). `DryRun` distinguishes a preview run (statuses are `WouldRegenerate`) from a
     /// write run (statuses are `Regenerated`); it is the projection's top-level `dryRun` field.
     type RefreshDecision =
-        { Outcome: RefreshOutcome
-          DryRun: bool
-          Views: ViewDecision list
-          RegeneratedCount: int
-          CurrentCount: int
-          UnresolvedCount: int
-          NotEvaluatedCount: int }
+        {
+            Outcome: RefreshOutcome
+            DryRun: bool
+            Views: ViewDecision list
+            RegeneratedCount: int
+            CurrentCount: int
+            UnresolvedCount: int
+            NotEvaluatedCount: int
+        }
 
     /// The stable, kebab-case wire token for a `ViewKind` (for the manifest round-trip and the projection's
     /// `kind` field). TOTAL and exhaustive — a future kind is a compile error here. `Other s` renders `s`

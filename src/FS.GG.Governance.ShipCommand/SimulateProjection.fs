@@ -7,14 +7,14 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open System.Text.Json                           // Utf8JsonWriter (the callback param type)
-open FS.GG.Governance.Config.Model             // GovernedPath
-open FS.GG.Governance.Gates.Model              // gateIdValue
-open FS.GG.Governance.Findings.Model           // findingIdToken
-open FS.GG.Governance.Ship.Model               // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
+open System.Text.Json // Utf8JsonWriter (the callback param type)
+open FS.GG.Governance.Config.Model // GovernedPath
+open FS.GG.Governance.Gates.Model // gateIdValue
+open FS.GG.Governance.Findings.Model // findingIdToken
+open FS.GG.Governance.Ship.Model // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
 open FS.GG.Governance.Adapters.SddHandoff.Model // Diagnostic, DiagnosticCause
-open FS.GG.Governance.JsonText                  // JsonText.writeToString — the shared compact-emit leaf
-open FS.GG.Governance.HumanText                 // HumanText.ofShipDecision (the reused verdict projection)
+open FS.GG.Governance.JsonText // JsonText.writeToString — the shared compact-emit leaf
+open FS.GG.Governance.HumanText // HumanText.ofShipDecision (the reused verdict projection)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SimulateProjection =
@@ -61,7 +61,10 @@ module SimulateProjection =
         JsonText.writeToString (fun (writer: Utf8JsonWriter) ->
             let writeIdArray (name: string) (items: EnforcedItem list) =
                 writer.WriteStartArray(name)
-                items |> List.iter (fun (it: EnforcedItem) -> writer.WriteStringValue(idToken it.Id))
+
+                items
+                |> List.iter (fun (it: EnforcedItem) -> writer.WriteStringValue(idToken it.Id))
+
                 writer.WriteEndArray()
 
             writer.WriteStartObject()
@@ -77,16 +80,19 @@ module SimulateProjection =
             writer.WriteNumber("requiredAbsentCount", suf.RequiredAbsentCount)
             writer.WriteBoolean("allNotEvaluated", suf.AllNotEvaluated)
             writer.WriteStartArray("signals")
+
             suf.Signals
             |> List.iter (fun (s: Simulate.SignalSufficiency) ->
                 writer.WriteStartObject()
                 writer.WriteString("signal", s.Signal)
                 writer.WriteString("class", classToken s.Class)
                 writer.WriteEndObject())
+
             writer.WriteEndArray()
             writer.WriteEndObject()
 
             writer.WriteStartArray("handoffDiagnostics")
+
             result.HandoffDiagnostics
             |> List.iter (fun (dg: Diagnostic) ->
                 writer.WriteStartObject()
@@ -94,6 +100,7 @@ module SimulateProjection =
                 writer.WriteString("source", dg.Source)
                 writer.WriteString("message", dg.Message)
                 writer.WriteEndObject())
+
             writer.WriteEndArray()
 
             writer.WriteEndObject())
@@ -105,7 +112,9 @@ module SimulateProjection =
         let suf = result.Sufficiency
 
         let signalsOf (c: Simulate.SignalClass) =
-            suf.Signals |> List.filter (fun s -> s.Class = c) |> List.map (fun s -> s.Signal)
+            suf.Signals
+            |> List.filter (fun s -> s.Class = c)
+            |> List.map (fun s -> s.Signal)
 
         let section (label: string) (ids: string list) : string list =
             match ids with
@@ -113,13 +122,14 @@ module SimulateProjection =
             | _ -> (sprintf "  %s:" label) :: (ids |> List.map (fun i -> "    - " + i))
 
         let sufficiencyLines =
-            [ ""
-              "Sufficiency (handoff evidence signals):" ]
+            [ ""; "Sufficiency (handoff evidence signals):" ]
             @ section (sprintf "required-absent (%d)" suf.RequiredAbsentCount) (signalsOf Simulate.RequiredAbsent)
             @ section "required-satisfied" (signalsOf Simulate.RequiredSatisfied)
             @ section "not-required" (signalsOf Simulate.NotRequired)
             @ (if suf.AllNotEvaluated then
-                   [ "  all-not-evaluated: nothing real was carried — this is the notEvaluated failure mode (absence, not a pass)." ]
+                   [
+                       "  all-not-evaluated: nothing real was carried — this is the notEvaluated failure mode (absence, not a pass)."
+                   ]
                else
                    [])
 
@@ -132,11 +142,13 @@ module SimulateProjection =
                 :: (diags
                     |> List.map (fun dg -> sprintf "  - %s: %s (%s)" (causeToken dg.Cause) dg.Message dg.Source))
 
-        [ "SIMULATED (dry-run) — not a real gate result"
-          sprintf "verdict: %s (%s)" (verdictToken d.Verdict) (basisToken d.ExitCodeBasis)
-          "gates not executed (dry-run); the verdict reflects the pre-execution state."
-          ""
-          HumanText.ofShipDecision d None [] ]
+        [
+            "SIMULATED (dry-run) — not a real gate result"
+            sprintf "verdict: %s (%s)" (verdictToken d.Verdict) (basisToken d.ExitCodeBasis)
+            "gates not executed (dry-run); the verdict reflects the pre-execution state."
+            ""
+            HumanText.ofShipDecision d None []
+        ]
         @ sufficiencyLines
         @ diagnosticLines
         |> String.concat "\n"

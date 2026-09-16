@@ -9,9 +9,9 @@
 
 namespace FS.GG.Governance.VerifyCommand
 
-open FS.GG.Governance.Enforcement.Enforcement   // Profile
-open FS.GG.Governance.SurfaceChecks.Model        // SurfaceFinding
-open FS.GG.Governance.Ship.Model                 // ShipDecision
+open FS.GG.Governance.Enforcement.Enforcement // Profile
+open FS.GG.Governance.SurfaceChecks.Model // SurfaceFinding
+open FS.GG.Governance.Ship.Model // ShipDecision
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SurfaceFold =

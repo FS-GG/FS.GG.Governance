@@ -42,16 +42,16 @@ type JudgeVerdict = { Verdict: Verdict; Confidence: float }
 /// fields the loop never merges, so a malicious artifact cannot become instruction. `Key` is
 /// the F04 content-hash cache key the verdict will be frozen against.
 type ReviewTask =
-    { Key: string
-      Instruction: string
-      Data: ArtifactContent list }
+    {
+        Key: string
+        Instruction: string
+        Data: ArtifactContent list
+    }
 
 /// A request the pure core emits for one cache-MISS agent review (carried by
 /// `DispatchReview`): the isolated `Task` plus how many samples the acceptance policy wants
 /// the edge to draw (`samplesFor policy`).
-type ReviewDispatch =
-    { Task: ReviewTask
-      Samples: int }
+type ReviewDispatch = { Task: ReviewTask; Samples: int }
 
 /// The configurable rule that decides whether a stochastic verdict is trustworthy enough to
 /// be FROZEN as durable evidence (decision #2, FR-009). Applied by `accept` BEFORE any
@@ -149,25 +149,27 @@ type Phase =
 /// transitions read and rewrite. Generic over the kernel's `'fact`; it DROPS `'change` (like
 /// `Route`), carrying only the computed route and the kernel-side state.
 type Model<'fact> =
-    { /// The current loop stage.
-      Phase: Phase
-      /// The facts sensed and recorded so far (supplied artifact-content facts + frozen
-      /// `RecordedReview` facts + everything the kernel derived), de-duplicated by `FactId`
-      /// (FR-014).
-      Facts: FactSet<'fact>
-      /// The F07 `Route` the loop acts on — computed at `init` from the supplied (base)
-      /// fences/rules/mode/change and stable thereafter (FR-011).
-      Route: Route
-      /// The review cache keys awaiting a verdict (dispatched, not yet resolved).
-      Pending: Set<string>
-      /// The observable bypass/override log (FR-013) — deterministically ordered.
-      Disclosures: Disclosure list
-      /// The safe-failure record (FR-012) — deterministically ordered; distinguishes
-      /// absent/bad input from a tool defect.
-      Failures: Failure list
-      /// The number of planning rounds that produced at least one new effect before
-      /// quiescence (observability; mirrors `EvaluationResult.Rounds`).
-      Rounds: int }
+    {
+        /// The current loop stage.
+        Phase: Phase
+        /// The facts sensed and recorded so far (supplied artifact-content facts + frozen
+        /// `RecordedReview` facts + everything the kernel derived), de-duplicated by `FactId`
+        /// (FR-014).
+        Facts: FactSet<'fact>
+        /// The F07 `Route` the loop acts on — computed at `init` from the supplied (base)
+        /// fences/rules/mode/change and stable thereafter (FR-011).
+        Route: Route
+        /// The review cache keys awaiting a verdict (dispatched, not yet resolved).
+        Pending: Set<string>
+        /// The observable bypass/override log (FR-013) — deterministically ordered.
+        Disclosures: Disclosure list
+        /// The safe-failure record (FR-012) — deterministically ordered; distinguishes
+        /// absent/bad input from a tool defect.
+        Failures: Failure list
+        /// The number of planning rounds that produced at least one new effect before
+        /// quiescence (observability; mirrors `EvaluationResult.Rounds`).
+        Rounds: int
+    }
 
 /// The PURE wiring the loop is generic over, SUPPLIED by the host/adapter (F09+/F12), NOT
 /// defined here — so F08 ships no domain adapter and stays domain-neutral (FR-017). It
@@ -175,32 +177,34 @@ type Model<'fact> =
 /// pure lift that turns sensed content into a `'fact`. Everything in it is pure data/
 /// functions; none of it performs I/O (the I/O is the injected `Ports` at the edge).
 type LoopConfig<'change, 'fact> =
-    { /// The kernel's sole identity authority (F01) — assigns `FactId`, dedups, names inputs.
-      Identify: 'fact -> FactId
-      /// The rules that ALREADY apply to this change (caller-filtered — F07 research D5), to
-      /// be bridged with `CheckRule.toRule Bridge` and evaluated.
-      Rules: CheckRule<'fact> list
-      /// The F04 bridge: lifts a `RuleOutcome` into `'fact` (`Embed`), recovers one
-      /// (`Project`) for the cache-hit lookup, carries the `JudgeId`, and reads an artifact's
-      /// content hash FROM the sensed facts (`ArtifactHash`).
-      Bridge: Bridge<'fact>
-      /// The declared fences that raise stakes (F07) — used to compute the `Route`.
-      Fences: Fence<'change> list
-      /// The run mode (F07): blocking gates are enforced ONLY at `Gate`, recomputed from base
-      /// (FR-011).
-      Mode: RunMode
-      /// The configurable freeze policy (decision #2, FR-009).
-      Policy: AcceptancePolicy
-      /// Lift a sensed artifact's `(ref, content)` into a `'fact` the kernel evaluates and the
-      /// bridge's `ArtifactHash` can read — the adapter's artifact-fact shape (FR-005).
-      SenseArtifact: ArtifactRef -> string -> 'fact
-      /// Recover an artifact's raw sensed content FROM the facts — the inverse of
-      /// `SenseArtifact`, parallel to `Bridge.ArtifactHash`. `Some content` once the artifact
-      /// has been sensed, `None` if it has not. The pure `update` uses it to build the
-      /// `ReviewTask.Data` (the untrusted-data channel) for a cache-MISS dispatch, so the
-      /// artifact content is isolated from the instruction (decision #3, FR-010) without the
-      /// loop performing any I/O. Total — never throws.
-      ReadContent: FactSet<'fact> -> ArtifactRef -> string option }
+    {
+        /// The kernel's sole identity authority (F01) — assigns `FactId`, dedups, names inputs.
+        Identify: 'fact -> FactId
+        /// The rules that ALREADY apply to this change (caller-filtered — F07 research D5), to
+        /// be bridged with `CheckRule.toRule Bridge` and evaluated.
+        Rules: CheckRule<'fact> list
+        /// The F04 bridge: lifts a `RuleOutcome` into `'fact` (`Embed`), recovers one
+        /// (`Project`) for the cache-hit lookup, carries the `JudgeId`, and reads an artifact's
+        /// content hash FROM the sensed facts (`ArtifactHash`).
+        Bridge: Bridge<'fact>
+        /// The declared fences that raise stakes (F07) — used to compute the `Route`.
+        Fences: Fence<'change> list
+        /// The run mode (F07): blocking gates are enforced ONLY at `Gate`, recomputed from base
+        /// (FR-011).
+        Mode: RunMode
+        /// The configurable freeze policy (decision #2, FR-009).
+        Policy: AcceptancePolicy
+        /// Lift a sensed artifact's `(ref, content)` into a `'fact` the kernel evaluates and the
+        /// bridge's `ArtifactHash` can read — the adapter's artifact-fact shape (FR-005).
+        SenseArtifact: ArtifactRef -> string -> 'fact
+        /// Recover an artifact's raw sensed content FROM the facts — the inverse of
+        /// `SenseArtifact`, parallel to `Bridge.ArtifactHash`. `Some content` once the artifact
+        /// has been sensed, `None` if it has not. The pure `update` uses it to build the
+        /// `ReviewTask.Data` (the untrusted-data channel) for a cache-MISS dispatch, so the
+        /// artifact content is isolated from the instruction (decision #3, FR-010) without the
+        /// loop performing any I/O. Total — never throws.
+        ReadContent: FactSet<'fact> -> ArtifactRef -> string option
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -272,7 +276,4 @@ module Loop =
     /// independent and `Failures`/`Disclosures` are deterministically ordered). Total for every
     /// `(config, msg, model)` (FR-002, SC-006).
     val update:
-        config: LoopConfig<'change, 'fact> ->
-        msg: Msg<'fact> ->
-        model: Model<'fact> ->
-            Model<'fact> * Effect list
+        config: LoopConfig<'change, 'fact> -> msg: Msg<'fact> -> model: Model<'fact> -> Model<'fact> * Effect list

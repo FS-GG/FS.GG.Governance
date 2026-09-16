@@ -31,45 +31,65 @@ let mkGate (id: GateId) (maturity: Maturity) : Gate =
     let domain = DomainId "build"
     let cost = Cheap
 
-    { Id = id
-      Domain = domain
-      Description = sprintf "gate %s" raw
-      Prerequisites = []
-      Cost = cost
-      Timeout = TimeoutLimit 60
-      Owner = Owner "team"
-      Maturity = maturity
-      ProductCheck = false
-      FreshnessKey =
-        { Check = CheckId raw
-          Domain = domain
-          Cost = cost
-          Environment = Local
-          Command = None } }
+    {
+        Id = id
+        Domain = domain
+        Description = sprintf "gate %s" raw
+        Prerequisites = []
+        Cost = cost
+        Timeout = TimeoutLimit 60
+        Owner = Owner "team"
+        Maturity = maturity
+        ProductCheck = false
+        FreshnessKey =
+            {
+                Check = CheckId raw
+                Domain = domain
+                Cost = cost
+                Environment = Local
+                Command = None
+            }
+    }
 
 /// Wrap a real `Gate` as a `SelectedGate` with a representative `SelectingPaths` list (never read by
 /// the rollup — F019 already deduped the gate; the rollup maps 1:1 over selected gates).
 let mkSelectedGate (gate: Gate) : SelectedGate =
-    { Gate = gate
-      SelectingPaths =
-        [ { Path = GovernedPath "src/a.fs"
-            MatchedGlob = GovernedPath "src/**" } ] }
+    {
+        Gate = gate
+        SelectingPaths =
+            [
+                {
+                    Path = GovernedPath "src/a.fs"
+                    MatchedGlob = GovernedPath "src/**"
+                }
+            ]
+    }
 
 /// Build a real F017 finding from an id, path, and zone.
 let mkFinding (id: FindingId) (path: GovernedPath) (zone: FindingZone) : UnknownGovernedPathFinding =
     let (GovernedPath p) = path
 
-    { Id = id
-      Path = path
-      Zone = zone
-      Message = sprintf "unclassified path %s" p }
+    {
+        Id = id
+        Path = path
+        Zone = zone
+        Message = sprintf "unclassified path %s" p
+    }
 
 /// Assemble a `RouteResult` from selected gates + findings. Cost is an all-zero `CostRollup` since the
 /// rollup never evaluates cost (FR-012).
 let mkRoute (gates: SelectedGate list) (findings: UnknownGovernedPathFinding list) : RouteResult =
-    { SelectedGates = gates
-      Findings = { Findings = findings }
-      Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+    {
+        SelectedGates = gates
+        Findings = { Findings = findings }
+        Cost =
+            {
+                Cheap = 0
+                Medium = 0
+                High = 0
+                Exhaustive = 0
+            }
+    }
 
 /// The empty route — no selected gates, no findings (the totality edge case).
 let emptyRoute: RouteResult = mkRoute [] []
@@ -81,8 +101,7 @@ let allModes: RunMode list =
     [ Sandbox; Inner; Focused; Verify; Gate; RunMode.Release ]
 
 /// All four profiles, least -> most strict. `Profile.Release` qualified.
-let allProfiles: Profile list =
-    [ Light; Standard; Strict; Profile.Release ]
+let allProfiles: Profile list = [ Light; Standard; Strict; Profile.Release ]
 
 /// All five F014 maturities.
 let allMaturities: Maturity list =
@@ -102,8 +121,7 @@ let findingIdForZone (zone: FindingZone) : FindingId =
 
 /// Roll a route up into a real `ShipDecision` via the GENUINE F024 `Ship.rollup` (research D7) — never
 /// a hand-built value. Every decision under test flows through the real partition + enforcement chain.
-let decisionOf (route: RouteResult) (mode: RunMode) (profile: Profile) : ShipDecision =
-    rollup route mode profile
+let decisionOf (route: RouteResult) (mode: RunMode) (profile: Profile) : ShipDecision = rollup route mode profile
 
 // ── Named discriminating-case decisions (all real `rollup` outputs) ──
 
@@ -126,11 +144,18 @@ let blockersDecision: ShipDecision =
 let richDecision: ShipDecision =
     decisionOf
         (mkRoute
-            [ mkSelectedGate (mkGate (GateId "build:ship") BlockOnShip)
-              mkSelectedGate (mkGate (GateId "build:rel") BlockOnRelease)
-              mkSelectedGate (mkGate (GateId "docs:lint") Observe) ]
-            [ mkFinding UnknownProtectedBoundaryPath (GovernedPath "src/boundary/Api.fs") (ProtectedBoundaryUnknown(SurfaceId "api"))
-              mkFinding UnknownGovernedPath (GovernedPath "src/new/Thing.fs") GovernedRootUnknown ])
+            [
+                mkSelectedGate (mkGate (GateId "build:ship") BlockOnShip)
+                mkSelectedGate (mkGate (GateId "build:rel") BlockOnRelease)
+                mkSelectedGate (mkGate (GateId "docs:lint") Observe)
+            ]
+            [
+                mkFinding
+                    UnknownProtectedBoundaryPath
+                    (GovernedPath "src/boundary/Api.fs")
+                    (ProtectedBoundaryUnknown(SurfaceId "api"))
+                mkFinding UnknownGovernedPath (GovernedPath "src/new/Thing.fs") GovernedRootUnknown
+            ])
         Gate
         Standard
 
@@ -140,8 +165,10 @@ let sameFindingIdTwoPathsDecision: ShipDecision =
     decisionOf
         (mkRoute
             []
-            [ mkFinding UnknownGovernedPath (GovernedPath "src/one.fs") GovernedRootUnknown
-              mkFinding UnknownGovernedPath (GovernedPath "src/two.fs") GovernedRootUnknown ])
+            [
+                mkFinding UnknownGovernedPath (GovernedPath "src/one.fs") GovernedRootUnknown
+                mkFinding UnknownGovernedPath (GovernedPath "src/two.fs") GovernedRootUnknown
+            ])
         Gate
         Standard
 
@@ -187,7 +214,9 @@ type AuditArbs =
 
 /// FsCheck config wiring the audit arbitraries (used by the property tests).
 let fsCheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<AuditArbs> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<AuditArbs> ]
+    }
 
 // ── JsonDocument read helpers (read-only inspection of the emitted bytes) ──
 
@@ -241,8 +270,16 @@ let enforcement (item: JsonElement) (name: string) : string =
 let rec allStringValues (el: JsonElement) : string list =
     match el.ValueKind with
     | JsonValueKind.String -> [ reqStr el ]
-    | JsonValueKind.Object -> [ for p in el.EnumerateObject() do yield! allStringValues p.Value ]
-    | JsonValueKind.Array -> [ for v in el.EnumerateArray() do yield! allStringValues v ]
+    | JsonValueKind.Object ->
+        [
+            for p in el.EnumerateObject() do
+                yield! allStringValues p.Value
+        ]
+    | JsonValueKind.Array ->
+        [
+            for v in el.EnumerateArray() do
+                yield! allStringValues v
+        ]
     | _ -> []
 
 /// The whole emitted document text, lowercased — for the deny-token exclusion sweep.

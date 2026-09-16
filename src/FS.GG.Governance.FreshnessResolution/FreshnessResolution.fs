@@ -30,34 +30,38 @@ module FreshnessResolution =
             fk.Command |> Option.bind (fun c -> Map.tryFind c sensed.CommandVersions)
 
         let missing =
-            [ if Option.isNone sensed.RuleHash then
-                  MissingRuleHash
-              if not (Map.containsKey gate.Id sensed.CoveredArtifacts) then
-                  MissingCoveredArtifacts
-              match fk.Command with
-              | Some c when not (Map.containsKey c sensed.CommandVersions) -> MissingCommandVersion
-              | _ -> ()
-              if Option.isNone sensed.GeneratorVersion then
-                  MissingGeneratorVersion
-              if Option.isNone sensed.Base then
-                  MissingBaseRevision
-              if Option.isNone sensed.Head then
-                  MissingHeadRevision ]
+            [
+                if Option.isNone sensed.RuleHash then
+                    MissingRuleHash
+                if not (Map.containsKey gate.Id sensed.CoveredArtifacts) then
+                    MissingCoveredArtifacts
+                match fk.Command with
+                | Some c when not (Map.containsKey c sensed.CommandVersions) -> MissingCommandVersion
+                | _ -> ()
+                if Option.isNone sensed.GeneratorVersion then
+                    MissingGeneratorVersion
+                if Option.isNone sensed.Base then
+                    MissingBaseRevision
+                if Option.isNone sensed.Head then
+                    MissingHeadRevision
+            ]
 
         let outcome =
             match missing with
             | [] ->
                 Resolved
-                    { Check = fk.Check
-                      Domain = fk.Domain
-                      Command = fk.Command
-                      Environment = fk.Environment
-                      RuleHash = Option.get sensed.RuleHash
-                      CoveredArtifacts = Map.find gate.Id sensed.CoveredArtifacts
-                      CommandVersion = commandVersion
-                      GeneratorVersion = Option.get sensed.GeneratorVersion
-                      Base = Option.get sensed.Base
-                      Head = Option.get sensed.Head }
+                    {
+                        Check = fk.Check
+                        Domain = fk.Domain
+                        Command = fk.Command
+                        Environment = fk.Environment
+                        RuleHash = Option.get sensed.RuleHash
+                        CoveredArtifacts = Map.find gate.Id sensed.CoveredArtifacts
+                        CommandVersion = commandVersion
+                        GeneratorVersion = Option.get sensed.GeneratorVersion
+                        Base = Option.get sensed.Base
+                        Head = Option.get sensed.Head
+                    }
             | facts -> Unresolved facts
 
         { Gate = gate.Id; Outcome = outcome }

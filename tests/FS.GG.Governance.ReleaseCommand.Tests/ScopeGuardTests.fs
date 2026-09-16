@@ -14,35 +14,39 @@ let private library = typeof<Loop.RunRequest>.Assembly
 let tests =
     testList
         "ScopeGuard"
-        [ test "ReleaseCommand references only FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet" {
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "YamlDotNet"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  || name.StartsWith "System."
-                  || name.StartsWith "FS.GG.Governance."
+        [
+            test "ReleaseCommand references only FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet" {
+                let allowed (name: string) =
+                    name = "FSharp.Core"
+                    || name = "YamlDotNet"
+                    || name = "System.Private.CoreLib"
+                    || name = "netstandard"
+                    || name = "mscorlib"
+                    || name.StartsWith "System."
+                    || name.StartsWith "FS.GG.Governance."
 
-              let offending =
-                  library.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
+                let offending =
+                    library.GetReferencedAssemblies()
+                    |> Array.choose (fun a -> Option.ofObj a.Name)
+                    |> Array.filter (allowed >> not)
 
-              Expect.isEmpty
-                  offending
-                  (sprintf "ReleaseCommand must depend on FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet only; found: %A" offending)
-          }
+                Expect.isEmpty
+                    offending
+                    (sprintf
+                        "ReleaseCommand must depend on FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet only; found: %A"
+                        offending)
+            }
 
-          test "no network / hosting-provider / registry / VCS symbol is referenced (SC-008)" {
-              let banned =
-                  [ "System.Net.Http"; "System.Net.Sockets"; "Octokit"; "GitHub"; "LibGit2Sharp" ]
+            test "no network / hosting-provider / registry / VCS symbol is referenced (SC-008)" {
+                let banned =
+                    [ "System.Net.Http"; "System.Net.Sockets"; "Octokit"; "GitHub"; "LibGit2Sharp" ]
 
-              let referenced =
-                  library.GetReferencedAssemblies() |> Array.choose (fun a -> Option.ofObj a.Name)
+                let referenced =
+                    library.GetReferencedAssemblies() |> Array.choose (fun a -> Option.ofObj a.Name)
 
-              for b in banned do
-                  Expect.isFalse
-                      (referenced |> Array.exists (fun n -> n.Contains b))
-                      (sprintf "ReleaseCommand must not reference %s (network-free, SC-008)" b)
-          } ]
+                for b in banned do
+                    Expect.isFalse
+                        (referenced |> Array.exists (fun n -> n.Contains b))
+                        (sprintf "ReleaseCommand must not reference %s (network-free, SC-008)" b)
+            }
+        ]

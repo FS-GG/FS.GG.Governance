@@ -14,25 +14,40 @@ let private seedSources d = writeFile d "src.txt" "hello\n"
 let tests =
     testList
         "Determinism"
-        [ test "two fresh identical repos ⇒ byte-identical refresh.json" {
-              let runOnce () =
-                  withTempRepo refreshYmlOneView seedSources (fun repo ->
-                      runReal repo { requestFor repo with Format = Loop.TextAndJson } |> ignore
-                      readFile repo "refresh.json")
+        [
+            test "two fresh identical repos ⇒ byte-identical refresh.json" {
+                let runOnce () =
+                    withTempRepo refreshYmlOneView seedSources (fun repo ->
+                        runReal
+                            repo
+                            { requestFor repo with
+                                Format = Loop.TextAndJson
+                            }
+                        |> ignore
 
-              Expect.equal (runOnce ()) (runOnce ()) "identical state + outcome ⇒ identical bytes"
-          }
+                        readFile repo "refresh.json")
 
-          test "--json stdout equals the persisted refresh.json verbatim" {
-              withTempRepo refreshYmlOneView seedSources (fun repo ->
-                  let captured = List<string>()
+                Expect.equal (runOnce ()) (runOnce ()) "identical state + outcome ⇒ identical bytes"
+            }
 
-                  let ports =
-                      { Interpreter.realPorts repo with Out = fun s -> captured.Add s }
+            test "--json stdout equals the persisted refresh.json verbatim" {
+                withTempRepo refreshYmlOneView seedSources (fun repo ->
+                    let captured = List<string>()
 
-                  Interpreter.run ports { requestFor repo with Format = Loop.Json } |> ignore
+                    let ports =
+                        { Interpreter.realPorts repo with
+                            Out = fun s -> captured.Add s
+                        }
 
-                  let persisted = readFile repo "refresh.json"
-                  let stdout = String.concat "\n" (List.ofSeq captured)
-                  Expect.equal stdout persisted "--json prints exactly what it wrote")
-          } ]
+                    Interpreter.run
+                        ports
+                        { requestFor repo with
+                            Format = Loop.Json
+                        }
+                    |> ignore
+
+                    let persisted = readFile repo "refresh.json"
+                    let stdout = String.concat "\n" (List.ofSeq captured)
+                    Expect.equal stdout persisted "--json prints exactly what it wrote")
+            }
+        ]

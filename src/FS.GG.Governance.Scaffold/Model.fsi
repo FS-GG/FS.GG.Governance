@@ -31,14 +31,18 @@ module Model =
     /// it. `ReservedPaths` are lifecycle-skeleton paths the host already owns (target-relative) so a
     /// provider can avoid them; the tool also treats any of them as a hard collision (research D3).
     type ScaffoldRequest =
-        { Target: string
-          ReservedPaths: string list }
+        {
+            Target: string
+            ReservedPaths: string list
+        }
 
     /// One file the provider wants laid down, addressed RELATIVE to the target. The provider supplies
     /// content as data; the TOOL writes it (research D1). Provider-owned.
     type EmittedFile =
-        { RelativePath: string
-          Contents: string }
+        {
+            RelativePath: string
+            Contents: string
+        }
 
     /// The provider's complete description of the runtime skeleton. Pure data.
     type ProviderEmission = { Files: EmittedFile list }
@@ -46,32 +50,34 @@ module Model =
     /// Why a provider's own `Emit` failed (its internal error), surfaced verbatim by the tool. Distinct
     /// from the tool's safety refusals (`Refusal`).
     type ProviderError =
-        | Unresolvable of detail: string      // the provider could not be produced/run (FR-009)
-        | EmitFailed of detail: string        // the provider errored mid-description (FR-008)
+        | Unresolvable of detail: string // the provider could not be produced/run (FR-009)
+        | EmitFailed of detail: string // the provider errored mid-description (FR-008)
 
     /// A resolved, selectable provider (research D1). `Emit` is PURE-SHAPED from the tool's view: given
     /// a request, it returns a description or an error — it performs NO filesystem writes. Third-party
     /// providers implement this in a .NET assembly; discovery/loading is a deferred host concern (the
     /// core gets a resolved value).
     type TemplateProvider =
-        { Id: ProviderId
-          ContractVersion: ProviderContractVersion
-          Emit: ScaffoldRequest -> Result<ProviderEmission, ProviderError> }
+        {
+            Id: ProviderId
+            ContractVersion: ProviderContractVersion
+            Emit: ScaffoldRequest -> Result<ProviderEmission, ProviderError>
+        }
 
     /// Why the TOOL refused to scaffold — decided in pure `update` BEFORE any write (research D4). Each
     /// is explicit and actionable (Principle VI, SC-005).
     type Refusal =
-        | ContractMismatch of declared: ProviderContractVersion   // FR-009
-        | ProviderUnavailable of detail: string                   // wraps ProviderError.Unresolvable (FR-009)
-        | OutOfTarget of paths: string list                       // emitted path escapes the target (FR-009, D5)
-        | Collision of paths: string list                         // path already exists / reserved (FR-007, D3)
-        | ProviderErrored of detail: string                       // wraps ProviderError.EmitFailed (FR-008)
+        | ContractMismatch of declared: ProviderContractVersion // FR-009
+        | ProviderUnavailable of detail: string // wraps ProviderError.Unresolvable (FR-009)
+        | OutOfTarget of paths: string list // emitted path escapes the target (FR-009, D5)
+        | Collision of paths: string list // path already exists / reserved (FR-007, D3)
+        | ProviderErrored of detail: string // wraps ProviderError.EmitFailed (FR-008)
 
     /// The closed outcome of one seam run.
     type ScaffoldOutcome =
-        | NoProvider                          // FR-002: nothing selected; seam is a no-op, no manifest write
-        | Scaffolded                          // provider emission written in full
-        | Refused of Refusal                  // explicit, recoverable safety refusal
+        | NoProvider // FR-002: nothing selected; seam is a no-op, no manifest write
+        | Scaffolded // provider emission written in full
+        | Refused of Refusal // explicit, recoverable safety refusal
 
     /// One generated path, marked provider-owned so later steps never mistake it for a
     /// lifecycle-authored source (FR-005, FR-006). The type leaves room for future ownership kinds.
@@ -79,8 +85,10 @@ module Model =
 
     /// One generated path. Target-RELATIVE for determinism (research D6).
     type GeneratedPath =
-        { RelativePath: string
-          Ownership: PathOwnership }
+        {
+            RelativePath: string
+            Ownership: PathOwnership
+        }
 
     /// The deterministic record of one scaffold run — the provenance other steps and automation consume
     /// (FR-005, FR-010, FR-012). Carries NO absolute target path, clock, or environment value (research
@@ -88,7 +96,9 @@ module Model =
     /// ascending by `RelativePath`, `[]` unless `Scaffolded`. `Collisions` lists the pre-existing/
     /// reserved paths that forced a refusal, ascending, `[]` otherwise.
     type ScaffoldManifest =
-        { Provider: (ProviderId * ProviderContractVersion) option
-          Outcome: ScaffoldOutcome
-          Generated: GeneratedPath list
-          Collisions: string list }
+        {
+            Provider: (ProviderId * ProviderContractVersion) option
+            Outcome: ScaffoldOutcome
+            Generated: GeneratedPath list
+            Collisions: string list
+        }

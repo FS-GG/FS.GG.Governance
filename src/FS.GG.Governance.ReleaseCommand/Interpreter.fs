@@ -11,19 +11,19 @@ open System
 open System.IO
 open System.Security.Cryptography
 open System.Text.RegularExpressions
-open FS.GG.Governance.Config                       // Loader
-open FS.GG.Governance.Config.Model                  // SurfaceId, EnvironmentClass, Local, Ci, LocalOrCi
-open FS.GG.Governance.FreshnessKey.Model            // Revision, ArtifactHash
-open FS.GG.Governance.Provenance.Model              // BuilderIdentity
-open FS.GG.Governance.GateExecution.Model           // ExecutionPort
-open FS.GG.Governance.CommandRecord.Model            // ExitCode
-open FS.GG.Governance.CommandKind.Model             // KindedCommandRun, CommandKind.Pack
-open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackArtifact, NoArtifactReason
-open FS.GG.Governance.ReleaseRules                  // SemVer (single shared comparator, M-ADPT-1/M-CLI-4)
-open FS.GG.Governance.Snapshot.Model                // CommitId, SnapshotOptions, DiffRange
-open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
-open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
-open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
+open FS.GG.Governance.Config // Loader
+open FS.GG.Governance.Config.Model // SurfaceId, EnvironmentClass, Local, Ci, LocalOrCi
+open FS.GG.Governance.FreshnessKey.Model // Revision, ArtifactHash
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model // ExecutionPort
+open FS.GG.Governance.CommandRecord.Model // ExitCode
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun, CommandKind.Pack
+open FS.GG.Governance.PackEvidence.Model // PackOutcome, PackArtifact, NoArtifactReason
+open FS.GG.Governance.ReleaseRules // SemVer (single shared comparator, M-ADPT-1/M-CLI-4)
+open FS.GG.Governance.Snapshot.Model // CommitId, SnapshotOptions, DiffRange
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease
+open FS.GG.Governance.ReleaseDeclaration // 065: the shared Declaration leaf (was row-local)
+open FS.GG.Governance.CommandHost // 049: shared host-loop combinators (guard/drive)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -33,15 +33,17 @@ module Interpreter =
     type OutputSink = string -> unit
 
     type Ports =
-        { Files: Loader.FileReader
-          Sense: SourceLayout -> ReleaseExpectations -> SensedRelease
-          Execute: ExecutionPort
-          PackRead: SurfaceId -> KindedCommandRun -> PackOutcome
-          SenseHead: unit -> Revision
-          SenseEnvironment: unit -> EnvironmentClass
-          SenseBuilder: unit -> BuilderIdentity
-          Write: ArtifactWriter
-          Out: OutputSink }
+        {
+            Files: Loader.FileReader
+            Sense: SourceLayout -> ReleaseExpectations -> SensedRelease
+            Execute: ExecutionPort
+            PackRead: SurfaceId -> KindedCommandRun -> PackOutcome
+            SenseHead: unit -> Revision
+            SenseEnvironment: unit -> EnvironmentClass
+            SenseBuilder: unit -> BuilderIdentity
+            Write: ArtifactWriter
+            Out: OutputSink
+        }
 
     let declError (reason: string) : Result<Declaration.ReleaseDeclaration, Declaration.DeclError> =
         Error { Reason = reason }
@@ -55,7 +57,11 @@ module Interpreter =
             let snap =
                 FS.GG.Governance.Snapshot.Interpreter.senseSnapshot
                     (FS.GG.Governance.Snapshot.Interpreter.realPorts repo)
-                    { Since = None; Base = None; Head = None }
+                    {
+                        Since = None
+                        Base = None
+                        Head = None
+                    }
 
             match snap.Range with
             | Some r ->
@@ -134,13 +140,18 @@ module Interpreter =
                         use sha = SHA256.Create()
 
                         let digest =
-                            Path.Combine(dir, fileName) |> File.ReadAllBytes |> sha.ComputeHash |> Convert.ToHexString
+                            Path.Combine(dir, fileName)
+                            |> File.ReadAllBytes
+                            |> sha.ComputeHash
+                            |> Convert.ToHexString
 
                         Packed(
-                            { Surface = surface
-                              ArtifactPath = fileName
-                              PackedVersion = versionFromNupkg fileName
-                              Digest = ArtifactHash(digest.ToLowerInvariant()) },
+                            {
+                                Surface = surface
+                                ArtifactPath = fileName
+                                PackedVersion = versionFromNupkg fileName
+                                Digest = ArtifactHash(digest.ToLowerInvariant())
+                            },
                             run
                         )
             with e ->
@@ -171,7 +182,9 @@ module Interpreter =
             let outcomes =
                 requests
                 |> List.map (fun (surface, command) ->
-                    let record = FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command
+                    let record =
+                        FS.GG.Governance.GateExecution.Interpreter.senseExecution ports.Execute command
+
                     let run = { Kind = Pack; Record = record }
                     ports.PackRead surface run)
 
@@ -180,26 +193,29 @@ module Interpreter =
         | Loop.SenseProvenance ->
             Loop.ProvenanceSensed(ports.SenseHead(), ports.SenseEnvironment(), ports.SenseBuilder())
 
-        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(kind, path, content) ->
+            Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
 
         | Loop.EmitSummary text ->
             ports.Out text
             Loop.Emitted
 
     let realPorts (repo: string) : Ports =
-        { Files = Loader.fileSystemReader repo
-          Sense =
-            fun layout expectations ->
-                FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
-                    (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
-                    expectations
-          Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
-          PackRead = packReadReal
-          SenseHead = senseHeadReal repo
-          SenseEnvironment = CommandHost.senseEnvironmentReal
-          SenseBuilder = CommandHost.senseBuilderReal
-          Write = CommandHost.writeAtomic
-          Out = fun text -> Console.Out.WriteLine text }
+        {
+            Files = Loader.fileSystemReader repo
+            Sense =
+                fun layout expectations ->
+                    FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
+                        (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
+                        expectations
+            Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
+            PackRead = packReadReal
+            SenseHead = senseHeadReal repo
+            SenseEnvironment = CommandHost.senseEnvironmentReal
+            SenseBuilder = CommandHost.senseBuilderReal
+            Write = CommandHost.writeAtomic
+            Out = fun text -> Console.Out.WriteLine text
+        }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

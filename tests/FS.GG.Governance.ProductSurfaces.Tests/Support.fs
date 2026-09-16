@@ -23,7 +23,8 @@ let factsOf (name: string) : TypedFacts =
     | Invalid d -> failwithf "expected Valid for fixture '%s', got: %A" name d
 
 /// The validation result for a named fixture (for the standalone/escape scenarios).
-let validateFixture (name: string) = Loader.loadAndValidate (fixtureDir name)
+let validateFixture (name: string) =
+    Loader.loadAndValidate (fixtureDir name)
 
 /// Build a real `RouteReport` by routing the given candidate paths against the facts (never mocked).
 let routeOf (facts: TypedFacts) (paths: string list) : RouteReport =

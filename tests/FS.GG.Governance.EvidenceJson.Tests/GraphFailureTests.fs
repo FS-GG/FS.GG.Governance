@@ -20,34 +20,36 @@ let private hasNoNodeOrDependencyKeys (root: JsonElement) =
 let tests =
     testList
         "GraphFailure"
-        [ test "Cycle renders graphFailure.kind=cycle with the witness node order, no per-node map" {
-              let root = parse (malformed (Cycle [ "a"; "b"; "a" ]) [])
-              let gf = root.GetProperty("graphFailure")
-              Expect.equal (strProp "kind" gf) "cycle" "cycle kind"
+        [
+            test "Cycle renders graphFailure.kind=cycle with the witness node order, no per-node map" {
+                let root = parse (malformed (Cycle [ "a"; "b"; "a" ]) [])
+                let gf = root.GetProperty("graphFailure")
+                Expect.equal (strProp "kind" gf) "cycle" "cycle kind"
 
-              let nodes = [ for n in gf.GetProperty("nodes").EnumerateArray() -> str n ]
-              Expect.equal nodes [ "a"; "b"; "a" ] "cycle witness order preserved"
-              hasNoNodeOrDependencyKeys root
-          }
+                let nodes = [ for n in gf.GetProperty("nodes").EnumerateArray() -> str n ]
+                Expect.equal nodes [ "a"; "b"; "a" ] "cycle witness order preserved"
+                hasNoNodeOrDependencyKeys root
+            }
 
-          test "UnknownNode renders graphFailure.kind=unknownNode naming the offending node" {
-              let root = parse (malformed (UnknownNode "ghost") [])
-              let gf = root.GetProperty("graphFailure")
-              Expect.equal (strProp "kind" gf) "unknownNode" "unknownNode kind"
-              Expect.equal (strProp "node" gf) "ghost" "offending node named"
-              hasNoNodeOrDependencyKeys root
-          }
+            test "UnknownNode renders graphFailure.kind=unknownNode naming the offending node" {
+                let root = parse (malformed (UnknownNode "ghost") [])
+                let gf = root.GetProperty("graphFailure")
+                Expect.equal (strProp "kind" gf) "unknownNode" "unknownNode kind"
+                Expect.equal (strProp "node" gf) "ghost" "offending node named"
+                hasNoNodeOrDependencyKeys root
+            }
 
-          test "AutoSyntheticDeclared renders graphFailure.kind=autoSyntheticDeclared naming the node" {
-              let root = parse (malformed (AutoSyntheticDeclared "x") [])
-              let gf = root.GetProperty("graphFailure")
-              Expect.equal (strProp "kind" gf) "autoSyntheticDeclared" "autoSyntheticDeclared kind"
-              Expect.equal (strProp "node" gf) "x" "offending node named"
-              hasNoNodeOrDependencyKeys root
-          }
+            test "AutoSyntheticDeclared renders graphFailure.kind=autoSyntheticDeclared naming the node" {
+                let root = parse (malformed (AutoSyntheticDeclared "x") [])
+                let gf = root.GetProperty("graphFailure")
+                Expect.equal (strProp "kind" gf) "autoSyntheticDeclared" "autoSyntheticDeclared kind"
+                Expect.equal (strProp "node" gf) "x" "offending node named"
+                hasNoNodeOrDependencyKeys root
+            }
 
-          test "a malformed document still carries schemaVersion and disclosures" {
-              let root = parse (malformed (UnknownNode "ghost") [ "R", "j" ])
-              Expect.equal (strProp "schemaVersion" root) "fsgg.evidence/v1" "schemaVersion present"
-              Expect.equal (root.GetProperty("disclosures").GetArrayLength()) 1 "disclosures carried"
-          } ]
+            test "a malformed document still carries schemaVersion and disclosures" {
+                let root = parse (malformed (UnknownNode "ghost") [ "R", "j" ])
+                Expect.equal (strProp "schemaVersion" root) "fsgg.evidence/v1" "schemaVersion present"
+                Expect.equal (root.GetProperty("disclosures").GetArrayLength()) 1 "disclosures carried"
+            }
+        ]

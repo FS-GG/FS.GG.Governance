@@ -35,10 +35,14 @@ module Mapping =
             block.Nodes
             |> List.filter (fun n -> n.Stale)
             |> List.map (fun n ->
-                { Cause = StaleEvidence
-                  Source = source
-                  Message =
-                    sprintf "evidence node '%s' is declared stale; its underlying state is carried plus a staleEvidence diagnostic (FR-006)" n.Id })
+                {
+                    Cause = StaleEvidence
+                    Source = source
+                    Message =
+                        sprintf
+                            "evidence node '%s' is declared stale; its underlying state is carried plus a staleEvidence diagnostic (FR-006)"
+                            n.Id
+                })
 
         Ok(mapped, block.Dependencies), staleDiags
 
@@ -55,10 +59,16 @@ module Mapping =
                 match err with
                 | GraphError.AutoSyntheticDeclared id ->
                     Model.AutoSyntheticDeclared,
-                    sprintf "evidence node '%s' is AutoSynthetic, which is computed-only and never a valid declared input" id
-                | Cycle cycle ->
-                    Model.Malformed, sprintf "declared evidence dependencies form a cycle: %A" cycle
+                    sprintf
+                        "evidence node '%s' is AutoSynthetic, which is computed-only and never a valid declared input"
+                        id
+                | Cycle cycle -> Model.Malformed, sprintf "declared evidence dependencies form a cycle: %A" cycle
                 | UnknownNode node ->
                     Model.Malformed, sprintf "a declared evidence dependency names an unknown node '%s'" node
 
-            Error { Cause = cause; Source = ""; Message = message }
+            Error
+                {
+                    Cause = cause
+                    Source = ""
+                    Message = message
+                }

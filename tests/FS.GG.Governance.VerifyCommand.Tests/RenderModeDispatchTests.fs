@@ -16,10 +16,12 @@ open FS.GG.Governance.VerifyCommand.Tests.Support
 // indirectly; here we drive each branch deterministically (Constitution V).
 let private cap (isTty: bool) (noColor: bool) : bool -> RenderMode.ColorCapability =
     fun explicitPlain ->
-        { IsTty = isTty
-          NoColorEnv = noColor
-          ExplicitPlain = explicitPlain
-          Width = None }
+        {
+            IsTty = isTty
+            NoColorEnv = noColor
+            ExplicitPlain = explicitPlain
+            Width = None
+        }
 
 // Drive the interpreter with an injected capability + a capturing rich renderer; return the model, the
 // capture, and the list of views the rich path received.
@@ -32,7 +34,8 @@ let private runDispatch (capability: bool -> RenderMode.ColorCapability) (scope)
     let ports =
         { basePorts with
             SenseCapability = capability
-            RenderReport = fun view -> richViews.Add view }
+            RenderReport = fun view -> richViews.Add view
+        }
 
     let model = Interpreter.run ports req
     model, cap0, List.ofSeq richViews
@@ -43,60 +46,86 @@ let private esc = string '' // ANSI/CSI escape introducer
 let tests =
     testList
         "RenderModeDispatch (US2)"
-        [ test "Synthetic TTY ⇒ Rich: the rich RenderReport path is taken, the plain projection is NOT written to the Out sink (SC-003)" {
-              let model, cap0, richViews = runDispatch (cap true false) Loop.DefaultRange Loop.Text
-              Expect.equal model.Exit Loop.Success "run succeeds"
-              Expect.equal (List.length richViews) 1 "the rich renderer received exactly one report view"
+        [
+            test
+                "Synthetic TTY ⇒ Rich: the rich RenderReport path is taken, the plain projection is NOT written to the Out sink (SC-003)" {
+                let model, cap0, richViews =
+                    runDispatch (cap true false) Loop.DefaultRange Loop.Text
 
-              // The rich path goes through RenderReport, not Out; only the operational `wrote` line reaches Out.
-              let emitted = String.concat "\n" cap0.Emits
-              Expect.stringContains emitted "wrote " "operational line still emitted after the rich render"
-              Expect.isFalse (emitted.Contains "exit status:") "the plain HumanText projection is NOT on the Out sink in Rich mode"
-              Expect.isFalse (emitted.Contains esc) "no ANSI on the plain Out sink"
-          }
+                Expect.equal model.Exit Loop.Success "run succeeds"
+                Expect.equal (List.length richViews) 1 "the rich renderer received exactly one report view"
 
-          test "Synthetic non-TTY ⇒ Plain: the ANSI-free HumanText projection is written to Out, rich path NOT taken (SC-003)" {
-              let _, cap0, richViews = runDispatch (cap false false) Loop.DefaultRange Loop.Text
-              Expect.isEmpty richViews "non-TTY ⇒ the rich renderer is never invoked"
-              let emitted = Expect.wantSome (List.tryHead cap0.Emits) "the plain summary is emitted via Out"
-              Expect.stringContains emitted "exit status:" "Out carries the HumanText projection in Plain mode"
-              Expect.isFalse (emitted.Contains esc) "Plain output is ANSI-free"
-          }
+                // The rich path goes through RenderReport, not Out; only the operational `wrote` line reaches Out.
+                let emitted = String.concat "\n" cap0.Emits
+                Expect.stringContains emitted "wrote " "operational line still emitted after the rich render"
 
-          test "Synthetic NO_COLOR on a TTY ⇒ Plain (color suppressed)" {
-              let _, _, richViews = runDispatch (cap true true) Loop.DefaultRange Loop.Text
-              Expect.isEmpty richViews "NO_COLOR ⇒ Plain, the rich path is never taken"
-          }
+                Expect.isFalse
+                    (emitted.Contains "exit status:")
+                    "the plain HumanText projection is NOT on the Out sink in Rich mode"
 
-          test "--plain on a TTY ⇒ Plain even though the terminal is rich-capable (FR-012)" {
-              // requestFor sets ExplicitPlain=false; force it on to mirror a parsed --plain.
-              let req = { requestFor Loop.DefaultRange Loop.Text with ExplicitPlain = true }
-              let cap0 = newCapture ()
-              let richViews = ResizeArray<ReportView.ReportView>()
-              let basePorts = fakePorts validCatalog gitSrcChange cap0
-              let ports = { basePorts with SenseCapability = cap true false; RenderReport = fun v -> richViews.Add v }
-              Interpreter.run ports req |> ignore
-              Expect.isEmpty richViews "--plain forces Plain regardless of the TTY"
-          }
+                Expect.isFalse (emitted.Contains esc) "no ANSI on the plain Out sink"
+            }
 
-          test "--json always wins: Json selected, the rich path NEVER reached, output ANSI-free (SC-004)" {
-              // Verify selects Json via `--json` (Loop.Json) — there is no `--format` flag. Json is never rich.
-              let _, cap0, richViews = runDispatch (cap true false) Loop.DefaultRange Loop.Json
-              Expect.isEmpty richViews "Json ⇒ the rich renderer is never invoked, even on a TTY"
-              let emitted = Expect.wantSome (List.tryHead cap0.Emits) "the JSON summary is emitted via Out"
-              Expect.isFalse (emitted.Contains esc) "JSON output is ANSI-free"
-              Expect.isFalse (emitted.Contains "exit status:") "JSON is not the human text"
-          }
+            test
+                "Synthetic non-TTY ⇒ Plain: the ANSI-free HumanText projection is written to Out, rich path NOT taken (SC-003)" {
+                let _, cap0, richViews = runDispatch (cap false false) Loop.DefaultRange Loop.Text
+                Expect.isEmpty richViews "non-TTY ⇒ the rich renderer is never invoked"
 
-          test "--plain parses into the request and is layered on top of --json (FR-012)" {
-              match Loop.parse [ "verify"; "--plain" ] with
-              | Ok req -> Expect.isTrue req.ExplicitPlain "--plain sets ExplicitPlain"
-              | Error e -> failtestf "parse failed: %A" e
+                let emitted =
+                    Expect.wantSome (List.tryHead cap0.Emits) "the plain summary is emitted via Out"
 
-              // `--plain` does NOT change verify's `--json` format selection.
-              match Loop.parse [ "verify"; "--json"; "--plain" ] with
-              | Ok req ->
-                  Expect.equal req.Format Loop.Json "--json still selects Json with --plain present"
-                  Expect.isTrue req.ExplicitPlain "--plain still parses alongside --json"
-              | Error e -> failtestf "parse failed: %A" e
-          } ]
+                Expect.stringContains emitted "exit status:" "Out carries the HumanText projection in Plain mode"
+                Expect.isFalse (emitted.Contains esc) "Plain output is ANSI-free"
+            }
+
+            test "Synthetic NO_COLOR on a TTY ⇒ Plain (color suppressed)" {
+                let _, _, richViews = runDispatch (cap true true) Loop.DefaultRange Loop.Text
+                Expect.isEmpty richViews "NO_COLOR ⇒ Plain, the rich path is never taken"
+            }
+
+            test "--plain on a TTY ⇒ Plain even though the terminal is rich-capable (FR-012)" {
+                // requestFor sets ExplicitPlain=false; force it on to mirror a parsed --plain.
+                let req =
+                    { requestFor Loop.DefaultRange Loop.Text with
+                        ExplicitPlain = true
+                    }
+
+                let cap0 = newCapture ()
+                let richViews = ResizeArray<ReportView.ReportView>()
+                let basePorts = fakePorts validCatalog gitSrcChange cap0
+
+                let ports =
+                    { basePorts with
+                        SenseCapability = cap true false
+                        RenderReport = fun v -> richViews.Add v
+                    }
+
+                Interpreter.run ports req |> ignore
+                Expect.isEmpty richViews "--plain forces Plain regardless of the TTY"
+            }
+
+            test "--json always wins: Json selected, the rich path NEVER reached, output ANSI-free (SC-004)" {
+                // Verify selects Json via `--json` (Loop.Json) — there is no `--format` flag. Json is never rich.
+                let _, cap0, richViews = runDispatch (cap true false) Loop.DefaultRange Loop.Json
+                Expect.isEmpty richViews "Json ⇒ the rich renderer is never invoked, even on a TTY"
+
+                let emitted =
+                    Expect.wantSome (List.tryHead cap0.Emits) "the JSON summary is emitted via Out"
+
+                Expect.isFalse (emitted.Contains esc) "JSON output is ANSI-free"
+                Expect.isFalse (emitted.Contains "exit status:") "JSON is not the human text"
+            }
+
+            test "--plain parses into the request and is layered on top of --json (FR-012)" {
+                match Loop.parse [ "verify"; "--plain" ] with
+                | Ok req -> Expect.isTrue req.ExplicitPlain "--plain sets ExplicitPlain"
+                | Error e -> failtestf "parse failed: %A" e
+
+                // `--plain` does NOT change verify's `--json` format selection.
+                match Loop.parse [ "verify"; "--json"; "--plain" ] with
+                | Ok req ->
+                    Expect.equal req.Format Loop.Json "--json still selects Json with --plain present"
+                    Expect.isTrue req.ExplicitPlain "--plain still parses alongside --json"
+                | Error e -> failtestf "parse failed: %A" e
+            }
+        ]

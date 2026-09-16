@@ -15,25 +15,29 @@ type FactId = FactId of string
 type RuleId = RuleId of string
 
 type ProvenanceStep =
-    { Rule: RuleId
-      Inputs: FactId list
-      Note: string }
+    {
+        Rule: RuleId
+        Inputs: FactId list
+        Note: string
+    }
 
 type FactAssertion<'fact> =
-    { Id: FactId
-      Value: 'fact
-      Provenance: ProvenanceStep list }
+    {
+        Id: FactId
+        Value: 'fact
+        Provenance: ProvenanceStep list
+    }
 
 type FactSet<'fact> = FactAssertion<'fact> list
 
 type Rule<'fact> =
-    { Id: RuleId
-      Description: string
-      Apply: FactSet<'fact> -> FactAssertion<'fact> list }
+    {
+        Id: RuleId
+        Description: string
+        Apply: FactSet<'fact> -> FactAssertion<'fact> list
+    }
 
-type EvaluationResult<'fact> =
-    { Facts: FactSet<'fact>
-      Rounds: int }
+type EvaluationResult<'fact> = { Facts: FactSet<'fact>; Rounds: int }
 
 module FixedPoint =
 
@@ -61,8 +65,14 @@ module FixedPoint =
         // generic `'fact` signature, not by a runtime check.
         for a in supplied do
             let id = identify a.Value
+
             if not (known.ContainsKey id) then
-                known.[id] <- { Id = id; Value = a.Value; Provenance = [] }
+                known.[id] <-
+                    {
+                        Id = id
+                        Value = a.Value
+                        Provenance = []
+                    }
 
         // (2)-(4) Synchronous rounds to quiescence.
         let mutable rounds = 0
@@ -98,7 +108,12 @@ module FixedPoint =
                 |> List.groupBy (fun (id, _, _) -> id)
                 |> List.map (fun (id, group) ->
                     let (_, _, winner) = group |> List.minBy (fun (fid, ruleId, _) -> (fid, ruleId))
-                    { Id = id; Value = winner.Value; Provenance = winner.Provenance })
+
+                    {
+                        Id = id
+                        Value = winner.Value
+                        Provenance = winner.Provenance
+                    })
 
             // (4) Commit. A productive round (≥1 new fact) bumps Rounds and iterates;
             // an empty round is quiescence and is NOT counted (D4).

@@ -1,12 +1,12 @@
 namespace FS.GG.Governance.VerifyJson
 
 open System.Text.Json
-open FS.GG.Governance.Gates.Model               // GateId
-open FS.GG.Governance.Enforcement.Enforcement   // EnforcementDecision
-open FS.GG.Governance.Ship.Model                // ShipDecision
-open FS.GG.Governance.CacheEligibility.Model     // CacheEligibilityReport
-open FS.GG.Governance.GateRun.Model             // GateOutcome
-open FS.GG.Governance.ReleaseReport.Model        // F26: VerifyReleasePreview
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.Enforcement.Enforcement // EnforcementDecision
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.ReleaseReport.Model // F26: VerifyReleasePreview
 
 module SC = FS.GG.Governance.SurfaceChecks.Model // F24: the additive surfaceChecks section
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary
@@ -66,8 +66,10 @@ module VerifyJson =
         | _ ->
             w.WritePropertyName "surfaceChecks"
             w.WriteStartArray()
+
             for f in findings do
                 SurfaceChecks.writeSurfaceFinding w f
+
             w.WriteEndArray()
 
         match preview with

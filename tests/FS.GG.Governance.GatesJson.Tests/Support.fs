@@ -22,22 +22,26 @@ let check
     (environment: EnvironmentClass)
     (maturity: Maturity)
     : Check =
-    { Id = CheckId checkId
-      Domain = DomainId domain
-      Command = command |> Option.map CommandId
-      Owner = Owner ("owner-" + domain)
-      Cost = cost
-      Environment = environment
-      Maturity = maturity
-      Tier = None }
+    {
+        Id = CheckId checkId
+        Domain = DomainId domain
+        Command = command |> Option.map CommandId
+        Owner = Owner("owner-" + domain)
+        Cost = cost
+        Environment = environment
+        Maturity = maturity
+        Tier = None
+    }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// gate projection never reads. The timeout becomes the gate's projected `timeout`.
 let command (commandId: string) (timeoutSeconds: int) : CommandSpec =
-    { Id = CommandId commandId
-      Command = "fixture --run"
-      Timeout = TimeoutLimit timeoutSeconds
-      Environment = Local }
+    {
+        Id = CommandId commandId
+        Command = "fixture --run"
+        Timeout = TimeoutLimit timeoutSeconds
+        Environment = Local
+    }
 
 /// Assemble a real `TypedFacts` with a governed root, a check list (so `Gates.buildRegistry` produces
 /// real gates), and a command list. The genuine downstream input — not a fake. The path map / surface
@@ -45,38 +49,45 @@ let command (commandId: string) (timeoutSeconds: int) : CommandSpec =
 let facts (checks: Check list) (commands: CommandSpec list) : TypedFacts =
     let domains = checks |> List.map (fun c -> c.Domain) |> List.distinct
 
-    { Project =
-        { SchemaVersion = SchemaVersion 1
-          Id = ProjectId "fixture"
-          Domains = domains
-          GovernedRoot = GovernedPath "src"
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 1
-          Domains = domains
-          PathMap = []
-          Surfaces = []
-          Checks = checks }
-      Tooling =
-        match commands with
-        | [] -> None
-        | cs ->
-            Some
-                { SchemaVersion = SchemaVersion 1
-                  Commands = cs
-                  EnvironmentClasses = []
-                  ExternalTools = [] } }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 1
+                Id = ProjectId "fixture"
+                Domains = domains
+                GovernedRoot = GovernedPath "src"
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 1
+                Domains = domains
+                PathMap = []
+                Surfaces = []
+                Checks = checks
+            }
+        Tooling =
+            match commands with
+            | [] -> None
+            | cs ->
+                Some
+                    {
+                        SchemaVersion = SchemaVersion 1
+                        Commands = cs
+                        EnvironmentClasses = []
+                        ExternalTools = []
+                    }
+    }
 
 /// The real F018 registry for these facts — `Gates.buildRegistry`, the genuine producer.
 let registryOf (facts: TypedFacts) : GateRegistry =
     FS.GG.Governance.Gates.Gates.buildRegistry facts
 
 /// Convenience: a real registry directly from a check list + command list.
-let registryFor (checks: Check list) (commands: CommandSpec list) : GateRegistry =
-    registryOf (facts checks commands)
+let registryFor (checks: Check list) (commands: CommandSpec list) : GateRegistry = registryOf (facts checks commands)
 
 // ── JsonDocument read helpers (read-only inspection of the emitted bytes) ──
 
@@ -114,7 +125,9 @@ let gateById (doc: JsonDocument) (id: string) : JsonElement =
 
 /// The `prerequisites` of a gate element as the carried `requiresCommand` strings.
 let prerequisites (gate: JsonElement) : string list =
-    [ for p in gate.GetProperty("prerequisites").EnumerateArray() -> strField p "requiresCommand" ]
+    [
+        for p in gate.GetProperty("prerequisites").EnumerateArray() -> strField p "requiresCommand"
+    ]
 
 /// Whether an object element has a property of the given name.
 let hasField (el: JsonElement) (name: string) : bool =

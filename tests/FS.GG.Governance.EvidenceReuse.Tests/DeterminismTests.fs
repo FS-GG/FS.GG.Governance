@@ -14,37 +14,48 @@ open FS.GG.Governance.EvidenceReuse.Tests.Support
 let tests =
     testList
         "Determinism"
-        [ testPropertyWithConfig fscheckConfig "decide c s is identical every time (SC-002)"
-          <| fun (c: FreshnessInputs) (s: ReuseStore) -> EvidenceReuse.decide c s = EvidenceReuse.decide c s
+        [
+            testPropertyWithConfig fscheckConfig "decide c s is identical every time (SC-002)"
+            <| fun (c: FreshnessInputs) (s: ReuseStore) -> EvidenceReuse.decide c s = EvidenceReuse.decide c s
 
-          test "reordering/duplicating CoveredArtifacts in the CANDIDATE never changes the decision (SC-002)" {
-              let store = storeOf [ baseInputs, E1 ]
-              // base has [h2; h1; h1]; same set, different order + extra duplicate.
-              let shuffled =
-                  { baseInputs with CoveredArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2"; ArtifactHash "h2" ] }
+            test "reordering/duplicating CoveredArtifacts in the CANDIDATE never changes the decision (SC-002)" {
+                let store = storeOf [ baseInputs, E1 ]
+                // base has [h2; h1; h1]; same set, different order + extra duplicate.
+                let shuffled =
+                    { baseInputs with
+                        CoveredArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2"; ArtifactHash "h2" ]
+                    }
 
-              Expect.equal
-                  (EvidenceReuse.decide shuffled store)
-                  (EvidenceReuse.decide baseInputs store)
-                  "covered-artifact order/dup in the candidate must not change the decision"
-          }
+                Expect.equal
+                    (EvidenceReuse.decide shuffled store)
+                    (EvidenceReuse.decide baseInputs store)
+                    "covered-artifact order/dup in the candidate must not change the decision"
+            }
 
-          test "reordering/duplicating CoveredArtifacts in a STORED entry never changes the decision (SC-002)" {
-              let storeOrdered = storeOf [ baseInputs, E1 ]
+            test "reordering/duplicating CoveredArtifacts in a STORED entry never changes the decision (SC-002)" {
+                let storeOrdered = storeOf [ baseInputs, E1 ]
 
-              let entryShuffled =
-                  { baseInputs with CoveredArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2"; ArtifactHash "h2" ] }
+                let entryShuffled =
+                    { baseInputs with
+                        CoveredArtifacts = [ ArtifactHash "h1"; ArtifactHash "h2"; ArtifactHash "h2" ]
+                    }
 
-              let storeShuffled = storeOf [ entryShuffled, E1 ]
+                let storeShuffled = storeOf [ entryShuffled, E1 ]
 
-              Expect.equal
-                  (EvidenceReuse.decide baseInputs storeShuffled)
-                  (EvidenceReuse.decide baseInputs storeOrdered)
-                  "covered-artifact order/dup in a stored entry must not change the decision"
-          }
+                Expect.equal
+                    (EvidenceReuse.decide baseInputs storeShuffled)
+                    (EvidenceReuse.decide baseInputs storeOrdered)
+                    "covered-artifact order/dup in a stored entry must not change the decision"
+            }
 
-          testPropertyWithConfig fscheckConfig "any same-set permutation of the candidate's covered artifacts ⇒ identical decision (SC-002)"
-          <| fun (c: FreshnessInputs) (s: ReuseStore) ->
-              let perm = FsCheck.FSharp.Gen.sampleWithSize 0 1 (samePermutationOf c.CoveredArtifacts) |> Seq.head
-              let permuted = { c with CoveredArtifacts = perm }
-              EvidenceReuse.decide permuted s = EvidenceReuse.decide c s ]
+            testPropertyWithConfig
+                fscheckConfig
+                "any same-set permutation of the candidate's covered artifacts ⇒ identical decision (SC-002)"
+            <| fun (c: FreshnessInputs) (s: ReuseStore) ->
+                let perm =
+                    FsCheck.FSharp.Gen.sampleWithSize 0 1 (samePermutationOf c.CoveredArtifacts)
+                    |> Seq.head
+
+                let permuted = { c with CoveredArtifacts = perm }
+                EvidenceReuse.decide permuted s = EvidenceReuse.decide c s
+        ]

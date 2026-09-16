@@ -22,19 +22,23 @@ type NodeFreshness =
     | Unknown
 
 type EvidenceNode =
-    { Id: string
-      Declared: EvidenceState
-      Effective: EvidenceState
-      Freshness: NodeFreshness
-      Source: string }
+    {
+        Id: string
+        Declared: EvidenceState
+        Effective: EvidenceState
+        Freshness: NodeFreshness
+        Source: string
+    }
 
 type EvidenceContent =
     | WellFormed of nodes: EvidenceNode list * dependencies: (string * string) list
     | Malformed of failure: GraphError<string>
 
 type EvidenceDocument =
-    { Content: EvidenceContent
-      Disclosures: (string * string) list }
+    {
+        Content: EvidenceContent
+        Disclosures: (string * string) list
+    }
 
 // The 069 evidence.json projection (US1–US3). Renders an `EvidenceDocument` into the deterministic, versioned
 // `evidence.json` PER-CHANGE effective-evidence document text via a hand-driven `System.Text.Json`
@@ -94,8 +98,10 @@ module EvidenceJson =
             w.WriteString("kind", "unresolved")
             w.WritePropertyName "missing"
             w.WriteStartArray()
+
             for fact in missing do
                 w.WriteStringValue(FreshnessResolution.missingFactToken fact)
+
             w.WriteEndArray()
         | NodeFreshness.Unknown -> w.WriteString("kind", "unknown")
 
@@ -123,8 +129,10 @@ module EvidenceJson =
             w.WriteString("kind", "cycle")
             w.WritePropertyName "nodes"
             w.WriteStartArray()
+
             for id in cycle do
                 w.WriteStringValue id
+
             w.WriteEndArray()
         | UnknownNode node ->
             w.WriteString("kind", "unknownNode")
@@ -166,17 +174,21 @@ module EvidenceJson =
 
                 w.WritePropertyName "nodes"
                 w.WriteStartArray()
+
                 for node in nodes |> List.sortBy (fun n -> n.Id) do
                     writeNode w node
+
                 w.WriteEndArray()
 
                 w.WritePropertyName "dependencies"
                 w.WriteStartArray()
+
                 for dependent, dependency in dependencies |> List.sortBy id do
                     w.WriteStartObject()
                     w.WriteString("dependent", dependent)
                     w.WriteString("dependency", dependency)
                     w.WriteEndObject()
+
                 w.WriteEndArray()
 
             | Malformed failure ->

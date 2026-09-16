@@ -14,13 +14,13 @@
 
 namespace FS.GG.Governance.HumanText
 
-open FS.GG.Governance.Route.Model              // RouteResult
-open FS.GG.Governance.RouteExplain.Model        // RouteExplanation
-open FS.GG.Governance.Ship.Model                // ShipDecision
-open FS.GG.Governance.ReleaseReport.Model         // ReleaseReport
-open FS.GG.Governance.CacheEligibility.Model      // CacheEligibilityReport
-open FS.GG.Governance.Gates.Model                 // GateId
-open FS.GG.Governance.GateRun.Model               // GateOutcome
+open FS.GG.Governance.Route.Model // RouteResult
+open FS.GG.Governance.RouteExplain.Model // RouteExplanation
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.ReleaseReport.Model // ReleaseReport
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.GateRun.Model // GateOutcome
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module HumanText =
@@ -31,10 +31,7 @@ module HumanText =
 
     /// `fsgg route` — mirrors `RouteJson.ofRouteResult`.
     val ofRouteResult:
-        result: RouteResult ->
-        cache: CacheEligibilityReport option ->
-        outcomes: (GateId * GateOutcome) list ->
-            string
+        result: RouteResult -> cache: CacheEligibilityReport option -> outcomes: (GateId * GateOutcome) list -> string
 
     /// `fsgg explain` — over `RouteExplain.RouteExplanation`.
     val ofRouteExplanation: explanation: RouteExplanation -> string

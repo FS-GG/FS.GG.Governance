@@ -15,6 +15,8 @@ let private config = typeof<DiagnosticId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Config" "FS.GG.Governance.Config" config
+        [
+            SurfaceDrift.surfaceTest "Config" "FS.GG.Governance.Config" config
 
-          SurfaceDrift.referencesOnly "Config" (fun n -> n = "YamlDotNet" || n = "FS.GG.Contracts") config ]
+            SurfaceDrift.referencesOnly "Config" (fun n -> n = "YamlDotNet" || n = "FS.GG.Contracts") config
+        ]

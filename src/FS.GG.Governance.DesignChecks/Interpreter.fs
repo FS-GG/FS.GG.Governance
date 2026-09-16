@@ -17,11 +17,13 @@ module SC = FS.GG.Governance.SurfaceChecks.Model
 module Interpreter =
 
     type DesignPort =
-        { ReadDescriptor: GovernedPath -> Result<string, string>
-          ReadTokenCatalog: unit -> Result<Set<string>, string>
-          ReadCaptureCatalog: unit -> Result<Set<string>, string>
-          ReadControlCatalog: unit -> Result<Set<string>, string>
-          ReadContrastCatalog: unit -> Result<Map<string, decimal * decimal>, string> }
+        {
+            ReadDescriptor: GovernedPath -> Result<string, string>
+            ReadTokenCatalog: unit -> Result<Set<string>, string>
+            ReadCaptureCatalog: unit -> Result<Set<string>, string>
+            ReadControlCatalog: unit -> Result<Set<string>, string>
+            ReadContrastCatalog: unit -> Result<Map<string, decimal * decimal>, string>
+        }
 
     let readDescriptor (repo: string) (path: GovernedPath) : Result<string, string> =
         let (GovernedPath rel) = path
@@ -75,11 +77,13 @@ module Interpreter =
     let realPort (repo: string) (catalogLayout: string * string * string * string) : DesignPort =
         let tokenPath, capturePath, controlPath, contrastPath = catalogLayout
 
-        { ReadDescriptor = readDescriptor repo
-          ReadTokenCatalog = fun () -> readStringSetCatalog repo tokenPath
-          ReadCaptureCatalog = fun () -> readStringSetCatalog repo capturePath
-          ReadControlCatalog = fun () -> readStringSetCatalog repo controlPath
-          ReadContrastCatalog = fun () -> readContrastCatalog repo contrastPath }
+        {
+            ReadDescriptor = readDescriptor repo
+            ReadTokenCatalog = fun () -> readStringSetCatalog repo tokenPath
+            ReadCaptureCatalog = fun () -> readStringSetCatalog repo capturePath
+            ReadControlCatalog = fun () -> readStringSetCatalog repo controlPath
+            ReadContrastCatalog = fun () -> readContrastCatalog repo contrastPath
+        }
 
     // Parse the neutral design surface descriptor: `token:` / `capture:` / `control:` referenced ids.
     let parseDescriptor (text: string) : string list * string list * string list =
@@ -106,12 +110,19 @@ module Interpreter =
                 unavailable <- sprintf "design surface descriptor: %s" e :: unavailable
                 [], [], []
 
-        let resolveSet (read: unit -> Result<Set<string>, string>) (mk: string -> ResolveOutcome -> 'a) (refs: string list) (label: string) : 'a list =
+        let resolveSet
+            (read: unit -> Result<Set<string>, string>)
+            (mk: string -> ResolveOutcome -> 'a)
+            (refs: string list)
+            (label: string)
+            : 'a list =
             // `safe` wraps the port read so a throwing catalog port degrades to a sensed error instead of
             // escaping `senseDesign` (its never-throws contract, #56/B13) — previously only ReadDescriptor
             // was guarded, leaving four of the five port calls able to escape.
             match SC.safe read with
-            | Ok set -> refs |> List.map (fun r -> mk r (if Set.contains r set then Resolves else Absent r))
+            | Ok set ->
+                refs
+                |> List.map (fun r -> mk r (if Set.contains r set then Resolves else Absent r))
             | Error e ->
                 unavailable <- sprintf "%s catalog: %s" label e :: unavailable
                 []
@@ -131,16 +142,20 @@ module Interpreter =
                 m
                 |> Map.toList
                 |> List.map (fun (pair, (ratio, threshold)) ->
-                    { Pair = pair
-                      Ratio = ratio
-                      Threshold = threshold
-                      Meets = ratio >= threshold })
+                    {
+                        Pair = pair
+                        Ratio = ratio
+                        Threshold = threshold
+                        Meets = ratio >= threshold
+                    })
             | Error e ->
                 unavailable <- sprintf "contrast catalog: %s" e :: unavailable
                 []
 
-        { Tokens = tokens
-          Captures = captures
-          Controls = controls
-          Contrasts = contrasts
-          CatalogUnavailable = List.rev unavailable }
+        {
+            Tokens = tokens
+            Captures = captures
+            Controls = controls
+            Contrasts = contrasts
+            CatalogUnavailable = List.rev unavailable
+        }

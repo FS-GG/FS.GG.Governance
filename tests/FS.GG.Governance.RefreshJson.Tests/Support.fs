@@ -9,47 +9,67 @@ open FS.GG.Governance.RefreshJson.RefreshModel
 // covering every per-view status, plus an all-current one, drive the shape/determinism/golden tests.
 
 let private entry (id: string) (kind: ViewKind) (output: string) : GenerationEntry =
-    { ViewId = id
-      Kind = kind
-      OutputPath = output
-      Sources = [ output + ".src" ]
-      Generator = [ "gen"; id ]
-      GeneratorBasis = "v1" }
+    {
+        ViewId = id
+        Kind = kind
+        OutputPath = output
+        Sources = [ output + ".src" ]
+        Generator = [ "gen"; id ]
+        GeneratorBasis = "v1"
+    }
 
 /// A mixed decision in declared order: regenerated, current, stale-unresolved, not-evaluated.
 let decisionMixed: RefreshDecision =
-    { Outcome = StaleUnresolved'
-      DryRun = false
-      Views =
-        [ { Entry = entry "gate-metadata" GateMetadata "docs/gates.json"
-            Status = Regenerated [ CoveredArtifactsCat ]
-            Drifted = [ CoveredArtifactsCat ] }
-          { Entry = entry "rule-catalog" RuleCatalog "docs/rules.json"
-            Status = Current
-            Drifted = [] }
-          { Entry = entry "api-surface" ApiSurfaceDoc "surface/x.txt"
-            Status = StaleUnresolved "src/x: source not found"
-            Drifted = [] }
-          { Entry = entry "extra" (Other "custom-kind") "out/extra.txt"
-            Status = NotEvaluated
-            Drifted = [] } ]
-      RegeneratedCount = 1
-      CurrentCount = 1
-      UnresolvedCount = 1
-      NotEvaluatedCount = 1 }
+    {
+        Outcome = StaleUnresolved'
+        DryRun = false
+        Views =
+            [
+                {
+                    Entry = entry "gate-metadata" GateMetadata "docs/gates.json"
+                    Status = Regenerated [ CoveredArtifactsCat ]
+                    Drifted = [ CoveredArtifactsCat ]
+                }
+                {
+                    Entry = entry "rule-catalog" RuleCatalog "docs/rules.json"
+                    Status = Current
+                    Drifted = []
+                }
+                {
+                    Entry = entry "api-surface" ApiSurfaceDoc "surface/x.txt"
+                    Status = StaleUnresolved "src/x: source not found"
+                    Drifted = []
+                }
+                {
+                    Entry = entry "extra" (Other "custom-kind") "out/extra.txt"
+                    Status = NotEvaluated
+                    Drifted = []
+                }
+            ]
+        RegeneratedCount = 1
+        CurrentCount = 1
+        UnresolvedCount = 1
+        NotEvaluatedCount = 1
+    }
 
 /// An all-current decision (the clean shade).
 let decisionClean: RefreshDecision =
-    { Outcome = NothingToRefresh
-      DryRun = false
-      Views =
-        [ { Entry = entry "only" Baseline "out.txt"
-            Status = Current
-            Drifted = [] } ]
-      RegeneratedCount = 0
-      CurrentCount = 1
-      UnresolvedCount = 0
-      NotEvaluatedCount = 0 }
+    {
+        Outcome = NothingToRefresh
+        DryRun = false
+        Views =
+            [
+                {
+                    Entry = entry "only" Baseline "out.txt"
+                    Status = Current
+                    Drifted = []
+                }
+            ]
+        RegeneratedCount = 0
+        CurrentCount = 1
+        UnresolvedCount = 0
+        NotEvaluatedCount = 0
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 

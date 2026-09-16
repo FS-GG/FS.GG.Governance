@@ -18,7 +18,10 @@ open FS.GG.Governance.Sample.SddReferenceProvider.Tests.Support
 let private sleeper () : (string * string) option =
     if RuntimeInformation.IsOSPlatform OSPlatform.Windows then
         Some("ping", "-n 30 127.0.0.1")
-    elif RuntimeInformation.IsOSPlatform OSPlatform.Linux || RuntimeInformation.IsOSPlatform OSPlatform.OSX then
+    elif
+        RuntimeInformation.IsOSPlatform OSPlatform.Linux
+        || RuntimeInformation.IsOSPlatform OSPlatform.OSX
+    then
         Some("sleep", "30")
     else
         None
@@ -36,32 +39,34 @@ let private isAlive (pid: int) : bool =
 let tests =
     testList
         "BoundedBuild"
-        [ test "bounded: a stalled build is cut off within budget+margin" {
-              match sleeper () with
-              | None -> skiptest "PLATFORM: no sleeper available to force a stall"
-              | Some(exe, args) ->
-                  let budget = TimeSpan.FromMilliseconds 500.
-                  // `runBounded` reports the spawned PID synchronously on this thread, so the capture is
-                  // race-free even when other builds run concurrently in the full suite.
-                  let mutable childPid = ValueNone
+        [
+            test "bounded: a stalled build is cut off within budget+margin" {
+                match sleeper () with
+                | None -> skiptest "PLATFORM: no sleeper available to force a stall"
+                | Some(exe, args) ->
+                    let budget = TimeSpan.FromMilliseconds 500.
+                    // `runBounded` reports the spawned PID synchronously on this thread, so the capture is
+                    // race-free even when other builds run concurrently in the full suite.
+                    let mutable childPid = ValueNone
 
-                  let sw = Stopwatch.StartNew()
-                  let outcome = runBounded exe args None budget (fun pid -> childPid <- ValueSome pid)
-                  sw.Stop()
+                    let sw = Stopwatch.StartNew()
+                    let outcome = runBounded exe args None budget (fun pid -> childPid <- ValueSome pid)
+                    sw.Stop()
 
-                  // (a) the outcome is a TimedOut carrying the configured budget — never silently a pass.
-                  match outcome with
-                  | TimedOut(b, _) -> Expect.equal b budget "the timeout carries the configured budget"
-                  | other -> failtestf "expected TimedOut, got %A" other
+                    // (a) the outcome is a TimedOut carrying the configured budget — never silently a pass.
+                    match outcome with
+                    | TimedOut(b, _) -> Expect.equal b budget "the timeout carries the configured budget"
+                    | other -> failtestf "expected TimedOut, got %A" other
 
-                  // (b) the bounded call returned within budget + the named assertion margin.
-                  Expect.isLessThan
-                      sw.Elapsed
-                      (budget + boundAssertionMargin)
-                      "the bounded call returned within budget + margin"
+                    // (b) the bounded call returned within budget + the named assertion margin.
+                    Expect.isLessThan
+                        sw.Elapsed
+                        (budget + boundAssertionMargin)
+                        "the bounded call returned within budget + margin"
 
-                  // (c) the EXACT spawned sleeper is gone (Kill(entireProcessTree=true) + drain reaped it).
-                  match childPid with
-                  | ValueNone -> failtest "runBounded never reported a started sleeper PID"
-                  | ValueSome pid -> Expect.isFalse (isAlive pid) "the spawned sleeper process tree was terminated"
-          } ]
+                    // (c) the EXACT spawned sleeper is gone (Kill(entireProcessTree=true) + drain reaped it).
+                    match childPid with
+                    | ValueNone -> failtest "runBounded never reported a started sleeper PID"
+                    | ValueSome pid -> Expect.isFalse (isAlive pid) "the spawned sleeper process tree was terminated"
+            }
+        ]

@@ -38,9 +38,11 @@ module Report =
         |> Map.toList
         |> List.sortBy (fun (kind, _) -> Release.releaseRuleKindOrdinal kind)
         |> List.map (fun (kind, state) ->
-            { Kind = kind
-              State = state
-              Reason = preconditionReason sensed kind state })
+            {
+                Kind = kind
+                State = state
+                Reason = preconditionReason sensed kind state
+            })
 
     // ── the public operations ──
 
@@ -50,16 +52,20 @@ module Report =
         (pack: PackEvidenceSet)
         (attestation: AttestationSummary)
         : ReleaseReport =
-        { Decision = decision
-          Sensed = sensed
-          Package = pack
-          Preconditions = preconditionsOf sensed
-          Attestation = attestation
-          ReleaseExitCodeBasis = decision.ExitCodeBasis }
+        {
+            Decision = decision
+            Sensed = sensed
+            Package = pack
+            Preconditions = preconditionsOf sensed
+            Attestation = attestation
+            ReleaseExitCodeBasis = decision.ExitCodeBasis
+        }
 
     let preview (report: ReleaseReport) : VerifyReleasePreview =
-        { Verdict = report.Decision.Verdict
-          Package = report.Package
-          Preconditions = report.Preconditions
-          Attestation = report.Attestation
-          Advisory = true }
+        {
+            Verdict = report.Decision.Verdict
+            Package = report.Package
+            Preconditions = report.Preconditions
+            Attestation = report.Attestation
+            Advisory = true
+        }

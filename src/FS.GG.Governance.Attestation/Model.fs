@@ -12,28 +12,33 @@ open FS.GG.Governance.CommandKind.Model
 module Model =
 
     type AttestationSubject =
-        { Name: string
-          Digest: ArtifactHash
-          Version: string }
+        {
+            Name: string
+            Digest: ArtifactHash
+            Version: string
+        }
 
     type AttestationMaterials =
-        { RuleHash: RuleHash
-          GeneratorVersion: GeneratorVersion
-          BaseRevision: Revision
-          HeadRevision: Revision
-          SourceCommit: Revision
-          ArtifactDigests: ArtifactHash list
-          Environment: EnvironmentClass }
+        {
+            RuleHash: RuleHash
+            GeneratorVersion: GeneratorVersion
+            BaseRevision: Revision
+            HeadRevision: Revision
+            SourceCommit: Revision
+            ArtifactDigests: ArtifactHash list
+            Environment: EnvironmentClass
+        }
 
     type AttestationInvocation = { Runs: KindedCommandRun list }
 
-    type ComplianceMarker =
-        | CompatibleShapeNotFormalCompliance
+    type ComplianceMarker = | CompatibleShapeNotFormalCompliance
 
     type AttestationSummary =
-        { Subjects: AttestationSubject list
-          Builder: BuilderIdentity
-          Materials: AttestationMaterials
-          Invocation: AttestationInvocation
-          Identity: string
-          Compliance: ComplianceMarker }
+        {
+            Subjects: AttestationSubject list
+            Builder: BuilderIdentity
+            Materials: AttestationMaterials
+            Invocation: AttestationInvocation
+            Identity: string
+            Compliance: ComplianceMarker
+        }

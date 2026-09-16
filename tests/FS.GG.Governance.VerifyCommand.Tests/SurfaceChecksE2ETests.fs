@@ -23,7 +23,8 @@ let private srcCandidate = "src/Api.fsi"
 // files; the gate exec is `exec`; writes/stdout are captured. Real sensors, faked git/exec — disclosed.
 let private detPorts (catalog) (dir: string) (changed: string) (exec) (cap: Capture) : Interpreter.Ports =
     { fakePortsExec catalog (gitWithChanges [ 'M', changed ]) fakeSensor absentStoreReader exec cap with
-        SenseSurfaces = realSurfaceSense dir }
+        SenseSurfaces = realSurfaceSense dir
+    }
 
 let private goldenDir =
     Path.Combine(repoRoot, "tests", "FS.GG.Governance.VerifyCommand.Tests", "goldens")
@@ -32,8 +33,10 @@ let private goldenDir =
 // silent self-fulfilling pass) unless blessing.
 let private goldenAssert (name: string) (actual: string) =
     let path = Path.Combine(goldenDir, name)
+
     if Environment.GetEnvironmentVariable "BLESS_GOLDEN" = "1" then
         File.WriteAllText(path, actual)
+
     Expect.isTrue (File.Exists path) (sprintf "golden %s exists (run BLESS_GOLDEN=1 dotnet test to mint it)" name)
     Expect.equal actual (File.ReadAllText path) (sprintf "byte-identical to golden %s (BLESS_GOLDEN=1 to refresh)" name)
 
@@ -42,11 +45,21 @@ let private contentOf (cap: Capture) : string =
     | Some(_, c) -> c
     | None -> failtest "expected a verify.json write"
 
-let private senseBoundarySource (source: string) (assertions: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list -> unit) =
+let private senseBoundarySource
+    (source: string)
+    (assertions: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list -> unit)
+    =
     withTempRepo (fun dir ->
-        writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+        writeFile
+            dir
+            "src/Boundary.fsproj"
+            """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+
         writeFile dir "src/Boundary.fs" source
-        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+
+        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+            { Classifications = [] }
+
         realSurfaceSense dir report |> assertions)
 
 // #390 repair round 1 (F1) — the shared driver for the two escape arms.
@@ -59,7 +72,8 @@ let private senseBoundarySource (source: string) (assertions: FS.GG.Governance.S
 //
 // Both plant a real inheritance hierarchy OUTSIDE the tree, so before containment they produced
 // `inheritance-hierarchy` findings rather than a refusal — the decisive observable.
-let private outsideHierarchy = """module Outside
+let private outsideHierarchy =
+    """module Outside
 
 type Base() =
     member _.Name = "base"
@@ -82,13 +96,16 @@ let private escapeCase (suffix: string) (plant: string -> unit) =
             let relative = "src/../../" + Path.GetFileName outside + suffix
             writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" relative)
 
-            let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+            let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                { Classifications = [] }
+
             let findings = realSurfaceSense dir report
 
             let refusal =
                 findings
                 |> List.tryFind (fun f ->
-                    f.Surface = SurfaceId "fsharp-idiomatic-simplicity" && f.Code = "surface.sense-error")
+                    f.Surface = SurfaceId "fsharp-idiomatic-simplicity"
+                    && f.Code = "surface.sense-error")
 
             Expect.isSome
                 refusal
@@ -108,11 +125,16 @@ let private escapeCase (suffix: string) (plant: string -> unit) =
                 (findings |> List.filter (fun f -> f.Code = "inheritance-hierarchy"))
                 "no rule finding may be produced from a file outside the governed root"
         finally
-            try Directory.Delete(outside, true) with _ -> ())
+            try
+                Directory.Delete(outside, true)
+            with _ ->
+                ())
 
 let private effectCodes (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) =
     findings
-    |> List.filter (fun finding -> finding.Code.StartsWith("fsharp.effect", StringComparison.Ordinal) || finding.Code = "fsharp.callback-hidden-state")
+    |> List.filter (fun finding ->
+        finding.Code.StartsWith("fsharp.effect", StringComparison.Ordinal)
+        || finding.Code = "fsharp.callback-hidden-state")
     |> List.map _.Code
 
 [<Tests>]
@@ -120,161 +142,264 @@ let tests =
     testList
         "SurfaceChecksE2E"
         [
-          // ── US1 (T004 / SC-001): a drifted package surface blocks `fsgg verify` ──
-          test "T004 drifted package surface ⇒ surfaceChecks package.baseline-drift, blocking exit, evidence tag, no leakage" {
-              withDriftedPackageRepo (fun dir ->
-                  let cap = newCapture ()
-                  let model = Interpreter.run (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                  // The build gate passes (faked exit 0) ⇒ the ONLY blocker is the surface finding.
-                  Expect.equal model.Exit Loop.Blocked "drifted surface ⇒ Blocked at Verify under Strict"
-                  Expect.equal (Loop.exitCode model.Exit) 1 "exit 1 (distinct from tool errors)"
+            // ── US1 (T004 / SC-001): a drifted package surface blocks `fsgg verify` ──
+            test
+                "T004 drifted package surface ⇒ surfaceChecks package.baseline-drift, blocking exit, evidence tag, no leakage" {
+                withDriftedPackageRepo (fun dir ->
+                    let cap = newCapture ()
 
-                  let content = contentOf cap
-                  Expect.stringContains content "surfaceChecks" "the additive section is emitted"
-                  Expect.stringContains content "package.baseline-drift" "the drift finding is reported"
-                  Expect.stringContains content "api-contract" "the declared evidenceTag is carried"
-                  // FR-006: no absolute path / temp-dir leakage in the emitted bytes.
-                  Expect.isFalse (content.Contains dir) "no absolute repo path leaks into surfaceChecks"
-                  Expect.isFalse (content.Contains(Path.GetTempPath())) "no temp path leaks") }
+                    let model =
+                        Interpreter.run
+                            (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap)
+                            (requestForProfile Loop.DefaultRange Loop.Text Strict)
+                    // The build gate passes (faked exit 0) ⇒ the ONLY blocker is the surface finding.
+                    Expect.equal model.Exit Loop.Blocked "drifted surface ⇒ Blocked at Verify under Strict"
+                    Expect.equal (Loop.exitCode model.Exit) 1 "exit 1 (distinct from tool errors)"
 
-          // ── US2 (T005 / SC-002): no declared surface ⇒ byte-identical, section omitted ──
-          test "T005 no declared product surface ⇒ verify.json byte-identical to the pre-wiring golden, no surfaceChecks" {
-              // The no-surface catalog (its only surface is `protected`) ⇒ the real sense returns [] regardless
-              // of the tree, so the default empty sense + FIXED-SHA faked git give a stable anchor.
-              let cap = newCapture ()
-              let candidates = [ gp "src/Lib/Thing.fs" ]
-              let model = Interpreter.run (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortPass cap) (requestFor (Loop.ExplicitPaths candidates) Loop.Text)
-              let content = contentOf cap
-              Expect.equal model.Exit Loop.Success "no surface, passing gates ⇒ Success"
-              Expect.isFalse (content.Contains "surfaceChecks") "no surfaceChecks section when there are no findings"
-              // Independent no-regression anchor: equals the genuine pre-wiring projection of the same inputs
-              // (ExplicitPaths senses no snapshot ⇒ baseHead None, matching the actual run).
-              Expect.equal content (verifyExpectedWith fakeExecPortPass validCatalog candidates Standard None) "byte-identical to the genuine VerifyJson.ofVerifyDecision projection"
-              goldenAssert "verify-no-surfaces.json" content }
+                    let content = contentOf cap
+                    Expect.stringContains content "surfaceChecks" "the additive section is emitted"
+                    Expect.stringContains content "package.baseline-drift" "the drift finding is reported"
+                    Expect.stringContains content "api-contract" "the declared evidenceTag is carried"
+                    // FR-006: no absolute path / temp-dir leakage in the emitted bytes.
+                    Expect.isFalse (content.Contains dir) "no absolute repo path leaks into surfaceChecks"
+                    Expect.isFalse (content.Contains(Path.GetTempPath())) "no temp path leaks")
+            }
 
-          // ── US3 (T006 / SC-003): an advisory-only finding surfaces without escalating ──
-          test "T006 advisory-only surface finding ⇒ surfaceChecks advisory entry, exit equals a clean run (Synthetic)" {
-              // SYNTHETIC: the advisory finding is injected through the surface-sense port — the real disk
-              // sensors emit only Blocking findings today (the lone Advisory check, docs.example-freshness, the
-              // real docs sensor does not yet populate). The fold + projection are exercised for real.
-              let runWith findings =
-                  let cap = newCapture ()
-                  let ports =
-                      { fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortPass cap with
-                          SenseSurfaces = syntheticSurfaceSense findings }
-                  Interpreter.run ports (requestFor (Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]) Loop.Text), cap
+            // ── US2 (T005 / SC-002): no declared surface ⇒ byte-identical, section omitted ──
+            test
+                "T005 no declared product surface ⇒ verify.json byte-identical to the pre-wiring golden, no surfaceChecks" {
+                // The no-surface catalog (its only surface is `protected`) ⇒ the real sense returns [] regardless
+                // of the tree, so the default empty sense + FIXED-SHA faked git give a stable anchor.
+                let cap = newCapture ()
+                let candidates = [ gp "src/Lib/Thing.fs" ]
 
-              let clean, _ = runWith []
-              let advised, capA = runWith [ advisorySurfaceFinding ]
-              let content = contentOf capA
-              Expect.stringContains content "surfaceChecks" "the advisory finding is visible in surfaceChecks"
-              Expect.stringContains content "advisory" "carried with advisory severity"
-              Expect.equal advised.Exit clean.Exit "advisory never changes the exit code"
-              Expect.equal advised.Exit Loop.Success "advisory-only ⇒ Success" }
+                let model =
+                    Interpreter.run
+                        (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortPass cap)
+                        (requestFor (Loop.ExplicitPaths candidates) Loop.Text)
 
-          // ── US1 (T008 / SC-004): determinism + the absent-baseline read-only case ──
-          test "T008 re-running over unchanged inputs ⇒ byte-identical verify.json (deterministic)" {
-              withDriftedPackageRepo (fun dir ->
-                  let run () =
-                      let cap = newCapture ()
-                      Interpreter.run (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                      |> ignore
-                      contentOf cap
+                let content = contentOf cap
+                Expect.equal model.Exit Loop.Success "no surface, passing gates ⇒ Success"
+                Expect.isFalse (content.Contains "surfaceChecks") "no surfaceChecks section when there are no findings"
+                // Independent no-regression anchor: equals the genuine pre-wiring projection of the same inputs
+                // (ExplicitPaths senses no snapshot ⇒ baseHead None, matching the actual run).
+                Expect.equal
+                    content
+                    (verifyExpectedWith fakeExecPortPass validCatalog candidates Standard None)
+                    "byte-identical to the genuine VerifyJson.ofVerifyDecision projection"
 
-                  Expect.equal (run ()) (run ()) "two runs over unchanged inputs are byte-identical") }
+                goldenAssert "verify-no-surfaces.json" content
+            }
 
-          test "T008b absent baseline ⇒ two runs byte-identical and the working tree is unchanged (read-only)" {
-              withAbsentBaselineRepo (fun dir ->
-                  let baselineFile = Path.Combine(dir, "src", "Api.fsi.baseline")
-                  let run () =
-                      let cap = newCapture ()
-                      Interpreter.run (detPorts surfaceCatalogNoGates dir srcCandidate fakeExecPortFail cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                      |> ignore
-                      contentOf cap
+            // ── US3 (T006 / SC-003): an advisory-only finding surfaces without escalating ──
+            test
+                "T006 advisory-only surface finding ⇒ surfaceChecks advisory entry, exit equals a clean run (Synthetic)" {
+                // SYNTHETIC: the advisory finding is injected through the surface-sense port — the real disk
+                // sensors emit only Blocking findings today (the lone Advisory check, docs.example-freshness, the
+                // real docs sensor does not yet populate). The fold + projection are exercised for real.
+                let runWith findings =
+                    let cap = newCapture ()
 
-                  let first = run ()
-                  Expect.isFalse (File.Exists baselineFile) "the read-only port never writes the absent baseline"
-                  let second = run ()
-                  Expect.equal first second "absent-baseline runs are byte-identical (no first-run-writes divergence)"
-                  Expect.stringContains first "package.baseline-absent" "the absent baseline is reported (blocking)") }
+                    let ports =
+                        { fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortPass cap with
+                            SenseSurfaces = syntheticSurfaceSense findings
+                        }
 
-          // ── US2 (T009b / FR-012): read-only, no working-tree write, no spawned process ──
-          test "T009b read-only verify ⇒ no .baseline written and no process spawned by surface sensing" {
-              withAbsentBaselineRepo (fun dir ->
-                  let baselineFile = Path.Combine(dir, "src", "Api.fsi.baseline")
-                  let counter = { Calls = 0 }
-                  let cap = newCapture ()
-                  // No gates in this catalog, so the ONLY thing that could spawn a process is a transcript run —
-                  // which the read-only package port suppresses (ListTranscripts ⇒ Ok []).
-                  let model = Interpreter.run (detPorts surfaceCatalogNoGates dir srcCandidate (countingExecPort counter 1) cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                  Expect.equal counter.Calls 0 "the read-only package port spawns no process (no transcript executed)"
-                  Expect.isFalse (File.Exists baselineFile) "no .baseline is written to the working tree"
-                  Expect.equal model.Exit Loop.Blocked "the package.baseline-absent finding still blocks under Strict"
-                  Expect.stringContains (contentOf cap) "package.baseline-absent" "the absent baseline is reported, written nowhere") }
+                    Interpreter.run ports (requestFor (Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]) Loop.Text), cap
 
-          // ── US3 (T009 / FR-010): safe failure on an unreadable / missing surface source ──
-          test "T009 a routed-but-missing surface source ⇒ a disclosed sensor outcome, not a crash or silent pass" {
-              withDriftedPackageRepo (fun dir ->
-                  let cap = newCapture ()
-                  // Faked git reports a GHOST `.fsi` that is not on disk — the real package sensor surfaces a
-                  // disclosed `package.baseline-unreadable` input-state finding (FR-010), never a crash/silent pass.
-                  let model = Interpreter.run (detPorts surfaceCatalog dir "src/Ghost.fsi" fakeExecPortPass cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                  let content = contentOf cap
-                  Expect.stringContains content "package.baseline-unreadable" "a missing source is a disclosed sensor outcome"
-                  Expect.equal model.Exit Loop.Blocked "the disclosed input-state finding blocks under Strict (not a silent pass)") }
+                let clean, _ = runWith []
+                let advised, capA = runWith [ advisorySurfaceFinding ]
+                let content = contentOf capA
+                Expect.stringContains content "surfaceChecks" "the advisory finding is visible in surfaceChecks"
+                Expect.stringContains content "advisory" "carried with advisory severity"
+                Expect.equal advised.Exit clean.Exit "advisory never changes the exit code"
+                Expect.equal advised.Exit Loop.Success "advisory-only ⇒ Success"
+            }
 
-          // ── ADPT-1 (fail-closed): an INVALID catalog must not collapse surface sensing to [] ──
-          test "ADPT-1 an invalid governance catalog ⇒ a Blocking input-state surface finding, never a silent empty pass" {
-              // Drive the REAL surface sense (`realSurfaceSense` = the production `Interpreter.realPorts` field)
-              // over a temp tree whose on-disk `.fsgg` catalog does not validate (schemaVersion 999). Before
-              // ADPT-1 this returned `[]` — verify would PASS with zero surface evidence exactly when the
-              // catalog was too broken to gather any. It must instead fail CLOSED with a disclosed finding.
-              let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-adpt1-" + Guid.NewGuid().ToString("N"))
-              Directory.CreateDirectory dir |> ignore
+            // ── US1 (T008 / SC-004): determinism + the absent-baseline read-only case ──
+            test "T008 re-running over unchanged inputs ⇒ byte-identical verify.json (deterministic)" {
+                withDriftedPackageRepo (fun dir ->
+                    let run () =
+                        let cap = newCapture ()
 
-              try
-                  for KeyValue(name, content) in invalidCatalog do
-                      writeFile dir (".fsgg/" + name) content
+                        Interpreter.run
+                            (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap)
+                            (requestForProfile Loop.DefaultRange Loop.Text Strict)
+                        |> ignore
 
-                  // The Invalid path short-circuits before the report is consumed, so an empty report suffices.
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                        contentOf cap
 
-                  Expect.isNonEmpty findings "an invalid catalog must NOT collapse to [] (that passes with zero surface evidence)"
-                  Expect.all findings (fun f -> f.IsInputState) "every reified failure is an input-state finding, not a fabricated rule violation"
-                  Expect.all findings (fun f -> f.BaseSeverity = Blocking) "reified as Blocking so verify fails closed"
+                    Expect.equal (run ()) (run ()) "two runs over unchanged inputs are byte-identical")
+            }
 
-                  Expect.isTrue
-                      (findings |> List.exists (fun f -> f.Code = "surface.catalog-invalid"))
-                      "the catalog-invalid code is reported"
+            test "T008b absent baseline ⇒ two runs byte-identical and the working tree is unchanged (read-only)" {
+                withAbsentBaselineRepo (fun dir ->
+                    let baselineFile = Path.Combine(dir, "src", "Api.fsi.baseline")
 
-                  // Fail-closed means it actually BLOCKS at Verify under Strict (via the existing deriveEffectiveSeverity).
-                  Expect.isTrue (SurfaceFold.surfaceBlocks Strict findings) "the reified finding blocks the verify verdict"
-              finally
-                  try Directory.Delete(dir, true) with _ -> () }
+                    let run () =
+                        let cap = newCapture ()
 
-          test "declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" {
-              // This exercises the concrete `Interpreter.realPorts` sense path, including its project
-              // enumeration and the ProjectSensing seam; it is not a hand-built BoundaryFacts fixture.
-              withTempRepo (fun dir ->
-                  writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
-                  writeFile dir "src/Boundary.fs" """module internal Boundary
+                        Interpreter.run
+                            (detPorts surfaceCatalogNoGates dir srcCandidate fakeExecPortFail cap)
+                            (requestForProfile Loop.DefaultRange Loop.Text Strict)
+                        |> ignore
+
+                        contentOf cap
+
+                    let first = run ()
+                    Expect.isFalse (File.Exists baselineFile) "the read-only port never writes the absent baseline"
+                    let second = run ()
+
+                    Expect.equal
+                        first
+                        second
+                        "absent-baseline runs are byte-identical (no first-run-writes divergence)"
+
+                    Expect.stringContains first "package.baseline-absent" "the absent baseline is reported (blocking)")
+            }
+
+            // ── US2 (T009b / FR-012): read-only, no working-tree write, no spawned process ──
+            test "T009b read-only verify ⇒ no .baseline written and no process spawned by surface sensing" {
+                withAbsentBaselineRepo (fun dir ->
+                    let baselineFile = Path.Combine(dir, "src", "Api.fsi.baseline")
+                    let counter = { Calls = 0 }
+                    let cap = newCapture ()
+                    // No gates in this catalog, so the ONLY thing that could spawn a process is a transcript run —
+                    // which the read-only package port suppresses (ListTranscripts ⇒ Ok []).
+                    let model =
+                        Interpreter.run
+                            (detPorts surfaceCatalogNoGates dir srcCandidate (countingExecPort counter 1) cap)
+                            (requestForProfile Loop.DefaultRange Loop.Text Strict)
+
+                    Expect.equal
+                        counter.Calls
+                        0
+                        "the read-only package port spawns no process (no transcript executed)"
+
+                    Expect.isFalse (File.Exists baselineFile) "no .baseline is written to the working tree"
+
+                    Expect.equal
+                        model.Exit
+                        Loop.Blocked
+                        "the package.baseline-absent finding still blocks under Strict"
+
+                    Expect.stringContains
+                        (contentOf cap)
+                        "package.baseline-absent"
+                        "the absent baseline is reported, written nowhere")
+            }
+
+            // ── US3 (T009 / FR-010): safe failure on an unreadable / missing surface source ──
+            test "T009 a routed-but-missing surface source ⇒ a disclosed sensor outcome, not a crash or silent pass" {
+                withDriftedPackageRepo (fun dir ->
+                    let cap = newCapture ()
+                    // Faked git reports a GHOST `.fsi` that is not on disk — the real package sensor surfaces a
+                    // disclosed `package.baseline-unreadable` input-state finding (FR-010), never a crash/silent pass.
+                    let model =
+                        Interpreter.run
+                            (detPorts surfaceCatalog dir "src/Ghost.fsi" fakeExecPortPass cap)
+                            (requestForProfile Loop.DefaultRange Loop.Text Strict)
+
+                    let content = contentOf cap
+
+                    Expect.stringContains
+                        content
+                        "package.baseline-unreadable"
+                        "a missing source is a disclosed sensor outcome"
+
+                    Expect.equal
+                        model.Exit
+                        Loop.Blocked
+                        "the disclosed input-state finding blocks under Strict (not a silent pass)")
+            }
+
+            // ── ADPT-1 (fail-closed): an INVALID catalog must not collapse surface sensing to [] ──
+            test
+                "ADPT-1 an invalid governance catalog ⇒ a Blocking input-state surface finding, never a silent empty pass" {
+                // Drive the REAL surface sense (`realSurfaceSense` = the production `Interpreter.realPorts` field)
+                // over a temp tree whose on-disk `.fsgg` catalog does not validate (schemaVersion 999). Before
+                // ADPT-1 this returned `[]` — verify would PASS with zero surface evidence exactly when the
+                // catalog was too broken to gather any. It must instead fail CLOSED with a disclosed finding.
+                let dir =
+                    Path.Combine(Path.GetTempPath(), "fsgg-verify-adpt1-" + Guid.NewGuid().ToString("N"))
+
+                Directory.CreateDirectory dir |> ignore
+
+                try
+                    for KeyValue(name, content) in invalidCatalog do
+                        writeFile dir (".fsgg/" + name) content
+
+                    // The Invalid path short-circuits before the report is consumed, so an empty report suffices.
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
+
+                    let findings = realSurfaceSense dir report
+
+                    Expect.isNonEmpty
+                        findings
+                        "an invalid catalog must NOT collapse to [] (that passes with zero surface evidence)"
+
+                    Expect.all
+                        findings
+                        (fun f -> f.IsInputState)
+                        "every reified failure is an input-state finding, not a fabricated rule violation"
+
+                    Expect.all
+                        findings
+                        (fun f -> f.BaseSeverity = Blocking)
+                        "reified as Blocking so verify fails closed"
+
+                    Expect.isTrue
+                        (findings |> List.exists (fun f -> f.Code = "surface.catalog-invalid"))
+                        "the catalog-invalid code is reported"
+
+                    // Fail-closed means it actually BLOCKS at Verify under Strict (via the existing deriveEffectiveSeverity).
+                    Expect.isTrue
+                        (SurfaceFold.surfaceBlocks Strict findings)
+                        "the reified finding blocks the verify verdict"
+                finally
+                    try
+                        Directory.Delete(dir, true)
+                    with _ ->
+                        ()
+            }
+
+            test "declared F# transition with direct I/O ⇒ production Verify sensing emits a blocking effect finding" {
+                // This exercises the concrete `Interpreter.realPorts` sense path, including its project
+                // enumeration and the ProjectSensing seam; it is not a hand-built BoundaryFacts fixture.
+                withTempRepo (fun dir ->
+                    writeFile
+                        dir
+                        "src/Boundary.fsproj"
+                        """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+
+                    writeFile
+                        dir
+                        "src/Boundary.fs"
+                        """module internal Boundary
 // fsgg:effect-boundary transition
 let transition value = File.WriteAllText("out.txt", value)"""
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  Expect.isFalse
-                      (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-boundary-malformed"))
-                      (sprintf "the production sensor accepted the project fixture; findings: %A" findings)
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isTrue
-                      (findings |> List.exists (fun finding -> finding.Code = "fsharp.effect-in-transition" && finding.BaseSeverity = Blocking))
-                      "a declared transition which performs direct I/O blocks through the production Verify sense") }
+                    Expect.isFalse
+                        (findings
+                         |> List.exists (fun finding -> finding.Code = "fsharp.effect-boundary-malformed"))
+                        (sprintf "the production sensor accepted the project fixture; findings: %A" findings)
 
-          test "effect-boundary production controls use real symbols and exact declaration tokens" {
-              let good = """module internal Boundary
+                    Expect.isTrue
+                        (findings
+                         |> List.exists (fun finding ->
+                             finding.Code = "fsharp.effect-in-transition" && finding.BaseSeverity = Blocking))
+                        "a declared transition which performs direct I/O blocks through the production Verify sense")
+            }
+
+            test "effect-boundary production controls use real symbols and exact declaration tokens" {
+                let good =
+                    """module internal Boundary
 type Message = Saved | SaveFailed
 type Effect = Persist of string
 // fsgg:effect-boundary advance edge=interpret success=Saved failure=SaveFailed retry=never idempotency=document-id
@@ -288,10 +413,12 @@ let interpret effect = task {
         with _ ->
             return SaveFailed
 }"""
-              senseBoundarySource good (fun findings ->
-                  Expect.isEmpty (effectCodes findings) "a pure transition plus explicit real edge contract passes")
 
-              let documented = """module internal Boundary
+                senseBoundarySource good (fun findings ->
+                    Expect.isEmpty (effectCodes findings) "a pure transition plus explicit real edge contract passes")
+
+                let documented =
+                    """module internal Boundary
 type Message = Saved | SaveFailed
 type Effect = Persist of string
 // fsgg:effect-boundary advance edge=interpret success=Saved failure=SaveFailed retry=never idempotency=document-id
@@ -302,10 +429,14 @@ let interpret effect = task {
         do! File.WriteAllTextAsync("document.txt", text)
         return Saved
 }"""
-              senseBoundarySource documented (fun findings ->
-                  Expect.isEmpty (effectCodes findings) "the exact documented pure-line comment does not manufacture an effect")
 
-              let lexicalNoise = """module internal Boundary
+                senseBoundarySource documented (fun findings ->
+                    Expect.isEmpty
+                        (effectCodes findings)
+                        "the exact documented pure-line comment does not manufacture an effect")
+
+                let lexicalNoise =
+                    """module internal Boundary
 // fsgg:effect-boundary advance
 let advance model =
     (* Process.Start("ignored") *)
@@ -313,106 +444,180 @@ let advance model =
     let interpolated = $"File.WriteAllText({model})"
     let FileWriteAllText = ordinary
     model"""
-              senseBoundarySource lexicalNoise (fun findings ->
-                  Expect.isEmpty (effectCodes findings) "comments, string text, interpolation text, and identifiers are not calls")
 
-              let interpolatedCall = "module internal Boundary\n// fsgg:effect-boundary advance\nlet advance (path: string) (model: string) = $\"{File.WriteAllText(path, model)}\""
-              senseBoundarySource interpolatedCall (fun findings ->
-                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
-                  Expect.stringContains effect.Location.Detail "File.WriteAllText@3:49" "production sensing preserves executable call identity inside an interpolation hole")
+                senseBoundarySource lexicalNoise (fun findings ->
+                    Expect.isEmpty
+                        (effectCodes findings)
+                        "comments, string text, interpolation text, and identifiers are not calls")
 
-              let actualCall = """module internal Boundary
+                let interpolatedCall =
+                    "module internal Boundary\n// fsgg:effect-boundary advance\nlet advance (path: string) (model: string) = $\"{File.WriteAllText(path, model)}\""
+
+                senseBoundarySource interpolatedCall (fun findings ->
+                    let effect =
+                        findings
+                        |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+
+                    Expect.stringContains
+                        effect.Location.Detail
+                        "File.WriteAllText@3:49"
+                        "production sensing preserves executable call identity inside an interpolation hole")
+
+                let actualCall =
+                    """module internal Boundary
 // fsgg:effect-boundary advance
 let advance model =
     File.WriteAllText("document.txt", model)"""
-              senseBoundarySource actualCall (fun findings ->
-                  let effect = findings |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
-                  Expect.stringContains effect.Location.Detail "File.WriteAllText@4:5" "production diagnostics retain actual call identity and location")
 
-              let unrelatedEdge = """module internal Boundary
+                senseBoundarySource actualCall (fun findings ->
+                    let effect =
+                        findings
+                        |> List.find (fun finding -> finding.Code = "fsharp.effect-in-transition")
+
+                    Expect.stringContains
+                        effect.Location.Detail
+                        "File.WriteAllText@4:5"
+                        "production diagnostics retain actual call identity and location")
+
+                let unrelatedEdge =
+                    """module internal Boundary
 // fsgg:effect-boundary advance
 let advance model = model
 let interpret text = File.WriteAllText("document.txt", text)"""
-              senseBoundarySource unrelatedEdge (fun findings ->
-                  Expect.isFalse (effectCodes findings |> List.contains "fsharp.effect-in-transition") "later edge I/O is outside the declared transition body")
 
-              let missingSymbol = """module internal Boundary
+                senseBoundarySource unrelatedEdge (fun findings ->
+                    Expect.isFalse
+                        (effectCodes findings |> List.contains "fsharp.effect-in-transition")
+                        "later edge I/O is outside the declared transition body")
+
+                let missingSymbol =
+                    """module internal Boundary
 // fsgg:effect-boundary missing
 let actual model = model"""
-              senseBoundarySource missingSymbol (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "a missing named symbol fails closed")
 
-              let malformed = """module internal Boundary
+                senseBoundarySource missingSymbol (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.effect-boundary-malformed"
+                        "a missing named symbol fails closed")
+
+                let malformed =
+                    """module internal Boundary
 // fsgg:effect-boundary transition not-edge
 let transition model = model"""
-              senseBoundarySource malformed (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "bare and substring-shaped options are rejected")
 
-              let unknown = """module internal Boundary
+                senseBoundarySource malformed (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.effect-boundary-malformed"
+                        "bare and substring-shaped options are rejected")
+
+                let unknown =
+                    """module internal Boundary
 // fsgg:effect-boundary transition edgy=true
 let transition model = model"""
-              senseBoundarySource unknown (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "unknown exact options are rejected") }
 
-          test "effect-boundary production controls cover applicability delivery callbacks clocks and exemptions" {
-              let nonApplicable kind = sprintf """module internal Boundary
+                senseBoundarySource unknown (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.effect-boundary-malformed"
+                        "unknown exact options are rejected")
+            }
+
+            test "effect-boundary production controls cover applicability delivery callbacks clocks and exemptions" {
+                let nonApplicable kind =
+                    sprintf
+                        """module internal Boundary
 // fsgg:effect-boundary read kind=%s
-let read value = File.WriteAllText("out.txt", value)""" kind
-              for kind in [ "parser"; "thin-adapter" ] do
-                  senseBoundarySource (nonApplicable kind) (fun findings ->
-                      Expect.isEmpty (effectCodes findings) (sprintf "%s is explicitly non-applicable" kind))
+let read value = File.WriteAllText("out.txt", value)"""
+                        kind
 
-              let callback = """module internal Boundary
+                for kind in [ "parser"; "thin-adapter" ] do
+                    senseBoundarySource (nonApplicable kind) (fun findings ->
+                        Expect.isEmpty (effectCodes findings) (sprintf "%s is explicitly non-applicable" kind))
+
+                let callback =
+                    """module internal Boundary
 // fsgg:effect-boundary transition
 let transition work = Async.Start work"""
-              senseBoundarySource callback (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.callback-hidden-state" "callback-hidden state blocks")
 
-              let incompleteDelivery = """module internal Boundary
+                senseBoundarySource callback (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.callback-hidden-state"
+                        "callback-hidden state blocks")
+
+                let incompleteDelivery =
+                    """module internal Boundary
 // fsgg:effect-boundary transition edge=interpret success=Saved
 let transition value = value
 let interpret value = value"""
-              senseBoundarySource incompleteDelivery (fun findings ->
-                  let codes = effectCodes findings
-                  Expect.contains codes "fsharp.effect-result-message-missing" "failure message is required"
-                  Expect.contains codes "fsharp.effect-retry-missing" "retry semantics are required"
-                  Expect.contains codes "fsharp.effect-idempotency-missing" "idempotency semantics are required")
 
-              let injectedClock = """module internal Boundary
+                senseBoundarySource incompleteDelivery (fun findings ->
+                    let codes = effectCodes findings
+                    Expect.contains codes "fsharp.effect-result-message-missing" "failure message is required"
+                    Expect.contains codes "fsharp.effect-retry-missing" "retry semantics are required"
+                    Expect.contains codes "fsharp.effect-idempotency-missing" "idempotency semantics are required")
+
+                let injectedClock =
+                    """module internal Boundary
 // fsgg:effect-boundary transition
 let transition clock model = clock(), model"""
-              senseBoundarySource injectedClock (fun findings ->
-                  Expect.isFalse (effectCodes findings |> List.contains "fsharp.effect-in-transition") "an injected clock is pure at the transition")
 
-              let exempt reviewBy = sprintf """module internal Boundary
+                senseBoundarySource injectedClock (fun findings ->
+                    Expect.isFalse
+                        (effectCodes findings |> List.contains "fsharp.effect-in-transition")
+                        "an injected clock is pure at the transition")
+
+                let exempt reviewBy =
+                    sprintf
+                        """module internal Boundary
 // fsgg:effect-boundary transition exemption-owner=platform exemption-rationale="legacy bridge" exemption-review-by=%s
-let transition value = File.WriteAllText("out.txt", value)""" reviewBy
-              senseBoundarySource (exempt "2099-01-01") (fun findings ->
-                  Expect.isEmpty (effectCodes findings) "a complete unexpired symbol exemption is narrow and non-applicable")
-              senseBoundarySource (exempt "2000-01-01") (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.effect-exemption-invalid" "an expired exemption blocks")
+let transition value = File.WriteAllText("out.txt", value)"""
+                        reviewBy
 
-              let partialExemption = """module internal Boundary
+                senseBoundarySource (exempt "2099-01-01") (fun findings ->
+                    Expect.isEmpty
+                        (effectCodes findings)
+                        "a complete unexpired symbol exemption is narrow and non-applicable")
+
+                senseBoundarySource (exempt "2000-01-01") (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.effect-exemption-invalid"
+                        "an expired exemption blocks")
+
+                let partialExemption =
+                    """module internal Boundary
 // fsgg:effect-boundary transition exemption-owner=platform
 let transition model = model"""
-              senseBoundarySource partialExemption (fun findings ->
-                  Expect.contains (effectCodes findings) "fsharp.effect-boundary-malformed" "a partial exemption schema fails closed") }
 
-          // ── #390: the two packs #385 published and nothing evaluated ──────────────────────────────
-          //
-          // Every test below drives `realSurfaceSense` — `Interpreter.realPorts repo |> _.SenseSurfaces`,
-          // the PRODUCTION verify route, project enumeration and all — over a real temp tree. Nothing is
-          // stubbed: the planted repository declares the pack's scope exactly the way an adopting
-          // repository would, and the assertions read the findings the real sweep returns.
-          //
-          // Before #390 EVERY one of these was unreachable: `grep -rn "CodeChecks.analyze\|
-          // EvidenceBoundary.evaluate" src/` returned nothing, so `fsharp:idiomatic-simplicity` and
-          // `fsharp:evidence-boundary` were green because no code path could look.
+                senseBoundarySource partialExemption (fun findings ->
+                    Expect.contains
+                        (effectCodes findings)
+                        "fsharp.effect-boundary-malformed"
+                        "a partial exemption schema fails closed")
+            }
 
-          test "#390 a planted inheritance hierarchy ⇒ #368's pack fires through the production verify sense" {
-              withTempRepo (fun dir ->
-                  writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": [ "src/Planted.fs" ] }"""
-                  writeFile dir "src/Planted.fs" """module Planted
+            // ── #390: the two packs #385 published and nothing evaluated ──────────────────────────────
+            //
+            // Every test below drives `realSurfaceSense` — `Interpreter.realPorts repo |> _.SenseSurfaces`,
+            // the PRODUCTION verify route, project enumeration and all — over a real temp tree. Nothing is
+            // stubbed: the planted repository declares the pack's scope exactly the way an adopting
+            // repository would, and the assertions read the findings the real sweep returns.
+            //
+            // Before #390 EVERY one of these was unreachable: `grep -rn "CodeChecks.analyze\|
+            // EvidenceBoundary.evaluate" src/` returned nothing, so `fsharp:idiomatic-simplicity` and
+            // `fsharp:evidence-boundary` were green because no code path could look.
+
+            test "#390 a planted inheritance hierarchy ⇒ #368's pack fires through the production verify sense" {
+                withTempRepo (fun dir ->
+                    writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": [ "src/Planted.fs" ] }"""
+
+                    writeFile
+                        dir
+                        "src/Planted.fs"
+                        """module Planted
 
 type Base() =
     member _.Name = "base"
@@ -421,60 +626,70 @@ type Derived() =
     inherit Base()
 """
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  let inheritance =
-                      findings
-                      |> List.tryFind (fun finding -> finding.Code = "inheritance-hierarchy")
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isSome
-                      inheritance
-                      (sprintf "#368's evaluator must be reached by the production sweep; findings: %A" findings)
+                    let inheritance =
+                        findings |> List.tryFind (fun finding -> finding.Code = "inheritance-hierarchy")
 
-                  let finding = Option.get inheritance
+                    Expect.isSome
+                        inheritance
+                        (sprintf "#368's evaluator must be reached by the production sweep; findings: %A" findings)
 
-                  Expect.equal
-                      finding.Surface
-                      (SurfaceId "fsharp-idiomatic-simplicity")
-                      "the finding carries the pack's own surface id"
+                    let finding = Option.get inheritance
 
-                  Expect.isFalse
-                      finding.IsInputState
-                      "a real rule violation is not an input-state finding — the id IS declared by the pack"
+                    Expect.equal
+                        finding.Surface
+                        (SurfaceId "fsharp-idiomatic-simplicity")
+                        "the finding carries the pack's own surface id"
 
-                  // AC2: normalized through `Profile.findingOf`, so it carries the COMPOSED PROFILE's declared
-                  // maturity for #368 rather than a second, local conversion.
-                  Expect.equal
-                      finding.Maturity
-                      (FS.GG.Governance.SurfaceChecks.Profile.declaredMaturity
-                          FS.GG.Governance.SurfaceChecks.Profile.IdiomaticSimplicity)
-                      "the maturity is READ from the composed profile, not restated at the call site"
+                    Expect.isFalse
+                        finding.IsInputState
+                        "a real rule violation is not an input-state finding — the id IS declared by the pack"
 
-                  // …and it reaches the existing enforcement rollup at exactly that maturity.
-                  Expect.equal
-                      (deriveEffectiveSeverity
-                          (FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf finding Verify Strict))
-                          .EffectiveSeverity
-                      Advisory
-                      "#368 binds at Warn, so the finding reaches deriveEffectiveSeverity and resolves advisory"
+                    // AC2: normalized through `Profile.findingOf`, so it carries the COMPOSED PROFILE's declared
+                    // maturity for #368 rather than a second, local conversion.
+                    Expect.equal
+                        finding.Maturity
+                        (FS.GG.Governance.SurfaceChecks.Profile.declaredMaturity
+                            FS.GG.Governance.SurfaceChecks.Profile.IdiomaticSimplicity)
+                        "the maturity is READ from the composed profile, not restated at the call site"
 
-                  Expect.isFalse
-                      (SurfaceFold.surfaceBlocks Strict findings)
-                      "an advisory pack surfaces without blocking a repository that was green") }
+                    // …and it reaches the existing enforcement rollup at exactly that maturity.
+                    Expect.equal
+                        (deriveEffectiveSeverity (
+                            FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf finding Verify Strict
+                        ))
+                            .EffectiveSeverity
+                        Advisory
+                        "#368 binds at Warn, so the finding reaches deriveEffectiveSeverity and resolves advisory"
 
-          test "#391 a declared sibling assembly reference reaches #368 rules through the production verify sense" {
-              withTempRepo (fun dir ->
-                  let referenceDirectory = Path.Combine(dir, "refs")
-                  Directory.CreateDirectory referenceDirectory |> ignore
-                  let reference = Path.Combine(referenceDirectory, "FS.GG.Governance.CodeChecks.dll")
-                  File.Copy(typeof<FS.GG.Governance.CodeChecks.Model.FindingId>.Assembly.Location, reference)
+                    Expect.isFalse
+                        (SurfaceFold.surfaceBlocks Strict findings)
+                        "an advisory pack surfaces without blocking a repository that was green")
+            }
 
-                  writeFile dir ".fsgg/fsharp-simplicity.json" """{
+            test "#391 a declared sibling assembly reference reaches #368 rules through the production verify sense" {
+                withTempRepo (fun dir ->
+                    let referenceDirectory = Path.Combine(dir, "refs")
+                    Directory.CreateDirectory referenceDirectory |> ignore
+                    let reference = Path.Combine(referenceDirectory, "FS.GG.Governance.CodeChecks.dll")
+                    File.Copy(typeof<FS.GG.Governance.CodeChecks.Model.FindingId>.Assembly.Location, reference)
+
+                    writeFile
+                        dir
+                        ".fsgg/fsharp-simplicity.json"
+                        """{
   "sources": [ "src/Planted.fs" ],
   "references": { "src/Planted.fs": [ "refs/FS.GG.Governance.CodeChecks.dll" ] }
 }"""
-                  writeFile dir "src/Planted.fs" """module Planted
+
+                    writeFile
+                        dir
+                        "src/Planted.fs"
+                        """module Planted
 open FS.GG.Governance.CodeChecks.Model
 
 type Base() = class end
@@ -484,22 +699,30 @@ type Derived() =
 let token = CompilerAnalysisFailed
 """
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  Expect.contains
-                      (findings |> List.map _.Code)
-                      "inheritance-hierarchy"
-                      "the declared reference enables real compiler-rule analysis"
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isFalse
-                      (findings |> List.exists (fun finding -> finding.Code = "compiler-analysis-failed"))
-                      "a source using the declared sibling assembly must not short-circuit") }
+                    Expect.contains
+                        (findings |> List.map _.Code)
+                        "inheritance-hierarchy"
+                        "the declared reference enables real compiler-rule analysis"
 
-          test "#390 the planted-clean counterpart of #368's pack passes through the same route" {
-              withTempRepo (fun dir ->
-                  writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": [ "src/Planted.fs" ] }"""
-                  writeFile dir "src/Planted.fs" """module Planted
+                    Expect.isFalse
+                        (findings
+                         |> List.exists (fun finding -> finding.Code = "compiler-analysis-failed"))
+                        "a source using the declared sibling assembly must not short-circuit")
+            }
+
+            test "#390 the planted-clean counterpart of #368's pack passes through the same route" {
+                withTempRepo (fun dir ->
+                    writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": [ "src/Planted.fs" ] }"""
+
+                    writeFile
+                        dir
+                        "src/Planted.fs"
+                        """module Planted
 
 type Shape =
     | Circle of radius: float
@@ -511,23 +734,29 @@ let area shape =
     | Square side -> side * side
 """
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  let simplicity =
-                      findings
-                      |> List.filter (fun finding -> finding.Surface = SurfaceId "fsharp-idiomatic-simplicity")
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isEmpty
-                      simplicity
-                      (sprintf "a clean declared source produces no #368 finding; got: %A" simplicity)) }
+                    let simplicity =
+                        findings
+                        |> List.filter (fun finding -> finding.Surface = SurfaceId "fsharp-idiomatic-simplicity")
 
-          test "#390 a declared evidence obligation with no observed outcome ⇒ #370's pack fires" {
-              withTempRepo (fun dir ->
-                  // A real, complete evidence inventory for the three unconditionally required classes — so the
-                  // three `evidence.real-boundary-required` findings do NOT fire and the ONLY thing left for the
-                  // evaluator to report is the missing observed outcome the declaration demands.
-                  writeFile dir ".fsgg/evidence-boundary.json" """{
+                    Expect.isEmpty
+                        simplicity
+                        (sprintf "a clean declared source produces no #368 finding; got: %A" simplicity))
+            }
+
+            test "#390 a declared evidence obligation with no observed outcome ⇒ #370's pack fires" {
+                withTempRepo (fun dir ->
+                    // A real, complete evidence inventory for the three unconditionally required classes — so the
+                    // three `evidence.real-boundary-required` findings do NOT fire and the ONLY thing left for the
+                    // evaluator to report is the missing observed outcome the declaration demands.
+                    writeFile
+                        dir
+                        ".fsgg/evidence-boundary.json"
+                        """{
   "requiresObservedOutcome": true,
   "evidence": [
     { "subject": "parser", "kind": "semantic-regression", "provenance": "real", "command": "dotnet test",
@@ -539,46 +768,53 @@ let area shape =
   ]
 }"""
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  let outcome =
-                      findings
-                      |> List.tryFind (fun finding -> finding.Code = "evidence.observed-outcome-missing")
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isSome
-                      outcome
-                      (sprintf "#370's evaluator must be reached by the production sweep; findings: %A" findings)
+                    let outcome =
+                        findings
+                        |> List.tryFind (fun finding -> finding.Code = "evidence.observed-outcome-missing")
 
-                  let finding = Option.get outcome
+                    Expect.isSome
+                        outcome
+                        (sprintf "#370's evaluator must be reached by the production sweep; findings: %A" findings)
 
-                  Expect.equal
-                      finding.Surface
-                      (SurfaceId "fsharp-evidence-boundary")
-                      "the finding carries the pack's own surface id"
+                    let finding = Option.get outcome
 
-                  Expect.isFalse finding.IsInputState "a real rule violation is not an input-state finding"
+                    Expect.equal
+                        finding.Surface
+                        (SurfaceId "fsharp-evidence-boundary")
+                        "the finding carries the pack's own surface id"
 
-                  Expect.equal
-                      finding.Maturity
-                      (FS.GG.Governance.SurfaceChecks.Profile.declaredMaturity
-                          FS.GG.Governance.SurfaceChecks.Profile.EvidenceBoundary)
-                      "the maturity is READ from the composed profile"
+                    Expect.isFalse finding.IsInputState "a real rule violation is not an input-state finding"
 
-                  Expect.equal
-                      (deriveEffectiveSeverity
-                          (FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf finding Verify Strict))
-                          .EffectiveSeverity
-                      Advisory
-                      "#370 binds at Warn, so the finding reaches deriveEffectiveSeverity and resolves advisory"
+                    Expect.equal
+                        finding.Maturity
+                        (FS.GG.Governance.SurfaceChecks.Profile.declaredMaturity
+                            FS.GG.Governance.SurfaceChecks.Profile.EvidenceBoundary)
+                        "the maturity is READ from the composed profile"
 
-                  Expect.isFalse
-                      (findings |> List.exists (fun f -> f.Code = "evidence.real-boundary-required"))
-                      "the declared inventory satisfies the three unconditional classes") }
+                    Expect.equal
+                        (deriveEffectiveSeverity (
+                            FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf finding Verify Strict
+                        ))
+                            .EffectiveSeverity
+                        Advisory
+                        "#370 binds at Warn, so the finding reaches deriveEffectiveSeverity and resolves advisory"
 
-          test "#390 the planted-clean counterpart of #370's pack passes through the same route" {
-              withTempRepo (fun dir ->
-                  writeFile dir ".fsgg/evidence-boundary.json" """{
+                    Expect.isFalse
+                        (findings |> List.exists (fun f -> f.Code = "evidence.real-boundary-required"))
+                        "the declared inventory satisfies the three unconditional classes")
+            }
+
+            test "#390 the planted-clean counterpart of #370's pack passes through the same route" {
+                withTempRepo (fun dir ->
+                    writeFile
+                        dir
+                        ".fsgg/evidence-boundary.json"
+                        """{
   "requiresObservedOutcome": true,
   "evidence": [
     { "subject": "parser", "kind": "semantic-regression", "provenance": "real", "command": "dotnet test",
@@ -590,220 +826,254 @@ let area shape =
   ]
 }"""
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  let evidence =
-                      findings
-                      |> List.filter (fun finding -> finding.Surface = SurfaceId "fsharp-evidence-boundary")
+                    let findings = realSurfaceSense dir report
 
-                  Expect.isEmpty
-                      evidence
-                      (sprintf "a satisfied declared obligation produces no #370 finding; got: %A" evidence)) }
+                    let evidence =
+                        findings
+                        |> List.filter (fun finding -> finding.Surface = SurfaceId "fsharp-evidence-boundary")
 
-          test "#390 an undeclared repository acquires neither pack — applicability is declared, not assumed" {
-              withTempRepo (fun dir ->
-                  writeFile dir "src/Ordinary.fs" """module Ordinary
+                    Expect.isEmpty
+                        evidence
+                        (sprintf "a satisfied declared obligation produces no #370 finding; got: %A" evidence))
+            }
+
+            test "#390 an undeclared repository acquires neither pack — applicability is declared, not assumed" {
+                withTempRepo (fun dir ->
+                    writeFile
+                        dir
+                        "src/Ordinary.fs"
+                        """module Ordinary
 type Base() = class end
 type Derived() =
     inherit Base()
 """
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  // The same inheritance hierarchy the declared case reports — silent here, because the
-                  // repository declared no scope. That is the #369 posture, and for #368 it is also what keeps
-                  // `compiler-analysis-failed` off every cross-project source in an adopting repository.
-                  Expect.isEmpty
-                      (findings
-                       |> List.filter (fun f ->
-                           f.Surface = SurfaceId "fsharp-idiomatic-simplicity"
-                           || f.Surface = SurfaceId "fsharp-evidence-boundary"))
-                      "no declaration ⇒ no obligation ⇒ no findings from either newly wired pack") }
+                    let findings = realSurfaceSense dir report
 
-          test "#390 a malformed declaration fails CLOSED and does not erase the other packs' findings" {
-              withTempRepo (fun dir ->
-                  // Malformed for BOTH packs at once, alongside a real #369 violation that must survive.
-                  writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": "not-an-array" }"""
-                  writeFile dir ".fsgg/evidence-boundary.json" """{ "evidence": [ { "kind": "no-such-kind" } ] }"""
-                  writeFile dir "src/Boundary.fsproj" """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
-                  writeFile dir "src/Boundary.fs" """module internal Boundary
+                    // The same inheritance hierarchy the declared case reports — silent here, because the
+                    // repository declared no scope. That is the #369 posture, and for #368 it is also what keeps
+                    // `compiler-analysis-failed` off every cross-project source in an adopting repository.
+                    Expect.isEmpty
+                        (findings
+                         |> List.filter (fun f ->
+                             f.Surface = SurfaceId "fsharp-idiomatic-simplicity"
+                             || f.Surface = SurfaceId "fsharp-evidence-boundary"))
+                        "no declaration ⇒ no obligation ⇒ no findings from either newly wired pack")
+            }
+
+            test "#390 a malformed declaration fails CLOSED and does not erase the other packs' findings" {
+                withTempRepo (fun dir ->
+                    // Malformed for BOTH packs at once, alongside a real #369 violation that must survive.
+                    writeFile dir ".fsgg/fsharp-simplicity.json" """{ "sources": "not-an-array" }"""
+                    writeFile dir ".fsgg/evidence-boundary.json" """{ "evidence": [ { "kind": "no-such-kind" } ] }"""
+
+                    writeFile
+                        dir
+                        "src/Boundary.fsproj"
+                        """<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><Compile Include="Boundary.fs" /></ItemGroup></Project>"""
+
+                    writeFile
+                        dir
+                        "src/Boundary.fs"
+                        """module internal Boundary
 // fsgg:effect-boundary transition
 let transition value = File.WriteAllText("out.txt", value)"""
 
-                  let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                  let findings = realSurfaceSense dir report
+                    let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                        { Classifications = [] }
 
-                  for surface in [ "fsharp-idiomatic-simplicity"; "fsharp-evidence-boundary" ] do
-                      let reified =
-                          findings
-                          |> List.tryFind (fun f -> f.Surface = SurfaceId surface && f.Code = "surface.sense-error")
+                    let findings = realSurfaceSense dir report
 
-                      Expect.isSome
-                          reified
-                          (sprintf "a malformed %s declaration must be REPORTED, never a silent empty pass" surface)
+                    for surface in [ "fsharp-idiomatic-simplicity"; "fsharp-evidence-boundary" ] do
+                        let reified =
+                            findings
+                            |> List.tryFind (fun f -> f.Surface = SurfaceId surface && f.Code = "surface.sense-error")
 
-                      let finding = Option.get reified
-                      Expect.isTrue finding.IsInputState "a malformed declaration is an input-state finding"
-                      Expect.equal finding.BaseSeverity Blocking "reified as Blocking so verify fails closed"
+                        Expect.isSome
+                            reified
+                            (sprintf "a malformed %s declaration must be REPORTED, never a silent empty pass" surface)
 
-                  Expect.isTrue
-                      (SurfaceFold.surfaceBlocks Strict findings)
-                      "the reified failure actually blocks the verify verdict"
+                        let finding = Option.get reified
+                        Expect.isTrue finding.IsInputState "a malformed declaration is an input-state finding"
+                        Expect.equal finding.BaseSeverity Blocking "reified as Blocking so verify fails closed"
 
-                  // ADPT-1's isolation property, extended to the two new sweeps: a broken declaration for these
-                  // packs must not discard #369's real finding from the same run.
-                  Expect.isTrue
-                      (findings
-                       |> List.exists (fun f -> f.Code = "fsharp.effect-in-transition"))
-                      "a malformed declaration for one pack does not erase another pack's real findings") }
+                    Expect.isTrue
+                        (SurfaceFold.surfaceBlocks Strict findings)
+                        "the reified failure actually blocks the verify verdict"
 
-          // #390 repair round 1 (F1): a declared source must not leave the governed root. One case each,
-          // as separate tests so a mutation restoring the hole reds BOTH arms.
-          test "#390 F1 file form: a declared source escaping the repository is refused" {
-              escapeCase "/Escape.fs" (fun outside ->
-                  File.WriteAllText(Path.Combine(outside, "Escape.fs"), outsideHierarchy)) }
+                    // ADPT-1's isolation property, extended to the two new sweeps: a broken declaration for these
+                    // packs must not discard #369's real finding from the same run.
+                    Expect.isTrue
+                        (findings |> List.exists (fun f -> f.Code = "fsharp.effect-in-transition"))
+                        "a malformed declaration for one pack does not erase another pack's real findings")
+            }
 
-          test "#390 F1 directory form: a declared source directory escaping the repository is refused" {
-              // This arm previously produced findings carrying a governed-LOOKING relative path
-              // ("outdir/Out1.fs") for a file that is not in the repository — an invisible escape.
-              escapeCase "/" (fun outside ->
-                  File.WriteAllText(Path.Combine(outside, "Out1.fs"), outsideHierarchy)) }
+            // #390 repair round 1 (F1): a declared source must not leave the governed root. One case each,
+            // as separate tests so a mutation restoring the hole reds BOTH arms.
+            test "#390 F1 file form: a declared source escaping the repository is refused" {
+                escapeCase "/Escape.fs" (fun outside ->
+                    File.WriteAllText(Path.Combine(outside, "Escape.fs"), outsideHierarchy))
+            }
 
-          // #390 repair round 2 (F3): the leading separator run is normalized, and no diagnostic quotes a
-          // path the author did not write.
-          //
-          // Round 1 stripped a fixed two characters, which broke BOTH directions: `.//src/Planted.fs` — a
-          // valid in-repo path — became `/src/Planted.fs` and was FALSELY REFUSED with a message quoting a
-          // path nobody wrote, byte-identical to the correct refusal of a genuinely absolute declaration;
-          // and a bare `/` slipped through to the directory arm, where `TrimEnd('/')` emptied it and the
-          // whole repository was swept SILENTLY.
-          test "#390 F3 a leading separator run normalizes — './/src/Planted.fs' declares 'src/Planted.fs'" {
-              let codesFor (declared: string) =
-                  withTempRepo (fun dir ->
-                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
-                      writeFile dir "src/Planted.fs" outsideHierarchy
+            test "#390 F1 directory form: a declared source directory escaping the repository is refused" {
+                // This arm previously produced findings carrying a governed-LOOKING relative path
+                // ("outdir/Out1.fs") for a file that is not in the repository — an invisible escape.
+                escapeCase "/" (fun outside -> File.WriteAllText(Path.Combine(outside, "Out1.fs"), outsideHierarchy))
+            }
 
-                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+            // #390 repair round 2 (F3): the leading separator run is normalized, and no diagnostic quotes a
+            // path the author did not write.
+            //
+            // Round 1 stripped a fixed two characters, which broke BOTH directions: `.//src/Planted.fs` — a
+            // valid in-repo path — became `/src/Planted.fs` and was FALSELY REFUSED with a message quoting a
+            // path nobody wrote, byte-identical to the correct refusal of a genuinely absolute declaration;
+            // and a bare `/` slipped through to the directory arm, where `TrimEnd('/')` emptied it and the
+            // whole repository was swept SILENTLY.
+            test "#390 F3 a leading separator run normalizes — './/src/Planted.fs' declares 'src/Planted.fs'" {
+                let codesFor (declared: string) =
+                    withTempRepo (fun dir ->
+                        writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                        writeFile dir "src/Planted.fs" outsideHierarchy
 
-                      realSurfaceSense dir report
-                      |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
-                      |> List.map (fun f -> f.Code)
-                      |> List.sort)
+                        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                            { Classifications = [] }
 
-              let plain = codesFor "src/Planted.fs"
+                        realSurfaceSense dir report
+                        |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
+                        |> List.map (fun f -> f.Code)
+                        |> List.sort)
 
-              Expect.isNonEmpty plain "the control declaration must actually analyse the planted source"
-              Expect.isFalse (plain |> List.contains "surface.sense-error") "the control is accepted, not refused"
+                let plain = codesFor "src/Planted.fs"
 
-              // The decisive equality: a redundant separator run changes NOTHING about what was declared.
-              for noisy in [ ".//src/Planted.fs"; "././src/Planted.fs"; "./src/Planted.fs" ] do
-                  Expect.equal
-                      (codesFor noisy)
-                      plain
-                      (sprintf "'%s' is the same declaration as 'src/Planted.fs' — no false refusal" noisy) }
+                Expect.isNonEmpty plain "the control declaration must actually analyse the planted source"
+                Expect.isFalse (plain |> List.contains "surface.sense-error") "the control is accepted, not refused"
 
-          test "#390 F3 an absolute declaration is refused, quoting exactly what the author wrote" {
-              let refusalFor (declared: string) =
-                  withTempRepo (fun dir ->
-                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
-                      writeFile dir "src/Planted.fs" outsideHierarchy
+                // The decisive equality: a redundant separator run changes NOTHING about what was declared.
+                for noisy in [ ".//src/Planted.fs"; "././src/Planted.fs"; "./src/Planted.fs" ] do
+                    Expect.equal
+                        (codesFor noisy)
+                        plain
+                        (sprintf "'%s' is the same declaration as 'src/Planted.fs' — no false refusal" noisy)
+            }
 
-                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
-                      let findings = realSurfaceSense dir report
+            test "#390 F3 an absolute declaration is refused, quoting exactly what the author wrote" {
+                let refusalFor (declared: string) =
+                    withTempRepo (fun dir ->
+                        writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                        writeFile dir "src/Planted.fs" outsideHierarchy
 
-                      let refusal =
-                          findings
-                          |> List.tryFind (fun f ->
-                              f.Surface = SurfaceId "fsharp-idiomatic-simplicity" && f.Code = "surface.sense-error")
+                        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                            { Classifications = [] }
 
-                      Expect.isSome refusal (sprintf "'%s' must be refused; findings: %A" declared findings)
+                        let findings = realSurfaceSense dir report
 
-                      // Nothing was analysed — a bare `/` must NOT be reinterpreted as the repository root.
-                      Expect.isEmpty
-                          (findings |> List.filter (fun f -> f.Code = "inheritance-hierarchy"))
-                          (sprintf "'%s' must not sweep anything" declared)
+                        let refusal =
+                            findings
+                            |> List.tryFind (fun f ->
+                                f.Surface = SurfaceId "fsharp-idiomatic-simplicity"
+                                && f.Code = "surface.sense-error")
 
-                      (Option.get refusal).Message)
+                        Expect.isSome refusal (sprintf "'%s' must be refused; findings: %A" declared findings)
 
-              // An absolute path, as written, is refused — and the diagnostic quotes it verbatim.
-              let absolute = refusalFor "/src/Planted.fs"
-              Expect.stringContains absolute "'/src/Planted.fs'" "the diagnostic quotes the declaration as written"
-              Expect.stringContains absolute "absolute path" "and names the actual defect"
+                        // Nothing was analysed — a bare `/` must NOT be reinterpreted as the repository root.
+                        Expect.isEmpty
+                            (findings |> List.filter (fun f -> f.Code = "inheritance-hierarchy"))
+                            (sprintf "'%s' must not sweep anything" declared)
 
-              // A bare `/` is refused rather than silently reinterpreted as the repo root.
-              let root = refusalFor "/"
-              Expect.stringContains root "'/'" "the bare-root declaration is quoted as written"
+                        (Option.get refusal).Message)
 
-              // And the shape that USED to collide with it is now accepted outright, so there is no longer
-              // any pair of declarations sharing one diagnostic while meaning different things.
-              Expect.notEqual absolute root "an absolute file and a bare root are distinguishable"
+                // An absolute path, as written, is refused — and the diagnostic quotes it verbatim.
+                let absolute = refusalFor "/src/Planted.fs"
+                Expect.stringContains absolute "'/src/Planted.fs'" "the diagnostic quotes the declaration as written"
+                Expect.stringContains absolute "absolute path" "and names the actual defect"
 
-              // And the entry-quoting rule itself: a declaration that normalizes to something SHORTER must
-              // still be reported as the author wrote it. Quoting the normalized form is exactly how round 1
-              // told an operator about a path they never typed.
-              let missing = refusalFor ".//src/Missing.fs"
+                // A bare `/` is refused rather than silently reinterpreted as the repo root.
+                let root = refusalFor "/"
+                Expect.stringContains root "'/'" "the bare-root declaration is quoted as written"
 
-              Expect.stringContains
-                  missing
-                  "'.//src/Missing.fs'"
-                  "the diagnostic quotes the declaration as written, not its normalized form" }
+                // And the shape that USED to collide with it is now accepted outright, so there is no longer
+                // any pair of declarations sharing one diagnostic while meaning different things.
+                Expect.notEqual absolute root "an absolute file and a bare root are distinguishable"
 
-          // #390 repair round 2: the directory arm's reattached over-refusal control.
-          //
-          // Every accepted-declaration case in this suite was the FILE form, so the directory arm had an
-          // escape test and no counterpart — an over-refusing directory arm would have passed. This is the
-          // missing half: an in-repo directory is ACCEPTED and yields the same findings the file form does.
-          test "#390 F3 the directory form accepts an in-repo directory, analyses it, and stays inside it" {
-              // The fixture deliberately carries a SECOND source OUTSIDE the declared directory. A one-file
-              // fixture cannot tell "swept src/" from "swept the whole repository": mutating the arm to
-              // resolve `src/..` survived that shape, because the widened scope enumerated the same single
-              // file. `tools/Widened.fs` is the discriminator.
-              let sense (declared: string) (locate: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding -> bool) =
-                  withTempRepo (fun dir ->
-                      writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
-                      writeFile dir "src/Planted.fs" outsideHierarchy
-                      writeFile dir "tools/Widened.fs" outsideHierarchy
+                // And the entry-quoting rule itself: a declaration that normalizes to something SHORTER must
+                // still be reported as the author wrote it. Quoting the normalized form is exactly how round 1
+                // told an operator about a path they never typed.
+                let missing = refusalFor ".//src/Missing.fs"
 
-                      let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport = { Classifications = [] }
+                Expect.stringContains
+                    missing
+                    "'.//src/Missing.fs'"
+                    "the diagnostic quotes the declaration as written, not its normalized form"
+            }
 
-                      realSurfaceSense dir report
-                      |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
-                      |> List.filter locate)
+            // #390 repair round 2: the directory arm's reattached over-refusal control.
+            //
+            // Every accepted-declaration case in this suite was the FILE form, so the directory arm had an
+            // escape test and no counterpart — an over-refusing directory arm would have passed. This is the
+            // missing half: an in-repo directory is ACCEPTED and yields the same findings the file form does.
+            test "#390 F3 the directory form accepts an in-repo directory, analyses it, and stays inside it" {
+                // The fixture deliberately carries a SECOND source OUTSIDE the declared directory. A one-file
+                // fixture cannot tell "swept src/" from "swept the whole repository": mutating the arm to
+                // resolve `src/..` survived that shape, because the widened scope enumerated the same single
+                // file. `tools/Widened.fs` is the discriminator.
+                let sense (declared: string) (locate: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding -> bool) =
+                    withTempRepo (fun dir ->
+                        writeFile dir ".fsgg/fsharp-simplicity.json" (sprintf """{ "sources": [ "%s" ] }""" declared)
+                        writeFile dir "src/Planted.fs" outsideHierarchy
+                        writeFile dir "tools/Widened.fs" outsideHierarchy
 
-              let anyFinding (_: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) = true
-              let viaDirectory = sense "src/" anyFinding
+                        let report: FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport =
+                            { Classifications = [] }
 
-              Expect.isFalse
-                  (viaDirectory |> List.exists (fun f -> f.Code = "surface.sense-error"))
-                  "an in-repo directory declaration is accepted, not refused"
+                        realSurfaceSense dir report
+                        |> List.filter (fun f -> f.Surface = SurfaceId "fsharp-idiomatic-simplicity")
+                        |> List.filter locate)
 
-              Expect.isTrue
-                  (viaDirectory |> List.exists (fun f -> f.Code = "inheritance-hierarchy"))
-                  "and the directory's own sources are analysed"
+                let anyFinding (_: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) = true
+                let viaDirectory = sense "src/" anyFinding
 
-              // Scope, not merely acceptance: the declared directory bounds what is swept.
-              let located (f: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) =
-                  let (GovernedPath file) = f.Location.File
-                  file
+                Expect.isFalse
+                    (viaDirectory |> List.exists (fun f -> f.Code = "surface.sense-error"))
+                    "an in-repo directory declaration is accepted, not refused"
 
-              Expect.isTrue
-                  (viaDirectory |> List.forall (fun f -> (located f).StartsWith("src/", StringComparison.Ordinal)))
-                  (sprintf
-                      "'src/' must sweep only src/**; found %A"
-                      (viaDirectory |> List.map located |> List.distinct))
+                Expect.isTrue
+                    (viaDirectory |> List.exists (fun f -> f.Code = "inheritance-hierarchy"))
+                    "and the directory's own sources are analysed"
 
-              Expect.equal
-                  (viaDirectory |> List.map (fun f -> f.Code) |> List.sort)
-                  (sense "src/Planted.fs" anyFinding |> List.map (fun f -> f.Code) |> List.sort)
-                  "the directory form and the file form agree over the same source" }
+                // Scope, not merely acceptance: the declared directory bounds what is swept.
+                let located (f: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding) =
+                    let (GovernedPath file) = f.Location.File
+                    file
 
-          // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
-          test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {
-              withDriftedPackageRepo (fun dir ->
-                  let cap = newCapture ()
-                  Interpreter.run (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap) (requestForProfile Loop.DefaultRange Loop.Text Strict)
-                  |> ignore
-                  goldenAssert "verify-surfacechecks.json" (contentOf cap)) }
+                Expect.isTrue
+                    (viaDirectory
+                     |> List.forall (fun f -> (located f).StartsWith("src/", StringComparison.Ordinal)))
+                    (sprintf
+                        "'src/' must sweep only src/**; found %A"
+                        (viaDirectory |> List.map located |> List.distinct))
+
+                Expect.equal
+                    (viaDirectory |> List.map (fun f -> f.Code) |> List.sort)
+                    (sense "src/Planted.fs" anyFinding |> List.map (fun f -> f.Code) |> List.sort)
+                    "the directory form and the file form agree over the same source"
+            }
+
+            // ── T020 / contract C2: the non-empty surfaceChecks projection is frozen byte-identically ──
+            test "T020 non-empty surfaceChecks projection is deterministic and byte-identical to the golden" {
+                withDriftedPackageRepo (fun dir ->
+                    let cap = newCapture ()
+
+                    Interpreter.run
+                        (detPorts surfaceCatalog dir srcCandidate fakeExecPortPass cap)
+                        (requestForProfile Loop.DefaultRange Loop.Text Strict)
+                    |> ignore
+
+                    goldenAssert "verify-surfacechecks.json" (contentOf cap))
+            }
         ]

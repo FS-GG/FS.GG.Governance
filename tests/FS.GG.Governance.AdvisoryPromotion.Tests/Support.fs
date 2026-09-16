@@ -23,23 +23,27 @@ let threshold (n: int) : ConfidenceThreshold = ConfidenceThreshold n
 
 /// Assemble a `PromotionFacts` from supplied levers — the sole input to `decide`.
 let facts (e: EvidenceRef option) (c: int) (t: int) (s: SignOff option) : PromotionFacts =
-    { BackingEvidence = e
-      Confirmations = ConfirmationCount c
-      ConfidenceThreshold = ConfidenceThreshold t
-      SignOff = s }
+    {
+        BackingEvidence = e
+        Confirmations = ConfirmationCount c
+        ConfidenceThreshold = ConfidenceThreshold t
+        SignOff = s
+    }
 
 // ── The seven worked examples (contracts/advisory-promotion-api.md) with their expected `decide` results,
 //    as example-test oracles. Each value is a real literal. ──
 
 let workedExamples: (PromotionFacts * PromotionDecision) list =
-    [ facts None 0 3 None, StaysAdvisory NoPermittedBasis
-      facts None 2 3 None, StaysAdvisory(ConfidenceBelowThreshold(ConfirmationCount 2, ConfidenceThreshold 3))
-      facts None 1 1 None, StaysAdvisory(ConfidenceBelowThreshold(ConfirmationCount 1, ConfidenceThreshold 1))
-      facts (Some(EvidenceRef "e")) 0 3 None, EligibleToBlock(DeterministicBackingEvidence, [])
-      facts None 3 3 None, EligibleToBlock(RepeatedReviewConfidence, [])
-      facts None 0 3 (Some(SignOff "u")), EligibleToBlock(HumanSignOff, [])
-      facts (Some(EvidenceRef "e")) 5 3 (Some(SignOff "u")),
-      EligibleToBlock(DeterministicBackingEvidence, [ RepeatedReviewConfidence; HumanSignOff ]) ]
+    [
+        facts None 0 3 None, StaysAdvisory NoPermittedBasis
+        facts None 2 3 None, StaysAdvisory(ConfidenceBelowThreshold(ConfirmationCount 2, ConfidenceThreshold 3))
+        facts None 1 1 None, StaysAdvisory(ConfidenceBelowThreshold(ConfirmationCount 1, ConfidenceThreshold 1))
+        facts (Some(EvidenceRef "e")) 0 3 None, EligibleToBlock(DeterministicBackingEvidence, [])
+        facts None 3 3 None, EligibleToBlock(RepeatedReviewConfidence, [])
+        facts None 0 3 (Some(SignOff "u")), EligibleToBlock(HumanSignOff, [])
+        facts (Some(EvidenceRef "e")) 5 3 (Some(SignOff "u")),
+        EligibleToBlock(DeterministicBackingEvidence, [ RepeatedReviewConfidence; HumanSignOff ])
+    ]
 
 // ── Oracle: the bases satisfied by facts, in the fixed order (distinct from the implementation under test) ──
 
@@ -50,12 +54,14 @@ let expectedBases (f: PromotionFacts) : PromotionBasis list =
     let (ConfirmationCount c) = f.Confirmations
     let (ConfidenceThreshold t) = f.ConfidenceThreshold
 
-    [ if f.BackingEvidence.IsSome then
-          DeterministicBackingEvidence
-      if c >= t && c >= 2 then
-          RepeatedReviewConfidence
-      if f.SignOff.IsSome then
-          HumanSignOff ]
+    [
+        if f.BackingEvidence.IsSome then
+            DeterministicBackingEvidence
+        if c >= t && c >= 2 then
+            RepeatedReviewConfidence
+        if f.SignOff.IsSome then
+            HumanSignOff
+    ]
 
 // ── FsCheck generators (real values, no mocks) ──
 
@@ -76,12 +82,17 @@ let private genSignOffOpt: Gen<SignOff option> = optionOf genSignOff
 // totality and the comparator law are exercised across, at, below, and above the threshold (and a lone review).
 let private genInt: Gen<int> =
     Gen.oneof
-        [ Gen.elements [ -3; -1; 0; 1; 2; 3; 4; 5; 10 ]
-          Gen.choose (-1000, 1000)
-          Gen.elements [ Int32.MinValue; Int32.MaxValue ] ]
+        [
+            Gen.elements [ -3; -1; 0; 1; 2; 3; 4; 5; 10 ]
+            Gen.choose (-1000, 1000)
+            Gen.elements [ Int32.MinValue; Int32.MaxValue ]
+        ]
 
-let private genConfirmationCount: Gen<ConfirmationCount> = genInt |> Gen.map ConfirmationCount
-let private genConfidenceThreshold: Gen<ConfidenceThreshold> = genInt |> Gen.map ConfidenceThreshold
+let private genConfirmationCount: Gen<ConfirmationCount> =
+    genInt |> Gen.map ConfirmationCount
+
+let private genConfidenceThreshold: Gen<ConfidenceThreshold> =
+    genInt |> Gen.map ConfidenceThreshold
 
 let private genFacts: Gen<PromotionFacts> =
     gen {
@@ -91,10 +102,12 @@ let private genFacts: Gen<PromotionFacts> =
         let! s = genSignOffOpt
 
         return
-            { BackingEvidence = e
-              Confirmations = c
-              ConfidenceThreshold = t
-              SignOff = s }
+            {
+                BackingEvidence = e
+                Confirmations = c
+                ConfidenceThreshold = t
+                SignOff = s
+            }
     }
 
 type Generators =
@@ -106,6 +119,8 @@ type Generators =
 
 /// FsCheck config registering the real F039 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

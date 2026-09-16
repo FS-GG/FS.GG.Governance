@@ -16,10 +16,12 @@ module Composition =
     /// The host fills only the domains whose surfaces were declared/routed (FR-015). A surface absent from a
     /// map ⇒ no facts sensed for it ⇒ that domain contributes nothing for that surface.
     type DomainFactBundle =
-        { Package: Map<SurfaceId, FS.GG.Governance.PackageChecks.Model.PackageFacts>
-          Docs: Map<SurfaceId, FS.GG.Governance.DocsChecks.Model.DocsFacts>
-          Skill: Map<SurfaceId, FS.GG.Governance.SkillChecks.Model.SkillFacts>
-          Design: Map<SurfaceId, FS.GG.Governance.DesignChecks.Model.DesignFacts> }
+        {
+            Package: Map<SurfaceId, FS.GG.Governance.PackageChecks.Model.PackageFacts>
+            Docs: Map<SurfaceId, FS.GG.Governance.DocsChecks.Model.DocsFacts>
+            Skill: Map<SurfaceId, FS.GG.Governance.SkillChecks.Model.SkillFacts>
+            Design: Map<SurfaceId, FS.GG.Governance.DesignChecks.Model.DesignFacts>
+        }
 
     /// An empty bundle (every map empty) — the host's starting point before any sensor runs.
     val emptyBundle: DomainFactBundle
@@ -37,8 +39,4 @@ module Composition =
     /// PURE and TOTAL: run every applicable pack, aggregate, sort by (surface id, domain ordinal, file,
     /// detail, code). No I/O, no clock. Empty report or empty bundle ⇒ empty list (valid success). The result
     /// is identical regardless of the order of `report.Classifications` or of the bundle maps (SC-008).
-    val run:
-        facts: TypedFacts ->
-        report: ProductSurfaceReport ->
-        bundle: DomainFactBundle ->
-            Model.SurfaceFinding list
+    val run: facts: TypedFacts -> report: ProductSurfaceReport -> bundle: DomainFactBundle -> Model.SurfaceFinding list

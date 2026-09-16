@@ -77,25 +77,29 @@ module Gates =
     /// `ProductCheck` is the MVP environment heuristic; `FreshnessKey` carries the declared identity
     /// inputs a later freshness/cache step will hash, evaluated by nothing here.
     let projectCheck (index: Map<CommandId, TimeoutLimit>) (check: Check) : Gate =
-        { Id = gateIdOf check
-          Domain = check.Domain
-          Description = describe check
-          Prerequisites =
-            match check.Command with
-            | Some c -> [ RequiresCommand c ]
-            | None -> []
-          Cost = check.Cost
-          Timeout = timeoutOf index check
-          Owner = check.Owner
-          Maturity = check.Maturity
-          // MVP heuristic: the only declared product signal is the release environment (research D6).
-          ProductCheck = (check.Environment = Release)
-          FreshnessKey =
-            { Check = check.Id
-              Domain = check.Domain
-              Cost = check.Cost
-              Environment = check.Environment
-              Command = check.Command } }
+        {
+            Id = gateIdOf check
+            Domain = check.Domain
+            Description = describe check
+            Prerequisites =
+                match check.Command with
+                | Some c -> [ RequiresCommand c ]
+                | None -> []
+            Cost = check.Cost
+            Timeout = timeoutOf index check
+            Owner = check.Owner
+            Maturity = check.Maturity
+            // MVP heuristic: the only declared product signal is the release environment (research D6).
+            ProductCheck = (check.Environment = Release)
+            FreshnessKey =
+                {
+                    Check = check.Id
+                    Domain = check.Domain
+                    Cost = check.Cost
+                    Environment = check.Environment
+                    Command = check.Command
+                }
+        }
 
     // ── The entry point (T012, FR-001/FR-007/FR-011/FR-014) ──
 

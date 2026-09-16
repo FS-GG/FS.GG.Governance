@@ -12,4 +12,6 @@ let private surfaceAsm = typeof<ClassificationReason>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "ProductSurfaces" "FS.GG.Governance.ProductSurfaces" surfaceAsm ]
+        [
+            SurfaceDrift.surfaceTest "ProductSurfaces" "FS.GG.Governance.ProductSurfaces" surfaceAsm
+        ]

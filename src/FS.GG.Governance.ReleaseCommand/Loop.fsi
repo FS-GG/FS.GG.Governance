@@ -19,18 +19,18 @@
 
 namespace FS.GG.Governance.ReleaseCommand
 
-open FS.GG.Governance.Config.Model                 // SurfaceId, EnvironmentClass
-open FS.GG.Governance.FreshnessKey.Model            // Revision
-open FS.GG.Governance.Provenance.Model              // BuilderIdentity
-open FS.GG.Governance.GateExecution.Model           // GateCommand
-open FS.GG.Governance.CommandKind.Model             // AuditSnapshot
-open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackEvidenceSet
-open FS.GG.Governance.Attestation.Model             // AttestationSummary
-open FS.GG.Governance.ValidationMatrix.Model        // MatrixPlan
-open FS.GG.Governance.ReleaseReport.Model           // ReleaseReport
-open FS.GG.Governance.ReleaseRules.Model            // ReleaseDecision
-open FS.GG.Governance.ReleaseFactsSensing.Model     // SourceLayout, ReleaseExpectations, SensedRelease
-open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
+open FS.GG.Governance.Config.Model // SurfaceId, EnvironmentClass
+open FS.GG.Governance.FreshnessKey.Model // Revision
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.CommandKind.Model // AuditSnapshot
+open FS.GG.Governance.PackEvidence.Model // PackOutcome, PackEvidenceSet
+open FS.GG.Governance.Attestation.Model // AttestationSummary
+open FS.GG.Governance.ValidationMatrix.Model // MatrixPlan
+open FS.GG.Governance.ReleaseReport.Model // ReleaseReport
+open FS.GG.Governance.ReleaseRules.Model // ReleaseDecision
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease
+open FS.GG.Governance.ReleaseDeclaration // 065: the shared Declaration leaf (was row-local)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -47,10 +47,12 @@ module Loop =
     /// The normalized invocation. Defaults: `Format = Text`, `ReleaseOut = <repo>/release.json`,
     /// `AttestationOut = <repo>/readiness/attestation.json`. `--repo` is REQUIRED.
     type RunRequest =
-        { Repo: string
-          Format: OutputFormat
-          ReleaseOut: string
-          AttestationOut: string }
+        {
+            Repo: string
+            Format: OutputFormat
+            ReleaseOut: string
+            AttestationOut: string
+        }
 
     /// Pure-parser rejection — a single carried actionable message. Maps to `UsageError'`/exit 2.
     type UsageError = { Message: string }
@@ -103,8 +105,10 @@ module Loop =
     /// A host-edge diagnostic tagged with the `ExitDecision` category so a missing/malformed INPUT is
     /// distinguishable from a TOOL defect on stderr (Constitution VI).
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed. `Sensed'` marks the fired three-way join (the composition);
     /// `Persisted` marks the first write ack (the summary is then scheduled).
@@ -118,28 +122,30 @@ module Loop =
     /// The durable state the workflow owns. The 065 additions carry the pack/provenance inputs and the
     /// assembled F26 report objects; `Decision` is the F053 `ReleaseDecision` carried verbatim into `Report`.
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Declaration: Declaration.ReleaseDeclaration option
-          Sensed: SensedRelease option
-          // 065 inputs (set by the interpreter feedback msgs):
-          Packs: PackOutcome list option
-          Head: Revision option
-          Environment: EnvironmentClass option
-          Builder: BuilderIdentity option
-          // 065 assembled-in-update F26 objects:
-          PackEvidence: PackEvidenceSet option
-          Snapshot: AuditSnapshot option
-          Attestation: AttestationSummary option
-          Report: ReleaseReport option
-          Matrix: MatrixPlan option
-          Decision: ReleaseDecision option
-          ReleaseDoc: string option
-          AttestationDoc: string option
-          /// Which release artifacts have been written (the two-write join → summary).
-          Written: Set<ArtifactKind>
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Declaration: Declaration.ReleaseDeclaration option
+            Sensed: SensedRelease option
+            // 065 inputs (set by the interpreter feedback msgs):
+            Packs: PackOutcome list option
+            Head: Revision option
+            Environment: EnvironmentClass option
+            Builder: BuilderIdentity option
+            // 065 assembled-in-update F26 objects:
+            PackEvidence: PackEvidenceSet option
+            Snapshot: AuditSnapshot option
+            Attestation: AttestationSummary option
+            Report: ReleaseReport option
+            Matrix: MatrixPlan option
+            Decision: ReleaseDecision option
+            ReleaseDoc: string option
+            AttestationDoc: string option
+            /// Which release artifacts have been written (the two-write join → summary).
+            Written: Set<ArtifactKind>
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL. `--repo` is required; `--format` defaults to
     /// `text`; `--out` defaults to `<repo>/release.json`; `--attestation-out` defaults to

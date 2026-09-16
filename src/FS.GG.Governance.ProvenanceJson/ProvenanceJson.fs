@@ -57,14 +57,18 @@ module ProvenanceJson =
 
             w.WritePropertyName "artifactDigests"
             w.WriteStartArray()
+
             for d in sortedDigests do
                 w.WriteStringValue d
+
             w.WriteEndArray()
 
             w.WritePropertyName "commandRuns"
             w.WriteStartArray()
+
             for run in snapshot.Runs do
                 JsonWriters.writeRun w run
+
             w.WriteEndArray()
 
             w.WriteEndObject())

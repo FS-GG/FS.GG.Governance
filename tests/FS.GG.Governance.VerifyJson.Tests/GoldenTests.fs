@@ -19,12 +19,14 @@ let private fixtureDoc () =
 let tests =
     testList
         "VerifyJson golden (US3)"
-        [ test "the fixed fixture projection equals the committed golden baseline" {
-              let actual = fixtureDoc ()
+        [
+            test "the fixed fixture projection equals the committed golden baseline" {
+                let actual = fixtureDoc ()
 
-              if Environment.GetEnvironmentVariable "BLESS_GOLDEN" = "1" then
-                  File.WriteAllText(goldenPath, actual)
+                if Environment.GetEnvironmentVariable "BLESS_GOLDEN" = "1" then
+                    File.WriteAllText(goldenPath, actual)
 
-              let golden = File.ReadAllText goldenPath
-              Expect.equal actual golden "verify.json golden drifted — regenerate with BLESS_GOLDEN=1 dotnet test"
-          } ]
+                let golden = File.ReadAllText goldenPath
+                Expect.equal actual golden "verify.json golden drifted — regenerate with BLESS_GOLDEN=1 dotnet test"
+            }
+        ]

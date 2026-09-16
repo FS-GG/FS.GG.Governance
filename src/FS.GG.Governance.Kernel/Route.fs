@@ -11,8 +11,7 @@ type Stakes =
     | Fenced of name: string
 
 type Fence<'change> =
-    { Name: string
-      Trips: 'change -> bool }
+    { Name: string; Trips: 'change -> bool }
 
 type RunMode =
     | Sandbox
@@ -20,10 +19,12 @@ type RunMode =
     | Gate
 
 type Route =
-    { Stakes: Stakes
-      Advisory: ContractEntry list
-      Blocking: ContractEntry list
-      Reason: string }
+    {
+        Stakes: Stakes
+        Advisory: ContractEntry list
+        Blocking: ContractEntry list
+        Reason: string
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Route =
@@ -89,10 +90,12 @@ module Route =
                     names
                     (modeName mode)
 
-        { Stakes = stakes
-          Advisory = advisory
-          Blocking = blocking
-          Reason = reason }
+        {
+            Stakes = stakes
+            Advisory = advisory
+            Blocking = blocking
+            Reason = reason
+        }
 
     let renderRoute (route: Route) : string =
         // Deterministic, execution-free explanation (R-D1/D2/D3, FR-014). Folds the Route
@@ -115,14 +118,24 @@ module Route =
 
         let renderEntry (suffix: string) (e: ContractEntry) =
             let (RuleId id) = e.Id
-            sprintf "  - [%s] %s — %s   (%s §%s)%s" (severityTag e.Severity) id e.Statement e.Spec.Document e.Spec.Section suffix
+
+            sprintf
+                "  - [%s] %s — %s   (%s §%s)%s"
+                (severityTag e.Severity)
+                id
+                e.Statement
+                e.Spec.Document
+                e.Spec.Section
+                suffix
 
         // Every section header is ALWAYS rendered with its count — "(0)" when empty, never
         // omitted — so the shape is fixed and deterministic (R-D2).
-        [ yield stakesLine
-          yield sprintf "reason: %s" route.Reason
-          yield sprintf "blocking (%d):" (List.length route.Blocking)
-          yield! route.Blocking |> List.map (renderEntry fenceSuffix)
-          yield sprintf "advisory (%d):" (List.length route.Advisory)
-          yield! route.Advisory |> List.map (renderEntry "") ]
+        [
+            yield stakesLine
+            yield sprintf "reason: %s" route.Reason
+            yield sprintf "blocking (%d):" (List.length route.Blocking)
+            yield! route.Blocking |> List.map (renderEntry fenceSuffix)
+            yield sprintf "advisory (%d):" (List.length route.Advisory)
+            yield! route.Advisory |> List.map (renderEntry "")
+        ]
         |> String.concat "\n"

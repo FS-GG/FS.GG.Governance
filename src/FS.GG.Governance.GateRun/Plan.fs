@@ -5,11 +5,11 @@
 
 namespace FS.GG.Governance.GateRun
 
-open FS.GG.Governance.CommandRecord.Model      // Executable, Argument, ExitCode, EnvironmentDelta
-open FS.GG.Governance.EvidenceReuse.Model       // EvidenceRef
-open FS.GG.Governance.Config.Model              // ToolingFacts, CommandSpec, CommandId, TimeoutLimit
-open FS.GG.Governance.Gates.Model               // Gate, GatePrerequisite, RequiresCommand
-open FS.GG.Governance.GateExecution.Model        // GateCommand
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, ExitCode, EnvironmentDelta
+open FS.GG.Governance.EvidenceReuse.Model // EvidenceRef
+open FS.GG.Governance.Config.Model // ToolingFacts, CommandSpec, CommandId, TimeoutLimit
+open FS.GG.Governance.Gates.Model // Gate, GatePrerequisite, RequiresCommand
+open FS.GG.Governance.GateExecution.Model // GateCommand
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Plan =
@@ -57,8 +57,10 @@ module Plan =
                     sb.Append(commandLine.[i]) |> ignore
                     i <- i + 1
 
-                if i < n then i <- i + 1 // skip closing quote
-                else malformed <- true // unterminated single quote
+                if i < n then
+                    i <- i + 1 // skip closing quote
+                else
+                    malformed <- true // unterminated single quote
             elif c = '"' then
                 // Double quotes: a backslash escapes the next character; everything else literal until close.
                 inToken <- true
@@ -72,8 +74,10 @@ module Plan =
                         sb.Append(commandLine.[i]) |> ignore
                         i <- i + 1
 
-                if i < n then i <- i + 1 // skip closing quote
-                else malformed <- true // unterminated double quote
+                if i < n then
+                    i <- i + 1 // skip closing quote
+                else
+                    malformed <- true // unterminated double quote
             elif c = '\\' then
                 // A bare backslash escapes the next character (a trailing backslash is dropped).
                 inToken <- true
@@ -118,12 +122,19 @@ module Plan =
                 | None -> Error EmptyCommandLine
                 | Some(exe, args) ->
                     Ok
-                        { Executable = exe
-                          Arguments = args
-                          WorkingDirectory = WorkingDirectory repoRoot
-                          Environment = { Added = []; Changed = []; Removed = [] }
-                          Timeout = spec.Timeout
-                          CapturedOutput = NoCapturedOutput }
+                        {
+                            Executable = exe
+                            Arguments = args
+                            WorkingDirectory = WorkingDirectory repoRoot
+                            Environment =
+                                {
+                                    Added = []
+                                    Changed = []
+                                    Removed = []
+                                }
+                            Timeout = spec.Timeout
+                            CapturedOutput = NoCapturedOutput
+                        }
 
     let priorExitOf (reference: EvidenceRef) : ExitCode option =
         // The reference is the F032 canonical-identity string (F049 `referenceOf`), segments joined by '\n'.

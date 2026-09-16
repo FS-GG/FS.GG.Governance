@@ -40,7 +40,11 @@ module CacheEligibility =
         // One attributed verdict per candidate (L-E1), then a stable ordinal sort (L-E2/L-E3); every gate
         // preserved, duplicates kept (L-E4); empty input ⇒ empty report (L-E5).
         candidates
-        |> List.map (fun c -> { Gate = c.Gate; Verdict = evaluateGate c store })
+        |> List.map (fun c ->
+            {
+                Gate = c.Gate
+                Verdict = evaluateGate c store
+            })
         |> List.sortWith compareEntries
         |> CacheEligibilityReport
 

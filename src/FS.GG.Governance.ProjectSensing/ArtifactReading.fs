@@ -13,13 +13,18 @@ open FS.GG.Governance.Adapters.DesignSystem
 module ArtifactReading =
 
     let fact (value: ProjectFact) : FactAssertion<ProjectFact> =
-        { Id = Project.identify value
-          Value = value
-          Provenance = [] }
+        {
+            Id = Project.identify value
+            Value = value
+            Provenance = []
+        }
 
     let tryReadAllText (path: string) =
         try
-            if File.Exists path then Ok(File.ReadAllText path) else Error("missing " + path)
+            if File.Exists path then
+                Ok(File.ReadAllText path)
+            else
+                Error("missing " + path)
         with ex ->
             Error ex.Message
 
@@ -35,12 +40,14 @@ module ArtifactReading =
 
     let stringProperty (name: string) (element: JsonElement) =
         match element.TryGetProperty(name) with
-        | true, value ->
-            value.GetString() |> Option.ofObj
+        | true, value -> value.GetString() |> Option.ofObj
         | _ -> None
 
     let activeFeatureDirectory (root: string) =
-        if File.Exists(Path.Combine(root, "tasks.md")) || File.Exists(Path.Combine(root, "spec.md")) then
+        if
+            File.Exists(Path.Combine(root, "tasks.md"))
+            || File.Exists(Path.Combine(root, "spec.md"))
+        then
             root
         else
             let fromFeatureJson =
@@ -136,8 +143,7 @@ module ArtifactReading =
             match Path.GetFileName(featureDir) |> Option.ofObj with
             | Some name when name.Contains("merge", StringComparison.OrdinalIgnoreCase) ->
                 FS.GG.Governance.Adapters.SpecKit.Phase.Merge
-            | _ ->
-                FS.GG.Governance.Adapters.SpecKit.Phase.Implement
+            | _ -> FS.GG.Governance.Adapters.SpecKit.Phase.Implement
 
     let specKitArtifactOfKey (key: string) =
         match key with
@@ -158,9 +164,11 @@ module ArtifactReading =
 
     let taskStateFromMarker (marker: string) =
         match marker with
-        | "X" | "x" -> Real
+        | "X"
+        | "x" -> Real
         | "-" -> Skipped
-        | "S" | "s" -> Synthetic
+        | "S"
+        | "s" -> Synthetic
         | _ -> Pending
 
     let taskStatesFrom (content: string) =
@@ -195,47 +203,76 @@ module ArtifactReading =
 
         if File.Exists path then
             let text = File.ReadAllText path
-            not (text.Contains("[NEEDS", StringComparison.OrdinalIgnoreCase)
-                 || text.Contains("TODO", StringComparison.OrdinalIgnoreCase))
+
+            not (
+                text.Contains("[NEEDS", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("TODO", StringComparison.OrdinalIgnoreCase)
+            )
         else
             true
 
     let specKitFacts (root: string) =
         let featureDir = activeFeatureDirectory root
         let phase = phaseFor root featureDir
-        let artifactKeys = [ "constitution"; "spec"; "plan"; "research"; "data-model"; "contracts"; "quickstart"; "tasks"; "task-deps" ]
+
+        let artifactKeys =
+            [
+                "constitution"
+                "spec"
+                "plan"
+                "research"
+                "data-model"
+                "contracts"
+                "quickstart"
+                "tasks"
+                "task-deps"
+            ]
 
         let taskText =
-            [ Path.Combine(featureDir, "tasks.md")
-              Path.Combine(root, "tasks.md") ]
-            |> List.tryPick (fun path -> match tryReadAllText path with | Ok text -> Some text | Error _ -> None)
+            [ Path.Combine(featureDir, "tasks.md"); Path.Combine(root, "tasks.md") ]
+            |> List.tryPick (fun path ->
+                match tryReadAllText path with
+                | Ok text -> Some text
+                | Error _ -> None)
             |> Option.defaultValue ""
 
         let depsText =
-            [ Path.Combine(featureDir, "tasks.deps.yml")
-              Path.Combine(root, "tasks.deps.yml") ]
-            |> List.tryPick (fun path -> match tryReadAllText path with | Ok text -> Some text | Error _ -> None)
+            [
+                Path.Combine(featureDir, "tasks.deps.yml")
+                Path.Combine(root, "tasks.deps.yml")
+            ]
+            |> List.tryPick (fun path ->
+                match tryReadAllText path with
+                | Ok text -> Some text
+                | Error _ -> None)
             |> Option.defaultValue ""
 
         let states = taskStatesFrom taskText
         let deps = taskDependenciesFrom depsText
-        let surfaces = artifactKeys |> List.filter (artifactPresent root featureDir) |> List.map specKitArtifactOfKey |> Set.ofList
+
+        let surfaces =
+            artifactKeys
+            |> List.filter (artifactPresent root featureDir)
+            |> List.map specKitArtifactOfKey
+            |> Set.ofList
 
         let facts =
-            [ yield SpecKitProjectFact(SpecKitFact.PhaseReached phase)
+            [
+                yield SpecKitProjectFact(SpecKitFact.PhaseReached phase)
 
-              for key in artifactKeys do
-                  if artifactPresent root featureDir key then
-                      yield SpecKitProjectFact(SpecKitFact.ArtifactPresent(specKitArtifactOfKey key))
+                for key in artifactKeys do
+                    if artifactPresent root featureDir key then
+                        yield SpecKitProjectFact(SpecKitFact.ArtifactPresent(specKitArtifactOfKey key))
 
-              if File.Exists(Path.Combine(root, ".specify", "memory", "constitution.md")) then
-                  yield SpecKitProjectFact(SpecKitFact.ConstitutionArea("constitution", constitutionFilled root))
+                if File.Exists(Path.Combine(root, ".specify", "memory", "constitution.md")) then
+                    yield SpecKitProjectFact(SpecKitFact.ConstitutionArea("constitution", constitutionFilled root))
 
-              for taskId, state in states do
-                  yield SpecKitProjectFact(SpecKitFact.TaskState(taskId, state))
+                for taskId, state in states do
+                    yield SpecKitProjectFact(SpecKitFact.TaskState(taskId, state))
 
-              for dependent, dependency in deps do
-                  yield SpecKitProjectFact(SpecKitFact.TaskDependsOn(dependent, dependency)) ]
+                for dependent, dependency in deps do
+                    yield SpecKitProjectFact(SpecKitFact.TaskDependsOn(dependent, dependency))
+            ]
 
         facts, { Phase = phase; Surfaces = surfaces }
 
@@ -252,32 +289,42 @@ module ArtifactReading =
         match readJson path with
         | None -> []
         | Some root ->
-            [ yield DesignSystemProjectFact(DesignSystemFact.ArtifactPresent subject)
+            [
+                yield DesignSystemProjectFact(DesignSystemFact.ArtifactPresent subject)
 
-              match root.TryGetProperty("observations") with
-              | true, observations ->
-                  for observation in observations.EnumerateObject() do
-                      yield DesignSystemProjectFact(DesignSystemFact.SurfaceObservation(observation.Name, subject, observation.Value.GetBoolean()))
-              | _ -> ()
+                match root.TryGetProperty("observations") with
+                | true, observations ->
+                    for observation in observations.EnumerateObject() do
+                        yield
+                            DesignSystemProjectFact(
+                                DesignSystemFact.SurfaceObservation(
+                                    observation.Name,
+                                    subject,
+                                    observation.Value.GetBoolean()
+                                )
+                            )
+                | _ -> ()
 
-              match root.TryGetProperty("measurements") with
-              | true, measurements ->
-                  for measurement in measurements.EnumerateArray() do
-                      let id = stringProperty "id" measurement
-                      let state = stringProperty "state" measurement |> Option.bind stateOfName
+                match root.TryGetProperty("measurements") with
+                | true, measurements ->
+                    for measurement in measurements.EnumerateArray() do
+                        let id = stringProperty "id" measurement
+                        let state = stringProperty "state" measurement |> Option.bind stateOfName
 
-                      match id, state with
-                      | Some id, Some state -> yield DesignSystemProjectFact(DesignSystemFact.MeasurementState(id, state))
-                      | _ -> ()
-              | _ -> ()
+                        match id, state with
+                        | Some id, Some state ->
+                            yield DesignSystemProjectFact(DesignSystemFact.MeasurementState(id, state))
+                        | _ -> ()
+                | _ -> ()
 
-              match root.TryGetProperty("verdictRestsOn") with
-              | true, verdicts ->
-                  for verdict in verdicts.EnumerateArray() do
-                      match stringProperty "verdict" verdict, stringProperty "measurement" verdict with
-                      | Some v, Some m -> yield DesignSystemProjectFact(DesignSystemFact.VerdictRestsOn(v, m))
-                      | _ -> ()
-              | _ -> () ]
+                match root.TryGetProperty("verdictRestsOn") with
+                | true, verdicts ->
+                    for verdict in verdicts.EnumerateArray() do
+                        match stringProperty "verdict" verdict, stringProperty "measurement" verdict with
+                        | Some v, Some m -> yield DesignSystemProjectFact(DesignSystemFact.VerdictRestsOn(v, m))
+                        | _ -> ()
+                | _ -> ()
+            ]
 
     let designFacts (root: string) =
         let baseDir = designBase root
@@ -287,45 +334,56 @@ module ArtifactReading =
             match readJson policyPath with
             | None -> []
             | Some policy ->
-                [ match stringProperty "policy" policy with
-                  | Some value -> yield DesignSystemProjectFact(DesignSystemFact.PolicySelected value)
-                  | None -> ()
+                [
+                    match stringProperty "policy" policy with
+                    | Some value -> yield DesignSystemProjectFact(DesignSystemFact.PolicySelected value)
+                    | None -> ()
 
-                  match policy.TryGetProperty("designRules") with
-                  | true, rules ->
-                      for rule in rules.EnumerateArray() do
-                          match rule.GetString() |> Option.ofObj with
-                          | None -> ()
-                          | Some value -> yield DesignSystemProjectFact(DesignSystemFact.DesignRule value)
-                  | _ -> () ]
+                    match policy.TryGetProperty("designRules") with
+                    | true, rules ->
+                        for rule in rules.EnumerateArray() do
+                            match rule.GetString() |> Option.ofObj with
+                            | None -> ()
+                            | Some value -> yield DesignSystemProjectFact(DesignSystemFact.DesignRule value)
+                    | _ -> ()
+                ]
 
         let artifactFiles =
-            [ TokenDocument, "token-document.json"
-              GeneratedTokenSurface, "generated-token-surface.json"
-              RenderedCapture, "rendered-capture.json"
-              InteractionStateSpec, "interaction-state-spec.json"
-              PagePatternSpec, "page-pattern-spec.json" ]
+            [
+                TokenDocument, "token-document.json"
+                GeneratedTokenSurface, "generated-token-surface.json"
+                RenderedCapture, "rendered-capture.json"
+                InteractionStateSpec, "interaction-state-spec.json"
+                PagePatternSpec, "page-pattern-spec.json"
+            ]
 
         let facts =
-            [ yield! policyFacts
+            [
+                yield! policyFacts
 
-              for artifact, file in artifactFiles do
-                  let path = Path.Combine(baseDir, file)
-                  if File.Exists path then
-                      yield! designFactsFromFile artifact path ]
+                for artifact, file in artifactFiles do
+                    let path = Path.Combine(baseDir, file)
+
+                    if File.Exists path then
+                        yield! designFactsFromFile artifact path
+            ]
 
         let surfaces =
-            [ for artifact, file in artifactFiles do
-                  if File.Exists(Path.Combine(baseDir, file)) then
-                      artifact ]
+            [
+                for artifact, file in artifactFiles do
+                    if File.Exists(Path.Combine(baseDir, file)) then
+                        artifact
+            ]
             |> Set.ofList
 
         facts, { Surfaces = surfaces }
 
     let optionsFor (request: RunRequest) : ProjectOptions =
-        { Domains = request.Domains
-          Judge = request.Judge
-          SpecKitDial = Catalog.defaultDial }
+        {
+            Domains = request.Domains
+            Judge = request.Judge
+            SpecKitDial = Catalog.defaultDial
+        }
 
     let artifactsFor (request: RunRequest) =
         let composed = Project.compose (optionsFor request)
@@ -357,9 +415,11 @@ module ArtifactReading =
 
                     if File.Exists file then
                         Some
-                            { FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
-                                sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
-                              FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file }
+                            {
+                                FS.GG.Governance.Adapters.SddHandoff.Reader.Source =
+                                    sprintf "readiness/%s/governance-handoff.json" (Path.GetFileName dir)
+                                FS.GG.Governance.Adapters.SddHandoff.Reader.Json = File.ReadAllText file
+                            }
                     else
                         None)
                 |> Array.toList
@@ -385,27 +445,32 @@ module ArtifactReading =
             if not (Directory.Exists root) then
                 Error("root does not exist or is not a directory: " + root)
             else
-                Directory.EnumerateFileSystemEntries root |> Seq.truncate 1 |> Seq.toList |> ignore
+                Directory.EnumerateFileSystemEntries root
+                |> Seq.truncate 1
+                |> Seq.toList
+                |> ignore
 
                 let specFacts, specChange = specKitFacts root
                 let designFacts, designChange = designFacts root
 
                 let facts: FactSet<ProjectFact> =
-                    [ yield! specFacts
-                      yield! designFacts ]
-                    |> List.map fact
+                    [ yield! specFacts; yield! designFacts ] |> List.map fact
 
                 let change: ProjectChange =
-                    { SpecKit = Some specChange
-                      DesignSystem = if List.isEmpty designFacts then None else Some designChange
-                      Scope = request.Scope }
+                    {
+                        SpecKit = Some specChange
+                        DesignSystem = if List.isEmpty designFacts then None else Some designChange
+                        Scope = request.Scope
+                    }
 
                 Ok
-                    { Root = root
-                      Supplied = facts
-                      Change = change
-                      Artifacts = artifactsFor request
-                      Handoffs = locateHandoffs root
-                      DefaultProfile = locateDefaultProfile root }
+                    {
+                        Root = root
+                        Supplied = facts
+                        Change = change
+                        Artifacts = artifactsFor request
+                        Handoffs = locateHandoffs root
+                        DefaultProfile = locateDefaultProfile root
+                    }
         with ex ->
             Error ex.Message

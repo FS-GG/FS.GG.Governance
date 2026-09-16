@@ -35,27 +35,36 @@ let private readBack (text: string) : ReuseStore option =
 let tests =
     testList
         "PersistenceRoundTrip"
-        [ test "a capture-grown store round-trips losslessly through F047 serialise → F046 reader" {
-              let world = inputs "build:tests"
-              let grown = EvidenceCapture.capture world baseRecord EvidenceReuse.empty
+        [
+            test "a capture-grown store round-trips losslessly through F047 serialise → F046 reader" {
+                let world = inputs "build:tests"
+                let grown = EvidenceCapture.capture world baseRecord EvidenceReuse.empty
 
-              Expect.equal
-                  (readBack (EvidenceReuseStore.serialise grown))
-                  (Some grown)
-                  "the captured world + the exact derived reference survive serialise → read byte-for-byte"
-          }
+                Expect.equal
+                    (readBack (EvidenceReuseStore.serialise grown))
+                    (Some grown)
+                    "the captured world + the exact derived reference survive serialise → read byte-for-byte"
+            }
 
-          test "the captured derived reference is preserved verbatim across persistence" {
-              let world = inputs "build:tests"
-              let grown = EvidenceCapture.capture world baseRecord EvidenceReuse.empty
+            test "the captured derived reference is preserved verbatim across persistence" {
+                let world = inputs "build:tests"
+                let grown = EvidenceCapture.capture world baseRecord EvidenceReuse.empty
 
-              match readBack (EvidenceReuseStore.serialise grown) with
-              | Some(ReuseStore [ e ]) ->
-                  Expect.equal e.Inputs world "the freshness world is preserved verbatim"
-                  Expect.equal e.Evidence (EvidenceCapture.referenceOf baseRecord) "the derived reference is rendered verbatim, never re-parsed or re-hashed"
-              | other -> failtestf "unexpected re-read store: %A" other
-          }
+                match readBack (EvidenceReuseStore.serialise grown) with
+                | Some(ReuseStore [ e ]) ->
+                    Expect.equal e.Inputs world "the freshness world is preserved verbatim"
 
-          testPropertyWithConfig fscheckConfig "round-trip preserves an arbitrary captured (record, world) pair" (fun (world: FreshnessInputs) (r: CommandRecord) ->
-              let grown = EvidenceCapture.capture world r EvidenceReuse.empty
-              readBack (EvidenceReuseStore.serialise grown) = Some grown) ]
+                    Expect.equal
+                        e.Evidence
+                        (EvidenceCapture.referenceOf baseRecord)
+                        "the derived reference is rendered verbatim, never re-parsed or re-hashed"
+                | other -> failtestf "unexpected re-read store: %A" other
+            }
+
+            testPropertyWithConfig
+                fscheckConfig
+                "round-trip preserves an arbitrary captured (record, world) pair"
+                (fun (world: FreshnessInputs) (r: CommandRecord) ->
+                    let grown = EvidenceCapture.capture world r EvidenceReuse.empty
+                    readBack (EvidenceReuseStore.serialise grown) = Some grown)
+        ]

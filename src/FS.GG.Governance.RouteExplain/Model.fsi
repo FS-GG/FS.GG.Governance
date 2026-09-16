@@ -40,8 +40,10 @@ module Model =
     /// YAML, host path, timestamp, severity, enforcement, freshness verdict, or ship verdict — only the
     /// embedded F019/F018 values (FR-010).
     type HighCostFinding =
-        { Selected: SelectedGate
-          Alternative: AlternativeOutcome }
+        {
+            Selected: SelectedGate
+            Alternative: AlternativeOutcome
+        }
 
     /// The deterministic explanation of a route's high-cost gates (FR-002): one `HighCostFinding` per
     /// selected gate whose declared `Cost >= High`. `Findings` is sorted by `Selected.Gate.Id` ordinal so

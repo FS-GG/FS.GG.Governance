@@ -7,7 +7,7 @@
 namespace FS.GG.Governance.VerifyJson
 
 open System.Text.Json
-open FS.GG.Governance.Enforcement.Enforcement  // EnforcementDecision
+open FS.GG.Governance.Enforcement.Enforcement // EnforcementDecision
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // the stale-view finding vocabulary (signature type)
 

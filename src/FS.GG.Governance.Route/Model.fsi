@@ -32,8 +32,10 @@ module Model =
     /// paths or raw YAML (FR-012). A single gate reached by several paths carries several of these,
     /// sorted by normalized `Path` ordinal (FR-007).
     type SelectingPath =
-        { Path: GovernedPath
-          MatchedGlob: GovernedPath }
+        {
+            Path: GovernedPath
+            MatchedGlob: GovernedPath
+        }
 
     // ── One selected gate with its route trace (key entity "Selected gate", FR-002/FR-004) ──
 
@@ -45,8 +47,10 @@ module Model =
     /// reached it — FR-002) and sorted by normalized path ordinal (FR-007). A gate's declared
     /// `FreshnessKey` is carried (inside `Gate`) but NEVER evaluated here (FR-011).
     type SelectedGate =
-        { Gate: Gate
-          SelectingPaths: SelectingPath list }
+        {
+            Gate: Gate
+            SelectingPaths: SelectingPath list
+        }
 
     // ── The rolled-up route cost (key entity, FR-006, research D5) ──
 
@@ -59,10 +63,12 @@ module Model =
     /// (FR-006, FR-009). Deterministic: identical inputs yield identical counts (SC-004).
     /// Phase 11 (cost & cache) MAY refine this into a weighted total once weights are declared.
     type CostRollup =
-        { Cheap: int
-          Medium: int
-          High: int
-          Exhaustive: int }
+        {
+            Cheap: int
+            Medium: int
+            High: int
+            Exhaustive: int
+        }
 
     // ── The aggregate result (key entity "Route result / route trace", FR-001/FR-005/FR-007) ──
 
@@ -75,6 +81,8 @@ module Model =
     /// error and never a "select everything" fallback (FR-003, FR-009). No severity, enforcement,
     /// freshness verdict, or ship verdict (FR-011, SC-007).
     type RouteResult =
-        { SelectedGates: SelectedGate list
-          Findings: FindingReport
-          Cost: CostRollup }
+        {
+            SelectedGates: SelectedGate list
+            Findings: FindingReport
+            Cost: CostRollup
+        }

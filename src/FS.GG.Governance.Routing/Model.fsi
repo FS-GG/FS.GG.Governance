@@ -54,8 +54,10 @@ module Model =
     /// sorted by normalized path (ordinal), so re-ordering the input never changes the report
     /// (FR-012, SC-002).
     type PathRouting =
-        { Path: GovernedPath
-          Result: RoutingResult }
+        {
+            Path: GovernedPath
+            Result: RoutingResult
+        }
 
     // ── Routing diagnostics (FR-006, FR-009, FR-010, FR-013) ──
 
@@ -81,10 +83,12 @@ module Model =
     /// `ConflictingGlobBinding`, the offending glob for `UnsupportedGlobSyntax`). `Message`
     /// carries a fix hint. No raw YAML and no product vocabulary beyond declared domains (SC-005).
     type RoutingDiagnostic =
-        { Id: RoutingDiagnosticId
-          Path: GovernedPath option
-          Globs: GovernedPath list
-          Message: string }
+        {
+            Id: RoutingDiagnosticId
+            Path: GovernedPath option
+            Globs: GovernedPath list
+            Message: string
+        }
 
     // ── The aggregate result (D5) ──
 
@@ -93,8 +97,10 @@ module Model =
     /// diagnostics (sorted by id, then path, then glob). Byte-for-byte identical for identical
     /// input (FR-012, SC-002); unchanged under re-ordering of the authored path map (SC-003).
     type RouteReport =
-        { Routings: PathRouting list
-          Diagnostics: RoutingDiagnostic list }
+        {
+            Routings: PathRouting list
+            Diagnostics: RoutingDiagnostic list
+        }
 
     // ── Stable rendering of a diagnostic id (for messages, tests, and any later JSON) ──
 

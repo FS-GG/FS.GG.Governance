@@ -18,64 +18,87 @@ open FS.GG.Governance.RouteJson.Tests.Support
 let private fixtureFacts =
     facts
         "src"
-        [ "src/build/**", "build"
-          "src/docs/**", "docs" ]
-        [ surface GovernedRoot "root" [ "src" ]
-          surface ProtectedSurface "api-surface" [ "src/api" ] ]
-        [ check "build" "tests" (Some "dotnet-test") Medium Local BlockOnShip
-          check "build" "format" None Cheap Local Observe
-          check "docs" "lint" None Cheap LocalOrCi Warn ]
+        [ "src/build/**", "build"; "src/docs/**", "docs" ]
+        [
+            surface GovernedRoot "root" [ "src" ]
+            surface ProtectedSurface "api-surface" [ "src/api" ]
+        ]
+        [
+            check "build" "tests" (Some "dotnet-test") Medium Local BlockOnShip
+            check "build" "format" None Cheap Local Observe
+            check "docs" "lint" None Cheap LocalOrCi Warn
+        ]
         [ command "dotnet-test" 600 ]
 
 let private pool =
-    [ "src/build/A.fs"
-      "src/build/B.fs"
-      "src/docs/G.md"
-      "src/api/secret.fs"
-      "src/loose/x.fs"
-      "../outside/y.fs" ]
+    [
+        "src/build/A.fs"
+        "src/build/B.fs"
+        "src/docs/G.md"
+        "src/api/secret.fs"
+        "src/loose/x.fs"
+        "../outside/y.fs"
+    ]
 
-let private genPaths : Gen<string list> =
+let private genPaths: Gen<string list> =
     gen {
         let! picks = Gen.listOf (Gen.elements pool)
         return picks
     }
 
-let private config = { FsCheckConfig.defaultConfig with maxTest = 300; arbitrary = [] }
+let private config =
+    { FsCheckConfig.defaultConfig with
+        maxTest = 300
+        arbitrary = []
+    }
 
 let private allZeroCost (doc: JsonDocument) =
-    [ "cheap"; "medium"; "high"; "exhaustive" ] |> List.forall (fun t -> costTier doc t = 0)
+    [ "cheap"; "medium"; "high"; "exhaustive" ]
+    |> List.forall (fun t -> costTier doc t = 0)
 
 [<Tests>]
 let tests =
     testList
         "Totality (US4)"
-        [ test "the empty route projects to a valid document with empty sections + all-zero cost (AS1, SC-006, FR-009)" {
-              let empty = resultOf fixtureFacts []
-              let json = RouteJson.ofRouteResult empty None []
-              use doc = parse json
-              Expect.equal doc.RootElement.ValueKind JsonValueKind.Object "a JSON object"
-              Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
-              Expect.isEmpty (findings doc) "findings present and empty"
-              Expect.isTrue (allZeroCost doc) "all-zero cost"
-          }
+        [
+            test
+                "the empty route projects to a valid document with empty sections + all-zero cost (AS1, SC-006, FR-009)" {
+                let empty = resultOf fixtureFacts []
+                let json = RouteJson.ofRouteResult empty None []
+                use doc = parse json
+                Expect.equal doc.RootElement.ValueKind JsonValueKind.Object "a JSON object"
+                Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
+                Expect.isEmpty (findings doc) "findings present and empty"
+                Expect.isTrue (allZeroCost doc) "all-zero cost"
+            }
 
-          test "a findings-only route projects with both sections coexisting (AS2)" {
-              // only an unclassified in-root path → no gates selected, but a finding present
-              let r = resultOf fixtureFacts [ "src/loose/x.fs" ]
-              Expect.isEmpty r.SelectedGates "no gates selected"
-              Expect.isNonEmpty r.Findings.Findings "a finding is present"
-              use doc = parse (RouteJson.ofRouteResult r None [])
-              Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
-              Expect.isNonEmpty (findings doc) "findings present and non-empty"
-          }
+            test "a findings-only route projects with both sections coexisting (AS2)" {
+                // only an unclassified in-root path → no gates selected, but a finding present
+                let r = resultOf fixtureFacts [ "src/loose/x.fs" ]
+                Expect.isEmpty r.SelectedGates "no gates selected"
+                Expect.isNonEmpty r.Findings.Findings "a finding is present"
+                use doc = parse (RouteJson.ofRouteResult r None [])
+                Expect.isEmpty (selectedGates doc) "selectedGates present and empty"
+                Expect.isNonEmpty (findings doc) "findings present and non-empty"
+            }
 
-          testPropertyWithConfig config "total: ofRouteResult always returns a parseable document and never throws (AS3, SC-006)"
-          <| Prop.forAll (Arb.fromGen genPaths) (fun paths ->
-              // drive the real chain, project, and parse — reaching here without an exception proves
-              // totality; the parse proves the output is always well-formed JSON.
-              let r = resultOf fixtureFacts paths
-              let json = RouteJson.ofRouteResult r None []
-              use doc = JsonDocument.Parse json
-              doc.RootElement.ValueKind = JsonValueKind.Object
-              && (topLevelFieldOrder doc) = [ "schemaVersion"; "selectedGates"; "findings"; "cost"; "cacheEligibilityEvaluated" ]) ]
+            testPropertyWithConfig
+                config
+                "total: ofRouteResult always returns a parseable document and never throws (AS3, SC-006)"
+            <| Prop.forAll (Arb.fromGen genPaths) (fun paths ->
+                // drive the real chain, project, and parse — reaching here without an exception proves
+                // totality; the parse proves the output is always well-formed JSON.
+                let r = resultOf fixtureFacts paths
+                let json = RouteJson.ofRouteResult r None []
+                use doc = JsonDocument.Parse json
+
+                doc.RootElement.ValueKind = JsonValueKind.Object
+                && (topLevelFieldOrder doc) =
+                    [
+                        "schemaVersion"
+                        "selectedGates"
+                        "findings"
+                        "cost"
+                        "cacheEligibilityEvaluated"
+                    ])
+        ]

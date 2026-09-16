@@ -105,8 +105,10 @@ module Json =
             w.WriteString("kind", "all")
             w.WritePropertyName "parts"
             w.WriteStartArray()
+
             for p in parts do
                 writeExplanation w p
+
             w.WriteEndArray()
             w.WritePropertyName "verdict"
             writeVerdict w verdict
@@ -114,8 +116,10 @@ module Json =
             w.WriteString("kind", "any")
             w.WritePropertyName "parts"
             w.WriteStartArray()
+
             for p in parts do
                 writeExplanation w p
+
             w.WriteEndArray()
             w.WritePropertyName "verdict"
             writeVerdict w verdict
@@ -141,12 +145,17 @@ module Json =
 
         match reqString (el.GetProperty "kind") with
         | "atom" -> AtomExplained(reqString (el.GetProperty "name"), readOutcome (el.GetProperty "outcome"), verdict ())
-        | "opaque" -> OpaqueExplained(reqString (el.GetProperty "name"), readOutcome (el.GetProperty "outcome"), verdict ())
+        | "opaque" ->
+            OpaqueExplained(reqString (el.GetProperty "name"), readOutcome (el.GetProperty "outcome"), verdict ())
         | "all" -> AllExplained([ for p in el.GetProperty("parts").EnumerateArray() -> readExplanation p ], verdict ())
         | "any" -> AnyExplained([ for p in el.GetProperty("parts").EnumerateArray() -> readExplanation p ], verdict ())
         | "not" -> NotExplained(readExplanation (el.GetProperty "part"), verdict ())
         | "implies" ->
-            ImpliesExplained(readExplanation (el.GetProperty "antecedent"), readExplanation (el.GetProperty "consequent"), verdict ())
+            ImpliesExplained(
+                readExplanation (el.GetProperty "antecedent"),
+                readExplanation (el.GetProperty "consequent"),
+                verdict ()
+            )
         | k -> failwithf "Json: unknown explanation node kind %A" k
 
     let ofExplanation (explanation: Explanation) : string =
@@ -185,18 +194,24 @@ module Json =
     let readContractEntry (el: JsonElement) : ContractEntry =
         let spec = el.GetProperty "spec"
 
-        { Id = RuleId(reqString (el.GetProperty "id"))
-          Severity = tokenSeverity (reqString (el.GetProperty "severity"))
-          Spec =
-            { Document = reqString (spec.GetProperty "document")
-              Section = reqString (spec.GetProperty "section") }
-          Statement = reqString (el.GetProperty "statement") }
+        {
+            Id = RuleId(reqString (el.GetProperty "id"))
+            Severity = tokenSeverity (reqString (el.GetProperty "severity"))
+            Spec =
+                {
+                    Document = reqString (spec.GetProperty "document")
+                    Section = reqString (spec.GetProperty "section")
+                }
+            Statement = reqString (el.GetProperty "statement")
+        }
 
     let ofContract (contract: ContractEntry list) : string =
         writeToString (fun w ->
             w.WriteStartArray()
+
             for e in contract do
                 writeContractEntry w e
+
             w.WriteEndArray())
 
     let toContract (json: string) : ContractEntry list =
@@ -251,8 +266,10 @@ module Json =
 
         writeToString (fun w ->
             w.WriteStartObject()
+
             for key, state in entries do
                 w.WriteString(key, stateToken state)
+
             w.WriteEndObject())
 
     let toEffective (json: string) : Map<string, EvidenceState> =

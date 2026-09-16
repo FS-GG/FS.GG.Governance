@@ -22,11 +22,17 @@ module SensedMetadata =
     let markDuration (label: SensedLabel) (duration: SensedDuration) : SensedMetadatum =
         // Verbatim carriage — no clock read, no elapsed-time measure, no normalization. The duration is the
         // supplied F032 `SensedDuration` (FR-008). The `SensedValue` DU is the flag: sensed by construction.
-        { Label = label; Value = DurationValue duration }
+        {
+            Label = label
+            Value = DurationValue duration
+        }
 
     let markTimestamp (label: SensedLabel) (timestamp: SensedTimestamp) : SensedMetadatum =
         // Verbatim carriage — no clock read. The timestamp is the supplied opaque `SensedTimestamp` (D2).
-        { Label = label; Value = TimestampValue timestamp }
+        {
+            Label = label
+            Value = TimestampValue timestamp
+        }
 
     let kindOf (metadatum: SensedMetadatum) : SensedKind =
         // The kind is intrinsic to the `SensedValue` case (D3) — total over the closed two-case DU.
@@ -47,7 +53,8 @@ module SensedMetadata =
     // `\n`) that lets it masquerade as the marker, as another field, or bleed across a boundary (FR-004). An
     // EMPTY string renders as "0:" — a distinct, unambiguous form that never collides with absence or the
     // marker (Edge cases).
-    let lenPrefixed (s: string) : string = sprintf "%d:%s" (Encoding.UTF8.GetByteCount s) s
+    let lenPrefixed (s: string) : string =
+        sprintf "%d:%s" (Encoding.UTF8.GetByteCount s) s
 
     // ── Flagged rendering (US2) ──
 
@@ -56,8 +63,8 @@ module SensedMetadata =
         // `0`, negatives), an opaque timestamp string verbatim — never rounded or re-scaled.
         let valueText =
             match metadatum.Value with
-            | TimestampValue (SensedTimestamp s) -> s
-            | DurationValue (SensedDuration ns) -> string ns
+            | TimestampValue(SensedTimestamp s) -> s
+            | DurationValue(SensedDuration ns) -> string ns
 
         let (SensedLabel label) = metadatum.Label
 
@@ -78,8 +85,7 @@ module SensedMetadata =
                 lenPrefixed r)
             |> String.concat ";"
 
-        sprintf "!sensed-section!=%d;%s" (List.length metadata) body
-        |> SensedRendering
+        sprintf "!sensed-section!=%d;%s" (List.length metadata) body |> SensedRendering
 
     let renderingValue (rendering: SensedRendering) : string =
         let (SensedRendering s) = rendering

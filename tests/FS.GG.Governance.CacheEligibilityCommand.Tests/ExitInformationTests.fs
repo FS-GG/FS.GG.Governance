@@ -21,29 +21,54 @@ let private run sensor store =
 let tests =
     testList
         "ExitInformation"
-        [ test "all-must-recompute (empty store) ⇒ exit 0 (SC-006)" {
-              let _, model = run fixedSensor (storeReaderOf (Ok None))
-              Expect.equal model.Exit Loop.Success "must-recompute is information, not failure"
-          }
+        [
+            test "all-must-recompute (empty store) ⇒ exit 0 (SC-006)" {
+                let _, model = run fixedSensor (storeReaderOf (Ok None))
+                Expect.equal model.Exit Loop.Success "must-recompute is information, not failure"
+            }
 
-          test "some-unresolved (a fact unsensed) ⇒ exit 0 (SC-006)" {
-              let _, model = run sensorNoCovered (storeReaderOf (Ok None))
-              Expect.equal model.Exit Loop.Success "unresolved is information, not failure"
-          }
+            test "some-unresolved (a fact unsensed) ⇒ exit 0 (SC-006)" {
+                let _, model = run sensorNoCovered (storeReaderOf (Ok None))
+                Expect.equal model.Exit Loop.Success "unresolved is information, not failure"
+            }
 
-          test "no ship/verdict/severity vocabulary leaks into the artifacts or summary (L10)" {
-              let cap, _ = run fixedSensor (storeReaderOf (Ok None))
-              let cache = writtenOf cap Loop.CacheArtifact |> Option.map snd |> Option.defaultValue ""
-              let sidecar = writtenOf cap Loop.UnresolvedArtifact |> Option.map snd |> Option.defaultValue ""
-              let summary = String.concat "\n" cap.Emits
-              let blob = (cache + "\n" + sidecar + "\n" + summary).ToLowerInvariant()
+            test "no ship/verdict/severity vocabulary leaks into the artifacts or summary (L10)" {
+                let cap, _ = run fixedSensor (storeReaderOf (Ok None))
 
-              for token in [ "severity"; "profile"; "enforcement"; "shipverdict"; "blockers"; "provenance"; "audit.json"; "route.json" ] do
-                  Expect.isFalse (blob.Contains token) (sprintf "excluded token '%s' must not appear" token)
-          }
+                let cache =
+                    writtenOf cap Loop.CacheArtifact |> Option.map snd |> Option.defaultValue ""
 
-          test "only the two cache documents are written — nothing toward route/audit (SC-008)" {
-              let cap, _ = run fixedSensor (storeReaderOf (Ok None))
-              let kinds = cap.Writes |> List.map (fun (k, _, _) -> k) |> List.distinct |> List.sort
-              Expect.equal kinds [ Loop.CacheArtifact; Loop.UnresolvedArtifact ] "exactly the two cache artifacts, nothing else"
-          } ]
+                let sidecar =
+                    writtenOf cap Loop.UnresolvedArtifact
+                    |> Option.map snd
+                    |> Option.defaultValue ""
+
+                let summary = String.concat "\n" cap.Emits
+                let blob = (cache + "\n" + sidecar + "\n" + summary).ToLowerInvariant()
+
+                for token in
+                    [
+                        "severity"
+                        "profile"
+                        "enforcement"
+                        "shipverdict"
+                        "blockers"
+                        "provenance"
+                        "audit.json"
+                        "route.json"
+                    ] do
+                    Expect.isFalse (blob.Contains token) (sprintf "excluded token '%s' must not appear" token)
+            }
+
+            test "only the two cache documents are written — nothing toward route/audit (SC-008)" {
+                let cap, _ = run fixedSensor (storeReaderOf (Ok None))
+
+                let kinds =
+                    cap.Writes |> List.map (fun (k, _, _) -> k) |> List.distinct |> List.sort
+
+                Expect.equal
+                    kinds
+                    [ Loop.CacheArtifact; Loop.UnresolvedArtifact ]
+                    "exactly the two cache artifacts, nothing else"
+            }
+        ]

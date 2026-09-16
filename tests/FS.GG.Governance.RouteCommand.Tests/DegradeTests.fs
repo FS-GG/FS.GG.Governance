@@ -32,66 +32,88 @@ let private driveToDone (m: Loop.Model) =
 let tests =
     testList
         "Degrade"
-        [ test "FreshnessSensed Error ⇒ empty SensedFacts (every gate notEvaluated) + cache note, NO fail, exit 0 (L2/L3)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let _, m2 = toSelected git req
-              Expect.isNonEmpty m2.SelectedGates "the src change selects gates"
+        [
+            test
+                "FreshnessSensed Error ⇒ empty SensedFacts (every gate notEvaluated) + cache note, NO fail, exit 0 (L2/L3)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let _, m2 = toSelected git req
+                Expect.isNonEmpty m2.SelectedGates "the src change selects gates"
 
-              // Degrade: the sense fails; the store arrives Ok. The execute step then projects.
-              let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
-              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
-              Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
+                // Degrade: the sense fails; the store arrives Ok. The execute step then projects.
+                let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
+                let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+                let m4, _ = runExecuteEffect fakeExecPort m4raw e4
+                Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
 
-              let routeDoc = Option.get m4.RouteDoc
-              Expect.stringContains routeDoc "\"cacheEligibilityEvaluated\":true" "still an evaluated section"
-              Expect.isFalse (routeDoc.Contains "\"kind\":\"reusable\"") "no gate is fabricated reusable"
-              // Every selected gate is notEvaluated (unresolved ⇒ dropped from the report).
-              for g in m2.SelectedGates do
-                  Expect.stringContains routeDoc (gateIdValue g.Id) "the gate is still named in route.json"
-              Expect.stringContains routeDoc "notEvaluated" "the affected gates render notEvaluated"
+                let routeDoc = Option.get m4.RouteDoc
+                Expect.stringContains routeDoc "\"cacheEligibilityEvaluated\":true" "still an evaluated section"
+                Expect.isFalse (routeDoc.Contains "\"kind\":\"reusable\"") "no gate is fabricated reusable"
+                // Every selected gate is notEvaluated (unresolved ⇒ dropped from the report).
+                for g in m2.SelectedGates do
+                    Expect.stringContains routeDoc (gateIdValue g.Id) "the gate is still named in route.json"
 
-              // A non-fatal cache note names the MISSING input (unsensed facts), distinct from a defect (O1).
-              Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
-              Expect.stringContains (String.concat " " m4.CacheNotes) "could not be sensed" "the note names the unsensed input"
+                Expect.stringContains routeDoc "notEvaluated" "the affected gates render notEvaluated"
 
-              let mDone = driveToDone m4
-              Expect.equal mDone.Exit Loop.Success "degrade never changes the exit code (route always 0)"
-          }
+                // A non-fatal cache note names the MISSING input (unsensed facts), distinct from a defect (O1).
+                Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
 
-          test "StoreLoaded Error ⇒ EvidenceReuse.empty (every gate mustRecompute noPriorEvidence) + cache note, exit 0 (L2/L4)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let snap, m2 = toSelected git req
-              let baseHead = baseHeadOfSnap (Some snap)
-              let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
+                Expect.stringContains
+                    (String.concat " " m4.CacheNotes)
+                    "could not be sensed"
+                    "the note names the unsensed input"
 
-              // Degrade: facts sense Ok; the store is malformed. The execute step then projects.
-              let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
-              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
-              Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
+                let mDone = driveToDone m4
+                Expect.equal mDone.Exit Loop.Success "degrade never changes the exit code (route always 0)"
+            }
 
-              let routeDoc = Option.get m4.RouteDoc
-              Expect.isFalse (routeDoc.Contains "\"kind\":\"reusable\"") "an unreadable store ⇒ never reusable (recompute by default)"
-              Expect.stringContains routeDoc "noPriorEvidence" "every gate recompute-by-default with noPriorEvidence"
+            test
+                "StoreLoaded Error ⇒ EvidenceReuse.empty (every gate mustRecompute noPriorEvidence) + cache note, exit 0 (L2/L4)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let snap, m2 = toSelected git req
+                let baseHead = baseHeadOfSnap (Some snap)
 
-              Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
-              Expect.stringContains (String.concat " " m4.CacheNotes) "unreadable" "the note names the malformed store input"
+                let sensed =
+                    match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with
+                    | Ok s -> s
+                    | Error e -> failtestf "%s" e
 
-              let mDone = driveToDone m4
-              Expect.equal mDone.Exit Loop.Success "a malformed store never changes the exit code"
-          }
+                // Degrade: facts sense Ok; the store is malformed. The execute step then projects.
+                let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
+                let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+                let m4, _ = runExecuteEffect fakeExecPort m4raw e4
+                Expect.equal m4.Phase Loop.Projected "the document still projects (no fail)"
 
-          test "the interpreter degrades end-to-end over faked degrade ports — still writes, exit 0 (L2)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let cap = newCapture ()
-              // A malformed store reader (present-but-unreadable) drives the degrade through the real edge.
-              let model = Interpreter.run (fakePortsWith validCatalog git fakeSensor malformedStoreReader cap req) req
+                let routeDoc = Option.get m4.RouteDoc
 
-              Expect.equal model.Exit Loop.Success "degraded store ⇒ still exits 0"
-              Expect.isNonEmpty model.CacheNotes "a cache note surfaced"
-              Expect.isSome (writtenOf cap Loop.RouteArtifact) "route.json still written under degrade"
-          } ]
+                Expect.isFalse
+                    (routeDoc.Contains "\"kind\":\"reusable\"")
+                    "an unreadable store ⇒ never reusable (recompute by default)"
+
+                Expect.stringContains routeDoc "noPriorEvidence" "every gate recompute-by-default with noPriorEvidence"
+
+                Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
+
+                Expect.stringContains
+                    (String.concat " " m4.CacheNotes)
+                    "unreadable"
+                    "the note names the malformed store input"
+
+                let mDone = driveToDone m4
+                Expect.equal mDone.Exit Loop.Success "a malformed store never changes the exit code"
+            }
+
+            test "the interpreter degrades end-to-end over faked degrade ports — still writes, exit 0 (L2)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let cap = newCapture ()
+                // A malformed store reader (present-but-unreadable) drives the degrade through the real edge.
+                let model =
+                    Interpreter.run (fakePortsWith validCatalog git fakeSensor malformedStoreReader cap req) req
+
+                Expect.equal model.Exit Loop.Success "degraded store ⇒ still exits 0"
+                Expect.isNonEmpty model.CacheNotes "a cache note surfaced"
+                Expect.isSome (writtenOf cap Loop.RouteArtifact) "route.json still written under degrade"
+            }
+        ]

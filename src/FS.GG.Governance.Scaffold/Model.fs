@@ -13,12 +13,16 @@ module Model =
     type ProviderContractVersion = { Major: int; Minor: int }
 
     type ScaffoldRequest =
-        { Target: string
-          ReservedPaths: string list }
+        {
+            Target: string
+            ReservedPaths: string list
+        }
 
     type EmittedFile =
-        { RelativePath: string
-          Contents: string }
+        {
+            RelativePath: string
+            Contents: string
+        }
 
     type ProviderEmission = { Files: EmittedFile list }
 
@@ -27,9 +31,11 @@ module Model =
         | EmitFailed of detail: string
 
     type TemplateProvider =
-        { Id: ProviderId
-          ContractVersion: ProviderContractVersion
-          Emit: ScaffoldRequest -> Result<ProviderEmission, ProviderError> }
+        {
+            Id: ProviderId
+            ContractVersion: ProviderContractVersion
+            Emit: ScaffoldRequest -> Result<ProviderEmission, ProviderError>
+        }
 
     type Refusal =
         | ContractMismatch of declared: ProviderContractVersion
@@ -46,11 +52,15 @@ module Model =
     type PathOwnership = ProviderOwned
 
     type GeneratedPath =
-        { RelativePath: string
-          Ownership: PathOwnership }
+        {
+            RelativePath: string
+            Ownership: PathOwnership
+        }
 
     type ScaffoldManifest =
-        { Provider: (ProviderId * ProviderContractVersion) option
-          Outcome: ScaffoldOutcome
-          Generated: GeneratedPath list
-          Collisions: string list }
+        {
+            Provider: (ProviderId * ProviderContractVersion) option
+            Outcome: ScaffoldOutcome
+            Generated: GeneratedPath list
+            Collisions: string list
+        }

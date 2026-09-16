@@ -43,16 +43,18 @@ module Schema =
     /// The unparsed-but-located input to the pure core: the governed-root anchor plus the four
     /// file slots. Built by `Loader.load`; consumed by `validate`.
     type RawSource =
-        { /// The `.fsgg` parent directory as a normalized ref — the anchor every declared path
-          /// is normalized against and bounds-checked within (FR-008, D5). Used ONLY as the
-          /// in-memory normalization anchor; it is never emitted into `TypedFacts` (the emitted
-          /// `ProjectFacts.GovernedRoot` comes from `governance.yml`), so no absolute host path
-          /// leaks (SC-002/SC-005).
-          Root: GovernedPath
-          Project: FileSlot
-          Policy: FileSlot
-          Capabilities: FileSlot
-          Tooling: FileSlot }
+        {
+            /// The `.fsgg` parent directory as a normalized ref — the anchor every declared path
+            /// is normalized against and bounds-checked within (FR-008, D5). Used ONLY as the
+            /// in-memory normalization anchor; it is never emitted into `TypedFacts` (the emitted
+            /// `ProjectFacts.GovernedRoot` comes from `governance.yml`), so no absolute host path
+            /// leaks (SC-002/SC-005).
+            Root: GovernedPath
+            Project: FileSlot
+            Policy: FileSlot
+            Capabilities: FileSlot
+            Tooling: FileSlot
+        }
 
     // ── Supported versions (FR-007, F23 D1: per-file) ──
 

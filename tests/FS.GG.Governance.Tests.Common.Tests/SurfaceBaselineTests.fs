@@ -10,25 +10,28 @@ open FS.GG.Governance.Tests.Common
 
 let private repoRoot = RepositoryHelpers.repoRoot
 
-let private testsCommonAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Tests.Common"
+let private testsCommonAsm =
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.Tests.Common"
 
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Tests.Common" "FS.GG.Governance.Tests.Common" testsCommonAsm
+        [
+            SurfaceDrift.surfaceTest "Tests.Common" "FS.GG.Governance.Tests.Common" testsCommonAsm
 
-          test "no src/*.fsproj references FS.GG.Governance.Tests.Common (FR-008 scope guard)" {
-              // The library is TEST-ONLY: it lives under tests/, is IsPackable=false, and MUST NOT enter the
-              // production dependency graph. This guard makes FR-008 a tested invariant, not a convention.
-              let srcDir = Path.Combine(repoRoot, "src")
+            test "no src/*.fsproj references FS.GG.Governance.Tests.Common (FR-008 scope guard)" {
+                // The library is TEST-ONLY: it lives under tests/, is IsPackable=false, and MUST NOT enter the
+                // production dependency graph. This guard makes FR-008 a tested invariant, not a convention.
+                let srcDir = Path.Combine(repoRoot, "src")
 
-              let offenders =
-                  Directory.GetFiles(srcDir, "*.fsproj", SearchOption.AllDirectories)
-                  |> Array.filter (fun f -> File.ReadAllText(f).Contains "FS.GG.Governance.Tests.Common")
-                  |> Array.map Path.GetFileName
+                let offenders =
+                    Directory.GetFiles(srcDir, "*.fsproj", SearchOption.AllDirectories)
+                    |> Array.filter (fun f -> File.ReadAllText(f).Contains "FS.GG.Governance.Tests.Common")
+                    |> Array.map Path.GetFileName
 
-              Expect.isEmpty
-                  offenders
-                  (sprintf "no src project may reference the test-only library; found: %A" offenders)
-          } ]
+                Expect.isEmpty
+                    offenders
+                    (sprintf "no src project may reference the test-only library; found: %A" offenders)
+            }
+        ]

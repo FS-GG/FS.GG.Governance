@@ -39,17 +39,21 @@ module Model =
     /// The caller's loose range inputs (US3, FR-004). All `None` ⇒ the documented default plan
     /// (Snapshot.planResolution / contracts/git-sensing.md).
     type SnapshotOptions =
-        { Since: GitRef option
-          Base: GitRef option
-          Head: GitRef option }
+        {
+            Since: GitRef option
+            Base: GitRef option
+            Head: GitRef option
+        }
 
     /// The resolved diff range recorded in the snapshot (FR-001). `MergeBase` is the three-dot
     /// base the committed diff was computed against, so unrelated upstream commits on a stale
     /// base branch are not reported (research D8).
     type DiffRange =
-        { Base: CommitId
-          Head: CommitId
-          MergeBase: CommitId }
+        {
+            Base: CommitId
+            Head: CommitId
+            MergeBase: CommitId
+        }
 
     // ── Paths & changes ──
 
@@ -67,9 +71,11 @@ module Model =
     /// path (the rename DESTINATION for `Renamed`/`Copied`); `OldPath` is `Some` only for those.
     /// Both are repo-relative `GovernedPath`s in F014's normalized form (FR-002).
     type ChangedPath =
-        { Path: GovernedPath
-          Kind: ChangeKind
-          OldPath: GovernedPath option }
+        {
+            Path: GovernedPath
+            Kind: ChangeKind
+            OldPath: GovernedPath option
+        }
 
     /// Uncommitted working-tree state (US2, FR-003). The committed `Changed` set and this
     /// working-tree state are TWO DISTINCT PLANES: within this plane a path is in at most one of
@@ -77,8 +83,10 @@ module Model =
     /// list a path modified again after commit (SC-003). Each list is normalized and
     /// deterministically ordered.
     type WorkingTreeState =
-        { Dirty: GovernedPath list
-          Untracked: GovernedPath list }
+        {
+            Dirty: GovernedPath list
+            Untracked: GovernedPath list
+        }
 
     // ── CI / PR context (optional, never fabricated) ──
 
@@ -93,9 +101,11 @@ module Model =
     /// NEVER a hosting-provider API call (research D9, SC-007). Lists are deterministically
     /// ordered and `[]` (not fabricated) when absent.
     type CiContext =
-        { Environment: CiEnvironment
-          PrLabels: string list
-          RequiredStatusChecks: string list }
+        {
+            Environment: CiEnvironment
+            PrLabels: string list
+            RequiredStatusChecks: string list
+        }
 
     // ── Provenance & diagnostics ──
 
@@ -103,9 +113,7 @@ module Model =
     /// facts. `Command` is the stable token of the closed `GitCommand` (e.g. "diff-name-status");
     /// `Digest` is a stable hash of the normalized output. Carries NO raw output, timing, pid, or
     /// absolute path. A later phase (Phase 11 freshness keys) consumes these.
-    type CommandRunDigest =
-        { Command: string
-          Digest: string }
+    type CommandRunDigest = { Command: string; Digest: string }
 
     /// The CLOSED set of stable sensing-failure ids — one per failure class (FR-008, SC-005).
     type SensingDiagnosticId =
@@ -120,9 +128,11 @@ module Model =
     /// style). `Operation` is the failed `GitCommand` token; `Message` carries a fix hint. NO raw
     /// stderr dump.
     type SensingDiagnostic =
-        { Id: SensingDiagnosticId
-          Operation: string
-          Message: string }
+        {
+            Id: SensingDiagnosticId
+            Operation: string
+            Message: string
+        }
 
     // ── The aggregate ──
 
@@ -133,13 +143,15 @@ module Model =
     /// empty `Changed`/working-tree is the genuine "nothing changed" outcome. The two are
     /// structurally distinct and never conflated.
     type RepoSnapshot =
-        { Range: DiffRange option
-          Changed: ChangedPath list
-          WorkingTree: WorkingTreeState
-          Branch: BranchName option
-          Ci: CiContext option
-          Digests: CommandRunDigest list
-          Diagnostics: SensingDiagnostic list }
+        {
+            Range: DiffRange option
+            Changed: ChangedPath list
+            WorkingTree: WorkingTreeState
+            Branch: BranchName option
+            Ci: CiContext option
+            Digests: CommandRunDigest list
+            Diagnostics: SensingDiagnostic list
+        }
 
     // ── Stable rendering (for messages, tests, and any later JSON) ──
 

@@ -10,7 +10,7 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
-open FS.GG.Governance.Gates.Model              // Gate
+open FS.GG.Governance.Gates.Model // Gate
 open FS.GG.Governance.Adapters.SddHandoff.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

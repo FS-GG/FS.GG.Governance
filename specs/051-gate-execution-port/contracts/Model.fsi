@@ -12,9 +12,9 @@
 
 namespace FS.GG.Governance.GateExecution
 
-open FS.GG.Governance.Config.Model           // TimeoutLimit
-open FS.GG.Governance.CommandRecord.Model     // Executable, Argument, WorkingDirectory, EnvironmentDelta,
-                                              // ExitCode, CapturedOutput, SensedDuration
+open FS.GG.Governance.Config.Model // TimeoutLimit
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, WorkingDirectory, EnvironmentDelta,
+// ExitCode, CapturedOutput, SensedDuration
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -25,12 +25,14 @@ module Model =
     /// three-class partition, not a full snapshot), the timeout to enforce, and the captured-output target
     /// (`NoCapturedOutput` in the common case). Carries NO bytes, NO clock reading, NO product vocabulary.
     type GateCommand =
-        { Executable: Executable
-          Arguments: Argument list
-          WorkingDirectory: WorkingDirectory
-          Environment: EnvironmentDelta
-          Timeout: TimeoutLimit
-          CapturedOutput: CapturedOutput }
+        {
+            Executable: Executable
+            Arguments: Argument list
+            WorkingDirectory: WorkingDirectory
+            Environment: EnvironmentDelta
+            Timeout: TimeoutLimit
+            CapturedOutput: CapturedOutput
+        }
 
     /// The SENSED result of one run (Key entity: "Captured execution outcome") — the raw stdout/stderr BYTES
     /// captured verbatim (no decoding, locale, normalization, or truncation), the integer exit code (or a
@@ -38,10 +40,12 @@ module Model =
     /// the value the injected port YIELDS and that F050 `ExecutionRecord.recordOf` CONSUMES; the duration is
     /// the sole non-deterministic fact and is held apart (excluded from the canonical identity, F050 FR-006).
     type ExecutionOutcome =
-        { Stdout: byte[]
-          Stderr: byte[]
-          ExitCode: ExitCode
-          Duration: SensedDuration }
+        {
+            Stdout: byte[]
+            Stderr: byte[]
+            ExitCode: ExitCode
+            Duration: SensedDuration
+        }
 
     /// The injected execution port (Key entity: "Execution port (injected)") — a function value that runs ONE
     /// gate command and yields its captured outcome. TOTAL by contract: a start failure or timeout is reified

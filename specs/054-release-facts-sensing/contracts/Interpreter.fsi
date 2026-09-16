@@ -30,12 +30,14 @@ module Interpreter =
     /// boundary" (FR-006). The real port reads local files; tests back it with a REAL temp fixture repository
     /// (Principle V, US3) or a hand-built fake.
     type RepositoryPort =
-        { ReadVersion: unit -> Result<VersionEvidence, string>
-          ReadMetadata: unit -> Result<MetadataEvidence, string>
-          ReadPins: unit -> Result<PinsEvidence, string>
-          ReadPublishPlan: unit -> Result<PostureEvidence, string>
-          ReadTrustedPublishing: unit -> Result<PostureEvidence, string>
-          ReadProvenance: unit -> Result<PostureEvidence, string> }
+        {
+            ReadVersion: unit -> Result<VersionEvidence, string>
+            ReadMetadata: unit -> Result<MetadataEvidence, string>
+            ReadPins: unit -> Result<PinsEvidence, string>
+            ReadPublishPlan: unit -> Result<PostureEvidence, string>
+            ReadTrustedPublishing: unit -> Result<PostureEvidence, string>
+            ReadProvenance: unit -> Result<PostureEvidence, string>
+        }
 
     /// Build the REAL port for a repository working directory and a caller-supplied `SourceLayout`: each read
     /// function reads its `layout` path under `repoDir` via `System.IO`, parses the bytes into the structured

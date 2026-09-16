@@ -32,29 +32,52 @@ let gid (domain: string) (check: string) : GateId = GateId(domain + ":" + check)
 /// A complete, literal `FreshnessInputs` — every category present and distinct so a single-field change is
 /// unambiguous (gate ("build", "tests")).
 let baseInputs: FreshnessInputs =
-    { Check = CheckId "build:tests"
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId "build:tests"
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 // ── One representative single-field variant per comparable category (the F041 table) ──
 // Each takes `baseInputs` and changes EXACTLY the named category to a distinct value (option categories flip
 // present↔absent). Paired with its `InputCategory` for table-driven no-hide tests.
 
-let private variantCheck (i: FreshnessInputs) = { i with Check = CheckId "build:other" }
+let private variantCheck (i: FreshnessInputs) =
+    { i with Check = CheckId "build:other" }
+
 let private variantDomain (i: FreshnessInputs) = { i with Domain = DomainId "release" }
-let private variantCommand (i: FreshnessInputs) = { i with Command = None; CommandVersion = None }
+
+let private variantCommand (i: FreshnessInputs) =
+    { i with
+        Command = None
+        CommandVersion = None
+    }
+
 let private variantEnvironment (i: FreshnessInputs) = { i with Environment = Ci }
 let private variantRuleHash (i: FreshnessInputs) = { i with RuleHash = RuleHash "r2" }
-let private variantCoveredArtifacts (i: FreshnessInputs) = { i with CoveredArtifacts = [ ArtifactHash "h3" ] }
-let private variantCommandVersion (i: FreshnessInputs) = { i with CommandVersion = Some(CommandVersion "9.0") }
-let private variantGeneratorVersion (i: FreshnessInputs) = { i with GeneratorVersion = GeneratorVersion "g2" }
+
+let private variantCoveredArtifacts (i: FreshnessInputs) =
+    { i with
+        CoveredArtifacts = [ ArtifactHash "h3" ]
+    }
+
+let private variantCommandVersion (i: FreshnessInputs) =
+    { i with
+        CommandVersion = Some(CommandVersion "9.0")
+    }
+
+let private variantGeneratorVersion (i: FreshnessInputs) =
+    { i with
+        GeneratorVersion = GeneratorVersion "g2"
+    }
+
 let private variantBase (i: FreshnessInputs) = { i with Base = Revision "ccc" }
 let private variantHead (i: FreshnessInputs) = { i with Head = Revision "ddd" }
 
@@ -62,16 +85,18 @@ let private variantHead (i: FreshnessInputs) = { i with Head = Revision "ddd" }
 /// (everything but Check/Domain) keep a candidate same-gate against a recorded base entry, so a change drives
 /// `InputsChanged [thatCategory]` — the no-hide cause carry under test.
 let allCategories: (InputCategory * (FreshnessInputs -> FreshnessInputs)) list =
-    [ CheckIdentity, variantCheck
-      DomainIdentity, variantDomain
-      CommandIdentity, variantCommand
-      EnvironmentClassCat, variantEnvironment
-      RuleHashCat, variantRuleHash
-      CoveredArtifactsCat, variantCoveredArtifacts
-      CommandVersionCat, variantCommandVersion
-      GeneratorVersionCat, variantGeneratorVersion
-      BaseRevisionCat, variantBase
-      HeadRevisionCat, variantHead ]
+    [
+        CheckIdentity, variantCheck
+        DomainIdentity, variantDomain
+        CommandIdentity, variantCommand
+        EnvironmentClassCat, variantEnvironment
+        RuleHashCat, variantRuleHash
+        CoveredArtifactsCat, variantCoveredArtifacts
+        CommandVersionCat, variantCommandVersion
+        GeneratorVersionCat, variantGeneratorVersion
+        BaseRevisionCat, variantBase
+        HeadRevisionCat, variantHead
+    ]
 
 /// The non-identity categories — those that change WITHOUT touching the gate identity (Check/Domain). A
 /// single-field change of one of these against a recorded base entry keeps the entry same-gate ⇒ the recompute
@@ -107,7 +132,8 @@ let emptyReport: CacheEligibilityReport = report [] EvidenceReuse.empty
 let exactStore: ReuseStore = storeOf [ baseInputs, refA ]
 
 /// Single exact-match candidate (docs:lint) against `exactStore` ⇒ `Reusable ev-A`.
-let reusableReport: CacheEligibilityReport = report [ candidate (gid "docs" "lint") baseInputs ] exactStore
+let reusableReport: CacheEligibilityReport =
+    report [ candidate (gid "docs" "lint") baseInputs ] exactStore
 
 /// Single no-prior candidate (security:scan) against the empty store ⇒ `MustRecompute NoPriorEvidence`.
 let noPriorReport: CacheEligibilityReport =
@@ -127,14 +153,30 @@ let orderingReport (order: (string * string) list) : CacheEligibilityReport =
 /// `MustRecompute NoPriorEvidence` entries — the duplicate-GateId fixture.
 let duplicateReport: CacheEligibilityReport =
     report
-        [ candidate (gid "build" "tests") baseInputs
-          candidate (gid "build" "tests") (variantRuleHash baseInputs) ]
+        [
+            candidate (gid "build" "tests") baseInputs
+            candidate (gid "build" "tests") (variantRuleHash baseInputs)
+        ]
         EvidenceReuse.empty
 
 // ── FsCheck generators (real values, no mocks) ──
 
 let private shortStringGen: Gen<string> =
-    Gen.elements [ ""; "a"; "b"; "h1"; "h2"; "r1"; "build:tests"; "8.0"; "g1"; "aaa"; "héllo"; "x:y=z" ]
+    Gen.elements
+        [
+            ""
+            "a"
+            "b"
+            "h1"
+            "h2"
+            "r1"
+            "build:tests"
+            "8.0"
+            "g1"
+            "aaa"
+            "héllo"
+            "x:y=z"
+        ]
 
 let private genEnvironment: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -155,16 +197,22 @@ let private genFreshnessInputs: Gen<FreshnessInputs> =
         let! headRev = shortStringGen
 
         return
-            { Check = CheckId check
-              Domain = DomainId domain
-              Command = (if hasCommand then Some(CommandId command) else None)
-              Environment = env
-              RuleHash = RuleHash ruleHash
-              CoveredArtifacts = arts |> List.map ArtifactHash
-              CommandVersion = (if hasCmdVersion then Some(CommandVersion cmdVersion) else None)
-              GeneratorVersion = GeneratorVersion genVersion
-              Base = Revision baseRev
-              Head = Revision headRev }
+            {
+                Check = CheckId check
+                Domain = DomainId domain
+                Command = (if hasCommand then Some(CommandId command) else None)
+                Environment = env
+                RuleHash = RuleHash ruleHash
+                CoveredArtifacts = arts |> List.map ArtifactHash
+                CommandVersion =
+                    (if hasCmdVersion then
+                         Some(CommandVersion cmdVersion)
+                     else
+                         None)
+                GeneratorVersion = GeneratorVersion genVersion
+                Base = Revision baseRev
+                Head = Revision headRev
+            }
     }
 
 let private genEvidenceRef: Gen<EvidenceRef> =
@@ -173,7 +221,8 @@ let private genEvidenceRef: Gen<EvidenceRef> =
 /// A small label pool so generated `GateId`s collide often — exercising the duplicate-`GateId` paths. Includes
 /// empty + multi-byte + ordinal-edge + `:`-containing strings.
 let private genGateId: Gen<GateId> =
-    Gen.elements [ ""; "a:a"; "a:b"; "z:a"; "build:tests"; "Z:a"; "héllo:x" ] |> Gen.map GateId
+    Gen.elements [ ""; "a:a"; "a:b"; "z:a"; "build:tests"; "Z:a"; "héllo:x" ]
+    |> Gen.map GateId
 
 let private genCandidate: Gen<CandidateGate> =
     gen {
@@ -218,7 +267,9 @@ type Generators =
 
 /// FsCheck config registering the real generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 
 // ── JsonDocument read helpers (read-only inspection of the emitted bytes) ──
 
@@ -241,7 +292,8 @@ let fieldOrder (el: JsonElement) : string list =
 let topLevelFieldOrder (doc: JsonDocument) : string list = fieldOrder doc.RootElement
 
 /// The document's `schemaVersion` field.
-let docSchemaVersion (doc: JsonDocument) : string = strField doc.RootElement "schemaVersion"
+let docSchemaVersion (doc: JsonDocument) : string =
+    strField doc.RootElement "schemaVersion"
 
 /// The entry objects of the `entries` array, in emitted order.
 let entriesOf (doc: JsonDocument) : JsonElement list =
@@ -279,18 +331,32 @@ let causeCategories (cause: JsonElement) : string list =
 let rec allStringValues (el: JsonElement) : string list =
     match el.ValueKind with
     | JsonValueKind.String -> [ reqStr el ]
-    | JsonValueKind.Object -> [ for p in el.EnumerateObject() do yield! allStringValues p.Value ]
-    | JsonValueKind.Array -> [ for v in el.EnumerateArray() do yield! allStringValues v ]
+    | JsonValueKind.Object ->
+        [
+            for p in el.EnumerateObject() do
+                yield! allStringValues p.Value
+        ]
+    | JsonValueKind.Array ->
+        [
+            for v in el.EnumerateArray() do
+                yield! allStringValues v
+        ]
     | _ -> []
 
 /// Every property name anywhere in the document (recursively) — for the closed-key-set sweep.
 let rec allPropertyNames (el: JsonElement) : string list =
     match el.ValueKind with
     | JsonValueKind.Object ->
-        [ for p in el.EnumerateObject() do
-              yield p.Name
-              yield! allPropertyNames p.Value ]
-    | JsonValueKind.Array -> [ for v in el.EnumerateArray() do yield! allPropertyNames v ]
+        [
+            for p in el.EnumerateObject() do
+                yield p.Name
+                yield! allPropertyNames p.Value
+        ]
+    | JsonValueKind.Array ->
+        [
+            for v in el.EnumerateArray() do
+                yield! allPropertyNames v
+        ]
     | _ -> []
 
 /// The whole emitted document text, lowercased — for the deny-token exclusion sweep.

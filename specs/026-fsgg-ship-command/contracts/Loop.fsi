@@ -18,10 +18,10 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open FS.GG.Governance.Config.Model            // GovernedPath, Validation
-open FS.GG.Governance.Snapshot.Model           // RepoSnapshot
-open FS.GG.Governance.Enforcement.Enforcement  // RunMode, Profile
-open FS.GG.Governance.Ship.Model               // ShipDecision
+open FS.GG.Governance.Config.Model // GovernedPath, Validation
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot
+open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile
+open FS.GG.Governance.Ship.Model // ShipDecision
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -44,12 +44,14 @@ module Loop =
     /// `Profile = Standard` (research D5), `AuditOut = <repo>/readiness/audit.json` (research D7).
     /// `Mode`/`Profile` are the F023 typed levers threaded into `Ship.rollup`.
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Mode: RunMode
-          Profile: Profile
-          Format: OutputFormat
-          AuditOut: string }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Mode: RunMode
+            Profile: Profile
+            Format: OutputFormat
+            AuditOut: string
+        }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2 (research D9). `UnrecognizedMode`/
     /// `UnrecognizedProfile` carry the offending string from F023 `recognizeMode`/`recognizeProfile`
@@ -72,8 +74,7 @@ module Loop =
         | ToolError
 
     /// Which persisted document an effect/result refers to. Only `AuditArtifact` (one write — research D3).
-    type ArtifactKind =
-        | AuditArtifact
+    type ArtifactKind = | AuditArtifact
 
     /// The I/O the pure `update` REQUESTS but never performs (Principle IV). The edge `Interpreter`
     /// executes each and feeds the result back as a `Msg`.
@@ -94,8 +95,10 @@ module Loop =
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
     /// NO clock, machine-absolute path, or environment value (FR-006, SC-005).
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed (data-model §3). `Rolled` collapses F022's `Selected`/
     /// `Projected`: select -> rollup -> project are all pure and happen in one `Loaded(Valid)` step.
@@ -111,13 +114,15 @@ module Loop =
     /// and the terminal exit mapping read it); `AuditDoc` is the F025 projection string, computed BEFORE
     /// the write effect is emitted (research D10).
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Decision: ShipDecision option
-          AuditDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Decision: ShipDecision option
+            AuditDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values,
     /// never exceptions (research D9). Tolerates a leading `ship` verb. `--paths` and `--since` together

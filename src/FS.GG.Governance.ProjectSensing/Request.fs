@@ -20,14 +20,16 @@ type ReviewBudget =
     | FreshReviews of count: int
 
 type RunRequest =
-    { Root: string
-      Command: CommandKind
-      Mode: RunMode
-      Format: OutputFormat
-      Scope: string list
-      Domains: Set<Domain>
-      ReviewBudget: ReviewBudget
-      ReviewStore: string option
-      OutputPath: string option
-      Judge: JudgeId
-      ExplicitPlain: bool }
+    {
+        Root: string
+        Command: CommandKind
+        Mode: RunMode
+        Format: OutputFormat
+        Scope: string list
+        Domains: Set<Domain>
+        ReviewBudget: ReviewBudget
+        ReviewStore: string option
+        OutputPath: string option
+        Judge: JudgeId
+        ExplicitPlain: bool
+    }

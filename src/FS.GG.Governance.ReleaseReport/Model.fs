@@ -13,21 +13,27 @@ open FS.GG.Governance.Attestation.Model
 module Model =
 
     type PreconditionEvidence =
-        { Kind: ReleaseRuleKind
-          State: FactState
-          Reason: string }
+        {
+            Kind: ReleaseRuleKind
+            State: FactState
+            Reason: string
+        }
 
     type ReleaseReport =
-        { Decision: ReleaseDecision
-          Sensed: SensedRelease
-          Package: PackEvidenceSet
-          Preconditions: PreconditionEvidence list
-          Attestation: AttestationSummary
-          ReleaseExitCodeBasis: ExitCodeBasis }
+        {
+            Decision: ReleaseDecision
+            Sensed: SensedRelease
+            Package: PackEvidenceSet
+            Preconditions: PreconditionEvidence list
+            Attestation: AttestationSummary
+            ReleaseExitCodeBasis: ExitCodeBasis
+        }
 
     type VerifyReleasePreview =
-        { Verdict: Verdict
-          Package: PackEvidenceSet
-          Preconditions: PreconditionEvidence list
-          Attestation: AttestationSummary
-          Advisory: bool }
+        {
+            Verdict: Verdict
+            Package: PackEvidenceSet
+            Preconditions: PreconditionEvidence list
+            Attestation: AttestationSummary
+            Advisory: bool
+        }

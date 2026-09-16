@@ -14,13 +14,13 @@ open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
 open FS.GG.Governance.FreshnessKey.Model
-open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
+open FS.GG.Governance.RuleIdentity // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
-open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
-open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
+open FS.GG.Governance.CommandRecord.Model // F052: ExitCode (the execution embed's exit code)
+open FS.GG.Governance.GateRun.Model // F052: GateDisposition, GateOutcome
 open FS.GG.Governance.JsonTokens // 073: the shared closed-enum token helpers (module-qualified)
 open FS.GG.Governance.JsonWriters // 073: the shared sub-object/map writers (module-qualified)
 
@@ -58,8 +58,10 @@ module Core =
             w.WriteString("kind", "inputsChanged")
             w.WritePropertyName "categories"
             w.WriteStartArray()
+
             for c in cats do
                 w.WriteStringValue(categoryToken c)
+
             w.WriteEndArray()
             w.WriteEndObject()
 
@@ -184,8 +186,10 @@ module Core =
         =
         w.WritePropertyName name
         w.WriteStartArray()
+
         for item in items do
             writeItem w lookup execLookup item
+
         w.WriteEndArray()
 
     // ── the `currency` section — derived from the cache report (fresh/recomputed) and the decision's gate
@@ -215,7 +219,9 @@ module Core =
 
         let resolvedGates = entries |> List.map (fun e -> gateIdValue e.Gate) |> Set.ofList
 
-        let unresolved = gateItemIds decision |> List.filter (fun g -> not (Set.contains g resolvedGates))
+        let unresolved =
+            gateItemIds decision
+            |> List.filter (fun g -> not (Set.contains g resolvedGates))
 
         w.WritePropertyName "currency"
         w.WriteStartObject()
@@ -266,8 +272,10 @@ module Core =
             w.WriteString("gate", g)
             w.WritePropertyName "missing"
             w.WriteStartArray()
+
             for token in (Map.tryFind g missingByGate |> Option.defaultValue []) do
                 w.WriteStringValue token
+
             w.WriteEndArray()
             w.WriteEndObject()
 
@@ -294,7 +302,9 @@ module Core =
                 fun gateId -> Map.tryFind (gateIdValue gateId) byGate
 
         let execByGate = JsonWriters.outcomeByGate execution
-        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
+
+        let execLookup: GateId -> GateOutcome option =
+            fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
         w.WriteString("schemaVersion", schemaVersion)
         w.WriteString("verdict", verdictToken decision.Verdict)

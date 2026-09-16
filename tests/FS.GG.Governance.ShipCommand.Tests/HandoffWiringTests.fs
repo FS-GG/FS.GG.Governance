@@ -22,12 +22,20 @@ let private failingJson =
          "evidence": { "nodes": [ { "id": "build:lib", "state": "real" }, { "id": "test:unit", "state": "failed" } ], "dependencies": [] } }"""
 
 let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =
-    { Source = "readiness/wi-1/governance-handoff.json"; Json = json }
+    {
+        Source = "readiness/wi-1/governance-handoff.json"
+        Json = json
+    }
 
 let private runWithHandoff json =
     let req = requestFor (Loop.ExplicitPaths []) Loop.Text
     let cap = newCapture ()
-    let ports = { fakePorts validCatalog gitSrcChange cap req with Handoffs = fun _ -> [ handoffRead json ] }
+
+    let ports =
+        { fakePorts validCatalog gitSrcChange cap req with
+            Handoffs = fun _ -> [ handoffRead json ]
+        }
+
     Interpreter.run ports req
 
 let private blockerGateIds (d: ShipDecision) =
@@ -41,35 +49,45 @@ let private blockerGateIds (d: ShipDecision) =
 let tests =
     testList
         "HandoffWiring"
-        [ test "satisfied handoff ⇒ Pass; failing handoff ⇒ Fail with the blocking handoff evidence gate in Blockers (SC-001)" {
-              let satisfied = runWithHandoff satisfiedJson
-              let failing = runWithHandoff failingJson
+        [
+            test
+                "satisfied handoff ⇒ Pass; failing handoff ⇒ Fail with the blocking handoff evidence gate in Blockers (SC-001)" {
+                let satisfied = runWithHandoff satisfiedJson
+                let failing = runWithHandoff failingJson
 
-              Expect.equal (Option.get satisfied.Decision).Verdict Pass "all-satisfied declared evidence ⇒ Pass"
-              Expect.equal (Option.get failing.Decision).Verdict Fail "a failed declared node ⇒ Fail"
+                Expect.equal (Option.get satisfied.Decision).Verdict Pass "all-satisfied declared evidence ⇒ Pass"
+                Expect.equal (Option.get failing.Decision).Verdict Fail "a failed declared node ⇒ Fail"
 
-              Expect.exists
-                  (blockerGateIds (Option.get failing.Decision))
-                  (fun id -> id.Contains "sdd-handoff:evidence")
-                  "the blocking handoff evidence gate appears in Blockers"
-          }
+                Expect.exists
+                    (blockerGateIds (Option.get failing.Decision))
+                    (fun id -> id.Contains "sdd-handoff:evidence")
+                    "the blocking handoff evidence gate appears in Blockers"
+            }
 
-          test "HandoffsLoaded keeps update pure and LoadHandoffs is the emitted effect (Principle IV)" {
-              let req = requestFor (Loop.ExplicitPaths []) Loop.Text
-              let m0, eff = Loop.init req
-              Expect.contains eff (Loop.LoadHandoffs req.Repo) "init emits LoadHandoffs (the only handoff I/O effect)"
+            test "HandoffsLoaded keeps update pure and LoadHandoffs is the emitted effect (Principle IV)" {
+                let req = requestFor (Loop.ExplicitPaths []) Loop.Text
+                let m0, eff = Loop.init req
+                Expect.contains eff (Loop.LoadHandoffs req.Repo) "init emits LoadHandoffs (the only handoff I/O effect)"
 
-              let reads = [ handoffRead satisfiedJson ]
-              let m1, eff1 = Loop.update (Loop.HandoffsLoaded reads) m0
-              Expect.equal m1.Handoffs reads "HandoffsLoaded folds the reads into Model (pure)"
-              Expect.isEmpty eff1 "HandoffsLoaded requests no further effect — parse/map happen in the pure Loaded fold"
-          }
+                let reads = [ handoffRead satisfiedJson ]
+                let m1, eff1 = Loop.update (Loop.HandoffsLoaded reads) m0
+                Expect.equal m1.Handoffs reads "HandoffsLoaded folds the reads into Model (pure)"
 
-          test "absent handoff is a true no-op — the verdict matches a run with no Handoffs port result (SC-003)" {
-              let req = requestFor (Loop.ExplicitPaths []) Loop.Text
-              let cap = newCapture ()
-              let withNone = Interpreter.run (fakePorts validCatalog gitSrcChange cap req) req
-              // fakePorts already defaults Handoffs to (fun _ -> []) — an empty product has no handoff gates.
-              Expect.equal (Option.get withNone.Decision).Verdict Pass "no handoff, no routed gate ⇒ Pass (identity fold)"
-              Expect.isEmpty (blockerGateIds (Option.get withNone.Decision)) "no blockers without a handoff"
-          } ]
+                Expect.isEmpty
+                    eff1
+                    "HandoffsLoaded requests no further effect — parse/map happen in the pure Loaded fold"
+            }
+
+            test "absent handoff is a true no-op — the verdict matches a run with no Handoffs port result (SC-003)" {
+                let req = requestFor (Loop.ExplicitPaths []) Loop.Text
+                let cap = newCapture ()
+                let withNone = Interpreter.run (fakePorts validCatalog gitSrcChange cap req) req
+                // fakePorts already defaults Handoffs to (fun _ -> []) — an empty product has no handoff gates.
+                Expect.equal
+                    (Option.get withNone.Decision).Verdict
+                    Pass
+                    "no handoff, no routed gate ⇒ Pass (identity fold)"
+
+                Expect.isEmpty (blockerGateIds (Option.get withNone.Decision)) "no blockers without a handoff"
+            }
+        ]

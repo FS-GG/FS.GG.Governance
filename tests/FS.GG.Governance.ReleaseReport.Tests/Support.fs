@@ -22,26 +22,42 @@ open FS.GG.Governance.Attestation.Model
 // ReleaseFactsSensing snapshots, a real PackEvidenceSet, and a real AttestationSummary (Principle V; no mock).
 
 let allFamilies =
-    [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
+    [
+        VersionBump
+        PackageMetadata
+        TemplatePins
+        PublishPlan
+        TrustedPublishing
+        Provenance
+    ]
 
 let private blockingRule kind : ReleaseRule =
-    { Kind = kind
-      Surface = SurfaceId "release"
-      BaseSeverity = Blocking
-      Maturity = BlockOnRelease }
+    {
+        Kind = kind
+        Surface = SurfaceId "release"
+        BaseSeverity = Blocking
+        Maturity = BlockOnRelease
+    }
 
 /// A SensedRelease from per-family fact states + optional diagnostics (the F54 shape, surface "release").
-let sensedFrom (states: (ReleaseRuleKind * FactState) list) (diagnostics: (ReleaseRuleKind * string) list) : SensedRelease =
-    { Facts = { States = Map.ofList states }
-      Snapshot =
-        { Surface = SurfaceId "release"
-          Version = None
-          Metadata = None
-          Pins = None
-          PublishPlan = None
-          TrustedPublishing = None
-          Provenance = None
-          Diagnostics = diagnostics |> List.map (fun (f, r) -> { Family = f; Reason = r }) } }
+let sensedFrom
+    (states: (ReleaseRuleKind * FactState) list)
+    (diagnostics: (ReleaseRuleKind * string) list)
+    : SensedRelease =
+    {
+        Facts = { States = Map.ofList states }
+        Snapshot =
+            {
+                Surface = SurfaceId "release"
+                Version = None
+                Metadata = None
+                Pins = None
+                PublishPlan = None
+                TrustedPublishing = None
+                Provenance = None
+                Diagnostics = diagnostics |> List.map (fun (f, r) -> { Family = f; Reason = r })
+            }
+    }
 
 /// Every family Met — a fully-releasable sensing.
 let allMet = allFamilies |> List.map (fun k -> k, Met)
@@ -57,7 +73,11 @@ let private record =
         (Executable "dotnet")
         [ Argument "pack" ]
         (WorkingDirectory "/work")
-        { Added = []; Changed = []; Removed = [] }
+        {
+            Added = []
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 600)
         (ExitCode 0)
         (OutputDigest "o")
@@ -68,13 +88,32 @@ let private record =
 let private packRun = { Kind = Pack; Record = record }
 
 let packEvidence: PackEvidenceSet =
-    Pack.evaluatePack Map.empty [ Packed({ Surface = SurfaceId "A"; ArtifactPath = "a.nupkg"; PackedVersion = "1.1.0"; Digest = ArtifactHash "dA" }, packRun) ]
+    Pack.evaluatePack
+        Map.empty
+        [
+            Packed(
+                {
+                    Surface = SurfaceId "A"
+                    ArtifactPath = "a.nupkg"
+                    PackedVersion = "1.1.0"
+                    Digest = ArtifactHash "dA"
+                },
+                packRun
+            )
+        ]
 
 let attestation: AttestationSummary =
     let snapshot =
         Audit.auditSnapshot
-            (Revision "c") (Revision "b") (Revision "h") (RuleHash "r") (GeneratorVersion "g")
-            [ ArtifactHash "dA" ] [ packRun ] Local (BuilderIdentity "ci")
+            (Revision "c")
+            (Revision "b")
+            (Revision "h")
+            (RuleHash "r")
+            (GeneratorVersion "g")
+            [ ArtifactHash "dA" ]
+            [ packRun ]
+            Local
+            (BuilderIdentity "ci")
 
     Attestation.summarize snapshot packEvidence
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).

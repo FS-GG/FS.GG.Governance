@@ -8,7 +8,7 @@
 namespace FS.GG.Governance.RouteJson
 
 open FS.GG.Governance.Route.Model
-open FS.GG.Governance.CacheEligibility.Model   // NEW: CacheEligibilityReport (transitively via the F041 ProjectReference)
+open FS.GG.Governance.CacheEligibility.Model // NEW: CacheEligibilityReport (transitively via the F041 ProjectReference)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RouteJson =

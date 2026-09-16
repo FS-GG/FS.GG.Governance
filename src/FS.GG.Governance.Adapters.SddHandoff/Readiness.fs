@@ -33,32 +33,41 @@ module Readiness =
     // A handoff `Gate` carrying the declared maturity verbatim — no command, default timeout, advisory
     // owner. The `FreshnessKey` is the always-available declared identity (carried, never evaluated).
     let buildGate (checkId: string) (maturity: Maturity) (description: string) : Gate =
-        { Id = GateId(sprintf "sdd-handoff:%s" checkId)
-          Domain = domain
-          Description = description
-          Prerequisites = []
-          Cost = Cheap
-          Timeout = Gates.defaultTimeout
-          Owner = Owner "sdd-handoff"
-          Maturity = maturity
-          ProductCheck = false
-          FreshnessKey =
-            { Check = CheckId checkId
-              Domain = domain
-              Cost = Cheap
-              Environment = LocalOrCi
-              Command = None } }
+        {
+            Id = GateId(sprintf "sdd-handoff:%s" checkId)
+            Domain = domain
+            Description = description
+            Prerequisites = []
+            Cost = Cheap
+            Timeout = Gates.defaultTimeout
+            Owner = Owner "sdd-handoff"
+            Maturity = maturity
+            ProductCheck = false
+            FreshnessKey =
+                {
+                    Check = CheckId checkId
+                    Domain = domain
+                    Cost = Cheap
+                    Environment = LocalOrCi
+                    Command = None
+                }
+        }
 
     // A disposition is shippable only when it is one of the recognized clean tokens; anything else
     // (including an empty/unknown disposition) is treated as non-shippable ⇒ blocking-capable.
-    let private shippableTokens = set [ "shipready"; "shippable"; "ready"; "clean"; "ship" ]
+    let private shippableTokens =
+        set [ "shipready"; "shippable"; "ready"; "clean"; "ship" ]
 
     let private isNonShippable (disposition: string) : bool =
         shippableTokens.Contains(disposition.Trim().ToLowerInvariant()) |> not
 
     let toGate (source: string) (block: ReadinessBlock) : Gate =
         let id = internalIdOf source
-        let blocking = isNonShippable block.ShipDisposition || not (List.isEmpty block.BlockingDiagnosticIds)
+
+        let blocking =
+            isNonShippable block.ShipDisposition
+            || not (List.isEmpty block.BlockingDiagnosticIds)
+
         let maturity = if blocking then BlockOnShip else Warn
 
         let countsText =

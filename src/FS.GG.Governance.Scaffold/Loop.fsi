@@ -23,8 +23,10 @@ module Loop =
     /// already-resolved provider (resolution/discovery is a deferred host concern — research D0/D1).
     /// `run` destructures it into `init`'s two arguments.
     type RunRequest =
-        { Request: ScaffoldRequest
-          Provider: TemplateProvider option }
+        {
+            Request: ScaffoldRequest
+            Provider: TemplateProvider option
+        }
 
     /// The I/O the pure `update` REQUESTS but never performs (Principle IV). The edge `Interpreter`
     /// executes each and feeds the result back as a `Msg`. None of these is decided here-and-performed;
@@ -55,11 +57,13 @@ module Loop =
     /// write batch + the manifest's generated list); `Manifest` is `None` until a terminal transition
     /// folds the deterministic provenance record (data-model §6/§7).
     type Model =
-        { Request: ScaffoldRequest
-          Provider: TemplateProvider option
-          Phase: Phase
-          Emission: ProviderEmission option
-          Manifest: ScaffoldManifest option }
+        {
+            Request: ScaffoldRequest
+            Provider: TemplateProvider option
+            Phase: Phase
+            Emission: ProviderEmission option
+            Manifest: ScaffoldManifest option
+        }
 
     /// Initial state plus the first requested effect(s) (Principle IV `init`). `None` ⇒ a terminal
     /// `Done(NoProvider)` with ZERO effects and a folded no-provider manifest (FR-002). A provider whose

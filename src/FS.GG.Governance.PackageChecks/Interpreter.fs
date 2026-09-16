@@ -33,11 +33,13 @@ module Interpreter =
         | s -> s
 
     type PackagePort =
-        { RegenerateSurface: GovernedPath -> Result<SurfaceTokens, string>
-          ReadBaseline: GovernedPath -> Result<SurfaceTokens option, string>
-          WriteBaseline: GovernedPath -> SurfaceTokens -> Result<unit, string>
-          ListTranscripts: GovernedPath -> Result<GovernedPath list, string>
-          RunTranscript: GovernedPath -> Result<TranscriptOutcome, string> }
+        {
+            RegenerateSurface: GovernedPath -> Result<SurfaceTokens, string>
+            ReadBaseline: GovernedPath -> Result<SurfaceTokens option, string>
+            WriteBaseline: GovernedPath -> SurfaceTokens -> Result<unit, string>
+            ListTranscripts: GovernedPath -> Result<GovernedPath list, string>
+            RunTranscript: GovernedPath -> Result<TranscriptOutcome, string>
+        }
 
     // ── Local-file helpers (the ONLY filesystem touch) ──
 
@@ -59,8 +61,7 @@ module Interpreter =
         |> List.ofArray
         |> SurfaceTokens
 
-    let baselinePathOf (repo: string) (GovernedPath rel) : string =
-        Path.Combine(repo, rel + ".baseline")
+    let baselinePathOf (repo: string) (GovernedPath rel) : string = Path.Combine(repo, rel + ".baseline")
 
     let regenerateSurface (repo: string) (path: GovernedPath) : Result<SurfaceTokens, string> =
         let (GovernedPath rel) = path
@@ -132,12 +133,19 @@ module Interpreter =
         else
             try
                 let command: GateCommand =
-                    { Executable = Executable "dotnet"
-                      Arguments = [ Argument "fsi"; Argument full ]
-                      WorkingDirectory = WorkingDirectory repo
-                      Environment = { Added = []; Changed = []; Removed = [] }
-                      Timeout = TimeoutLimit 300
-                      CapturedOutput = NoCapturedOutput }
+                    {
+                        Executable = Executable "dotnet"
+                        Arguments = [ Argument "fsi"; Argument full ]
+                        WorkingDirectory = WorkingDirectory repo
+                        Environment =
+                            {
+                                Added = []
+                                Changed = []
+                                Removed = []
+                            }
+                        Timeout = TimeoutLimit 300
+                        CapturedOutput = NoCapturedOutput
+                    }
 
                 let outcome = exec command
                 let (ExitCode code) = outcome.ExitCode
@@ -162,11 +170,13 @@ module Interpreter =
                 Error(sprintf "transcript run threw: %s" ex.Message)
 
     let realPort (repo: string) (exec: ExecutionPort) : PackagePort =
-        { RegenerateSurface = regenerateSurface repo
-          ReadBaseline = readBaseline repo
-          WriteBaseline = writeBaseline repo
-          ListTranscripts = listTranscripts repo
-          RunTranscript = runTranscript repo exec }
+        {
+            RegenerateSurface = regenerateSurface repo
+            ReadBaseline = readBaseline repo
+            WriteBaseline = writeBaseline repo
+            ListTranscripts = listTranscripts repo
+            RunTranscript = runTranscript repo exec
+        }
 
     // Compare the regenerated surface to the committed baseline as a normalized token diff (D5).
     let diffBaseline (SurfaceTokens committed) (SurfaceTokens generated) : FsiBaselineFact =
@@ -204,9 +214,13 @@ module Interpreter =
             // a Blocking input-state finding (the same treatment as a per-transcript TranscriptUnlocatable /
             // a BaselineUnreadable), never a fabricated pass.
             | Error e ->
-                [ { ExampleId = "<transcripts>"
-                    Source = source
-                    Outcome = TranscriptUnlocatable e } ]
+                [
+                    {
+                        ExampleId = "<transcripts>"
+                        Source = source
+                        Outcome = TranscriptUnlocatable e
+                    }
+                ]
             | Ok paths ->
                 paths
                 |> List.map (fun p ->
@@ -218,10 +232,14 @@ module Interpreter =
                         | Ok o -> o
                         | Error e -> TranscriptUnlocatable e
 
-                    { ExampleId = exampleId
-                      Source = p
-                      Outcome = outcome })
+                    {
+                        ExampleId = exampleId
+                        Source = p
+                        Outcome = outcome
+                    })
 
-        { BaselineSource = source
-          Baseline = baseline
-          Transcripts = transcripts }
+        {
+            BaselineSource = source
+            Baseline = baseline
+            Transcripts = transcripts
+        }

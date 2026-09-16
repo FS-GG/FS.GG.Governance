@@ -31,12 +31,14 @@ module Model =
     /// is unresolved on covered artifacts. The supplied newtypes are consumed opaquely — never parsed, re-hashed,
     /// or fabricated.
     type SensedFacts =
-        { RuleHash: RuleHash option
-          GeneratorVersion: GeneratorVersion option
-          Base: Revision option
-          Head: Revision option
-          CoveredArtifacts: Map<GateId, ArtifactHash list>
-          CommandVersions: Map<CommandId, CommandVersion> }
+        {
+            RuleHash: RuleHash option
+            GeneratorVersion: GeneratorVersion option
+            Base: Revision option
+            Head: Revision option
+            CoveredArtifacts: Map<GateId, ArtifactHash list>
+            CommandVersions: Map<CommandId, CommandVersion>
+        }
 
     /// The CLOSED no-hide vocabulary (research D5/D6), in FR-002 field order. One case per required sensed fact
     /// that can be missing. `MissingCommandVersion` is ONLY possible for a gate that declares a command (FR-005).
@@ -62,8 +64,10 @@ module Model =
     /// originating `GateId` so the host can run F041 and a later projection can place each result under the
     /// correct gate. The entry carries ONLY the gate id and outcome (necessary-not-sufficient, FR-011).
     type FreshnessResolutionEntry =
-        { Gate: GateId
-          Outcome: ResolutionOutcome }
+        {
+            Gate: GateId
+            Outcome: ResolutionOutcome
+        }
 
     /// The per-change roll-up (FR-007): one entry per input gate, in deterministic `GateId`-ordinal order with a
     /// structural tiebreak (duplicates preserved as adjacent entries); every gate preserved, none dropped,

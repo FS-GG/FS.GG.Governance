@@ -29,32 +29,54 @@ let appName (target: string) : string =
 // only). No clock/guid/env; never throws; deterministic order.
 let emit (request: ScaffoldRequest) : Result<ProviderEmission, ProviderError> =
     let app = appName request.Target
-    let f path contents = { RelativePath = path; Contents = contents }
+
+    let f path contents =
+        {
+            RelativePath = path
+            Contents = contents
+        }
+
     Ok
-        { Files =
-            [ f (app + ".sln") (sprintf "// solution: %s\n" app)
-              f (sprintf "src/%s/%s.fsproj" app app) "<Project />\n"
-              f (sprintf "src/%s/Program.fs" app) "[<EntryPoint>]\nlet main _ = 0\n"
-              f (sprintf "tests/%s.Tests/%s.Tests.fsproj" app app) "<Project />\n"
-              f (sprintf "tests/%s.Tests/Tests.fs" app) "module Tests\n"
-              f "README.md" "# generated\n" ] }
+        {
+            Files =
+                [
+                    f (app + ".sln") (sprintf "// solution: %s\n" app)
+                    f (sprintf "src/%s/%s.fsproj" app app) "<Project />\n"
+                    f (sprintf "src/%s/Program.fs" app) "[<EntryPoint>]\nlet main _ = 0\n"
+                    f (sprintf "tests/%s.Tests/%s.Tests.fsproj" app app) "<Project />\n"
+                    f (sprintf "tests/%s.Tests/Tests.fs" app) "module Tests\n"
+                    f "README.md" "# generated\n"
+                ]
+        }
 
 let provider: TemplateProvider =
-    { Id = providerId
-      ContractVersion = { Major = 1; Minor = 0 }
-      Emit = emit }
+    {
+        Id = providerId
+        ContractVersion = { Major = 1; Minor = 0 }
+        Emit = emit
+    }
 
 // Exercise against a literal request and drive the seam through realPorts over a
 // temp dir, then project the manifest — the contract a host consumes.
-let target = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sdd-ref-fsi-" + System.Guid.NewGuid().ToString("N"))
+let target =
+    System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sdd-ref-fsi-" + System.Guid.NewGuid().ToString("N"))
+
 System.IO.Directory.CreateDirectory target |> ignore
 
 let model =
     Interpreter.run
         (Interpreter.realPorts target)
-        { Request = { Target = target; ReservedPaths = [ ".fsgg/policy.fsgg" ] }
-          Provider = Some provider }
+        {
+            Request =
+                {
+                    Target = target
+                    ReservedPaths = [ ".fsgg/policy.fsgg" ]
+                }
+            Provider = Some provider
+        }
 
 printfn "Phase   = %A" model.Phase
 model.Manifest |> Option.iter (fun m -> printfn "Outcome = %A" m.Outcome)
-model.Manifest |> Option.iter (fun m -> printfn "Manifest JSON:\n%s" (ScaffoldManifestJson.ofManifest m))
+
+model.Manifest
+|> Option.iter (fun m -> printfn "Manifest JSON:\n%s" (ScaffoldManifestJson.ofManifest m))

@@ -44,8 +44,10 @@ module Model =
     /// `EnforcementDecision` returned VERBATIM — carrying all six no-hide fields (base severity echoed
     /// unchanged, maturity, run mode, profile, effective severity, reason — FR-005, FR-006).
     type EnforcedItem =
-        { Id: EnforcedItemId
-          Decision: EnforcementDecision }
+        {
+            Id: EnforcedItemId
+            Decision: EnforcementDecision
+        }
 
     /// The whole-change ship decision. `Blockers`/`Warnings`/`Passing` are the mutually-exclusive,
     /// jointly-exhaustive partition of every enforced item (FR-004, FR-010, SC-006):
@@ -56,8 +58,10 @@ module Model =
     /// FR-009). `Verdict`/`ExitCodeBasis` are total functions of the partition. No serialized document,
     /// exit code, or freshness/cache verdict (FR-012, SC-007).
     type ShipDecision =
-        { Verdict: Verdict
-          Blockers: EnforcedItem list
-          Warnings: EnforcedItem list
-          Passing: EnforcedItem list
-          ExitCodeBasis: ExitCodeBasis }
+        {
+            Verdict: Verdict
+            Blockers: EnforcedItem list
+            Warnings: EnforcedItem list
+            Passing: EnforcedItem list
+            ExitCodeBasis: ExitCodeBasis
+        }

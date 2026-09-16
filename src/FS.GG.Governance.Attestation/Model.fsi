@@ -19,36 +19,41 @@ module Model =
     /// One attested artifact (the in-toto "subject"). Built ONLY from a Packed PackArtifact — a failed /
     /// no-artifact pack yields no subject (FR-008). Name is the normalized artifact path.
     type AttestationSubject =
-        { Name: string
-          Digest: ArtifactHash
-          Version: string }
+        {
+            Name: string
+            Digest: ArtifactHash
+            Version: string
+        }
 
     /// The in-toto "materials" — the reproducible build inputs, projected verbatim from the F033 Provenance.
     /// ArtifactDigests is treated as a SET in identity (D7).
     type AttestationMaterials =
-        { RuleHash: RuleHash
-          GeneratorVersion: GeneratorVersion
-          BaseRevision: Revision
-          HeadRevision: Revision
-          SourceCommit: Revision
-          ArtifactDigests: ArtifactHash list
-          Environment: EnvironmentClass }
+        {
+            RuleHash: RuleHash
+            GeneratorVersion: GeneratorVersion
+            BaseRevision: Revision
+            HeadRevision: Revision
+            SourceCommit: Revision
+            ArtifactDigests: ArtifactHash list
+            Environment: EnvironmentClass
+        }
 
     /// The in-toto "invocation" — the recorded command runs (order-significant, D7). Duration is carried only
     /// inside each embedded CommandRecord and excluded from identity.
     type AttestationInvocation = { Runs: KindedCommandRun list }
 
     /// The explicit not-a-claim marker (FR-008). Closed, never derived from clock/env/input.
-    type ComplianceMarker =
-        | CompatibleShapeNotFormalCompliance
+    type ComplianceMarker = | CompatibleShapeNotFormalCompliance
 
     /// The whole summary — the projection of the F25 AuditSnapshot + pack subjects. Identity is
     /// Provenance.canonicalId (F033 verbatim): changes only when a reproducible input changes; duration never
     /// affects it (SC-005).
     type AttestationSummary =
-        { Subjects: AttestationSubject list
-          Builder: BuilderIdentity
-          Materials: AttestationMaterials
-          Invocation: AttestationInvocation
-          Identity: string
-          Compliance: ComplianceMarker }
+        {
+            Subjects: AttestationSubject list
+            Builder: BuilderIdentity
+            Materials: AttestationMaterials
+            Invocation: AttestationInvocation
+            Identity: string
+            Compliance: ComplianceMarker
+        }

@@ -16,10 +16,10 @@ open System.Text
 open System.IO
 open System.Diagnostics
 open System.Threading.Tasks
-open FS.GG.Governance.Config.Model            // TimeoutLimit
-open FS.GG.Governance.CommandRecord.Model      // ExitCode, CommandRecord, the env-delta newtypes
-open FS.GG.Governance.ExecutionRecord          // ExecutionRecord.recordOf (F050)
-open FS.GG.Governance.GateExecution.Model        // GateCommand, ExecutionOutcome, ExecutionPort
+open FS.GG.Governance.Config.Model // TimeoutLimit
+open FS.GG.Governance.CommandRecord.Model // ExitCode, CommandRecord, the env-delta newtypes
+open FS.GG.Governance.ExecutionRecord // ExecutionRecord.recordOf (F050)
+open FS.GG.Governance.GateExecution.Model // GateCommand, ExecutionOutcome, ExecutionPort
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -88,10 +88,12 @@ module Interpreter =
                 match Process.Start psi with
                 | null ->
                     // A null process is a start failure — reified, never thrown (FR-007).
-                    { Stdout = [||]
-                      Stderr = Encoding.UTF8.GetBytes "gate process failed to start"
-                      ExitCode = startFailureExitCode
-                      Duration = nanos () }
+                    {
+                        Stdout = [||]
+                        Stderr = Encoding.UTF8.GetBytes "gate process failed to start"
+                        ExitCode = startFailureExitCode
+                        Duration = nanos ()
+                    }
                 | proc ->
                     use proc = proc
                     // Drain BOTH redirected base byte streams CONCURRENTLY into in-memory buffers — raw bytes
@@ -112,7 +114,11 @@ module Interpreter =
                             0
                         else
                             let ms = int64 seconds * 1000L
-                            if ms > int64 System.Int32.MaxValue then System.Int32.MaxValue else int ms
+
+                            if ms > int64 System.Int32.MaxValue then
+                                System.Int32.MaxValue
+                            else
+                                int ms
 
                     if proc.WaitForExit waitMs then
                         // Clean / within-limit exit: drain BOUNDED too (M-CORE-2) — a gate that spawned a
@@ -125,31 +131,40 @@ module Interpreter =
 
                         proc.WaitForExit() // ensure ExitCode is available
 
-                        { Stdout = drainedBytes outTask stdoutBuf
-                          Stderr = drainedBytes errTask stderrBuf
-                          ExitCode = ExitCode proc.ExitCode
-                          Duration = nanos () }
+                        {
+                            Stdout = drainedBytes outTask stdoutBuf
+                            Stderr = drainedBytes errTask stderrBuf
+                            ExitCode = ExitCode proc.ExitCode
+                            Duration = nanos ()
+                        }
                     else
                         // Overrun (FR-006): terminate the whole tree, drain whatever was captured (bounded so
                         // we never hang), and record timeoutExitCode + partial output + elapsed duration.
-                        (try proc.Kill true with _ -> ())
+                        (try
+                            proc.Kill true
+                         with _ ->
+                             ())
 
                         (try
                             Task.WaitAll([| outTask; errTask |], 5000) |> ignore
                          with _ ->
                              ())
 
-                        { Stdout = drainedBytes outTask stdoutBuf
-                          Stderr = drainedBytes errTask stderrBuf
-                          ExitCode = timeoutExitCode
-                          Duration = nanos () }
+                        {
+                            Stdout = drainedBytes outTask stdoutBuf
+                            Stderr = drainedBytes errTask stderrBuf
+                            ExitCode = timeoutExitCode
+                            Duration = nanos ()
+                        }
             with ex ->
                 // A start failure (e.g. a missing executable) is CAUGHT and reified as startFailureExitCode +
                 // the exception message captured in the stderr bytes (the diagnostic), never thrown (FR-007).
-                { Stdout = [||]
-                  Stderr = Encoding.UTF8.GetBytes ex.Message
-                  ExitCode = startFailureExitCode
-                  Duration = nanos () }
+                {
+                    Stdout = [||]
+                    Stderr = Encoding.UTF8.GetBytes ex.Message
+                    ExitCode = startFailureExitCode
+                    Duration = nanos ()
+                }
 
     let senseExecution (port: ExecutionPort) (command: GateCommand) : CommandRecord =
         // Edge I/O + the pure F050 `recordOf` (mirrors `Snapshot.senseSnapshot` = edge I/O + pure `assemble`).

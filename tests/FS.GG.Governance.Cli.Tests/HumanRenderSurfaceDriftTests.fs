@@ -14,4 +14,6 @@ let private humanRender = typeof<Watch.WatchModel>.Assembly
 let tests =
     testList
         "HumanRenderSurfaceDrift"
-        [ SurfaceDrift.surfaceTest "HumanRender" "FS.GG.Governance.HumanRender" humanRender ]
+        [
+            SurfaceDrift.surfaceTest "HumanRender" "FS.GG.Governance.HumanRender" humanRender
+        ]

@@ -25,42 +25,54 @@ let private outcomeName (v: CacheEligibilityVerdict) =
 let tests =
     testList
         "NecessaryNotSufficient"
-        [ test "the verdict is structurally exactly two outcomes — no enforcement member exists (by construction, L-G6)" {
-              // If `CacheEligibilityVerdict` grew a third case or an enforcement payload, `outcomeName` would
-              // stop compiling or this enumeration would miss a case. Pin both representative values.
-              Expect.equal (outcomeName (Reusable refA)) "reusable" "Reusable is one closed outcome"
-              Expect.equal (outcomeName (MustRecompute NoPriorEvidence)) "recompute" "MustRecompute is the other"
-          }
+        [
+            test
+                "the verdict is structurally exactly two outcomes — no enforcement member exists (by construction, L-G6)" {
+                // If `CacheEligibilityVerdict` grew a third case or an enforcement payload, `outcomeName` would
+                // stop compiling or this enumeration would miss a case. Pin both representative values.
+                Expect.equal (outcomeName (Reusable refA)) "reusable" "Reusable is one closed outcome"
+                Expect.equal (outcomeName (MustRecompute NoPriorEvidence)) "recompute" "MustRecompute is the other"
+            }
 
-          testPropertyWithConfig fscheckConfig "every Reusable names its evidence and no cause; every MustRecompute names its cause and no evidence (FR-001, no-hide, L-P2/L-P3/L-P4)"
-          <| fun (c: CandidateGate) (s: ReuseStore) ->
-              let v = CacheEligibility.evaluateGate c s
+            testPropertyWithConfig
+                fscheckConfig
+                "every Reusable names its evidence and no cause; every MustRecompute names its cause and no evidence (FR-001, no-hide, L-P2/L-P3/L-P4)"
+            <| fun (c: CandidateGate) (s: ReuseStore) ->
+                let v = CacheEligibility.evaluateGate c s
 
-              match v with
-              | Reusable ref ->
-                  CacheEligibility.isReusable v
-                  && CacheEligibility.reusableEvidence v = Some ref
-                  && CacheEligibility.recomputeCause v = None
-              | MustRecompute cause ->
-                  not (CacheEligibility.isReusable v)
-                  && CacheEligibility.recomputeCause v = Some cause
-                  && CacheEligibility.reusableEvidence v = None
+                match v with
+                | Reusable ref ->
+                    CacheEligibility.isReusable v
+                    && CacheEligibility.reusableEvidence v = Some ref
+                    && CacheEligibility.recomputeCause v = None
+                | MustRecompute cause ->
+                    not (CacheEligibility.isReusable v)
+                    && CacheEligibility.recomputeCause v = Some cause
+                    && CacheEligibility.reusableEvidence v = None
 
-          test "every entry of a produced report obeys the no-hide projections (FR-001, no-hide)" {
-              // A mixed report: one exact match (Reusable) and one stale candidate (MustRecompute).
-              let store = storeOf [ baseInputs, refA ]
-              let cs =
-                  [ candidate (gid "a" "a") baseInputs
-                    candidate (gid "b" "b") { baseInputs with Domain = FS.GG.Governance.Config.Model.DomainId "release" } ]
+            test "every entry of a produced report obeys the no-hide projections (FR-001, no-hide)" {
+                // A mixed report: one exact match (Reusable) and one stale candidate (MustRecompute).
+                let store = storeOf [ baseInputs, refA ]
 
-              for e in CacheEligibility.entries (CacheEligibility.evaluate cs store) do
-                  match e.Verdict with
-                  | Reusable _ ->
-                      Expect.isTrue (CacheEligibility.isReusable e.Verdict) "Reusable ⇒ isReusable"
-                      Expect.isSome (CacheEligibility.reusableEvidence e.Verdict) "Reusable names its evidence"
-                      Expect.isNone (CacheEligibility.recomputeCause e.Verdict) "Reusable has no cause"
-                  | MustRecompute _ ->
-                      Expect.isFalse (CacheEligibility.isReusable e.Verdict) "MustRecompute ⇒ not isReusable"
-                      Expect.isSome (CacheEligibility.recomputeCause e.Verdict) "MustRecompute always names its cause"
-                      Expect.isNone (CacheEligibility.reusableEvidence e.Verdict) "MustRecompute has no evidence"
-          } ]
+                let cs =
+                    [
+                        candidate (gid "a" "a") baseInputs
+                        candidate
+                            (gid "b" "b")
+                            { baseInputs with
+                                Domain = FS.GG.Governance.Config.Model.DomainId "release"
+                            }
+                    ]
+
+                for e in CacheEligibility.entries (CacheEligibility.evaluate cs store) do
+                    match e.Verdict with
+                    | Reusable _ ->
+                        Expect.isTrue (CacheEligibility.isReusable e.Verdict) "Reusable ⇒ isReusable"
+                        Expect.isSome (CacheEligibility.reusableEvidence e.Verdict) "Reusable names its evidence"
+                        Expect.isNone (CacheEligibility.recomputeCause e.Verdict) "Reusable has no cause"
+                    | MustRecompute _ ->
+                        Expect.isFalse (CacheEligibility.isReusable e.Verdict) "MustRecompute ⇒ not isReusable"
+                        Expect.isSome (CacheEligibility.recomputeCause e.Verdict) "MustRecompute always names its cause"
+                        Expect.isNone (CacheEligibility.reusableEvidence e.Verdict) "MustRecompute has no evidence"
+            }
+        ]

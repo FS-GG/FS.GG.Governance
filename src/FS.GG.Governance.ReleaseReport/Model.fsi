@@ -20,9 +20,11 @@ module Model =
     /// One publication precondition surfaced first-class (FR-006), projected from the F54 ReleaseSnapshot +
     /// the F53 finding. Product-neutral.
     type PreconditionEvidence =
-        { Kind: ReleaseRuleKind
-          State: FactState
-          Reason: string }
+        {
+            Kind: ReleaseRuleKind
+            State: FactState
+            Reason: string
+        }
 
     /// The whole publication boundary as one immutable, presentation-free value (FR-012). Carries the F53
     /// decision VERBATIM — never re-derives a verdict or exit-code basis. `Sensed` is the F54 SensedRelease
@@ -30,17 +32,21 @@ module Model =
     /// v1 `rules`/`evidence` blocks render from it, and `Preconditions` is its first-class projection
     /// (the JSON v2 contract renders the v1 fields "from report.Decision + the sensed snapshot").
     type ReleaseReport =
-        { Decision: ReleaseDecision
-          Sensed: SensedRelease
-          Package: PackEvidenceSet
-          Preconditions: PreconditionEvidence list
-          Attestation: AttestationSummary
-          ReleaseExitCodeBasis: ExitCodeBasis }
+        {
+            Decision: ReleaseDecision
+            Sensed: SensedRelease
+            Package: PackEvidenceSet
+            Preconditions: PreconditionEvidence list
+            Attestation: AttestationSummary
+            ReleaseExitCodeBasis: ExitCodeBasis
+        }
 
     /// The ADVISORY projection fsgg verify surfaces (FR-005): the same evidence, explicitly non-blocking.
     type VerifyReleasePreview =
-        { Verdict: Verdict
-          Package: PackEvidenceSet
-          Preconditions: PreconditionEvidence list
-          Attestation: AttestationSummary
-          Advisory: bool }
+        {
+            Verdict: Verdict
+            Package: PackEvidenceSet
+            Preconditions: PreconditionEvidence list
+            Attestation: AttestationSummary
+            Advisory: bool
+        }

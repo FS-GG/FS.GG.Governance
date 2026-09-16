@@ -34,15 +34,17 @@ module Provenance =
         : Provenance =
         // Verbatim carriage — no normalization, no sorting, no dedup (canonicalization is `canonicalId`'s
         // job — L-B4). The sensed durations stay structurally apart inside the embedded F032 records (D3).
-        { SourceCommit = sourceCommit
-          Base = baseRevision
-          Head = headRevision
-          RuleHash = ruleHash
-          GeneratorVersion = generatorVersion
-          ArtifactDigests = artifactDigests
-          CommandRecords = commandRecords
-          Environment = environment
-          Builder = builder }
+        {
+            SourceCommit = sourceCommit
+            Base = baseRevision
+            Head = headRevision
+            RuleHash = ruleHash
+            GeneratorVersion = generatorVersion
+            ArtifactDigests = artifactDigests
+            CommandRecords = commandRecords
+            Environment = environment
+            Builder = builder
+        }
 
     // ── Segment encoders (internal; hidden by Provenance.fsi) — the F029/F032 discipline (D5) ──
 
@@ -64,9 +66,7 @@ module Provenance =
             |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b))
 
         let body =
-            canon
-            |> List.map (fun a -> sprintf "%d:%s" (byteLen a) a)
-            |> String.concat ";"
+            canon |> List.map (fun a -> sprintf "%d:%s" (byteLen a) a) |> String.concat ";"
 
         sprintf "art=%d;%s" (List.length canon) body
 
@@ -108,15 +108,17 @@ module Provenance =
 
         // Fixed field order, joined by '\n', no trailing newline
         // (contracts/provenance-identity-format.md).
-        [ req "src" src
-          req "base" baseRev
-          req "head" headRev
-          req "rule" rule
-          req "gen" gen
-          artSegment provenance.ArtifactDigests
-          cmdsSegment provenance.CommandRecords
-          req "env" (environmentToken provenance.Environment)
-          req "bld" bld ]
+        [
+            req "src" src
+            req "base" baseRev
+            req "head" headRev
+            req "rule" rule
+            req "gen" gen
+            artSegment provenance.ArtifactDigests
+            cmdsSegment provenance.CommandRecords
+            req "env" (environmentToken provenance.Environment)
+            req "bld" bld
+        ]
         |> String.concat "\n"
         |> ProvenanceIdentity
 

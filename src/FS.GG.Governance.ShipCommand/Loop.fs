@@ -10,46 +10,46 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open FS.GG.Governance.Config.Model       // GovernedPath, Validation, Valid/Invalid, normalizePath, diagnosticIdToken
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot, ChangedPath, DiffRange, CommitId
-open FS.GG.Governance.Routing             // Routing.route
-open FS.GG.Governance.Findings            // Findings.findUnknownGovernedPaths
-open FS.GG.Governance.Findings.Model       // findingIdToken
-open FS.GG.Governance.Gates               // Gates.buildRegistry
-open FS.GG.Governance.Gates.Model          // Gate, gateIdValue
-open FS.GG.Governance.Route               // Route.select
-open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
-open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
+open FS.GG.Governance.Config.Model // GovernedPath, Validation, Valid/Invalid, normalizePath, diagnosticIdToken
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot, ChangedPath, DiffRange, CommitId
+open FS.GG.Governance.Routing // Routing.route
+open FS.GG.Governance.Findings // Findings.findUnknownGovernedPaths
+open FS.GG.Governance.Findings.Model // findingIdToken
+open FS.GG.Governance.Gates // Gates.buildRegistry
+open FS.GG.Governance.Gates.Model // Gate, gateIdValue
+open FS.GG.Governance.Route // Route.select
+open FS.GG.Governance.Route.Model // RouteResult, SelectedGate
+open FS.GG.Governance.Adapters.SddHandoff // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile, Severity, Recognized, recognizeMode, recognizeProfile
-open FS.GG.Governance.Ship                // Ship.rollup
-open FS.GG.Governance.Inheritance          // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
-open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
-open FS.GG.Governance.AuditJson           // AuditJson.ofShipDecision
-open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofShipDecision — the plain projection
+open FS.GG.Governance.Ship // Ship.rollup
+open FS.GG.Governance.Inheritance // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
+open FS.GG.Governance.Ship.Model // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
+open FS.GG.Governance.AuditJson // AuditJson.ofShipDecision
+open FS.GG.Governance.HumanText // F27 wiring (063): HumanText.ofShipDecision — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
-open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
-open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
+open FS.GG.Governance.FreshnessKey.Model // Revision, categoryToken
+open FS.GG.Governance.FreshnessResolution // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts, FreshnessResolutionEntry
-open FS.GG.Governance.CacheEligibility      // evaluate, entries
+open FS.GG.Governance.CacheEligibility // evaluate, entries
 open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityEntry, CacheEligibilityVerdict, Reusable, MustRecompute
-open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
-open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
-open FS.GG.Governance.EvidenceReuseStore    // F048: prune, retain, serialise, defaultRetentionBound
+open FS.GG.Governance.EvidenceReuse // empty, referenceValue
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
+open FS.GG.Governance.EvidenceReuseStore // F048: prune, retain, serialise, defaultRetentionBound
 // F052 gate-execution wiring (classify → run → capture → relocate verdict → persist-grown-store)
-open FS.GG.Governance.CommandRecord.Model    // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
-open FS.GG.Governance.GateExecution.Model     // GateCommand
-open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
-open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
-open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
+open FS.GG.Governance.CommandRecord.Model // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.EvidenceCapture // EvidenceCapture.capture
+open FS.GG.Governance.GateRun // Plan.commandFor / priorExitOf / passed
+open FS.GG.Governance.GateRun.Model // GateDisposition, GateOutcome
 // F25 host wiring (064): the four consumed cores + F033 Provenance (budget filter, kinded runs, two sidecars).
-open FS.GG.Governance.CostBudget.Model        // CostBudget, CandidateCost, AgentReviewMark, CacheDecision, BudgetReason, CacheDecisionReport
-open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
-open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
-open FS.GG.Governance.Provenance.Model        // BuilderIdentity
-open FS.GG.Governance.CommandHost             // 075: shared host skeleton — under/describeInvalid/emptySensedFacts/
-                                              //   revOfCommit/baseHeadOf/persistedContent/kindOf/kindedRunsOf/
-                                              //   buildSnapshot/GateClassification/executionPlan (ExitDecision/
-                                              //   exitCode/fail/tryExecute stay LOCAL — type-divergent on Model/Effect)
+open FS.GG.Governance.CostBudget.Model // CostBudget, CandidateCost, AgentReviewMark, CacheDecision, BudgetReason, CacheDecisionReport
+open FS.GG.Governance.CostBudget.Findings // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
+open FS.GG.Governance.CommandKind.Model // CommandKind, KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — under/describeInvalid/emptySensedFacts/
+//   revOfCommit/baseHeadOf/persistedContent/kindOf/kindedRunsOf/
+//   buildSnapshot/GateClassification/executionPlan (ExitDecision/
+//   exitCode/fail/tryExecute stay LOCAL — type-divergent on Model/Effect)
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
 
@@ -66,18 +66,20 @@ module Loop =
         | Json
 
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Mode: RunMode
-          Profile: Profile
-          Format: OutputFormat
-          AuditOut: string
-          StorePath: string
-          PersistStore: bool
-          ExplicitPlain: bool
-          CostBudgetOut: string
-          ProvenanceOut: string
-          DryRun: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Mode: RunMode
+            Profile: Profile
+            Format: OutputFormat
+            AuditOut: string
+            StorePath: string
+            PersistStore: bool
+            ExplicitPlain: bool
+            CostBudgetOut: string
+            ProvenanceOut: string
+            DryRun: bool
+        }
 
     type UsageError =
         | UnknownFlag of string
@@ -128,8 +130,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -141,28 +145,30 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Decision: ShipDecision option
-          AuditDoc: string option
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          Tooling: ToolingFacts option
-          Outcomes: (GateId * GateOutcome) list
-          CacheNotes: string list
-          StoreDegraded: bool
-          PersistAcked: bool
-          Environment: EnvironmentClass option
-          Builder: BuilderIdentity option
-          CacheDecision: CacheDecisionReport option
-          Audit: AuditSnapshot option
-          ViewCurrencyFindings: CE.CurrencyFinding list
-          Handoffs: Reader.HandoffRead list
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Decision: ShipDecision option
+            AuditDoc: string option
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            Tooling: ToolingFacts option
+            Outcomes: (GateId * GateOutcome) list
+            CacheNotes: string list
+            StoreDegraded: bool
+            PersistAcked: bool
+            Environment: EnvironmentClass option
+            Builder: BuilderIdentity option
+            CacheDecision: CacheDecisionReport option
+            Audit: AuditSnapshot option
+            ViewCurrencyFindings: CE.CurrencyFinding list
+            Handoffs: Reader.HandoffRead list
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     // ── exitCode (research D6) — total, no wildcard; `Blocked` 1 reserved for a blocked merge verdict ──
 
@@ -179,34 +185,38 @@ module Loop =
     // Hidden accumulator (absent from Loop.fsi). `Paths = Some []` marks an explicit but empty
     // `--paths` (an EmptyPaths usage error); `Paths = None` means no `--paths` flag was given.
     type ParseAcc =
-        { Repo: string option
-          Paths: string list option
-          Since: string option
-          Mode: string option
-          Profile: string option
-          Json: bool
-          AuditOut: string option
-          Store: string option
-          Persist: bool
-          Plain: bool
-          CostBudgetOut: string option
-          ProvenanceOut: string option
-          DryRun: bool }
+        {
+            Repo: string option
+            Paths: string list option
+            Since: string option
+            Mode: string option
+            Profile: string option
+            Json: bool
+            AuditOut: string option
+            Store: string option
+            Persist: bool
+            Plain: bool
+            CostBudgetOut: string option
+            ProvenanceOut: string option
+            DryRun: bool
+        }
 
     let emptyAcc =
-        { Repo = None
-          Paths = None
-          Since = None
-          Mode = None
-          Profile = None
-          Json = false
-          AuditOut = None
-          Store = None
-          Persist = false
-          Plain = false
-          CostBudgetOut = None
-          ProvenanceOut = None
-          DryRun = false }
+        {
+            Repo = None
+            Paths = None
+            Since = None
+            Mode = None
+            Profile = None
+            Json = false
+            AuditOut = None
+            Store = None
+            Persist = false
+            Plain = false
+            CostBudgetOut = None
+            ProvenanceOut = None
+            DryRun = false
+        }
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `ship` verb — the verb this command implements.
@@ -236,9 +246,11 @@ module Loop =
             | "--profile" :: _ -> Error(MissingValue "--profile")
             | "--audit-out" :: v :: more when not (v.StartsWith "--") -> go { acc with AuditOut = Some v } more
             | "--audit-out" :: _ -> Error(MissingValue "--audit-out")
-            | "--cost-budget-out" :: v :: more when not (v.StartsWith "--") -> go { acc with CostBudgetOut = Some v } more
+            | "--cost-budget-out" :: v :: more when not (v.StartsWith "--") ->
+                go { acc with CostBudgetOut = Some v } more
             | "--cost-budget-out" :: _ -> Error(MissingValue "--cost-budget-out")
-            | "--provenance-out" :: v :: more when not (v.StartsWith "--") -> go { acc with ProvenanceOut = Some v } more
+            | "--provenance-out" :: v :: more when not (v.StartsWith "--") ->
+                go { acc with ProvenanceOut = Some v } more
             | "--provenance-out" :: _ -> Error(MissingValue "--provenance-out")
             | "--store" :: v :: more when not (v.StartsWith "--") -> go { acc with Store = Some v } more
             | "--store" :: _ -> Error(MissingValue "--store")
@@ -291,45 +303,57 @@ module Loop =
                         | _ -> DefaultRange
 
                     Ok
-                        { Repo = repo
-                          Scope = scope
-                          Mode = mode
-                          Profile = profile
-                          Format = (if acc.Json then Json else Text)
-                          AuditOut = acc.AuditOut |> Option.defaultValue (CommandHost.under repo "readiness/audit.json")
-                          StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
-                          PersistStore = acc.Persist
-                          ExplicitPlain = acc.Plain
-                          CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
-                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json")
-                          DryRun = acc.DryRun }
+                        {
+                            Repo = repo
+                            Scope = scope
+                            Mode = mode
+                            Profile = profile
+                            Format = (if acc.Json then Json else Text)
+                            AuditOut =
+                                acc.AuditOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/audit.json")
+                            StorePath =
+                                acc.Store
+                                |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
+                            PersistStore = acc.Persist
+                            ExplicitPlain = acc.Plain
+                            CostBudgetOut =
+                                acc.CostBudgetOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
+                            ProvenanceOut =
+                                acc.ProvenanceOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json")
+                            DryRun = acc.DryRun
+                        }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Candidates = None
-              Decision = None
-              AuditDoc = None
-              Snapshot = None
-              SelectedGates = []
-              Sensed = None
-              Store = None
-              Tooling = None
-              Outcomes = []
-              CacheNotes = []
-              StoreDegraded = false
-              PersistAcked = false
-              Environment = None
-              Builder = None
-              CacheDecision = None
-              Audit = None
-              ViewCurrencyFindings = []
-              Handoffs = []
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Candidates = None
+                Decision = None
+                AuditDoc = None
+                Snapshot = None
+                SelectedGates = []
+                Sensed = None
+                Store = None
+                Tooling = None
+                Outcomes = []
+                CacheNotes = []
+                StoreDegraded = false
+                PersistAcked = false
+                Environment = None
+                Builder = None
+                CacheDecision = None
+                Audit = None
+                ViewCurrencyFindings = []
+                Handoffs = []
+                Diagnostics = []
+                Exit = Success
+            }
 
         // F25 wiring (064): sense the two normalized provenance facts FIRST, so `Environment`/`Builder` are
         // populated before the executed-gate persist projects the `provenance.json` sidecar. F070: sense
@@ -342,10 +366,21 @@ module Loop =
         // `Loaded(Valid)` rollup consumes them (the breadth-first driver processes a batch in order).
         | ExplicitPaths paths ->
             { model with Candidates = Some paths },
-            [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; LoadCatalog request.Repo ]
+            [
+                LoadHandoffs request.Repo
+                SenseViewCurrency request.Repo
+                SenseProvenance
+                LoadCatalog request.Repo
+            ]
         | Since _
         | DefaultRange ->
-            model, [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
+            model,
+            [
+                LoadHandoffs request.Repo
+                SenseViewCurrency request.Repo
+                SenseProvenance
+                SenseScope request.Scope
+            ]
 
     // ── update — the whole composition; TOTAL, never throws (FR-004/FR-013) ──
 
@@ -354,7 +389,15 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     // Map the decision's typed ExitCodeBasis to the process-level ExitDecision (research D6, FR-008).
@@ -389,8 +432,12 @@ module Loop =
             | GateItem g -> Set.contains g passedGateIds
             | FindingItem _ -> false
 
-        let blockersKept, blockersMoved = decision.Blockers |> List.partition (isPassingGate >> not)
-        let warningsKept, warningsMoved = decision.Warnings |> List.partition (isPassingGate >> not)
+        let blockersKept, blockersMoved =
+            decision.Blockers |> List.partition (isPassingGate >> not)
+
+        let warningsKept, warningsMoved =
+            decision.Warnings |> List.partition (isPassingGate >> not)
+
         let passing' = decision.Passing @ blockersMoved @ warningsMoved
         let verdict' = if List.isEmpty blockersKept then Pass else Fail
 
@@ -404,7 +451,8 @@ module Loop =
             Blockers = blockersKept
             Warnings = warningsKept
             Passing = passing'
-            ExitCodeBasis = basis' }
+            ExitCodeBasis = basis'
+        }
 
     // ── F25 wiring (064): pure host-edge helpers (kinded-run label, provenance snapshot build) ──
 
@@ -447,10 +495,12 @@ module Loop =
                         | Some v -> v
                         | None -> MustRecompute NoPriorEvidence
 
-                    { Gate = g.Id
-                      Cost = g.Cost
-                      Verdict = verdict
-                      Review = reviewMarkOf g })
+                    {
+                        Gate = g.Id
+                        Cost = g.Cost
+                        Verdict = verdict
+                        Review = reviewMarkOf g
+                    })
 
             let budgetReport =
                 FS.GG.Governance.CostBudget.Budget.decide budget model.Request.Mode candidateCosts
@@ -494,7 +544,10 @@ module Loop =
                         | CommandHost.Deferred _
                         | CommandHost.NoCommand -> None)
 
-            { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
+            { model with
+                CacheDecision = Some budgetReport
+            },
+            [ ExecuteGates toExecute ]
         | _ -> model, []
 
     // On `GatesExecuted`: fold F049 `capture` per executed gate (grows the store), build the per-gate
@@ -518,7 +571,8 @@ module Loop =
         if viewCurrencyBlocks mode profile findings then
             { decision with
                 Verdict = Fail
-                ExitCodeBasis = ExitCodeBasis.Blocked }
+                ExitCodeBasis = ExitCodeBasis.Blocked
+            }
         else
             decision
 
@@ -546,7 +600,8 @@ module Loop =
 
             { model with
                 Phase = Persisted
-                Decision = Some folded },
+                Decision = Some folded
+            },
             [ EmitSummary(text, None, model.Request.ExplicitPlain) ]
 
         | Some sensed, Some store, Some decision ->
@@ -561,7 +616,9 @@ module Loop =
                     (fun s (g, c) ->
                         match c with
                         | CommandHost.ToExecute _ ->
-                            match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
+                            match
+                                Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap
+                            with
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
                         | CommandHost.ToReuse _
@@ -579,22 +636,32 @@ module Loop =
                             | Some record ->
                                 let code = record.Reproducible.ExitCode
 
-                                { GateId = g.Id
-                                  Disposition = Executed(code, Plan.passed code) }
+                                {
+                                    GateId = g.Id
+                                    Disposition = Executed(code, Plan.passed code)
+                                }
                             | None ->
-                                { GateId = g.Id
-                                  Disposition = NotExecuted }
+                                {
+                                    GateId = g.Id
+                                    Disposition = NotExecuted
+                                }
                         | CommandHost.ToReuse code ->
-                            { GateId = g.Id
-                              Disposition = Reused(code, Plan.passed code) }
+                            {
+                                GateId = g.Id
+                                Disposition = Reused(code, Plan.passed code)
+                            }
                         // A deferred (over-budget) gate is NOT executed and NOT reused — recorded NotExecuted so
                         // it is structurally excluded from the passed set (never coerced to pass — SC-002).
                         | CommandHost.Deferred _ ->
-                            { GateId = g.Id
-                              Disposition = NotExecuted }
+                            {
+                                GateId = g.Id
+                                Disposition = NotExecuted
+                            }
                         | CommandHost.NoCommand ->
-                            { GateId = g.Id
-                              Disposition = NotExecuted }
+                            {
+                                GateId = g.Id
+                                Disposition = NotExecuted
+                            }
 
                     g.Id, outcome)
 
@@ -617,7 +684,11 @@ module Loop =
                 |> List.map (fun f -> f, CE.decisionOf f model.Request.Mode model.Request.Profile)
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries resReport
+                |> List.choose FreshnessResolution.candidate
+
             let cacheReport = CacheEligibility.evaluate candidates store
             // audit.json is projected over the currency-folded decision + cache report + outcomes; the additive
             // `generatedViews` array is omitted when there are no currency findings ⇒ byte-identical (FR-004/D6).
@@ -639,14 +710,22 @@ module Loop =
                     model.Environment
                     model.Builder
                     (CommandHost.kindedRunsOf model.SelectedGates records)
-            let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+
+            let provenanceDoc =
+                FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore) ], []
+                | true, false ->
+                    [
+                        PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore)
+                    ],
+                    []
                 | true, true ->
                     [],
-                    [ "cache note: store not persisted: on-disk store failed to parse; left untouched" ]
+                    [
+                        "cache note: store not persisted: on-disk store failed to parse; left untouched"
+                    ]
                 | false, _ -> [], []
 
             { model with
@@ -656,7 +735,8 @@ module Loop =
                 Outcomes = outcomes
                 CacheDecision = Some budgetReport
                 Audit = Some snapshot
-                CacheNotes = model.CacheNotes @ persistNotes },
+                CacheNotes = model.CacheNotes @ persistNotes
+            },
             WriteArtifact(AuditArtifact, model.Request.AuditOut, auditDoc)
             :: WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
             :: WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc)
@@ -677,7 +757,8 @@ module Loop =
                 { model with
                     Phase = Sensed'
                     Candidates = Some candidates
-                    Snapshot = Some snapshot },
+                    Snapshot = Some snapshot
+                },
                 [ LoadCatalog model.Request.Repo ]
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
@@ -714,8 +795,8 @@ module Loop =
                     | extra ->
                         { routed with
                             SelectedGates =
-                                routed.SelectedGates @ extra
-                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+                                routed.SelectedGates @ extra |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id)
+                        }
 
                 // WI-5 / ADR-0049: fold the product's profile-bound inherited gate floor into the
                 // selection BEFORE `Ship.rollup`, so an inherited gate enforces via the SAME
@@ -731,9 +812,15 @@ module Loop =
                     Phase = Selected
                     Decision = Some decision
                     SelectedGates = selectedGates
-                    Tooling = facts.Tooling },
-                [ SenseFreshness(selectedGates, CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range)))
-                  LoadStore model.Request.StorePath ]
+                    Tooling = facts.Tooling
+                },
+                [
+                    SenseFreshness(
+                        selectedGates,
+                        CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
+                    )
+                    LoadStore model.Request.StorePath
+                ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
             // non-fatal cache note (D2) — it NEVER fails the command, never perturbs the verdict, and never
@@ -746,7 +833,12 @@ module Loop =
                         Sensed = Some CommandHost.emptySensedFacts
                         CacheNotes =
                             model.CacheNotes
-                            @ [ "cache note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
+                            @ [
+                                "cache note: freshness facts could not be sensed ("
+                                + reason
+                                + "); affected gates are recompute-by-default and reported as not-evaluated"
+                            ]
+                    }
 
             | StoreLoaded(Ok store) -> tryExecute { model with Store = Some store }
 
@@ -759,7 +851,12 @@ module Loop =
                         StoreDegraded = true
                         CacheNotes =
                             model.CacheNotes
-                            @ [ "cache note: reuse store unreadable (" + reason + "); treated as empty — every gate is recompute-by-default" ] }
+                            @ [
+                                "cache note: reuse store unreadable ("
+                                + reason
+                                + "); treated as empty — every gate is recompute-by-default"
+                            ]
+                    }
 
             | Wrote(_, Error reason) ->
                 // A write failure is ALWAYS a ToolError, NEVER a blocked verdict (FR-009).
@@ -795,7 +892,11 @@ module Loop =
                         model.CacheNotes
                         @ [ "cache note: store not persisted (" + reason + "); run unaffected" ]
 
-                let model = { model with PersistAcked = true; CacheNotes = notes }
+                let model =
+                    { model with
+                        PersistAcked = true
+                        CacheNotes = notes
+                    }
 
                 match model.Phase with
                 | Persisted -> model, [ emitEffect model ]
@@ -810,13 +911,18 @@ module Loop =
             | ProvenanceSensed(environment, builder) ->
                 { model with
                     Environment = Some environment
-                    Builder = Some builder },
+                    Builder = Some builder
+                },
                 []
 
             // F070: the stale-generated-view currency findings landed. Store them; the verdict fold and the
             // additive `generatedViews` projection happen in `projectExecuted`, which reads this field. Pure
             // state, no phase change. `[]` (unconfigured) ⇒ identity fold ⇒ byte-identical ship.json (FR-004).
-            | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
+            | ViewCurrencySensed findings ->
+                { model with
+                    ViewCurrencyFindings = findings
+                },
+                []
 
             // F081: store the located handoff reads (pure); they are consumed at the `Loaded(Valid)` fold.
             | HandoffsLoaded reads -> { model with Handoffs = reads }, []
@@ -845,7 +951,10 @@ module Loop =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             Some(CacheEligibility.evaluate candidates store)
         | _ -> None
 
@@ -866,7 +975,9 @@ module Loop =
             // F27 wiring (063): the report facts come from the shared HumanText projection over the SAME
             // ShipDecision the audit.json path serializes (FR-001); the host keeps only its operational
             // `wrote` line (never part of the JSON contract — FR-003).
-            let projection = HumanText.ofShipDecision decision (cacheReportOf model) model.Outcomes
+            let projection =
+                HumanText.ofShipDecision decision (cacheReportOf model) model.Outcomes
+
             [ projection; operationalLines model ] |> String.concat "\n"
 
     // F27 wiring (063): build the emit effect. Json carries the contract string (human = None). Text carries
@@ -878,7 +989,9 @@ module Loop =
         | Text ->
             match model.Decision with
             | Some decision ->
-                let view = ReportView.viewOfShipDecision decision (cacheReportOf model) model.Outcomes
+                let view =
+                    ReportView.viewOfShipDecision decision (cacheReportOf model) model.Outcomes
+
                 EmitSummary(renderText model, Some(view, operationalLines model), model.Request.ExplicitPlain)
             | None -> EmitSummary(renderText model, None, model.Request.ExplicitPlain)
 

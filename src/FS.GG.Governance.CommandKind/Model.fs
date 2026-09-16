@@ -21,9 +21,13 @@ module Model =
         | VisualCapture
 
     type KindedCommandRun =
-        { Kind: CommandKind
-          Record: CommandRecord }
+        {
+            Kind: CommandKind
+            Record: CommandRecord
+        }
 
     type AuditSnapshot =
-        { Provenance: Provenance
-          Runs: KindedCommandRun list }
+        {
+            Provenance: Provenance
+            Runs: KindedCommandRun list
+        }

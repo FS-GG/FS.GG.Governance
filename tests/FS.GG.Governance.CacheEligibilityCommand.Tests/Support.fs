@@ -37,10 +37,12 @@ open FS.GG.Governance.HumanText
 // this with a forced-TTY synthetic capability to exercise Rich.
 let plainCapability: bool -> RenderMode.ColorCapability =
     fun explicitPlain ->
-        { IsTty = false
-          NoColorEnv = false
-          ExplicitPlain = explicitPlain
-          Width = None }
+        {
+            IsTty = false
+            NoColorEnv = false
+            ExplicitPlain = explicitPlain
+            Width = None
+        }
 
 // A no-op rich renderer for the faked ports (the Plain path never calls it).
 let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
@@ -65,7 +67,8 @@ let jsonProp (el: JsonElement) (name: string) : string = jsonStr (el.GetProperty
 let private yaml (s: string) = s.TrimStart('\n')
 
 let private projectYml =
-    yaml """
+    yaml
+        """
 schemaVersion: 1
 id: my-product
 governedRoot: .
@@ -79,7 +82,8 @@ capabilitiesRef: .fsgg/capabilities.yml
 """
 
 let private policyYml =
-    yaml """
+    yaml
+        """
 schemaVersion: 1
 defaultProfile: standard
 profiles:
@@ -94,7 +98,8 @@ reviewBudget:
 """
 
 let private toolingYml =
-    yaml """
+    yaml
+        """
 schemaVersion: 1
 commands:
   - id: dotnet-format
@@ -116,9 +121,11 @@ environmentClasses:
 
 let validCatalog: Map<string, string> =
     Map
-        [ "governance.yml", projectYml
-          "capabilities.yml",
-          yaml """
+        [
+            "governance.yml", projectYml
+            "capabilities.yml",
+            yaml
+                """
 schemaVersion: 2
 domains:
   - package-api
@@ -157,17 +164,23 @@ checks:
     environment: local-or-ci
     maturity: block-on-ship
 """
-          "policy.yml", policyYml
-          "tooling.yml", toolingYml ]
+            "policy.yml", policyYml
+            "tooling.yml", toolingYml
+        ]
 
 let invalidCatalog: Map<string, string> =
-    Map [ "governance.yml", yaml """
+    Map
+        [
+            "governance.yml",
+            yaml
+                """
 schemaVersion: 999
 id: my-product
 governedRoot: .
 domains:
   - package-api
-""" ]
+"""
+        ]
 
 // In-memory FileReader: a missing key is `Ok None`; a present key is `Ok (Some _)`.
 let readerOf (files: Map<string, string>) : Loader.FileReader =
@@ -179,7 +192,9 @@ let readerOf (files: Map<string, string>) : Loader.FileReader =
 // ── In-memory git port (canned READ-ONLY output the real Snapshot.assemble parses) ──
 
 let diffPayload (changes: (char * string) list) : string =
-    changes |> List.map (fun (k, p) -> sprintf "%c\000%s\000" k p) |> String.concat ""
+    changes
+    |> List.map (fun (k, p) -> sprintf "%c\000%s\000" k p)
+    |> String.concat ""
 
 let gitWithChanges (changes: (char * string) list) : GitPort =
     fun cmd ->
@@ -201,8 +216,19 @@ let gitNotRepo: GitPort =
 
 let portsGit (g: GitPort) : Ports = { Git = g; Ci = fun () -> None }
 
-let defaultOpts: SnapshotOptions = { Since = None; Base = None; Head = None }
-let sinceOpts (rev: string) : SnapshotOptions = { Since = Some(GitRef rev); Base = None; Head = None }
+let defaultOpts: SnapshotOptions =
+    {
+        Since = None
+        Base = None
+        Head = None
+    }
+
+let sinceOpts (rev: string) : SnapshotOptions =
+    {
+        Since = Some(GitRef rev)
+        Base = None
+        Head = None
+    }
 
 let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
     FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts
@@ -236,70 +262,90 @@ let selectedGatesOf (files: Map<string, string>) (candidates: GovernedPath list)
 // ── A literal gate builder (for the pure-Loop tier; mirrors the prelude f43Gate shape) ──
 
 let mkGate (domain: string) (check: string) (cost: Cost) (env: EnvironmentClass) (command: CommandId option) : Gate =
-    { Id = GateId(domain + ":" + check)
-      Domain = DomainId domain
-      Description = ""
-      Prerequisites =
-        (match command with
-         | Some c -> [ RequiresCommand c ]
-         | None -> [])
-      Cost = cost
-      Timeout = TimeoutLimit 600
-      Owner = Owner "platform"
-      Maturity = BlockOnShip
-      ProductCheck = false
-      FreshnessKey =
-        { Check = CheckId check
-          Domain = DomainId domain
-          Cost = cost
-          Environment = env
-          Command = command } }
+    {
+        Id = GateId(domain + ":" + check)
+        Domain = DomainId domain
+        Description = ""
+        Prerequisites =
+            (match command with
+             | Some c -> [ RequiresCommand c ]
+             | None -> [])
+        Cost = cost
+        Timeout = TimeoutLimit 600
+        Owner = Owner "platform"
+        Maturity = BlockOnShip
+        ProductCheck = false
+        FreshnessKey =
+            {
+                Check = CheckId check
+                Domain = DomainId domain
+                Cost = cost
+                Environment = env
+                Command = command
+            }
+    }
 
 // ── Fake FreshnessSensor (SYNTHETIC: fixed literal facts — a real hash is a non-reproducible oracle; the
 //    real BCL-crypto sensor is proven once in EndToEndTests) ──
 
 let fixedSensor: Interpreter.FreshnessSensor =
-    { SenseRuleHash = fun () -> Some(RuleHash "rule-1")
-      SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-1")
-      SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-1" ]
-      SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-1") }
+    {
+        SenseRuleHash = fun () -> Some(RuleHash "rule-1")
+        SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-1")
+        SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-1" ]
+        SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-1")
+    }
 
 /// A sensor that cannot sense covered artifacts (returns None) ⇒ gates unresolved on covered artifacts.
 let sensorNoCovered: Interpreter.FreshnessSensor =
-    { fixedSensor with SenseCoveredArtifacts = fun _ -> None }
+    { fixedSensor with
+        SenseCoveredArtifacts = fun _ -> None
+    }
 
 /// A sensor whose covered set is sensed-but-EMPTY (Some []) ⇒ resolves (sensed-empty ≠ unsensed).
 let sensorEmptyCovered: Interpreter.FreshnessSensor =
-    { fixedSensor with SenseCoveredArtifacts = fun _ -> Some [] }
+    { fixedSensor with
+        SenseCoveredArtifacts = fun _ -> Some []
+    }
 
 // The interpreter's SensedFacts assembly, replicated as a test oracle (base/head passed through from the
 // snapshot range; the per-key facts from the sensor — a present key = sensed, absent = unsensed).
-let assembleSensed (sensor: Interpreter.FreshnessSensor) (gates: Gate list) (baseHead: Revision option * Revision option) : SensedFacts =
+let assembleSensed
+    (sensor: Interpreter.FreshnessSensor)
+    (gates: Gate list)
+    (baseHead: Revision option * Revision option)
+    : SensedFacts =
     let baseOpt, headOpt = baseHead
 
-    { RuleHash = sensor.SenseRuleHash()
-      GeneratorVersion = sensor.SenseGeneratorVersion()
-      Base = baseOpt
-      Head = headOpt
-      CoveredArtifacts =
-        gates
-        |> List.choose (fun g -> sensor.SenseCoveredArtifacts g |> Option.map (fun hs -> g.Id, hs))
-        |> Map.ofList
-      CommandVersions =
-        gates
-        |> List.choose (fun g -> g.FreshnessKey.Command)
-        |> List.distinct
-        |> List.choose (fun c -> sensor.SenseCommandVersion c |> Option.map (fun v -> c, v))
-        |> Map.ofList }
+    {
+        RuleHash = sensor.SenseRuleHash()
+        GeneratorVersion = sensor.SenseGeneratorVersion()
+        Base = baseOpt
+        Head = headOpt
+        CoveredArtifacts =
+            gates
+            |> List.choose (fun g -> sensor.SenseCoveredArtifacts g |> Option.map (fun hs -> g.Id, hs))
+            |> Map.ofList
+        CommandVersions =
+            gates
+            |> List.choose (fun g -> g.FreshnessKey.Command)
+            |> List.distinct
+            |> List.choose (fun c -> sensor.SenseCommandVersion c |> Option.map (fun v -> c, v))
+            |> Map.ofList
+    }
 
 // A fully-sensed SensedFacts over the given gates (every gate resolves).
-let fullSensed (gates: Gate list) : SensedFacts = assembleSensed fixedSensor gates (Some(Revision "base-1"), Some(Revision "head-1"))
+let fullSensed (gates: Gate list) : SensedFacts =
+    assembleSensed fixedSensor gates (Some(Revision "base-1"), Some(Revision "head-1"))
 
 // ── Expected-document computers (genuine cores) ──
 
 let expectedCacheDoc (gates: Gate list) (sensed: SensedFacts) (store: ReuseStore) : string =
     let report = FreshnessResolution.resolve gates sensed
-    let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+    let candidates =
+        FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
     CacheEligibilityJson.ofReport (CacheEligibility.evaluate candidates store)
 
 /// A store whose newest matching entry makes EVERY resolvable gate reusable, built from the genuine resolved
@@ -311,8 +357,10 @@ let storeMakingReusable (gates: Gate list) (sensed: SensedFacts) (ev: GateId -> 
     |> List.choose (fun e ->
         FreshnessResolution.candidate e
         |> Option.map (fun c ->
-            { Inputs = c.Inputs
-              Evidence = EvidenceRef(ev e.Gate) }))
+            {
+                Inputs = c.Inputs
+                Evidence = EvidenceRef(ev e.Gate)
+            }))
     |> ReuseStore
 
 // ── Read-only store serializer (test/fixture side — the command has NO writer this row, A5) ──
@@ -340,7 +388,11 @@ let serializeStore (store: ReuseStore) : string =
             | None -> "null"
 
         let (RuleHash rh) = i.RuleHash
-        let covered = i.CoveredArtifacts |> List.map (fun (ArtifactHash h) -> jstr h) |> String.concat ","
+
+        let covered =
+            i.CoveredArtifacts
+            |> List.map (fun (ArtifactHash h) -> jstr h)
+            |> String.concat ","
 
         let cv =
             match i.CommandVersion with
@@ -372,17 +424,29 @@ let serializeStore (store: ReuseStore) : string =
 // ── Capturing write/output edges + StoreReader stubs ──
 
 type Capture =
-    { mutable Writes: (Loop.ArtifactKind * string * string) list
-      mutable Emits: string list }
+    {
+        mutable Writes: (Loop.ArtifactKind * string * string) list
+        mutable Emits: string list
+    }
 
 let newCapture () : Capture = { Writes = []; Emits = [] }
 
-let capturingWriter (cap: Capture) (failPaths: Set<string>) (cacheOut: string) (unresolvedOut: string) : string -> string -> Result<unit, string> =
+let capturingWriter
+    (cap: Capture)
+    (failPaths: Set<string>)
+    (cacheOut: string)
+    (unresolvedOut: string)
+    : string -> string -> Result<unit, string> =
     fun path content ->
         if Set.contains path failPaths then
             Error "no space left on device"
         else
-            let kind = if path = cacheOut then Loop.CacheArtifact else Loop.UnresolvedArtifact
+            let kind =
+                if path = cacheOut then
+                    Loop.CacheArtifact
+                else
+                    Loop.UnresolvedArtifact
+
             ignore unresolvedOut
             cap.Writes <- cap.Writes @ [ kind, path, content ]
             Ok()
@@ -401,14 +465,16 @@ let fakePorts
     (cap: Capture)
     (req: Loop.RunRequest)
     : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = sensor
-      Store = store
-      Write = capturingWriter cap Set.empty req.CacheOut req.UnresolvedOut
-      Out = capturingSink cap
-      SenseCapability = plainCapability
-      RenderReport = noRichRender }
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = sensor
+        Store = store
+        Write = capturingWriter cap Set.empty req.CacheOut req.UnresolvedOut
+        Out = capturingSink cap
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+    }
 
 let fakePortsFailingWrites
     (files: Map<string, string>)
@@ -419,35 +485,41 @@ let fakePortsFailingWrites
     (failPaths: Set<string>)
     (req: Loop.RunRequest)
     : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = sensor
-      Store = store
-      Write = capturingWriter cap failPaths req.CacheOut req.UnresolvedOut
-      Out = capturingSink cap
-      SenseCapability = plainCapability
-      RenderReport = noRichRender }
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = sensor
+        Store = store
+        Write = capturingWriter cap failPaths req.CacheOut req.UnresolvedOut
+        Out = capturingSink cap
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+    }
 
 let writtenOf (cap: Capture) (kind: Loop.ArtifactKind) : (string * string) option =
-    cap.Writes |> List.tryPick (fun (k, p, c) -> if k = kind then Some(p, c) else None)
+    cap.Writes
+    |> List.tryPick (fun (k, p, c) -> if k = kind then Some(p, c) else None)
 
 // ── Request builders ──
 
 let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.RunRequest =
-    { Repo = "."
-      Scope = scope
-      StorePath = "readiness/evidence-reuse.json"
-      CacheOut = "readiness/cache-eligibility.json"
-      UnresolvedOut = "readiness/cache-eligibility.unresolved.json"
-      Format = format
-      ExplicitPlain = false }
+    {
+        Repo = "."
+        Scope = scope
+        StorePath = "readiness/evidence-reuse.json"
+        CacheOut = "readiness/cache-eligibility.json"
+        UnresolvedOut = "readiness/cache-eligibility.unresolved.json"
+        Format = format
+        ExplicitPlain = false
+    }
 
 /// A fresh Model in the `Selected` phase carrying literal gates — the entry point for the pure-Loop tier
 /// (bypasses catalog/selection so resolve→evaluate→project can be driven with controlled SensedFacts/store).
 let selectedModel (gates: Gate list) (request: Loop.RunRequest) : Loop.Model =
     { fst (Loop.init request) with
         Phase = Loop.Selected
-        SelectedGates = gates }
+        SelectedGates = gates
+    }
 
 /// Drive the pure pipeline tail: feed FreshnessSensed then StoreLoaded, returning the model after the
 /// projection (with the two WriteArtifact effects from the second message).
@@ -459,6 +531,7 @@ let driveProjection (model: Loop.Model) (sensed: SensedFacts) (store: ReuseStore
 
 let git (dir: string) (args: string list) : string =
     let psi = ProcessStartInfo "git"
+
     for a in args do
         psi.ArgumentList.Add a
 
@@ -491,7 +564,9 @@ let writeFile (dir: string) (relPath: string) (content: string) : unit =
 /// Create a disposable temp git repo with a real `.fsgg` catalog and a real two-commit edit under `src/`,
 /// run `body` against its path, then delete it.
 let withTempRepo (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-ce-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-ce-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
 
     try

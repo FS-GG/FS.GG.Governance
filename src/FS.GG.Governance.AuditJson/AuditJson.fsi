@@ -29,9 +29,9 @@
 namespace FS.GG.Governance.AuditJson
 
 open FS.GG.Governance.Ship.Model
-open FS.GG.Governance.Gates.Model              // GateId (F052 execution embed matched by gate)
-open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
-open FS.GG.Governance.GateRun.Model            // F052: GateOutcome (the per-gate execution embed)
+open FS.GG.Governance.Gates.Model // GateId (F052 execution embed matched by gate)
+open FS.GG.Governance.CacheEligibility.Model // F045: CacheEligibilityReport (via the F041 ProjectReference)
+open FS.GG.Governance.GateRun.Model // F052: GateOutcome (the per-gate execution embed)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AuditJson =
@@ -128,5 +128,5 @@ module AuditJson =
         execution: (GateId * GateOutcome) list ->
         generatedViews:
             (FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding *
-             FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
+            FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
             string

@@ -18,43 +18,65 @@ let private preconditionFor (states: (ReleaseRuleKind * FactState) list) diagnos
 let tests =
     testList
         "precondition-evidence"
-        [ test "a resolved publish plan ⇒ PublishPlan precondition Met" {
-              let _, p = preconditionFor allMet [] PublishPlan
-              Expect.equal p.State Met ""
-          }
+        [
+            test "a resolved publish plan ⇒ PublishPlan precondition Met" {
+                let _, p = preconditionFor allMet [] PublishPlan
+                Expect.equal p.State Met ""
+            }
 
-          test "a missing publish plan ⇒ PublishPlan Unmet and the release blocked naming it" {
-              let states =
-                  [ VersionBump, Met; PackageMetadata, Met; TemplatePins, Met
-                    PublishPlan, Unmet; TrustedPublishing, Met; Provenance, Met ]
+            test "a missing publish plan ⇒ PublishPlan Unmet and the release blocked naming it" {
+                let states =
+                    [
+                        VersionBump, Met
+                        PackageMetadata, Met
+                        TemplatePins, Met
+                        PublishPlan, Unmet
+                        TrustedPublishing, Met
+                        Provenance, Met
+                    ]
 
-              let report, p = preconditionFor states [ PublishPlan, "no publish plan resolved" ] PublishPlan
-              Expect.equal p.State Unmet ""
-              Expect.equal report.Decision.Verdict Fail "an unmet publish plan blocks the release"
-              Expect.stringContains p.Reason "publishPlan" "reason names the family"
-          }
+                let report, p =
+                    preconditionFor states [ PublishPlan, "no publish plan resolved" ] PublishPlan
 
-          test "an unconfigured trusted-publishing posture ⇒ TrustedPublishing Unmet" {
-              let states =
-                  [ VersionBump, Met; PackageMetadata, Met; TemplatePins, Met
-                    PublishPlan, Met; TrustedPublishing, Unmet; Provenance, Met ]
+                Expect.equal p.State Unmet ""
+                Expect.equal report.Decision.Verdict Fail "an unmet publish plan blocks the release"
+                Expect.stringContains p.Reason "publishPlan" "reason names the family"
+            }
 
-              let _, p = preconditionFor states [] TrustedPublishing
-              Expect.equal p.State Unmet ""
-          }
+            test "an unconfigured trusted-publishing posture ⇒ TrustedPublishing Unmet" {
+                let states =
+                    [
+                        VersionBump, Met
+                        PackageMetadata, Met
+                        TemplatePins, Met
+                        PublishPlan, Met
+                        TrustedPublishing, Unmet
+                        Provenance, Met
+                    ]
 
-          test "a drifted template pin ⇒ TemplatePins Unrecoverable surfaced" {
-              let states =
-                  [ VersionBump, Met; PackageMetadata, Met; TemplatePins, Unrecoverable
-                    PublishPlan, Met; TrustedPublishing, Met; Provenance, Met ]
+                let _, p = preconditionFor states [] TrustedPublishing
+                Expect.equal p.State Unmet ""
+            }
 
-              let report, p = preconditionFor states [] TemplatePins
-              Expect.equal p.State Unrecoverable ""
-              Expect.equal report.Decision.Verdict Fail "an unrecoverable pin blocks the release"
-          }
+            test "a drifted template pin ⇒ TemplatePins Unrecoverable surfaced" {
+                let states =
+                    [
+                        VersionBump, Met
+                        PackageMetadata, Met
+                        TemplatePins, Unrecoverable
+                        PublishPlan, Met
+                        TrustedPublishing, Met
+                        Provenance, Met
+                    ]
 
-          test "a fully-satisfied set ⇒ a clean decision (never assumed satisfied)" {
-              let report, _ = preconditionFor allMet [] PublishPlan
-              Expect.equal report.Decision.Verdict Pass ""
-              Expect.equal report.ReleaseExitCodeBasis Clean ""
-          } ]
+                let report, p = preconditionFor states [] TemplatePins
+                Expect.equal p.State Unrecoverable ""
+                Expect.equal report.Decision.Verdict Fail "an unrecoverable pin blocks the release"
+            }
+
+            test "a fully-satisfied set ⇒ a clean decision (never assumed satisfied)" {
+                let report, _ = preconditionFor allMet [] PublishPlan
+                Expect.equal report.Decision.Verdict Pass ""
+                Expect.equal report.ReleaseExitCodeBasis Clean ""
+            }
+        ]

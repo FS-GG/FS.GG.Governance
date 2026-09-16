@@ -22,9 +22,11 @@ module ReportView =
         | Group of title: string * children: ReportNode list
 
     type ReportView =
-        { Title: string
-          ExitStatus: string
-          Sections: ReportNode list }
+        {
+            Title: string
+            ExitStatus: string
+            Sections: ReportNode list
+        }
 
     // ── token helpers (closed-enum → stable, deterministic text; hidden from the .fsi) ──
 
@@ -99,14 +101,18 @@ module ReportView =
     // ── selected-gate / finding / cache leaves shared across views ──
 
     let private selectingPathsDetail (g: SelectedGate) =
-        g.SelectingPaths
-        |> List.map (fun sp -> pathValue sp.Path)
-        |> String.concat ", "
+        g.SelectingPaths |> List.map (fun sp -> pathValue sp.Path) |> String.concat ", "
 
     let private selectedGateLeaf (g: SelectedGate) =
         Leaf(
             gateIdValue g.Gate.Id,
-            Some(sprintf "domain=%s cost=%s; paths: %s" (domainValue g.Gate.Domain) (costToken g.Gate.Cost) (selectingPathsDetail g))
+            Some(
+                sprintf
+                    "domain=%s cost=%s; paths: %s"
+                    (domainValue g.Gate.Domain)
+                    (costToken g.Gate.Cost)
+                    (selectingPathsDetail g)
+            )
         )
 
     let private findingLeaf (f: UnknownGovernedPathFinding) =
@@ -134,8 +140,7 @@ module ReportView =
     let private cacheSection (cache: CacheEligibilityReport option) =
         match cache with
         | None -> []
-        | Some(CacheEligibilityReport entries) ->
-            [ groupOf "Cache eligibility" (entries |> List.map cacheEntryLeaf) ]
+        | Some(CacheEligibilityReport entries) -> [ groupOf "Cache eligibility" (entries |> List.map cacheEntryLeaf) ]
 
     let private outcomesSection (outcomes: (GateId * GateOutcome) list) =
         match outcomes with
@@ -153,23 +158,22 @@ module ReportView =
 
         let costLeaf =
             Leaf(
-                sprintf
-                    "cheap=%d medium=%d high=%d exhaustive=%d"
-                    cost.Cheap
-                    cost.Medium
-                    cost.High
-                    cost.Exhaustive,
+                sprintf "cheap=%d medium=%d high=%d exhaustive=%d" cost.Cheap cost.Medium cost.High cost.Exhaustive,
                 None
             )
 
-        { Title = sprintf "route: %d selected gate(s)" (List.length result.SelectedGates)
-          ExitStatus = "success"
-          Sections =
-            [ groupOf "Selected gates" (result.SelectedGates |> List.map selectedGateLeaf)
-              Group("Cost", [ costLeaf ])
-              groupOf "Findings" (result.Findings.Findings |> List.map findingLeaf) ]
-            @ cacheSection cache
-            @ outcomesSection outcomes }
+        {
+            Title = sprintf "route: %d selected gate(s)" (List.length result.SelectedGates)
+            ExitStatus = "success"
+            Sections =
+                [
+                    groupOf "Selected gates" (result.SelectedGates |> List.map selectedGateLeaf)
+                    Group("Cost", [ costLeaf ])
+                    groupOf "Findings" (result.Findings.Findings |> List.map findingLeaf)
+                ]
+                @ cacheSection cache
+                @ outcomesSection outcomes
+        }
 
     let viewOfRouteExplanation (explanation: RouteExplanation) : ReportView =
         let findingLeaf (hcf: HighCostFinding) =
@@ -180,17 +184,29 @@ module ReportView =
 
             Leaf(gateIdValue hcf.Selected.Gate.Id, Some detail)
 
-        { Title = sprintf "explain: %d high-cost finding(s)" (List.length explanation.Findings)
-          ExitStatus = "advisory"
-          Sections = [ groupOf "High-cost gates" (explanation.Findings |> List.map findingLeaf) ] }
+        {
+            Title = sprintf "explain: %d high-cost finding(s)" (List.length explanation.Findings)
+            ExitStatus = "advisory"
+            Sections = [ groupOf "High-cost gates" (explanation.Findings |> List.map findingLeaf) ]
+        }
 
     let private shipView (decision: ShipDecision) : ReportView =
-        { Title = sprintf "verdict: %s" (verdictToken decision.Verdict)
-          ExitStatus = exitToken decision.ExitCodeBasis
-          Sections =
-            [ groupOf "Blockers" (decision.Blockers |> List.map (fun i -> Leaf(enforcedItemLabel i, enforcedItemDetail i)))
-              groupOf "Warnings" (decision.Warnings |> List.map (fun i -> Leaf(enforcedItemLabel i, enforcedItemDetail i)))
-              countLeaf "Passing" (List.length decision.Passing) ] }
+        {
+            Title = sprintf "verdict: %s" (verdictToken decision.Verdict)
+            ExitStatus = exitToken decision.ExitCodeBasis
+            Sections =
+                [
+                    groupOf
+                        "Blockers"
+                        (decision.Blockers
+                         |> List.map (fun i -> Leaf(enforcedItemLabel i, enforcedItemDetail i)))
+                    groupOf
+                        "Warnings"
+                        (decision.Warnings
+                         |> List.map (fun i -> Leaf(enforcedItemLabel i, enforcedItemDetail i)))
+                    countLeaf "Passing" (List.length decision.Passing)
+                ]
+        }
 
     let viewOfShipDecision
         (decision: ShipDecision)
@@ -200,7 +216,8 @@ module ReportView =
         let baseView = shipView decision
 
         { baseView with
-            Sections = baseView.Sections @ cacheSection cache @ outcomesSection outcomes }
+            Sections = baseView.Sections @ cacheSection cache @ outcomesSection outcomes
+        }
 
     let viewOfVerifyDecision
         (decision: ShipDecision)
@@ -222,13 +239,17 @@ module ReportView =
                 Some(sprintf "%s — %s" (severityToken f.Decision.EffectiveSeverity) f.Finding.Reason)
             )
 
-        { Title = sprintf "release verdict: %s" (verdictToken decision.Verdict)
-          ExitStatus = exitToken report.ReleaseExitCodeBasis
-          Sections =
-            [ groupOf "Preconditions" (report.Preconditions |> List.map preconditionLeaf)
-              groupOf "Blockers" (decision.Blockers |> List.map releaseFindingLeaf)
-              groupOf "Warnings" (decision.Warnings |> List.map releaseFindingLeaf)
-              countLeaf "Passing" (List.length decision.Passing) ] }
+        {
+            Title = sprintf "release verdict: %s" (verdictToken decision.Verdict)
+            ExitStatus = exitToken report.ReleaseExitCodeBasis
+            Sections =
+                [
+                    groupOf "Preconditions" (report.Preconditions |> List.map preconditionLeaf)
+                    groupOf "Blockers" (decision.Blockers |> List.map releaseFindingLeaf)
+                    groupOf "Warnings" (decision.Warnings |> List.map releaseFindingLeaf)
+                    countLeaf "Passing" (List.length decision.Passing)
+                ]
+        }
 
     let viewOfCacheEligibilityReport (report: CacheEligibilityReport) : ReportView =
         let (CacheEligibilityReport entries) = report
@@ -243,6 +264,8 @@ module ReportView =
 
         let recompute = List.length entries - reusable
 
-        { Title = sprintf "evidence: %d gate(s)" (List.length entries)
-          ExitStatus = sprintf "%d reusable, %d must-recompute" reusable recompute
-          Sections = [ groupOf "Cache eligibility" (entries |> List.map cacheEntryLeaf) ] }
+        {
+            Title = sprintf "evidence: %d gate(s)" (List.length entries)
+            ExitStatus = sprintf "%d reusable, %d must-recompute" reusable recompute
+            Sections = [ groupOf "Cache eligibility" (entries |> List.map cacheEntryLeaf) ]
+        }

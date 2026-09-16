@@ -13,4 +13,6 @@ let private library = typeof<Declaration.ReleaseDeclaration>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "ReleaseDeclaration" "FS.GG.Governance.ReleaseDeclaration" library ]
+        [
+            SurfaceDrift.surfaceTest "ReleaseDeclaration" "FS.GG.Governance.ReleaseDeclaration" library
+        ]

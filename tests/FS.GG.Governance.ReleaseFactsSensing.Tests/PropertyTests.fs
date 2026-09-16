@@ -12,40 +12,71 @@ open FS.GG.Governance.ReleaseFactsSensing.Tests.Support
 
 // The expectation accessor + recovered Result per family, to assert the no-fabrication invariant.
 let private familyInputs (exp: ReleaseExpectations) (recovered: RecoveredEvidence) =
-    [ VersionBump, Option.isSome exp.VersionBaseline, (match recovered.Version with Ok _ -> true | Error _ -> false)
-      PackageMetadata, Option.isSome exp.RequiredMetadataFields, (match recovered.Metadata with Ok _ -> true | Error _ -> false)
-      TemplatePins, Option.isSome exp.ExpectedPins, (match recovered.Pins with Ok _ -> true | Error _ -> false)
-      PublishPlan, Option.isSome exp.RequiredPublishPosture, (match recovered.PublishPlan with Ok _ -> true | Error _ -> false)
-      TrustedPublishing, Option.isSome exp.RequiredTrustedPublishing, (match recovered.TrustedPublishing with Ok _ -> true | Error _ -> false)
-      Provenance, Option.isSome exp.RequiredProvenance, (match recovered.Provenance with Ok _ -> true | Error _ -> false) ]
+    [
+        VersionBump,
+        Option.isSome exp.VersionBaseline,
+        (match recovered.Version with
+         | Ok _ -> true
+         | Error _ -> false)
+        PackageMetadata,
+        Option.isSome exp.RequiredMetadataFields,
+        (match recovered.Metadata with
+         | Ok _ -> true
+         | Error _ -> false)
+        TemplatePins,
+        Option.isSome exp.ExpectedPins,
+        (match recovered.Pins with
+         | Ok _ -> true
+         | Error _ -> false)
+        PublishPlan,
+        Option.isSome exp.RequiredPublishPosture,
+        (match recovered.PublishPlan with
+         | Ok _ -> true
+         | Error _ -> false)
+        TrustedPublishing,
+        Option.isSome exp.RequiredTrustedPublishing,
+        (match recovered.TrustedPublishing with
+         | Ok _ -> true
+         | Error _ -> false)
+        Provenance,
+        Option.isSome exp.RequiredProvenance,
+        (match recovered.Provenance with
+         | Ok _ -> true
+         | Error _ -> false)
+    ]
 
 [<Tests>]
 let tests =
     testList
         "PropertyTests"
-        [ testPropertyWithConfig fsCheckConfig "deriveFacts always yields exactly the seven families"
-          <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
-              let states = (Sensing.deriveFacts exp recovered).Facts.States
-              states.Count = 7
-              && (states |> Map.toList |> List.map fst |> List.sort) = (Sensing.releaseFamilies |> List.sort)
+        [
+            testPropertyWithConfig fsCheckConfig "deriveFacts always yields exactly the seven families"
+            <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
+                let states = (Sensing.deriveFacts exp recovered).Facts.States
 
-          testPropertyWithConfig fsCheckConfig "every state is Met/Unmet/Unrecoverable"
-          <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
-              (Sensing.deriveFacts exp recovered).Facts.States
-              |> Map.forall (fun _ s -> s = Met || s = Unmet || s = Unrecoverable)
+                states.Count = 7
+                && (states |> Map.toList |> List.map fst |> List.sort) = (Sensing.releaseFamilies |> List.sort)
 
-          testPropertyWithConfig fsCheckConfig "an Error-recovered or None-expectation family is NEVER Met (no fabrication, SC-002)"
-          <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
-              let states = (Sensing.deriveFacts exp recovered).Facts.States
+            testPropertyWithConfig fsCheckConfig "every state is Met/Unmet/Unrecoverable"
+            <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
+                (Sensing.deriveFacts exp recovered).Facts.States
+                |> Map.forall (fun _ s -> s = Met || s = Unmet || s = Unrecoverable)
 
-              familyInputs exp recovered
-              |> List.forall (fun (kind, hasExpectation, recoveredOk) ->
-                  if (not hasExpectation) || (not recoveredOk) then
-                      states.[kind] = Unrecoverable
-                  else
-                      true)
+            testPropertyWithConfig
+                fsCheckConfig
+                "an Error-recovered or None-expectation family is NEVER Met (no fabrication, SC-002)"
+            <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
+                let states = (Sensing.deriveFacts exp recovered).Facts.States
 
-          testPropertyWithConfig fsCheckConfig "deriveFacts never throws over arbitrary input"
-          <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
-              let _ = Sensing.deriveFacts exp recovered
-              true ]
+                familyInputs exp recovered
+                |> List.forall (fun (kind, hasExpectation, recoveredOk) ->
+                    if (not hasExpectation) || (not recoveredOk) then
+                        states.[kind] = Unrecoverable
+                    else
+                        true)
+
+            testPropertyWithConfig fsCheckConfig "deriveFacts never throws over arbitrary input"
+            <| fun (exp: ReleaseExpectations) (recovered: RecoveredEvidence) ->
+                let _ = Sensing.deriveFacts exp recovered
+                true
+        ]

@@ -24,11 +24,7 @@ module RichRender =
     /// Render a report view to a Spectre console at the chosen mode. `plain` is the precomputed
     /// `HumanText` projection used verbatim for the `Plain` degrade path.
     val emit:
-        mode: RenderMode.RenderMode ->
-        view: ReportView.ReportView ->
-        plain: string ->
-        console: IAnsiConsole ->
-            unit
+        mode: RenderMode.RenderMode -> view: ReportView.ReportView -> plain: string -> console: IAnsiConsole -> unit
 
     /// F27 wiring (063): render to the real stdout terminal (the default Spectre console). Hosts inject
     /// this as their `RenderReport` edge port so NO host references Spectre directly (FR-011, SC-007).

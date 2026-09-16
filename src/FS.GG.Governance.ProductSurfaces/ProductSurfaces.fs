@@ -94,7 +94,12 @@ module ProductSurfaces =
     /// release-oriented profile raises a `ReleaseSurface` target to `ReleaseValidation`; a strict profile
     /// raises the target by one rank. Neither lowers below the baseline, and neither raises a kind that did
     /// not match (the baseline is per matched kind already).
-    let private escalate (facts: TypedFacts) (profile: ProfileId) (cls: SurfaceClass) (baseline: GeneratedProductTier) : GeneratedProductTier =
+    let private escalate
+        (facts: TypedFacts)
+        (profile: ProfileId)
+        (cls: SurfaceClass)
+        (baseline: GeneratedProductTier)
+        : GeneratedProductTier =
         let declared =
             match facts.Policy with
             | Some pol -> pol.Profiles |> List.contains profile
@@ -104,6 +109,7 @@ module ProductSurfaces =
             baseline
         else
             let (ProfileId name) = profile
+
             match name with
             | "release" -> if cls = ReleaseSurface then ReleaseValidation else baseline
             | "strict" -> tierOfRank (generatedProductTierRank baseline + 1)
@@ -127,7 +133,9 @@ module ProductSurfaces =
         match tiers with
         | [] -> target, false
         | _ ->
-            let leqTarget = tiers |> List.filter (fun t -> generatedProductTierRank t <= generatedProductTierRank target)
+            let leqTarget =
+                tiers
+                |> List.filter (fun t -> generatedProductTierRank t <= generatedProductTierRank target)
 
             let selected =
                 match leqTarget with
@@ -153,7 +161,13 @@ module ProductSurfaces =
 
     // ── Explanation (contracts/classification.md §6) — deterministic; only declared ids ──
 
-    let private explain (capability: DomainId) (cls: SurfaceClass) (tier: GeneratedProductTier) (declared: bool) (alt: TierAlternative) : string =
+    let private explain
+        (capability: DomainId)
+        (cls: SurfaceClass)
+        (tier: GeneratedProductTier)
+        (declared: bool)
+        (alt: TierAlternative)
+        : string =
         let (DomainId cap) = capability
 
         let tierNote =
@@ -178,8 +192,11 @@ module ProductSurfaces =
             covering
             |> List.sortWith (fun a b ->
                 let byClass = compare (classPrecedence a.Class) (classPrecedence b.Class)
-                if byClass <> 0 then byClass
-                else System.String.CompareOrdinal(sidStr a.Id, sidStr b.Id))
+
+                if byClass <> 0 then
+                    byClass
+                else
+                    System.String.CompareOrdinal(sidStr a.Id, sidStr b.Id))
 
         let winner = List.head sorted
 
@@ -191,14 +208,23 @@ module ProductSurfaces =
                 let topClassCount =
                     covering |> List.filter (fun s -> s.Class = winner.Class) |> List.length
 
-                if topClassCount = 1 then HighestPrecedenceKind else OrdinalSurfaceTiebreak
+                if topClassCount = 1 then
+                    HighestPrecedenceKind
+                else
+                    OrdinalSurfaceTiebreak
 
         winner, reason
 
     /// Classify one `Routed` path, or `None` when no product surface covers it (or only a boundary-only
     /// kind wins ⇒ not tiered, no entry).
-    let private classifyRouting (facts: TypedFacts) (profile: ProfileId) (path: GovernedPath) (domain: DomainId) : ProductClassification option =
-        let covering = facts.Capabilities.Surfaces |> List.filter (fun s -> withinSurface s path)
+    let private classifyRouting
+        (facts: TypedFacts)
+        (profile: ProfileId)
+        (path: GovernedPath)
+        (domain: DomainId)
+        : ProductClassification option =
+        let covering =
+            facts.Capabilities.Surfaces |> List.filter (fun s -> withinSurface s path)
 
         match covering with
         | [] -> None
@@ -214,15 +240,17 @@ module ProductSurfaces =
                 let alt = cheaperLocal tieredChecks selected
 
                 Some
-                    { Path = path
-                      Capability = domain
-                      Surface = winner.Id
-                      Class = winner.Class
-                      SelectedTier = selected
-                      TierIsDeclared = declared
-                      Alternative = alt
-                      Reason = reason
-                      Explanation = explain domain winner.Class selected declared alt }
+                    {
+                        Path = path
+                        Capability = domain
+                        Surface = winner.Id
+                        Class = winner.Class
+                        SelectedTier = selected
+                        TierIsDeclared = declared
+                        Alternative = alt
+                        Reason = reason
+                        Explanation = explain domain winner.Class selected declared alt
+                    }
 
     // ── The entry point ──
 
@@ -238,7 +266,10 @@ module ProductSurfaces =
                 | OutOfScope -> None)
             |> List.sortWith (fun a b ->
                 let byPath = System.String.CompareOrdinal(pathStr a.Path, pathStr b.Path)
-                if byPath <> 0 then byPath
-                else System.String.CompareOrdinal(sidStr a.Surface, sidStr b.Surface))
+
+                if byPath <> 0 then
+                    byPath
+                else
+                    System.String.CompareOrdinal(sidStr a.Surface, sidStr b.Surface))
 
         { Classifications = classifications }

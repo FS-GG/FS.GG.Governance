@@ -20,10 +20,8 @@ let goldenPath =
 // SYNTHETIC: the lifecycle layer is sibling-owned `fsgg-sdd init` output — research D4. Real production
 // wiring lives in the FS.GG.SDD repo (FR-013); here these literals stand in to demonstrate layering and
 // reserved-path avoidance only.
-let lifecycleReservedPaths : string list =
-    [ ".fsgg/policy.fsgg"
-      "work/0001/spec.md"
-      "readiness/0001/state.json" ]
+let lifecycleReservedPaths: string list =
+    [ ".fsgg/policy.fsgg"; "work/0001/spec.md"; "readiness/0001/state.json" ]
 
 // ── real temp directories with a FIXED leaf (for a byte-stable golden) ──
 
@@ -35,7 +33,9 @@ let fixedAppName = "MyApp"
 /// Create a fresh, UNIQUE parent temp directory containing an empty `MyApp` child, and return the child
 /// (the scaffold target). Unique location, fixed leaf ⇒ fresh empty target + deterministic emission.
 let freshTarget () : string =
-    let parent = Path.Combine(Path.GetTempPath(), "fsgg-sdd-ref-" + Guid.NewGuid().ToString("N"))
+    let parent =
+        Path.Combine(Path.GetTempPath(), "fsgg-sdd-ref-" + Guid.NewGuid().ToString("N"))
+
     let target = Path.Combine(parent, fixedAppName)
     Directory.CreateDirectory target |> ignore
     target
@@ -66,8 +66,14 @@ let filesUnder (root: string) : string list =
 // ── request / run builders ──
 
 let runRequest (target: string) (reserved: string list) (provider: TemplateProvider option) : Loop.RunRequest =
-    { Request = { Target = target; ReservedPaths = reserved }
-      Provider = provider }
+    {
+        Request =
+            {
+                Target = target
+                ReservedPaths = reserved
+            }
+        Provider = provider
+    }
 
 // ── the real `dotnet build` runner (real-evidence edge, with a named missing-SDK skip) ──
 
@@ -85,7 +91,7 @@ type BuildAttempt =
 /// The finite ceiling a real-evidence build may consume before it is cut off as `TimedOut`. Default 120 s;
 /// overridable via `FSGG_BUILD_BUDGET_SECONDS` (absent / non-numeric / ≤ 0 ⇒ the 120 s default — a
 /// malformed override NEVER yields an unbounded wait, FR-001/FR-010).
-let buildBudget : TimeSpan =
+let buildBudget: TimeSpan =
     let fallback = TimeSpan.FromSeconds 120.
 
     match Environment.GetEnvironmentVariable "FSGG_BUILD_BUDGET_SECONDS" with
@@ -97,11 +103,11 @@ let buildBudget : TimeSpan =
 
 /// The bounded post-`Kill` drain wait in `runBounded`, so reading the partial output after a tree-kill
 /// cannot itself block. Distinct from `boundAssertionMargin` below.
-let killDrainMargin : TimeSpan = TimeSpan.FromSeconds 5.
+let killDrainMargin: TimeSpan = TimeSpan.FromSeconds 5.
 
 /// The assertion tolerance the forced-stall test (`BoundedBuildTests`) allows over `budget` when checking
 /// the bound. Distinct from the drain margin so the two "small margin" notions are unambiguous (FR-010).
-let boundAssertionMargin : TimeSpan = TimeSpan.FromSeconds 2.
+let boundAssertionMargin: TimeSpan = TimeSpan.FromSeconds 2.
 
 /// Run `exe args` (optionally in `workingDir`), capturing stdout+stderr ASYNCHRONOUSLY and waiting at most
 /// `budget`. Async capture (`OutputDataReceived`/`ErrorDataReceived` + `BeginOutputReadLine` *after* `Start`)

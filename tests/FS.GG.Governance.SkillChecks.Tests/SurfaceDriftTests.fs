@@ -10,6 +10,8 @@ let private library = typeof<SkillFacts>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "SkillChecks" "FS.GG.Governance.SkillChecks" library
+        [
+            SurfaceDrift.surfaceTest "SkillChecks" "FS.GG.Governance.SkillChecks" library
 
-          SurfaceDrift.referencesOnly "SkillChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library ]
+            SurfaceDrift.referencesOnly "SkillChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library
+        ]

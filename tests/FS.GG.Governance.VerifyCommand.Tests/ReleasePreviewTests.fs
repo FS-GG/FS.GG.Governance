@@ -52,22 +52,30 @@ let private decl =
 let private surfaceId = SurfaceId "pkg"
 
 let private expectations: ReleaseExpectations =
-    { Surface = surfaceId
-      VersionBaseline = Some "1.2.0"
-      RequiredMetadataFields = Some [ "authors"; "license" ]
-      ExpectedPins = None
-      RequiredPublishPosture = Some [ "plan-present" ]
-      RequiredTrustedPublishing = Some [ "oidc" ]
-      RequiredProvenance = Some [ "attestation" ] }
+    {
+        Surface = surfaceId
+        VersionBaseline = Some "1.2.0"
+        RequiredMetadataFields = Some [ "authors"; "license" ]
+        ExpectedPins = None
+        RequiredPublishPosture = Some [ "plan-present" ]
+        RequiredTrustedPublishing = Some [ "oidc" ]
+        RequiredProvenance = Some [ "attestation" ]
+    }
 
 // A fully-met recovered evidence ⇒ a compliant sensed (the cheap pre-PR preview the maintainer sees).
 let private recoveredMet: RecoveredEvidence =
-    { Version = Ok { Declared = "1.3.0" }
-      Metadata = Ok { PresentFields = [ "authors"; "license" ] }
-      Pins = Ok { Resolved = Map.empty }
-      PublishPlan = Ok { Observed = [ "plan-present" ] }
-      TrustedPublishing = Ok { Observed = [ "oidc" ] }
-      Provenance = Ok { Observed = [ "attestation" ] } }
+    {
+        Version = Ok { Declared = "1.3.0" }
+        Metadata =
+            Ok
+                {
+                    PresentFields = [ "authors"; "license" ]
+                }
+        Pins = Ok { Resolved = Map.empty }
+        PublishPlan = Ok { Observed = [ "plan-present" ] }
+        TrustedPublishing = Ok { Observed = [ "oidc" ] }
+        Provenance = Ok { Observed = [ "attestation" ] }
+    }
 
 let private sensed = Sensing.deriveFacts expectations recoveredMet
 
@@ -77,7 +85,12 @@ let private driveTo (opt: (Declaration.ReleaseDeclaration * SensedRelease) optio
     let m0, _ = Loop.init (requestFor Loop.DefaultRange Loop.Text)
     let snap = snapshotOf gitSrcChange defaultOpts
     let m1, _ = Loop.update (Loop.Sensed(Ok snap)) m0
-    let m1b, _ = Loop.update (Loop.ProvenanceSensed(EnvironmentClass.Local, FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg")) m1
+
+    let m1b, _ =
+        Loop.update
+            (Loop.ProvenanceSensed(EnvironmentClass.Local, FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg"))
+            m1
+
     let m2, _ = Loop.update (Loop.ReleasePreviewSensed opt) m1b
     let m3, _ = Loop.update (Loop.Loaded(Valid(factsOf emptyCatalog))) m2
     // 067: the empty-selection projection is now deferred until the (read-only) surface checks land; the
@@ -89,39 +102,44 @@ let private driveTo (opt: (Declaration.ReleaseDeclaration * SensedRelease) optio
 let tests =
     testList
         "ReleasePreview"
-        [ test "T031: a present declaration ⇒ advisory releaseReadiness preview, exit unchanged, matrix deferred" {
-              let withDecl = driveTo (Some(decl, sensed))
-              let withoutDecl = driveTo None
+        [
+            test "T031: a present declaration ⇒ advisory releaseReadiness preview, exit unchanged, matrix deferred" {
+                let withDecl = driveTo (Some(decl, sensed))
+                let withoutDecl = driveTo None
 
-              // The advisory block is present and advisory.
-              match withDecl.ReleasePreview with
-              | Some p -> Expect.isTrue p.Advisory "the preview is advisory"
-              | None -> failtest "expected a release-readiness preview when a declaration is present"
+                // The advisory block is present and advisory.
+                match withDecl.ReleasePreview with
+                | Some p -> Expect.isTrue p.Advisory "the preview is advisory"
+                | None -> failtest "expected a release-readiness preview when a declaration is present"
 
-              Expect.isTrue (withDecl.VerifyDoc |> Option.exists (fun d -> d.Contains "releaseReadiness")) "verify.json carries the releaseReadiness block"
+                Expect.isTrue
+                    (withDecl.VerifyDoc |> Option.exists (fun d -> d.Contains "releaseReadiness"))
+                    "verify.json carries the releaseReadiness block"
 
-              // The preview NEVER changes the verify exit code (same as the no-declaration run).
-              Expect.equal withDecl.Exit withoutDecl.Exit "the preview does not change the verify exit code"
+                // The preview NEVER changes the verify exit code (same as the no-declaration run).
+                Expect.equal withDecl.Exit withoutDecl.Exit "the preview does not change the verify exit code"
 
-              // A declared exhaustive matrix is recorded Deferred (to the scheduled/release boundary), not run.
-              match withDecl.ReleaseMatrix with
-              | Some(Deferred(DeferredToScheduledBoundary(name, _))) -> Expect.equal name "cross" "the declared matrix is deferred"
-              | other -> failtestf "expected the declared matrix Deferred at the inner loop, got %A" other
-          }
+                // A declared exhaustive matrix is recorded Deferred (to the scheduled/release boundary), not run.
+                match withDecl.ReleaseMatrix with
+                | Some(Deferred(DeferredToScheduledBoundary(name, _))) ->
+                    Expect.equal name "cross" "the declared matrix is deferred"
+                | other -> failtestf "expected the declared matrix Deferred at the inner loop, got %A" other
+            }
 
-          test "T032: no declaration ⇒ no releaseReadiness block, byte-identical to the plain projection" {
-              let withoutDecl = driveTo None
-              Expect.isNone withoutDecl.ReleasePreview "no declaration ⇒ no preview"
+            test "T032: no declaration ⇒ no releaseReadiness block, byte-identical to the plain projection" {
+                let withoutDecl = driveTo None
+                Expect.isNone withoutDecl.ReleasePreview "no declaration ⇒ no preview"
 
-              let doc = withoutDecl.VerifyDoc |> Option.defaultValue ""
-              Expect.isFalse (doc.Contains "releaseReadiness") "no releaseReadiness block when absent"
+                let doc = withoutDecl.VerifyDoc |> Option.defaultValue ""
+                Expect.isFalse (doc.Contains "releaseReadiness") "no releaseReadiness block when absent"
 
-              // Byte-identical to the existing 3-arg projection (the additive WithPreview []/None equivalence).
-              let plain = VerifyJson.ofVerifyDecision (withoutDecl.Decision |> Option.get) None []
-              Expect.equal doc plain "verify.json byte-identical to the pre-wiring projection"
-          }
+                // Byte-identical to the existing 3-arg projection (the additive WithPreview []/None equivalence).
+                let plain = VerifyJson.ofVerifyDecision (withoutDecl.Decision |> Option.get) None []
+                Expect.equal doc plain "verify.json byte-identical to the pre-wiring projection"
+            }
 
-          test "an undeclared matrix is NotDeclared; a no-declaration run has no matrix at all" {
-              let withoutDecl = driveTo None
-              Expect.isNone withoutDecl.ReleaseMatrix "no declaration ⇒ no matrix decision"
-          } ]
+            test "an undeclared matrix is NotDeclared; a no-declaration run has no matrix at all" {
+                let withoutDecl = driveTo None
+                Expect.isNone withoutDecl.ReleaseMatrix "no declaration ⇒ no matrix decision"
+            }
+        ]

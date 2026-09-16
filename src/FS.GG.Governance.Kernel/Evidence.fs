@@ -28,8 +28,10 @@ type GraphError<'id> =
 // dependency edges as an adjacency map ("a rests on b" ⇒ b ∈ Deps[a]). The .fsi keeps
 // this opaque, so the DAG invariant `build` establishes cannot be forged.
 type EvidenceGraph<'id when 'id: comparison> =
-    { Nodes: Map<'id, EvidenceState>
-      Deps: Map<'id, Set<'id>> }
+    {
+        Nodes: Map<'id, EvidenceState>
+        Deps: Map<'id, Set<'id>>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Evidence =
@@ -53,11 +55,14 @@ module Evidence =
                 | x :: _ when x = n -> List.rev (x :: acc)
                 | x :: rest -> take (x :: acc) rest
                 | [] -> List.rev acc
+
             take [] onStack
 
         let rec visit (onStack: 'id list) (finished: Set<'id>) (n: 'id) : Result<Set<'id>, 'id list> =
-            if Set.contains n finished then Ok finished
-            elif List.contains n onStack then Error(witness onStack n)
+            if Set.contains n finished then
+                Ok finished
+            elif List.contains n onStack then
+                Error(witness onStack n)
             else
                 let stack' = n :: onStack
 
@@ -91,7 +96,8 @@ module Evidence =
 
         // Precedence (data-model §build): AutoSyntheticDeclared, then UnknownNode, then Cycle.
         let autoDeclared =
-            nodeMap |> Map.tryPick (fun id st -> if st = AutoSynthetic then Some id else None)
+            nodeMap
+            |> Map.tryPick (fun id st -> if st = AutoSynthetic then Some id else None)
 
         let unknownEndpoint =
             dependencies
@@ -107,9 +113,7 @@ module Evidence =
             // Adjacency: edge (a, b) — "a rests on b" — adds b to a's dependency set.
             let deps =
                 dependencies
-                |> List.fold
-                    (fun m (a, b) -> Map.add a (Set.add b (restsOn m a)) m)
-                    Map.empty
+                |> List.fold (fun m (a, b) -> Map.add a (Set.add b (restsOn m a)) m) Map.empty
 
             match findCycle (nodeMap |> Map.toList |> List.map fst) deps with
             | Some path -> Error(Cycle path)

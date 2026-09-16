@@ -12,13 +12,13 @@
 
 namespace FS.GG.Governance.HumanText
 
-open FS.GG.Governance.Route.Model              // RouteResult
-open FS.GG.Governance.RouteExplain.Model        // RouteExplanation
-open FS.GG.Governance.Ship.Model                // ShipDecision
-open FS.GG.Governance.ReleaseReport.Model         // ReleaseReport
-open FS.GG.Governance.CacheEligibility.Model      // CacheEligibilityReport
-open FS.GG.Governance.Gates.Model                 // GateId
-open FS.GG.Governance.GateRun.Model               // GateOutcome
+open FS.GG.Governance.Route.Model // RouteResult
+open FS.GG.Governance.RouteExplain.Model // RouteExplanation
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.ReleaseReport.Model // ReleaseReport
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.GateRun.Model // GateOutcome
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReportView =
@@ -32,9 +32,11 @@ module ReportView =
     /// The whole report as one navigable tree: a titled root (the verdict/header) over grouped
     /// sections (selected gates, blockers, warnings, preconditions, evidence/provenance references).
     type ReportView =
-        { Title: string
-          ExitStatus: string
-          Sections: ReportNode list }
+        {
+            Title: string
+            ExitStatus: string
+            Sections: ReportNode list
+        }
 
     /// Project an F019 route result (with the optional cache-eligibility report + per-gate execution
     /// outcomes the JSON path carries) into the navigable view. Route never blocks (FR-008).

@@ -60,5 +60,4 @@ module Route =
     /// all yield an empty selected-gate set with the all-zero cost — a valid, successful empty route.
     /// Pure: no I/O, git, clock, severity, enforcement, freshness evaluation, execution, JSON, or CLI
     /// (FR-008, FR-011, FR-013).
-    val select:
-        registry: GateRegistry -> report: RouteReport -> findings: FindingReport -> RouteResult
+    val select: registry: GateRegistry -> report: RouteReport -> findings: FindingReport -> RouteResult

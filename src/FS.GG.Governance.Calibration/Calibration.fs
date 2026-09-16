@@ -43,10 +43,12 @@ module Calibration =
         else
             // Both gates pass: calibrated, naming exactly what cleared the gate — the no-hide rule (L-D4/L-D8).
             Calibrated
-                { ObservedSamples = SampleCount observed
-                  RequiredSamples = SampleCount effectiveMin
-                  ObservedAgreement = evidence.ObservedAgreement
-                  RequiredAgreement = thresholds.MinimumAgreement }
+                {
+                    ObservedSamples = SampleCount observed
+                    RequiredSamples = SampleCount effectiveMin
+                    ObservedAgreement = evidence.ObservedAgreement
+                    RequiredAgreement = thresholds.MinimumAgreement
+                }
 
     let calibrationReason (decision: CalibrationDecision) : CalibrationReason option =
         match decision with

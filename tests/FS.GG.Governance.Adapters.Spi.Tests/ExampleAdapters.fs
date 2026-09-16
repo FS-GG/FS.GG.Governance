@@ -30,16 +30,20 @@ open Check // the ==> operator and the smart constructors
 //     hash/route — is REAL evaluation (the deterministic-engine "prefer real" path).
 // ─────────────────────────────────────────────────────────────────────────────
 
-let judge: JudgeId = { ModelId = "example-judge"; Version = "1" }
+let judge: JudgeId =
+    {
+        ModelId = "example-judge"
+        Version = "1"
+    }
 
 /// A stable string key for any governance outcome — reused by every domain's
 /// `Identify` so an embedded `RuleOutcome` is identified uniformly (D8).
 let govKey (o: RuleOutcome) : string =
     match o with
-    | Decided (RuleId r, _) -> "decided:" + r
+    | Decided(RuleId r, _) -> "decided:" + r
     | NeedsReview req -> "needs:" + req.Key
     | Reviewed rr -> "reviewed:" + rr.Key
-    | Escalated (RuleId r) -> "escalated:" + r
+    | Escalated(RuleId r) -> "escalated:" + r
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SYNTHETIC: example domain A — a tiny "document" domain. Illustrative, not a real
@@ -61,16 +65,30 @@ let docToRef (a: DocArtifact) : ArtifactRef =
     | DocBody -> { Kind = "doc"; Key = "body" }
 
 let titledProbe: Probe<DocFact> =
-    { Name = "has-title"
-      Reads = [ docToRef DocBody ]
-      Args = []
-      Eval = fun fs -> if fs |> List.exists (fun f -> f.Value = HasTitle true) then Met else Unmet "no title" }
+    {
+        Name = "has-title"
+        Reads = [ docToRef DocBody ]
+        Args = []
+        Eval =
+            fun fs ->
+                if fs |> List.exists (fun f -> f.Value = HasTitle true) then
+                    Met
+                else
+                    Unmet "no title"
+    }
 
 let titled: Check<DocFact> = Atom titledProbe
 
 /// A Deterministic, reified rule: the document must have a title.
 let docTitledRule: CheckRule<DocFact> =
-    CheckRule.rule (RuleId "doc-titled") Deterministic { Document = "doc-policy"; Section = "title" } titled
+    CheckRule.rule
+        (RuleId "doc-titled")
+        Deterministic
+        {
+            Document = "doc-policy"
+            Section = "title"
+        }
+        titled
     |> function
         | Ok r -> CheckRule.blocking r
         | Error e -> failwithf "doc-titled: %A" e
@@ -78,9 +96,17 @@ let docTitledRule: CheckRule<DocFact> =
 /// An AgentReviewed rule over an OPAQUE check — for the lifted-opacity proof (V65):
 /// it can never be Deterministic and always routes to review.
 let docReviewRule: CheckRule<DocFact> =
-    let manualReview = Opaque("manual-review", fun _ -> Unknown "subjective — a judge must rule")
+    let manualReview =
+        Opaque("manual-review", fun _ -> Unknown "subjective — a judge must rule")
 
-    CheckRule.rule (RuleId "doc-reviewed") AgentReviewed { Document = "doc-policy"; Section = "review" } manualReview
+    CheckRule.rule
+        (RuleId "doc-reviewed")
+        AgentReviewed
+        {
+            Document = "doc-policy"
+            Section = "review"
+        }
+        manualReview
     |> function
         | Ok r -> CheckRule.asking "Is the document well written?" r
         | Error e -> failwithf "doc-reviewed: %A" e
@@ -91,25 +117,31 @@ let docIdentify (f: DocFact) : FactId =
     | DocGov o -> FactId("doc:gov:" + govKey o)
 
 let docBridge: Bridge<DocFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = DocGov
-      Project =
-        function
-        | DocGov o -> Some o
-        | HasTitle _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = DocGov
+        Project =
+            function
+            | DocGov o -> Some o
+            | HasTitle _ -> None
+    }
 
 let docFence: Fence<DocChange> =
-    { Name = "doc-body"
-      Trips = fun c -> c.DocPaths.Contains "doc.md" }
+    {
+        Name = "doc-body"
+        Trips = fun c -> c.DocPaths.Contains "doc.md"
+    }
 
 let docAdapter: Adapter<DocFact, DocArtifact, DocChange> =
-    { Identify = docIdentify
-      ToRef = docToRef
-      Probes = [ titledProbe ]
-      Rules = [ docTitledRule; docReviewRule ]
-      Fences = [ docFence ]
-      Bridge = docBridge }
+    {
+        Identify = docIdentify
+        ToRef = docToRef
+        Probes = [ titledProbe ]
+        Rules = [ docTitledRule; docReviewRule ]
+        Fences = [ docFence ]
+        Bridge = docBridge
+    }
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SYNTHETIC: example domain B — an UNRELATED "task" domain. Illustrative, not a real
@@ -134,16 +166,30 @@ let taskToRef (a: TaskArtifact) : ArtifactRef =
     | TaskCard -> { Kind = "task"; Key = "card" }
 
 let closedProbe: Probe<TaskFact> =
-    { Name = "task-closed"
-      Reads = [ taskToRef TaskCard ]
-      Args = []
-      Eval = fun fs -> if fs |> List.exists (fun f -> f.Value = TaskClosed true) then Met else Unmet "task open" }
+    {
+        Name = "task-closed"
+        Reads = [ taskToRef TaskCard ]
+        Args = []
+        Eval =
+            fun fs ->
+                if fs |> List.exists (fun f -> f.Value = TaskClosed true) then
+                    Met
+                else
+                    Unmet "task open"
+    }
 
 let closed: Check<TaskFact> = Atom closedProbe
 
 /// A Deterministic, reified rule: the task must be closed.
 let taskClosedRule: CheckRule<TaskFact> =
-    CheckRule.rule (RuleId "task-closed") Deterministic { Document = "task-policy"; Section = "closure" } closed
+    CheckRule.rule
+        (RuleId "task-closed")
+        Deterministic
+        {
+            Document = "task-policy"
+            Section = "closure"
+        }
+        closed
     |> function
         | Ok r -> r
         | Error e -> failwithf "task-closed: %A" e
@@ -154,25 +200,31 @@ let taskIdentify (f: TaskFact) : FactId =
     | TaskGov o -> FactId("task:gov:" + govKey o)
 
 let taskBridge: Bridge<TaskFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = TaskGov
-      Project =
-        function
-        | TaskGov o -> Some o
-        | TaskClosed _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = TaskGov
+        Project =
+            function
+            | TaskGov o -> Some o
+            | TaskClosed _ -> None
+    }
 
 let taskFence: Fence<TaskChange> =
-    { Name = "task-board"
-      Trips = fun c -> c.TaskIds.Contains "T-1" }
+    {
+        Name = "task-board"
+        Trips = fun c -> c.TaskIds.Contains "T-1"
+    }
 
 let taskAdapter: Adapter<TaskFact, TaskArtifact, TaskChange> =
-    { Identify = taskIdentify
-      ToRef = taskToRef
-      Probes = [ closedProbe ]
-      Rules = [ taskClosedRule ]
-      Fences = [ taskFence ]
-      Bridge = taskBridge }
+    {
+        Identify = taskIdentify
+        ToRef = taskToRef
+        Probes = [ closedProbe ]
+        Rules = [ taskClosedRule ]
+        Fences = [ taskFence ]
+        Bridge = taskBridge
+    }
 
 // ═════════════════════════════════════════════════════════════════════════════
 // The composition root (consumer-authored, D8): the CLOSED `ProjectFact` coproduct
@@ -199,8 +251,10 @@ let (|TaskP|_|) =
 
 /// The project's change shape — carries each domain's change independently.
 type ProjectChange =
-    { Docs: Set<string>
-      Tasks: Set<string> }
+    {
+        Docs: Set<string>
+        Tasks: Set<string>
+    }
 
 let narrowDoc (c: ProjectChange) : DocChange = { DocPaths = c.Docs }
 let narrowTask (c: ProjectChange) : TaskChange = { TaskIds = c.Tasks }
@@ -215,14 +269,16 @@ let projIdentify (f: ProjectFact) : FactId =
     | Gov o -> FactId("proj:gov:" + govKey o)
 
 let projBridge: Bridge<ProjectFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = Gov
-      Project =
-        function
-        | Gov o -> Some o
-        | Doc _
-        | Task _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = Gov
+        Project =
+            function
+            | Gov o -> Some o
+            | Doc _
+            | Task _ -> None
+    }
 
 // ── The single, named cross-domain coupling: an `Implies` over the coproduct ──
 // "if the document is titled, the task must be governed." Authored ONCE at the root
@@ -240,7 +296,7 @@ let taskGoverned: Check<ProjectFact> =
             fs
             |> List.exists (fun f ->
                 match f.Value with
-                | Task (TaskClosed true) -> true
+                | Task(TaskClosed true) -> true
                 | _ -> false)
         then
             Met
@@ -252,7 +308,14 @@ let crossDomainRule: CheckRule<ProjectFact> =
     let antecedent = Lift.check (|DocP|_|) titled
     let crossCheck = antecedent ==> taskGoverned
 
-    CheckRule.rule (RuleId "doc-implies-task-gov") Deterministic { Document = "root"; Section = "x-domain" } crossCheck
+    CheckRule.rule
+        (RuleId "doc-implies-task-gov")
+        Deterministic
+        {
+            Document = "root"
+            Section = "x-domain"
+        }
+        crossCheck
     |> function
         | Ok r -> CheckRule.blocking r
         | Error e -> failwithf "doc-implies-task-gov: %A" e

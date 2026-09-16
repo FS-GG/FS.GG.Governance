@@ -9,30 +9,30 @@ namespace FS.GG.Governance.ReleaseCommand
 
 open System.Security.Cryptography
 open System.Text
-open FS.GG.Governance.Config.Model                 // SurfaceId, EnvironmentClass
-open FS.GG.Governance.Enforcement.Enforcement       // Severity, Advisory, Blocking, Profile, RunMode
-open FS.GG.Governance.Ship.Model                    // Verdict, ExitCodeBasis, Pass, Fail, Clean, Blocked
-open FS.GG.Governance.FreshnessKey.Model            // Revision, RuleHash, GeneratorVersion, ArtifactHash
-open FS.GG.Governance.Provenance.Model              // BuilderIdentity
-open FS.GG.Governance.GateExecution.Model           // GateCommand
-open FS.GG.Governance.CommandKind                   // Audit.auditSnapshot
-open FS.GG.Governance.CommandKind.Model             // KindedCommandRun, AuditSnapshot
-open FS.GG.Governance.PackEvidence                  // Pack.evaluatePack/factContributions
-open FS.GG.Governance.PackEvidence.Model            // PackOutcome, PackArtifact, PackEvidenceSet, PackVerdict
-open FS.GG.Governance.Attestation                   // Attestation.summarize
-open FS.GG.Governance.Attestation.Model             // AttestationSummary
-open FS.GG.Governance.ReleaseReport                 // Report.assemble
-open FS.GG.Governance.ReleaseReport.Model           // ReleaseReport
-open FS.GG.Governance.ValidationMatrix              // Matrix.decideMatrix
-open FS.GG.Governance.ValidationMatrix.Model        // MatrixPlan, MatrixBoundary
-open FS.GG.Governance.CostBudget                    // Budget.budgetFor
-open FS.GG.Governance.ReleaseRules                  // Release.evaluateRelease, Release.releaseRuleKindToken
-open FS.GG.Governance.ReleaseRules.Model             // ReleaseDecision, ReleaseFacts, FactState, EnforcedReleaseFinding
-open FS.GG.Governance.ReleaseFactsSensing.Model      // SourceLayout, ReleaseExpectations, SensedRelease
-open FS.GG.Governance.ReleaseJson                   // ReleaseJson.ofReleaseReport
-open FS.GG.Governance.AttestationJson               // AttestationJson.ofAttestation
-open FS.GG.Governance.ReleaseDeclaration            // 065: the shared Declaration leaf (was row-local)
-open FS.GG.Governance.CommandHost                   // 075: shared host skeleton — `under`
+open FS.GG.Governance.Config.Model // SurfaceId, EnvironmentClass
+open FS.GG.Governance.Enforcement.Enforcement // Severity, Advisory, Blocking, Profile, RunMode
+open FS.GG.Governance.Ship.Model // Verdict, ExitCodeBasis, Pass, Fail, Clean, Blocked
+open FS.GG.Governance.FreshnessKey.Model // Revision, RuleHash, GeneratorVersion, ArtifactHash
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.CommandKind // Audit.auditSnapshot
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.PackEvidence // Pack.evaluatePack/factContributions
+open FS.GG.Governance.PackEvidence.Model // PackOutcome, PackArtifact, PackEvidenceSet, PackVerdict
+open FS.GG.Governance.Attestation // Attestation.summarize
+open FS.GG.Governance.Attestation.Model // AttestationSummary
+open FS.GG.Governance.ReleaseReport // Report.assemble
+open FS.GG.Governance.ReleaseReport.Model // ReleaseReport
+open FS.GG.Governance.ValidationMatrix // Matrix.decideMatrix
+open FS.GG.Governance.ValidationMatrix.Model // MatrixPlan, MatrixBoundary
+open FS.GG.Governance.CostBudget // Budget.budgetFor
+open FS.GG.Governance.ReleaseRules // Release.evaluateRelease, Release.releaseRuleKindToken
+open FS.GG.Governance.ReleaseRules.Model // ReleaseDecision, ReleaseFacts, FactState, EnforcedReleaseFinding
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease
+open FS.GG.Governance.ReleaseJson // ReleaseJson.ofReleaseReport
+open FS.GG.Governance.AttestationJson // AttestationJson.ofAttestation
+open FS.GG.Governance.ReleaseDeclaration // 065: the shared Declaration leaf (was row-local)
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — `under`
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -43,10 +43,12 @@ module Loop =
         | TextAndJson
 
     type RunRequest =
-        { Repo: string
-          Format: OutputFormat
-          ReleaseOut: string
-          AttestationOut: string }
+        {
+            Repo: string
+            Format: OutputFormat
+            ReleaseOut: string
+            AttestationOut: string
+        }
 
     type UsageError = { Message: string }
 
@@ -79,8 +81,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -90,25 +94,27 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Declaration: Declaration.ReleaseDeclaration option
-          Sensed: SensedRelease option
-          Packs: PackOutcome list option
-          Head: Revision option
-          Environment: EnvironmentClass option
-          Builder: BuilderIdentity option
-          PackEvidence: PackEvidenceSet option
-          Snapshot: AuditSnapshot option
-          Attestation: AttestationSummary option
-          Report: ReleaseReport option
-          Matrix: MatrixPlan option
-          Decision: ReleaseDecision option
-          ReleaseDoc: string option
-          AttestationDoc: string option
-          Written: Set<ArtifactKind>
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Declaration: Declaration.ReleaseDeclaration option
+            Sensed: SensedRelease option
+            Packs: PackOutcome list option
+            Head: Revision option
+            Environment: EnvironmentClass option
+            Builder: BuilderIdentity option
+            PackEvidence: PackEvidenceSet option
+            Snapshot: AuditSnapshot option
+            Attestation: AttestationSummary option
+            Report: ReleaseReport option
+            Matrix: MatrixPlan option
+            Decision: ReleaseDecision option
+            ReleaseDoc: string option
+            AttestationDoc: string option
+            Written: Set<ArtifactKind>
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     // ── exitCode (cli.md exit-code table) — total, no wildcard ──
 
@@ -123,16 +129,20 @@ module Loop =
     // ── parse — a pure, total argv matcher; usage problems are values, never throws ──
 
     type ParseAcc =
-        { Repo: string option
-          Format: string option
-          Out: string option
-          AttestationOut: string option }
+        {
+            Repo: string option
+            Format: string option
+            Out: string option
+            AttestationOut: string option
+        }
 
     let emptyAcc =
-        { Repo = None
-          Format = None
-          Out = None
-          AttestationOut = None }
+        {
+            Repo = None
+            Format = None
+            Out = None
+            AttestationOut = None
+        }
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         let rec go (acc: ParseAcc) (rest: string list) : Result<ParseAcc, UsageError> =
@@ -141,22 +151,47 @@ module Loop =
             // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as missing rather than
             // silently swallowing the following flag.
             | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
-            | "--repo" :: _ -> Error { Message = "missing value for flag: --repo" }
+            | "--repo" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --repo"
+                    }
             | "--format" :: v :: more when not (v.StartsWith "--") -> go { acc with Format = Some v } more
-            | "--format" :: _ -> Error { Message = "missing value for flag: --format" }
+            | "--format" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --format"
+                    }
             | "--out" :: v :: more when not (v.StartsWith "--") -> go { acc with Out = Some v } more
-            | "--out" :: _ -> Error { Message = "missing value for flag: --out" }
-            | "--attestation-out" :: v :: more when not (v.StartsWith "--") -> go { acc with AttestationOut = Some v } more
-            | "--attestation-out" :: _ -> Error { Message = "missing value for flag: --attestation-out" }
+            | "--out" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --out"
+                    }
+            | "--attestation-out" :: v :: more when not (v.StartsWith "--") ->
+                go { acc with AttestationOut = Some v } more
+            | "--attestation-out" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --attestation-out"
+                    }
             // CLI-5: distinguish an unknown `--` flag from a stray non-`--` positional in the message.
             | flag :: _ when flag.StartsWith "--" -> Error { Message = "unknown flag: " + flag }
-            | other :: _ -> Error { Message = "unexpected argument: " + other }
+            | other :: _ ->
+                Error
+                    {
+                        Message = "unexpected argument: " + other
+                    }
 
         match go emptyAcc argv with
         | Error e -> Error e
         | Ok acc ->
             match acc.Repo with
-            | None -> Error { Message = "missing required flag: --repo <dir>" }
+            | None ->
+                Error
+                    {
+                        Message = "missing required flag: --repo <dir>"
+                    }
             | Some repo ->
                 let formatResult =
                     match acc.Format with
@@ -164,40 +199,50 @@ module Loop =
                     | Some "text" -> Ok Text
                     | Some "json" -> Ok Json
                     | Some "both" -> Ok TextAndJson
-                    | Some other -> Error { Message = "unrecognized --format: " + other + " (expected text|json|both)" }
+                    | Some other ->
+                        Error
+                            {
+                                Message = "unrecognized --format: " + other + " (expected text|json|both)"
+                            }
 
                 match formatResult with
                 | Error e -> Error e
                 | Ok format ->
                     Ok
-                        { Repo = repo
-                          Format = format
-                          ReleaseOut = acc.Out |> Option.defaultValue (CommandHost.under repo "release.json")
-                          AttestationOut = acc.AttestationOut |> Option.defaultValue (CommandHost.under repo "readiness/attestation.json") }
+                        {
+                            Repo = repo
+                            Format = format
+                            ReleaseOut = acc.Out |> Option.defaultValue (CommandHost.under repo "release.json")
+                            AttestationOut =
+                                acc.AttestationOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/attestation.json")
+                        }
 
     // ── init (Principle IV) — initial Model + first effects ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Declaration = None
-              Sensed = None
-              Packs = None
-              Head = None
-              Environment = None
-              Builder = None
-              PackEvidence = None
-              Snapshot = None
-              Attestation = None
-              Report = None
-              Matrix = None
-              Decision = None
-              ReleaseDoc = None
-              AttestationDoc = None
-              Written = Set.empty
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Declaration = None
+                Sensed = None
+                Packs = None
+                Head = None
+                Environment = None
+                Builder = None
+                PackEvidence = None
+                Snapshot = None
+                Attestation = None
+                Report = None
+                Matrix = None
+                Decision = None
+                ReleaseDoc = None
+                AttestationDoc = None
+                Written = Set.empty
+                Diagnostics = []
+                Exit = Success
+            }
 
         model, [ LoadDeclaration request.Repo; SenseProvenance ]
 
@@ -217,7 +262,9 @@ module Loop =
     /// pack families (D1). `factContributions` carries ONLY the pack families (empty when no packable
     /// projects), so a plain `Map.fold` overlay never disturbs a non-pack family.
     let mergeFacts (sensed: SensedRelease) (contribs: Map<ReleaseRuleKind, FactState>) : ReleaseFacts =
-        { States = (sensed.Facts.States, contribs) ||> Map.fold (fun acc k v -> Map.add k v acc) }
+        {
+            States = (sensed.Facts.States, contribs) ||> Map.fold (fun acc k v -> Map.add k v acc)
+        }
 
     /// A deterministic, machine/clock-independent rule hash derived from the declared rules (the attestation
     /// materials' rule identity). SHA256 over the canonical, already-sorted rule list — byte-identical for
@@ -231,7 +278,10 @@ module Loop =
             |> String.concat ";"
 
         use sha = SHA256.Create()
-        let hex = canon |> Encoding.UTF8.GetBytes |> sha.ComputeHash |> System.Convert.ToHexString
+
+        let hex =
+            canon |> Encoding.UTF8.GetBytes |> sha.ComputeHash |> System.Convert.ToHexString
+
         RuleHash(hex.ToLowerInvariant())
 
     /// The real packed-artifact digests (Packed outcomes only — a failed/no-artifact pack yields no digest,
@@ -269,7 +319,15 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     // ── render — the deterministic summary (mutually recursive with update) ──
@@ -314,12 +372,15 @@ module Loop =
                 | Clean -> "clean"
                 | ExitCodeBasis.Blocked -> "blocked"
 
-            let header = sprintf "release: verdict %s (exit-code basis: %s)" verdictToken basisToken
+            let header =
+                sprintf "release: verdict %s (exit-code basis: %s)" verdictToken basisToken
 
-            [ [ header; "" ]
-              section "blockers" decision.Blockers
-              section "warnings" decision.Warnings
-              section "passing" decision.Passing ]
+            [
+                [ header; "" ]
+                section "blockers" decision.Blockers
+                section "warnings" decision.Warnings
+                section "passing" decision.Passing
+            ]
             |> List.concat
             |> String.concat "\n"
 
@@ -363,29 +424,35 @@ module Loop =
                 fail InputUnavailable (sprintf "pack output unreadable for surface '%s': %s" surface reason) model
             | [] ->
 
-            let pack = Pack.evaluatePack (baselinesOf decl) outcomes
-            let merged = mergeFacts sensed (Pack.factContributions pack)
-            let decision = Release.evaluateRelease decl.Rules merged
-            let snapshot = buildSnapshot model decl pack
-            let attestation = Attestation.summarize snapshot pack
-            let report = Report.assemble decision sensed pack attestation
-            let matrix = Matrix.decideMatrix (Budget.budgetFor Profile.Release RunMode.Release) decl.Matrix
-            let releaseDoc = ReleaseJson.ofReleaseReport report
-            let attestationDoc = AttestationJson.ofAttestation report.Attestation
+                let pack = Pack.evaluatePack (baselinesOf decl) outcomes
+                let merged = mergeFacts sensed (Pack.factContributions pack)
+                let decision = Release.evaluateRelease decl.Rules merged
+                let snapshot = buildSnapshot model decl pack
+                let attestation = Attestation.summarize snapshot pack
+                let report = Report.assemble decision sensed pack attestation
 
-            { model with
-                Phase = Sensed'
-                PackEvidence = Some pack
-                Decision = Some decision
-                Snapshot = Some snapshot
-                Attestation = Some attestation
-                Report = Some report
-                Matrix = Some matrix
-                ReleaseDoc = Some releaseDoc
-                AttestationDoc = Some attestationDoc
-                Exit = exitFromBasis decision.ExitCodeBasis },
-            [ WriteArtifact(ReleaseArtifact, model.Request.ReleaseOut, releaseDoc)
-              WriteArtifact(AttestationArtifact, model.Request.AttestationOut, attestationDoc) ]
+                let matrix =
+                    Matrix.decideMatrix (Budget.budgetFor Profile.Release RunMode.Release) decl.Matrix
+
+                let releaseDoc = ReleaseJson.ofReleaseReport report
+                let attestationDoc = AttestationJson.ofAttestation report.Attestation
+
+                { model with
+                    Phase = Sensed'
+                    PackEvidence = Some pack
+                    Decision = Some decision
+                    Snapshot = Some snapshot
+                    Attestation = Some attestation
+                    Report = Some report
+                    Matrix = Some matrix
+                    ReleaseDoc = Some releaseDoc
+                    AttestationDoc = Some attestationDoc
+                    Exit = exitFromBasis decision.ExitCodeBasis
+                },
+                [
+                    WriteArtifact(ReleaseArtifact, model.Request.ReleaseOut, releaseDoc)
+                    WriteArtifact(AttestationArtifact, model.Request.AttestationOut, attestationDoc)
+                ]
         | _ -> model, []
 
     // ── update — the whole composition; TOTAL, never throws ──
@@ -397,14 +464,17 @@ module Loop =
             match msg with
             | Begin -> model, []
 
-            | DeclarationLoaded(Error e) ->
-                fail InputUnavailable ("release declaration unavailable: " + e.Reason) model
+            | DeclarationLoaded(Error e) -> fail InputUnavailable ("release declaration unavailable: " + e.Reason) model
 
             | DeclarationLoaded(Ok decl) ->
                 { model with
                     Phase = Loaded'
-                    Declaration = Some decl },
-                [ SenseRelease(decl.Layout, decl.Expectations); PackProjects(packCommandsOf decl) ]
+                    Declaration = Some decl
+                },
+                [
+                    SenseRelease(decl.Layout, decl.Expectations)
+                    PackProjects(packCommandsOf decl)
+                ]
 
             | Sensed sensed -> tryCompose { model with Sensed = Some sensed }
 
@@ -415,7 +485,8 @@ module Loop =
                     { model with
                         Head = Some head
                         Environment = Some environment
-                        Builder = Some builder }
+                        Builder = Some builder
+                    }
 
             | Wrote(_, Error reason) ->
                 // A write failure is ALWAYS a ToolError (exit 4), NEVER a blocked verdict.
@@ -433,7 +504,8 @@ module Loop =
                 | _ ->
                     { model with
                         Phase = Persisted
-                        Written = written },
+                        Written = written
+                    },
                     [ EmitSummary(render model model.Request.Format) ]
 
             | Emitted -> { model with Phase = Done }, []

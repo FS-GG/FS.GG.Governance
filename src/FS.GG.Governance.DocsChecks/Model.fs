@@ -13,32 +13,40 @@ module Model =
         | LinkDangling of target: string
 
     type LinkFact =
-        { Source: GovernedPath
-          LinkText: string
-          Target: string
-          Outcome: LinkOutcome }
+        {
+            Source: GovernedPath
+            LinkText: string
+            Target: string
+            Outcome: LinkOutcome
+        }
 
     type ReferenceOutcome =
         | ReferenceResolves
         | ReferenceStale of symbol: string
 
     type ReferenceFact =
-        { Source: GovernedPath
-          Reference: string
-          Outcome: ReferenceOutcome }
+        {
+            Source: GovernedPath
+            Reference: string
+            Outcome: ReferenceOutcome
+        }
 
     type ExampleOutcome =
         | ExampleCurrent
         | ExampleStale of detail: string
 
     type ExampleFact =
-        { Source: GovernedPath
-          Example: string
-          Outcome: ExampleOutcome }
+        {
+            Source: GovernedPath
+            Example: string
+            Outcome: ExampleOutcome
+        }
 
     type DocsFacts =
-        { Sources: GovernedPath list
-          Links: LinkFact list
-          References: ReferenceFact list
-          Examples: ExampleFact list
-          Unreadable: string list }
+        {
+            Sources: GovernedPath list
+            Links: LinkFact list
+            References: ReferenceFact list
+            Examples: ExampleFact list
+            Unreadable: string list
+        }

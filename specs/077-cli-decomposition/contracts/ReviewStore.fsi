@@ -30,5 +30,4 @@ module ReviewStore =
 
     /// Persist a recorded review. `Error reason` for the unavailable fixture / OS error.
     /// Called by the host `RecordVerdict` effect. (Relocated from Program.saveReview.)
-    val saveReview:
-        request: RunRequest -> snapshot: ProjectSnapshot -> review: RecordedReview -> Result<unit, string>
+    val saveReview: request: RunRequest -> snapshot: ProjectSnapshot -> review: RecordedReview -> Result<unit, string>

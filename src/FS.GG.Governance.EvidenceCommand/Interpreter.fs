@@ -17,16 +17,18 @@ open FS.GG.Governance.Kernel
 open FS.GG.Governance.Adapters.SpecKit
 open FS.GG.Governance.Adapters.DesignSystem
 open FS.GG.Governance.Cli
-open FS.GG.Governance.CommandHost         // 049: shared host edge leaf (writeAtomic)
+open FS.GG.Governance.CommandHost // 049: shared host edge leaf (writeAtomic)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
     // The injected edge ports — the implementation of the type declared in Interpreter.fsi.
     type Ports =
-        { SenseReport: string -> Result<ProjectEvidenceReport, Loop.ReportFault>
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+        {
+            SenseReport: string -> Result<ProjectEvidenceReport, Loop.ReportFault>
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+        }
 
     // ── project sensing: reuse ArtifactReading (single source; #49 removed the ~325-line copy). 100
     //    (M-ARCH-2): ArtifactReading + the RunRequest vocabulary now live in the ProjectSensing library
@@ -37,36 +39,50 @@ module Interpreter =
     let private evidenceDomains = Set.ofList [ SpecKitDomain; DesignSystemDomain ]
 
     let optionsFor () : ProjectOptions =
-        { Domains = evidenceDomains
-          Judge = Project.defaultJudge
-          SpecKitDial = Catalog.defaultDial }
+        {
+            Domains = evidenceDomains
+            Judge = Project.defaultJudge
+            SpecKitDial = Catalog.defaultDial
+        }
 
     // A RunRequest shaped for `ArtifactReading.loadSnapshot`: it consults only Root/Scope/Domains/Judge; the
     // remaining fields are inert here and take neutral defaults.
     let private senseRequest (rawRoot: string) : RunRequest =
-        { Root = rawRoot
-          Command = CommandKind.EvidenceCommand
-          Mode = Inner
-          Format = OutputFormat.Text
-          Scope = []
-          Domains = evidenceDomains
-          ReviewBudget = ReviewBudget.CacheOnly
-          ReviewStore = None
-          OutputPath = None
-          Judge = Project.defaultJudge
-          ExplicitPlain = false }
+        {
+            Root = rawRoot
+            Command = CommandKind.EvidenceCommand
+            Mode = Inner
+            Format = OutputFormat.Text
+            Scope = []
+            Domains = evidenceDomains
+            ReviewBudget = ReviewBudget.CacheOnly
+            ReviewStore = None
+            OutputPath = None
+            Judge = Project.defaultJudge
+            ExplicitPlain = false
+        }
 
     let loadSnapshot (rawRoot: string) : Result<ProjectSnapshot, string> =
         // Reuse the Cli reader (identical spec-kit/design fact sensing), then clear the two fields Evidence
         // deliberately omits: the SDD handoff and the declared profile (both route-only concerns).
         ArtifactReading.loadSnapshot (senseRequest rawRoot)
-        |> Result.map (fun snapshot -> { snapshot with Handoffs = []; DefaultProfile = None })
+        |> Result.map (fun snapshot ->
+            { snapshot with
+                Handoffs = []
+                DefaultProfile = None
+            })
 
     // ── drive the Host loop (cache-only, zero fresh-review budget ⇒ deterministic) ──
 
-    let private stepHostEffect (root: string) (effect: FS.GG.Governance.Host.Effect) : FS.GG.Governance.Host.Msg<ProjectFact> list =
+    let private stepHostEffect
+        (root: string)
+        (effect: FS.GG.Governance.Host.Effect)
+        : FS.GG.Governance.Host.Msg<ProjectFact> list =
         match effect with
-        | FS.GG.Governance.Host.ReadArtifact artifact -> [ FS.GG.Governance.Host.Msg.Sensed(artifact, ArtifactReading.readArtifact root artifact) ]
+        | FS.GG.Governance.Host.ReadArtifact artifact ->
+            [
+                FS.GG.Governance.Host.Msg.Sensed(artifact, ArtifactReading.readArtifact root artifact)
+            ]
         | FS.GG.Governance.Host.LoadReview key -> [ FS.GG.Governance.Host.Msg.Loaded(key, Ok None) ]
         | FS.GG.Governance.Host.DispatchReview _ -> []
         | FS.GG.Governance.Host.RecordVerdict review -> [ FS.GG.Governance.Host.Msg.Recorded(review.Key, Ok()) ]
@@ -111,9 +127,11 @@ module Interpreter =
     let realPorts (repo: string) : Ports =
         ignore repo
 
-        { SenseReport = senseReport
-          Write = CommandHost.writeAtomic
-          Out = fun text -> Console.Out.WriteLine text }
+        {
+            SenseReport = senseReport
+            Write = CommandHost.writeAtomic
+            Out = fun text -> Console.Out.WriteLine text
+        }
 
     let step (ports: Ports) (effect: Loop.Effect) : Loop.Msg =
         match effect with

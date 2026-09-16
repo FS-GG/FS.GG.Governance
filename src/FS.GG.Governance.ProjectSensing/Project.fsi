@@ -30,48 +30,58 @@ type ProjectFact =
 
 /// Project-level change shape. Each adapter sees its own narrowed change through F09 lift.
 type ProjectChange =
-    { SpecKit: SpecKitChange option
-      DesignSystem: DesignChange option
-      Scope: string list }
+    {
+        SpecKit: SpecKitChange option
+        DesignSystem: DesignChange option
+        Scope: string list
+    }
 
 /// Snapshot sensed from a repository root before Host runs.
 type ProjectSnapshot =
-    { Root: string
-      Supplied: FactSet<ProjectFact>
-      Change: ProjectChange
-      Artifacts: ArtifactRef list
-      /// F081 wiring: the raw SDD→Governance handoff documents located under `Root`
-      /// (`readiness/<id>/governance-handoff.json`), in stable `<id>` order; `[]` when none.
-      /// The `route` command folds these through `Adapters.SddHandoff.Consumer` into its gate
-      /// verdict so a produced handoff drives the exit code (blocks at `--mode gate`).
-      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
-      /// 090: the product's declared `.fsgg/policy.yml defaultProfile`, read at the Config-load
-      /// edge (`Config.Loader.loadAndValidate`); `None` when no policy is declared, the policy is
-      /// invalid, or `defaultProfile` is absent. The `route` exit resolves this through
-      /// `Enforcement.recognizeProfile` (absent / unrecognized → `Strict`, the one-way fail-safe)
-      /// so the handoff gate honors the active profile like every other gate.
-      DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option }
+    {
+        Root: string
+        Supplied: FactSet<ProjectFact>
+        Change: ProjectChange
+        Artifacts: ArtifactRef list
+        /// F081 wiring: the raw SDD→Governance handoff documents located under `Root`
+        /// (`readiness/<id>/governance-handoff.json`), in stable `<id>` order; `[]` when none.
+        /// The `route` command folds these through `Adapters.SddHandoff.Consumer` into its gate
+        /// verdict so a produced handoff drives the exit code (blocks at `--mode gate`).
+        Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+        /// 090: the product's declared `.fsgg/policy.yml defaultProfile`, read at the Config-load
+        /// edge (`Config.Loader.loadAndValidate`); `None` when no policy is declared, the policy is
+        /// invalid, or `defaultProfile` is absent. The `route` exit resolves this through
+        /// `Enforcement.recognizeProfile` (absent / unrecognized → `Strict`, the one-way fail-safe)
+        /// so the handoff gate honors the active profile like every other gate.
+        DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option
+    }
 
 /// Options for building the composed catalog and Host configuration.
 type ProjectOptions =
-    { Domains: Set<Domain>
-      Judge: JudgeId
-      SpecKitDial: ConstitutionDial }
+    {
+        Domains: Set<Domain>
+        Judge: JudgeId
+        SpecKitDial: ConstitutionDial
+    }
 
 /// One evidence node in the CLI evidence report.
 type EvidenceNodeReport =
-    { Id: string
-      Declared: EvidenceState option
-      Effective: EvidenceState option
-      Freshness: Freshness option
-      Source: string }
+    {
+        Id: string
+        Declared: EvidenceState option
+        Effective: EvidenceState option
+        Freshness: Freshness option
+        Source: string
+    }
 
 /// Project-level evidence report before review-budget accounting is attached by Cli.
 type ProjectEvidenceReport =
-    { Nodes: EvidenceNodeReport list
-      Dependencies: (string * string) list
-      Disclosures: Disclosure list
-      Failures: Failure list }
+    {
+        Nodes: EvidenceNodeReport list
+        Dependencies: (string * string) list
+        Disclosures: Disclosure list
+        Failures: Failure list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Project =
@@ -104,10 +114,7 @@ module Project =
 
     /// Build the Host loop configuration for a run over a sensed project snapshot.
     val toLoopConfig:
-        options: ProjectOptions ->
-        mode: RunMode ->
-        snapshot: ProjectSnapshot ->
-            LoopConfig<ProjectChange, ProjectFact>
+        options: ProjectOptions -> mode: RunMode -> snapshot: ProjectSnapshot -> LoopConfig<ProjectChange, ProjectFact>
 
     /// Fold project facts and Host model failures into the `evidence` command report.
     val evidenceReport: host: FS.GG.Governance.Host.Model<ProjectFact> -> ProjectEvidenceReport

@@ -48,58 +48,70 @@ let private str (e: JsonElement) : string =
 let private surfaceFacts (subject: DesignArtifactRef) (file: string) : DesignSystemFact list =
     let root = readDoc file
 
-    [ match root.TryGetProperty "present" with
-      | true, p when p.GetBoolean() -> ArtifactPresent subject
-      | _ -> ()
+    [
+        match root.TryGetProperty "present" with
+        | true, p when p.GetBoolean() -> ArtifactPresent subject
+        | _ -> ()
 
-      match root.TryGetProperty "observations" with
-      | true, obs ->
-          for o in obs.EnumerateObject() do
-              SurfaceObservation(o.Name, subject, o.Value.GetBoolean())
-      | _ -> () ]
+        match root.TryGetProperty "observations" with
+        | true, obs ->
+            for o in obs.EnumerateObject() do
+                SurfaceObservation(o.Name, subject, o.Value.GetBoolean())
+        | _ -> ()
+    ]
 
 /// The F05 evidence pair (measurements + verdict-rests-on edges) declared on the generated
 /// token surface file.
 let private evidenceFacts (file: string) : DesignSystemFact list =
     let root = readDoc file
 
-    [ match root.TryGetProperty "measurements" with
-      | true, ms ->
-          for m in ms.EnumerateArray() do
-              MeasurementState(str (m.GetProperty "id"), stateOfName (str (m.GetProperty "state")))
-      | _ -> ()
+    [
+        match root.TryGetProperty "measurements" with
+        | true, ms ->
+            for m in ms.EnumerateArray() do
+                MeasurementState(str (m.GetProperty "id"), stateOfName (str (m.GetProperty "state")))
+        | _ -> ()
 
-      match root.TryGetProperty "verdictRestsOn" with
-      | true, vs ->
-          for v in vs.EnumerateArray() do
-              VerdictRestsOn(str (v.GetProperty "verdict"), str (v.GetProperty "measurement"))
-      | _ -> () ]
+        match root.TryGetProperty "verdictRestsOn" with
+        | true, vs ->
+            for v in vs.EnumerateArray() do
+                VerdictRestsOn(str (v.GetProperty "verdict"), str (v.GetProperty "measurement"))
+        | _ -> ()
+    ]
 
 let private policyFacts (file: string) : DesignSystemFact list =
     let root = readDoc file
 
-    [ match root.TryGetProperty "policy" with
-      | true, p -> PolicySelected(str p)
-      | _ -> ()
+    [
+        match root.TryGetProperty "policy" with
+        | true, p -> PolicySelected(str p)
+        | _ -> ()
 
-      match root.TryGetProperty "designRules" with
-      | true, rs ->
-          for r in rs.EnumerateArray() do
-              DesignRule(str r)
-      | _ -> () ]
+        match root.TryGetProperty "designRules" with
+        | true, rs ->
+            for r in rs.EnumerateArray() do
+                DesignRule(str r)
+        | _ -> ()
+    ]
 
 /// A supplied DesignSystemFact with the adapter's own identity (provenance empty — asserted).
 let fact (v: DesignSystemFact) : FactAssertion<DesignSystemFact> =
-    { Id = DesignSystem.identify v; Value = v; Provenance = [] }
+    {
+        Id = DesignSystem.identify v
+        Value = v
+        Provenance = []
+    }
 
 /// The conforming fixture token tree, lifted to a fact set — every deterministic observation
 /// is `true` and every measurement is `Real`, so the deterministic catalog passes. The real
 /// input the full-catalog evaluation/explanation tests run against (SC-003).
 let conformingFacts: FactSet<DesignSystemFact> =
-    [ yield! policyFacts "policy.json"
-      yield! surfaceFacts TokenDocument "token-document.json"
-      yield! surfaceFacts GeneratedTokenSurface "generated-token-surface.json"
-      yield! surfaceFacts InteractionStateSpec "interaction-state-spec.json"
-      yield! surfaceFacts PagePatternSpec "page-pattern-spec.json"
-      yield! evidenceFacts "generated-token-surface.json" ]
+    [
+        yield! policyFacts "policy.json"
+        yield! surfaceFacts TokenDocument "token-document.json"
+        yield! surfaceFacts GeneratedTokenSurface "generated-token-surface.json"
+        yield! surfaceFacts InteractionStateSpec "interaction-state-spec.json"
+        yield! surfaceFacts PagePatternSpec "page-pattern-spec.json"
+        yield! evidenceFacts "generated-token-surface.json"
+    ]
     |> List.map fact

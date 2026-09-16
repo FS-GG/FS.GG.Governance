@@ -18,9 +18,11 @@ module Tui =
     /// Durable navigation state. `View` is the immutable projection being navigated (never mutated);
     /// `Path` is the selection cursor into `Sections`; `Expanded` is which group cursors are open.
     type TuiModel =
-        { View: ReportView.ReportView
-          Path: int list
-          Expanded: Set<int list> }
+        {
+            View: ReportView.ReportView
+            Path: int list
+            Expanded: Set<int list>
+        }
 
     /// User navigation actions.
     type TuiMsg =

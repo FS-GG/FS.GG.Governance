@@ -22,22 +22,28 @@ module Model =
 
     // Representation hidden by Model.fsi's `[<Sealed>] type BoundedExcerpt`. Built only by `excerpt`.
     type BoundedExcerpt =
-        { Content: string
-          Bound: SizeBound
-          Truncation: Truncation }
+        {
+            Content: string
+            Bound: SizeBound
+            Truncation: Truncation
+        }
 
     let excerpt (SizeBound n) (content: string) : BoundedExcerpt =
         // Clamp a negative bound to 0 so capture stays total (research D4).
         let n = max 0 n
 
         if content.Length <= n then
-            { Content = content
-              Bound = SizeBound n
-              Truncation = Whole }
+            {
+                Content = content
+                Bound = SizeBound n
+                Truncation = Whole
+            }
         else
-            { Content = content.Substring(0, n)
-              Bound = SizeBound n
-              Truncation = Truncated }
+            {
+                Content = content.Substring(0, n)
+                Bound = SizeBound n
+                Truncation = Truncated
+            }
 
     let excerptContent (excerpt: BoundedExcerpt) : string = excerpt.Content
 
@@ -50,7 +56,9 @@ module Model =
         | DigestOnly of ArtifactHash
 
     type ReviewRequest =
-        { Instructions: QuestionText
-          Artifacts: ArtifactPayload list }
+        {
+            Instructions: QuestionText
+            Artifacts: ArtifactPayload list
+        }
 
     type RenderedPrompt = RenderedPrompt of string

@@ -17,8 +17,13 @@ module RepositoryHelpers =
         match dir with
         | null -> failwith "repo root (FS.GG.Governance.sln) not found"
         | d ->
-            let here ext = File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-            if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
+            let here ext =
+                File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
+
+            if here "sln" || here "slnx" then
+                d.FullName
+            else
+                findRepoRoot d.Parent
 
     let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
 
@@ -32,7 +37,8 @@ module CatalogFixtures =
     let yaml (s: string) = s.TrimStart('\n')
 
     let projectYml =
-        yaml """
+        yaml
+            """
 schemaVersion: 1
 id: my-product
 governedRoot: .
@@ -46,7 +52,8 @@ capabilitiesRef: .fsgg/capabilities.yml
 """
 
     let policyYml =
-        yaml """
+        yaml
+            """
 schemaVersion: 1
 defaultProfile: standard
 profiles:
@@ -61,7 +68,8 @@ reviewBudget:
 """
 
     let toolingYml =
-        yaml """
+        yaml
+            """
 schemaVersion: 1
 commands:
   - id: dotnet-format
@@ -85,9 +93,11 @@ environmentClasses:
     // under `src/**` routes to package-api ⇒ selects format(cheap) + build(medium).
     let validCatalog: Map<string, string> =
         Map
-            [ "governance.yml", projectYml
-              "capabilities.yml",
-              yaml """
+            [
+                "governance.yml", projectYml
+                "capabilities.yml",
+                yaml
+                    """
 schemaVersion: 2
 domains:
   - package-api
@@ -126,15 +136,18 @@ checks:
     environment: local-or-ci
     maturity: block-on-ship
 """
-              "policy.yml", policyYml
-              "tooling.yml", toolingYml ]
+                "policy.yml", policyYml
+                "tooling.yml", toolingYml
+            ]
 
     // A valid-but-empty catalog: two domains, no checks ⇒ an empty GateRegistry.
     let emptyCatalog: Map<string, string> =
         Map
-            [ "governance.yml", projectYml
-              "capabilities.yml",
-              yaml """
+            [
+                "governance.yml", projectYml
+                "capabilities.yml",
+                yaml
+                    """
 schemaVersion: 2
 domains:
   - package-api
@@ -146,18 +159,24 @@ pathMap:
     capability: workflow
 checks: []
 """
-              "policy.yml", policyYml
-              "tooling.yml", toolingYml ]
+                "policy.yml", policyYml
+                "tooling.yml", toolingYml
+            ]
 
     // An invalid catalog: an unsupported schema version on governance.yml ⇒ Invalid.
     let invalidCatalog: Map<string, string> =
-        Map [ "governance.yml", yaml """
+        Map
+            [
+                "governance.yml",
+                yaml
+                    """
 schemaVersion: 999
 id: my-product
 governedRoot: .
 domains:
   - package-api
-""" ]
+"""
+            ]
 
     let readerOf (files: Map<string, string>) : Loader.FileReader =
         fun name ->
@@ -183,16 +202,20 @@ module FakePorts =
     // ports so existing tests keep capturing the ANSI-free summary via the `Out` sink.
     let plainCapability: bool -> RenderMode.ColorCapability =
         fun explicitPlain ->
-            { IsTty = false
-              NoColorEnv = false
-              ExplicitPlain = explicitPlain
-              Width = None }
+            {
+                IsTty = false
+                NoColorEnv = false
+                ExplicitPlain = explicitPlain
+                Width = None
+            }
 
     // A no-op rich renderer for the faked ports (the Plain path never calls it).
     let noRichRender: ReportView.ReportView -> unit = fun _ -> ()
 
     let diffPayload (changes: (char * string) list) : string =
-        changes |> List.map (fun (k, p) -> sprintf "%c\000%s\000" k p) |> String.concat ""
+        changes
+        |> List.map (fun (k, p) -> sprintf "%c\000%s\000" k p)
+        |> String.concat ""
 
     let gitWithChanges (changes: (char * string) list) : GitPort =
         fun cmd ->
@@ -221,26 +244,33 @@ module FakePorts =
     /// sensor is proven over real temp-dir bytes in FS.GG.Governance.FreshnessSensing.Tests). Senses every
     /// gate fully.
     let fakeSensor: FreshnessSensing.FreshnessSensor =
-        { SenseRuleHash = fun () -> Some(RuleHash "rule-synthetic") // SYNTHETIC: fixed literal hash
-          SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-synthetic")
-          SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-synthetic" ]
-          SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-synthetic") }
+        {
+            SenseRuleHash = fun () -> Some(RuleHash "rule-synthetic") // SYNTHETIC: fixed literal hash
+            SenseGeneratorVersion = fun () -> Some(GeneratorVersion "gen-synthetic")
+            SenseCoveredArtifacts = fun _ -> Some [ ArtifactHash "art-synthetic" ]
+            SenseCommandVersion = fun _ -> Some(CommandVersion "cmd-synthetic")
+        }
 
     /// A faked sensor whose `senseFreshness` would surface an `Error` (a throwing accessor) — the degrade
     /// probe.
     let throwingSensor: FreshnessSensing.FreshnessSensor =
-        { fakeSensor with SenseRuleHash = fun () -> failwith "synthetic sense failure" }
+        { fakeSensor with
+            SenseRuleHash = fun () -> failwith "synthetic sense failure"
+        }
 
     let absentStoreReader: FreshnessSensing.StoreReader = fun _ -> Ok None
 
-    let malformedStoreReader: FreshnessSensing.StoreReader = fun _ -> Error "synthetic malformed store"
+    let malformedStoreReader: FreshnessSensing.StoreReader =
+        fun _ -> Error "synthetic malformed store"
 
     let fakeExecPortExiting (code: int) : ExecutionPort =
         fun _command ->
-            { Stdout = System.Text.Encoding.UTF8.GetBytes "out"
-              Stderr = System.Text.Encoding.UTF8.GetBytes "err"
-              ExitCode = ExitCode code
-              Duration = SensedDuration 7L }
+            {
+                Stdout = System.Text.Encoding.UTF8.GetBytes "out"
+                Stderr = System.Text.Encoding.UTF8.GetBytes "err"
+                ExitCode = ExitCode code
+                Duration = SensedDuration 7L
+            }
 
     type ExecCounter = { mutable Calls: int }
 
@@ -271,9 +301,19 @@ module SnapshotHelpers =
     open CatalogFixtures
     open FakePorts
 
-    let defaultOpts: SnapshotOptions = { Since = None; Base = None; Head = None }
+    let defaultOpts: SnapshotOptions =
+        {
+            Since = None
+            Base = None
+            Head = None
+        }
 
-    let sinceOpts (rev: string) : SnapshotOptions = { Since = Some(GitRef rev); Base = None; Head = None }
+    let sinceOpts (rev: string) : SnapshotOptions =
+        {
+            Since = Some(GitRef rev)
+            Base = None
+            Head = None
+        }
 
     let snapshotOf (g: GitPort) (opts: SnapshotOptions) : RepoSnapshot =
         FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts
@@ -282,10 +322,13 @@ module SnapshotHelpers =
         FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (FS.GG.Governance.Snapshot.Interpreter.realPorts dir) opts
 
     let candidatesOf (g: GitPort) (opts: SnapshotOptions) : GovernedPath list =
-        (FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts).Changed |> List.map (fun c -> c.Path)
+        (FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (portsGit g) opts).Changed
+        |> List.map (fun c -> c.Path)
 
     let candidatesOfRepo (dir: string) (opts: SnapshotOptions) : GovernedPath list =
-        (FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (FS.GG.Governance.Snapshot.Interpreter.realPorts dir) opts).Changed |> List.map (fun c -> c.Path)
+        (FS.GG.Governance.Snapshot.Interpreter.senseSnapshot (FS.GG.Governance.Snapshot.Interpreter.realPorts dir) opts)
+            .Changed
+        |> List.map (fun c -> c.Path)
 
     let revOfCommit (CommitId c) = Revision c
 
@@ -299,9 +342,15 @@ module SnapshotHelpers =
         let report = Routing.route facts candidates
         let registry = Gates.buildRegistry facts
         let findings = Findings.findUnknownGovernedPaths facts report
-        (Route.select registry report findings).SelectedGates |> List.map (fun sg -> sg.Gate)
 
-    let expectedOutcomesWith (port: ExecutionPort) (files: Map<string, string>) (selectedGates: Gate list) : (GateId * GateOutcome) list =
+        (Route.select registry report findings).SelectedGates
+        |> List.map (fun sg -> sg.Gate)
+
+    let expectedOutcomesWith
+        (port: ExecutionPort)
+        (files: Map<string, string>)
+        (selectedGates: Gate list)
+        : (GateId * GateOutcome) list =
         let tooling = (factsOf files).Tooling
 
         selectedGates
@@ -312,29 +361,36 @@ module SnapshotHelpers =
                     let record = FS.GG.Governance.GateExecution.Interpreter.senseExecution port cmd
                     let code = record.Reproducible.ExitCode
 
-                    { GateId = g.Id
-                      Disposition = Executed(code, Plan.passed code) }
+                    {
+                        GateId = g.Id
+                        Disposition = Executed(code, Plan.passed code)
+                    }
                 | Some(Error _)
                 | None ->
-                    { GateId = g.Id
-                      Disposition = NotExecuted }
+                    {
+                        GateId = g.Id
+                        Disposition = NotExecuted
+                    }
 
             g.Id, outcome)
 
     let storeOf (entries: (FreshnessInputs * EvidenceRef) list) : ReuseStore =
-        entries |> List.fold (fun s (i, e) -> EvidenceReuse.record i e s) EvidenceReuse.empty
+        entries
+        |> List.fold (fun s (i, e) -> EvidenceReuse.record i e s) EvidenceReuse.empty
 
     let persistInputs (check: string) (head: string) : FreshnessInputs =
-        { Check = CheckId check
-          Domain = DomainId "package-api"
-          Command = Some(CommandId "dotnet")
-          Environment = Local
-          RuleHash = RuleHash "r1"
-          CoveredArtifacts = [ ArtifactHash "h1" ]
-          CommandVersion = Some(CommandVersion "8.0")
-          GeneratorVersion = GeneratorVersion "g1"
-          Base = Revision "aaa"
-          Head = Revision head }
+        {
+            Check = CheckId check
+            Domain = DomainId "package-api"
+            Command = Some(CommandId "dotnet")
+            Environment = Local
+            RuleHash = RuleHash "r1"
+            CoveredArtifacts = [ ArtifactHash "h1" ]
+            CommandVersion = Some(CommandVersion "8.0")
+            GeneratorVersion = GeneratorVersion "g1"
+            Base = Revision "aaa"
+            Head = Revision head
+        }
 
     let syntheticRef (label: string) : EvidenceRef = EvidenceRef("synthetic://" + label) // SYNTHETIC: real refs need gate execution
 
@@ -347,26 +403,34 @@ module SnapshotHelpers =
     /// temp dir; owns no durable state. The per-suite `withTempRepo` builders compose these two.
     let git (dir: string) (args: string list) : string =
         let psi = ProcessStartInfo "git"
-        for a in args do psi.ArgumentList.Add a
+
+        for a in args do
+            psi.ArgumentList.Add a
+
         psi.WorkingDirectory <- dir
         psi.RedirectStandardOutput <- true
         psi.RedirectStandardError <- true
         psi.UseShellExecute <- false
+
         match Process.Start psi with
         | null -> failwith "git did not start"
         | p ->
             let out = p.StandardOutput.ReadToEnd()
             let err = p.StandardError.ReadToEnd()
             p.WaitForExit()
+
             if p.ExitCode <> 0 then
                 failwithf "git %s failed in %s: %s" (String.concat " " args) dir err
+
             out
 
     let writeFile (dir: string) (relPath: string) (content: string) : unit =
         let full = Path.Combine(dir, relPath)
+
         match Path.GetDirectoryName full with
         | null -> ()
         | parent -> Directory.CreateDirectory parent |> ignore
+
         File.WriteAllText(full, content)
 
 // 101 (M-CI-3): the shared surface-drift check behind the curated `.fsi`. Lifted VERBATIM from the
@@ -401,14 +465,15 @@ module SurfaceDrift =
             String.concat "\n" (Array.append [| sprintf "TYPE %s" t.FullName |] members))
         |> String.concat "\n"
 
-    let renderSurface (asm: Assembly) : string =
-        renderTypes (asm.GetExportedTypes())
+    let renderSurface (asm: Assembly) : string = renderTypes (asm.GetExportedTypes())
 
     let renderSurfaceForNamespace (namespaceName: string) (asm: Assembly) : string =
         asm.GetExportedTypes()
         |> Array.filter (fun t ->
             match Option.ofObj t.Namespace with
-            | Some ns -> ns = namespaceName || ns.StartsWith(namespaceName + ".", StringComparison.Ordinal)
+            | Some ns ->
+                ns = namespaceName
+                || ns.StartsWith(namespaceName + ".", StringComparison.Ordinal)
             | None -> false)
         |> renderTypes
 
@@ -419,8 +484,7 @@ module SurfaceDrift =
             let baselinePath =
                 Path.Combine(RepositoryHelpers.repoRoot, "surface", baselineName + ".surface.txt")
 
-            let assemblyName =
-                asm.GetName().Name |> Option.ofObj |> Option.defaultValue ""
+            let assemblyName = asm.GetName().Name |> Option.ofObj |> Option.defaultValue ""
 
             // A low-value organizational assembly may carry multiple preserved namespace contracts.
             // When the baseline name differs from the assembly name, it is also the namespace filter.

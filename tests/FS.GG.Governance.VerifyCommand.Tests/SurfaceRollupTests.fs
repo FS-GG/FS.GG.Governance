@@ -19,34 +19,40 @@ let private srcScope = Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]
 // given findings, and a PASSING gate exec (so any block comes from the surface finding, not a gate).
 let private runWithFindings (profile: Profile) (findings: _ list) =
     let cap = newCapture ()
+
     let ports =
         { fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortPass cap with
-            SenseSurfaces = syntheticSurfaceSense findings }
+            SenseSurfaces = syntheticSurfaceSense findings
+        }
+
     Interpreter.run ports (requestForProfile srcScope Loop.Text profile), cap
 
 [<Tests>]
 let tests =
     testList
         "SurfaceRollup (US1)"
-        [ test "a blocking surface finding fails the run at Verify under Strict (folded via deriveEffectiveSeverity)" {
-              let model, _ = runWithFindings Strict [ blockingSurfaceFinding ]
-              Expect.equal model.Exit Loop.Blocked "blocking surface finding ⇒ Blocked"
-              Expect.equal (Loop.exitCode model.Exit) 1 "exit 1"
-          }
+        [
+            test "a blocking surface finding fails the run at Verify under Strict (folded via deriveEffectiveSeverity)" {
+                let model, _ = runWithFindings Strict [ blockingSurfaceFinding ]
+                Expect.equal model.Exit Loop.Blocked "blocking surface finding ⇒ Blocked"
+                Expect.equal (Loop.exitCode model.Exit) 1 "exit 1"
+            }
 
-          test "an advisory surface finding never escalates — exit unchanged from a clean run" {
-              let clean, _ = runWithFindings Standard []
-              let advised, _ = runWithFindings Standard [ advisorySurfaceFinding ]
-              Expect.equal clean.Exit Loop.Success "clean ⇒ Success"
-              Expect.equal advised.Exit Loop.Success "advisory-only ⇒ Success (no escalation)"
-              Expect.equal advised.Exit clean.Exit "advisory exit equals a clean run's exit"
-          }
+            test "an advisory surface finding never escalates — exit unchanged from a clean run" {
+                let clean, _ = runWithFindings Standard []
+                let advised, _ = runWithFindings Standard [ advisorySurfaceFinding ]
+                Expect.equal clean.Exit Loop.Success "clean ⇒ Success"
+                Expect.equal advised.Exit Loop.Success "advisory-only ⇒ Success (no escalation)"
+                Expect.equal advised.Exit clean.Exit "advisory exit equals a clean run's exit"
+            }
 
-          test "the truth table is NOT re-opened: the SAME blocking finding relaxes to advisory under Standard" {
-              // block-on-pr base-Blocking ⇒ effective-Blocking only once the verify floor is reached (Strict);
-              // under Standard it relaxes to advisory exactly as a gate finding does — proving the fold reuses
-              // the existing severity derivation rather than a new surface-specific rule.
-              let strict, _ = runWithFindings Strict [ blockingSurfaceFinding ]
-              let standard, _ = runWithFindings Standard [ blockingSurfaceFinding ]
-              Expect.equal strict.Exit Loop.Blocked "Strict ⇒ Blocked"
-              Expect.equal standard.Exit Loop.Success "Standard ⇒ relaxed to advisory ⇒ Success" } ]
+            test "the truth table is NOT re-opened: the SAME blocking finding relaxes to advisory under Standard" {
+                // block-on-pr base-Blocking ⇒ effective-Blocking only once the verify floor is reached (Strict);
+                // under Standard it relaxes to advisory exactly as a gate finding does — proving the fold reuses
+                // the existing severity derivation rather than a new surface-specific rule.
+                let strict, _ = runWithFindings Strict [ blockingSurfaceFinding ]
+                let standard, _ = runWithFindings Standard [ blockingSurfaceFinding ]
+                Expect.equal strict.Exit Loop.Blocked "Strict ⇒ Blocked"
+                Expect.equal standard.Exit Loop.Success "Standard ⇒ relaxed to advisory ⇒ Success"
+            }
+        ]

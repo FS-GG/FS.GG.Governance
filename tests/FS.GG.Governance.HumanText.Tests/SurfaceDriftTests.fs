@@ -12,6 +12,4 @@ let private humanText = SurfaceDrift.assemblyNamed "FS.GG.Governance.HumanText"
 
 [<Tests>]
 let tests =
-    testList
-        "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "HumanText" "FS.GG.Governance.HumanText" humanText ]
+    testList "SurfaceDrift" [ SurfaceDrift.surfaceTest "HumanText" "FS.GG.Governance.HumanText" humanText ]

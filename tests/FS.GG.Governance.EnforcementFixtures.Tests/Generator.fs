@@ -85,23 +85,29 @@ let renderTable (headers: string list) (rows: string list list) : string =
 /// token, and the reason text VERBATIM from `deriveEffectiveSeverity` (FR-002).
 let renderPrimaryTable () : string =
     let rows =
-        [ for b in allBaseSeverities do
-              for m in allMaturities do
-                  for mode in allModes do
-                      for p in allProfiles do
-                          let d =
-                              deriveEffectiveSeverity
-                                  { BaseSeverity = b
-                                    Maturity = m
-                                    Mode = mode
-                                    Profile = p }
+        [
+            for b in allBaseSeverities do
+                for m in allMaturities do
+                    for mode in allModes do
+                        for p in allProfiles do
+                            let d =
+                                deriveEffectiveSeverity
+                                    {
+                                        BaseSeverity = b
+                                        Maturity = m
+                                        Mode = mode
+                                        Profile = p
+                                    }
 
-                          [ severityToken b
-                            maturityToken m
-                            modeToken mode
-                            profileToken p
-                            severityToken d.EffectiveSeverity
-                            markdownCell d.Reason ] ]
+                            [
+                                severityToken b
+                                maturityToken m
+                                modeToken mode
+                                profileToken p
+                                severityToken d.EffectiveSeverity
+                                markdownCell d.Reason
+                            ]
+        ]
 
     renderTable [ "base"; "maturity"; "mode"; "profile"; "effective"; "reason" ] rows
 
@@ -132,10 +138,18 @@ let private routeClassRow (cls: string) (rawPath: string) (note: string) : strin
 /// (escalated finding) — all from the genuine cores over real facts (FR-003).
 let renderRouteClassTable () : string =
     let rows =
-        [ routeClassRow "routine" "docs/readme.md" "selects nothing; never default-denies, even under the strictest dials"
-          routeClassRow "fenced" "src/build/Main.fs" "routes into the domain's gates"
-          routeClassRow "unknown-governed-path" "src/new/Thing.fs" "explicit finding; never a silent default-deny"
-          routeClassRow "protected-surface-unknown" "src/boundary/Api.fs" "escalated finding on a declared protected boundary" ]
+        [
+            routeClassRow
+                "routine"
+                "docs/readme.md"
+                "selects nothing; never default-denies, even under the strictest dials"
+            routeClassRow "fenced" "src/build/Main.fs" "routes into the domain's gates"
+            routeClassRow "unknown-governed-path" "src/new/Thing.fs" "explicit finding; never a silent default-deny"
+            routeClassRow
+                "protected-surface-unknown"
+                "src/boundary/Api.fs"
+                "escalated finding on a declared protected boundary"
+        ]
 
     renderTable [ "class"; "example path"; "route outcome"; "finding"; "note" ] rows
 
@@ -145,21 +159,23 @@ let renderRouteClassTable () : string =
 /// and the `##` route-class table, in the fixed order from the contract. UTF-8, `\n` newlines, exactly
 /// one trailing newline.
 let renderTruthTable () : string =
-    [ "# Golden Enforcement Truth Table"
-      ""
-      "<!-- GENERATED — do not edit by hand; regenerate with `BLESS_FIXTURES=1 dotnet test tests/FS.GG.Governance.EnforcementFixtures.Tests`. -->"
-      ""
-      "Every value below comes verbatim from the merged enforcement cores (F023 `deriveEffectiveSeverity`,"
-      "F015 `Routing.route`, F017 `findUnknownGovernedPaths`). This file is a coverage/evidence artifact —"
-      "it computes no new semantics. A byte-equality drift guard regenerates it from the live cores."
-      ""
-      "## Primary cross-product (base severity × maturity × run mode × profile)"
-      ""
-      renderPrimaryTable ()
-      ""
-      "## Route classes (routine vs fenced vs unknown governed path)"
-      ""
-      renderRouteClassTable () ]
+    [
+        "# Golden Enforcement Truth Table"
+        ""
+        "<!-- GENERATED — do not edit by hand; regenerate with `BLESS_FIXTURES=1 dotnet test tests/FS.GG.Governance.EnforcementFixtures.Tests`. -->"
+        ""
+        "Every value below comes verbatim from the merged enforcement cores (F023 `deriveEffectiveSeverity`,"
+        "F015 `Routing.route`, F017 `findUnknownGovernedPaths`). This file is a coverage/evidence artifact —"
+        "it computes no new semantics. A byte-equality drift guard regenerates it from the live cores."
+        ""
+        "## Primary cross-product (base severity × maturity × run mode × profile)"
+        ""
+        renderPrimaryTable ()
+        ""
+        "## Route classes (routine vs fenced vs unknown governed path)"
+        ""
+        renderRouteClassTable ()
+    ]
     |> String.concat "\n"
     |> fun body -> body + "\n"
 
@@ -168,12 +184,14 @@ let renderTruthTable () : string =
 /// One named scenario seeding one `audit.json` snapshot: the single dial under test, the real route /
 /// mode / profile fed to the genuine `Ship.rollup`, and the section the dialed item must land in.
 type Scenario =
-    { Name: string
-      DialUnderTest: string
-      Route: RouteResult
-      Mode: RunMode
-      Profile: Profile
-      ExpectedSection: string }
+    {
+        Name: string
+        DialUnderTest: string
+        Route: RouteResult
+        Mode: RunMode
+        Profile: Profile
+        ExpectedSection: string
+    }
 
 /// The verbatim merged projection for a scenario — `ofShipDecision (rollup route mode profile)`. No new
 /// schema, no post-processing (FR-008).
@@ -187,7 +205,12 @@ let private gateRoute (id: string) (maturity: Maturity) : RouteResult =
 let private protectedFindingRoute: RouteResult =
     mkRoute
         []
-        [ mkFinding UnknownProtectedBoundaryPath (GovernedPath "src/boundary/Api.fs") (ProtectedBoundaryUnknown(SurfaceId "api")) ]
+        [
+            mkFinding
+                UnknownProtectedBoundaryPath
+                (GovernedPath "src/boundary/Api.fs")
+                (ProtectedBoundaryUnknown(SurfaceId "api"))
+        ]
 
 /// The fixed named scenario set (contracts/audit-snapshot-set.md). Each isolates ONE dial as the lever
 /// that flips blocking; `ExpectedSection` is the section the genuine `rollup` actually places the item
@@ -203,45 +226,61 @@ let private protectedFindingRoute: RouteResult =
 /// from `profile-relaxes-blocker` and `mode-below-floor`, which are genuine base-`Blocking`→`Advisory`
 /// relaxations.
 let scenarios: Scenario list =
-    [ { Name = "maturity-withholds-observe"
-        DialUnderTest = "maturity"
-        Route = gateRoute "build:observe" Observe
-        Mode = RunMode.Release
-        Profile = Profile.Release
-        ExpectedSection = "passing" }
-      { Name = "maturity-withholds-warn"
-        DialUnderTest = "maturity"
-        Route = gateRoute "build:warn" Warn
-        Mode = RunMode.Release
-        Profile = Profile.Release
-        ExpectedSection = "passing" }
-      { Name = "base-advisory-stays-advisory"
-        DialUnderTest = "base severity"
-        Route = gateRoute "build:advisory" Warn
-        Mode = RunMode.Release
-        Profile = Profile.Release
-        ExpectedSection = "passing" }
-      { Name = "profile-relaxes-blocker"
-        DialUnderTest = "profile"
-        Route = gateRoute "build:rel" BlockOnRelease
-        Mode = Gate
-        Profile = Light
-        ExpectedSection = "warnings" }
-      { Name = "profile-tightens-to-block"
-        DialUnderTest = "profile"
-        Route = gateRoute "build:rel" BlockOnRelease
-        Mode = Gate
-        Profile = Profile.Release
-        ExpectedSection = "blockers" }
-      { Name = "mode-below-floor"
-        DialUnderTest = "run mode"
-        Route = gateRoute "build:ship" BlockOnShip
-        Mode = Inner
-        Profile = Standard
-        ExpectedSection = "warnings" }
-      { Name = "mode-reaches-floor"
-        DialUnderTest = "run mode"
-        Route = gateRoute "build:ship" BlockOnShip
-        Mode = Gate
-        Profile = Standard
-        ExpectedSection = "blockers" } ]
+    [
+        {
+            Name = "maturity-withholds-observe"
+            DialUnderTest = "maturity"
+            Route = gateRoute "build:observe" Observe
+            Mode = RunMode.Release
+            Profile = Profile.Release
+            ExpectedSection = "passing"
+        }
+        {
+            Name = "maturity-withholds-warn"
+            DialUnderTest = "maturity"
+            Route = gateRoute "build:warn" Warn
+            Mode = RunMode.Release
+            Profile = Profile.Release
+            ExpectedSection = "passing"
+        }
+        {
+            Name = "base-advisory-stays-advisory"
+            DialUnderTest = "base severity"
+            Route = gateRoute "build:advisory" Warn
+            Mode = RunMode.Release
+            Profile = Profile.Release
+            ExpectedSection = "passing"
+        }
+        {
+            Name = "profile-relaxes-blocker"
+            DialUnderTest = "profile"
+            Route = gateRoute "build:rel" BlockOnRelease
+            Mode = Gate
+            Profile = Light
+            ExpectedSection = "warnings"
+        }
+        {
+            Name = "profile-tightens-to-block"
+            DialUnderTest = "profile"
+            Route = gateRoute "build:rel" BlockOnRelease
+            Mode = Gate
+            Profile = Profile.Release
+            ExpectedSection = "blockers"
+        }
+        {
+            Name = "mode-below-floor"
+            DialUnderTest = "run mode"
+            Route = gateRoute "build:ship" BlockOnShip
+            Mode = Inner
+            Profile = Standard
+            ExpectedSection = "warnings"
+        }
+        {
+            Name = "mode-reaches-floor"
+            DialUnderTest = "run mode"
+            Route = gateRoute "build:ship" BlockOnShip
+            Mode = Gate
+            Profile = Standard
+            ExpectedSection = "blockers"
+        }
+    ]

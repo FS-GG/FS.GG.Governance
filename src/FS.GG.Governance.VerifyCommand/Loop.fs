@@ -11,51 +11,51 @@
 
 namespace FS.GG.Governance.VerifyCommand
 
-open FS.GG.Governance.Config.Model       // GovernedPath, Validation, Valid/Invalid, normalizePath, diagnosticIdToken
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot, ChangedPath, DiffRange, CommitId
-open FS.GG.Governance.Routing             // Routing.route
-open FS.GG.Governance.Findings            // Findings.findUnknownGovernedPaths
-open FS.GG.Governance.Findings.Model       // findingIdToken
-open FS.GG.Governance.Gates               // Gates.buildRegistry
-open FS.GG.Governance.Gates.Model          // Gate, gateIdValue
-open FS.GG.Governance.Route               // Route.select
-open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate
-open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume
+open FS.GG.Governance.Config.Model // GovernedPath, Validation, Valid/Invalid, normalizePath, diagnosticIdToken
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot, ChangedPath, DiffRange, CommitId
+open FS.GG.Governance.Routing // Routing.route
+open FS.GG.Governance.Findings // Findings.findUnknownGovernedPaths
+open FS.GG.Governance.Findings.Model // findingIdToken
+open FS.GG.Governance.Gates // Gates.buildRegistry
+open FS.GG.Governance.Gates.Model // Gate, gateIdValue
+open FS.GG.Governance.Route // Route.select
+open FS.GG.Governance.Route.Model // RouteResult, SelectedGate
+open FS.GG.Governance.Adapters.SddHandoff // F081: Reader.HandoffRead, Consumer.consume
 open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Severity, Recognized, recognizeProfile
-open FS.GG.Governance.Ship                // Ship.rollup
-open FS.GG.Governance.Inheritance          // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
-open FS.GG.Governance.Ship.Model           // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
-open FS.GG.Governance.VerifyJson           // VerifyJson.ofVerifyDecision
-open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofVerifyDecision — the plain projection
+open FS.GG.Governance.Ship // Ship.rollup
+open FS.GG.Governance.Inheritance // WI-5/ADR-0049: Inheritance.applyInheritance (profile-bound floor)
+open FS.GG.Governance.Ship.Model // ShipDecision, Verdict, ExitCodeBasis, EnforcedItem, EnforcedItemId
+open FS.GG.Governance.VerifyJson // VerifyJson.ofVerifyDecision
+open FS.GG.Governance.HumanText // F27 wiring (063): HumanText.ofVerifyDecision — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
-open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
-open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
+open FS.GG.Governance.FreshnessKey.Model // Revision, categoryToken
+open FS.GG.Governance.FreshnessResolution // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts, FreshnessResolutionEntry
-open FS.GG.Governance.CacheEligibility      // evaluate, entries
+open FS.GG.Governance.CacheEligibility // evaluate, entries
 open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityEntry, CacheEligibilityVerdict, Reusable, MustRecompute
-open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
-open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
-open FS.GG.Governance.EvidenceReuseStore    // F048: prune, retain, serialise, defaultRetentionBound
+open FS.GG.Governance.EvidenceReuse // empty, referenceValue
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
+open FS.GG.Governance.EvidenceReuseStore // F048: prune, retain, serialise, defaultRetentionBound
 // F052 gate-execution wiring (classify → run → capture → relocate verdict → persist-grown-store)
-open FS.GG.Governance.CommandRecord.Model    // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
-open FS.GG.Governance.GateExecution.Model     // GateCommand
-open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
-open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
-open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
+open FS.GG.Governance.CommandRecord.Model // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.EvidenceCapture // EvidenceCapture.capture
+open FS.GG.Governance.GateRun // Plan.commandFor / priorExitOf / passed
+open FS.GG.Governance.GateRun.Model // GateDisposition, GateOutcome
 // F25 host wiring (064): the four consumed cores + F033 Provenance (budget filter, kinded runs, two sidecars).
-open FS.GG.Governance.CostBudget.Model        // CostBudget, CandidateCost, AgentReviewMark, CacheDecision, BudgetReason, CacheDecisionReport
-open FS.GG.Governance.CostBudget.Findings     // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
-open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
-open FS.GG.Governance.Provenance.Model        // BuilderIdentity
-open FS.GG.Governance.CommandHost             // 075: shared host skeleton — under/describeInvalid/emptySensedFacts/
-                                              //   revOfCommit/baseHeadOf/persistedContent/kindOf/kindedRunsOf/
-                                              //   buildSnapshot/GateClassification/executionPlan (ExitDecision/
-                                              //   exitCode/fail/tryExecute stay LOCAL — type-divergent on Model/Effect)
+open FS.GG.Governance.CostBudget.Model // CostBudget, CandidateCost, AgentReviewMark, CacheDecision, BudgetReason, CacheDecisionReport
+open FS.GG.Governance.CostBudget.Findings // CostFinding, EvidenceTaint (Real/Synthetic), cacheFindings, enforce
+open FS.GG.Governance.CommandKind.Model // CommandKind, KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — under/describeInvalid/emptySensedFacts/
+//   revOfCommit/baseHeadOf/persistedContent/kindOf/kindedRunsOf/
+//   buildSnapshot/GateClassification/executionPlan (ExitDecision/
+//   exitCode/fail/tryExecute stay LOCAL — type-divergent on Model/Effect)
 // 065 wiring (US3): the declaration-gated advisory release-readiness preview (verify does NOT pack).
-open FS.GG.Governance.ReleaseFactsSensing.Model   // SourceLayout, ReleaseExpectations, SensedRelease (F54)
-open FS.GG.Governance.ValidationMatrix.Model       // MatrixPlan, MatrixBoundary (InnerLoop)
-open FS.GG.Governance.ReleaseReport.Model          // VerifyReleasePreview
-open FS.GG.Governance.ReleaseDeclaration           // Declaration (the shared leaf)
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease (F54)
+open FS.GG.Governance.ValidationMatrix.Model // MatrixPlan, MatrixBoundary (InnerLoop)
+open FS.GG.Governance.ReleaseReport.Model // VerifyReleasePreview
+open FS.GG.Governance.ReleaseDeclaration // Declaration (the shared leaf)
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
 
@@ -72,16 +72,18 @@ module Loop =
         | Json
 
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Profile: Profile
-          Format: OutputFormat
-          VerifyOut: string
-          StorePath: string
-          PersistStore: bool
-          ExplicitPlain: bool
-          CostBudgetOut: string
-          ProvenanceOut: string }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Profile: Profile
+            Format: OutputFormat
+            VerifyOut: string
+            StorePath: string
+            PersistStore: bool
+            ExplicitPlain: bool
+            CostBudgetOut: string
+            ProvenanceOut: string
+        }
 
     type UsageError =
         | UnknownFlag of string
@@ -141,8 +143,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -154,37 +158,39 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Decision: ShipDecision option
-          VerifyDoc: string option
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          Tooling: ToolingFacts option
-          Outcomes: (GateId * GateOutcome) list
-          CurrencyNotes: string list
-          StoreDegraded: bool
-          PersistAcked: bool
-          Environment: EnvironmentClass option
-          Builder: BuilderIdentity option
-          CacheDecision: CacheDecisionReport option
-          Audit: AuditSnapshot option
-          ReleaseDecl: Declaration.ReleaseDeclaration option
-          ReleaseSensed: SensedRelease option
-          ReleasePreview: VerifyReleasePreview option
-          ReleaseMatrix: MatrixPlan option
-          // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed).
-          SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
-          // F070: the stale-generated-view currency findings sensed at the edge ([] until ViewCurrencySensed).
-          ViewCurrencyFindings: CE.CurrencyFinding list
-          // F081: the located handoff reads, set by `HandoffsLoaded` ([] default). Consumed at the
-          // `Loaded(Valid)` fold (unioned into the selection before `Ship.rollup` at Verify). [] ⇒ identity.
-          Handoffs: Reader.HandoffRead list
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Decision: ShipDecision option
+            VerifyDoc: string option
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            Tooling: ToolingFacts option
+            Outcomes: (GateId * GateOutcome) list
+            CurrencyNotes: string list
+            StoreDegraded: bool
+            PersistAcked: bool
+            Environment: EnvironmentClass option
+            Builder: BuilderIdentity option
+            CacheDecision: CacheDecisionReport option
+            Audit: AuditSnapshot option
+            ReleaseDecl: Declaration.ReleaseDeclaration option
+            ReleaseSensed: SensedRelease option
+            ReleasePreview: VerifyReleasePreview option
+            ReleaseMatrix: MatrixPlan option
+            // 067: the surface-check findings sensed at the edge ([] until SurfacesSensed).
+            SurfaceFindings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+            // F070: the stale-generated-view currency findings sensed at the edge ([] until ViewCurrencySensed).
+            ViewCurrencyFindings: CE.CurrencyFinding list
+            // F081: the located handoff reads, set by `HandoffsLoaded` ([] default). Consumed at the
+            // `Loaded(Valid)` fold (unioned into the selection before `Ship.rollup` at Verify). [] ⇒ identity.
+            Handoffs: Reader.HandoffRead list
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     // ── exitCode — total, no wildcard; `Blocked` 1 reserved for an unmet effective-blocking check ──
 
@@ -201,30 +207,34 @@ module Loop =
     // Hidden accumulator (absent from Loop.fsi). `Paths = Some []` marks an explicit but empty `--paths`
     // (an EmptyPaths usage error); `Paths = None` means no `--paths` flag was given.
     type ParseAcc =
-        { Repo: string option
-          Paths: string list option
-          Since: string option
-          Profile: string option
-          Json: bool
-          VerifyOut: string option
-          Store: string option
-          Persist: bool
-          Plain: bool
-          CostBudgetOut: string option
-          ProvenanceOut: string option }
+        {
+            Repo: string option
+            Paths: string list option
+            Since: string option
+            Profile: string option
+            Json: bool
+            VerifyOut: string option
+            Store: string option
+            Persist: bool
+            Plain: bool
+            CostBudgetOut: string option
+            ProvenanceOut: string option
+        }
 
     let emptyAcc =
-        { Repo = None
-          Paths = None
-          Since = None
-          Profile = None
-          Json = false
-          VerifyOut = None
-          Store = None
-          Persist = false
-          Plain = false
-          CostBudgetOut = None
-          ProvenanceOut = None }
+        {
+            Repo = None
+            Paths = None
+            Since = None
+            Profile = None
+            Json = false
+            VerifyOut = None
+            Store = None
+            Persist = false
+            Plain = false
+            CostBudgetOut = None
+            ProvenanceOut = None
+        }
 
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
@@ -253,9 +263,11 @@ module Loop =
             | "--profile" :: _ -> Error(MissingValue "--profile")
             | "--verify-out" :: v :: more when not (v.StartsWith "--") -> go { acc with VerifyOut = Some v } more
             | "--verify-out" :: _ -> Error(MissingValue "--verify-out")
-            | "--cost-budget-out" :: v :: more when not (v.StartsWith "--") -> go { acc with CostBudgetOut = Some v } more
+            | "--cost-budget-out" :: v :: more when not (v.StartsWith "--") ->
+                go { acc with CostBudgetOut = Some v } more
             | "--cost-budget-out" :: _ -> Error(MissingValue "--cost-budget-out")
-            | "--provenance-out" :: v :: more when not (v.StartsWith "--") -> go { acc with ProvenanceOut = Some v } more
+            | "--provenance-out" :: v :: more when not (v.StartsWith "--") ->
+                go { acc with ProvenanceOut = Some v } more
             | "--provenance-out" :: _ -> Error(MissingValue "--provenance-out")
             | "--store" :: v :: more when not (v.StartsWith "--") -> go { acc with Store = Some v } more
             | "--store" :: _ -> Error(MissingValue "--store")
@@ -299,48 +311,60 @@ module Loop =
                         | _ -> DefaultRange
 
                     Ok
-                        { Repo = repo
-                          Scope = scope
-                          Profile = profile
-                          Format = (if acc.Json then Json else Text)
-                          VerifyOut = acc.VerifyOut |> Option.defaultValue (CommandHost.under repo "readiness/verify.json")
-                          StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
-                          PersistStore = acc.Persist
-                          ExplicitPlain = acc.Plain
-                          CostBudgetOut = acc.CostBudgetOut |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
-                          ProvenanceOut = acc.ProvenanceOut |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json") }
+                        {
+                            Repo = repo
+                            Scope = scope
+                            Profile = profile
+                            Format = (if acc.Json then Json else Text)
+                            VerifyOut =
+                                acc.VerifyOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/verify.json")
+                            StorePath =
+                                acc.Store
+                                |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
+                            PersistStore = acc.Persist
+                            ExplicitPlain = acc.Plain
+                            CostBudgetOut =
+                                acc.CostBudgetOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/cost-budget.json")
+                            ProvenanceOut =
+                                acc.ProvenanceOut
+                                |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json")
+                        }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Candidates = None
-              Decision = None
-              VerifyDoc = None
-              Snapshot = None
-              SelectedGates = []
-              Sensed = None
-              Store = None
-              Tooling = None
-              Outcomes = []
-              CurrencyNotes = []
-              StoreDegraded = false
-              PersistAcked = false
-              Environment = None
-              Builder = None
-              CacheDecision = None
-              Audit = None
-              ReleaseDecl = None
-              ReleaseSensed = None
-              ReleasePreview = None
-              ReleaseMatrix = None
-              SurfaceFindings = []
-              ViewCurrencyFindings = []
-              Handoffs = []
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Candidates = None
+                Decision = None
+                VerifyDoc = None
+                Snapshot = None
+                SelectedGates = []
+                Sensed = None
+                Store = None
+                Tooling = None
+                Outcomes = []
+                CurrencyNotes = []
+                StoreDegraded = false
+                PersistAcked = false
+                Environment = None
+                Builder = None
+                CacheDecision = None
+                Audit = None
+                ReleaseDecl = None
+                ReleaseSensed = None
+                ReleasePreview = None
+                ReleaseMatrix = None
+                SurfaceFindings = []
+                ViewCurrencyFindings = []
+                Handoffs = []
+                Diagnostics = []
+                Exit = Success
+            }
 
         // F25 wiring (064): sense the two normalized provenance facts FIRST, so `Environment`/`Builder` are
         // populated before either the empty-selection short-circuit or the executed-gate persist projects the
@@ -354,10 +378,21 @@ module Loop =
         // F081: `LoadHandoffs` FIRST so `HandoffsLoaded` folds before the `Loaded(Valid)` rollup consumes it.
         | ExplicitPaths paths ->
             { model with Candidates = Some paths },
-            [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseReleasePreview request.Repo ]
+            [
+                LoadHandoffs request.Repo
+                SenseViewCurrency request.Repo
+                SenseProvenance
+                SenseReleasePreview request.Repo
+            ]
         | Since _
         | DefaultRange ->
-            model, [ LoadHandoffs request.Repo; SenseViewCurrency request.Repo; SenseProvenance; SenseScope request.Scope ]
+            model,
+            [
+                LoadHandoffs request.Repo
+                SenseViewCurrency request.Repo
+                SenseProvenance
+                SenseScope request.Scope
+            ]
 
     // ── update — the whole composition; TOTAL, never throws ──
 
@@ -366,7 +401,15 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     // Map the decision's typed ExitCodeBasis to the process-level ExitDecision.
@@ -394,8 +437,12 @@ module Loop =
             | GateItem g -> Set.contains g passedGateIds
             | FindingItem _ -> false
 
-        let blockersKept, blockersMoved = decision.Blockers |> List.partition (isPassingGate >> not)
-        let warningsKept, warningsMoved = decision.Warnings |> List.partition (isPassingGate >> not)
+        let blockersKept, blockersMoved =
+            decision.Blockers |> List.partition (isPassingGate >> not)
+
+        let warningsKept, warningsMoved =
+            decision.Warnings |> List.partition (isPassingGate >> not)
+
         let passing' = decision.Passing @ blockersMoved @ warningsMoved
         let verdict' = if List.isEmpty blockersKept then Pass else Fail
 
@@ -409,7 +456,8 @@ module Loop =
             Blockers = blockersKept
             Warnings = warningsKept
             Passing = passing'
-            ExitCodeBasis = basis' }
+            ExitCodeBasis = basis'
+        }
 
     // ── 067: surface-findings verdict fold — extracted to the `SurfaceFold` seam module (076 Phase C).
     //    `Loop` calls `SurfaceFold.foldSurfaceVerdict` at its two projection sites; the fold is the identity
@@ -456,7 +504,8 @@ module Loop =
     // profile + `reviewMarkOf` (host cost policy) so the leaf stays command-agnostic.
     let verifyPlan (model: Model) =
         let budgetFold (verdictMap: Map<string, CacheEligibilityVerdict>) =
-            let budget = FS.GG.Governance.CostBudget.Budget.budgetFor model.Request.Profile Verify
+            let budget =
+                FS.GG.Governance.CostBudget.Budget.budgetFor model.Request.Profile Verify
 
             let candidateCosts =
                 model.SelectedGates
@@ -466,12 +515,15 @@ module Loop =
                         | Some v -> v
                         | None -> MustRecompute NoPriorEvidence
 
-                    { Gate = g.Id
-                      Cost = g.Cost
-                      Verdict = verdict
-                      Review = reviewMarkOf g })
+                    {
+                        Gate = g.Id
+                        Cost = g.Cost
+                        Verdict = verdict
+                        Review = reviewMarkOf g
+                    })
 
-            let budgetReport = FS.GG.Governance.CostBudget.Budget.decide budget Verify candidateCosts
+            let budgetReport =
+                FS.GG.Governance.CostBudget.Budget.decide budget Verify candidateCosts
 
             let overReasons =
                 FS.GG.Governance.CostBudget.Budget.overBudget budgetReport
@@ -506,7 +558,10 @@ module Loop =
                     | CommandHost.Deferred _
                     | CommandHost.NoCommand -> None)
 
-            { model with CacheDecision = Some budgetReport }, [ ExecuteGates toExecute ]
+            { model with
+                CacheDecision = Some budgetReport
+            },
+            [ ExecuteGates toExecute ]
         | _ -> model, []
 
     // 067: the empty-selection ("nothing to verify") projection, now deferred until `SurfacesSensed` arrives so
@@ -519,7 +574,10 @@ module Loop =
         match model.Decision with
         | Some decision ->
             let emptyReport = CacheDecisionReport []
-            let costBudgetDoc = FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
+
+            let costBudgetDoc =
+                FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
+
             let snapshot =
                 CommandHost.buildSnapshot
                     model.Sensed
@@ -527,11 +585,17 @@ module Loop =
                     model.Environment
                     model.Builder
                     []
-            let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+
+            let provenanceDoc =
+                FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+
             let preview = previewOf model snapshot
-            let folded = SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
+
+            let folded =
+                SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings decision
             // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
-            let folded = ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
+            let folded =
+                ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
 
             let verifyDoc =
                 VerifyJson.ofVerifyDecisionWithGeneratedViews
@@ -553,10 +617,13 @@ module Loop =
                 CacheDecision = Some emptyReport
                 Audit = Some snapshot
                 ReleasePreview = preview
-                PersistAcked = true },
-            [ WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
-              WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
-              WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc) ]
+                PersistAcked = true
+            },
+            [
+                WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
+                WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
+                WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc)
+            ]
         | None -> model, []
 
     // On `GatesExecuted`: fold F049 `capture` per executed gate (grows the store), build the per-gate
@@ -577,7 +644,9 @@ module Loop =
                     (fun s (g, c) ->
                         match c with
                         | CommandHost.ToExecute _ ->
-                            match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
+                            match
+                                Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap
+                            with
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
                         | CommandHost.ToReuse _
@@ -595,22 +664,32 @@ module Loop =
                             | Some record ->
                                 let code = record.Reproducible.ExitCode
 
-                                { GateId = g.Id
-                                  Disposition = Executed(code, Plan.passed code) }
+                                {
+                                    GateId = g.Id
+                                    Disposition = Executed(code, Plan.passed code)
+                                }
                             | None ->
-                                { GateId = g.Id
-                                  Disposition = NotExecuted }
+                                {
+                                    GateId = g.Id
+                                    Disposition = NotExecuted
+                                }
                         | CommandHost.ToReuse code ->
-                            { GateId = g.Id
-                              Disposition = Reused(code, Plan.passed code) }
+                            {
+                                GateId = g.Id
+                                Disposition = Reused(code, Plan.passed code)
+                            }
                         // A deferred (over-budget) gate is NOT executed and NOT reused — recorded NotExecuted so
                         // it is structurally excluded from the passed set (never coerced to pass — SC-002).
                         | CommandHost.Deferred _ ->
-                            { GateId = g.Id
-                              Disposition = NotExecuted }
+                            {
+                                GateId = g.Id
+                                Disposition = NotExecuted
+                            }
                         | CommandHost.NoCommand ->
-                            { GateId = g.Id
-                              Disposition = NotExecuted }
+                            {
+                                GateId = g.Id
+                                Disposition = NotExecuted
+                            }
 
                     g.Id, outcome)
 
@@ -626,12 +705,18 @@ module Loop =
             // 067: fold the surface findings into the RELOCATED verdict (a blocking finding fails the run —
             // FR-007) AFTER `applyExecution`, which recomputes from gate blockers only. With no findings this is
             // the identity, so the executed path stays byte-identical to the pre-067 golden (FR-004).
-            let folded = SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
+            let folded =
+                SurfaceFold.foldSurfaceVerdict model.Request.Profile model.SurfaceFindings relocated
             // F070: also fold the stale-generated-view findings (empty ⇒ identity ⇒ byte-identical, FR-004).
-            let folded = ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
+            let folded =
+                ViewCurrencyFold.foldViewCurrencyVerdict model.Request.Profile model.ViewCurrencyFindings folded
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries resReport
+                |> List.choose FreshnessResolution.candidate
+
             let cacheReport = CacheEligibility.evaluate candidates store
             // JSON-2: carry the missing-fact wire tokens for each unresolved gate into verify.json's
             // `currency.unresolved[].missing` (was structurally always-empty). The tokens live in the freshness
@@ -656,7 +741,9 @@ module Loop =
                     model.Environment
                     model.Builder
                     (CommandHost.kindedRunsOf model.SelectedGates records)
+
             let preview = previewOf model snapshot
+
             let verifyDoc =
                 VerifyJson.ofVerifyDecisionWithGeneratedViews
                     folded
@@ -676,14 +763,21 @@ module Loop =
                 FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport budgetReport findings
 
             // `snapshot` already built above (065 — used by the preview); reuse it for provenance.json.
-            let provenanceDoc = FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+            let provenanceDoc =
+                FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore) ], []
+                | true, false ->
+                    [
+                        PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore)
+                    ],
+                    []
                 | true, true ->
                     [],
-                    [ "currency note: store not persisted: on-disk store failed to parse; left untouched" ]
+                    [
+                        "currency note: store not persisted: on-disk store failed to parse; left untouched"
+                    ]
                 | false, _ -> [], []
 
             { model with
@@ -694,7 +788,8 @@ module Loop =
                 CacheDecision = Some budgetReport
                 Audit = Some snapshot
                 ReleasePreview = preview
-                CurrencyNotes = model.CurrencyNotes @ persistNotes },
+                CurrencyNotes = model.CurrencyNotes @ persistNotes
+            },
             WriteArtifact(VerifyArtifact, model.Request.VerifyOut, verifyDoc)
             :: WriteArtifact(CostBudgetArtifact, model.Request.CostBudgetOut, costBudgetDoc)
             :: WriteArtifact(ProvenanceArtifact, model.Request.ProvenanceOut, provenanceDoc)
@@ -715,7 +810,8 @@ module Loop =
                 { model with
                     Phase = Sensed'
                     Candidates = Some candidates
-                    Snapshot = Some snapshot },
+                    Snapshot = Some snapshot
+                },
                 // 065 (US3): sense the release preview before loading the catalog (see init).
                 [ SenseReleasePreview model.Request.Repo ]
 
@@ -754,8 +850,8 @@ module Loop =
                     | extra ->
                         { routed with
                             SelectedGates =
-                                routed.SelectedGates @ extra
-                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+                                routed.SelectedGates @ extra |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id)
+                        }
 
                 // WI-5 / ADR-0049: fold the product's profile-bound inherited gate floor into the
                 // selection so `verify` mirrors `ship` — the SAME effective gate set enforced through the
@@ -786,20 +882,27 @@ module Loop =
                         Phase = Selected
                         Decision = Some decision
                         SelectedGates = []
-                        Tooling = facts.Tooling },
+                        Tooling = facts.Tooling
+                    },
                     [ SenseSurfaces productReport ]
                 else
                     { model with
                         Phase = Selected
                         Decision = Some decision
                         SelectedGates = selectedGates
-                        Tooling = facts.Tooling },
+                        Tooling = facts.Tooling
+                    },
                     // SenseSurfaces FIRST so `SurfacesSensed` is folded before `StoreLoaded` triggers
                     // `tryExecute` ⇒ `ExecuteGates` ⇒ `GatesExecuted` ⇒ `projectExecuted` (which reads the
                     // already-populated `model.SurfaceFindings`).
-                    [ SenseSurfaces productReport
-                      SenseFreshness(selectedGates, CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range)))
-                      LoadStore model.Request.StorePath ]
+                    [
+                        SenseSurfaces productReport
+                        SenseFreshness(
+                            selectedGates,
+                            CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
+                        )
+                        LoadStore model.Request.StorePath
+                    ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
             // non-fatal currency note — it NEVER fails the command, never perturbs the verdict, never changes
@@ -812,7 +915,12 @@ module Loop =
                         Sensed = Some CommandHost.emptySensedFacts
                         CurrencyNotes =
                             model.CurrencyNotes
-                            @ [ "currency note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
+                            @ [
+                                "currency note: freshness facts could not be sensed ("
+                                + reason
+                                + "); affected gates are recompute-by-default and reported as not-evaluated"
+                            ]
+                    }
 
             | StoreLoaded(Ok store) -> tryExecute { model with Store = Some store }
 
@@ -825,7 +933,12 @@ module Loop =
                         StoreDegraded = true
                         CurrencyNotes =
                             model.CurrencyNotes
-                            @ [ "currency note: reuse store unreadable (" + reason + "); treated as empty — every gate is recompute-by-default" ] }
+                            @ [
+                                "currency note: reuse store unreadable ("
+                                + reason
+                                + "); treated as empty — every gate is recompute-by-default"
+                            ]
+                    }
 
             | Wrote(_, Error reason) ->
                 // A write failure is ALWAYS a ToolError, NEVER a blocked verdict.
@@ -858,7 +971,11 @@ module Loop =
                         model.CurrencyNotes
                         @ [ "currency note: store not persisted (" + reason + "); run unaffected" ]
 
-                let model = { model with PersistAcked = true; CurrencyNotes = notes }
+                let model =
+                    { model with
+                        PersistAcked = true
+                        CurrencyNotes = notes
+                    }
 
                 match model.Phase with
                 | Persisted -> model, [ emitEffect model ]
@@ -873,7 +990,8 @@ module Loop =
             | ProvenanceSensed(environment, builder) ->
                 { model with
                     Environment = Some environment
-                    Builder = Some builder },
+                    Builder = Some builder
+                },
                 []
 
             // 065 (US3): the declaration + sensed F54 facts (or None) landed — store them, record the
@@ -895,7 +1013,8 @@ module Loop =
                 { model with
                     ReleaseDecl = decl
                     ReleaseSensed = sensed
-                    ReleaseMatrix = matrix },
+                    ReleaseMatrix = matrix
+                },
                 [ LoadCatalog model.Request.Repo ]
 
             // 067: the deterministic surface findings landed. Store them (the verdict fold happens at
@@ -904,7 +1023,9 @@ module Loop =
             // the now-populated `model.SurfaceFindings`. `findings = []` ⇒ byte-identical verify.json (FR-004).
             | SurfacesSensed surfaceFindings ->
                 let model =
-                    { model with SurfaceFindings = surfaceFindings }
+                    { model with
+                        SurfaceFindings = surfaceFindings
+                    }
 
                 if List.isEmpty model.SelectedGates then
                     projectEmpty model
@@ -914,7 +1035,11 @@ module Loop =
             // F070: the stale-generated-view currency findings landed (sensed in the first batch, before the
             // catalog/gate chain). Store them; both projection paths read `model.ViewCurrencyFindings`. Pure
             // state, no projection trigger. `[]` (unconfigured) ⇒ byte-identical verify.json (FR-004).
-            | ViewCurrencySensed findings -> { model with ViewCurrencyFindings = findings }, []
+            | ViewCurrencySensed findings ->
+                { model with
+                    ViewCurrencyFindings = findings
+                },
+                []
 
             // F081: store the located handoff reads (pure); consumed at the `Loaded(Valid)` fold.
             | HandoffsLoaded reads -> { model with Handoffs = reads }, []
@@ -938,7 +1063,10 @@ module Loop =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             Some(CacheEligibility.evaluate candidates store)
         | _ -> None
 
@@ -959,7 +1087,9 @@ module Loop =
             // F27 wiring (063) US1: the report facts come from the shared HumanText projection over the SAME
             // ShipDecision the verify.json path serializes (FR-001); the host keeps only its operational `wrote`
             // line (never part of the JSON contract — FR-003).
-            let projection = HumanText.ofVerifyDecision decision (cacheReportOf model) model.Outcomes
+            let projection =
+                HumanText.ofVerifyDecision decision (cacheReportOf model) model.Outcomes
+
             [ projection; operationalLines model ] |> String.concat "\n"
 
     // F27 wiring (063) US2: build the emit effect. Json carries the contract string (human = None). Text carries
@@ -972,7 +1102,9 @@ module Loop =
         | Text ->
             match model.Decision with
             | Some decision ->
-                let view = ReportView.viewOfVerifyDecision decision (cacheReportOf model) model.Outcomes
+                let view =
+                    ReportView.viewOfVerifyDecision decision (cacheReportOf model) model.Outcomes
+
                 EmitSummary(renderText model, Some(view, operationalLines model), model.Request.ExplicitPlain)
             | None -> EmitSummary(renderText model, None, model.Request.ExplicitPlain)
 

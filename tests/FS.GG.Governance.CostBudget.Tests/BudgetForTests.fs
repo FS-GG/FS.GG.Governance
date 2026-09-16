@@ -30,33 +30,40 @@ let private expectedModeCeiling mode =
 let tests =
     testList
         "BudgetFor"
-        [ test "budgetFor p m = { Ceiling = min (profileCeiling p) (modeCeiling m) } across the whole 4×6 grid" {
-              for p in profiles do
-                  for m in modes do
-                      let expected = min (expectedProfileCeiling p) (expectedModeCeiling m)
-                      Expect.equal (Budget.budgetFor p m).Ceiling expected (sprintf "ceiling for %A/%A" p m)
-          }
+        [
+            test "budgetFor p m = { Ceiling = min (profileCeiling p) (modeCeiling m) } across the whole 4×6 grid" {
+                for p in profiles do
+                    for m in modes do
+                        let expected = min (expectedProfileCeiling p) (expectedModeCeiling m)
+                        Expect.equal (Budget.budgetFor p m).Ceiling expected (sprintf "ceiling for %A/%A" p m)
+            }
 
-          test "the anchor points hold" {
-              Expect.equal (Budget.budgetFor Light Inner).Ceiling Cheap "Light/Inner floors to Cheap"
-              Expect.equal (Budget.budgetFor Profile.Release RunMode.Release).Ceiling Exhaustive "Release/Release admits Exhaustive"
-              Expect.equal (Budget.budgetFor Strict Verify).Ceiling High "Strict/Verify is High"
-          }
+            test "the anchor points hold" {
+                Expect.equal (Budget.budgetFor Light Inner).Ceiling Cheap "Light/Inner floors to Cheap"
 
-          test "both levers are monotone (a stricter profile / more protective mode never lowers the ceiling)" {
-              // profile lever monotone, holding mode fixed
-              for m in modes do
-                  let ceilings = profiles |> List.map (fun p -> (Budget.budgetFor p m).Ceiling)
-                  Expect.equal ceilings (List.sort ceilings) (sprintf "profile lever monotone at mode %A" m)
-              // mode lever monotone, holding profile fixed (modes already in protectiveness order)
-              for p in profiles do
-                  let ceilings = modes |> List.map (fun m -> (Budget.budgetFor p m).Ceiling)
-                  Expect.equal ceilings (List.sort ceilings) (sprintf "mode lever monotone at profile %A" p)
-          }
+                Expect.equal
+                    (Budget.budgetFor Profile.Release RunMode.Release).Ceiling
+                    Exhaustive
+                    "Release/Release admits Exhaustive"
 
-          test "fits is the inclusive cost <= ceiling over the ordered Cost DU (edge 'budget exactly met')" {
-              let budget = Budget.budgetFor Strict Verify // ceiling High
-              Expect.isTrue (Budget.fits budget Cheap) "cheap fits"
-              Expect.isTrue (Budget.fits budget High) "exactly-met fits (inclusive)"
-              Expect.isFalse (Budget.fits budget Exhaustive) "above ceiling does not fit"
-          } ]
+                Expect.equal (Budget.budgetFor Strict Verify).Ceiling High "Strict/Verify is High"
+            }
+
+            test "both levers are monotone (a stricter profile / more protective mode never lowers the ceiling)" {
+                // profile lever monotone, holding mode fixed
+                for m in modes do
+                    let ceilings = profiles |> List.map (fun p -> (Budget.budgetFor p m).Ceiling)
+                    Expect.equal ceilings (List.sort ceilings) (sprintf "profile lever monotone at mode %A" m)
+                // mode lever monotone, holding profile fixed (modes already in protectiveness order)
+                for p in profiles do
+                    let ceilings = modes |> List.map (fun m -> (Budget.budgetFor p m).Ceiling)
+                    Expect.equal ceilings (List.sort ceilings) (sprintf "mode lever monotone at profile %A" p)
+            }
+
+            test "fits is the inclusive cost <= ceiling over the ordered Cost DU (edge 'budget exactly met')" {
+                let budget = Budget.budgetFor Strict Verify // ceiling High
+                Expect.isTrue (Budget.fits budget Cheap) "cheap fits"
+                Expect.isTrue (Budget.fits budget High) "exactly-met fits (inclusive)"
+                Expect.isFalse (Budget.fits budget Exhaustive) "above ceiling does not fit"
+            }
+        ]

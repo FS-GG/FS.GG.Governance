@@ -30,37 +30,47 @@ type ProjectFact =
 
 /// Project-level change shape. Each adapter sees its own narrowed change through F09 lift.
 type ProjectChange =
-    { SpecKit: SpecKitChange option
-      DesignSystem: DesignChange option
-      Scope: string list }
+    {
+        SpecKit: SpecKitChange option
+        DesignSystem: DesignChange option
+        Scope: string list
+    }
 
 /// Snapshot sensed from a repository root before Host runs.
 type ProjectSnapshot =
-    { Root: string
-      Supplied: FactSet<ProjectFact>
-      Change: ProjectChange
-      Artifacts: ArtifactRef list }
+    {
+        Root: string
+        Supplied: FactSet<ProjectFact>
+        Change: ProjectChange
+        Artifacts: ArtifactRef list
+    }
 
 /// Options for building the composed catalog and Host configuration.
 type ProjectOptions =
-    { Domains: Set<Domain>
-      Judge: JudgeId
-      SpecKitDial: ConstitutionDial }
+    {
+        Domains: Set<Domain>
+        Judge: JudgeId
+        SpecKitDial: ConstitutionDial
+    }
 
 /// One evidence node in the CLI evidence report.
 type EvidenceNodeReport =
-    { Id: string
-      Declared: EvidenceState option
-      Effective: EvidenceState option
-      Freshness: Freshness option
-      Source: string }
+    {
+        Id: string
+        Declared: EvidenceState option
+        Effective: EvidenceState option
+        Freshness: Freshness option
+        Source: string
+    }
 
 /// Project-level evidence report before review-budget accounting is attached by Cli.
 type ProjectEvidenceReport =
-    { Nodes: EvidenceNodeReport list
-      Dependencies: (string * string) list
-      Disclosures: Disclosure list
-      Failures: Failure list }
+    {
+        Nodes: EvidenceNodeReport list
+        Dependencies: (string * string) list
+        Disclosures: Disclosure list
+        Failures: Failure list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Project =
@@ -88,10 +98,7 @@ module Project =
 
     /// Build the Host loop configuration for a run over a sensed project snapshot.
     val toLoopConfig:
-        options: ProjectOptions ->
-        mode: RunMode ->
-        snapshot: ProjectSnapshot ->
-            LoopConfig<ProjectChange, ProjectFact>
+        options: ProjectOptions -> mode: RunMode -> snapshot: ProjectSnapshot -> LoopConfig<ProjectChange, ProjectFact>
 
     /// Fold project facts and Host model failures into the `evidence` command report.
     val evidenceReport: host: FS.GG.Governance.Host.Model<ProjectFact> -> ProjectEvidenceReport

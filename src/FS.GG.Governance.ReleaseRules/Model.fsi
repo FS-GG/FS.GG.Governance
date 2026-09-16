@@ -63,10 +63,12 @@ module Model =
     /// makes a violation advisory WITHOUT changing its satisfied/violated truth or visibility (FR-010).
     /// Provided as input.
     type ReleaseRule =
-        { Kind: ReleaseRuleKind
-          Surface: SurfaceId
-          BaseSeverity: Severity
-          Maturity: Maturity }
+        {
+            Kind: ReleaseRuleKind
+            Surface: SurfaceId
+            BaseSeverity: Severity
+            Maturity: Maturity
+        }
 
     // ── The provided release facts (key entity "Release facts", FR-008, research D3) ──
 
@@ -74,7 +76,10 @@ module Model =
     /// provided `FactState`: a rule reads the fact for ITS kind; a kind ABSENT from the map resolves to
     /// `Unrecoverable` (⇒ `Violated`, FR-005). Facts for a kind no rule declares are simply never read and
     /// invent no finding (edge case "extra/unrecognized facts"). Sensing the real facts is a later row.
-    type ReleaseFacts = { States: Map<ReleaseRuleKind, FactState> }
+    type ReleaseFacts =
+        {
+            States: Map<ReleaseRuleKind, FactState>
+        }
 
     // ── The per-rule outcome classification (FR-001) ──
 
@@ -92,12 +97,14 @@ module Model =
     /// (research D7). Exactly one per declared rule — never dropped (FR-006) or fabricated. A pure value: no
     /// raw YAML, host paths, timestamps, or product vocabulary beyond the declared ids.
     type ReleaseFinding =
-        { Kind: ReleaseRuleKind
-          Surface: SurfaceId
-          Outcome: RuleOutcome
-          BaseSeverity: Severity
-          Maturity: Maturity
-          Reason: string }
+        {
+            Kind: ReleaseRuleKind
+            Surface: SurfaceId
+            Outcome: RuleOutcome
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Reason: string
+        }
 
     // ── A finding after enforcement (mirrors F024 `EnforcedItem`, FR-003/FR-004) ──
 
@@ -106,8 +113,10 @@ module Model =
     /// severity echoed unchanged, maturity, run mode, profile, effective severity, reason). The element type
     /// of the `ReleaseDecision` partition lists, mirroring `Ship.Model.EnforcedItem` (research D1).
     type EnforcedReleaseFinding =
-        { Finding: ReleaseFinding
-          Decision: EnforcementDecision }
+        {
+            Finding: ReleaseFinding
+            Decision: EnforcementDecision
+        }
 
     // ── The whole-release decision (key entity "Release verdict / decision", FR-004, research D1) ──
 
@@ -126,8 +135,10 @@ module Model =
     /// `Pass`; `ExitCodeBasis = Blocked` iff `Fail`, else `Clean`. No serialized document and no process exit
     /// code — only the typed basis (FR-007, FR-008).
     type ReleaseDecision =
-        { Verdict: Verdict
-          Blockers: EnforcedReleaseFinding list
-          Warnings: EnforcedReleaseFinding list
-          Passing: EnforcedReleaseFinding list
-          ExitCodeBasis: ExitCodeBasis }
+        {
+            Verdict: Verdict
+            Blockers: EnforcedReleaseFinding list
+            Warnings: EnforcedReleaseFinding list
+            Passing: EnforcedReleaseFinding list
+            ExitCodeBasis: ExitCodeBasis
+        }

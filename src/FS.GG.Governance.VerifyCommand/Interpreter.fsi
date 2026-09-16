@@ -15,13 +15,13 @@
 
 namespace FS.GG.Governance.VerifyCommand
 
-open FS.GG.Governance.Config              // Loader.FileReader
-open FS.GG.Governance.Config.Model        // EnvironmentClass (F25 wiring 064 — normalized env sense)
-open FS.GG.Governance.Snapshot            // Ports
-open FS.GG.Governance.FreshnessSensing     // FreshnessSensor, StoreReader (F046)
-open FS.GG.Governance.Provenance.Model     // BuilderIdentity (F25 wiring 064 — normalized builder sense)
-open FS.GG.Governance.ReleaseFactsSensing.Model  // SourceLayout, ReleaseExpectations, SensedRelease (065 US3)
-open FS.GG.Governance.HumanText           // RenderMode, ReportView (F27 wiring 063)
+open FS.GG.Governance.Config // Loader.FileReader
+open FS.GG.Governance.Config.Model // EnvironmentClass (F25 wiring 064 — normalized env sense)
+open FS.GG.Governance.Snapshot // Ports
+open FS.GG.Governance.FreshnessSensing // FreshnessSensor, StoreReader (F046)
+open FS.GG.Governance.Provenance.Model // BuilderIdentity (F25 wiring 064 — normalized builder sense)
+open FS.GG.Governance.ReleaseFactsSensing.Model // SourceLayout, ReleaseExpectations, SensedRelease (065 US3)
+open FS.GG.Governance.HumanText // RenderMode, ReportView (F27 wiring 063)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -41,55 +41,57 @@ module Interpreter =
     /// `Execute` the REUSED F051 gate-execution port; `Write`/`Out` the persistence/stdout ports. Wholly faked
     /// in tests so no real `git` process or real filesystem is reached.
     type Ports =
-        { Files: Loader.FileReader
-          Git: FS.GG.Governance.Snapshot.Ports
-          Freshness: FreshnessSensing.FreshnessSensor
-          Store: FreshnessSensing.StoreReader
-          Write: ArtifactWriter
-          Out: OutputSink
-          /// F052: the injected GATE-EXECUTION port — the only seam through which the command touches a gate
-          /// process. `realPorts` wires the merged F051 `GateExecution.Interpreter.realPort`; tests inject a
-          /// deterministic fake.
-          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
-          /// F27 wiring (063): sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag into a
-          /// `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires `Capability.senseCapability`;
-          /// tests inject a synthetic capability (e.g. a forced TTY) to exercise the Rich path.
-          SenseCapability: bool -> RenderMode.ColorCapability
-          /// F27 wiring (063): render the report view richly to the terminal (the `Rich` path). `realPorts`
-          /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
-          /// inject a capturing renderer. Plain/Json still go via `Out`.
-          RenderReport: ReportView.ReportView -> unit
-          /// F25 wiring (064): the two NEW normalized provenance senses. `SenseEnvironment` classifies the run
-          /// environment (`Local|Ci|LocalOrCi|Release`); `SenseBuilder` yields a username/host/clock-free
-          /// `BuilderIdentity`. Both MUST be normalized so `provenance.json` is byte-identical across machines
-          /// and re-runs (FR-006, SC-003). `realPorts` wires constant/CI-derived senses; tests inject synthetic
-          /// (`Synthetic`-named, disclosed) values.
-          SenseEnvironment: unit -> EnvironmentClass
-          SenseBuilder: unit -> BuilderIdentity
-          /// 065 wiring (US3): the REUSED F54 release-fact sensor, used ONLY when a `.fsgg/release.yml` is
-          /// present (the advisory preview). `realPorts` wires `ReleaseFactsSensing.Interpreter.senseRelease`
-          /// over the repo; tests inject a synthetic sense. Verify does NOT pack — this is the only new edge.
-          SenseRelease: SourceLayout -> ReleaseExpectations -> SensedRelease
-          /// 067 (F24 verify-host wiring): sense + run the product-surface checks for an already-classified
-          /// `ProductSurfaceReport`, returning the deterministic `SurfaceFinding list`. `realPorts` wires the
-          /// real read-only sense over `repo` (closing over `repo` + the F051 `Execute` port at construction
-          /// time, mirroring `SenseRelease`): the four declared domains are sensed through READ-ONLY ports —
-          /// the **package** port no-ops `WriteBaseline` and lists no transcripts (an absent baseline is
-          /// REPORTED but never written, no FSI is spawned — FR-012) — then `Composition.run` aggregates the
-          /// findings. Tests inject a synthetic port (e.g. an advisory-only finding the real sensors cannot
-          /// yet emit from disk, disclosed per Constitution V).
-          SenseSurfaces:
-              FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
-                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
-          /// F070: sense generated-view currency for `repo`, returning the stale-view findings gated by the
-          /// manifest's `currency-enforcement` dial. `realPorts` reuses the F057 refresh machinery; tests inject
-          /// a deterministic port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`). `[]` ⇒ byte-identical.
-          SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
-          /// F081: locate every `readiness/<id>/governance-handoff.json` under `repo` in stable `<id>` order
-          /// and read each one's raw JSON — the ONLY I/O the handoff consumer needs. `[]` when none present
-          /// (the no-op path). `realPorts` reads the real filesystem; tests inject a deterministic port.
-          /// TOTAL & SAFE (catches its own exceptions ⇒ `[]`).
-          Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
+        {
+            Files: Loader.FileReader
+            Git: FS.GG.Governance.Snapshot.Ports
+            Freshness: FreshnessSensing.FreshnessSensor
+            Store: FreshnessSensing.StoreReader
+            Write: ArtifactWriter
+            Out: OutputSink
+            /// F052: the injected GATE-EXECUTION port — the only seam through which the command touches a gate
+            /// process. `realPorts` wires the merged F051 `GateExecution.Interpreter.realPort`; tests inject a
+            /// deterministic fake.
+            Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
+            /// F27 wiring (063): sense the terminal capability (TTY/NO_COLOR/width) + the `--plain` flag into a
+            /// `ColorCapability` — the ONLY sensing point (FR-004). `realPorts` wires `Capability.senseCapability`;
+            /// tests inject a synthetic capability (e.g. a forced TTY) to exercise the Rich path.
+            SenseCapability: bool -> RenderMode.ColorCapability
+            /// F27 wiring (063): render the report view richly to the terminal (the `Rich` path). `realPorts`
+            /// wires `RichRender.emitStdout Rich` so NO host references Spectre directly (FR-011, SC-007); tests
+            /// inject a capturing renderer. Plain/Json still go via `Out`.
+            RenderReport: ReportView.ReportView -> unit
+            /// F25 wiring (064): the two NEW normalized provenance senses. `SenseEnvironment` classifies the run
+            /// environment (`Local|Ci|LocalOrCi|Release`); `SenseBuilder` yields a username/host/clock-free
+            /// `BuilderIdentity`. Both MUST be normalized so `provenance.json` is byte-identical across machines
+            /// and re-runs (FR-006, SC-003). `realPorts` wires constant/CI-derived senses; tests inject synthetic
+            /// (`Synthetic`-named, disclosed) values.
+            SenseEnvironment: unit -> EnvironmentClass
+            SenseBuilder: unit -> BuilderIdentity
+            /// 065 wiring (US3): the REUSED F54 release-fact sensor, used ONLY when a `.fsgg/release.yml` is
+            /// present (the advisory preview). `realPorts` wires `ReleaseFactsSensing.Interpreter.senseRelease`
+            /// over the repo; tests inject a synthetic sense. Verify does NOT pack — this is the only new edge.
+            SenseRelease: SourceLayout -> ReleaseExpectations -> SensedRelease
+            /// 067 (F24 verify-host wiring): sense + run the product-surface checks for an already-classified
+            /// `ProductSurfaceReport`, returning the deterministic `SurfaceFinding list`. `realPorts` wires the
+            /// real read-only sense over `repo` (closing over `repo` + the F051 `Execute` port at construction
+            /// time, mirroring `SenseRelease`): the four declared domains are sensed through READ-ONLY ports —
+            /// the **package** port no-ops `WriteBaseline` and lists no transcripts (an absent baseline is
+            /// REPORTED but never written, no FSI is spawned — FR-012) — then `Composition.run` aggregates the
+            /// findings. Tests inject a synthetic port (e.g. an advisory-only finding the real sensors cannot
+            /// yet emit from disk, disclosed per Constitution V).
+            SenseSurfaces:
+                FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+                    -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+            /// F070: sense generated-view currency for `repo`, returning the stale-view findings gated by the
+            /// manifest's `currency-enforcement` dial. `realPorts` reuses the F057 refresh machinery; tests inject
+            /// a deterministic port. TOTAL & SAFE (catches its own exceptions ⇒ `[]`). `[]` ⇒ byte-identical.
+            SenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
+            /// F081: locate every `readiness/<id>/governance-handoff.json` under `repo` in stable `<id>` order
+            /// and read each one's raw JSON — the ONLY I/O the handoff consumer needs. `[]` when none present
+            /// (the no-op path). `realPorts` reads the real filesystem; tests inject a deterministic port.
+            /// TOTAL & SAFE (catches its own exceptions ⇒ `[]`).
+            Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+        }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, the F046 real sensor/store reader, the F051 real execution port,

@@ -53,22 +53,27 @@ module Model =
     /// explanation; `Explanation` names the capability, class, selected tier, and (when known) the cheaper
     /// local alternative. No raw YAML, host path, or timestamp — only declared ids.
     type ProductClassification =
-        { Path: GovernedPath
-          Capability: DomainId
-          Surface: SurfaceId
-          Class: SurfaceClass
-          SelectedTier: GeneratedProductTier
-          TierIsDeclared: bool
-          Alternative: TierAlternative
-          Reason: ClassificationReason
-          Explanation: string }
+        {
+            Path: GovernedPath
+            Capability: DomainId
+            Surface: SurfaceId
+            Class: SurfaceClass
+            SelectedTier: GeneratedProductTier
+            TierIsDeclared: bool
+            Alternative: TierAlternative
+            Reason: ClassificationReason
+            Explanation: string
+        }
 
     /// The deterministic aggregate (FR-008): one entry per routed path that fell under a declared product
     /// surface, sorted by normalized `Path` (ordinal) then `SurfaceId` token. A routed path under no
     /// declared product surface (or under only a boundary-only kind) produces NO entry (light-by-default,
     /// FR-004). An EMPTY report is a valid, successful outcome — never an error and never a fabricated
     /// classification.
-    type ProductSurfaceReport = { Classifications: ProductClassification list }
+    type ProductSurfaceReport =
+        {
+            Classifications: ProductClassification list
+        }
 
     // ── Stable rendering helpers (for the explanation, tests, and the route.json projection) ──
 

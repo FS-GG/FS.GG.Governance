@@ -12,20 +12,22 @@ open FS.GG.Governance.Cli.Tests.RenderSupport
 let tests =
     testList
         "TuiParity"
-        [ test "Tui.init View is exactly the ReportView projected from the same decision" {
-              let model, _ = Tui.init blockedView
-              Expect.equal model.View blockedView "the TUI navigates the same report view"
-          }
+        [
+            test "Tui.init View is exactly the ReportView projected from the same decision" {
+                let model, _ = Tui.init blockedView
+                Expect.equal model.View blockedView "the TUI navigates the same report view"
+            }
 
-          test "the navigable view carries the same verdict + blocker facts as the plain projection" {
-              let model, _ = Tui.init blockedView
-              // the blocking gate appears as a navigable leaf somewhere in the sections.
-              let rec labels node =
-                  match node with
-                  | ReportView.Leaf(l, _) -> [ l ]
-                  | ReportView.Group(t, cs) -> t :: List.collect labels cs
+            test "the navigable view carries the same verdict + blocker facts as the plain projection" {
+                let model, _ = Tui.init blockedView
+                // the blocking gate appears as a navigable leaf somewhere in the sections.
+                let rec labels node =
+                    match node with
+                    | ReportView.Leaf(l, _) -> [ l ]
+                    | ReportView.Group(t, cs) -> t :: List.collect labels cs
 
-              let allLabels = model.View.Sections |> List.collect labels
-              Expect.isTrue (allLabels |> List.exists (fun l -> l.Contains "build:ship")) "blocking gate is navigable"
-              Expect.stringContains model.View.Title "FAIL" "verdict carried in the view title"
-          } ]
+                let allLabels = model.View.Sections |> List.collect labels
+                Expect.isTrue (allLabels |> List.exists (fun l -> l.Contains "build:ship")) "blocking gate is navigable"
+                Expect.stringContains model.View.Title "FAIL" "verdict carried in the view title"
+            }
+        ]

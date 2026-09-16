@@ -10,12 +10,12 @@
 
 namespace FS.GG.Governance.RefreshCommand
 
-open FS.GG.Governance.Config.Model                  // CheckId, DomainId, EnvironmentClass
-open FS.GG.Governance.FreshnessKey                  // FreshnessKey.matches/diff
-open FS.GG.Governance.FreshnessKey.Model             // FreshnessInputs, ArtifactHash, GeneratorVersion, ...
-open FS.GG.Governance.RefreshJson                   // RefreshJson.ofRefreshDecision
-open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationManifest, CurrencyStatus, RefreshDecision, ...
-open FS.GG.Governance.CommandHost                    // 075: shared host skeleton — `under`
+open FS.GG.Governance.Config.Model // CheckId, DomainId, EnvironmentClass
+open FS.GG.Governance.FreshnessKey // FreshnessKey.matches/diff
+open FS.GG.Governance.FreshnessKey.Model // FreshnessInputs, ArtifactHash, GeneratorVersion, ...
+open FS.GG.Governance.RefreshJson // RefreshJson.ofRefreshDecision
+open FS.GG.Governance.RefreshJson.RefreshModel // GenerationManifest, CurrencyStatus, RefreshDecision, ...
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — `under`
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -31,11 +31,13 @@ module Loop =
         | ByView of string
 
     type RunRequest =
-        { Repo: string
-          DryRun: bool
-          Scope: Scope
-          Format: OutputFormat
-          RefreshOut: string option }
+        {
+            Repo: string
+            DryRun: bool
+            Scope: Scope
+            Format: OutputFormat
+            RefreshOut: string option
+        }
 
     type UsageError = { Message: string }
 
@@ -59,8 +61,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: RefreshOutcome
-          Message: string }
+        {
+            Category: RefreshOutcome
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -70,19 +74,21 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Manifest: GenerationManifest option
-          InScope: GenerationEntry list
-          Sensed: Map<string, Result<ArtifactHash list * GeneratorVersion, string>>
-          Recorded: Map<string, (ArtifactHash list * GeneratorVersion) option>
-          ExpectedRegen: Set<string>
-          PendingProv: int
-          Views: ViewDecision list
-          Decision: RefreshDecision option
-          RefreshDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: RefreshOutcome }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Manifest: GenerationManifest option
+            InScope: GenerationEntry list
+            Sensed: Map<string, Result<ArtifactHash list * GeneratorVersion, string>>
+            Recorded: Map<string, (ArtifactHash list * GeneratorVersion) option>
+            ExpectedRegen: Set<string>
+            PendingProv: int
+            Views: ViewDecision list
+            Decision: RefreshDecision option
+            RefreshDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: RefreshOutcome
+        }
 
     // ── exitCode (cli.md exit-code table) — total, no wildcard ──
 
@@ -98,20 +104,24 @@ module Loop =
     // ── parse — a pure, total argv matcher; usage problems are values, never throws ──
 
     type ParseAcc =
-        { Repo: string option
-          DryRun: bool
-          ViewKind: string option
-          View: string option
-          Format: string option
-          RefreshOut: string option }
+        {
+            Repo: string option
+            DryRun: bool
+            ViewKind: string option
+            View: string option
+            Format: string option
+            RefreshOut: string option
+        }
 
     let emptyAcc =
-        { Repo = None
-          DryRun = false
-          ViewKind = None
-          View = None
-          Format = None
-          RefreshOut = None }
+        {
+            Repo = None
+            DryRun = false
+            ViewKind = None
+            View = None
+            Format = None
+            RefreshOut = None
+        }
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // A leading bare `refresh` token is tolerated (no central dispatcher — command precedent).
@@ -127,19 +137,44 @@ module Loop =
             // M-CLI-3 (#49): a `--`-prefixed next token is NOT a value — reject as missing rather than
             // silently swallowing the following flag.
             | "--repo" :: v :: more when not (v.StartsWith "--") -> go { acc with Repo = Some v } more
-            | "--repo" :: _ -> Error { Message = "missing value for flag: --repo" }
+            | "--repo" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --repo"
+                    }
             | "--view-kind" :: v :: more when not (v.StartsWith "--") -> go { acc with ViewKind = Some v } more
-            | "--view-kind" :: _ -> Error { Message = "missing value for flag: --view-kind" }
+            | "--view-kind" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --view-kind"
+                    }
             | "--view" :: v :: more when not (v.StartsWith "--") -> go { acc with View = Some v } more
-            | "--view" :: _ -> Error { Message = "missing value for flag: --view" }
+            | "--view" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --view"
+                    }
             | "--refresh-out" :: v :: more when not (v.StartsWith "--") -> go { acc with RefreshOut = Some v } more
-            | "--refresh-out" :: _ -> Error { Message = "missing value for flag: --refresh-out" }
+            | "--refresh-out" :: _ ->
+                Error
+                    {
+                        Message = "missing value for flag: --refresh-out"
+                    }
             | "--text" :: more -> go { acc with Format = Some "text" } more
             | "--json" :: more -> go { acc with Format = Some "json" } more
-            | "--text-and-json" :: more -> go { acc with Format = Some "text-and-json" } more
+            | "--text-and-json" :: more ->
+                go
+                    { acc with
+                        Format = Some "text-and-json"
+                    }
+                    more
             // CLI-5: distinguish an unknown `--` flag from a stray non-`--` positional in the message.
             | flag :: _ when flag.StartsWith "--" -> Error { Message = "unknown flag: " + flag }
-            | other :: _ -> Error { Message = "unexpected argument: " + other }
+            | other :: _ ->
+                Error
+                    {
+                        Message = "unexpected argument: " + other
+                    }
 
         match go emptyAcc argv with
         | Error e -> Error e
@@ -150,11 +185,19 @@ module Loop =
                 | Some "text" -> Ok Text
                 | Some "json" -> Ok Json
                 | Some "text-and-json" -> Ok TextAndJson
-                | Some other -> Error { Message = "unrecognized format: " + other }
+                | Some other ->
+                    Error
+                        {
+                            Message = "unrecognized format: " + other
+                        }
 
             let scopeResult =
                 match acc.ViewKind, acc.View with
-                | Some _, Some _ -> Error { Message = "mutually exclusive selectors: use --view-kind OR --view, not both" }
+                | Some _, Some _ ->
+                    Error
+                        {
+                            Message = "mutually exclusive selectors: use --view-kind OR --view, not both"
+                        }
                 | Some k, None -> Ok(ByKind(viewKindOfToken k))
                 | None, Some v -> Ok(ByView v)
                 | None, None -> Ok AllViews
@@ -164,11 +207,13 @@ module Loop =
             | _, Error e -> Error e
             | Ok format, Ok scope ->
                 Ok
-                    { Repo = acc.Repo |> Option.defaultValue "."
-                      DryRun = acc.DryRun
-                      Scope = scope
-                      Format = format
-                      RefreshOut = acc.RefreshOut }
+                    {
+                        Repo = acc.Repo |> Option.defaultValue "."
+                        DryRun = acc.DryRun
+                        Scope = scope
+                        Format = format
+                        RefreshOut = acc.RefreshOut
+                    }
 
     // ── currency decision (pure; reuses F029 FreshnessKey, revisions held EQUAL — research D1) ──
 
@@ -177,16 +222,18 @@ module Loop =
     // the `Base`/`Head` revisions — so currency depends ONLY on sources + generator, never git position
     // (research D1, the crux distinguishing view currency from per-change gate-evidence reuse).
     let freshnessInputsOf (artifacts: ArtifactHash list) (generator: GeneratorVersion) : FreshnessInputs =
-        { Check = CheckId "refresh"
-          Domain = DomainId "refresh"
-          Command = None
-          Environment = Local
-          RuleHash = RuleHash ""
-          CoveredArtifacts = artifacts
-          CommandVersion = None
-          GeneratorVersion = generator
-          Base = Revision ""
-          Head = Revision "" }
+        {
+            Check = CheckId "refresh"
+            Domain = DomainId "refresh"
+            Command = None
+            Environment = Local
+            RuleHash = RuleHash ""
+            CoveredArtifacts = artifacts
+            CommandVersion = None
+            GeneratorVersion = generator
+            Base = Revision ""
+            Head = Revision ""
+        }
 
     // The `recorded` inputs reconstructed from a view's recorded provenance; an ABSENT record (first
     // generation) reconstructs as empty sources + an empty generator version, which never matches a sensed
@@ -197,11 +244,17 @@ module Loop =
         | None -> freshnessInputsOf [] (GeneratorVersion "")
 
     // The drifted categories driving staleness; `[]` iff the view is current (`FreshnessKey.matches`).
-    let driftOf (recorded: (ArtifactHash list * GeneratorVersion) option) (current: ArtifactHash list * GeneratorVersion) : InputCategory list =
+    let driftOf
+        (recorded: (ArtifactHash list * GeneratorVersion) option)
+        (current: ArtifactHash list * GeneratorVersion)
+        : InputCategory list =
         let curDigests, curGen = current
         FreshnessKey.diff (recordedInputs recorded) (freshnessInputsOf curDigests curGen)
 
-    let isStale (recorded: (ArtifactHash list * GeneratorVersion) option) (current: ArtifactHash list * GeneratorVersion) : bool =
+    let isStale
+        (recorded: (ArtifactHash list * GeneratorVersion) option)
+        (current: ArtifactHash list * GeneratorVersion)
+        : bool =
         let curDigests, curGen = current
         not (FreshnessKey.matches (recordedInputs recorded) (freshnessInputsOf curDigests curGen))
 
@@ -217,19 +270,21 @@ module Loop =
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Manifest = None
-              InScope = []
-              Sensed = Map.empty
-              Recorded = Map.empty
-              ExpectedRegen = Set.empty
-              PendingProv = 0
-              Views = []
-              Decision = None
-              RefreshDoc = None
-              Diagnostics = []
-              Exit = NothingToRefresh }
+            {
+                Request = request
+                Phase = Parsed
+                Manifest = None
+                InScope = []
+                Sensed = Map.empty
+                Recorded = Map.empty
+                ExpectedRegen = Set.empty
+                PendingProv = 0
+                Views = []
+                Decision = None
+                RefreshDoc = None
+                Diagnostics = []
+                Exit = NothingToRefresh
+            }
 
         model, [ LoadManifest request.Repo ]
 
@@ -239,7 +294,15 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     let entryOf (model: Model) (viewId: string) : GenerationEntry option =
@@ -248,10 +311,27 @@ module Loop =
     // Roll the per-view statuses into the run outcome (research D5): any unresolved ⇒ StaleUnresolved';
     // else any regenerated/would-regenerate ⇒ ViewsRegenerated; else NothingToRefresh.
     let rollup (views: ViewDecision list) : RefreshOutcome * int * int * int * int =
-        let isRegen v = match v.Status with | Regenerated _ | WouldRegenerate _ -> true | _ -> false
-        let isCurrent v = match v.Status with | Current -> true | _ -> false
-        let isUnresolved v = match v.Status with | StaleUnresolved _ -> true | _ -> false
-        let isNotEval v = match v.Status with | NotEvaluated -> true | _ -> false
+        let isRegen v =
+            match v.Status with
+            | Regenerated _
+            | WouldRegenerate _ -> true
+            | _ -> false
+
+        let isCurrent v =
+            match v.Status with
+            | Current -> true
+            | _ -> false
+
+        let isUnresolved v =
+            match v.Status with
+            | StaleUnresolved _ -> true
+            | _ -> false
+
+        let isNotEval v =
+            match v.Status with
+            | NotEvaluated -> true
+            | _ -> false
+
         let regen = views |> List.filter isRegen |> List.length
         let current = views |> List.filter isCurrent |> List.length
         let unresolved = views |> List.filter isUnresolved |> List.length
@@ -279,33 +359,46 @@ module Loop =
 
             | ManifestLoaded(Ok manifest) ->
                 let inScope = manifest.Entries |> List.filter (inScopeMatch model.Request.Scope)
-                let outOfScope = manifest.Entries |> List.filter (inScopeMatch model.Request.Scope >> not)
+
+                let outOfScope =
+                    manifest.Entries |> List.filter (inScopeMatch model.Request.Scope >> not)
 
                 let notEvalViews =
                     outOfScope
-                    |> List.map (fun e -> { Entry = e; Status = NotEvaluated; Drifted = [] })
+                    |> List.map (fun e ->
+                        {
+                            Entry = e
+                            Status = NotEvaluated
+                            Drifted = []
+                        })
 
                 let model' =
                     { model with
                         Phase = Loaded'
                         Manifest = Some manifest
                         InScope = inScope
-                        Views = notEvalViews }
+                        Views = notEvalViews
+                    }
 
                 match inScope with
                 | [] -> finalize model'
                 | _ ->
                     let effects =
-                        inScope
-                        |> List.collect (fun e -> [ SenseSource e; ReadRecorded e.ViewId ])
+                        inScope |> List.collect (fun e -> [ SenseSource e; ReadRecorded e.ViewId ])
 
                     model', effects
 
             | Sensed(viewId, result) ->
-                maybeDecideSensing { model with Sensed = Map.add viewId result model.Sensed }
+                maybeDecideSensing
+                    { model with
+                        Sensed = Map.add viewId result model.Sensed
+                    }
 
             | RecordedRead(viewId, recorded) ->
-                maybeDecideSensing { model with Recorded = Map.add viewId recorded model.Recorded }
+                maybeDecideSensing
+                    { model with
+                        Recorded = Map.add viewId recorded model.Recorded
+                    }
 
             | Regenerated'(viewId, Error reason) ->
                 // A generator failure is ALWAYS a ToolError (exit 4) — no partial view recorded.
@@ -317,22 +410,28 @@ module Loop =
                     let drifted = driftOf (Map.find viewId model.Recorded) (curDigests, curGen)
 
                     let view =
-                        { Entry = entry
-                          Status = Regenerated drifted
-                          Drifted = drifted }
+                        {
+                            Entry = entry
+                            Status = Regenerated drifted
+                            Drifted = drifted
+                        }
 
                     { model with
                         Views = model.Views @ [ view ]
-                        PendingProv = model.PendingProv + 1 },
+                        PendingProv = model.PendingProv + 1
+                    },
                     [ RecordProvenance(viewId, (curDigests, curGen, outputDigest)) ]
                 | _ ->
                     // Unreachable in a well-formed run (only sensed-Ok in-scope views are regenerated).
                     fail ToolError (sprintf "internal: regenerated unknown/unsensed view '%s'" viewId) model
 
-            | ProvenanceWritten(Error reason) ->
-                fail ToolError ("failed to record provenance: " + reason) model
+            | ProvenanceWritten(Error reason) -> fail ToolError ("failed to record provenance: " + reason) model
 
-            | ProvenanceWritten(Ok()) -> maybeFinalize { model with PendingProv = model.PendingProv - 1 }
+            | ProvenanceWritten(Ok()) ->
+                maybeFinalize
+                    { model with
+                        PendingProv = model.PendingProv - 1
+                    }
 
             | Wrote(Error reason) -> fail ToolError ("failed to write artifact: " + reason) model
 
@@ -346,7 +445,8 @@ module Loop =
         let ready =
             model.Phase = Loaded'
             && model.InScope
-               |> List.forall (fun e -> Map.containsKey e.ViewId model.Sensed && Map.containsKey e.ViewId model.Recorded)
+               |> List.forall (fun e ->
+                   Map.containsKey e.ViewId model.Sensed && Map.containsKey e.ViewId model.Recorded)
 
         if not ready then model, [] else decideSensing model
 
@@ -358,30 +458,56 @@ module Loop =
             match Map.find e.ViewId model.Sensed with
             | Error reason ->
                 // A source whose digest cannot be sensed ⇒ stale-unresolved, NEVER fabricated current (FR-010).
-                Choice1Of2 { Entry = e; Status = StaleUnresolved reason; Drifted = [] }
+                Choice1Of2
+                    {
+                        Entry = e
+                        Status = StaleUnresolved reason
+                        Drifted = []
+                    }
             | Ok(curDigests, curGen) ->
                 let recorded = Map.find e.ViewId model.Recorded
                 let current = (curDigests, curGen)
 
                 if not (isStale recorded current) then
-                    Choice1Of2 { Entry = e; Status = Current; Drifted = [] }
+                    Choice1Of2
+                        {
+                            Entry = e
+                            Status = Current
+                            Drifted = []
+                        }
                 else
                     let drifted = driftOf recorded current
 
                     if model.Request.DryRun then
-                        Choice1Of2 { Entry = e; Status = WouldRegenerate drifted; Drifted = drifted }
+                        Choice1Of2
+                            {
+                                Entry = e
+                                Status = WouldRegenerate drifted
+                                Drifted = drifted
+                            }
                     else
                         Choice2Of2 e
 
         let decisions = model.InScope |> List.map decideEntry
-        let resolved = decisions |> List.choose (function Choice1Of2 v -> Some v | _ -> None)
-        let needsRegen = decisions |> List.choose (function Choice2Of2 e -> Some e | _ -> None)
+
+        let resolved =
+            decisions
+            |> List.choose (function
+                | Choice1Of2 v -> Some v
+                | _ -> None)
+
+        let needsRegen =
+            decisions
+            |> List.choose (function
+                | Choice2Of2 e -> Some e
+                | _ -> None)
 
         let model' =
             { model with
                 Phase = Sensed'
                 Views = model.Views @ resolved
-                ExpectedRegen = needsRegen |> List.map (fun e -> e.ViewId) |> Set.ofList }
+                ExpectedRegen = needsRegen |> List.map (fun e -> e.ViewId) |> Set.ofList
+            }
 
         match needsRegen with
         | [] -> finalize model'
@@ -394,7 +520,11 @@ module Loop =
             model.ExpectedRegen
             |> Set.forall (fun v ->
                 model.Views
-                |> List.exists (fun vw -> vw.Entry.ViewId = v && (match vw.Status with Regenerated _ -> true | _ -> false)))
+                |> List.exists (fun vw ->
+                    vw.Entry.ViewId = v
+                    && (match vw.Status with
+                        | Regenerated _ -> true
+                        | _ -> false)))
 
         if model.Phase = Sensed' && regenSettled && model.PendingProv = 0 then
             finalize model
@@ -411,18 +541,22 @@ module Loop =
 
         let views =
             model.Views
-            |> List.sortBy (fun v -> Map.tryFind v.Entry.ViewId orderIndex |> Option.defaultValue System.Int32.MaxValue)
+            |> List.sortBy (fun v ->
+                Map.tryFind v.Entry.ViewId orderIndex
+                |> Option.defaultValue System.Int32.MaxValue)
 
         let outcome, regen, current, unresolved, notEval = rollup views
 
         let decision =
-            { Outcome = outcome
-              DryRun = model.Request.DryRun
-              Views = views
-              RegeneratedCount = regen
-              CurrentCount = current
-              UnresolvedCount = unresolved
-              NotEvaluatedCount = notEval }
+            {
+                Outcome = outcome
+                DryRun = model.Request.DryRun
+                Views = views
+                RegeneratedCount = regen
+                CurrentCount = current
+                UnresolvedCount = unresolved
+                NotEvaluatedCount = notEval
+            }
 
         let needsArtifact =
             (match model.Request.Format with
@@ -433,14 +567,18 @@ module Loop =
 
         if needsArtifact then
             let doc = RefreshJson.ofRefreshDecision decision
-            let path = model.Request.RefreshOut |> Option.defaultValue (CommandHost.under model.Request.Repo "refresh.json")
+
+            let path =
+                model.Request.RefreshOut
+                |> Option.defaultValue (CommandHost.under model.Request.Repo "refresh.json")
 
             { model with
                 Phase = Persisted
                 Views = views
                 Decision = Some decision
                 RefreshDoc = Some doc
-                Exit = outcome },
+                Exit = outcome
+            },
             [ WriteArtifact(path, doc) ]
         else
             let model' =
@@ -448,7 +586,8 @@ module Loop =
                     Phase = Persisted
                     Views = views
                     Decision = Some decision
-                    Exit = outcome }
+                    Exit = outcome
+                }
 
             model', [ EmitSummary(render model' Text) ]
 

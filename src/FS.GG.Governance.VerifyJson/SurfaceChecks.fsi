@@ -5,8 +5,8 @@
 
 namespace FS.GG.Governance.VerifyJson
 
-open System.Text.Json                          // Utf8JsonWriter
-open FS.GG.Governance.SurfaceChecks.Model      // SurfaceFinding
+open System.Text.Json // Utf8JsonWriter
+open FS.GG.Governance.SurfaceChecks.Model // SurfaceFinding
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SurfaceChecks =

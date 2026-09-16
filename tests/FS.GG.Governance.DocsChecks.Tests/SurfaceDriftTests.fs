@@ -10,6 +10,8 @@ let private library = typeof<DocsFacts>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "DocsChecks" "FS.GG.Governance.DocsChecks" library
+        [
+            SurfaceDrift.surfaceTest "DocsChecks" "FS.GG.Governance.DocsChecks" library
 
-          SurfaceDrift.referencesOnly "DocsChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library ]
+            SurfaceDrift.referencesOnly "DocsChecks" (fun n -> n.StartsWith "FS.GG.Governance.") library
+        ]

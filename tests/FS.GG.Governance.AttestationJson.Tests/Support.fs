@@ -22,7 +22,11 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         (Executable "dotnet")
         [ Argument "pack" ]
         (WorkingDirectory "/work")
-        { Added = []; Changed = []; Removed = [] }
+        {
+            Added = []
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 600)
         (ExitCode exit)
         (OutputDigest "sha-out")
@@ -30,17 +34,28 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         NoCapturedOutput
         (SensedDuration duration)
 
-let packRun = { Kind = Pack; Record = makeRecord 0 200L }
-let failedPackRun = { Kind = Pack; Record = makeRecord 137 200L }
+let packRun =
+    {
+        Kind = Pack
+        Record = makeRecord 0 200L
+    }
+
+let failedPackRun =
+    {
+        Kind = Pack
+        Record = makeRecord 137 200L
+    }
 
 let private surface s = SurfaceId s
 
 let packedOutcome (s: string) (path: string) (version: string) (digest: string) : PackOutcome =
     Packed(
-        { Surface = surface s
-          ArtifactPath = path
-          PackedVersion = version
-          Digest = ArtifactHash digest },
+        {
+            Surface = surface s
+            ArtifactPath = path
+            PackedVersion = version
+            Digest = ArtifactHash digest
+        },
         packRun
     )
 
@@ -63,8 +78,10 @@ let snapshotOf (runs: KindedCommandRun list) : AuditSnapshot =
 let twoPacked: PackEvidenceSet =
     Pack.evaluatePack
         Map.empty
-        [ packedOutcome "B" "out/B.nupkg" "1.1.0" "dB"
-          packedOutcome "A" "out/A.nupkg" "1.1.0" "dA" ]
+        [
+            packedOutcome "B" "out/B.nupkg" "1.1.0" "dB"
+            packedOutcome "A" "out/A.nupkg" "1.1.0" "dA"
+        ]
 
 let summaryWith (runs: KindedCommandRun list) (pack: PackEvidenceSet) : AttestationSummary =
     Attestation.summarize (snapshotOf runs) pack

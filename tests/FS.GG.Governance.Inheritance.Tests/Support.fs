@@ -15,32 +15,52 @@ module Support =
     let mkGate (rawId: string) (maturity: Maturity) : Gate =
         let domain = DomainId "build"
 
-        { Id = GateId rawId
-          Domain = domain
-          Description = sprintf "gate %s" rawId
-          Prerequisites = []
-          Cost = Cheap
-          Timeout = TimeoutLimit 60
-          Owner = Owner "team"
-          Maturity = maturity
-          ProductCheck = false
-          FreshnessKey =
-            { Check = CheckId rawId
-              Domain = domain
-              Cost = Cheap
-              Environment = Local
-              Command = None } }
+        {
+            Id = GateId rawId
+            Domain = domain
+            Description = sprintf "gate %s" rawId
+            Prerequisites = []
+            Cost = Cheap
+            Timeout = TimeoutLimit 60
+            Owner = Owner "team"
+            Maturity = maturity
+            ProductCheck = false
+            FreshnessKey =
+                {
+                    Check = CheckId rawId
+                    Domain = domain
+                    Cost = Cheap
+                    Environment = Local
+                    Command = None
+                }
+        }
 
     /// Wrap a `Gate` as a `SelectedGate` with a representative selection trace.
     let mkSelectedGate (gate: Gate) : SelectedGate =
-        { Gate = gate
-          SelectingPaths = [ { Path = GovernedPath "src/a.fs"; MatchedGlob = GovernedPath "src/**" } ] }
+        {
+            Gate = gate
+            SelectingPaths =
+                [
+                    {
+                        Path = GovernedPath "src/a.fs"
+                        MatchedGlob = GovernedPath "src/**"
+                    }
+                ]
+        }
 
     /// A `RouteResult` from selected gates; findings empty and cost all-zero (never read here).
     let mkRoute (gates: SelectedGate list) : RouteResult =
-        { SelectedGates = gates
-          Findings = { Findings = [] }
-          Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+        {
+            SelectedGates = gates
+            Findings = { Findings = [] }
+            Cost =
+                {
+                    Cheap = 0
+                    Medium = 0
+                    High = 0
+                    Exhaustive = 0
+                }
+        }
 
     /// A minimal, valid-shaped `TypedFacts` whose single `generatedProduct` surface carries the given
     /// `templateProfile` (or none). Only `Capabilities.Surfaces` is read by `productTemplateProfiles`;
@@ -49,28 +69,36 @@ module Support =
         let surfaces =
             profiles
             |> List.mapi (fun i p ->
-                { Id = SurfaceId(sprintf "product-%d" i)
-                  Class = GeneratedProductRoot
-                  Paths = [ GovernedPath "." ]
-                  Owner = Owner "platform"
-                  Maturity = Warn
-                  EvidenceTag = None
-                  TemplateProfile = Some(TemplateProfile p)
-                  Baseline = None })
+                {
+                    Id = SurfaceId(sprintf "product-%d" i)
+                    Class = GeneratedProductRoot
+                    Paths = [ GovernedPath "." ]
+                    Owner = Owner "platform"
+                    Maturity = Warn
+                    EvidenceTag = None
+                    TemplateProfile = Some(TemplateProfile p)
+                    Baseline = None
+                })
 
-        { Project =
-            { SchemaVersion = SchemaVersion 1
-              Id = ProjectId "product-under-test"
-              Domains = [ DomainId "build" ]
-              GovernedRoot = GovernedPath "."
-              PackageSurfaces = []
-              PolicyRef = None
-              CapabilitiesRef = None }
-          Policy = None
-          Capabilities =
-            { SchemaVersion = SchemaVersion 2
-              Domains = [ DomainId "build" ]
-              PathMap = []
-              Surfaces = surfaces
-              Checks = [] }
-          Tooling = None }
+        {
+            Project =
+                {
+                    SchemaVersion = SchemaVersion 1
+                    Id = ProjectId "product-under-test"
+                    Domains = [ DomainId "build" ]
+                    GovernedRoot = GovernedPath "."
+                    PackageSurfaces = []
+                    PolicyRef = None
+                    CapabilitiesRef = None
+                }
+            Policy = None
+            Capabilities =
+                {
+                    SchemaVersion = SchemaVersion 2
+                    Domains = [ DomainId "build" ]
+                    PathMap = []
+                    Surfaces = surfaces
+                    Checks = []
+                }
+            Tooling = None
+        }

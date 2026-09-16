@@ -22,24 +22,35 @@ let private noSpuriousReuse (decideBefore: ReuseDecision) (decideAfter: ReuseDec
 let tests =
     testList
         "Safety"
-        [ testPropertyWithConfig fscheckConfig "serialise∘readBack never turns Recompute into Reuse (in fact verdict-identical)" (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
-              match readBack (EvidenceReuseStore.serialise store) with
-              | Some loaded ->
-                  let before = EvidenceReuse.decide candidate store
-                  let after = EvidenceReuse.decide candidate loaded
-                  // round-trip is an equal store ⇒ verdicts identical (the strongest form of safe)
-                  before = after && noSpuriousReuse before after
-              | None ->
-                  // only the empty store maps to a None-via-absent; serialise always yields a present recorded
-                  // array, so readBack is always Some — a None here is a genuine failure.
-                  false)
+        [
+            testPropertyWithConfig
+                fscheckConfig
+                "serialise∘readBack never turns Recompute into Reuse (in fact verdict-identical)"
+                (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
+                    match readBack (EvidenceReuseStore.serialise store) with
+                    | Some loaded ->
+                        let before = EvidenceReuse.decide candidate store
+                        let after = EvidenceReuse.decide candidate loaded
+                        // round-trip is an equal store ⇒ verdicts identical (the strongest form of safe)
+                        before = after && noSpuriousReuse before after
+                    | None ->
+                        // only the empty store maps to a None-via-absent; serialise always yields a present recorded
+                        // array, so readBack is always Some — a None here is a genuine failure.
+                        false)
 
-          testPropertyWithConfig fscheckConfig "retain n never turns Recompute into Reuse" (fun (candidate: FreshnessInputs) (store: ReuseStore) (n: int) ->
-              let before = EvidenceReuse.decide candidate store
-              let after = EvidenceReuse.decide candidate (EvidenceReuseStore.retain n store)
-              noSpuriousReuse before after)
+            testPropertyWithConfig
+                fscheckConfig
+                "retain n never turns Recompute into Reuse"
+                (fun (candidate: FreshnessInputs) (store: ReuseStore) (n: int) ->
+                    let before = EvidenceReuse.decide candidate store
+                    let after = EvidenceReuse.decide candidate (EvidenceReuseStore.retain n store)
+                    noSpuriousReuse before after)
 
-          testPropertyWithConfig fscheckConfig "prune never turns Recompute into Reuse (in fact verdict-identical)" (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
-              let before = EvidenceReuse.decide candidate store
-              let after = EvidenceReuse.decide candidate (EvidenceReuseStore.prune store)
-              before = after && noSpuriousReuse before after) ]
+            testPropertyWithConfig
+                fscheckConfig
+                "prune never turns Recompute into Reuse (in fact verdict-identical)"
+                (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
+                    let before = EvidenceReuse.decide candidate store
+                    let after = EvidenceReuse.decide candidate (EvidenceReuseStore.prune store)
+                    before = after && noSpuriousReuse before after)
+        ]

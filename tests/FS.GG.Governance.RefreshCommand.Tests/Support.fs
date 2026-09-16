@@ -16,7 +16,9 @@ open FS.GG.Governance.RefreshCommand
 // ── temp-repo fixture helpers (the ReleaseCommand/VerifyCommand precedent) ──
 
 let withTempDir (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-refresh-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-refresh-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
 
     try
@@ -36,13 +38,17 @@ let writeFile (dir: string) (relPath: string) (content: string) : unit =
 
     File.WriteAllText(full, content)
 
-let readFile (dir: string) (relPath: string) : string = File.ReadAllText(Path.Combine(dir, relPath))
+let readFile (dir: string) (relPath: string) : string =
+    File.ReadAllText(Path.Combine(dir, relPath))
 
 let fileExists (dir: string) (relPath: string) : bool = File.Exists(Path.Combine(dir, relPath))
 
 let sha256Hex (s: string) : string =
     use sha = SHA256.Create()
-    sha.ComputeHash(Text.Encoding.UTF8.GetBytes s) |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+    sha.ComputeHash(Text.Encoding.UTF8.GetBytes s)
+    |> Array.map (fun b -> b.ToString("x2"))
+    |> String.concat ""
 
 /// A content-hash snapshot of every file under `dir` (relative path -> sha). The no-mutation guard compares
 /// two snapshots for byte-for-byte equality.
@@ -111,11 +117,13 @@ let withTempRepo (yml: string) (writeSources: string -> unit) (body: string -> '
 // ── default request + ports ──
 
 let requestFor (repo: string) : Loop.RunRequest =
-    { Repo = repo
-      DryRun = false
-      Scope = Loop.AllViews
-      Format = Loop.Text
-      RefreshOut = None }
+    {
+        Repo = repo
+        DryRun = false
+        Scope = Loop.AllViews
+        Format = Loop.Text
+        RefreshOut = None
+    }
 
 /// Run the command end to end through the REAL ports against a real temp repo.
 let runReal (repo: string) (request: Loop.RunRequest) : Loop.Model =

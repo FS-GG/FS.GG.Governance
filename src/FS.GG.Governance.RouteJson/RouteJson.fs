@@ -6,14 +6,14 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Route.Model
 open FS.GG.Governance.FreshnessKey.Model
-open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
+open FS.GG.Governance.RuleIdentity // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
-open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
-open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
-open FS.GG.Governance.ProductSurfaces.Model      // F23: ProductSurfaceReport/ProductClassification/TierAlternative
+open FS.GG.Governance.CommandRecord.Model // F052: ExitCode (the execution embed's exit code)
+open FS.GG.Governance.GateRun.Model // F052: GateDisposition, GateOutcome
+open FS.GG.Governance.ProductSurfaces.Model // F23: ProductSurfaceReport/ProductClassification/TierAlternative
 
 // The F020 route.json projection (US1–US4). Renders the F019 `RouteResult` into the deterministic,
 // versioned `route.json` document text via a hand-driven `System.Text.Json` `Utf8JsonWriter` walk —
@@ -114,8 +114,10 @@ module RouteJson =
 
         w.WritePropertyName "prerequisites"
         w.WriteStartArray()
+
         for prereq in gate.Prerequisites do
             JsonWriters.writePrerequisite w prereq
+
         w.WriteEndArray()
 
         w.WritePropertyName "freshnessKey"
@@ -123,8 +125,10 @@ module RouteJson =
 
         w.WritePropertyName "selectingPaths"
         w.WriteStartArray()
+
         for sp in sg.SelectingPaths do
             writeSelectingPath w sp
+
         w.WriteEndArray()
 
         // F045: the per-gate cache-eligibility verdict, matched by GateId, as the entry's last field.
@@ -208,7 +212,9 @@ module RouteJson =
 
         // F052: the per-gate execution lookup, built once from the supplied outcomes (empty ⇒ always None).
         let execByGate = JsonWriters.outcomeByGate execution
-        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
+
+        let execLookup: GateId -> GateOutcome option =
+            fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
         JsonText.writeToString (fun w ->
             w.WriteStartObject()
@@ -216,14 +222,18 @@ module RouteJson =
 
             w.WritePropertyName "selectedGates"
             w.WriteStartArray()
+
             for sg in result.SelectedGates do
                 writeSelectedGate w lookup execLookup sg
+
             w.WriteEndArray()
 
             w.WritePropertyName "findings"
             w.WriteStartArray()
+
             for f in result.Findings.Findings do
                 writeFinding w f
+
             w.WriteEndArray()
 
             w.WritePropertyName "cost"
@@ -238,8 +248,10 @@ module RouteJson =
             | classifications ->
                 w.WritePropertyName "productSurfaces"
                 w.WriteStartArray()
+
                 for c in classifications do
                     writeProductClassification w c
+
                 w.WriteEndArray()
 
             w.WriteEndObject())

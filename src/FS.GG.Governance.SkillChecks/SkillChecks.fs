@@ -33,7 +33,9 @@ module SkillChecks =
             match p.Outcome with
             | PathHolds -> None
             | PathUnresolved claimed ->
-                let message = sprintf "skill '%s' claims path '%s' that does not resolve" facts.SkillId claimed
+                let message =
+                    sprintf "skill '%s' claims path '%s' that does not resolve" facts.SkillId claimed
+
                 Some(mkFinding request "skill.path-contract" claimed Blocking false message)
             | PathEscapesBounds claimed ->
                 let message =
@@ -45,7 +47,9 @@ module SkillChecks =
         match facts.TaskList with
         | TaskListConsistent -> []
         | TaskListInconsistent detail ->
-            let message = sprintf "skill '%s' has an inconsistent task list: %s" facts.SkillId detail
+            let message =
+                sprintf "skill '%s' has an inconsistent task list: %s" facts.SkillId detail
+
             [ mkFinding request "skill.task-list" "task-list" Blocking false message ]
 
     let mirrorFindings (request: SC.SurfaceCheckRequest) (facts: SkillFacts) : SC.SurfaceFinding list =
@@ -53,13 +57,19 @@ module SkillChecks =
         | NoMirrorDeclared
         | MirrorInSync -> []
         | MirrorMissing mirror ->
-            let message = sprintf "skill '%s' declares mirror '%s' that is missing" facts.SkillId mirror
+            let message =
+                sprintf "skill '%s' declares mirror '%s' that is missing" facts.SkillId mirror
+
             [ mkFinding request "skill.mirror" mirror Blocking false message ]
         | MirrorDrifted(mirror, detail) ->
-            let message = sprintf "skill '%s' mirror '%s' has drifted: %s" facts.SkillId mirror detail
+            let message =
+                sprintf "skill '%s' mirror '%s' has drifted: %s" facts.SkillId mirror detail
+
             [ mkFinding request "skill.mirror" mirror Blocking false message ]
         | MirrorUnreadable(mirror, detail) ->
-            let message = sprintf "skill '%s' declares mirror '%s' that could not be read: %s" facts.SkillId mirror detail
+            let message =
+                sprintf "skill '%s' declares mirror '%s' that could not be read: %s" facts.SkillId mirror detail
+
             [ mkFinding request "skill.mirror" mirror Blocking true message ]
 
     let unreadableFindings (request: SC.SurfaceCheckRequest) (facts: SkillFacts) : SC.SurfaceFinding list =
@@ -69,9 +79,11 @@ module SkillChecks =
             mkFinding request "skill.manifest-unreadable" src Blocking true message)
 
     let evaluate (request: SC.SurfaceCheckRequest) (facts: SkillFacts) : SC.SurfaceFinding list =
-        [ pathFindings request facts
-          taskListFindings request facts
-          mirrorFindings request facts
-          unreadableFindings request facts ]
+        [
+            pathFindings request facts
+            taskListFindings request facts
+            mirrorFindings request facts
+            unreadableFindings request facts
+        ]
         |> List.concat
         |> List.sortBy (fun (f: SC.SurfaceFinding) -> facts.SkillId, f.Location.Detail, f.Code)

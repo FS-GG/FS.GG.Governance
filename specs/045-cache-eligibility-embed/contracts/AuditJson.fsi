@@ -8,7 +8,7 @@
 namespace FS.GG.Governance.AuditJson
 
 open FS.GG.Governance.Ship.Model
-open FS.GG.Governance.CacheEligibility.Model   // NEW: CacheEligibilityReport (transitively via the F041 ProjectReference)
+open FS.GG.Governance.CacheEligibility.Model // NEW: CacheEligibilityReport (transitively via the F041 ProjectReference)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module AuditJson =

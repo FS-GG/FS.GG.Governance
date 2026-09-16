@@ -14,12 +14,14 @@ open FS.GG.Governance.Config.Model
 module Model =
 
     type SensedFacts =
-        { RuleHash: RuleHash option
-          GeneratorVersion: GeneratorVersion option
-          Base: Revision option
-          Head: Revision option
-          CoveredArtifacts: Map<GateId, ArtifactHash list>
-          CommandVersions: Map<CommandId, CommandVersion> }
+        {
+            RuleHash: RuleHash option
+            GeneratorVersion: GeneratorVersion option
+            Base: Revision option
+            Head: Revision option
+            CoveredArtifacts: Map<GateId, ArtifactHash list>
+            CommandVersions: Map<CommandId, CommandVersion>
+        }
 
     type MissingFact =
         | MissingRuleHash
@@ -34,7 +36,9 @@ module Model =
         | Unresolved of MissingFact list
 
     type FreshnessResolutionEntry =
-        { Gate: GateId
-          Outcome: ResolutionOutcome }
+        {
+            Gate: GateId
+            Outcome: ResolutionOutcome
+        }
 
     type FreshnessResolutionReport = FreshnessResolutionReport of FreshnessResolutionEntry list

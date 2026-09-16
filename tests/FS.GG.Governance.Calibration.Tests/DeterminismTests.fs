@@ -16,34 +16,40 @@ open FS.GG.Governance.Calibration.Tests.Support
 let tests =
     testList
         "Determinism"
-        [ test "decide is structurally identical across cwd change and unrelated filesystem mutation" {
-              let originalCwd = Directory.GetCurrentDirectory()
-              let tmp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())
-              Directory.CreateDirectory tmp |> ignore
+        [
+            test "decide is structurally identical across cwd change and unrelated filesystem mutation" {
+                let originalCwd = Directory.GetCurrentDirectory()
+                let tmp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())
+                Directory.CreateDirectory tmp |> ignore
 
-              try
-                  let d1 = Calibration.decide T (evidenceOf 5 95)
+                try
+                    let d1 = Calibration.decide T (evidenceOf 5 95)
 
-                  // Change the working directory and touch an unrelated file between the two computations.
-                  Directory.SetCurrentDirectory tmp
-                  File.WriteAllText(Path.Combine(tmp, "noise.txt"), "unrelated state")
+                    // Change the working directory and touch an unrelated file between the two computations.
+                    Directory.SetCurrentDirectory tmp
+                    File.WriteAllText(Path.Combine(tmp, "noise.txt"), "unrelated state")
 
-                  let d2 = Calibration.decide T (evidenceOf 5 95)
+                    let d2 = Calibration.decide T (evidenceOf 5 95)
 
-                  Expect.equal d2 d1 "the decision is structurally identical regardless of cwd/filesystem state"
-              finally
-                  Directory.SetCurrentDirectory originalCwd
+                    Expect.equal d2 d1 "the decision is structurally identical regardless of cwd/filesystem state"
+                finally
+                    Directory.SetCurrentDirectory originalCwd
 
-                  try
-                      Directory.Delete(tmp, true)
-                  with _ ->
-                      ()
-          }
+                    try
+                        Directory.Delete(tmp, true)
+                    with _ ->
+                        ()
+            }
 
-          test "every worked example re-decides identically on a second call" {
-              for (t, e, _) in workedExamples do
-                  Expect.equal (Calibration.decide t e) (Calibration.decide t e) "decide is a pure function of its inputs"
-          }
+            test "every worked example re-decides identically on a second call" {
+                for (t, e, _) in workedExamples do
+                    Expect.equal
+                        (Calibration.decide t e)
+                        (Calibration.decide t e)
+                        "decide is a pure function of its inputs"
+            }
 
-          testPropertyWithConfig fscheckConfig "decide is a pure function of its inputs (SC-005, L-D14)"
-          <| fun (t: CalibrationThresholds) (e: CalibrationEvidence) -> Calibration.decide t e = Calibration.decide t e ]
+            testPropertyWithConfig fscheckConfig "decide is a pure function of its inputs (SC-005, L-D14)"
+            <| fun (t: CalibrationThresholds) (e: CalibrationEvidence) ->
+                Calibration.decide t e = Calibration.decide t e
+        ]

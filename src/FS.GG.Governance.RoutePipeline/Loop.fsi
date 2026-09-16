@@ -14,21 +14,21 @@
 
 namespace FS.GG.Governance.RouteCommand
 
-open FS.GG.Governance.Config.Model       // GovernedPath
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot
-open FS.GG.Governance.Route.Model          // RouteResult
-open FS.GG.Governance.Config              // Validation (Config.Model)
-open FS.GG.Governance.Gates.Model          // Gate (F046 — the selected gates to sense)
-open FS.GG.Governance.Adapters.SddHandoff   // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
-open FS.GG.Governance.FreshnessKey.Model    // Revision (F046 — base/head, passed through from RepoSnapshot.Range)
+open FS.GG.Governance.Config.Model // GovernedPath
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot
+open FS.GG.Governance.Route.Model // RouteResult
+open FS.GG.Governance.Config // Validation (Config.Model)
+open FS.GG.Governance.Gates.Model // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.Adapters.SddHandoff // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
+open FS.GG.Governance.FreshnessKey.Model // Revision (F046 — base/head, passed through from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
-open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore (F046 — the read-only reuse store join input)
-open FS.GG.Governance.Config.Model          // ToolingFacts (F052 — declared command specs)
-open FS.GG.Governance.CommandRecord.Model    // CommandRecord (F052 — the assembled run record)
-open FS.GG.Governance.GateExecution.Model     // GateCommand (F052 — the command-to-run)
-open FS.GG.Governance.GateRun.Model           // GateOutcome (F052 — the per-gate execution outcome)
-open FS.GG.Governance.ProductSurfaces.Model    // ProductSurfaceReport (F23 — the product-surface classification)
-open FS.GG.Governance.HumanText               // F27 wiring (063): ReportView (the rich/plain view payload)
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore (F046 — the read-only reuse store join input)
+open FS.GG.Governance.Config.Model // ToolingFacts (F052 — declared command specs)
+open FS.GG.Governance.CommandRecord.Model // CommandRecord (F052 — the assembled run record)
+open FS.GG.Governance.GateExecution.Model // GateCommand (F052 — the command-to-run)
+open FS.GG.Governance.GateRun.Model // GateOutcome (F052 — the per-gate execution outcome)
+open FS.GG.Governance.ProductSurfaces.Model // ProductSurfaceReport (F23 — the product-surface classification)
+open FS.GG.Governance.HumanText // F27 wiring (063): ReportView (the rich/plain view payload)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -50,23 +50,25 @@ module Loop =
     /// `StorePath` is the read-only evidence-reuse store path (F046): `--store`, default
     /// `<repo>/readiness/evidence-reuse.json` (research D6); absent on disk ⇒ `EvidenceReuse.empty`.
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Format: OutputFormat
-          GatesOut: string
-          RouteOut: string
-          StorePath: string
-          /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
-          /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts
-          /// (FR-004/FR-007).
-          PersistStore: bool
-          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
-          /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
-          ExplicitPlain: bool
-          /// F27 wiring (063, US3): the host-parsed `--watch` flag. A pure-Loop no-op (the read-only watch
-          /// loop is an interpreter-edge concern driven by `HumanRender.Watch.run`); the one-shot evaluation
-          /// and the persisted artifacts are unaffected (FR-009). Never selects `Json`.
-          Watch: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Format: OutputFormat
+            GatesOut: string
+            RouteOut: string
+            StorePath: string
+            /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
+            /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts
+            /// (FR-004/FR-007).
+            PersistStore: bool
+            /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+            /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
+            ExplicitPlain: bool
+            /// F27 wiring (063, US3): the host-parsed `--watch` flag. A pure-Loop no-op (the read-only watch
+            /// loop is an interpreter-edge concern driven by `HumanRender.Watch.run`); the one-shot evaluation
+            /// and the persisted artifacts are unaffected (FR-009). Never selects `Json`.
+            Watch: bool
+        }
 
     /// Pure-parser rejections — each maps to `UsageError`/exit 2 (research D6/D8).
     type UsageError =
@@ -140,8 +142,10 @@ module Loop =
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
     /// NO clock, machine-absolute path, or environment value (FR-006, SC-005).
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed (data-model §3).
     type Phase =
@@ -159,39 +163,41 @@ module Loop =
     /// gates to sense, set at `Loaded(Valid)`), `Sensed`/`Store` (the join inputs), and `CacheNotes`
     /// (non-fatal degrade notes surfaced in the summary — D7).
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Result: RouteResult option
-          GatesDoc: string option
-          RouteDoc: string option
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          /// F23: the product-surface classification computed at the edge (at `Loaded(Valid)`) from the
-          /// loaded facts + the route report under the catalog's default profile; threaded into the
-          /// additive `productSurfaces` route.json section and the human summary. Empty until loaded.
-          Classifications: ProductSurfaceReport
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
-          /// classify/execute step can derive each gate's command-to-run (`commandFor`).
-          Tooling: ToolingFacts option
-          /// F052: the per-gate execution outcomes built on `GatesExecuted` (executed/reused/not-executed),
-          /// embedded in `route.json` and surfaced in the summary. Empty until execution completes.
-          Outcomes: (GateId * GateOutcome) list
-          CacheNotes: string list
-          /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
-          /// malformed file is never clobbered (D6).
-          StoreDegraded: bool
-          /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
-          /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
-          PersistAcked: bool
-          /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
-          /// `Loaded(Valid)` projection — the derived handoff gates union into the registry + selection.
-          /// `[]` ⇒ identity fold ⇒ byte-identical gates.json/route.json (FR-001, SC-003).
-          Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Result: RouteResult option
+            GatesDoc: string option
+            RouteDoc: string option
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            /// F23: the product-surface classification computed at the edge (at `Loaded(Valid)`) from the
+            /// loaded facts + the route report under the catalog's default profile; threaded into the
+            /// additive `productSurfaces` route.json section and the human summary. Empty until loaded.
+            Classifications: ProductSurfaceReport
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
+            /// classify/execute step can derive each gate's command-to-run (`commandFor`).
+            Tooling: ToolingFacts option
+            /// F052: the per-gate execution outcomes built on `GatesExecuted` (executed/reused/not-executed),
+            /// embedded in `route.json` and surfaced in the summary. Empty until execution completes.
+            Outcomes: (GateId * GateOutcome) list
+            CacheNotes: string list
+            /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
+            /// malformed file is never clobbered (D6).
+            StoreDegraded: bool
+            /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
+            /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
+            PersistAcked: bool
+            /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
+            /// `Loaded(Valid)` projection — the derived handoff gates union into the registry + selection.
+            /// `[]` ⇒ identity fold ⇒ byte-identical gates.json/route.json (FR-001, SC-003).
+            Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values,
     /// never exceptions (research D8). `--paths` and `--since` together ⇒ `PathsAndSinceTogether`.

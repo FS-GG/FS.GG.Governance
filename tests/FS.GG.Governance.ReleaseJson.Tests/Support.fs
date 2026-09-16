@@ -15,39 +15,58 @@ open FS.GG.Governance.ReleaseFactsSensing.Model
 let surfaceId = SurfaceId "pkg"
 
 let expectations: ReleaseExpectations =
-    { Surface = surfaceId
-      VersionBaseline = Some "1.2.0"
-      RequiredMetadataFields = Some [ "authors"; "license" ]
-      ExpectedPins = Some(Map [ "base", "9.0.0" ])
-      RequiredPublishPosture = Some [ "plan-present" ]
-      RequiredTrustedPublishing = Some [ "oidc" ]
-      RequiredProvenance = Some [ "attestation" ] }
+    {
+        Surface = surfaceId
+        VersionBaseline = Some "1.2.0"
+        RequiredMetadataFields = Some [ "authors"; "license" ]
+        ExpectedPins = Some(Map [ "base", "9.0.0" ])
+        RequiredPublishPosture = Some [ "plan-present" ]
+        RequiredTrustedPublishing = Some [ "oidc" ]
+        RequiredProvenance = Some [ "attestation" ]
+    }
 
 /// One blocking-at-release rule per family, in declaration order.
 let rules: ReleaseRule list =
-    [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
+    [
+        VersionBump
+        PackageMetadata
+        TemplatePins
+        PublishPlan
+        TrustedPublishing
+        Provenance
+    ]
     |> List.map (fun k ->
-        { Kind = k
-          Surface = surfaceId
-          BaseSeverity = Blocking
-          Maturity = BlockOnRelease })
+        {
+            Kind = k
+            Surface = surfaceId
+            BaseSeverity = Blocking
+            Maturity = BlockOnRelease
+        })
 
 let recoveredMet: RecoveredEvidence =
-    { Version = Ok { Declared = "1.3.0" }
-      Metadata = Ok { PresentFields = [ "authors"; "license" ] }
-      Pins = Ok { Resolved = Map [ "base", "9.0.0" ] }
-      PublishPlan = Ok { Observed = [ "plan-present" ] }
-      TrustedPublishing = Ok { Observed = [ "oidc" ] }
-      Provenance = Ok { Observed = [ "attestation" ] } }
+    {
+        Version = Ok { Declared = "1.3.0" }
+        Metadata =
+            Ok
+                {
+                    PresentFields = [ "authors"; "license" ]
+                }
+        Pins = Ok { Resolved = Map [ "base", "9.0.0" ] }
+        PublishPlan = Ok { Observed = [ "plan-present" ] }
+        TrustedPublishing = Ok { Observed = [ "oidc" ] }
+        Provenance = Ok { Observed = [ "attestation" ] }
+    }
 
 /// A mixed bundle exercising met / unmet / unrecoverable (pins is unrecoverable ⇒ a `null` evidence object).
 let recoveredMixed: RecoveredEvidence =
-    { Version = Ok { Declared = "1.3.0" } // met
-      Metadata = Ok { PresentFields = [ "authors" ] } // unmet (missing license)
-      Pins = Error "pins source not found" // unrecoverable
-      PublishPlan = Ok { Observed = [ "plan-present" ] } // met
-      TrustedPublishing = Ok { Observed = [] } // unmet (missing oidc)
-      Provenance = Ok { Observed = [ "attestation" ] } } // met
+    {
+        Version = Ok { Declared = "1.3.0" } // met
+        Metadata = Ok { PresentFields = [ "authors" ] } // unmet (missing license)
+        Pins = Error "pins source not found" // unrecoverable
+        PublishPlan = Ok { Observed = [ "plan-present" ] } // met
+        TrustedPublishing = Ok { Observed = [] } // unmet (missing oidc)
+        Provenance = Ok { Observed = [ "attestation" ] }
+    } // met
 
 let sensedMet = Sensing.deriveFacts expectations recoveredMet
 let sensedMixed = Sensing.deriveFacts expectations recoveredMixed

@@ -7,8 +7,8 @@
 
 namespace FS.GG.Governance.RefreshJson
 
-open FS.GG.Governance.FreshnessKey.Model    // InputCategory
-open FS.GG.Governance.Config.Model          // Maturity (F070 additive currency-enforcement dial)
+open FS.GG.Governance.FreshnessKey.Model // InputCategory
+open FS.GG.Governance.Config.Model // Maturity (F070 additive currency-enforcement dial)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RefreshModel =
@@ -24,16 +24,20 @@ module RefreshModel =
         | Other of string
 
     type GenerationEntry =
-        { ViewId: string
-          Kind: ViewKind
-          OutputPath: string
-          Sources: string list
-          Generator: string list
-          GeneratorBasis: string }
+        {
+            ViewId: string
+            Kind: ViewKind
+            OutputPath: string
+            Sources: string list
+            Generator: string list
+            GeneratorBasis: string
+        }
 
     type GenerationManifest =
-        { Entries: GenerationEntry list
-          CurrencyEnforcement: Maturity option }
+        {
+            Entries: GenerationEntry list
+            CurrencyEnforcement: Maturity option
+        }
 
     type DeclError = { Reason: string }
 
@@ -45,9 +49,11 @@ module RefreshModel =
         | NotEvaluated
 
     type ViewDecision =
-        { Entry: GenerationEntry
-          Status: CurrencyStatus
-          Drifted: InputCategory list }
+        {
+            Entry: GenerationEntry
+            Status: CurrencyStatus
+            Drifted: InputCategory list
+        }
 
     type RefreshOutcome =
         | NothingToRefresh
@@ -58,13 +64,15 @@ module RefreshModel =
         | ToolError
 
     type RefreshDecision =
-        { Outcome: RefreshOutcome
-          DryRun: bool
-          Views: ViewDecision list
-          RegeneratedCount: int
-          CurrentCount: int
-          UnresolvedCount: int
-          NotEvaluatedCount: int }
+        {
+            Outcome: RefreshOutcome
+            DryRun: bool
+            Views: ViewDecision list
+            RegeneratedCount: int
+            CurrentCount: int
+            UnresolvedCount: int
+            NotEvaluatedCount: int
+        }
 
     // EXHAUSTIVE with NO wildcard — a future kind is a compile error here, never a silently mis-tokened
     // field. `Other s` renders `s` verbatim (product-neutral, FR-011).

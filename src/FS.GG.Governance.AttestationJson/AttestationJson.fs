@@ -74,8 +74,10 @@ module AttestationJson =
 
             w.WritePropertyName "subjects"
             w.WriteStartArray()
+
             for s in sortedSubjects do
                 writeSubject w s
+
             w.WriteEndArray()
 
             w.WritePropertyName "materials"
@@ -88,8 +90,10 @@ module AttestationJson =
 
             w.WritePropertyName "artifactDigests"
             w.WriteStartArray()
+
             for d in sortedDigests do
                 w.WriteStringValue d
+
             w.WriteEndArray()
 
             w.WriteString("environment", JsonTokens.environmentToken m.Environment)
@@ -99,8 +103,10 @@ module AttestationJson =
             w.WriteStartObject()
             w.WritePropertyName "runs"
             w.WriteStartArray()
+
             for run in summary.Invocation.Runs do
                 JsonWriters.writeRun w run
+
             w.WriteEndArray()
             w.WriteEndObject()
 

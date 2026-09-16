@@ -13,7 +13,7 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
-open FS.GG.Governance.Config.Model            // GovernedPath
+open FS.GG.Governance.Config.Model // GovernedPath
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -34,26 +34,32 @@ module Model =
     /// One declared evidence node (`evidence.nodes[]`). `Stale` is the Governance-owned freshness flag
     /// (FR-006); `Rationale` is carried for `deferred → skipped` and diagnostics.
     type DeclaredNode =
-        { Id: string
-          State: DeclaredState
-          Stale: bool
-          Rationale: string option }
+        {
+            Id: string
+            State: DeclaredState
+            Stale: bool
+            Rationale: string option
+        }
 
     /// The declared evidence block: nodes + `"a rests on b"` dependency edges fed verbatim to
     /// `Evidence.build` (may be empty — consumed independently of `readiness`).
     type EvidenceBlock =
-        { Nodes: DeclaredNode list
-          Dependencies: (string * string) list }
+        {
+            Nodes: DeclaredNode list
+            Dependencies: (string * string) list
+        }
 
     /// The declared SDD merge-boundary readiness block. A non-shippable `ShipDisposition` OR a non-empty
     /// `BlockingDiagnosticIds` makes the derived readiness gate blocking-capable (FR-009). `Counts`/
     /// `PerViewState` are carried into the gate description.
     type ReadinessBlock =
-        { ShipDisposition: string
-          VerificationReadiness: string
-          BlockingDiagnosticIds: string list
-          Counts: (string * int) list
-          PerViewState: (string * string) list }
+        {
+            ShipDisposition: string
+            VerificationReadiness: string
+            BlockingDiagnosticIds: string list
+            Counts: (string * int) list
+            PerViewState: (string * string) list
+        }
 
     /// Governance's typed interpretation of the SDD-owned production-journey receipt/provenance
     /// result. Receipt validation remains producer-owned; this closed union prevents consumers from
@@ -67,39 +73,47 @@ module Model =
     /// The required SDD 0.30+ journey readiness fact. `ObligationsUnmet` is preserved exactly;
     /// diagnostic and related ids retain the producer's actionable obligation/scenario provenance.
     type JourneyReadiness =
-        { ObligationsUnmet: int
-          BlockingDiagnosticIds: string list
-          RelatedIds: string list
-          Disposition: JourneyProvenanceDisposition }
+        {
+            ObligationsUnmet: int
+            BlockingDiagnosticIds: string list
+            RelatedIds: string list
+            Disposition: JourneyProvenanceDisposition
+        }
 
     /// One flat governed-reference projection from the v2 contract. `Path` is used as optional
     /// SelectingPath provenance; the remaining fields are carried for auditability.
     type GovernedReference =
-        { Path: GovernedPath
-          Owner: string
-          Relationship: string
-          Kind: string option
-          Operation: string option }
+        {
+            Path: GovernedPath
+            Owner: string
+            Relationship: string
+            Kind: string option
+            Operation: string option
+        }
 
     /// One handoff diagnostic used for freshness and actionable correction projection.
     type HandoffDiagnostic =
-        { Id: string
-          Message: string
-          Correction: string
-          RelatedIds: string list }
+        {
+            Id: string
+            Message: string
+            Correction: string
+            RelatedIds: string list
+        }
 
     /// The in-memory projection of one `readiness/<id>/governance-handoff.json`. The consumer pins
     /// `ContractVersion` MAJOR `2`; an unknown major ⇒ a version-mismatch diagnostic (FR-002).
     type Handoff =
-        { ContractVersion: string
-          SchemaVersion: int
-          GeneratorVersion: string option
-          Evidence: EvidenceBlock
-          Readiness: ReadinessBlock option
-          JourneyReadiness: JourneyReadiness option
-          GovernedReferences: GovernedReference list
-          PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
-          Diagnostics: HandoffDiagnostic list }
+        {
+            ContractVersion: string
+            SchemaVersion: int
+            GeneratorVersion: string option
+            Evidence: EvidenceBlock
+            Readiness: ReadinessBlock option
+            JourneyReadiness: JourneyReadiness option
+            GovernedReferences: GovernedReference list
+            PerformanceEvidence: Fsgg.Schemas.GovernanceHandoffPerformanceEvidence list
+            Diagnostics: HandoffDiagnostic list
+        }
 
     /// Governance's independent disposition of one typed performance-evidence projection.
     type PerformanceGateState =
@@ -111,12 +125,14 @@ module Model =
     /// The auditable result used to build the performance gate. `Measurements` are recomputed from
     /// raw samples by Governance; `Failures` and `Remediation` are projected verbatim to gate JSON.
     type PerformanceEvaluation =
-        { EvidenceId: string
-          ArtifactPath: string
-          State: PerformanceGateState
-          Measurements: Fsgg.Schemas.PerformanceEvidenceMeasurement list
-          Failures: string list
-          Remediation: string }
+        {
+            EvidenceId: string
+            ArtifactPath: string
+            State: PerformanceGateState
+            Measurements: Fsgg.Schemas.PerformanceEvidenceMeasurement list
+            Failures: string list
+            Remediation: string
+        }
 
     /// Why a handoff (or one of its nodes) was refused or flagged. Distinct per cause so the surfaced
     /// message is distinct and descriptive (SC-004). These are handoff-domain diagnostics — NOT F017
@@ -130,9 +146,11 @@ module Model =
     /// A surfaced, descriptive diagnostic: the cause, the `readiness/<id>/...` source path, and a
     /// descriptive message distinct per cause (SC-004).
     type Diagnostic =
-        { Cause: DiagnosticCause
-          Source: string
-          Message: string }
+        {
+            Cause: DiagnosticCause
+            Source: string
+            Message: string
+        }
 
     /// The pinned contract MAJOR the consumer recognizes (= 2). A handoff whose `ContractVersion` major
     /// differs yields a `VersionMismatch` diagnostic and no mapped result (FR-002).

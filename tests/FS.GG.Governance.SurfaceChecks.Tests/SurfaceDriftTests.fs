@@ -9,9 +9,11 @@ module SC = FS.GG.Governance.SurfaceChecks.Model
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "SurfaceChecks" "FS.GG.Governance.SurfaceChecks" typeof<SC.CheckDomain>.Assembly
+        [
+            SurfaceDrift.surfaceTest "SurfaceChecks" "FS.GG.Governance.SurfaceChecks" typeof<SC.CheckDomain>.Assembly
 
-          SurfaceDrift.surfaceTest
-              "SurfaceChecks.Dispatch"
-              "FS.GG.Governance.SurfaceChecks.Dispatch"
-              typeof<FS.GG.Governance.SurfaceChecks.Dispatch.Composition.DomainFactBundle>.Assembly ]
+            SurfaceDrift.surfaceTest
+                "SurfaceChecks.Dispatch"
+                "FS.GG.Governance.SurfaceChecks.Dispatch"
+                typeof<FS.GG.Governance.SurfaceChecks.Dispatch.Composition.DomainFactBundle>.Assembly
+        ]

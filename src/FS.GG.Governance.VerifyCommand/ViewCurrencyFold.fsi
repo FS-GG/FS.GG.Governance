@@ -8,8 +8,8 @@
 
 namespace FS.GG.Governance.VerifyCommand
 
-open FS.GG.Governance.Enforcement.Enforcement   // Profile, EnforcementDecision
-open FS.GG.Governance.Ship.Model                 // ShipDecision
+open FS.GG.Governance.Enforcement.Enforcement // Profile, EnforcementDecision
+open FS.GG.Governance.Ship.Model // ShipDecision
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ViewCurrencyFold =
@@ -17,7 +17,9 @@ module ViewCurrencyFold =
     /// True iff any currency finding is effective-Blocking at `RunMode.Verify` under the active profile, via
     /// the EXISTING `deriveEffectiveSeverity` (through the leaf's `decisionOf`). Reuse only — no new rule.
     val viewCurrencyBlocks:
-        profile: Profile -> findings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list -> bool
+        profile: Profile ->
+        findings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list ->
+            bool
 
     /// Fold the stale-view findings into the (already-rolled/relocated) decision: a blocking finding flips
     /// Verdict/ExitCodeBasis to blocked; otherwise the identity. `findings = []` ⇒ byte-identical (FR-004).

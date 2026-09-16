@@ -7,7 +7,7 @@
 namespace FS.GG.Governance.VerifyCommand
 
 open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Severity (Blocking), deriveEffectiveSeverity
-open FS.GG.Governance.Ship.Model               // ShipDecision, Verdict (Fail), ExitCodeBasis
+open FS.GG.Governance.Ship.Model // ShipDecision, Verdict (Fail), ExitCodeBasis
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SurfaceFold =
@@ -20,7 +20,9 @@ module SurfaceFold =
         findings
         |> List.exists (fun f ->
             (deriveEffectiveSeverity (FS.GG.Governance.SurfaceChecks.Model.enforcementInputOf f Verify profile))
-                .EffectiveSeverity = Blocking)
+                .EffectiveSeverity
+                =
+                Blocking)
 
     // Fold the surface findings into an ALREADY-rolled (and, on the executed path, ALREADY-relocated) decision:
     // a blocking surface finding fails the run; an advisory one leaves the verdict/exit untouched. Surface
@@ -36,6 +38,7 @@ module SurfaceFold =
         if surfaceBlocks profile findings then
             { decision with
                 Verdict = Fail
-                ExitCodeBasis = ExitCodeBasis.Blocked }
+                ExitCodeBasis = ExitCodeBasis.Blocked
+            }
         else
             decision

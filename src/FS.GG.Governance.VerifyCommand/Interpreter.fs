@@ -12,18 +12,18 @@ namespace FS.GG.Governance.VerifyCommand
 
 open System
 open System.IO
-open FS.GG.Governance.Config              // Loader, Schema
-open FS.GG.Governance.Config.Model         // GovernedPath, Validation, Invalid, Diagnostic, Locator, DiagnosticId
-open FS.GG.Governance.Snapshot.Model        // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken
-open FS.GG.Governance.FreshnessSensing       // FreshnessSensing.senseFreshness, loadStore, realSensor, realStoreReader (F046)
-open FS.GG.Governance.HumanText              // RenderMode (selectMode), ReportView (F27 wiring 063)
-open FS.GG.Governance.HumanRender            // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
-open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
+open FS.GG.Governance.Config // Loader, Schema
+open FS.GG.Governance.Config.Model // GovernedPath, Validation, Invalid, Diagnostic, Locator, DiagnosticId
+open FS.GG.Governance.Snapshot.Model // SnapshotOptions, GitRef, RepoSnapshot, sensingDiagnosticIdToken
+open FS.GG.Governance.FreshnessSensing // FreshnessSensing.senseFreshness, loadStore, realSensor, realStoreReader (F046)
+open FS.GG.Governance.HumanText // RenderMode (selectMode), ReportView (F27 wiring 063)
+open FS.GG.Governance.HumanRender // Capability.senseCapability, RichRender.emitStdout (Spectre confined here)
+open FS.GG.Governance.CommandHost // 049: shared host-loop combinators (guard/drive)
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: CurrencyFinding (the port's result)
-module CS = FS.GG.Governance.CurrencySensing.CurrencySensing         // F070: the shared edge sensing (senseRepo)
-module SC = FS.GG.Governance.SurfaceChecks.Model                     // ADPT-1: the shared SurfaceFinding vocabulary
-module Enf = FS.GG.Governance.Enforcement.Enforcement                // ADPT-1: Severity (Blocking) for a reified fail-closed finding
+module CS = FS.GG.Governance.CurrencySensing.CurrencySensing // F070: the shared edge sensing (senseRepo)
+module SC = FS.GG.Governance.SurfaceChecks.Model // ADPT-1: the shared SurfaceFinding vocabulary
+module Enf = FS.GG.Governance.Enforcement.Enforcement // ADPT-1: Severity (Blocking) for a reified fail-closed finding
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -33,38 +33,50 @@ module Interpreter =
     type OutputSink = string -> unit
 
     type Ports =
-        { Files: Loader.FileReader
-          Git: FS.GG.Governance.Snapshot.Ports
-          Freshness: FreshnessSensing.FreshnessSensor
-          Store: FreshnessSensing.StoreReader
-          Write: ArtifactWriter
-          Out: OutputSink
-          Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
-          SenseCapability: bool -> RenderMode.ColorCapability
-          RenderReport: ReportView.ReportView -> unit
-          SenseEnvironment: unit -> FS.GG.Governance.Config.Model.EnvironmentClass
-          SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity
-          SenseRelease:
-              FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
-                  -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
-                  -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease
-          // 067: the read-only product-surface sense + dispatch port (classified report ⇒ findings).
-          SenseSurfaces:
-              FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
-                  -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
-          // F070: the read-only generated-view currency sense (repo ⇒ stale-view findings). TOTAL & SAFE.
-          SenseViewCurrency: string -> CE.CurrencyFinding list
-          // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable <id> order.
-          Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list }
+        {
+            Files: Loader.FileReader
+            Git: FS.GG.Governance.Snapshot.Ports
+            Freshness: FreshnessSensing.FreshnessSensor
+            Store: FreshnessSensing.StoreReader
+            Write: ArtifactWriter
+            Out: OutputSink
+            Execute: FS.GG.Governance.GateExecution.Model.ExecutionPort
+            SenseCapability: bool -> RenderMode.ColorCapability
+            RenderReport: ReportView.ReportView -> unit
+            SenseEnvironment: unit -> FS.GG.Governance.Config.Model.EnvironmentClass
+            SenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity
+            SenseRelease:
+                FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
+                    -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
+                    -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease
+            // 067: the read-only product-surface sense + dispatch port (classified report ⇒ findings).
+            SenseSurfaces:
+                FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+                    -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+            // F070: the read-only generated-view currency sense (repo ⇒ stale-view findings). TOTAL & SAFE.
+            SenseViewCurrency: string -> CE.CurrencyFinding list
+            // F081: locate + read every readiness/<id>/governance-handoff.json under `repo` in stable <id> order.
+            Handoffs: string -> FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+        }
 
     let step (ports: Ports) (effect: Loop.Effect) : Loop.Msg =
         match effect with
         | Loop.SenseScope scope ->
             let options =
                 match scope with
-                | Loop.Since rev -> { Since = Some(GitRef rev); Base = None; Head = None }
+                | Loop.Since rev ->
+                    {
+                        Since = Some(GitRef rev)
+                        Base = None
+                        Head = None
+                    }
                 | Loop.ExplicitPaths _
-                | Loop.DefaultRange -> { Since = None; Base = None; Head = None }
+                | Loop.DefaultRange ->
+                    {
+                        Since = None
+                        Base = None
+                        Head = None
+                    }
 
             Loop.Sensed(CommandHost.senseSnapshotResult ports.Git options)
 
@@ -78,11 +90,13 @@ module Interpreter =
             // F046: read-only store load (absent ⇒ empty); a malformed store DEGRADES in `update`.
             Loop.StoreLoaded(FreshnessSensing.loadStore ports.Store path)
 
-        | Loop.WriteArtifact(kind, path, content) -> Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
+        | Loop.WriteArtifact(kind, path, content) ->
+            Loop.Wrote(kind, CommandHost.guard (fun () -> ports.Write path content))
 
         // F048: reuse the existing atomic `writeAtomic` (temp + rename) for the store write — a failed write
         // leaves no partial file and is reified to the NON-FATAL `StorePersisted`.
-        | Loop.PersistStore(path, content) -> Loop.StorePersisted(CommandHost.guard (fun () -> ports.Write path content))
+        | Loop.PersistStore(path, content) ->
+            Loop.StorePersisted(CommandHost.guard (fun () -> ports.Write path content))
 
         // F052: run each requested must-recompute command-gate ONCE through the injected F051 port, assembling
         // its F032 `CommandRecord` via the merged `senseExecution`. Records come back in request order, tagged
@@ -139,7 +153,9 @@ module Interpreter =
                 match RenderMode.selectMode false (ports.SenseCapability explicitPlain) with
                 | RenderMode.Rich ->
                     ports.RenderReport view
-                    if operational <> "" then ports.Out operational
+
+                    if operational <> "" then
+                        ports.Out operational
                 | RenderMode.Plain
                 | RenderMode.Json -> ports.Out text
 
@@ -179,26 +195,37 @@ module Interpreter =
             (code: string)
             (message: string)
             : SC.SurfaceFinding =
-            { Domain = domain
-              Surface = SurfaceId surface
-              Code = code
-              Location = { File = normalizePath "."; Detail = code }
-              BaseSeverity = Enf.Blocking
-              Maturity = BlockOnPr
-              EvidenceTag = None
-              IsInputState = true
-              Message = message }
+            {
+                Domain = domain
+                Surface = SurfaceId surface
+                Code = code
+                Location =
+                    {
+                        File = normalizePath "."
+                        Detail = code
+                    }
+                BaseSeverity = Enf.Blocking
+                Maturity = BlockOnPr
+                EvidenceTag = None
+                IsInputState = true
+                Message = message
+            }
 
         try
-            match Loader.readSource (GovernedPath ".") (Loader.fileSystemReader repo) |> Schema.validate with
+            match
+                Loader.readSource (GovernedPath ".") (Loader.fileSystemReader repo)
+                |> Schema.validate
+            with
             | Invalid _ ->
                 // The catalog itself doesn't validate ⇒ the surface requests can't be derived ⇒ no domain sense
                 // can run. Report blocking, never a silent skip.
-                [ inputStateFinding
-                      SC.PackageDomain
-                      "<surface-catalog>"
-                      "surface.catalog-invalid"
-                      "the governance catalog is invalid, so product-surface checks could not run (blocking, not silently skipped)" ]
+                [
+                    inputStateFinding
+                        SC.PackageDomain
+                        "<surface-catalog>"
+                        "surface.catalog-invalid"
+                        "the governance catalog is invalid, so product-surface checks could not run (blocking, not silently skipped)"
+                ]
             | Valid facts ->
                 let requests =
                     FS.GG.Governance.SurfaceChecks.Dispatch.Composition.requestsOf facts report
@@ -208,11 +235,14 @@ module Interpreter =
                 let pkgPort =
                     { FS.GG.Governance.PackageChecks.Interpreter.realPort repo exec with
                         WriteBaseline = (fun _ _ -> Ok())
-                        ListTranscripts = (fun _ -> Ok []) }
+                        ListTranscripts = (fun _ -> Ok [])
+                    }
 
                 let docsPort = FS.GG.Governance.DocsChecks.Interpreter.realPort repo
                 let skillPort = FS.GG.Governance.SkillChecks.Interpreter.realPort repo
-                let designPort = FS.GG.Governance.DesignChecks.Interpreter.realPort repo designCatalogLayout
+
+                let designPort =
+                    FS.GG.Governance.DesignChecks.Interpreter.realPort repo designCatalogLayout
 
                 // Fold the requests into the fact bundle, ISOLATING each domain's sense: a throw in one domain
                 // reifies to a per-surface Blocking input-state finding (collected in `senseFailures`) instead of
@@ -229,29 +259,37 @@ module Interpreter =
                                             Package =
                                                 Map.add
                                                     req.Surface
-                                                    (FS.GG.Governance.PackageChecks.Interpreter.sensePackage pkgPort req)
-                                                    b.Package }
+                                                    (FS.GG.Governance.PackageChecks.Interpreter.sensePackage
+                                                        pkgPort
+                                                        req)
+                                                    b.Package
+                                        }
                                     | SC.DocsDomain ->
                                         { b with
                                             Docs =
                                                 Map.add
                                                     req.Surface
                                                     (FS.GG.Governance.DocsChecks.Interpreter.senseDocs docsPort req)
-                                                    b.Docs }
+                                                    b.Docs
+                                        }
                                     | SC.SkillDomain ->
                                         { b with
                                             Skill =
                                                 Map.add
                                                     req.Surface
                                                     (FS.GG.Governance.SkillChecks.Interpreter.senseSkill skillPort req)
-                                                    b.Skill }
+                                                    b.Skill
+                                        }
                                     | SC.DesignDomain ->
                                         { b with
                                             Design =
                                                 Map.add
                                                     req.Surface
-                                                    (FS.GG.Governance.DesignChecks.Interpreter.senseDesign designPort req)
-                                                    b.Design }
+                                                    (FS.GG.Governance.DesignChecks.Interpreter.senseDesign
+                                                        designPort
+                                                        req)
+                                                    b.Design
+                                        }
 
                                 b', fails
                             with ex ->
@@ -278,27 +316,46 @@ module Interpreter =
                 // package/design surface entry.  The sensor is fail-closed: an unreadable project becomes a
                 // Blocking input finding via the normal FSharpSurface evaluator path, never a skipped gate.
                 let fsharpRequest project : SC.SurfaceCheckRequest =
-                    { Domain = SC.DesignDomain
-                      Surface = SurfaceId "fsharp-public-surface"
-                      Class = FS.GG.Governance.Config.Model.DesignSurface
-                      Path = normalizePath project
-                      EvidenceTag = None }
+                    {
+                        Domain = SC.DesignDomain
+                        Surface = SurfaceId "fsharp-public-surface"
+                        Class = FS.GG.Governance.Config.Model.DesignSurface
+                        Path = normalizePath project
+                        EvidenceTag = None
+                    }
 
                 let effectRequest project : SC.SurfaceCheckRequest =
                     { fsharpRequest project with
-                        Surface = SurfaceId "fsharp-effect-boundary" }
+                        Surface = SurfaceId "fsharp-effect-boundary"
+                    }
 
                 let fsharpFindings =
                     Directory.EnumerateFiles(repo, "*.fsproj", SearchOption.AllDirectories)
-                    |> Seq.filter (fun path -> path.IndexOf(string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) < 0)
+                    |> Seq.filter (fun path ->
+                        path.IndexOf(
+                            string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                            <
+                            0)
                     |> Seq.map (fun path -> Path.GetRelativePath(repo, path).Replace('\\', '/'))
                     |> Seq.sort
                     |> Seq.collect (fun project ->
                         let isTest = project.IndexOf("test", StringComparison.OrdinalIgnoreCase) >= 0
-                        match FS.GG.Governance.ProjectSensing.FSharpSurfaceSensing.sense repo project isTest false true with
-                        | Ok modules -> FS.GG.Governance.DesignChecks.FSharpSurface.evaluate (fsharpRequest project) modules
+
+                        match
+                            FS.GG.Governance.ProjectSensing.FSharpSurfaceSensing.sense repo project isTest false true
+                        with
+                        | Ok modules ->
+                            FS.GG.Governance.DesignChecks.FSharpSurface.evaluate (fsharpRequest project) modules
                         | Error reason ->
-                            [ inputStateFinding SC.DesignDomain "fsharp-public-surface" "fsharp.surface-malformed" reason ])
+                            [
+                                inputStateFinding
+                                    SC.DesignDomain
+                                    "fsharp-public-surface"
+                                    "fsharp.surface-malformed"
+                                    reason
+                            ])
                     |> Seq.toList
 
                 // Declared stateful workflow boundaries use a separate fact/symbol sensor.  Unlike the
@@ -308,13 +365,29 @@ module Interpreter =
                 // through the same real Verify finding fold.
                 let effectFindings =
                     Directory.EnumerateFiles(repo, "*.fsproj", SearchOption.AllDirectories)
-                    |> Seq.filter (fun path -> path.IndexOf(string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) < 0)
+                    |> Seq.filter (fun path ->
+                        path.IndexOf(
+                            string Path.DirectorySeparatorChar + "obj" + string Path.DirectorySeparatorChar,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                            <
+                            0)
                     |> Seq.map (fun path -> Path.GetRelativePath(repo, path).Replace('\\', '/'))
                     |> Seq.sort
                     |> Seq.collect (fun project ->
                         match FS.GG.Governance.ProjectSensing.FSharpEffectBoundarySensing.sense repo project with
-                        | Ok boundaries -> FS.GG.Governance.DesignChecks.FSharpEffectBoundary.evaluate (effectRequest project) boundaries
-                        | Error reason -> [ inputStateFinding SC.DesignDomain "fsharp-effect-boundary" "fsharp.effect-boundary-malformed" reason ])
+                        | Ok boundaries ->
+                            FS.GG.Governance.DesignChecks.FSharpEffectBoundary.evaluate
+                                (effectRequest project)
+                                boundaries
+                        | Error reason ->
+                            [
+                                inputStateFinding
+                                    SC.DesignDomain
+                                    "fsharp-effect-boundary"
+                                    "fsharp.effect-boundary-malformed"
+                                    reason
+                            ])
                     |> Seq.toList
 
                 // #390: the two packs #385 composed and published but nothing evaluated. `fsharp:idiomatic-simplicity`
@@ -341,13 +414,15 @@ module Interpreter =
                     match result with
                     | Ok found -> found
                     | Error reason ->
-                        [ inputStateFinding
-                              SC.DesignDomain
-                              surface
-                              "surface.sense-error"
-                              (sprintf
-                                  "the declared scope for this rule pack could not be read (%s); reported blocking, not silently skipped"
-                                  reason) ]
+                        [
+                            inputStateFinding
+                                SC.DesignDomain
+                                surface
+                                "surface.sense-error"
+                                (sprintf
+                                    "the declared scope for this rule pack could not be read (%s); reported blocking, not silently skipped"
+                                    reason)
+                        ]
 
                 let simplicityFindings =
                     sweepFindings CodeSweep.SurfaceName (CodeSweep.findings repo)
@@ -382,35 +457,39 @@ module Interpreter =
         with ex ->
             // A throw OUTSIDE any single domain sense — the catalog read, request derivation, or aggregation.
             // Fail closed with one infrastructure finding rather than a silent empty pass.
-            [ inputStateFinding
-                  SC.PackageDomain
-                  "<surface-sensing>"
-                  "surface.sense-error"
-                  (sprintf "product-surface sensing threw (%s); reported blocking, not silently skipped" ex.Message) ]
+            [
+                inputStateFinding
+                    SC.PackageDomain
+                    "<surface-sensing>"
+                    "surface.sense-error"
+                    (sprintf "product-surface sensing threw (%s); reported blocking, not silently skipped" ex.Message)
+            ]
 
     let realPorts (repo: string) : Ports =
-        { Files = Loader.fileSystemReader repo
-          Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
-          Freshness = FreshnessSensing.realSensor repo
-          Store = FreshnessSensing.realStoreReader
-          Write = CommandHost.writeAtomic
-          Out = fun text -> Console.Out.WriteLine text
-          Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
-          SenseCapability = Capability.senseCapability
-          RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
-          SenseEnvironment = CommandHost.senseEnvironmentReal
-          SenseBuilder = CommandHost.senseBuilderReal
-          SenseRelease =
-            fun layout exp ->
-                FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
-                    (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
-                    exp
-          // 067: the real read-only surface sense closes over `repo` + the F051 real execution port at
-          // construction time (mirroring `SenseRelease`/`Execute`), so the effect carries only the report.
-          SenseSurfaces = senseSurfacesReal repo FS.GG.Governance.GateExecution.Interpreter.realPort
-          // F070: the shared read-only generated-view currency sense (the CurrencySensing core).
-          SenseViewCurrency = CS.senseRepo
-          Handoffs = CommandHost.realHandoffs }
+        {
+            Files = Loader.fileSystemReader repo
+            Git = FS.GG.Governance.Snapshot.Interpreter.realPorts repo
+            Freshness = FreshnessSensing.realSensor repo
+            Store = FreshnessSensing.realStoreReader
+            Write = CommandHost.writeAtomic
+            Out = fun text -> Console.Out.WriteLine text
+            Execute = FS.GG.Governance.GateExecution.Interpreter.realPort
+            SenseCapability = Capability.senseCapability
+            RenderReport = (fun view -> RichRender.emitStdout RenderMode.Rich view "")
+            SenseEnvironment = CommandHost.senseEnvironmentReal
+            SenseBuilder = CommandHost.senseBuilderReal
+            SenseRelease =
+                fun layout exp ->
+                    FS.GG.Governance.ReleaseFactsSensing.Interpreter.senseRelease
+                        (FS.GG.Governance.ReleaseFactsSensing.Interpreter.realPort repo layout)
+                        exp
+            // 067: the real read-only surface sense closes over `repo` + the F051 real execution port at
+            // construction time (mirroring `SenseRelease`/`Execute`), so the effect carries only the report.
+            SenseSurfaces = senseSurfacesReal repo FS.GG.Governance.GateExecution.Interpreter.realPort
+            // F070: the shared read-only generated-view currency sense (the CurrencySensing core).
+            SenseViewCurrency = CS.senseRepo
+            Handoffs = CommandHost.realHandoffs
+        }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

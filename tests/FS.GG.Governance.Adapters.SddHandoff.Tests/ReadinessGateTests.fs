@@ -19,49 +19,67 @@ let private readinessOf name =
 let tests =
     testList
         "ReadinessGate"
-        [ test "readiness-blocking fixture ⇒ BlockOnShip (non-shippable disposition + blockingDiagnosticIds)" {
-              let gate = Readiness.toGate "readiness/blk/governance-handoff.json" (readinessOf "readiness-blocking")
-              Expect.equal gate.Maturity BlockOnShip "blocked disposition / blocking diagnostics ⇒ block-on-ship"
-          }
+        [
+            test "readiness-blocking fixture ⇒ BlockOnShip (non-shippable disposition + blockingDiagnosticIds)" {
+                let gate =
+                    Readiness.toGate "readiness/blk/governance-handoff.json" (readinessOf "readiness-blocking")
 
-          test "readiness-clean fixture ⇒ Warn (advisory)" {
-              let gate = Readiness.toGate "readiness/cln/governance-handoff.json" (readinessOf "readiness-clean")
-              Expect.equal gate.Maturity Warn "shippable + no blocking diagnostics ⇒ advisory warn"
-          }
+                Expect.equal gate.Maturity BlockOnShip "blocked disposition / blocking diagnostics ⇒ block-on-ship"
+            }
 
-          test "the published SDD shipReady token is shippable" {
-              let gate =
-                  Readiness.toGate
-                      "readiness/reference/governance-handoff.json"
-                      { ShipDisposition = "shipReady"
-                        VerificationReadiness = "verificationReady"
-                        BlockingDiagnosticIds = []
-                        Counts = [ "journeyObligationsUnmet", 0 ]
-                        PerViewState = [] }
+            test "readiness-clean fixture ⇒ Warn (advisory)" {
+                let gate =
+                    Readiness.toGate "readiness/cln/governance-handoff.json" (readinessOf "readiness-clean")
 
-              Expect.equal gate.Maturity Warn "camel-case producer token must not become a false block"
-          }
+                Expect.equal gate.Maturity Warn "shippable + no blocking diagnostics ⇒ advisory warn"
+            }
 
-          test "a non-empty blockingDiagnosticIds forces blocking even on a shippable disposition" {
-              let block =
-                  { ShipDisposition = "shippable"
-                    VerificationReadiness = "complete"
-                    BlockingDiagnosticIds = [ "VIEW_STALE" ]
-                    Counts = []
-                    PerViewState = [] }
+            test "the published SDD shipReady token is shippable" {
+                let gate =
+                    Readiness.toGate
+                        "readiness/reference/governance-handoff.json"
+                        {
+                            ShipDisposition = "shipReady"
+                            VerificationReadiness = "verificationReady"
+                            BlockingDiagnosticIds = []
+                            Counts = [ "journeyObligationsUnmet", 0 ]
+                            PerViewState = []
+                        }
 
-              let gate = Readiness.toGate "readiness/x/governance-handoff.json" block
-              Expect.equal gate.Maturity BlockOnShip "a blocking diagnostic id ⇒ block-on-ship regardless of disposition"
-          }
+                Expect.equal gate.Maturity Warn "camel-case producer token must not become a false block"
+            }
 
-          test "counts and perViewState are carried into the gate description (FR-009)" {
-              let gate = Readiness.toGate "readiness/blk/governance-handoff.json" (readinessOf "readiness-blocking")
-              Expect.stringContains gate.Description "VIEW_STALE" "blocking diagnostic id surfaced"
-              Expect.stringContains gate.Description "ledger" "perViewState carried"
-              Expect.stringContains gate.Description "blocking" "counts carried"
-          }
+            test "a non-empty blockingDiagnosticIds forces blocking even on a shippable disposition" {
+                let block =
+                    {
+                        ShipDisposition = "shippable"
+                        VerificationReadiness = "complete"
+                        BlockingDiagnosticIds = [ "VIEW_STALE" ]
+                        Counts = []
+                        PerViewState = []
+                    }
 
-          test "the readiness gate id is domain-qualified and stable" {
-              let gate = Readiness.toGate "readiness/wi-42/governance-handoff.json" (readinessOf "readiness-clean")
-              Expect.equal (gateIdValue gate.Id) "sdd-handoff:readiness:wi-42" "stable domain-qualified gate id"
-          } ]
+                let gate = Readiness.toGate "readiness/x/governance-handoff.json" block
+
+                Expect.equal
+                    gate.Maturity
+                    BlockOnShip
+                    "a blocking diagnostic id ⇒ block-on-ship regardless of disposition"
+            }
+
+            test "counts and perViewState are carried into the gate description (FR-009)" {
+                let gate =
+                    Readiness.toGate "readiness/blk/governance-handoff.json" (readinessOf "readiness-blocking")
+
+                Expect.stringContains gate.Description "VIEW_STALE" "blocking diagnostic id surfaced"
+                Expect.stringContains gate.Description "ledger" "perViewState carried"
+                Expect.stringContains gate.Description "blocking" "counts carried"
+            }
+
+            test "the readiness gate id is domain-qualified and stable" {
+                let gate =
+                    Readiness.toGate "readiness/wi-42/governance-handoff.json" (readinessOf "readiness-clean")
+
+                Expect.equal (gateIdValue gate.Id) "sdd-handoff:readiness:wi-42" "stable domain-qualified gate id"
+            }
+        ]

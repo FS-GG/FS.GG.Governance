@@ -90,7 +90,9 @@ module Findings =
         (routineSurfaces: Surface list)
         (path: GovernedPath)
         : UnknownGovernedPathFinding option =
-        let matchedProtected = protectedSurfaces |> List.filter (fun s -> withinSurface s path)
+        let matchedProtected =
+            protectedSurfaces |> List.filter (fun s -> withinSurface s path)
+
         let matchedRoutine = routineSurfaces |> List.filter (fun s -> withinSurface s path)
 
         match matchedProtected with
@@ -105,10 +107,12 @@ module Findings =
                 | _ -> Some(ordinalFirstId matchedRoutine)
 
             Some
-                { Id = UnknownProtectedBoundaryPath
-                  Path = path
-                  Zone = ProtectedBoundaryUnknown sid
-                  Message = protectedMessage path sid routineId }
+                {
+                    Id = UnknownProtectedBoundaryPath
+                    Path = path
+                    Zone = ProtectedBoundaryUnknown sid
+                    Message = protectedMessage path sid routineId
+                }
         | [] ->
             match matchedRoutine with
             | _ :: _ ->
@@ -120,10 +124,12 @@ module Findings =
                 // (GovernedRoot/GeneratedView/ReleaseSurface) neither suppress nor escalate, so a
                 // path covered only by them falls through to here.
                 Some
-                    { Id = UnknownGovernedPath
-                      Path = path
-                      Zone = GovernedRootUnknown
-                      Message = ordinaryMessage path }
+                    {
+                        Id = UnknownGovernedPath
+                        Path = path
+                        Zone = GovernedRootUnknown
+                        Message = ordinaryMessage path
+                    }
 
     // ── Deduplication + deterministic ordering (T012, precedence.md §"Deduplication"/§"Ordering") ──
 
@@ -174,7 +180,10 @@ module Findings =
 
     let findUnknownGovernedPaths (facts: TypedFacts) (report: RouteReport) : FindingReport =
         let surfaces = facts.Capabilities.Surfaces
-        let protectedSurfaces = surfaces |> List.filter (fun s -> isEscalatingBoundary s.Class)
+
+        let protectedSurfaces =
+            surfaces |> List.filter (fun s -> isEscalatingBoundary s.Class)
+
         let routineSurfaces = surfaces |> List.filter (fun s -> s.Class = Routine)
 
         let findings =

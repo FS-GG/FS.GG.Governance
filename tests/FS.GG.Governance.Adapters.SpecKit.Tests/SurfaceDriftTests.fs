@@ -17,14 +17,13 @@ let private kernel = typeof<FactId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest
-              "V8 SpecKit"
-              "FS.GG.Governance.Adapters.SpecKit"
-              specKit
+        [
+            SurfaceDrift.surfaceTest "V8 SpecKit" "FS.GG.Governance.Adapters.SpecKit" specKit
 
-          SurfaceDrift.referencesOnly
-              "V8 SpecKit"
-              (fun n -> n = "FS.GG.Governance.Adapters.Spi" || n = "FS.GG.Governance.Kernel")
-              specKit
+            SurfaceDrift.referencesOnly
+                "V8 SpecKit"
+                (fun n -> n = "FS.GG.Governance.Adapters.Spi" || n = "FS.GG.Governance.Kernel")
+                specKit
 
-          SurfaceDrift.noInboundReferences "V8 SpecKit" [ kernel; spi ] specKit ]
+            SurfaceDrift.noInboundReferences "V8 SpecKit" [ kernel; spi ] specKit
+        ]

@@ -19,9 +19,30 @@ open FS.GG.Governance.CommandRecord.Model
 /// A complete, literal env delta — one added, one changed, one removed variable, all names/values distinct
 /// so a single-field change is unambiguous (and a changed var is never confusable with an add+remove pair).
 let baseEnvironment: EnvironmentDelta =
-    { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]
-      Changed = [ { Name = EnvVarName "PATH"; Old = EnvVarValue "/a"; New = EnvVarValue "/a:/b" } ]
-      Removed = [ { Name = EnvVarName "TMP"; Old = EnvVarValue "/tmp" } ] }
+    {
+        Added =
+            [
+                {
+                    Name = EnvVarName "CI"
+                    Value = EnvVarValue "1"
+                }
+            ]
+        Changed =
+            [
+                {
+                    Name = EnvVarName "PATH"
+                    Old = EnvVarValue "/a"
+                    New = EnvVarValue "/a:/b"
+                }
+            ]
+        Removed =
+            [
+                {
+                    Name = EnvVarName "TMP"
+                    Old = EnvVarValue "/tmp"
+                }
+            ]
+    }
 
 /// The ten literal facts of a representative successful run. Every fact is present and distinct so a
 /// single-field perturbation is unambiguous.
@@ -68,48 +89,135 @@ let rebuild (facts: ReproducibleFacts) (duration: SensedDuration) : CommandRecor
 // Each takes a `ReproducibleFacts` and changes EXACTLY the named fact to a distinct value, for
 // table-driven per-field-sensitivity tests (SC-004).
 
-let variantExecutable (f: ReproducibleFacts) = { f with Executable = Executable "clang" }
-let variantArgumentValue (f: ReproducibleFacts) = { f with Arguments = [ Argument "-c"; Argument "other.c" ] }
-let variantArgumentOrder (f: ReproducibleFacts) = { f with Arguments = [ Argument "main.c"; Argument "-c" ] }
-let variantWorkingDirectory (f: ReproducibleFacts) = { f with WorkingDirectory = WorkingDirectory "/other" }
+let variantExecutable (f: ReproducibleFacts) =
+    { f with
+        Executable = Executable "clang"
+    }
+
+let variantArgumentValue (f: ReproducibleFacts) =
+    { f with
+        Arguments = [ Argument "-c"; Argument "other.c" ]
+    }
+
+let variantArgumentOrder (f: ReproducibleFacts) =
+    { f with
+        Arguments = [ Argument "main.c"; Argument "-c" ]
+    }
+
+let variantWorkingDirectory (f: ReproducibleFacts) =
+    { f with
+        WorkingDirectory = WorkingDirectory "/other"
+    }
+
 let variantEnvironmentAdded (f: ReproducibleFacts) =
-    { f with Environment = { f.Environment with Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "2" } ] } }
+    { f with
+        Environment =
+            { f.Environment with
+                Added =
+                    [
+                        {
+                            Name = EnvVarName "CI"
+                            Value = EnvVarValue "2"
+                        }
+                    ]
+            }
+    }
+
 let variantEnvironmentChanged (f: ReproducibleFacts) =
-    { f with Environment = { f.Environment with Changed = [ { Name = EnvVarName "PATH"; Old = EnvVarValue "/a"; New = EnvVarValue "/z" } ] } }
+    { f with
+        Environment =
+            { f.Environment with
+                Changed =
+                    [
+                        {
+                            Name = EnvVarName "PATH"
+                            Old = EnvVarValue "/a"
+                            New = EnvVarValue "/z"
+                        }
+                    ]
+            }
+    }
+
 let variantEnvironmentRemoved (f: ReproducibleFacts) =
-    { f with Environment = { f.Environment with Removed = [ { Name = EnvVarName "TMP"; Old = EnvVarValue "/var/tmp" } ] } }
+    { f with
+        Environment =
+            { f.Environment with
+                Removed =
+                    [
+                        {
+                            Name = EnvVarName "TMP"
+                            Old = EnvVarValue "/var/tmp"
+                        }
+                    ]
+            }
+    }
+
 let variantTimeout (f: ReproducibleFacts) = { f with Timeout = TimeoutLimit 60 }
 let variantExitCode (f: ReproducibleFacts) = { f with ExitCode = ExitCode 1 }
-let variantStdoutDigest (f: ReproducibleFacts) = { f with StdoutDigest = OutputDigest "sha-out-2" }
-let variantStderrDigest (f: ReproducibleFacts) = { f with StderrDigest = OutputDigest "sha-err-2" }
-let variantCapturedOutput (f: ReproducibleFacts) = { f with CapturedOutput = CapturedAt(CapturedOutputPath "/cap/out.log") }
+
+let variantStdoutDigest (f: ReproducibleFacts) =
+    { f with
+        StdoutDigest = OutputDigest "sha-out-2"
+    }
+
+let variantStderrDigest (f: ReproducibleFacts) =
+    { f with
+        StderrDigest = OutputDigest "sha-err-2"
+    }
+
+let variantCapturedOutput (f: ReproducibleFacts) =
+    { f with
+        CapturedOutput = CapturedAt(CapturedOutputPath "/cap/out.log")
+    }
 
 /// Every reproducible fact paired with a single-field variation, each labelled. Table-driven sensitivity
 /// tests iterate this so EVERY reproducible fact (including argument value AND order) is covered (SC-004).
 let allReproducibleVariants: (string * (ReproducibleFacts -> ReproducibleFacts)) list =
-    [ "executable", variantExecutable
-      "argument value", variantArgumentValue
-      "argument order", variantArgumentOrder
-      "working directory", variantWorkingDirectory
-      "env added", variantEnvironmentAdded
-      "env changed", variantEnvironmentChanged
-      "env removed", variantEnvironmentRemoved
-      "timeout", variantTimeout
-      "exit code", variantExitCode
-      "stdout digest", variantStdoutDigest
-      "stderr digest", variantStderrDigest
-      "captured output", variantCapturedOutput ]
+    [
+        "executable", variantExecutable
+        "argument value", variantArgumentValue
+        "argument order", variantArgumentOrder
+        "working directory", variantWorkingDirectory
+        "env added", variantEnvironmentAdded
+        "env changed", variantEnvironmentChanged
+        "env removed", variantEnvironmentRemoved
+        "timeout", variantTimeout
+        "exit code", variantExitCode
+        "stdout digest", variantStdoutDigest
+        "stderr digest", variantStderrDigest
+        "captured output", variantCapturedOutput
+    ]
 
 // ── FsCheck generators (real values, no mocks) ──
 
 let private shortStringGen: Gen<string> =
-    Gen.elements [ ""; "a"; "b"; "gcc"; "clang"; "-c"; "main.c"; "/work"; "CI"; "PATH"; "1"; "héllo"; "x:y=z;|" ]
+    Gen.elements
+        [
+            ""
+            "a"
+            "b"
+            "gcc"
+            "clang"
+            "-c"
+            "main.c"
+            "/work"
+            "CI"
+            "PATH"
+            "1"
+            "héllo"
+            "x:y=z;|"
+        ]
 
 let private genAddedVar: Gen<AddedVar> =
     gen {
         let! n = shortStringGen
         let! v = shortStringGen
-        return { Name = EnvVarName n; Value = EnvVarValue v }
+
+        return
+            {
+                Name = EnvVarName n
+                Value = EnvVarValue v
+            }
     }
 
 let private genChangedVar: Gen<ChangedVar> =
@@ -117,14 +225,25 @@ let private genChangedVar: Gen<ChangedVar> =
         let! n = shortStringGen
         let! o = shortStringGen
         let! w = shortStringGen
-        return { Name = EnvVarName n; Old = EnvVarValue o; New = EnvVarValue w }
+
+        return
+            {
+                Name = EnvVarName n
+                Old = EnvVarValue o
+                New = EnvVarValue w
+            }
     }
 
 let private genRemovedVar: Gen<RemovedVar> =
     gen {
         let! n = shortStringGen
         let! o = shortStringGen
-        return { Name = EnvVarName n; Old = EnvVarValue o }
+
+        return
+            {
+                Name = EnvVarName n
+                Old = EnvVarValue o
+            }
     }
 
 let private genEnvironmentDelta: Gen<EnvironmentDelta> =
@@ -132,13 +251,21 @@ let private genEnvironmentDelta: Gen<EnvironmentDelta> =
         let! added = Gen.listOf genAddedVar
         let! changed = Gen.listOf genChangedVar
         let! removed = Gen.listOf genRemovedVar
-        return { Added = added; Changed = changed; Removed = removed }
+
+        return
+            {
+                Added = added
+                Changed = changed
+                Removed = removed
+            }
     }
 
 let private genCapturedOutput: Gen<CapturedOutput> =
     Gen.oneof
-        [ Gen.constant NoCapturedOutput
-          shortStringGen |> Gen.map (fun s -> CapturedAt(CapturedOutputPath s)) ]
+        [
+            Gen.constant NoCapturedOutput
+            shortStringGen |> Gen.map (fun s -> CapturedAt(CapturedOutputPath s))
+        ]
 
 let private genReproducibleFacts: Gen<ReproducibleFacts> =
     gen {
@@ -153,15 +280,17 @@ let private genReproducibleFacts: Gen<ReproducibleFacts> =
         let! cap = genCapturedOutput
 
         return
-            { Executable = Executable exe
-              Arguments = args |> List.map Argument
-              WorkingDirectory = WorkingDirectory cwd
-              Environment = env
-              Timeout = TimeoutLimit timeout
-              ExitCode = ExitCode exit
-              StdoutDigest = OutputDigest out
-              StderrDigest = OutputDigest err
-              CapturedOutput = cap }
+            {
+                Executable = Executable exe
+                Arguments = args |> List.map Argument
+                WorkingDirectory = WorkingDirectory cwd
+                Environment = env
+                Timeout = TimeoutLimit timeout
+                ExitCode = ExitCode exit
+                StdoutDigest = OutputDigest out
+                StderrDigest = OutputDigest err
+                CapturedOutput = cap
+            }
     }
 
 let private genSensedDuration: Gen<SensedDuration> =
@@ -181,7 +310,9 @@ type Generators =
 
 /// FsCheck config registering the real F032 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 
 /// A same-SET permutation+duplication of an env-delta: each class's entries are reversed and one entry of
 /// each non-empty class is duplicated, so the underlying set is preserved while order and multiplicity
@@ -192,8 +323,10 @@ let permuteAndDuplicateEnv (env: EnvironmentDelta) : EnvironmentDelta =
         | [] -> []
         | head :: _ as reversed -> reversed @ [ head ]
 
-    { Added = perturb env.Added
-      Changed = perturb env.Changed
-      Removed = perturb env.Removed }
+    {
+        Added = perturb env.Added
+        Changed = perturb env.Changed
+        Removed = perturb env.Removed
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

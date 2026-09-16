@@ -41,7 +41,11 @@ type SpecKitFact = FS.GG.Governance.Adapters.SpecKit.SpecKitFact
 type SpecKitArtifact = FS.GG.Governance.Adapters.SpecKit.SpecKitArtifact
 type SpecKitChange = FS.GG.Governance.Adapters.SpecKit.SpecKitChange
 
-let judge: JudgeId = { ModelId = "design-judge"; Version = "1" }
+let judge: JudgeId =
+    {
+        ModelId = "design-judge"
+        Version = "1"
+    }
 
 /// The assembled design-system adapter under test — the REAL adopter (domain #2).
 let designAdapter: Adapter<DesignSystemFact, DesignArtifactRef, DesignChange> =
@@ -55,10 +59,10 @@ let specKitAdapter: Adapter<SpecKitFact, SpecKitArtifact, SpecKitChange> =
 /// so an embedded `RuleOutcome` is identified uniformly.
 let govKey (o: RuleOutcome) : string =
     match o with
-    | Decided (RuleId r, _) -> "decided:" + r
+    | Decided(RuleId r, _) -> "decided:" + r
     | NeedsReview req -> "needs:" + req.Key
     | Reviewed rr -> "reviewed:" + rr.Key
-    | Escalated (RuleId r) -> "escalated:" + r
+    | Escalated(RuleId r) -> "escalated:" + r
 
 // ═════════════════════════════════════════════════════════════════════════════
 // The composition root (consumer-authored): the CLOSED `ProjectFact` coproduct with its
@@ -88,8 +92,10 @@ let injectDesign: DesignSystemFact -> ProjectFact = Design
 let injectSpecKit: SpecKitFact -> ProjectFact = SpecKit
 
 type ProjectChange =
-    { DesignChange: DesignChange
-      SpecKitChange: SpecKitChange }
+    {
+        DesignChange: DesignChange
+        SpecKitChange: SpecKitChange
+    }
 
 let narrowDesign (c: ProjectChange) : DesignChange = c.DesignChange
 let narrowSpecKit (c: ProjectChange) : SpecKitChange = c.SpecKitChange
@@ -110,11 +116,13 @@ let sampleSpecKitFact: SpecKitFact =
     FS.GG.Governance.Adapters.SpecKit.PhaseReached FS.GG.Governance.Adapters.SpecKit.Phase.Merge
 
 let projBridge: Bridge<ProjectFact> =
-    { Judge = judge
-      ArtifactHash = fun _ _ -> ""
-      Embed = Governance
-      Project =
-        function
-        | Governance o -> Some o
-        | Design _
-        | SpecKit _ -> None }
+    {
+        Judge = judge
+        ArtifactHash = fun _ _ -> ""
+        Embed = Governance
+        Project =
+            function
+            | Governance o -> Some o
+            | Design _
+            | SpecKit _ -> None
+    }

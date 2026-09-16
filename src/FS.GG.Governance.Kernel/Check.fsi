@@ -57,10 +57,12 @@ type ProbeArg =
 /// (drives routing and the artifact half of the cache key); `Args` are its ordered,
 /// declared parameters.
 type Probe<'fact> =
-    { Name: string
-      Reads: ArtifactRef list
-      Args: ProbeArg list
-      Eval: FactSet<'fact> -> Outcome }
+    {
+        Name: string
+        Reads: ArtifactRef list
+        Args: ProbeArg list
+        Eval: FactSet<'fact> -> Outcome
+    }
 
 /// The closed, reified combinator algebra — a single value that the six interpreters
 /// fold. Deliberately APPLICATIVE, never monadic: there is no `bind` or data-dependent
@@ -117,7 +119,10 @@ module Check =
     /// Build an atomic check from a probe's declared shape and its evaluation function:
     /// `Atom { Name = name; Reads = reads; Args = args; Eval = eval }`.
     val probe:
-        name: string -> reads: ArtifactRef list -> args: ProbeArg list -> eval: (FactSet<'fact> -> Outcome) ->
+        name: string ->
+        reads: ArtifactRef list ->
+        args: ProbeArg list ->
+        eval: (FactSet<'fact> -> Outcome) ->
             Check<'fact>
 
     /// "all of these must hold" (= `All`).

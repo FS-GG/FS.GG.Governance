@@ -43,15 +43,17 @@ module Loop =
     /// `CacheOut = <repo>/readiness/cache-eligibility.json`, `UnresolvedOut` DERIVED from `CacheOut`
     /// (`…unresolved.json` stem), `StorePath = <repo>/readiness/evidence-reuse.json`, `Format = Human`.
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          StorePath: string
-          CacheOut: string
-          UnresolvedOut: string
-          Format: OutputFormat
-          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
-          /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
-          ExplicitPlain: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            StorePath: string
+            CacheOut: string
+            UnresolvedOut: string
+            Format: OutputFormat
+            /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+            /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
+            ExplicitPlain: bool
+        }
 
     /// Pure-parser rejections (mirrors RouteCommand.Loop.UsageError) — each maps to `UsageError'`/exit 2.
     type UsageError =
@@ -106,8 +108,10 @@ module Loop =
     /// A host-edge diagnostic — actionable text carrying NO clock, machine-absolute path, or environment
     /// value (FR-008). Distinct from the F014 catalog `Diagnostic`.
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed.
     type Phase =
@@ -124,17 +128,19 @@ module Loop =
     /// The durable state the workflow owns. `CacheDoc` is the F042 projection string and `UnresolvedDoc`
     /// the sidecar render, BOTH computed before either write effect is emitted (the RouteCommand precedent).
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          Resolution: FreshnessResolutionReport option
-          CacheDoc: string option
-          UnresolvedDoc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            Resolution: FreshnessResolutionReport option
+            CacheDoc: string option
+            UnresolvedDoc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// The schema id of the no-hide unresolved sidecar (`"fsgg.cache-eligibility.unresolved/v1"`). A fixed
     /// deterministic constant; the F042 `cache-eligibility.json` keeps its own `fsgg.cache-eligibility/v1`.

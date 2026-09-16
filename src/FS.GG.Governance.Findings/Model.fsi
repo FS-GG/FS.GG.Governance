@@ -61,10 +61,12 @@ module Model =
     /// surface). A pure, deterministic value — no raw YAML, host paths, or product vocabulary
     /// beyond the declared ids (FR-008, SC-006).
     type UnknownGovernedPathFinding =
-        { Id: FindingId
-          Path: GovernedPath
-          Zone: FindingZone
-          Message: string }
+        {
+            Id: FindingId
+            Path: GovernedPath
+            Zone: FindingZone
+            Message: string
+        }
 
     // ── The aggregate result (FR-001, FR-012) ──
 
@@ -74,7 +76,9 @@ module Model =
     /// (FR-009, SC-004). An EMPTY list is a valid, successful outcome — never an error and never a
     /// fabricated "all clear" finding (FR-012, edge case "Empty input").
     type FindingReport =
-        { Findings: UnknownGovernedPathFinding list }
+        {
+            Findings: UnknownGovernedPathFinding list
+        }
 
     // ── Stable rendering of a finding id (for messages, tests, and any later JSON) ──
 

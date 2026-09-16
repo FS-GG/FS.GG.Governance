@@ -104,8 +104,10 @@ module CostBudgetJson =
         | Stale cats ->
             w.WritePropertyName "categories"
             w.WriteStartArray()
+
             for c in cats do
                 w.WriteStringValue(categoryToken c)
+
             w.WriteEndArray()
         | SyntheticTaint
         | NoEvidence -> ()
@@ -124,14 +126,18 @@ module CostBudgetJson =
 
             w.WritePropertyName "decisions"
             w.WriteStartArray()
+
             for entry in entries do
                 writeEntry w entry
+
             w.WriteEndArray()
 
             w.WritePropertyName "findings"
             w.WriteStartArray()
+
             for finding in findings do
                 writeFinding w finding
+
             w.WriteEndArray()
 
             w.WriteEndObject())

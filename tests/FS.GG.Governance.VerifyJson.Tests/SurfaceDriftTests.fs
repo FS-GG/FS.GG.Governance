@@ -13,4 +13,6 @@ let private verifyJson = SurfaceDrift.assemblyNamed "FS.GG.Governance.VerifyJson
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "VerifyJson" "FS.GG.Governance.VerifyJson" verifyJson ]
+        [
+            SurfaceDrift.surfaceTest "VerifyJson" "FS.GG.Governance.VerifyJson" verifyJson
+        ]

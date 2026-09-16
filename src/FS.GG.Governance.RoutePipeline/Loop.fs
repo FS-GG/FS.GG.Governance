@@ -8,39 +8,39 @@
 
 namespace FS.GG.Governance.RouteCommand
 
-open FS.GG.Governance.Config.Model       // GovernedPath, Validation, Valid/Invalid, Cost, normalizePath, diagnosticIdToken
-open FS.GG.Governance.Snapshot.Model      // RepoSnapshot, ChangedPath, DiffRange, CommitId
-open FS.GG.Governance.Routing             // Routing.route
-open FS.GG.Governance.Findings            // Findings.findUnknownGovernedPaths
-open FS.GG.Governance.Gates               // Gates.buildRegistry, gateIdValue
-open FS.GG.Governance.Gates.Model         // Gate, GateId
-open FS.GG.Governance.Route               // Route.select
-open FS.GG.Governance.Route.Model          // RouteResult, SelectedGate, SelectingPath, CostRollup
-open FS.GG.Governance.Adapters.SddHandoff   // F081: Reader.HandoffRead, Consumer.consume (handoff gates)
-open FS.GG.Governance.ProductSurfaces       // ProductSurfaces.classify (F23 — edge-side product-surface classification)
-open FS.GG.Governance.ProductSurfaces.Model  // ProductSurfaceReport, ProductClassification, TierAlternative
-open FS.GG.Governance.RouteJson           // RouteJson.ofRouteResult, schemaVersion
-open FS.GG.Governance.GatesJson           // GatesJson.ofGateRegistry, schemaVersion
-open FS.GG.Governance.HumanText           // F27 wiring (063): HumanText.ofRouteResult — the plain projection
+open FS.GG.Governance.Config.Model // GovernedPath, Validation, Valid/Invalid, Cost, normalizePath, diagnosticIdToken
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot, ChangedPath, DiffRange, CommitId
+open FS.GG.Governance.Routing // Routing.route
+open FS.GG.Governance.Findings // Findings.findUnknownGovernedPaths
+open FS.GG.Governance.Gates // Gates.buildRegistry, gateIdValue
+open FS.GG.Governance.Gates.Model // Gate, GateId
+open FS.GG.Governance.Route // Route.select
+open FS.GG.Governance.Route.Model // RouteResult, SelectedGate, SelectingPath, CostRollup
+open FS.GG.Governance.Adapters.SddHandoff // F081: Reader.HandoffRead, Consumer.consume (handoff gates)
+open FS.GG.Governance.ProductSurfaces // ProductSurfaces.classify (F23 — edge-side product-surface classification)
+open FS.GG.Governance.ProductSurfaces.Model // ProductSurfaceReport, ProductClassification, TierAlternative
+open FS.GG.Governance.RouteJson // RouteJson.ofRouteResult, schemaVersion
+open FS.GG.Governance.GatesJson // GatesJson.ofGateRegistry, schemaVersion
+open FS.GG.Governance.HumanText // F27 wiring (063): HumanText.ofRouteResult — the plain projection
 // F046 cache-eligibility pipeline (sense → resolve → evaluate → embed Some report)
-open FS.GG.Governance.FreshnessKey.Model   // Revision, categoryToken
-open FS.GG.Governance.FreshnessResolution  // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
+open FS.GG.Governance.FreshnessKey.Model // Revision, categoryToken
+open FS.GG.Governance.FreshnessResolution // resolve, entries, candidate, isResolved, missingFacts, missingFactToken
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts, FreshnessResolutionEntry
-open FS.GG.Governance.CacheEligibility      // evaluate, entries
+open FS.GG.Governance.CacheEligibility // evaluate, entries
 open FS.GG.Governance.CacheEligibility.Model // CandidateGate, CacheEligibilityEntry, CacheEligibilityVerdict, Reusable, MustRecompute
-open FS.GG.Governance.EvidenceReuse         // empty, referenceValue
-open FS.GG.Governance.EvidenceReuse.Model   // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
-open FS.GG.Governance.EvidenceReuseStore    // F048: prune, retain, serialise, defaultRetentionBound
+open FS.GG.Governance.EvidenceReuse // empty, referenceValue
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, EvidenceRef, RecomputeCause, NoPriorEvidence, InputsChanged
+open FS.GG.Governance.EvidenceReuseStore // F048: prune, retain, serialise, defaultRetentionBound
 // F052 gate-execution wiring (classify → run → capture → persist-grown-store; advisory, always exit 0)
-open FS.GG.Governance.CommandRecord.Model    // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
-open FS.GG.Governance.GateExecution.Model     // GateCommand
-open FS.GG.Governance.EvidenceCapture        // EvidenceCapture.capture
-open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf / passed
-open FS.GG.Governance.GateRun.Model           // GateDisposition, GateOutcome
-open FS.GG.Governance.CommandHost             // 075: shared host skeleton — under/revOfCommit/baseHeadOf/
-                                              //   emptySensedFacts/describeInvalid/persistedContent/
-                                              //   GateClassification/executionPlan (ExitDecision/exitCode/
-                                              //   fail/tryExecute stay LOCAL — type-divergent on this host's Model/Effect)
+open FS.GG.Governance.CommandRecord.Model // CommandRecord, ExitCode (FreshnessInputs/ToolingFacts already open)
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.EvidenceCapture // EvidenceCapture.capture
+open FS.GG.Governance.GateRun // Plan.commandFor / priorExitOf / passed
+open FS.GG.Governance.GateRun.Model // GateDisposition, GateOutcome
+open FS.GG.Governance.CommandHost // 075: shared host skeleton — under/revOfCommit/baseHeadOf/
+//   emptySensedFacts/describeInvalid/persistedContent/
+//   GateClassification/executionPlan (ExitDecision/exitCode/
+//   fail/tryExecute stay LOCAL — type-divergent on this host's Model/Effect)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -55,15 +55,17 @@ module Loop =
         | Json
 
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Format: OutputFormat
-          GatesOut: string
-          RouteOut: string
-          StorePath: string
-          PersistStore: bool
-          ExplicitPlain: bool
-          Watch: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Format: OutputFormat
+            GatesOut: string
+            RouteOut: string
+            StorePath: string
+            PersistStore: bool
+            ExplicitPlain: bool
+            Watch: bool
+        }
 
     type UsageError =
         | UnknownFlag of string
@@ -106,8 +108,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -119,25 +123,27 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Result: RouteResult option
-          GatesDoc: string option
-          RouteDoc: string option
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Classifications: ProductSurfaceReport
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          Tooling: ToolingFacts option
-          Outcomes: (GateId * GateOutcome) list
-          CacheNotes: string list
-          StoreDegraded: bool
-          PersistAcked: bool
-          Handoffs: Reader.HandoffRead list
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Result: RouteResult option
+            GatesDoc: string option
+            RouteDoc: string option
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Classifications: ProductSurfaceReport
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            Tooling: ToolingFacts option
+            Outcomes: (GateId * GateOutcome) list
+            CacheNotes: string list
+            StoreDegraded: bool
+            PersistAcked: bool
+            Handoffs: Reader.HandoffRead list
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     // ── exitCode (research D6) — total, no wildcard, no GovernedBlocking code (FR-008) ──
 
@@ -153,28 +159,32 @@ module Loop =
     // Hidden accumulator (absent from Loop.fsi). `Paths = Some []` marks an explicit but empty
     // `--paths` (an EmptyPaths usage error); `Paths = None` means no `--paths` flag was given.
     type ParseAcc =
-        { Repo: string option
-          Paths: string list option
-          Since: string option
-          Json: bool
-          GatesOut: string option
-          RouteOut: string option
-          Store: string option
-          Persist: bool
-          Plain: bool
-          Watch: bool }
+        {
+            Repo: string option
+            Paths: string list option
+            Since: string option
+            Json: bool
+            GatesOut: string option
+            RouteOut: string option
+            Store: string option
+            Persist: bool
+            Plain: bool
+            Watch: bool
+        }
 
     let emptyAcc =
-        { Repo = None
-          Paths = None
-          Since = None
-          Json = false
-          GatesOut = None
-          RouteOut = None
-          Store = None
-          Persist = false
-          Plain = false
-          Watch = false }
+        {
+            Repo = None
+            Paths = None
+            Since = None
+            Json = false
+            GatesOut = None
+            RouteOut = None
+            Store = None
+            Persist = false
+            Plain = false
+            Watch = false
+        }
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `route` verb — the only subcommand this tool ships.
@@ -231,39 +241,47 @@ module Loop =
                     | _ -> DefaultRange
 
                 Ok
-                    { Repo = repo
-                      Scope = scope
-                      Format = (if acc.Json then Json else Text)
-                      GatesOut = acc.GatesOut |> Option.defaultValue (CommandHost.under repo ".fsgg/gates.json")
-                      RouteOut = acc.RouteOut |> Option.defaultValue (CommandHost.under repo "readiness/route.json")
-                      StorePath = acc.Store |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
-                      PersistStore = acc.Persist
-                      ExplicitPlain = acc.Plain
-                      Watch = acc.Watch }
+                    {
+                        Repo = repo
+                        Scope = scope
+                        Format = (if acc.Json then Json else Text)
+                        GatesOut = acc.GatesOut |> Option.defaultValue (CommandHost.under repo ".fsgg/gates.json")
+                        RouteOut =
+                            acc.RouteOut
+                            |> Option.defaultValue (CommandHost.under repo "readiness/route.json")
+                        StorePath =
+                            acc.Store
+                            |> Option.defaultValue (CommandHost.under repo "readiness/evidence-reuse.json")
+                        PersistStore = acc.Persist
+                        ExplicitPlain = acc.Plain
+                        Watch = acc.Watch
+                    }
 
     // ── init (Principle IV) — initial Model + first effect ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Candidates = None
-              Result = None
-              GatesDoc = None
-              RouteDoc = None
-              Snapshot = None
-              SelectedGates = []
-              Classifications = { Classifications = [] }
-              Sensed = None
-              Store = None
-              Tooling = None
-              Outcomes = []
-              CacheNotes = []
-              StoreDegraded = false
-              PersistAcked = false
-              Handoffs = []
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Candidates = None
+                Result = None
+                GatesDoc = None
+                RouteDoc = None
+                Snapshot = None
+                SelectedGates = []
+                Classifications = { Classifications = [] }
+                Sensed = None
+                Store = None
+                Tooling = None
+                Outcomes = []
+                CacheNotes = []
+                StoreDegraded = false
+                PersistAcked = false
+                Handoffs = []
+                Diagnostics = []
+                Exit = Success
+            }
 
         // F081: `LoadHandoffs` is FIRST so `HandoffsLoaded` folds (sets `Handoffs`) before the
         // `Loaded(Valid)` projection consumes them (the breadth-first driver processes a batch in order).
@@ -282,7 +300,15 @@ module Loop =
         { model with
             Phase = Done
             Exit = category
-            Diagnostics = model.Diagnostics @ [ { Category = category; Message = message } ] },
+            Diagnostics =
+                model.Diagnostics
+                @ [
+                    {
+                        Category = category
+                        Message = message
+                    }
+                ]
+        },
         []
 
     // ── F048 persistence (pure; the decision lives here, not at the write edge — FR-010/D2) ──
@@ -346,7 +372,9 @@ module Loop =
                     (fun s (g, c) ->
                         match c with
                         | CommandHost.ToExecute _ ->
-                            match Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap with
+                            match
+                                Map.tryFind (gateIdValue g.Id) recordMap, Map.tryFind (gateIdValue g.Id) inputsMap
+                            with
                             | Some record, Some inputs -> EvidenceCapture.capture inputs record s
                             | _ -> s
                         | CommandHost.ToReuse _
@@ -364,46 +392,68 @@ module Loop =
                             | Some record ->
                                 let code = record.Reproducible.ExitCode
 
-                                { GateId = g.Id
-                                  Disposition = Executed(code, Plan.passed code) }
+                                {
+                                    GateId = g.Id
+                                    Disposition = Executed(code, Plan.passed code)
+                                }
                             | None ->
-                                { GateId = g.Id
-                                  Disposition = NotExecuted }
+                                {
+                                    GateId = g.Id
+                                    Disposition = NotExecuted
+                                }
                         | CommandHost.ToReuse code ->
-                            { GateId = g.Id
-                              Disposition = Reused(code, Plan.passed code) }
+                            {
+                                GateId = g.Id
+                                Disposition = Reused(code, Plan.passed code)
+                            }
                         // `Deferred` is unreachable for Route (BudgetFold = None); map it exactly as a
                         // non-executed gate (identical to `NoCommand`) so the plan stays byte-identical.
                         | CommandHost.Deferred _
                         | CommandHost.NoCommand ->
-                            { GateId = g.Id
-                              Disposition = NotExecuted }
+                            {
+                                GateId = g.Id
+                                Disposition = NotExecuted
+                            }
 
                     g.Id, outcome)
 
             let resReport = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries resReport
+                |> List.choose FreshnessResolution.candidate
+
             let cacheReport = CacheEligibility.evaluate candidates store
             // F23: the additive productSurfaces section (empty ⇒ byte-identical to the F052-era route.json).
-            let routeDoc = RouteJson.ofRouteResultWithProductSurfaces result (Some cacheReport) outcomes model.Classifications
+            let routeDoc =
+                RouteJson.ofRouteResultWithProductSurfaces result (Some cacheReport) outcomes model.Classifications
 
             let writes =
-                [ WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
-                  WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc) ]
+                [
+                    WriteArtifact(GatesArtifact, model.Request.GatesOut, gatesDoc)
+                    WriteArtifact(RouteArtifact, model.Request.RouteOut, routeDoc)
+                ]
 
             let persistEffects, persistNotes =
                 match model.Request.PersistStore, model.StoreDegraded with
-                | true, false -> [ PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore) ], []
+                | true, false ->
+                    [
+                        PersistStore(model.Request.StorePath, CommandHost.persistedContent grownStore)
+                    ],
+                    []
                 | true, true ->
                     [],
-                    [ "cache note: store not persisted: on-disk store failed to parse; left untouched" ]
+                    [
+                        "cache note: store not persisted: on-disk store failed to parse; left untouched"
+                    ]
                 | false, _ -> [], []
 
             { model with
                 Phase = Projected
                 RouteDoc = Some routeDoc
                 Outcomes = outcomes
-                CacheNotes = model.CacheNotes @ persistNotes },
+                CacheNotes = model.CacheNotes @ persistNotes
+            },
             writes @ persistEffects
         | _ -> model, []
 
@@ -425,7 +475,8 @@ module Loop =
                 { model with
                     Phase = Sensed'
                     Candidates = Some candidates
-                    Snapshot = Some snapshot },
+                    Snapshot = Some snapshot
+                },
                 [ LoadCatalog model.Request.Repo ]
 
             | Sensed(Error reason) -> fail InputUnavailable ("git sensing unavailable: " + reason) model
@@ -460,11 +511,13 @@ module Loop =
                     | [], [] -> registry0, routed
                     | extraGates, extraSelected ->
                         { registry0 with
-                            Gates = registry0.Gates @ extraGates |> List.sortBy (fun g -> gateIdValue g.Id) },
+                            Gates = registry0.Gates @ extraGates |> List.sortBy (fun g -> gateIdValue g.Id)
+                        },
                         { routed with
                             SelectedGates =
                                 routed.SelectedGates @ extraSelected
-                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id) }
+                                |> List.sortBy (fun sg -> gateIdValue sg.Gate.Id)
+                        }
 
                 let gatesDoc = GatesJson.ofGateRegistry registry
                 let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
@@ -472,7 +525,11 @@ module Loop =
                 // F23: classify the routed paths into product surfaces at the EDGE (not inside a pure
                 // `update` body that touches I/O — this is pure). The active profile is the catalog's
                 // declared default (or `standard` when no policy is declared).
-                let profile = facts.Policy |> Option.map (fun p -> p.DefaultProfile) |> Option.defaultValue (ProfileId "standard")
+                let profile =
+                    facts.Policy
+                    |> Option.map (fun p -> p.DefaultProfile)
+                    |> Option.defaultValue (ProfileId "standard")
+
                 let classifications = ProductSurfaces.classify facts report profile
 
                 { model with
@@ -481,9 +538,15 @@ module Loop =
                     GatesDoc = Some gatesDoc
                     SelectedGates = selectedGates
                     Classifications = classifications
-                    Tooling = facts.Tooling },
-                [ SenseFreshness(selectedGates, CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range)))
-                  LoadStore model.Request.StorePath ]
+                    Tooling = facts.Tooling
+                },
+                [
+                    SenseFreshness(
+                        selectedGates,
+                        CommandHost.baseHeadOf (model.Snapshot |> Option.bind (fun s -> s.Range))
+                    )
+                    LoadStore model.Request.StorePath
+                ]
 
             // F046: a sensed/store result feeds the pure join. An `Error` DEGRADES to a safe default + a
             // non-fatal cache note (D2) — it NEVER fails the command or changes the exit code (FR-010/FR-011).
@@ -495,7 +558,12 @@ module Loop =
                         Sensed = Some CommandHost.emptySensedFacts
                         CacheNotes =
                             model.CacheNotes
-                            @ [ "cache note: freshness facts could not be sensed (" + reason + "); affected gates are recompute-by-default and reported as not-evaluated" ] }
+                            @ [
+                                "cache note: freshness facts could not be sensed ("
+                                + reason
+                                + "); affected gates are recompute-by-default and reported as not-evaluated"
+                            ]
+                    }
 
             | StoreLoaded(Ok store) -> tryExecute { model with Store = Some store }
 
@@ -508,10 +576,14 @@ module Loop =
                         StoreDegraded = true
                         CacheNotes =
                             model.CacheNotes
-                            @ [ "cache note: reuse store unreadable (" + reason + "); treated as empty — every gate is recompute-by-default" ] }
+                            @ [
+                                "cache note: reuse store unreadable ("
+                                + reason
+                                + "); treated as empty — every gate is recompute-by-default"
+                            ]
+                    }
 
-            | Wrote(_, Error reason) ->
-                fail ToolError ("failed to write artifact: " + reason) model
+            | Wrote(_, Error reason) -> fail ToolError ("failed to write artifact: " + reason) model
 
             | Wrote(_, Ok()) ->
                 // Two writes were emitted together; the first ack advances to Persisted, the second
@@ -537,7 +609,11 @@ module Loop =
                         model.CacheNotes
                         @ [ "cache note: store not persisted (" + reason + "); run unaffected" ]
 
-                let model = { model with PersistAcked = true; CacheNotes = notes }
+                let model =
+                    { model with
+                        PersistAcked = true
+                        CacheNotes = notes
+                    }
 
                 match model.Phase with
                 | Persisted -> model, [ emitEffect model ]
@@ -548,11 +624,17 @@ module Loop =
             // advisory: `exitCode` is unaffected (always 0 — FR-008).
             | GatesExecuted records -> projectExecuted records model
 
-            | Emitted -> { model with Phase = Done; Exit = Success }, []
+            | Emitted ->
+                { model with
+                    Phase = Done
+                    Exit = Success
+                },
+                []
 
     // ── render (research D7) — the deterministic summary, separate from the persisted artifacts ──
 
-    and jstr (s: string) = System.Text.Json.JsonSerializer.Serialize s
+    and jstr (s: string) =
+        System.Text.Json.JsonSerializer.Serialize s
 
     // F27 wiring (063): the full CacheEligibilityReport (not just its entries) recomputed purely from the
     // model's sensed facts + loaded store — the same value the route.json embed carries — for the shared
@@ -561,7 +643,10 @@ module Loop =
         match model.Sensed, model.Store with
         | Some sensed, Some store ->
             let report = FreshnessResolution.resolve model.SelectedGates sensed
-            let candidates = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
             Some(CacheEligibility.evaluate candidates store)
         | _ -> None
 
@@ -570,8 +655,14 @@ module Loop =
     and operationalLines (model: Model) : string =
         match model.Result with
         | Some result ->
-            [ sprintf "wrote %s    (%s)" model.Request.GatesOut GatesJson.schemaVersion
-              sprintf "wrote %s    (%s, %d selected)" model.Request.RouteOut RouteJson.schemaVersion result.SelectedGates.Length ]
+            [
+                sprintf "wrote %s    (%s)" model.Request.GatesOut GatesJson.schemaVersion
+                sprintf
+                    "wrote %s    (%s, %d selected)"
+                    model.Request.RouteOut
+                    RouteJson.schemaVersion
+                    result.SelectedGates.Length
+            ]
             |> String.concat "\n"
         | None -> ""
 
@@ -616,7 +707,9 @@ module Loop =
         match model.RouteDoc with
         | Some doc -> doc
         | None ->
-            let errs = model.Diagnostics |> List.map (fun d -> jstr d.Message) |> String.concat ","
+            let errs =
+                model.Diagnostics |> List.map (fun d -> jstr d.Message) |> String.concat ","
+
             sprintf "{\"errors\":[%s]}" errs
 
     and render (model: Model) (format: OutputFormat) : string =

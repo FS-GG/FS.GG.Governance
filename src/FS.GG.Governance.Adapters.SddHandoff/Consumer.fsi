@@ -14,9 +14,9 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
-open FS.GG.Governance.Config.Model             // GovernedPath
-open FS.GG.Governance.Gates.Model              // Gate
-open FS.GG.Governance.Route.Model              // SelectedGate
+open FS.GG.Governance.Config.Model // GovernedPath
+open FS.GG.Governance.Gates.Model // Gate
+open FS.GG.Governance.Route.Model // SelectedGate
 open FS.GG.Governance.Adapters.SddHandoff.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -27,9 +27,11 @@ module Consumer =
     /// `GateRegistry` and `Selected` into `RouteResult.SelectedGates` before roll-up / the route JSON
     /// projection.
     type ConsumeResult =
-        { Gates: Gate list
-          Selected: SelectedGate list
-          Diagnostics: Diagnostic list }
+        {
+            Gates: Gate list
+            Selected: SelectedGate list
+            Diagnostics: Diagnostic list
+        }
 
     /// Parse + map + readiness-project all located documents, in stable (`<id>`, then `GateId`) order.
     /// Empty input ⇒ `{ Gates = []; Selected = []; Diagnostics = [] }` (no-op, SC-003). A bad document

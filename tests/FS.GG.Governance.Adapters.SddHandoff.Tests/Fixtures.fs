@@ -12,8 +12,13 @@ let rec private findRepoRoot (dir: DirectoryInfo | null) : string =
     match dir with
     | null -> failwith "repo root (FS.GG.Governance.sln) not found"
     | d ->
-        let here ext = File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
-        if here "sln" || here "slnx" then d.FullName else findRepoRoot d.Parent
+        let here ext =
+            File.Exists(Path.Combine(d.FullName, "FS.GG.Governance." + ext))
+
+        if here "sln" || here "slnx" then
+            d.FullName
+        else
+            findRepoRoot d.Parent
 
 let repoRoot = findRepoRoot (DirectoryInfo(AppContext.BaseDirectory))
 
@@ -26,5 +31,7 @@ let json (name: string) : string =
 
 /// A `Reader.HandoffRead` over fixture `name`, with a deterministic `readiness/<name>/...` source.
 let read (name: string) : Reader.HandoffRead =
-    { Source = sprintf "readiness/%s/governance-handoff.json" name
-      Json = json name }
+    {
+        Source = sprintf "readiness/%s/governance-handoff.json" name
+        Json = json name
+    }

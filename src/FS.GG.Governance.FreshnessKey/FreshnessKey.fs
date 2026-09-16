@@ -47,7 +47,10 @@ module FreshnessKey =
     // The covered-artifact segment: "art=<count>;<len1>:<v1>;<len2>:<v2>;…" (empty set ⇒ "art=0;").
     let artSegment (arts: ArtifactHash list) : string =
         let elems = artifactSet arts
-        let body = elems |> List.map (fun v -> sprintf "%d:%s" (byteLen v) v) |> String.concat ";"
+
+        let body =
+            elems |> List.map (fun v -> sprintf "%d:%s" (byteLen v) v) |> String.concat ";"
+
         sprintf "art=%d;%s" (List.length elems) body
 
     let compute (inputs: FreshnessInputs) : Key =
@@ -55,22 +58,27 @@ module FreshnessKey =
         let (DomainId domain) = inputs.Domain
         let command = inputs.Command |> Option.map (fun (CommandId c) -> c)
         let (RuleHash rule) = inputs.RuleHash
-        let commandVersion = inputs.CommandVersion |> Option.map (fun (CommandVersion v) -> v)
+
+        let commandVersion =
+            inputs.CommandVersion |> Option.map (fun (CommandVersion v) -> v)
+
         let (GeneratorVersion genv) = inputs.GeneratorVersion
         let (Revision baseRev) = inputs.Base
         let (Revision headRev) = inputs.Head
 
         // Fixed field order, joined by '\n', no trailing newline (contracts/freshness-key-format.md).
-        [ req "check" check
-          req "domain" domain
-          opt "cmd" command
-          req "env" (environmentToken inputs.Environment)
-          req "rule" rule
-          artSegment inputs.CoveredArtifacts
-          opt "cmdv" commandVersion
-          req "genv" genv
-          req "base" baseRev
-          req "head" headRev ]
+        [
+            req "check" check
+            req "domain" domain
+            opt "cmd" command
+            req "env" (environmentToken inputs.Environment)
+            req "rule" rule
+            artSegment inputs.CoveredArtifacts
+            opt "cmdv" commandVersion
+            req "genv" genv
+            req "base" baseRev
+            req "head" headRev
+        ]
         |> String.concat "\n"
         |> Key
 
@@ -79,16 +87,28 @@ module FreshnessKey =
     let diff (a: FreshnessInputs) (b: FreshnessInputs) : InputCategory list =
         // Compare field-by-field in the fixed category order; covered artifacts compared as a SET so a
         // reorder/duplicate is never reported. Returns exactly the differing categories (FR-007).
-        [ if a.Check <> b.Check then CheckIdentity
-          if a.Domain <> b.Domain then DomainIdentity
-          if a.Command <> b.Command then CommandIdentity
-          if a.Environment <> b.Environment then EnvironmentClassCat
-          if a.RuleHash <> b.RuleHash then RuleHashCat
-          if artifactSet a.CoveredArtifacts <> artifactSet b.CoveredArtifacts then CoveredArtifactsCat
-          if a.CommandVersion <> b.CommandVersion then CommandVersionCat
-          if a.GeneratorVersion <> b.GeneratorVersion then GeneratorVersionCat
-          if a.Base <> b.Base then BaseRevisionCat
-          if a.Head <> b.Head then HeadRevisionCat ]
+        [
+            if a.Check <> b.Check then
+                CheckIdentity
+            if a.Domain <> b.Domain then
+                DomainIdentity
+            if a.Command <> b.Command then
+                CommandIdentity
+            if a.Environment <> b.Environment then
+                EnvironmentClassCat
+            if a.RuleHash <> b.RuleHash then
+                RuleHashCat
+            if artifactSet a.CoveredArtifacts <> artifactSet b.CoveredArtifacts then
+                CoveredArtifactsCat
+            if a.CommandVersion <> b.CommandVersion then
+                CommandVersionCat
+            if a.GeneratorVersion <> b.GeneratorVersion then
+                GeneratorVersionCat
+            if a.Base <> b.Base then
+                BaseRevisionCat
+            if a.Head <> b.Head then
+                HeadRevisionCat
+        ]
 
     let value (key: Key) : string =
         let (Key s) = key

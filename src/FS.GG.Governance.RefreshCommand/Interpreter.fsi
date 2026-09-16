@@ -17,9 +17,9 @@
 
 namespace FS.GG.Governance.RefreshCommand
 
-open FS.GG.Governance.Config                       // Loader.FileReader
-open FS.GG.Governance.FreshnessKey.Model             // ArtifactHash, GeneratorVersion
-open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationEntry
+open FS.GG.Governance.Config // Loader.FileReader
+open FS.GG.Governance.FreshnessKey.Model // ArtifactHash, GeneratorVersion
+open FS.GG.Governance.RefreshJson.RefreshModel // GenerationEntry
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -32,13 +32,15 @@ module Interpreter =
     /// stdout sink. Every port is fakeable; unit tests inject capturing/faulting fakes, the end-to-end test
     /// uses `realPorts` against a real temp repo with a real deterministic generator command.
     type Ports =
-        { Files: Loader.FileReader
-          Sense: GenerationEntry -> Result<ArtifactHash list * GeneratorVersion, string>
-          ReadProv: string -> (ArtifactHash list * GeneratorVersion) option
-          Generate: GenerationEntry -> Result<ArtifactHash, string>
-          WriteProv: string -> (ArtifactHash list * GeneratorVersion * ArtifactHash) -> Result<unit, string>
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+        {
+            Files: Loader.FileReader
+            Sense: GenerationEntry -> Result<ArtifactHash list * GeneratorVersion, string>
+            ReadProv: string -> (ArtifactHash list * GeneratorVersion) option
+            Generate: GenerationEntry -> Result<ArtifactHash, string>
+            WriteProv: string -> (ArtifactHash list * GeneratorVersion * ArtifactHash) -> Result<unit, string>
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+        }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo` (reads
     /// `<repo>/.fsgg/refresh.yml`), a `Sense` that SHA-256-digests each declared source (file or directory)

@@ -25,30 +25,50 @@ open FS.GG.Governance.HumanText
 let private mkGate (id: string) (maturity: Maturity) : Gate =
     let domain = DomainId "build"
 
-    { Id = GateId id
-      Domain = domain
-      Description = sprintf "gate %s" id
-      Prerequisites = []
-      Cost = Cheap
-      Timeout = TimeoutLimit 60
-      Owner = Owner "team"
-      Maturity = maturity
-      ProductCheck = false
-      FreshnessKey =
-        { Check = CheckId id
-          Domain = domain
-          Cost = Cheap
-          Environment = Local
-          Command = None } }
+    {
+        Id = GateId id
+        Domain = domain
+        Description = sprintf "gate %s" id
+        Prerequisites = []
+        Cost = Cheap
+        Timeout = TimeoutLimit 60
+        Owner = Owner "team"
+        Maturity = maturity
+        ProductCheck = false
+        FreshnessKey =
+            {
+                Check = CheckId id
+                Domain = domain
+                Cost = Cheap
+                Environment = Local
+                Command = None
+            }
+    }
 
 let private mkSelected (id: string) (maturity: Maturity) : SelectedGate =
-    { Gate = mkGate id maturity
-      SelectingPaths = [ { Path = GovernedPath "src/a.fs"; MatchedGlob = GovernedPath "src/**" } ] }
+    {
+        Gate = mkGate id maturity
+        SelectingPaths =
+            [
+                {
+                    Path = GovernedPath "src/a.fs"
+                    MatchedGlob = GovernedPath "src/**"
+                }
+            ]
+    }
 
 let private route: RouteResult =
-    { SelectedGates = [ mkSelected "build:ship" BlockOnShip; mkSelected "docs:lint" Observe ]
-      Findings = { Findings = [] }
-      Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+    {
+        SelectedGates = [ mkSelected "build:ship" BlockOnShip; mkSelected "docs:lint" Observe ]
+        Findings = { Findings = [] }
+        Cost =
+            {
+                Cheap = 0
+                Medium = 0
+                High = 0
+                Exhaustive = 0
+            }
+    }
 
 /// A real blocked ShipDecision (BlockOnShip blocks at Verify/Strict).
 let blockedDecision: ShipDecision = rollup route Verify Strict

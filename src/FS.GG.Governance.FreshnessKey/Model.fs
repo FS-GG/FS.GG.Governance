@@ -23,16 +23,18 @@ module Model =
     type Revision = Revision of string
 
     type FreshnessInputs =
-        { Check: CheckId
-          Domain: DomainId
-          Command: CommandId option
-          Environment: EnvironmentClass
-          RuleHash: RuleHash
-          CoveredArtifacts: ArtifactHash list
-          CommandVersion: CommandVersion option
-          GeneratorVersion: GeneratorVersion
-          Base: Revision
-          Head: Revision }
+        {
+            Check: CheckId
+            Domain: DomainId
+            Command: CommandId option
+            Environment: EnvironmentClass
+            RuleHash: RuleHash
+            CoveredArtifacts: ArtifactHash list
+            CommandVersion: CommandVersion option
+            GeneratorVersion: GeneratorVersion
+            Base: Revision
+            Head: Revision
+        }
 
     type Key = Key of string
 

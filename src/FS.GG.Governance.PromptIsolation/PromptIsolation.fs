@@ -38,14 +38,7 @@ module PromptIsolation =
 
             let sb = StringBuilder()
 
-            sb
-                .Append("exc=")
-                .Append(flag)
-                .Append(',')
-                .Append(byteLen content)
-                .Append(':')
-                .Append(content)
-                .ToString()
+            sb.Append("exc=").Append(flag).Append(',').Append(byteLen content).Append(':').Append(content).ToString()
         | DigestOnly(ArtifactHash h) ->
             let sb = StringBuilder()
             sb.Append("dig=").Append(byteLen h).Append(':').Append(h).ToString()
@@ -61,8 +54,10 @@ module PromptIsolation =
     let assemble (instructions: QuestionText) (artifacts: ArtifactPayload list) : ReviewRequest =
         // Pair the two already-formed channels verbatim — no reorder, de-duplication, capture, hashing, or
         // I/O (FR-004, research D6).
-        { Instructions = instructions
-          Artifacts = artifacts }
+        {
+            Instructions = instructions
+            Artifacts = artifacts
+        }
 
     let render (request: ReviewRequest) : RenderedPrompt =
         let (QuestionText instructions) = request.Instructions

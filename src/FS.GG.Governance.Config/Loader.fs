@@ -16,8 +16,12 @@ module Loader =
     let fileSystemReader (fsggParentDir: string) : FileReader =
         fun name ->
             let path = Path.Combine(fsggParentDir, ".fsgg", name)
+
             try
-                if File.Exists path then Ok(Some(File.ReadAllText path)) else Ok None
+                if File.Exists path then
+                    Ok(Some(File.ReadAllText path))
+                else
+                    Ok None
             with ex ->
                 Error ex.Message
 
@@ -31,11 +35,14 @@ module Loader =
             // diagnostic — so an Error can never pass as `Valid`/`None`, and is no longer mis-reported as an
             // `EmptyFile` with the underlying error discarded.
             | Error e -> Unreadable e
-        { Root = root
-          Project = slot "governance.yml"
-          Policy = slot "policy.yml"
-          Capabilities = slot "capabilities.yml"
-          Tooling = slot "tooling.yml" }
+
+        {
+            Root = root
+            Project = slot "governance.yml"
+            Policy = slot "policy.yml"
+            Capabilities = slot "capabilities.yml"
+            Tooling = slot "tooling.yml"
+        }
 
     let loadAndValidate (fsggParentDir: string) : Validation =
         // Root is the in-memory normalization anchor only; it never enters TypedFacts (the

@@ -14,8 +14,10 @@ module Model =
     type EvidenceRef = EvidenceRef of string
 
     type RecordedEvidence =
-        { Inputs: FreshnessInputs
-          Evidence: EvidenceRef }
+        {
+            Inputs: FreshnessInputs
+            Evidence: EvidenceRef
+        }
 
     type ReuseStore = ReuseStore of RecordedEvidence list
 

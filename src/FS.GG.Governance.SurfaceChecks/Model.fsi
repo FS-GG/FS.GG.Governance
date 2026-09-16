@@ -27,9 +27,7 @@ module Model =
     /// The precise locus a finding points at (FR-004/FR-006: name the exact thing).
     /// File is repo-relative, forward-slash normalized (normalizePath). Detail is the stable,
     /// domain-specific locus token (member name, transcript id, link target, entry id).
-    type FindingLocation =
-        { File: GovernedPath
-          Detail: string }
+    type FindingLocation = { File: GovernedPath; Detail: string }
 
     /// One deterministic-or-advisory finding from a surface check.
     /// BaseSeverity = Blocking for deterministic checks, Advisory for judgement-heavy (FR-011).
@@ -38,25 +36,29 @@ module Model =
     /// violation and never a fabricated pass (FR-012). Message/Code/Detail are deterministic — no
     /// abs-path/clock/username (FR-010).
     type SurfaceFinding =
-        { Domain: CheckDomain
-          Surface: SurfaceId
-          Code: string
-          Location: FindingLocation
-          BaseSeverity: Severity
-          Maturity: Maturity
-          EvidenceTag: EvidenceTag option
-          IsInputState: bool
-          Message: string }
+        {
+            Domain: CheckDomain
+            Surface: SurfaceId
+            Code: string
+            Location: FindingLocation
+            BaseSeverity: Severity
+            Maturity: Maturity
+            EvidenceTag: EvidenceTag option
+            IsInputState: bool
+            Message: string
+        }
 
     /// One unit of work derived from a single F23 ProductClassification (D4). The dispatcher builds one
     /// request per applicable routed surface and feeds it to the matching pack's evaluate. EvidenceTag is
     /// looked up from the surface declaration.
     type SurfaceCheckRequest =
-        { Domain: CheckDomain
-          Surface: SurfaceId
-          Class: SurfaceClass
-          Path: GovernedPath
-          EvidenceTag: EvidenceTag option }
+        {
+            Domain: CheckDomain
+            Surface: SurfaceId
+            Class: SurfaceClass
+            Path: GovernedPath
+            EvidenceTag: EvidenceTag option
+        }
 
     /// Stable render token for a domain (token table, no clock/locale).
     val checkDomainToken: domain: CheckDomain -> string

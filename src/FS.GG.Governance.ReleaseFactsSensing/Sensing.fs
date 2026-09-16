@@ -18,13 +18,15 @@ open FS.GG.Governance.ReleaseFactsSensing.Model
 module Sensing =
 
     let releaseFamilies =
-        [ VersionBump
-          PackageMetadata
-          TemplatePins
-          PublishPlan
-          TrustedPublishing
-          Provenance
-          ApiCompatibility ]
+        [
+            VersionBump
+            PackageMetadata
+            TemplatePins
+            PublishPlan
+            TrustedPublishing
+            Provenance
+            ApiCompatibility
+        ]
         |> List.sortBy Release.releaseRuleKindOrdinal
 
     // ── Deterministic ordering helpers (D7) — ordinal so order never depends on culture ──
@@ -55,30 +57,80 @@ module Sensing =
 
     let deriveVersion (exp: ReleaseExpectations) (recovered: RecoveredEvidence) =
         match exp.VersionBaseline, recovered.Version with
-        | None, _ -> Unrecoverable, None, Some { Family = VersionBump; Reason = noExpectationReason VersionBump }
+        | None, _ ->
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = VersionBump
+                    Reason = noExpectationReason VersionBump
+                }
         | _, Error reason ->
-            Unrecoverable, None, Some { Family = VersionBump; Reason = unrecoverableReason VersionBump reason }
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = VersionBump
+                    Reason = unrecoverableReason VersionBump reason
+                }
         | Some baseline, Ok ev ->
-            let fact = { Observed = ev.Declared; Baseline = baseline }
+            let fact =
+                {
+                    Observed = ev.Declared
+                    Baseline = baseline
+                }
+
             let satisfied = SemVer.compareVersions ev.Declared baseline > 0
             (if satisfied then Met else Unmet), Some fact, None
 
     let deriveMetadata (exp: ReleaseExpectations) (recovered: RecoveredEvidence) =
         match exp.RequiredMetadataFields, recovered.Metadata with
         | None, _ ->
-            Unrecoverable, None, Some { Family = PackageMetadata; Reason = noExpectationReason PackageMetadata }
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = PackageMetadata
+                    Reason = noExpectationReason PackageMetadata
+                }
         | _, Error reason ->
-            Unrecoverable, None, Some { Family = PackageMetadata; Reason = unrecoverableReason PackageMetadata reason }
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = PackageMetadata
+                    Reason = unrecoverableReason PackageMetadata reason
+                }
         | Some required, Ok ev ->
-            let missing = required |> List.filter (fun f -> not (List.contains f ev.PresentFields))
-            let fact = { Present = ordinalSort ev.PresentFields; Missing = ordinalSort missing }
+            let missing =
+                required |> List.filter (fun f -> not (List.contains f ev.PresentFields))
+
+            let fact =
+                {
+                    Present = ordinalSort ev.PresentFields
+                    Missing = ordinalSort missing
+                }
+
             (if List.isEmpty missing then Met else Unmet), Some fact, None
 
     let derivePins (exp: ReleaseExpectations) (recovered: RecoveredEvidence) =
         match exp.ExpectedPins, recovered.Pins with
-        | None, _ -> Unrecoverable, None, Some { Family = TemplatePins; Reason = noExpectationReason TemplatePins }
+        | None, _ ->
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = TemplatePins
+                    Reason = noExpectationReason TemplatePins
+                }
         | _, Error reason ->
-            Unrecoverable, None, Some { Family = TemplatePins; Reason = unrecoverableReason TemplatePins reason }
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = TemplatePins
+                    Reason = unrecoverableReason TemplatePins reason
+                }
         | Some expected, Ok ev ->
             let drifted =
                 expected
@@ -88,33 +140,62 @@ module Sensing =
                     | Some resolved -> resolved <> v
                     | None -> true)
                 |> List.map fst
+
             let fact =
-                { Resolved = ordinalSortByKey (Map.toList ev.Resolved)
-                  Expected = ordinalSortByKey (Map.toList expected)
-                  Drifted = ordinalSort drifted }
+                {
+                    Resolved = ordinalSortByKey (Map.toList ev.Resolved)
+                    Expected = ordinalSortByKey (Map.toList expected)
+                    Drifted = ordinalSort drifted
+                }
+
             (if List.isEmpty drifted then Met else Unmet), Some fact, None
 
     // The three posture/config/provenance families share one present-token subset rule (D6).
-    let derivePosture (family: ReleaseRuleKind) (required: string list option) (recovered: Result<PostureEvidence, string>) =
+    let derivePosture
+        (family: ReleaseRuleKind)
+        (required: string list option)
+        (recovered: Result<PostureEvidence, string>)
+        =
         match required, recovered with
-        | None, _ -> Unrecoverable, None, Some { Family = family; Reason = noExpectationReason family }
-        | _, Error reason -> Unrecoverable, None, Some { Family = family; Reason = unrecoverableReason family reason }
+        | None, _ ->
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = family
+                    Reason = noExpectationReason family
+                }
+        | _, Error reason ->
+            Unrecoverable,
+            None,
+            Some
+                {
+                    Family = family
+                    Reason = unrecoverableReason family reason
+                }
         | Some req, Ok ev ->
             let missing = req |> List.filter (fun t -> not (List.contains t ev.Observed))
+
             let fact =
-                { Observed = ordinalSort ev.Observed
-                  Required = ordinalSort req
-                  Missing = ordinalSort missing }
+                {
+                    Observed = ordinalSort ev.Observed
+                    Required = ordinalSort req
+                    Missing = ordinalSort missing
+                }
+
             (if List.isEmpty missing then Met else Unmet), Some fact, None
 
     let deriveFacts (expectations: ReleaseExpectations) (recovered: RecoveredEvidence) : SensedRelease =
         let vState, vFact, vDiag = deriveVersion expectations recovered
         let mState, mFact, mDiag = deriveMetadata expectations recovered
         let piState, piFact, piDiag = derivePins expectations recovered
+
         let plState, plFact, plDiag =
             derivePosture PublishPlan expectations.RequiredPublishPosture recovered.PublishPlan
+
         let tpState, tpFact, tpDiag =
             derivePosture TrustedPublishing expectations.RequiredTrustedPublishing recovered.TrustedPublishing
+
         let prState, prFact, prDiag =
             derivePosture Provenance expectations.RequiredProvenance recovered.Provenance
 
@@ -127,13 +208,15 @@ module Sensing =
 
         // Always all seven families (FR-009) — Map.ofList over the fixed seven (kind, state) pairs.
         let states =
-            [ VersionBump, vState
-              PackageMetadata, mState
-              TemplatePins, piState
-              PublishPlan, plState
-              TrustedPublishing, tpState
-              Provenance, prState
-              ApiCompatibility, acState ]
+            [
+                VersionBump, vState
+                PackageMetadata, mState
+                TemplatePins, piState
+                PublishPlan, plState
+                TrustedPublishing, tpState
+                Provenance, prState
+                ApiCompatibility, acState
+            ]
             |> Map.ofList
 
         let diagnostics =
@@ -141,16 +224,20 @@ module Sensing =
             |> List.choose id
             |> List.sortBy (fun d -> Release.releaseRuleKindOrdinal d.Family)
 
-        { Facts = { States = states }
-          Snapshot =
-            { Surface = expectations.Surface
-              Version = vFact
-              Metadata = mFact
-              Pins = piFact
-              PublishPlan = plFact
-              TrustedPublishing = tpFact
-              Provenance = prFact
-              Diagnostics = diagnostics } }
+        {
+            Facts = { States = states }
+            Snapshot =
+                {
+                    Surface = expectations.Surface
+                    Version = vFact
+                    Metadata = mFact
+                    Pins = piFact
+                    PublishPlan = plFact
+                    TrustedPublishing = tpFact
+                    Provenance = prFact
+                    Diagnostics = diagnostics
+                }
+        }
 
     // ── 088 (T014): the pure ApiCompat-output parser (surface in Sensing.fsi). Total + fail-safe (FR-008). ──
 
@@ -160,7 +247,11 @@ module Sensing =
 
         if i >= 0 then
             let j = line.IndexOf('\'', i + 1)
-            if j > i then line.Substring(i + 1, j - i - 1) else line.Trim()
+
+            if j > i then
+                line.Substring(i + 1, j - i - 1)
+            else
+                line.Trim()
         else
             line.Trim()
 
@@ -189,25 +280,44 @@ module Sensing =
 
             if parts.Length >= 3 then
                 Some
-                    { Member = parts.[2]
-                      Kind = parseKind parts.[0]
-                      Origin = parseOrigin parts.[1] }
+                    {
+                        Member = parts.[2]
+                        Kind = parseKind parts.[0]
+                        Origin = parseOrigin parts.[1]
+                    }
             elif parts.Length = 2 then
                 Some
-                    { Member = ""
-                      Kind = parseKind parts.[0]
-                      Origin = parseOrigin parts.[1] }
+                    {
+                        Member = ""
+                        Kind = parseKind parts.[0]
+                        Origin = parseOrigin parts.[1]
+                    }
             else
                 None
         elif upper.Contains "CP0001" then
-            Some { Member = extractQuoted line; Kind = TypeRemoved; Origin = ApiBreakOrigin.Local }
-        elif upper.Contains "CP0002" then
-            Some { Member = extractQuoted line; Kind = MemberRemoved; Origin = ApiBreakOrigin.Local }
-        elif [ "CP0003"; "CP0004"; "CP0005"; "CP0006"; "CP0007"; "CP0008" ] |> List.exists upper.Contains then
             Some
-                { Member = extractQuoted line
-                  Kind = MemberSignatureChanged
-                  Origin = ApiBreakOrigin.Local }
+                {
+                    Member = extractQuoted line
+                    Kind = TypeRemoved
+                    Origin = ApiBreakOrigin.Local
+                }
+        elif upper.Contains "CP0002" then
+            Some
+                {
+                    Member = extractQuoted line
+                    Kind = MemberRemoved
+                    Origin = ApiBreakOrigin.Local
+                }
+        elif
+            [ "CP0003"; "CP0004"; "CP0005"; "CP0006"; "CP0007"; "CP0008" ]
+            |> List.exists upper.Contains
+        then
+            Some
+                {
+                    Member = extractQuoted line
+                    Kind = MemberSignatureChanged
+                    Origin = ApiBreakOrigin.Local
+                }
         else
             None
 

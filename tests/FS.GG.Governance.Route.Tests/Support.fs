@@ -16,40 +16,41 @@ let gp (s: string) = GovernedPath s
 /// A real `Check` from its distinguishing fields, with inert defaults so a test varies only the
 /// field under test. `command` is the optional `tooling.yml` reference; everything else carries a
 /// plain declared value.
-let check
-    (domain: string)
-    (checkId: string)
-    (command: string option)
-    (cost: Cost)
-    : Check =
-    { Id = CheckId checkId
-      Domain = DomainId domain
-      Command = command |> Option.map CommandId
-      Owner = Owner "fixture"
-      Cost = cost
-      Environment = Local
-      Maturity = Observe
-      Tier = None }
+let check (domain: string) (checkId: string) (command: string option) (cost: Cost) : Check =
+    {
+        Id = CheckId checkId
+        Domain = DomainId domain
+        Command = command |> Option.map CommandId
+        Owner = Owner "fixture"
+        Cost = cost
+        Environment = Local
+        Maturity = Observe
+        Tier = None
+    }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// downstream join never reads.
 let command (commandId: string) (timeoutSeconds: int) : CommandSpec =
-    { Id = CommandId commandId
-      Command = "fixture --run"
-      Timeout = TimeoutLimit timeoutSeconds
-      Environment = Local }
+    {
+        Id = CommandId commandId
+        Command = "fixture --run"
+        Timeout = TimeoutLimit timeoutSeconds
+        Environment = Local
+    }
 
 /// Build a `Surface` from `(class, id, paths)` with fixed inert defaults for the fields the
 /// route join never reads (`Owner`/`Maturity`).
 let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
-    { Id = SurfaceId id
-      Class = cls
-      Paths = paths |> List.map GovernedPath
-      Owner = Owner "fixture"
-      Maturity = Observe
-      EvidenceTag = None
-      TemplateProfile = None
-      Baseline = None }
+    {
+        Id = SurfaceId id
+        Class = cls
+        Paths = paths |> List.map GovernedPath
+        Owner = Owner "fixture"
+        Maturity = Observe
+        EvidenceTag = None
+        TemplateProfile = None
+        Baseline = None
+    }
 
 /// Assemble a real `Valid TypedFacts` with a governed root, a `glob -> domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), a declared
@@ -65,36 +66,50 @@ let facts
     (commands: CommandSpec list)
     : TypedFacts =
     let entries =
-        pathMap |> List.map (fun (g, d) -> { Glob = GovernedPath g; Capability = DomainId d })
+        pathMap
+        |> List.map (fun (g, d) ->
+            {
+                Glob = GovernedPath g
+                Capability = DomainId d
+            })
 
     let domains =
-        (entries |> List.map (fun e -> e.Capability)) @ (checks |> List.map (fun c -> c.Domain))
+        (entries |> List.map (fun e -> e.Capability))
+        @ (checks |> List.map (fun c -> c.Domain))
         |> List.distinct
 
-    { Project =
-        { SchemaVersion = SchemaVersion 1
-          Id = ProjectId "fixture"
-          Domains = domains
-          GovernedRoot = GovernedPath root
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 1
-          Domains = domains
-          PathMap = entries
-          Surfaces = surfaces
-          Checks = checks }
-      Tooling =
-        match commands with
-        | [] -> None
-        | cs ->
-            Some
-                { SchemaVersion = SchemaVersion 1
-                  Commands = cs
-                  EnvironmentClasses = []
-                  ExternalTools = [] } }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 1
+                Id = ProjectId "fixture"
+                Domains = domains
+                GovernedRoot = GovernedPath root
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 1
+                Domains = domains
+                PathMap = entries
+                Surfaces = surfaces
+                Checks = checks
+            }
+        Tooling =
+            match commands with
+            | [] -> None
+            | cs ->
+                Some
+                    {
+                        SchemaVersion = SchemaVersion 1
+                        Commands = cs
+                        EnvironmentClasses = []
+                        ExternalTools = []
+                    }
+    }
 
 /// (b) The real F018 registry for these facts — `Gates.buildRegistry`, the genuine producer.
 let registryOf (facts: TypedFacts) : GateRegistry =

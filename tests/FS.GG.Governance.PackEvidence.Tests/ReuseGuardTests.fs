@@ -26,15 +26,18 @@ let private isKnownFamily kind =
 let tests =
     testList
         "reuse-guard"
-        [ test "factContributions keys ⊆ { VersionBump; PackageMetadata; Provenance } — no new family" {
-              let set = Pack.evaluatePack bs [ packed "A" "a.nupkg" "1.1.0" "dA"; packFailed "A" 1 ]
+        [
+            test "factContributions keys ⊆ { VersionBump; PackageMetadata; Provenance } — no new family" {
+                let set =
+                    Pack.evaluatePack bs [ packed "A" "a.nupkg" "1.1.0" "dA"; packFailed "A" 1 ]
 
-              let keys = Pack.factContributions set |> Map.toList |> List.map fst
+                let keys = Pack.factContributions set |> Map.toList |> List.map fst
 
-              Expect.all keys isKnownFamily "every key is a known F53 family"
+                Expect.all keys isKnownFamily "every key is a known F53 family"
 
-              Expect.all
-                  keys
-                  (fun k -> List.contains k [ VersionBump; PackageMetadata; Provenance ])
-                  "pack evidence touches only the three packed-grounded families"
-          } ]
+                Expect.all
+                    keys
+                    (fun k -> List.contains k [ VersionBump; PackageMetadata; Provenance ])
+                    "pack evidence touches only the three packed-grounded families"
+            }
+        ]

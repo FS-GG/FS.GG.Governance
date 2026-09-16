@@ -26,10 +26,12 @@ module Model =
         | ConfidenceBelowThreshold of ConfirmationCount * ConfidenceThreshold
 
     type PromotionFacts =
-        { BackingEvidence: EvidenceRef option
-          Confirmations: ConfirmationCount
-          ConfidenceThreshold: ConfidenceThreshold
-          SignOff: SignOff option }
+        {
+            BackingEvidence: EvidenceRef option
+            Confirmations: ConfirmationCount
+            ConfidenceThreshold: ConfidenceThreshold
+            SignOff: SignOff option
+        }
 
     type PromotionDecision =
         | StaysAdvisory of AdvisoryReason

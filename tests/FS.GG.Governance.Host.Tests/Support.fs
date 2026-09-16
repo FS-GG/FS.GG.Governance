@@ -20,21 +20,21 @@ let apiRef: ArtifactRef = { Kind = "file"; Key = "src/Api.fs" }
 
 let outcomeId =
     function
-    | Decided (RuleId r, _) -> "decided:" + r
+    | Decided(RuleId r, _) -> "decided:" + r
     | NeedsReview req -> "needs:" + req.Key
     | RuleOutcome.Reviewed rr -> "reviewed:" + rr.Key
-    | Escalated (RuleId r) -> "escalated:" + r
+    | Escalated(RuleId r) -> "escalated:" + r
 
 let identify =
     function
-    | Artifact (ref, _) -> FactId(sprintf "artifact:%s/%s" ref.Kind ref.Key)
+    | Artifact(ref, _) -> FactId(sprintf "artifact:%s/%s" ref.Kind ref.Key)
     | Outcome o -> FactId("outcome:" + outcomeId o)
 
 let readContent (facts: FactSet<TFact>) (ref: ArtifactRef) : string option =
     facts
     |> List.tryPick (fun fa ->
         match fa.Value with
-        | Artifact (r, c) when r = ref -> Some c
+        | Artifact(r, c) when r = ref -> Some c
         | _ -> None)
 
 // Content-dependent, NON-EMPTY when sensed (so sensing-completion detection works) and "" when
@@ -45,13 +45,19 @@ let artifactHash (facts: FactSet<TFact>) (ref: ArtifactRef) : string =
     | None -> ""
 
 let bridge: Bridge<TFact> =
-    { Judge = { ModelId = "test-judge"; Version = "1" }
-      ArtifactHash = artifactHash
-      Embed = Outcome
-      Project =
-        (function
-        | Outcome o -> Some o
-        | Artifact _ -> None) }
+    {
+        Judge =
+            {
+                ModelId = "test-judge"
+                Version = "1"
+            }
+        ArtifactHash = artifactHash
+        Embed = Outcome
+        Project =
+            (function
+            | Outcome o -> Some o
+            | Artifact _ -> None)
+    }
 
 /// An AgentReviewed rule over a probe that reads `apiRef`, asking a fixed question.
 let apiRule: CheckRule<TFact> =
@@ -64,14 +70,22 @@ let apiRule: CheckRule<TFact> =
 let change: Set<string> = set [ "src/Api.fs" ]
 
 let makeConfig (policy: AcceptancePolicy) (rules: CheckRule<TFact> list) : LoopConfig<Set<string>, TFact> =
-    { Identify = identify
-      Rules = rules
-      Bridge = bridge
-      Fences = [ { Name = "merge-boundary"; Trips = fun (c: Set<string>) -> c |> Set.exists (fun p -> p.StartsWith "src/") } ]
-      Mode = Gate
-      Policy = policy
-      SenseArtifact = fun ref content -> Artifact(ref, content)
-      ReadContent = readContent }
+    {
+        Identify = identify
+        Rules = rules
+        Bridge = bridge
+        Fences =
+            [
+                {
+                    Name = "merge-boundary"
+                    Trips = fun (c: Set<string>) -> c |> Set.exists (fun p -> p.StartsWith "src/")
+                }
+            ]
+        Mode = Gate
+        Policy = policy
+        SenseArtifact = fun ref content -> Artifact(ref, content)
+        ReadContent = readContent
+    }
 
 let defaultConfig = makeConfig Loop.defaultPolicy [ apiRule ]
 
@@ -93,32 +107,46 @@ let verdictOfString (s: string) =
 
 /// A REAL local-filesystem review store under `dir` (Principle V — real evidence).
 let fsStore (dir: string) : ReviewStore =
-    { Load =
-        fun key ->
-            let path = Path.Combine(dir, key)
+    {
+        Load =
+            fun key ->
+                let path = Path.Combine(dir, key)
 
-            if File.Exists path then
-                let lines = File.ReadAllLines path
-                Ok(Some { Rule = RuleId lines.[0]; Key = lines.[1]; Verdict = verdictOfString lines.[2] })
-            else
-                Ok None
-      Save =
-        fun rr ->
-            let (RuleId r) = rr.Rule
-            File.WriteAllLines(Path.Combine(dir, rr.Key), [| r; rr.Key; verdictToString rr.Verdict |])
-            Ok() }
+                if File.Exists path then
+                    let lines = File.ReadAllLines path
+
+                    Ok(
+                        Some
+                            {
+                                Rule = RuleId lines.[0]
+                                Key = lines.[1]
+                                Verdict = verdictOfString lines.[2]
+                            }
+                    )
+                else
+                    Ok None
+        Save =
+            fun rr ->
+                let (RuleId r) = rr.Rule
+                File.WriteAllLines(Path.Combine(dir, rr.Key), [| r; rr.Key; verdictToString rr.Verdict |])
+                Ok()
+    }
 
 /// The edge environment for an interpreter run: a real temp fixture dir holding `Api.fs` with the
 /// given content, a real-fs store dir, a counting/configurable FAKE judge, and a capturing sink.
 type Env =
-    { Ports: Ports
-      Dispatches: int ref
-      Outputs: ResizeArray<Output>
-      FixtureDir: string
-      Cleanup: unit -> unit }
+    {
+        Ports: Ports
+        Dispatches: int ref
+        Outputs: ResizeArray<Output>
+        FixtureDir: string
+        Cleanup: unit -> unit
+    }
 
 let makeEnvWith (apiContent: string) (judge: Judge) : Env =
-    let root = Path.Combine(Path.GetTempPath(), "fsgg-host-" + Guid.NewGuid().ToString("N"))
+    let root =
+        Path.Combine(Path.GetTempPath(), "fsgg-host-" + Guid.NewGuid().ToString("N"))
+
     let fixtureDir = Path.Combine(root, "fixture")
     let storeDir = Path.Combine(root, "store")
     Directory.CreateDirectory fixtureDir |> ignore
@@ -131,7 +159,11 @@ let makeEnvWith (apiContent: string) (judge: Judge) : Env =
     let read: ArtifactReader =
         fun ref ->
             try
-                let name = match Path.GetFileName ref.Key with | null -> ref.Key | n -> n
+                let name =
+                    match Path.GetFileName ref.Key with
+                    | null -> ref.Key
+                    | n -> n
+
                 Ok(File.ReadAllText(Path.Combine(fixtureDir, name)))
             with e ->
                 Error e.Message
@@ -142,20 +174,28 @@ let makeEnvWith (apiContent: string) (judge: Judge) : Env =
             judge task
 
     let ports =
-        { Read = read
-          Judge = countingJudge
-          Store = fsStore storeDir
-          Sink = fun out -> outputs.Add out }
+        {
+            Read = read
+            Judge = countingJudge
+            Store = fsStore storeDir
+            Sink = fun out -> outputs.Add out
+        }
 
-    { Ports = ports
-      Dispatches = dispatches
-      Outputs = outputs
-      FixtureDir = fixtureDir
-      Cleanup = fun () -> (try Directory.Delete(root, true) with _ -> ()) }
+    {
+        Ports = ports
+        Dispatches = dispatches
+        Outputs = outputs
+        FixtureDir = fixtureDir
+        Cleanup =
+            fun () ->
+                (try
+                    Directory.Delete(root, true)
+                 with _ ->
+                     ())
+    }
 
 /// A passing fake judge. SYNTHETIC: a real agent is not a reproducible oracle (F12 supplies the
 /// real judge port). Every test that uses this carries the `Synthetic` token in its name.
-let passingJudge: Judge =
-    fun _task -> Ok { Verdict = Pass; Confidence = 1.0 }
+let passingJudge: Judge = fun _task -> Ok { Verdict = Pass; Confidence = 1.0 }
 
 let makeEnv () = makeEnvWith "let x = 1" passingJudge

@@ -33,10 +33,12 @@ module Model =
     /// One gate's already-sensed cost inputs. `Verdict` is the F041 verdict VERBATIM — `decide` folds it
     /// with the budget, never recomputing a freshness or agent-review match (FR-005, FR-006).
     type CandidateCost =
-        { Gate: GateId
-          Cost: Cost
-          Verdict: CacheEligibilityVerdict
-          Review: AgentReviewMark }
+        {
+            Gate: GateId
+            Cost: Cost
+            Verdict: CacheEligibilityVerdict
+            Review: AgentReviewMark
+        }
 
     /// Skip (inner-loop mode) vs Defer (boundary mode) for an over-budget gate (research D2).
     type DeferralClass =
@@ -49,11 +51,13 @@ module Model =
     /// micro-decisions: "the entry retains enough to emit the Stale finding"). The `cost-budget.json`
     /// `overBudget` decision shape stays `{ class, ceiling, reason }` — `Cause` is consumed only by findings.
     type BudgetReason =
-        { Gate: GateId
-          Cost: Cost
-          Ceiling: Cost
-          Class: DeferralClass
-          Cause: RecomputeCause }
+        {
+            Gate: GateId
+            Cost: Cost
+            Ceiling: Cost
+            Class: DeferralClass
+            Cause: RecomputeCause
+        }
 
     /// The single budgeted cache decision per gate (FR-004).
     ///   • `Reuse`      — verdict was `Reusable`; charges NOTHING against the budget.
@@ -65,9 +69,11 @@ module Model =
         | OverBudget of BudgetReason
 
     type CacheDecisionEntry =
-        { Gate: GateId
-          Cost: Cost
-          Review: AgentReviewMark
-          Decision: CacheDecision }
+        {
+            Gate: GateId
+            Cost: Cost
+            Review: AgentReviewMark
+            Decision: CacheDecision
+        }
 
     type CacheDecisionReport = CacheDecisionReport of CacheDecisionEntry list

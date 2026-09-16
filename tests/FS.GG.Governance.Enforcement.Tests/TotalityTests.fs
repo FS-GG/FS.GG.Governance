@@ -12,23 +12,28 @@ open FS.GG.Governance.Enforcement.Tests.Support
 let tests =
     testList
         "Totality"
-        [ test "deriveEffectiveSeverity over the full 240-input cross-product never throws (SC-001)" {
-              for i in allInputs do
-                  let d = deriveEffectiveSeverity i
-                  // Touch every field so the decision must be fully constructed.
-                  ignore (d.BaseSeverity, d.Maturity, d.Mode, d.Profile, d.EffectiveSeverity, d.Reason)
-          }
+        [
+            test "deriveEffectiveSeverity over the full 240-input cross-product never throws (SC-001)" {
+                for i in allInputs do
+                    let d = deriveEffectiveSeverity i
+                    // Touch every field so the decision must be fully constructed.
+                    ignore (d.BaseSeverity, d.Maturity, d.Mode, d.Profile, d.EffectiveSeverity, d.Reason)
+            }
 
-          test "every decision carries all six fields with a non-empty reason (FR-010)" {
-              for i in allInputs do
-                  let d = deriveEffectiveSeverity i
-                  Expect.equal d.BaseSeverity i.BaseSeverity "base severity present and echoed"
-                  Expect.equal d.Maturity i.Maturity "maturity present and echoed"
-                  Expect.equal d.Mode i.Mode "mode present and echoed"
-                  Expect.equal d.Profile i.Profile "profile present and echoed"
-                  Expect.isNotEmpty d.Reason (sprintf "non-empty reason for %A" i)
-          }
+            test "every decision carries all six fields with a non-empty reason (FR-010)" {
+                for i in allInputs do
+                    let d = deriveEffectiveSeverity i
+                    Expect.equal d.BaseSeverity i.BaseSeverity "base severity present and echoed"
+                    Expect.equal d.Maturity i.Maturity "maturity present and echoed"
+                    Expect.equal d.Mode i.Mode "mode present and echoed"
+                    Expect.equal d.Profile i.Profile "profile present and echoed"
+                    Expect.isNotEmpty d.Reason (sprintf "non-empty reason for %A" i)
+            }
 
-          testPropertyWithConfig fsCheckConfig "deriveEffectiveSeverity is total over generated inputs (SC-001)" (fun (i: EnforcementInput) ->
-              let d = deriveEffectiveSeverity i
-              d.Reason.Length > 0) ]
+            testPropertyWithConfig
+                fsCheckConfig
+                "deriveEffectiveSeverity is total over generated inputs (SC-001)"
+                (fun (i: EnforcementInput) ->
+                    let d = deriveEffectiveSeverity i
+                    d.Reason.Length > 0)
+        ]

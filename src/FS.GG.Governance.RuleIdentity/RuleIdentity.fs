@@ -16,7 +16,8 @@ module RuleIdentity =
 
     let boundary (findingToken: string) : RuleId = RuleId("boundary:" + findingToken)
 
-    let surface (domain: string) (code: string) : RuleId = RuleId("surface:" + domain + ":" + code)
+    let surface (domain: string) (code: string) : RuleId =
+        RuleId("surface:" + domain + ":" + code)
 
     let release (kindToken: string) : RuleId = RuleId("release:" + kindToken)
 

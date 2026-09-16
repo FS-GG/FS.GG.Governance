@@ -8,10 +8,10 @@
 
 namespace FS.GG.Governance.VerifyCommand
 
-open FS.GG.Governance.ReleaseDeclaration           // Declaration.ReleaseDeclaration
-open FS.GG.Governance.ReleaseFactsSensing.Model    // SensedRelease
-open FS.GG.Governance.CommandKind.Model            // AuditSnapshot
-open FS.GG.Governance.ReleaseReport.Model          // VerifyReleasePreview
+open FS.GG.Governance.ReleaseDeclaration // Declaration.ReleaseDeclaration
+open FS.GG.Governance.ReleaseFactsSensing.Model // SensedRelease
+open FS.GG.Governance.CommandKind.Model // AuditSnapshot
+open FS.GG.Governance.ReleaseReport.Model // VerifyReleasePreview
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReleasePreview =

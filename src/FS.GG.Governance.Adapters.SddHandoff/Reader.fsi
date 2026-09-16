@@ -18,9 +18,7 @@ module Reader =
 
     /// One located document: its source path and raw JSON text. The impure read is the host's
     /// `Interpreter.Ports.Handoffs` port; this record is its pure result.
-    type HandoffRead =
-        { Source: string
-          Json: string }
+    type HandoffRead = { Source: string; Json: string }
 
     /// Pure: parse + validate one located document. `Ok handoff` for a well-formed `v2.x` document;
     /// otherwise `Error` with a distinct, descriptive `Diagnostic`:

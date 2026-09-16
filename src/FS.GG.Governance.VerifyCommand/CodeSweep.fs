@@ -44,11 +44,13 @@ module internal CodeSweep =
     let SurfaceName = "fsharp-idiomatic-simplicity"
 
     let request: SC.SurfaceCheckRequest =
-        { Domain = SC.DesignDomain
-          Surface = SurfaceId SurfaceName
-          Class = DesignSurface
-          Path = normalizePath PolicyPath
-          EvidenceTag = None }
+        {
+            Domain = SC.DesignDomain
+            Surface = SurfaceId SurfaceName
+            Class = DesignSurface
+            Path = normalizePath PolicyPath
+            EvidenceTag = None
+        }
 
     /// A defect in the declaration. Raised only by the parser below and caught only by `sense`.
     exception private PolicyError of string
@@ -118,35 +120,45 @@ module internal CodeSweep =
         | "interoperability" -> CM.Interoperability
         | other ->
             raise (
-                PolicyError(sprintf "unknown justification reason '%s' (expected 'measured' or 'interoperability')" other)
+                PolicyError(
+                    sprintf "unknown justification reason '%s' (expected 'measured' or 'interoperability')" other
+                )
             )
 
     let private justification (element: JsonElement) : CM.ComplexityJustification =
-        { Path = requiredString element "path"
-          Symbol = requiredString element "symbol"
-          Head = optionalString element "head"
-          SourceDigest = optionalString element "sourceDigest"
-          SimplerAlternative = optionalString element "simplerAlternative"
-          Reason = reason element
-          Evidence = optionalString element "evidence" }
+        {
+            Path = requiredString element "path"
+            Symbol = requiredString element "symbol"
+            Head = optionalString element "head"
+            SourceDigest = optionalString element "sourceDigest"
+            SimplerAlternative = optionalString element "simplerAlternative"
+            Reason = reason element
+            Evidence = optionalString element "evidence"
+        }
 
     let private approvedPrimitive (element: JsonElement) : CM.ApprovedPrimitive =
-        { Capability = requiredString element "capability"
-          ApprovedSymbols = stringList element "approvedSymbols"
-          CandidateSymbols = stringList element "candidateSymbols" }
+        {
+            Capability = requiredString element "capability"
+            ApprovedSymbols = stringList element "approvedSymbols"
+            CandidateSymbols = stringList element "candidateSymbols"
+        }
 
     let private thresholds (root: JsonElement) : CM.ReviewThresholds =
         match prop root "thresholds" with
         | None ->
-            { ModuleLines = None
-              TypeLines = None
-              MemberLines = None
-              DependencyFanOut = None }
+            {
+                ModuleLines = None
+                TypeLines = None
+                MemberLines = None
+                DependencyFanOut = None
+            }
         | Some value when value.ValueKind = JsonValueKind.Object ->
-            { ModuleLines = optionalInt value "moduleLines"
-              TypeLines = optionalInt value "typeLines"
-              MemberLines = optionalInt value "memberLines"
-              DependencyFanOut = optionalInt value "dependencyFanOut" }
+            {
+                ModuleLines = optionalInt value "moduleLines"
+                TypeLines = optionalInt value "typeLines"
+                MemberLines = optionalInt value "memberLines"
+                DependencyFanOut = optionalInt value "dependencyFanOut"
+            }
         | Some value -> raise (PolicyError(sprintf "'thresholds' must be an object; found %O" value.ValueKind))
 
     // ── Source expansion ─────────────────────────────────────────────────────────────────────────────
@@ -288,18 +300,38 @@ module internal CodeSweep =
             |> Seq.map (fun property ->
                 let references =
                     if property.Value.ValueKind <> JsonValueKind.Array then
-                        raise (PolicyError(sprintf "references for '%s' must be an array; found %O" property.Name property.Value.ValueKind))
+                        raise (
+                            PolicyError(
+                                sprintf
+                                    "references for '%s' must be an array; found %O"
+                                    property.Name
+                                    property.Value.ValueKind
+                            )
+                        )
 
                     property.Value.EnumerateArray()
                     |> Seq.map (fun item ->
                         if item.ValueKind <> JsonValueKind.String then
-                            raise (PolicyError(sprintf "references for '%s' must contain only strings; found %O" property.Name item.ValueKind))
+                            raise (
+                                PolicyError(
+                                    sprintf
+                                        "references for '%s' must contain only strings; found %O"
+                                        property.Name
+                                        item.ValueKind
+                                )
+                            )
 
                         let declared = text item
                         let normalized = declared.Replace('\\', '/') |> stripLeadingCurrent
 
                         if normalized = "" || normalized.StartsWith("/", StringComparison.Ordinal) then
-                            raise (PolicyError(sprintf "declared reference '%s' must name a repository-relative assembly path" declared))
+                            raise (
+                                PolicyError(
+                                    sprintf
+                                        "declared reference '%s' must name a repository-relative assembly path"
+                                        declared
+                                )
+                            )
 
                         let full = contained repo declared normalized
 
@@ -314,16 +346,22 @@ module internal CodeSweep =
             |> Map.ofSeq
         | Some value -> raise (PolicyError(sprintf "'references' must be an object; found %O" value.ValueKind))
 
-    let private documents (repo: string) (entries: string list) (references: Map<string, string list>) : CM.SourceDocument list =
+    let private documents
+        (repo: string)
+        (entries: string list)
+        (references: Map<string, string list>)
+        : CM.SourceDocument list =
         entries
         |> List.collect (expand repo)
         |> List.distinct
         |> List.sort
         |> List.map (fun relative ->
-            { Path = relative
-              Source = File.ReadAllText(Path.Combine(repo, relative))
-              IsGenerated = isGenerated relative
-              References = references |> Map.tryFind relative |> Option.defaultValue [] })
+            {
+                Path = relative
+                Source = File.ReadAllText(Path.Combine(repo, relative))
+                IsGenerated = isGenerated relative
+                References = references |> Map.tryFind relative |> Option.defaultValue []
+            })
 
     /// Read the repository's declaration. `Ok None` means the pack is not applicable here (no policy file,
     /// or a policy that declares no sources — an empty declaration is still a declaration).
@@ -346,20 +384,31 @@ module internal CodeSweep =
                         let references = referenceMap repo root
                         let documents = documents repo sources references
                         let selected = documents |> List.map _.Path |> Set.ofList
-                        let undeclared = references |> Map.keys |> Seq.filter (fun path -> not (Set.contains path selected)) |> Seq.toList
+
+                        let undeclared =
+                            references
+                            |> Map.keys
+                            |> Seq.filter (fun path -> not (Set.contains path selected))
+                            |> Seq.toList
 
                         if not undeclared.IsEmpty then
-                            Error(sprintf "references declare source(s) outside 'sources': %s" (String.concat ", " undeclared))
+                            Error(
+                                sprintf
+                                    "references declare source(s) outside 'sources': %s"
+                                    (String.concat ", " undeclared)
+                            )
                         else
                             Ok(
                                 Some
-                                    { Head = optionalString root "head"
-                                      Documents = documents
-                                      PureDomainPrefixes = stringList root "pureDomainPrefixes"
-                                      Thresholds = thresholds root
-                                      Justifications = objects root "justifications" |> List.map justification
-                                      ApprovedPrimitives =
-                                        objects root "approvedPrimitives" |> List.map approvedPrimitive }
+                                    {
+                                        Head = optionalString root "head"
+                                        Documents = documents
+                                        PureDomainPrefixes = stringList root "pureDomainPrefixes"
+                                        Thresholds = thresholds root
+                                        Justifications = objects root "justifications" |> List.map justification
+                                        ApprovedPrimitives =
+                                            objects root "approvedPrimitives" |> List.map approvedPrimitive
+                                    }
                             )
         with
         | PolicyError detail -> Error(sprintf "%s is malformed: %s" PolicyPath detail)
@@ -375,7 +424,8 @@ module internal CodeSweep =
         | Ok(Some analysis) ->
             try
                 let report =
-                    FS.GG.Governance.CodeChecks.CodeChecks.analyze analysis |> Async.RunSynchronously
+                    FS.GG.Governance.CodeChecks.CodeChecks.analyze analysis
+                    |> Async.RunSynchronously
 
                 report.Findings
                 |> List.map (fun finding ->

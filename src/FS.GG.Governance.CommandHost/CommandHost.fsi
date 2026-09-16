@@ -19,18 +19,18 @@
 
 namespace FS.GG.Governance.CommandHost
 
-open FS.GG.Governance.Config.Model            // Diagnostic, ToolingFacts, EnvironmentClass
-open FS.GG.Governance.Snapshot.Model          // CommitId, DiffRange
-open FS.GG.Governance.FreshnessKey.Model      // Revision, FreshnessInputs
-open FS.GG.Governance.Gates.Model             // Gate, GateId
-open FS.GG.Governance.GateExecution.Model     // GateCommand
-open FS.GG.Governance.CommandRecord.Model     // CommandRecord, ExitCode
+open FS.GG.Governance.Config.Model // Diagnostic, ToolingFacts, EnvironmentClass
+open FS.GG.Governance.Snapshot.Model // CommitId, DiffRange
+open FS.GG.Governance.FreshnessKey.Model // Revision, FreshnessInputs
+open FS.GG.Governance.Gates.Model // Gate, GateId
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.CommandRecord.Model // CommandRecord, ExitCode
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts
-open FS.GG.Governance.CacheEligibility.Model  // CacheEligibilityVerdict
-open FS.GG.Governance.EvidenceReuse.Model     // ReuseStore
-open FS.GG.Governance.CostBudget.Model        // BudgetReason, CacheDecisionReport
-open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
-open FS.GG.Governance.Provenance.Model        // BuilderIdentity
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityVerdict
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore
+open FS.GG.Governance.CostBudget.Model // BudgetReason, CacheDecisionReport
+open FS.GG.Governance.CommandKind.Model // CommandKind, KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CommandHost =
@@ -52,8 +52,9 @@ module CommandHost =
 
     /// Per-command optional folds that distinguish one host's gate-execution plan from another's.
     type ExecutionPlanParams =
-        { BudgetFold:
-            (Map<string, CacheEligibilityVerdict> -> Map<string, BudgetReason> * CacheDecisionReport) option }
+        {
+            BudgetFold: (Map<string, CacheEligibilityVerdict> -> Map<string, BudgetReason> * CacheDecisionReport) option
+        }
 
     // ---- micro-helpers (verbatim relocations — research audit) ----
 

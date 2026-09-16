@@ -82,7 +82,9 @@ module CacheEligibilityJson =
             w.WriteString("schemaVersion", schemaVersion)
             w.WritePropertyName "entries"
             w.WriteStartArray()
+
             for entry in CacheEligibility.entries report do
                 writeEntry w entry
+
             w.WriteEndArray()
             w.WriteEndObject())

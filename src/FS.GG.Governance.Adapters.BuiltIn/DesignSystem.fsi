@@ -96,8 +96,7 @@ type DesignSystemFact =
 /// no lifecycle position (FR-005, research D3). A project root narrows its composite change
 /// onto this via `Lift.fence` when the design-system adapter is composed with another domain
 /// (FR-014).
-type DesignChange =
-    { Surfaces: Set<DesignArtifactRef> }
+type DesignChange = { Surfaces: Set<DesignArtifactRef> }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module DesignSystem =
@@ -142,16 +141,14 @@ module DesignSystem =
     /// The token-drift probe: the generated token surface matches the source token document.
     /// Reads the `SurfaceObservation ("surface-matches", generated, _)` fact; `Met` when
     /// `met`, `Unmet` when not, `Unknown` when the generated surface is absent. Total.
-    val surfaceMatches:
-        generated: DesignArtifactRef -> source: DesignArtifactRef -> Check<DesignSystemFact>
+    val surfaceMatches: generated: DesignArtifactRef -> source: DesignArtifactRef -> Check<DesignSystemFact>
 
     /// The colour/contrast probe: a WCAG / Ant ratio is met on `surface` under `policy`.
     /// Reads the `SurfaceObservation ("contrast-meets", surface, _)` fact; `policy` is a
     /// `LiteralArg` so the rendered statement and hash distinguish policies. `Unknown` when
     /// the surface fixture is absent (a missing contrast fixture is never a silent `Met`,
     /// edge case). Total.
-    val contrastMeets:
-        policy: string -> surface: DesignArtifactRef -> Check<DesignSystemFact>
+    val contrastMeets: policy: string -> surface: DesignArtifactRef -> Check<DesignSystemFact>
 
     /// A generic deterministic surface probe over `SurfaceObservation (name, subject, _)` —
     /// the shared shape behind the spacing-scale, control-height, intent-coverage, and

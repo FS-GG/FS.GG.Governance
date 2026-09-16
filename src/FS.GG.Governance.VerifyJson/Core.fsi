@@ -10,11 +10,11 @@
 
 namespace FS.GG.Governance.VerifyJson
 
-open System.Text.Json                         // Utf8JsonWriter
-open FS.GG.Governance.Ship.Model              // ShipDecision
-open FS.GG.Governance.Gates.Model             // GateId
-open FS.GG.Governance.GateRun.Model           // GateOutcome
-open FS.GG.Governance.CacheEligibility.Model  // CacheEligibilityReport
+open System.Text.Json // Utf8JsonWriter
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Core =

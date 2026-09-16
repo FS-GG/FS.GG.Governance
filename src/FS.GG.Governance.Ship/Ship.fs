@@ -34,10 +34,12 @@ module Ship =
             | BlockOnShip
             | BlockOnRelease -> Blocking
 
-        { BaseSeverity = baseSeverity
-          Maturity = gate.Maturity
-          Mode = mode
-          Profile = profile }
+        {
+            BaseSeverity = baseSeverity
+            Maturity = gate.Maturity
+            Mode = mode
+            Profile = profile
+        }
 
     /// Map one finding to its F023 `EnforcementInput` (research D4): a `GovernedRootUnknown` is base
     /// `Advisory` with maturity-equivalent `Warn` (always passing); a `ProtectedBoundaryUnknown` is
@@ -49,10 +51,12 @@ module Ship =
             | GovernedRootUnknown -> Advisory, Warn
             | ProtectedBoundaryUnknown _ -> Blocking, BlockOnShip
 
-        { BaseSeverity = baseSeverity
-          Maturity = maturity
-          Mode = mode
-          Profile = profile }
+        {
+            BaseSeverity = baseSeverity
+            Maturity = maturity
+            Mode = mode
+            Profile = profile
+        }
 
     // ── Hidden item identity + stable sort key (research D6; absent from Ship.fsi) ──
 
@@ -73,14 +77,18 @@ module Ship =
         let gateItems =
             route.SelectedGates
             |> List.map (fun selected ->
-                { Id = GateItem selected.Gate.Id
-                  Decision = deriveEffectiveSeverity (gateToInput mode profile selected.Gate) })
+                {
+                    Id = GateItem selected.Gate.Id
+                    Decision = deriveEffectiveSeverity (gateToInput mode profile selected.Gate)
+                })
 
         let findingItems =
             route.Findings.Findings
             |> List.map (fun finding ->
-                { Id = FindingItem(finding.Id, finding.Path)
-                  Decision = deriveEffectiveSeverity (findingToInput mode profile finding) })
+                {
+                    Id = FindingItem(finding.Id, finding.Path)
+                    Decision = deriveEffectiveSeverity (findingToInput mode profile finding)
+                })
 
         let items = gateItems @ findingItems
 
@@ -105,8 +113,10 @@ module Ship =
             | Pass -> Clean
             | Fail -> Blocked
 
-        { Verdict = verdict
-          Blockers = blockers
-          Warnings = warnings
-          Passing = passing
-          ExitCodeBasis = exitCodeBasis }
+        {
+            Verdict = verdict
+            Blockers = blockers
+            Warnings = warnings
+            Passing = passing
+            ExitCodeBasis = exitCodeBasis
+        }

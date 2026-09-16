@@ -15,26 +15,38 @@ let private srcScope = Loop.ExplicitPaths [ gp "src/Lib/Thing.fs" ]
 let tests =
     testList
         "PersistenceEdge (US3)"
-        [ test "a failing ArtifactWriter ⇒ ToolError (exit 4), no artifact recorded, distinct from Blocked" {
-              let cap = newCapture ()
-              let req = requestForProfile srcScope Loop.Text Strict
-              let ports = fakePortsFailingWrites validCatalog gitSrcChange cap (Set.ofList [ req.VerifyOut ])
-              let model = Interpreter.run ports req
+        [
+            test "a failing ArtifactWriter ⇒ ToolError (exit 4), no artifact recorded, distinct from Blocked" {
+                let cap = newCapture ()
+                let req = requestForProfile srcScope Loop.Text Strict
 
-              Expect.equal model.Exit Loop.ToolError "write failure ⇒ ToolError"
-              Expect.equal (Loop.exitCode model.Exit) 4 "exit 4"
-              Expect.notEqual model.Exit Loop.Blocked "ToolError is distinct from Blocked"
-              Expect.isNone (writtenVerify cap) "no partial artifact recorded on a failed write"
-          }
+                let ports =
+                    fakePortsFailingWrites validCatalog gitSrcChange cap (Set.ofList [ req.VerifyOut ])
 
-          test "a tool-error diagnostic is tagged and carries no fabricated passing verdict" {
-              let cap = newCapture ()
-              let req = requestForProfile srcScope Loop.Text Standard
-              let ports = fakePortsFailingWrites validCatalog gitSrcChange cap (Set.ofList [ req.VerifyOut ])
-              let model = Interpreter.run ports req
+                let model = Interpreter.run ports req
 
-              Expect.isNonEmpty model.Diagnostics "a diagnostic is recorded"
-              Expect.isTrue (model.Diagnostics |> List.forall (fun d -> d.Category = Loop.ToolError)) "tagged ToolError" } ]
+                Expect.equal model.Exit Loop.ToolError "write failure ⇒ ToolError"
+                Expect.equal (Loop.exitCode model.Exit) 4 "exit 4"
+                Expect.notEqual model.Exit Loop.Blocked "ToolError is distinct from Blocked"
+                Expect.isNone (writtenVerify cap) "no partial artifact recorded on a failed write"
+            }
+
+            test "a tool-error diagnostic is tagged and carries no fabricated passing verdict" {
+                let cap = newCapture ()
+                let req = requestForProfile srcScope Loop.Text Standard
+
+                let ports =
+                    fakePortsFailingWrites validCatalog gitSrcChange cap (Set.ofList [ req.VerifyOut ])
+
+                let model = Interpreter.run ports req
+
+                Expect.isNonEmpty model.Diagnostics "a diagnostic is recorded"
+
+                Expect.isTrue
+                    (model.Diagnostics |> List.forall (fun d -> d.Category = Loop.ToolError))
+                    "tagged ToolError"
+            }
+        ]
 
 // 066 US3 (closes 065 T009/T024): the NO-DECLARATION `verify.json` byte-identity golden. 065 changed
 // `fsgg verify` (it now emits a `releaseReadiness` block) — but ONLY when a `.fsgg/release.yml` declaration
@@ -64,27 +76,50 @@ let private copyGoldenFixture (dst: string) : unit =
 let goldenTests =
     testList
         "ByteIdentityGolden"
-        [ test "no-declaration verify.json byte-identical to the frozen pre-wiring golden (5a0cb28)" {
-              let tmp = Path.Combine(Path.GetTempPath(), "fsgg-golden-verify-" + System.Guid.NewGuid().ToString("N"))
-              Directory.CreateDirectory tmp |> ignore
+        [
+            test "no-declaration verify.json byte-identical to the frozen pre-wiring golden (5a0cb28)" {
+                let tmp =
+                    Path.Combine(Path.GetTempPath(), "fsgg-golden-verify-" + System.Guid.NewGuid().ToString("N"))
 
-              try
-                  copyGoldenFixture tmp
-                  let req = parseOrFail [ "verify"; "--repo"; tmp; "--paths"; "src/Lib/Thing.fs" ]
-                  let model = Interpreter.run { Interpreter.realPorts req.Repo with Out = ignore } req
-                  Expect.equal model.Exit Loop.Success "verify exits 0 over the fixed fixture"
-                  let produced = File.ReadAllText req.VerifyOut
-                  Expect.isFalse (produced.Contains "releaseReadiness") "no releaseReadiness block without a declaration"
+                Directory.CreateDirectory tmp |> ignore
 
-                  let golden =
-                      File.ReadAllText(
-                          Path.Combine(repoRoot, "tests", "FS.GG.Governance.VerifyCommand.Tests", "goldens", "verify.no-declaration.json")
-                      )
+                try
+                    copyGoldenFixture tmp
+                    let req = parseOrFail [ "verify"; "--repo"; tmp; "--paths"; "src/Lib/Thing.fs" ]
 
-                  Expect.equal produced golden "no-declaration verify.json byte-identical to the frozen 5a0cb28 golden"
-              finally
-                  try
-                      Directory.Delete(tmp, true)
-                  with _ ->
-                      ()
-          } ]
+                    let model =
+                        Interpreter.run
+                            { Interpreter.realPorts req.Repo with
+                                Out = ignore
+                            }
+                            req
+
+                    Expect.equal model.Exit Loop.Success "verify exits 0 over the fixed fixture"
+                    let produced = File.ReadAllText req.VerifyOut
+
+                    Expect.isFalse
+                        (produced.Contains "releaseReadiness")
+                        "no releaseReadiness block without a declaration"
+
+                    let golden =
+                        File.ReadAllText(
+                            Path.Combine(
+                                repoRoot,
+                                "tests",
+                                "FS.GG.Governance.VerifyCommand.Tests",
+                                "goldens",
+                                "verify.no-declaration.json"
+                            )
+                        )
+
+                    Expect.equal
+                        produced
+                        golden
+                        "no-declaration verify.json byte-identical to the frozen 5a0cb28 golden"
+                finally
+                    try
+                        Directory.Delete(tmp, true)
+                    with _ ->
+                        ()
+            }
+        ]

@@ -62,7 +62,9 @@ module Budget =
     // ── public surface ──
 
     let budgetFor (profile: Profile) (mode: RunMode) : CostBudget =
-        { Ceiling = min (profileCeiling profile) (modeCeiling mode) }
+        {
+            Ceiling = min (profileCeiling profile) (modeCeiling mode)
+        }
 
     let fits (budget: CostBudget) (cost: Cost) : bool =
         costRank cost <= costRank budget.Ceiling
@@ -78,16 +80,20 @@ module Budget =
                         Recompute cause
                     else
                         OverBudget
-                            { Gate = c.Gate
-                              Cost = c.Cost
-                              Ceiling = budget.Ceiling
-                              Class = deferralClass mode
-                              Cause = cause }
+                            {
+                                Gate = c.Gate
+                                Cost = c.Cost
+                                Ceiling = budget.Ceiling
+                                Class = deferralClass mode
+                                Cause = cause
+                            }
 
-            { Gate = c.Gate
-              Cost = c.Cost
-              Review = c.Review
-              Decision = decision })
+            {
+                Gate = c.Gate
+                Cost = c.Cost
+                Review = c.Review
+                Decision = decision
+            })
         |> List.sortWith byGate
         |> CacheDecisionReport
 

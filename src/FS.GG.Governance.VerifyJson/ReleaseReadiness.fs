@@ -7,13 +7,13 @@
 namespace FS.GG.Governance.VerifyJson
 
 open System.Text.Json
-open FS.GG.Governance.Config.Model          // SurfaceId
-open FS.GG.Governance.FreshnessKey.Model     // ArtifactHash
-open FS.GG.Governance.Ship.Model             // Verdict (Pass/Fail)
-open FS.GG.Governance.PackEvidence.Model      // PackEvidenceSet / PackVerdict / VersionVerdict / PackOutcome
-open FS.GG.Governance.Attestation.Model       // AttestationSummary
-open FS.GG.Governance.AttestationJson         // schemaVersion / complianceToken — the canonical attestation tokens
-open FS.GG.Governance.ReleaseReport.Model     // VerifyReleasePreview
+open FS.GG.Governance.Config.Model // SurfaceId
+open FS.GG.Governance.FreshnessKey.Model // ArtifactHash
+open FS.GG.Governance.Ship.Model // Verdict (Pass/Fail)
+open FS.GG.Governance.PackEvidence.Model // PackEvidenceSet / PackVerdict / VersionVerdict / PackOutcome
+open FS.GG.Governance.Attestation.Model // AttestationSummary
+open FS.GG.Governance.AttestationJson // schemaVersion / complianceToken — the canonical attestation tokens
+open FS.GG.Governance.ReleaseReport.Model // VerifyReleasePreview
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ReleaseReadiness =
@@ -49,12 +49,16 @@ module ReleaseReadiness =
     let rrNullableString (w: Utf8JsonWriter) (name: string) (value: string option) =
         match value with
         | Some s -> w.WriteString(name, s)
-        | None -> w.WritePropertyName name; w.WriteNullValue()
+        | None ->
+            w.WritePropertyName name
+            w.WriteNullValue()
 
     let rrNullableInt (w: Utf8JsonWriter) (name: string) (value: int option) =
         match value with
         | Some i -> w.WriteNumber(name, i)
-        | None -> w.WritePropertyName name; w.WriteNullValue()
+        | None ->
+            w.WritePropertyName name
+            w.WriteNullValue()
 
     let rrPathOf (v: PackVerdict) : string =
         match v.Outcome with
@@ -89,16 +93,23 @@ module ReleaseReadiness =
         let sorted =
             pack.Verdicts
             |> List.sortWith (fun a b ->
-                let s = System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface)
-                if s <> 0 then s else System.String.CompareOrdinal(rrPathOf a, rrPathOf b))
+                let s =
+                    System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface)
+
+                if s <> 0 then
+                    s
+                else
+                    System.String.CompareOrdinal(rrPathOf a, rrPathOf b))
 
         w.WritePropertyName "packageEvidence"
         w.WriteStartObject()
         w.WriteBoolean("noPackableProjects", pack.NoPackableProjects)
         w.WritePropertyName "projects"
         w.WriteStartArray()
+
         for v in sorted do
             writePackProject w v
+
         w.WriteEndArray()
         w.WriteEndObject()
 
@@ -113,12 +124,14 @@ module ReleaseReadiness =
 
         let sorted =
             pack.Verdicts
-            |> List.sortWith (fun a b -> System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface))
+            |> List.sortWith (fun a b ->
+                System.String.CompareOrdinal(rrSurfaceValue a.Surface, rrSurfaceValue b.Surface))
 
         w.WritePropertyName "versionPolicy"
         w.WriteStartObject()
         w.WritePropertyName "projects"
         w.WriteStartArray()
+
         for v in sorted do
             let baseline, packed = baselineAndPacked v.Version
             w.WriteStartObject()
@@ -127,6 +140,7 @@ module ReleaseReadiness =
             rrNullableString w "baseline" baseline
             rrNullableString w "packed" packed
             w.WriteEndObject()
+
         w.WriteEndArray()
         w.WriteEndObject()
 

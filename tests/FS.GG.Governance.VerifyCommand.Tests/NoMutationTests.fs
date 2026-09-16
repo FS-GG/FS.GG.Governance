@@ -18,28 +18,33 @@ let private diskWriter: Interpreter.ArtifactWriter =
     fun path content ->
         try
             match Path.GetDirectoryName path with
-            | null | "" -> ()
+            | null
+            | "" -> ()
             | d -> Directory.CreateDirectory d |> ignore
+
             File.WriteAllText(path, content)
             Ok()
-        with e -> Error e.Message
+        with e ->
+            Error e.Message
 
 let private realishPorts (dir: string) (cap: Capture) : Interpreter.Ports =
-    { Files = Loader.fileSystemReader dir
-      Git = FS.GG.Governance.Snapshot.Interpreter.realPorts dir
-      Freshness = FreshnessSensing.realSensor dir
-      Store = FreshnessSensing.realStoreReader
-      Write = diskWriter
-      Out = capturingSink cap
-      Execute = fakeExecPortPass
-      SenseCapability = plainCapability
-      RenderReport = noRichRender
-      SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency
-      Handoffs = fun _ -> [] }
+    {
+        Files = Loader.fileSystemReader dir
+        Git = FS.GG.Governance.Snapshot.Interpreter.realPorts dir
+        Freshness = FreshnessSensing.realSensor dir
+        Store = FreshnessSensing.realStoreReader
+        Write = diskWriter
+        Out = capturingSink cap
+        Execute = fakeExecPortPass
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+        SenseEnvironment = fakeSenseEnvironment
+        SenseBuilder = fakeSenseBuilder
+        SenseRelease = fakeSenseRelease
+        SenseSurfaces = fakeSenseSurfaces
+        SenseViewCurrency = fakeSenseViewCurrency
+        Handoffs = fun _ -> []
+    }
 
 /// Relative-path → content-hash snapshot of a directory tree, skipping `.git`.
 let private snapshotTree (dir: string) : Map<string, string> =
@@ -55,45 +60,67 @@ let private snapshotTree (dir: string) : Map<string, string> =
 let tests =
     testList
         "NoMutation (Polish)"
-        [ test "writing --verify-out OUTSIDE the repo leaves the repo tree byte-for-byte unchanged" {
-              withTempRepo (fun dir ->
-                  let outDir = Path.Combine(Path.GetTempPath(), "fsgg-verify-out-" + System.Guid.NewGuid().ToString("N"))
-                  Directory.CreateDirectory outDir |> ignore
+        [
+            test "writing --verify-out OUTSIDE the repo leaves the repo tree byte-for-byte unchanged" {
+                withTempRepo (fun dir ->
+                    let outDir =
+                        Path.Combine(Path.GetTempPath(), "fsgg-verify-out-" + System.Guid.NewGuid().ToString("N"))
 
-                  try
-                      let before = snapshotTree dir
-                      let cap = newCapture ()
+                    Directory.CreateDirectory outDir |> ignore
 
-                      let req =
-                          { requestForProfile (Loop.Since "HEAD~1") Loop.Text Standard with
-                              Repo = dir
-                              VerifyOut = Path.Combine(outDir, "verify.json")
-                              StorePath = Path.Combine(outDir, "store.json") }
+                    try
+                        let before = snapshotTree dir
+                        let cap = newCapture ()
 
-                      Interpreter.run (realishPorts dir cap) req |> ignore
+                        let req =
+                            { requestForProfile (Loop.Since "HEAD~1") Loop.Text Standard with
+                                Repo = dir
+                                VerifyOut = Path.Combine(outDir, "verify.json")
+                                StorePath = Path.Combine(outDir, "store.json")
+                            }
 
-                      let after = snapshotTree dir
-                      Expect.equal after before "the governed repo tree is unchanged when the artifact is written outside it"
-                  finally
-                      try Directory.Delete(outDir, true) with _ -> ())
-          }
+                        Interpreter.run (realishPorts dir cap) req |> ignore
 
-          test "writing --verify-out INSIDE the repo (no --persist-store) adds only the requested verify.json" {
-              withTempRepo (fun dir ->
-                  let before = snapshotTree dir
-                  let cap = newCapture ()
+                        let after = snapshotTree dir
 
-                  let req =
-                      { requestForProfile (Loop.Since "HEAD~1") Loop.Text Standard with
-                          Repo = dir
-                          VerifyOut = Path.Combine(dir, "readiness", "verify.json")
-                          StorePath = Path.Combine(dir, "readiness", "evidence-reuse.json") }
+                        Expect.equal
+                            after
+                            before
+                            "the governed repo tree is unchanged when the artifact is written outside it"
+                    finally
+                        try
+                            Directory.Delete(outDir, true)
+                        with _ ->
+                            ())
+            }
 
-                  Interpreter.run (realishPorts dir cap) req |> ignore
+            test "writing --verify-out INSIDE the repo (no --persist-store) adds only the requested verify.json" {
+                withTempRepo (fun dir ->
+                    let before = snapshotTree dir
+                    let cap = newCapture ()
 
-                  let after = snapshotTree dir
-                  let added = Map.toList after |> List.map fst |> List.filter (fun p -> not (Map.containsKey p before))
-                  let changed = Map.toList before |> List.filter (fun (p, h) -> Map.tryFind p after <> Some h) |> List.map fst
+                    let req =
+                        { requestForProfile (Loop.Since "HEAD~1") Loop.Text Standard with
+                            Repo = dir
+                            VerifyOut = Path.Combine(dir, "readiness", "verify.json")
+                            StorePath = Path.Combine(dir, "readiness", "evidence-reuse.json")
+                        }
 
-                  Expect.equal added [ "readiness/verify.json" ] "only verify.json is added"
-                  Expect.isEmpty changed "no existing file is changed") } ]
+                    Interpreter.run (realishPorts dir cap) req |> ignore
+
+                    let after = snapshotTree dir
+
+                    let added =
+                        Map.toList after
+                        |> List.map fst
+                        |> List.filter (fun p -> not (Map.containsKey p before))
+
+                    let changed =
+                        Map.toList before
+                        |> List.filter (fun (p, h) -> Map.tryFind p after <> Some h)
+                        |> List.map fst
+
+                    Expect.equal added [ "readiness/verify.json" ] "only verify.json is added"
+                    Expect.isEmpty changed "no existing file is changed")
+            }
+        ]

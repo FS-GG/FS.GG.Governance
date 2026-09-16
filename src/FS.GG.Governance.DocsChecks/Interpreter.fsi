@@ -20,18 +20,22 @@ module Interpreter =
         | UnexpectedIo
 
     type DocsReadError =
-        { Path: string
-          Kind: DocsReadErrorKind
-          Detail: string }
+        {
+            Path: string
+            Kind: DocsReadErrorKind
+            Detail: string
+        }
 
     /// Injected port: read a docs source, resolve an internal path/anchor target, resolve a symbol/anchor.
     /// The ONLY filesystem seam. `ResolveTarget`/`ResolveSymbol` interpret their argument relative to the
     /// repo root (the real port closes over `repo`). `ResolveSymbol` reports every unreadable `.fsi`
     /// input as typed errors; an incomplete scan is never collapsed into `Ok false`.
     type DocsPort =
-        { ReadSource: GovernedPath -> Result<string, string>
-          ResolveTarget: string -> bool
-          ResolveSymbol: string -> Result<bool, DocsReadError list> }
+        {
+            ReadSource: GovernedPath -> Result<string, string>
+            ResolveTarget: string -> bool
+            ResolveSymbol: string -> Result<bool, DocsReadError list>
+        }
 
     val realPort: repo: string -> DocsPort
 
@@ -41,6 +45,4 @@ module Interpreter =
     /// Automated example-freshness judgement is out of scope (inherently judgement-heavy — supplied by a
     /// reviewer as an `ExampleFact`), so `Examples` is empty here.
     val senseDocs:
-        port: DocsPort ->
-        request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest ->
-            Model.DocsFacts
+        port: DocsPort -> request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest -> Model.DocsFacts

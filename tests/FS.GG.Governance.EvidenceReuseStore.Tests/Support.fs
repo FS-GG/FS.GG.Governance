@@ -23,16 +23,18 @@ open FS.GG.Governance.FreshnessSensing
 /// A complete, literal `FreshnessInputs` for `check` — every category present and distinct so loss is
 /// observable, with a multi-element verbatim `CoveredArtifacts` list (distinct order from any sort).
 let inputs (check: string) : FreshnessInputs =
-    { Check = CheckId check
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId check
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 // ── Real EvidenceRef + store builders (opaque, edge-supplied, disclosed Synthetic) ──
 
@@ -73,20 +75,22 @@ let readPath (path: string) : Result<ReuseStore option, string> = FreshnessSensi
 // chars) — so the opaque-reference / escaping edge (FR-004) is exercised by generated stores.
 let private shortStringGen: Gen<string> =
     Gen.elements
-        [ ""
-          "a"
-          "h1"
-          "h2"
-          "r1"
-          "g1"
-          "8.0"
-          "build:tests"
-          "héllo"
-          "x:y=z"
-          "with\"quote"
-          "back\\slash"
-          "tab\tchar"
-          "new\nline" ]
+        [
+            ""
+            "a"
+            "h1"
+            "h2"
+            "r1"
+            "g1"
+            "8.0"
+            "build:tests"
+            "héllo"
+            "x:y=z"
+            "with\"quote"
+            "back\\slash"
+            "tab\tchar"
+            "new\nline"
+        ]
 
 let private genEnvironment: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -108,16 +112,22 @@ let private genFreshnessInputs: Gen<FreshnessInputs> =
         let! headRev = shortStringGen
 
         return
-            { Check = CheckId check
-              Domain = DomainId domain
-              Command = (if hasCommand then Some(CommandId command) else None)
-              Environment = env
-              RuleHash = RuleHash ruleHash
-              CoveredArtifacts = arts |> List.map ArtifactHash
-              CommandVersion = (if hasCmdVersion then Some(CommandVersion cmdVersion) else None)
-              GeneratorVersion = GeneratorVersion genVersion
-              Base = Revision baseRev
-              Head = Revision headRev }
+            {
+                Check = CheckId check
+                Domain = DomainId domain
+                Command = (if hasCommand then Some(CommandId command) else None)
+                Environment = env
+                RuleHash = RuleHash ruleHash
+                CoveredArtifacts = arts |> List.map ArtifactHash
+                CommandVersion =
+                    (if hasCmdVersion then
+                         Some(CommandVersion cmdVersion)
+                     else
+                         None)
+                GeneratorVersion = GeneratorVersion genVersion
+                Base = Revision baseRev
+                Head = Revision headRev
+            }
     }
 
 let private genEvidenceRef: Gen<EvidenceRef> =
@@ -145,9 +155,23 @@ let supersededStore: ReuseStore =
     let world = inputs "build:tests"
 
     ReuseStore
-        [ { Inputs = world; Evidence = syntheticRef "newest" }
-          { Inputs = { world with Check = CheckId "build:other" }; Evidence = syntheticRef "distinct" }
-          { Inputs = world; Evidence = syntheticRef "superseded" } ]
+        [
+            {
+                Inputs = world
+                Evidence = syntheticRef "newest"
+            }
+            {
+                Inputs =
+                    { world with
+                        Check = CheckId "build:other"
+                    }
+                Evidence = syntheticRef "distinct"
+            }
+            {
+                Inputs = world
+                Evidence = syntheticRef "superseded"
+            }
+        ]
 
 /// Arbitrary candidate `FreshnessInputs` (for the reuse-decision safety property).
 type Generators =
@@ -158,6 +182,8 @@ type Generators =
 
 /// FsCheck config registering the real generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
