@@ -13,14 +13,23 @@ open FS.GG.Governance.AdvisoryPromotion.Tests.Support
 let tests =
     testList
         "NonEmptyEligibility"
-        [ test "the head+tail encoding makes an empty-basis promotion unrepresentable (compile-time guarantee)" {
-              // Documented by construction: `EligibleToBlock of PromotionBasis * PromotionBasis list` REQUIRES a
-              // head basis. Building one always names at least the head; there is no `EligibleToBlock []` form.
-              let eligible = EligibleToBlock(DeterministicBackingEvidence, [])
-              Expect.equal (AdvisoryPromotion.satisfiedBases eligible) [ DeterministicBackingEvidence ] "an eligible decision always names at least its head basis"
-          }
+        [
+            test "the head+tail encoding makes an empty-basis promotion unrepresentable (compile-time guarantee)" {
+                // Documented by construction: `EligibleToBlock of PromotionBasis * PromotionBasis list` REQUIRES a
+                // head basis. Building one always names at least the head; there is no `EligibleToBlock []` form.
+                let eligible = EligibleToBlock(DeterministicBackingEvidence, [])
 
-          testPropertyWithConfig fscheckConfig "every EligibleToBlock has satisfiedBases <> [] and every StaysAdvisory has satisfiedBases = [] (L-S1/L-S2)" (fun (f: PromotionFacts) ->
-              match AdvisoryPromotion.decide f with
-              | EligibleToBlock(_, _) as d -> not (List.isEmpty (AdvisoryPromotion.satisfiedBases d))
-              | StaysAdvisory _ as d -> List.isEmpty (AdvisoryPromotion.satisfiedBases d)) ]
+                Expect.equal
+                    (AdvisoryPromotion.satisfiedBases eligible)
+                    [ DeterministicBackingEvidence ]
+                    "an eligible decision always names at least its head basis"
+            }
+
+            testPropertyWithConfig
+                fscheckConfig
+                "every EligibleToBlock has satisfiedBases <> [] and every StaysAdvisory has satisfiedBases = [] (L-S1/L-S2)"
+                (fun (f: PromotionFacts) ->
+                    match AdvisoryPromotion.decide f with
+                    | EligibleToBlock(_, _) as d -> not (List.isEmpty (AdvisoryPromotion.satisfiedBases d))
+                    | StaysAdvisory _ as d -> List.isEmpty (AdvisoryPromotion.satisfiedBases d))
+        ]

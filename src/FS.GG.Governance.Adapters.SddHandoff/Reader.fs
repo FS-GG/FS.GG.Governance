@@ -8,9 +8,7 @@ open FS.GG.Governance.Adapters.SddHandoff.Model
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Reader =
 
-    type HandoffRead =
-        { Source: string
-          Json: string }
+    type HandoffRead = { Source: string; Json: string }
 
     exception ParseFailure of DiagnosticCause * string
 
@@ -88,9 +86,7 @@ module Reader =
         | "deferred" -> Deferred
         | "accepted-deferral" -> AcceptedDeferral
         | "autoSynthetic" ->
-            fail
-                AutoSyntheticDeclared
-                $"evidence node '{id}' declares computed-only state 'autoSynthetic'"
+            fail AutoSyntheticDeclared $"evidence node '{id}' declares computed-only state 'autoSynthetic'"
         | _ -> fail Malformed $"evidence node '{id}' declares unknown state token '{token}'"
 
     let majorOf (version: string) =
@@ -126,15 +122,13 @@ module Reader =
         if unmet = 0 then
             JourneySatisfied
         else
-            let has id = journeyDiagnosticIds |> List.contains id
+            let has id =
+                journeyDiagnosticIds |> List.contains id
 
             match has invalidJourneyReceiptId, has staleJourneyReceiptId with
-            | false, true ->
-                JourneyReceiptStale
-            | true, false ->
-                JourneyReceiptInvalid
-            | _ ->
-                JourneyProvenanceUnsupported
+            | false, true -> JourneyReceiptStale
+            | true, false -> JourneyReceiptInvalid
+            | _ -> JourneyProvenanceUnsupported
 
     let parseIntent (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceIntentDeclaration option =
         if value.ValueKind = JsonValueKind.Null then
@@ -143,71 +137,77 @@ module Reader =
             let item = objectValue path value
 
             let intent: Fsgg.Schemas.PerformanceIntentDeclaration =
-                { Id = property path "id" item |> stringValue $"{path}.id"
-                  Disposition = property path "disposition" item |> stringValue $"{path}.disposition"
-                  TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
-                  WorkloadIds = property path "workloadIds" item |> strings $"{path}.workloadIds"
-                  WorkloadDefinitionDigests =
-                    property path "workloadDefinitionDigests" item
-                    |> strings $"{path}.workloadDefinitionDigests"
-                  MaximumExpectedScale =
-                    property path "maximumExpectedScale" item |> stringValue $"{path}.maximumExpectedScale"
-                  MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
-                  MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
-                  MaxCatchUpFrames =
-                    property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
-                  StructuralCostBudgets =
-                    property path "structuralCostBudgets" item |> strings $"{path}.structuralCostBudgets"
-                  RequiredCapability =
-                    property path "requiredCapability" item |> stringValue $"{path}.requiredCapability"
-                  LiveCompositorRequired =
-                    property path "liveCompositorRequired" item |> boolValue $"{path}.liveCompositorRequired"
-                  DeferralIssue = optionalProperty "deferralIssue" item |> optionalString $"{path}.deferralIssue"
-                  EvidenceRefs = property path "evidenceRefs" item |> strings $"{path}.evidenceRefs"
-                  Rationale = optionalProperty "rationale" item |> optionalString $"{path}.rationale" }
+                {
+                    Id = property path "id" item |> stringValue $"{path}.id"
+                    Disposition = property path "disposition" item |> stringValue $"{path}.disposition"
+                    TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
+                    WorkloadIds = property path "workloadIds" item |> strings $"{path}.workloadIds"
+                    WorkloadDefinitionDigests =
+                        property path "workloadDefinitionDigests" item
+                        |> strings $"{path}.workloadDefinitionDigests"
+                    MaximumExpectedScale =
+                        property path "maximumExpectedScale" item
+                        |> stringValue $"{path}.maximumExpectedScale"
+                    MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
+                    MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
+                    MaxCatchUpFrames = property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
+                    StructuralCostBudgets =
+                        property path "structuralCostBudgets" item
+                        |> strings $"{path}.structuralCostBudgets"
+                    RequiredCapability =
+                        property path "requiredCapability" item
+                        |> stringValue $"{path}.requiredCapability"
+                    LiveCompositorRequired =
+                        property path "liveCompositorRequired" item
+                        |> boolValue $"{path}.liveCompositorRequired"
+                    DeferralIssue = optionalProperty "deferralIssue" item |> optionalString $"{path}.deferralIssue"
+                    EvidenceRefs = property path "evidenceRefs" item |> strings $"{path}.evidenceRefs"
+                    Rationale = optionalProperty "rationale" item |> optionalString $"{path}.rationale"
+                }
 
             Some intent
 
     let parseSample (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceEvidenceSampleSet =
         let item = objectValue path value
 
-        { WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
-          WorkloadDefinitionDigest =
-            property path "workloadDefinitionDigest" item |> stringValue $"{path}.workloadDefinitionDigest"
-          WorkloadClass = property path "workloadClass" item |> stringValue $"{path}.workloadClass"
-          TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
-          MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
-          MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
-          MaxCatchUpFrames =
-            property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
-          MeasurementScope =
-            property path "measurementScope" item |> stringValue $"{path}.measurementScope"
-          RequiredCapability =
-            property path "requiredCapability" item |> stringValue $"{path}.requiredCapability"
-          HostProfile = property path "hostProfile" item |> stringValue $"{path}.hostProfile"
-          PackageVersions = property path "packageVersions" item |> strings $"{path}.packageVersions"
-          MeasurementMode =
-            property path "measurementMode" item |> stringValue $"{path}.measurementMode"
-          Capabilities = property path "capabilities" item |> strings $"{path}.capabilities"
-          WarmupPolicy = property path "warmupPolicy" item |> stringValue $"{path}.warmupPolicy"
-          SamplePolicy = property path "samplePolicy" item |> stringValue $"{path}.samplePolicy"
-          CapturedAtUtc = property path "capturedAtUtc" item |> stringValue $"{path}.capturedAtUtc"
-          CurrencyToken = property path "currencyToken" item |> stringValue $"{path}.currencyToken"
-          ProbeReadbackContaminated =
-            property path "probeReadbackContaminated" item
-            |> boolValue $"{path}.probeReadbackContaminated"
-          DurationSamplesMs =
-            property path "durationSamplesMs" item |> decimals $"{path}.durationSamplesMs"
-          CatchUpFrames = property path "catchUpFrames" item |> ints $"{path}.catchUpFrames" }
+        {
+            WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
+            WorkloadDefinitionDigest =
+                property path "workloadDefinitionDigest" item
+                |> stringValue $"{path}.workloadDefinitionDigest"
+            WorkloadClass = property path "workloadClass" item |> stringValue $"{path}.workloadClass"
+            TargetFps = property path "targetFps" item |> intValue $"{path}.targetFps"
+            MaxP95Ms = property path "maxP95Ms" item |> decimalValue $"{path}.maxP95Ms"
+            MaxP99Ms = property path "maxP99Ms" item |> decimalValue $"{path}.maxP99Ms"
+            MaxCatchUpFrames = property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
+            MeasurementScope = property path "measurementScope" item |> stringValue $"{path}.measurementScope"
+            RequiredCapability =
+                property path "requiredCapability" item
+                |> stringValue $"{path}.requiredCapability"
+            HostProfile = property path "hostProfile" item |> stringValue $"{path}.hostProfile"
+            PackageVersions = property path "packageVersions" item |> strings $"{path}.packageVersions"
+            MeasurementMode = property path "measurementMode" item |> stringValue $"{path}.measurementMode"
+            Capabilities = property path "capabilities" item |> strings $"{path}.capabilities"
+            WarmupPolicy = property path "warmupPolicy" item |> stringValue $"{path}.warmupPolicy"
+            SamplePolicy = property path "samplePolicy" item |> stringValue $"{path}.samplePolicy"
+            CapturedAtUtc = property path "capturedAtUtc" item |> stringValue $"{path}.capturedAtUtc"
+            CurrencyToken = property path "currencyToken" item |> stringValue $"{path}.currencyToken"
+            ProbeReadbackContaminated =
+                property path "probeReadbackContaminated" item
+                |> boolValue $"{path}.probeReadbackContaminated"
+            DurationSamplesMs = property path "durationSamplesMs" item |> decimals $"{path}.durationSamplesMs"
+            CatchUpFrames = property path "catchUpFrames" item |> ints $"{path}.catchUpFrames"
+        }
 
     let parseMeasurement (path: string) (value: JsonElement) : Fsgg.Schemas.PerformanceEvidenceMeasurement =
         let item = objectValue path value
 
-        { WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
-          P95Ms = property path "p95Ms" item |> decimalValue $"{path}.p95Ms"
-          P99Ms = property path "p99Ms" item |> decimalValue $"{path}.p99Ms"
-          MaxCatchUpFrames =
-            property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames" }
+        {
+            WorkloadId = property path "workloadId" item |> stringValue $"{path}.workloadId"
+            P95Ms = property path "p95Ms" item |> decimalValue $"{path}.p95Ms"
+            P99Ms = property path "p99Ms" item |> decimalValue $"{path}.p99Ms"
+            MaxCatchUpFrames = property path "maxCatchUpFrames" item |> intValue $"{path}.maxCatchUpFrames"
+        }
 
     let parsePerformanceEvidence index (value: JsonElement) : Fsgg.Schemas.GovernanceHandoffPerformanceEvidence =
         let path = $"performanceEvidence[{index}]"
@@ -222,37 +222,45 @@ module Reader =
             | Some element -> Some(boolValue $"{artifactPath}.claimedBudgetPassed" element)
 
         let artifactValue: Fsgg.Schemas.PerformanceEvidenceArtifact =
-            { ContractVersion =
-                property artifactPath "contractVersion" artifact
-                |> stringValue $"{artifactPath}.contractVersion"
-              ClaimedBudgetPassed = claimed
-              SampleSets =
-                property artifactPath "sampleSets" artifact
-                |> arrayValue $"{artifactPath}.sampleSets"
-                |> List.mapi (fun sampleIndex sample ->
-                    parseSample $"{artifactPath}.sampleSets[{sampleIndex}]" sample) }
+            {
+                ContractVersion =
+                    property artifactPath "contractVersion" artifact
+                    |> stringValue $"{artifactPath}.contractVersion"
+                ClaimedBudgetPassed = claimed
+                SampleSets =
+                    property artifactPath "sampleSets" artifact
+                    |> arrayValue $"{artifactPath}.sampleSets"
+                    |> List.mapi (fun sampleIndex sample ->
+                        parseSample $"{artifactPath}.sampleSets[{sampleIndex}]" sample)
+            }
 
-        { EvidenceId = property path "evidenceId" item |> stringValue $"{path}.evidenceId"
-          ArtifactPath = property path "artifactPath" item |> stringValue $"{path}.artifactPath"
-          Intent = property path "intent" item |> parseIntent $"{path}.intent"
-          Artifact = artifactValue
-          Measurements =
-            property path "measurements" item
-            |> arrayValue $"{path}.measurements"
-            |> List.mapi (fun measurementIndex measurement ->
-                parseMeasurement $"{path}.measurements[{measurementIndex}]" measurement) }
+        {
+            EvidenceId = property path "evidenceId" item |> stringValue $"{path}.evidenceId"
+            ArtifactPath = property path "artifactPath" item |> stringValue $"{path}.artifactPath"
+            Intent = property path "intent" item |> parseIntent $"{path}.intent"
+            Artifact = artifactValue
+            Measurements =
+                property path "measurements" item
+                |> arrayValue $"{path}.measurements"
+                |> List.mapi (fun measurementIndex measurement ->
+                    parseMeasurement $"{path}.measurements[{measurementIndex}]" measurement)
+        }
 
     let parse (read: HandoffRead) : Result<Handoff, Diagnostic> =
         let diagnostic cause message =
             Error
-                { Cause = cause
-                  Source = read.Source
-                  Message = message }
+                {
+                    Cause = cause
+                    Source = read.Source
+                    Message = message
+                }
 
         try
             use document = JsonDocument.Parse read.Json
             let root = objectValue "handoff" document.RootElement
-            let contractVersion = property "handoff" "contractVersion" root |> stringValue "contractVersion"
+
+            let contractVersion =
+                property "handoff" "contractVersion" root |> stringValue "contractVersion"
 
             match majorOf contractVersion with
             | None -> fail Malformed $"handoff contractVersion is not recognizable semver: '{contractVersion}'"
@@ -276,23 +284,29 @@ module Reader =
                     let id = property path "id" node |> stringValue $"{path}.id"
                     let token = property path "state" node |> stringValue $"{path}.state"
 
-                    { Id = id
-                      State = parseDeclaredState id token
-                      Stale =
-                        optionalProperty "stale" node
-                        |> Option.map (boolValue $"{path}.stale")
-                        |> Option.defaultValue false
-                      Rationale = optionalProperty "rationale" node |> optionalString $"{path}.rationale" })
+                    {
+                        Id = id
+                        State = parseDeclaredState id token
+                        Stale =
+                            optionalProperty "stale" node
+                            |> Option.map (boolValue $"{path}.stale")
+                            |> Option.defaultValue false
+                        Rationale = optionalProperty "rationale" node |> optionalString $"{path}.rationale"
+                    })
 
             let dependencies =
                 optionalProperty "dependencies" evidence
                 |> Option.bind (fun value ->
-                    if value.ValueKind = JsonValueKind.Null then None else Some value)
+                    if value.ValueKind = JsonValueKind.Null then
+                        None
+                    else
+                        Some value)
                 |> Option.map (arrayValue "evidence.dependencies")
                 |> Option.defaultValue []
                 |> List.mapi (fun index value ->
                     let path = $"evidence.dependencies[{index}]"
                     let edge = objectValue path value
+
                     property path "dependent" edge |> stringValue $"{path}.dependent",
                     property path "dependency" edge |> stringValue $"{path}.dependency")
 
@@ -320,20 +334,23 @@ module Reader =
                                 |> List.mapi (fun index value ->
                                     let path = $"readiness.perViewState[{index}]"
                                     let view = objectValue path value
+
                                     property path "view" view |> stringValue $"{path}.view",
                                     property path "state" view |> stringValue $"{path}.state")
 
-                    { ShipDisposition =
-                        property "readiness" "shipDisposition" item
-                        |> stringValue "readiness.shipDisposition"
-                      VerificationReadiness =
-                        property "readiness" "verificationReadiness" item
-                        |> stringValue "readiness.verificationReadiness"
-                      BlockingDiagnosticIds =
-                        property "readiness" "blockingDiagnosticIds" item
-                        |> strings "readiness.blockingDiagnosticIds"
-                      Counts = countValues
-                      PerViewState = perView })
+                    {
+                        ShipDisposition =
+                            property "readiness" "shipDisposition" item
+                            |> stringValue "readiness.shipDisposition"
+                        VerificationReadiness =
+                            property "readiness" "verificationReadiness" item
+                            |> stringValue "readiness.verificationReadiness"
+                        BlockingDiagnosticIds =
+                            property "readiness" "blockingDiagnosticIds" item
+                            |> strings "readiness.blockingDiagnosticIds"
+                        Counts = countValues
+                        PerViewState = perView
+                    })
 
             let governedReferences =
                 optionalProperty "governedReferences" root
@@ -345,13 +362,15 @@ module Reader =
 
                     match optionalProperty "path" item with
                     | Some rawPath ->
-                        [ { Path = rawPath |> stringValue $"{path}.path" |> normalizePath
-                            Owner = property path "owner" item |> stringValue $"{path}.owner"
-                            Relationship =
-                                property path "relationship" item |> stringValue $"{path}.relationship"
-                            Kind = optionalProperty "kind" item |> optionalString $"{path}.kind"
-                            Operation =
-                                optionalProperty "operation" item |> optionalString $"{path}.operation" } ]
+                        [
+                            {
+                                Path = rawPath |> stringValue $"{path}.path" |> normalizePath
+                                Owner = property path "owner" item |> stringValue $"{path}.owner"
+                                Relationship = property path "relationship" item |> stringValue $"{path}.relationship"
+                                Kind = optionalProperty "kind" item |> optionalString $"{path}.kind"
+                                Operation = optionalProperty "operation" item |> optionalString $"{path}.operation"
+                            }
+                        ]
                     | None ->
                         let workItem =
                             optionalProperty "workItem" item
@@ -361,11 +380,13 @@ module Reader =
                         property path "paths" item
                         |> strings $"{path}.paths"
                         |> List.map (fun rawPath ->
-                            { Path = normalizePath rawPath
-                              Owner = workItem
-                              Relationship = "legacy"
-                              Kind = None
-                              Operation = None }))
+                            {
+                                Path = normalizePath rawPath
+                                Owner = workItem
+                                Relationship = "legacy"
+                                Kind = None
+                                Operation = None
+                            }))
                 |> List.collect id
 
             let performanceEvidence =
@@ -382,18 +403,17 @@ module Reader =
                     let path = $"diagnostics[{index}]"
                     let item = objectValue path value
 
-                    { Id = property path "id" item |> stringValue $"{path}.id"
-                      Message = property path "message" item |> stringValue $"{path}.message"
-                      Correction =
-                        property path "correction" item |> stringValue $"{path}.correction"
-                      RelatedIds = property path "relatedIds" item |> strings $"{path}.relatedIds" })
+                    {
+                        Id = property path "id" item |> stringValue $"{path}.id"
+                        Message = property path "message" item |> stringValue $"{path}.message"
+                        Correction = property path "correction" item |> stringValue $"{path}.correction"
+                        RelatedIds = property path "relatedIds" item |> strings $"{path}.relatedIds"
+                    })
 
             let journeyReadiness =
                 match readiness with
                 | None when generatorRequiresJourney generatorVersion ->
-                    fail
-                        Malformed
-                        "readiness is required for SDD 0.30+ production-journey facts"
+                    fail Malformed "readiness is required for SDD 0.30+ production-journey facts"
                 | None -> None
                 | Some block ->
                     match block.Counts |> List.tryFind (fun (name, _) -> name = "journeyObligationsUnmet") with
@@ -404,9 +424,7 @@ module Reader =
                     | None -> None
                     | Some(_, unmet) ->
                         if unmet < 0 then
-                            fail
-                                Malformed
-                                "readiness.counts.journeyObligationsUnmet must be non-negative"
+                            fail Malformed "readiness.counts.journeyObligationsUnmet must be non-negative"
 
                         let shipDisposition = block.ShipDisposition.Trim().ToLowerInvariant()
 
@@ -415,8 +433,7 @@ module Reader =
                                 Malformed
                                 "readiness contradicts itself: ship-ready disposition has unmet production journeys"
 
-                        let journeyDiagnosticIds =
-                            canonicalJourneyDiagnostics block.BlockingDiagnosticIds
+                        let journeyDiagnosticIds = canonicalJourneyDiagnostics block.BlockingDiagnosticIds
 
                         if unmet = 0 && not (List.isEmpty journeyDiagnosticIds) then
                             fail
@@ -425,33 +442,38 @@ module Reader =
 
                         let relatedIds =
                             diagnostics
-                            |> List.filter (fun diagnostic ->
-                                journeyDiagnosticIds |> List.contains diagnostic.Id)
+                            |> List.filter (fun diagnostic -> journeyDiagnosticIds |> List.contains diagnostic.Id)
                             |> List.collect (fun diagnostic -> diagnostic.RelatedIds)
                             |> List.distinct
                             |> List.sort
 
                         Some
-                            { ObligationsUnmet = unmet
-                              BlockingDiagnosticIds = journeyDiagnosticIds
-                              RelatedIds = relatedIds
-                              Disposition = journeyDisposition unmet journeyDiagnosticIds }
+                            {
+                                ObligationsUnmet = unmet
+                                BlockingDiagnosticIds = journeyDiagnosticIds
+                                RelatedIds = relatedIds
+                                Disposition = journeyDisposition unmet journeyDiagnosticIds
+                            }
 
             Ok
-                { ContractVersion = contractVersion
-                  SchemaVersion =
-                    optionalProperty "schemaVersion" root
-                    |> Option.map (intValue "schemaVersion")
-                    |> Option.defaultValue 1
-                  GeneratorVersion = generatorVersion
-                  Evidence =
-                    { Nodes = nodes
-                      Dependencies = dependencies }
-                  Readiness = readiness
-                  JourneyReadiness = journeyReadiness
-                  GovernedReferences = governedReferences
-                  PerformanceEvidence = performanceEvidence
-                  Diagnostics = diagnostics }
+                {
+                    ContractVersion = contractVersion
+                    SchemaVersion =
+                        optionalProperty "schemaVersion" root
+                        |> Option.map (intValue "schemaVersion")
+                        |> Option.defaultValue 1
+                    GeneratorVersion = generatorVersion
+                    Evidence =
+                        {
+                            Nodes = nodes
+                            Dependencies = dependencies
+                        }
+                    Readiness = readiness
+                    JourneyReadiness = journeyReadiness
+                    GovernedReferences = governedReferences
+                    PerformanceEvidence = performanceEvidence
+                    Diagnostics = diagnostics
+                }
         with
         | ParseFailure(cause, message) -> diagnostic cause message
         | :? JsonException as ex -> diagnostic Malformed $"handoff JSON could not be parsed: {ex.Message}"

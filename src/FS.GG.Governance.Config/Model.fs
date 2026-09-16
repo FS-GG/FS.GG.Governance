@@ -75,13 +75,15 @@ module Model =
     // ── governance.yml ──
 
     type ProjectFacts =
-        { SchemaVersion: SchemaVersion
-          Id: ProjectId
-          Domains: DomainId list
-          GovernedRoot: GovernedPath
-          PackageSurfaces: GovernedPath list
-          PolicyRef: GovernedPath option
-          CapabilitiesRef: GovernedPath option }
+        {
+            SchemaVersion: SchemaVersion
+            Id: ProjectId
+            Domains: DomainId list
+            GovernedRoot: GovernedPath
+            PackageSurfaces: GovernedPath list
+            PolicyRef: GovernedPath option
+            CapabilitiesRef: GovernedPath option
+        }
 
     // ── policy.yml (optional) ──
 
@@ -90,68 +92,84 @@ module Model =
     type ReviewBudgetDecl = { MaxReviews: int }
 
     type PolicyFacts =
-        { SchemaVersion: SchemaVersion
-          Profiles: ProfileId list
-          DefaultProfile: ProfileId
-          BranchPolicy: BranchPolicyDecl option
-          ReviewBudget: ReviewBudgetDecl option }
+        {
+            SchemaVersion: SchemaVersion
+            Profiles: ProfileId list
+            DefaultProfile: ProfileId
+            BranchPolicy: BranchPolicyDecl option
+            ReviewBudget: ReviewBudgetDecl option
+        }
 
     // ── capabilities.yml ──
 
     type PathMapEntry =
-        { Glob: GovernedPath
-          Capability: DomainId }
+        {
+            Glob: GovernedPath
+            Capability: DomainId
+        }
 
     type Surface =
-        { Id: SurfaceId
-          Class: SurfaceClass
-          Paths: GovernedPath list
-          Owner: Owner
-          Maturity: Maturity
-          EvidenceTag: EvidenceTag option
-          TemplateProfile: TemplateProfile option
-          Baseline: Baseline option }
+        {
+            Id: SurfaceId
+            Class: SurfaceClass
+            Paths: GovernedPath list
+            Owner: Owner
+            Maturity: Maturity
+            EvidenceTag: EvidenceTag option
+            TemplateProfile: TemplateProfile option
+            Baseline: Baseline option
+        }
 
     type Check =
-        { Id: CheckId
-          Domain: DomainId
-          Command: CommandId option
-          Owner: Owner
-          Cost: Cost
-          Environment: EnvironmentClass
-          Maturity: Maturity
-          Tier: GeneratedProductTier option }
+        {
+            Id: CheckId
+            Domain: DomainId
+            Command: CommandId option
+            Owner: Owner
+            Cost: Cost
+            Environment: EnvironmentClass
+            Maturity: Maturity
+            Tier: GeneratedProductTier option
+        }
 
     type CapabilityFacts =
-        { SchemaVersion: SchemaVersion
-          Domains: DomainId list
-          PathMap: PathMapEntry list
-          Surfaces: Surface list
-          Checks: Check list }
+        {
+            SchemaVersion: SchemaVersion
+            Domains: DomainId list
+            PathMap: PathMapEntry list
+            Surfaces: Surface list
+            Checks: Check list
+        }
 
     // ── tooling.yml (optional) ──
 
     type CommandSpec =
-        { Id: CommandId
-          Command: string
-          Timeout: TimeoutLimit
-          Environment: EnvironmentClass }
+        {
+            Id: CommandId
+            Command: string
+            Timeout: TimeoutLimit
+            Environment: EnvironmentClass
+        }
 
     type ExternalToolReq = { Tool: string; MinVersion: string }
 
     type ToolingFacts =
-        { SchemaVersion: SchemaVersion
-          Commands: CommandSpec list
-          EnvironmentClasses: EnvironmentClass list
-          ExternalTools: ExternalToolReq list }
+        {
+            SchemaVersion: SchemaVersion
+            Commands: CommandSpec list
+            EnvironmentClasses: EnvironmentClass list
+            ExternalTools: ExternalToolReq list
+        }
 
     // ── The aggregate typed facts ──
 
     type TypedFacts =
-        { Project: ProjectFacts
-          Policy: PolicyFacts option
-          Capabilities: CapabilityFacts
-          Tooling: ToolingFacts option }
+        {
+            Project: ProjectFacts
+            Policy: PolicyFacts option
+            Capabilities: CapabilityFacts
+            Tooling: ToolingFacts option
+        }
 
     // ── Diagnostics ──
 
@@ -162,9 +180,11 @@ module Model =
         | Tooling
 
     type Locator =
-        { Field: string option
-          Id: string option
-          Line: int option }
+        {
+            Field: string option
+            Id: string option
+            Line: int option
+        }
 
     type DiagnosticId =
         | UnknownField
@@ -181,10 +201,12 @@ module Model =
         | MissingRequiredFile
 
     type Diagnostic =
-        { Id: DiagnosticId
-          File: FsggFile
-          Locator: Locator
-          Message: string }
+        {
+            Id: DiagnosticId
+            File: FsggFile
+            Locator: Locator
+            Message: string
+        }
 
     type Validation =
         | Valid of TypedFacts
@@ -279,7 +301,8 @@ module Model =
         let stack = System.Collections.Generic.List<string>()
 
         for seg in segments do
-            if seg = "" || seg = "." then ()
+            if seg = "" || seg = "." then
+                ()
             elif seg = ".." then
                 if stack.Count > 0 && stack.[stack.Count - 1] <> ".." then
                     stack.RemoveAt(stack.Count - 1)

@@ -18,43 +18,65 @@ open FS.GG.Governance.CurrencyEnforcement.Tests.Support
 let tests =
     testList
         "CurrencyEnforcement.findingsOf"
-        [ test "None ⇒ [] (unconfigured ⇒ byte-identity)" {
-              let views = [ decision "v" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ] ]
-              Expect.equal (findingsOf None views) [] "no config ⇒ no findings"
-          }
+        [
+            test "None ⇒ [] (unconfigured ⇒ byte-identity)" {
+                let views =
+                    [
+                        decision "v" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ]
+                    ]
 
-          test "Current and NotEvaluated ⇒ no finding" {
-              let views = [ decision "a" Current []; decision "b" NotEvaluated [] ]
-              Expect.equal (findingsOf (Some BlockOnShip) views) [] "fresh + out-of-scope ⇒ none"
-          }
+                Expect.equal (findingsOf None views) [] "no config ⇒ no findings"
+            }
 
-          test "each stale/unresolved view ⇒ one finding, Blocking base, configured maturity, declared order" {
-              let views =
-                  [ decision "a" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ]
-                    decision "b" (Regenerated [ GeneratorVersionCat ]) [ GeneratorVersionCat ]
-                    decision "c" (StaleUnresolved "x") [] ]
+            test "Current and NotEvaluated ⇒ no finding" {
+                let views = [ decision "a" Current []; decision "b" NotEvaluated [] ]
+                Expect.equal (findingsOf (Some BlockOnShip) views) [] "fresh + out-of-scope ⇒ none"
+            }
 
-              let findings = findingsOf (Some BlockOnShip) views
-              Expect.equal (findings |> List.map (fun f -> f.ViewId)) [ "a"; "b"; "c" ] "declared manifest order"
-              Expect.all findings (fun f -> f.BaseSeverity = Blocking) "base severity is Blocking (D5)"
-              Expect.all findings (fun f -> f.Maturity = BlockOnShip) "maturity = the configured dial"
-          }
+            test "each stale/unresolved view ⇒ one finding, Blocking base, configured maturity, declared order" {
+                let views =
+                    [
+                        decision "a" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ]
+                        decision "b" (Regenerated [ GeneratorVersionCat ]) [ GeneratorVersionCat ]
+                        decision "c" (StaleUnresolved "x") []
+                    ]
 
-          test "drift ⇒ SourceDrift cause; unresolved ⇒ Undeterminable cause" {
-              let views =
-                  [ decision "drift" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ]
-                    decision "unres" (StaleUnresolved "no declared sources") [] ]
+                let findings = findingsOf (Some BlockOnShip) views
+                Expect.equal (findings |> List.map (fun f -> f.ViewId)) [ "a"; "b"; "c" ] "declared manifest order"
+                Expect.all findings (fun f -> f.BaseSeverity = Blocking) "base severity is Blocking (D5)"
+                Expect.all findings (fun f -> f.Maturity = BlockOnShip) "maturity = the configured dial"
+            }
 
-              let findings = findingsOf (Some BlockOnShip) views
-              Expect.equal findings.[0].Cause (SourceDrift [ CoveredArtifactsCat ]) "drift carries the drifted categories"
-              Expect.equal findings.[1].Cause (Undeterminable "no declared sources") "unresolved carries the reason"
-          }
+            test "drift ⇒ SourceDrift cause; unresolved ⇒ Undeterminable cause" {
+                let views =
+                    [
+                        decision "drift" (WouldRegenerate [ CoveredArtifactsCat ]) [ CoveredArtifactsCat ]
+                        decision "unres" (StaleUnresolved "no declared sources") []
+                    ]
 
-          test "NotEvaluated (out of scope) ⇒ pass; StaleUnresolved (in scope) ⇒ finding, never a silent pass (FR-008)" {
-              let views =
-                  [ decision "skip" NotEvaluated []
-                    decision "unres" (StaleUnresolved "missing manifest entry") [] ]
+                let findings = findingsOf (Some BlockOnShip) views
 
-              let findings = findingsOf (Some BlockOnShip) views
-              Expect.equal (findings |> List.map (fun f -> f.ViewId)) [ "unres" ] "only the in-scope undeterminable view is a finding"
-          } ]
+                Expect.equal
+                    findings.[0].Cause
+                    (SourceDrift [ CoveredArtifactsCat ])
+                    "drift carries the drifted categories"
+
+                Expect.equal findings.[1].Cause (Undeterminable "no declared sources") "unresolved carries the reason"
+            }
+
+            test
+                "NotEvaluated (out of scope) ⇒ pass; StaleUnresolved (in scope) ⇒ finding, never a silent pass (FR-008)" {
+                let views =
+                    [
+                        decision "skip" NotEvaluated []
+                        decision "unres" (StaleUnresolved "missing manifest entry") []
+                    ]
+
+                let findings = findingsOf (Some BlockOnShip) views
+
+                Expect.equal
+                    (findings |> List.map (fun f -> f.ViewId))
+                    [ "unres" ]
+                    "only the in-scope undeterminable view is a finding"
+            }
+        ]

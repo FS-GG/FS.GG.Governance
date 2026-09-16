@@ -26,8 +26,10 @@ open FS.GG.Governance.Adapters.Spi
 //      featureInScope         -> RuleId "feature-in-scope"
 
 type ConstitutionDial =
-    { BlockingAtMerge: Set<RuleId>
-      EarlyFences: (string * Phase) list }
+    {
+        BlockingAtMerge: Set<RuleId>
+        EarlyFences: (string * Phase) list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Catalog =
@@ -38,28 +40,28 @@ module Catalog =
         fs
         |> List.choose (fun f ->
             match f.Value with
-            | TaskState (t, s) -> Some(t, s)
+            | TaskState(t, s) -> Some(t, s)
             | _ -> None)
 
     let taskDeps (fs: FactSet<SpecKitFact>) : (string * string) list =
         fs
         |> List.choose (fun f ->
             match f.Value with
-            | TaskDependsOn (t, d) -> Some(t, d)
+            | TaskDependsOn(t, d) -> Some(t, d)
             | _ -> None)
 
     let skillBindings (fs: FactSet<SpecKitFact>) : (string * string) list =
         fs
         |> List.choose (fun f ->
             match f.Value with
-            | SkillBound (t, s) -> Some(t, s)
+            | SkillBound(t, s) -> Some(t, s)
             | _ -> None)
 
     let constitutionAreas (fs: FactSet<SpecKitFact>) : (string * bool) list =
         fs
         |> List.choose (fun f ->
             match f.Value with
-            | ConstitutionArea (a, filled) -> Some(a, filled)
+            | ConstitutionArea(a, filled) -> Some(a, filled)
             | _ -> None)
 
     let artifactsPresent (fs: FactSet<SpecKitFact>) : SpecKitArtifact list =
@@ -80,106 +82,122 @@ module Catalog =
     /// effective state is `Synthetic`/`AutoSynthetic`; on a malformed graph `Unmet` with
     /// the `GraphError` (malformed ≠ tainted, distinguishable from `Unknown`).
     let evidenceCleanProbe: Probe<SpecKitFact> =
-        { Name = "evidence-not-synthetic"
-          Reads = []
-          Args = []
-          Eval =
-            fun fs ->
-                match Evidence.build (taskStates fs) (taskDeps fs) with
-                | Error e -> Unmet(sprintf "malformed evidence graph: %A" e)
-                | Ok graph ->
-                    let effective = Evidence.effective graph
+        {
+            Name = "evidence-not-synthetic"
+            Reads = []
+            Args = []
+            Eval =
+                fun fs ->
+                    match Evidence.build (taskStates fs) (taskDeps fs) with
+                    | Error e -> Unmet(sprintf "malformed evidence graph: %A" e)
+                    | Ok graph ->
+                        let effective = Evidence.effective graph
 
-                    if effective |> Map.exists (fun _ s -> s = Synthetic || s = AutoSynthetic) then
-                        Unmet "synthetic evidence reaches the base"
-                    else
-                        Met }
+                        if effective |> Map.exists (fun _ s -> s = Synthetic || s = AutoSynthetic) then
+                            Unmet "synthetic evidence reaches the base"
+                        else
+                            Met
+        }
 
     /// Every dependency edge's DEPENDENT task is a declared `TaskState`.
     let everyTaskHasDepsProbe: Probe<SpecKitFact> =
-        { Name = "every-task-declared"
-          Reads = []
-          Args = []
-          Eval =
-            fun fs ->
-                let declared = declaredTaskIds fs
+        {
+            Name = "every-task-declared"
+            Reads = []
+            Args = []
+            Eval =
+                fun fs ->
+                    let declared = declaredTaskIds fs
 
-                match taskDeps fs |> List.map fst |> List.filter (declared.Contains >> not) with
-                | [] -> Met
-                | missing -> Unmet(sprintf "undeclared dependent task(s): %A" missing) }
+                    match taskDeps fs |> List.map fst |> List.filter (declared.Contains >> not) with
+                    | [] -> Met
+                    | missing -> Unmet(sprintf "undeclared dependent task(s): %A" missing)
+        }
 
     /// Every dependency edge's TARGET task is a declared `TaskState` (the dep resolves).
     let depsResolveProbe: Probe<SpecKitFact> =
-        { Name = "deps-resolve"
-          Reads = []
-          Args = []
-          Eval =
-            fun fs ->
-                let declared = declaredTaskIds fs
+        {
+            Name = "deps-resolve"
+            Reads = []
+            Args = []
+            Eval =
+                fun fs ->
+                    let declared = declaredTaskIds fs
 
-                match taskDeps fs |> List.map snd |> List.filter (declared.Contains >> not) with
-                | [] -> Met
-                | missing -> Unmet(sprintf "unresolved dependency target(s): %A" missing) }
+                    match taskDeps fs |> List.map snd |> List.filter (declared.Contains >> not) with
+                    | [] -> Met
+                    | missing -> Unmet(sprintf "unresolved dependency target(s): %A" missing)
+        }
 
     /// The dependency topology is acyclic — reads the SAME `Evidence.build` result (a
     /// derivation, not a bespoke engine); `Unmet` only on a `Cycle`.
     let acyclicProbe: Probe<SpecKitFact> =
-        { Name = "acyclic"
-          Reads = []
-          Args = []
-          Eval =
-            fun fs ->
-                match Evidence.build (taskStates fs) (taskDeps fs) with
-                | Error (Cycle cycle) -> Unmet(sprintf "cyclic task graph: %A" cycle)
-                | _ -> Met }
+        {
+            Name = "acyclic"
+            Reads = []
+            Args = []
+            Eval =
+                fun fs ->
+                    match Evidence.build (taskStates fs) (taskDeps fs) with
+                    | Error(Cycle cycle) -> Unmet(sprintf "cyclic task graph: %A" cycle)
+                    | _ -> Met
+        }
 
     /// Every `SkillBound` names a declared `TaskState`.
     let skillIdsResolveProbe: Probe<SpecKitFact> =
-        { Name = "skill-ids-resolve"
-          Reads = []
-          Args = []
-          Eval =
-            fun fs ->
-                let declared = declaredTaskIds fs
+        {
+            Name = "skill-ids-resolve"
+            Reads = []
+            Args = []
+            Eval =
+                fun fs ->
+                    let declared = declaredTaskIds fs
 
-                match skillBindings fs |> List.map fst |> List.filter (declared.Contains >> not) with
-                | [] -> Met
-                | missing -> Unmet(sprintf "skill bound to undeclared task(s): %A" missing) }
+                    match skillBindings fs |> List.map fst |> List.filter (declared.Contains >> not) with
+                    | [] -> Met
+                    | missing -> Unmet(sprintf "skill bound to undeclared task(s): %A" missing)
+        }
 
     /// Every supplied `ConstitutionArea` is filled (non-placeholder).
     let constitutionProbe: Probe<SpecKitFact> =
-        { Name = "constitution-areas-filled"
-          Reads = [ SpecKit.toRef SpecKitArtifact.Constitution ]
-          Args = []
-          Eval =
-            fun fs ->
-                match constitutionAreas fs |> List.tryFind (snd >> not) with
-                | Some (area, _) -> Unmet(sprintf "constitution area '%s' is a placeholder" area)
-                | None -> Met }
+        {
+            Name = "constitution-areas-filled"
+            Reads = [ SpecKit.toRef SpecKitArtifact.Constitution ]
+            Args = []
+            Eval =
+                fun fs ->
+                    match constitutionAreas fs |> List.tryFind (snd >> not) with
+                    | Some(area, _) -> Unmet(sprintf "constitution area '%s' is a placeholder" area)
+                    | None -> Met
+        }
 
     /// The published contract / surface views are present and current.
     let contractsCurrentProbe: Probe<SpecKitFact> =
-        { Name = "contracts-current"
-          Reads = [ SpecKit.toRef SpecKitArtifact.Contracts ]
-          Args = []
-          Eval =
-            fun fs ->
-                if artifactsPresent fs |> List.contains SpecKitArtifact.Contracts then
-                    Met
-                else
-                    Unmet "contracts not present / drifted" }
+        {
+            Name = "contracts-current"
+            Reads = [ SpecKit.toRef SpecKitArtifact.Contracts ]
+            Args = []
+            Eval =
+                fun fs ->
+                    if artifactsPresent fs |> List.contains SpecKitArtifact.Contracts then
+                        Met
+                    else
+                        Unmet "contracts not present / drifted"
+        }
 
     /// The touched high-stakes surfaces carry their verification facts.
     let fencedSurfacesProbe: Probe<SpecKitFact> =
-        { Name = "fenced-surfaces-verified"
-          Reads = [ SpecKit.toRef SpecKitArtifact.TaskDeps ]
-          Args = []
-          Eval =
-            fun fs ->
-                if artifactsPresent fs |> List.contains SpecKitArtifact.TaskDeps then
-                    Met
-                else
-                    Unmet "fenced surface lacks its verification" }
+        {
+            Name = "fenced-surfaces-verified"
+            Reads = [ SpecKit.toRef SpecKitArtifact.TaskDeps ]
+            Args = []
+            Eval =
+                fun fs ->
+                    if artifactsPresent fs |> List.contains SpecKitArtifact.TaskDeps then
+                        Met
+                    else
+                        Unmet "fenced surface lacks its verification"
+        }
 
     // ── Rule construction helper (module-private) ──
 
@@ -195,34 +213,48 @@ module Catalog =
         mkRule
             "tasks-graph"
             Deterministic
-            { Document = "speckit"; Section = "task-graph" }
+            {
+                Document = "speckit"
+                Section = "task-graph"
+            }
             (SpecKit.whenPhase
                 Phase.Tasks
                 (Check.allOf
-                    [ Atom everyTaskHasDepsProbe
-                      Atom depsResolveProbe
-                      Atom acyclicProbe
-                      Atom skillIdsResolveProbe ]))
+                    [
+                        Atom everyTaskHasDepsProbe
+                        Atom depsResolveProbe
+                        Atom acyclicProbe
+                        Atom skillIdsResolveProbe
+                    ]))
 
     let constitutionComplete: CheckRule<SpecKitFact> =
         mkRule
             "constitution-complete"
             Deterministic
-            { Document = "constitution"; Section = "completeness" }
+            {
+                Document = "constitution"
+                Section = "completeness"
+            }
             (SpecKit.whenPhase Phase.Constitution (Atom constitutionProbe))
 
     let contractsCurrent: CheckRule<SpecKitFact> =
         mkRule
             "contracts-current"
             Deterministic
-            { Document = "speckit"; Section = "contracts" }
+            {
+                Document = "speckit"
+                Section = "contracts"
+            }
             (SpecKit.whenPhase Phase.Plan (Atom contractsCurrentProbe))
 
     let evidenceNotSynthetic: CheckRule<SpecKitFact> =
         mkRule
             "evidence-not-synthetic"
             Deterministic
-            { Document = "constitution"; Section = "evidence" }
+            {
+                Document = "constitution"
+                Section = "evidence"
+            }
             (Atom evidenceCleanProbe)
         |> CheckRule.blocking
 
@@ -230,7 +262,10 @@ module Catalog =
         mkRule
             "fenced-surfaces-verified"
             Deterministic
-            { Document = "speckit"; Section = "surfaces" }
+            {
+                Document = "speckit"
+                Section = "surfaces"
+            }
             (Atom fencedSurfacesProbe)
 
     // ── The judgement checks — `Opaque`, so never `Deterministic`; advisory, they report
@@ -240,7 +275,10 @@ module Catalog =
         mkRule
             "plan-satisfies-spec"
             AgentReviewed
-            { Document = "plan"; Section = "coverage" }
+            {
+                Document = "plan"
+                Section = "coverage"
+            }
             (SpecKit.whenPhase
                 Phase.Plan
                 (SpecKit.reviewing
@@ -252,7 +290,10 @@ module Catalog =
         mkRule
             "tasks-complete-ordered"
             AgentReviewed
-            { Document = "tasks"; Section = "completeness" }
+            {
+                Document = "tasks"
+                Section = "completeness"
+            }
             (SpecKit.whenPhase
                 Phase.Tasks
                 (SpecKit.reviewing
@@ -268,30 +309,44 @@ module Catalog =
             (Opaque("feature-in-scope", fun _ -> Unknown "a person must decide whether this is worth doing"))
 
     let catalog: CheckRule<SpecKitFact> list =
-        [ tasksGraphWellFormed
-          constitutionComplete
-          contractsCurrent
-          evidenceNotSynthetic
-          fencedSurfacesVerified
-          planSatisfiesSpec
-          tasksCompleteOrdered
-          featureInScope ]
+        [
+            tasksGraphWellFormed
+            constitutionComplete
+            contractsCurrent
+            evidenceNotSynthetic
+            fencedSurfacesVerified
+            planSatisfiesSpec
+            tasksCompleteOrdered
+            featureInScope
+        ]
 
     let mergeFence: Fence<SpecKitChange> =
-        { Name = "feature-merge"
-          Trips = fun c -> c.Phase = Phase.Merge }
+        {
+            Name = "feature-merge"
+            Trips = fun c -> c.Phase = Phase.Merge
+        }
 
     let defaultDial: ConstitutionDial =
-        { BlockingAtMerge =
-            Set.ofList
-                [ RuleId "constitution-complete"
-                  RuleId "contracts-current"
-                  RuleId "fenced-surfaces-verified" ]
-          EarlyFences = [] }
+        {
+            BlockingAtMerge =
+                Set.ofList
+                    [
+                        RuleId "constitution-complete"
+                        RuleId "contracts-current"
+                        RuleId "fenced-surfaces-verified"
+                    ]
+            EarlyFences = []
+        }
 
     let fences (dial: ConstitutionDial) : Fence<SpecKitChange> list =
         mergeFence
-        :: [ for (name, phase) in dial.EarlyFences -> { Name = name; Trips = fun c -> c.Phase = phase } ]
+        :: [
+            for (name, phase) in dial.EarlyFences ->
+                {
+                    Name = name
+                    Trips = fun c -> c.Phase = phase
+                }
+        ]
 
     let adapter (judge: JudgeId) (dial: ConstitutionDial) : Adapter<SpecKitFact, SpecKitArtifact, SpecKitChange> =
         // Promote each rule the dial names; `evidence-not-synthetic` is already Blocking in
@@ -299,11 +354,17 @@ module Catalog =
         // demotes, so the promotion is idempotent.
         let promoted =
             catalog
-            |> List.map (fun r -> if dial.BlockingAtMerge.Contains r.Id then CheckRule.blocking r else r)
+            |> List.map (fun r ->
+                if dial.BlockingAtMerge.Contains r.Id then
+                    CheckRule.blocking r
+                else
+                    r)
 
-        { Identify = SpecKit.identify
-          ToRef = SpecKit.toRef
-          Probes = SpecKit.probes
-          Rules = promoted
-          Fences = fences dial
-          Bridge = SpecKit.bridge judge }
+        {
+            Identify = SpecKit.identify
+            ToRef = SpecKit.toRef
+            Probes = SpecKit.probes
+            Rules = promoted
+            Fences = fences dial
+            Bridge = SpecKit.bridge judge
+        }

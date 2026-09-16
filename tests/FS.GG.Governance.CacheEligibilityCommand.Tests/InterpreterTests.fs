@@ -32,48 +32,75 @@ let private gateIds: string list = gates |> List.map (fun g -> gateIdValue g.Id)
 let tests =
     testList
         "Interpreter"
-        [ test "the change selects gates (sanity for the fixtures)" {
-              Expect.isNonEmpty gates "a src change selects the package-api gates"
-          }
+        [
+            test "the change selects gates (sanity for the fixtures)" {
+                Expect.isNonEmpty gates "a src change selects the package-api gates"
+            }
 
-          test "absent store ⇒ empty ⇒ every gate mustRecompute NoPriorEvidence; exit 0 (L7, US1 AS2)" {
-              let _, cap, model = runWith fixedSensor (storeReaderOf (Ok None))
+            test "absent store ⇒ empty ⇒ every gate mustRecompute NoPriorEvidence; exit 0 (L7, US1 AS2)" {
+                let _, cap, model = runWith fixedSensor (storeReaderOf (Ok None))
 
-              let written = writtenOf cap Loop.CacheArtifact |> Option.map snd
-              Expect.equal written (Some(expectedCacheDoc gates sensed EvidenceReuse.empty)) "cache doc = ofReport over the empty store"
-              Expect.equal model.Exit Loop.Success "exit 0"
-          }
+                let written = writtenOf cap Loop.CacheArtifact |> Option.map snd
 
-          test "written cache-eligibility.json = genuine ofReport; sidecar present (US1, L6)" {
-              let store = storeMakingReusable [ List.head gates ] sensed (fun _ -> "ev-1")
-              let _, cap, model = runWith fixedSensor (storeReaderOf (Ok(Some store)))
+                Expect.equal
+                    written
+                    (Some(expectedCacheDoc gates sensed EvidenceReuse.empty))
+                    "cache doc = ofReport over the empty store"
 
-              Expect.equal (writtenOf cap Loop.CacheArtifact |> Option.map snd) (Some(expectedCacheDoc gates sensed store)) "cache doc = genuine ofReport"
-              Expect.isSome (writtenOf cap Loop.UnresolvedArtifact) "sidecar always written"
-              Expect.equal model.Exit Loop.Success "exit 0"
+                Expect.equal model.Exit Loop.Success "exit 0"
+            }
 
-              // The prepared gate is reusable over the genuine evaluate path.
-              let report = FreshnessResolution.resolve gates sensed
-              let cands = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
-              let verdicts = CacheEligibility.evaluate cands store |> CacheEligibility.entries
-              let head = verdicts |> List.find (fun e -> e.Gate = (List.head gates).Id)
-              Expect.equal (CacheEligibility.reusableEvidence head.Verdict) (Some(EvidenceRef "ev-1")) "prepared gate reusable"
-          }
+            test "written cache-eligibility.json = genuine ofReport; sidecar present (US1, L6)" {
+                let store = storeMakingReusable [ List.head gates ] sensed (fun _ -> "ev-1")
+                let _, cap, model = runWith fixedSensor (storeReaderOf (Ok(Some store)))
 
-          test "T019: every selected gate appears in EXACTLY ONE document; unsensed ⇒ sidecar (A4)" {
-              // sensorNoCovered ⇒ every gate unresolved on coveredArtifacts.
-              let _, cap, model = runWith sensorNoCovered (storeReaderOf (Ok None))
+                Expect.equal
+                    (writtenOf cap Loop.CacheArtifact |> Option.map snd)
+                    (Some(expectedCacheDoc gates sensed store))
+                    "cache doc = genuine ofReport"
 
-              let cacheDoc = writtenOf cap Loop.CacheArtifact |> Option.map snd |> Option.get
-              let sidecar = writtenOf cap Loop.UnresolvedArtifact |> Option.map snd |> Option.get
+                Expect.isSome (writtenOf cap Loop.UnresolvedArtifact) "sidecar always written"
+                Expect.equal model.Exit Loop.Success "exit 0"
 
-              use sdoc = JsonDocument.Parse sidecar
-              let sidecarGates = [ for e in sdoc.RootElement.GetProperty("unresolved").EnumerateArray() -> jsonProp e "gate" ]
+                // The prepared gate is reusable over the genuine evaluate path.
+                let report = FreshnessResolution.resolve gates sensed
 
-              Expect.equal (List.sort sidecarGates) (List.sort gateIds) "all selected gates are in the sidecar (unresolved)"
+                let cands =
+                    FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
 
-              for g in gateIds do
-                  Expect.isFalse (cacheDoc.Contains g) (sprintf "%s is unresolved ⇒ absent from cache-eligibility.json" g)
+                let verdicts = CacheEligibility.evaluate cands store |> CacheEligibility.entries
+                let head = verdicts |> List.find (fun e -> e.Gate = (List.head gates).Id)
 
-              Expect.equal model.Exit Loop.Success "unresolved is information ⇒ exit 0"
-          } ]
+                Expect.equal
+                    (CacheEligibility.reusableEvidence head.Verdict)
+                    (Some(EvidenceRef "ev-1"))
+                    "prepared gate reusable"
+            }
+
+            test "T019: every selected gate appears in EXACTLY ONE document; unsensed ⇒ sidecar (A4)" {
+                // sensorNoCovered ⇒ every gate unresolved on coveredArtifacts.
+                let _, cap, model = runWith sensorNoCovered (storeReaderOf (Ok None))
+
+                let cacheDoc = writtenOf cap Loop.CacheArtifact |> Option.map snd |> Option.get
+                let sidecar = writtenOf cap Loop.UnresolvedArtifact |> Option.map snd |> Option.get
+
+                use sdoc = JsonDocument.Parse sidecar
+
+                let sidecarGates =
+                    [
+                        for e in sdoc.RootElement.GetProperty("unresolved").EnumerateArray() -> jsonProp e "gate"
+                    ]
+
+                Expect.equal
+                    (List.sort sidecarGates)
+                    (List.sort gateIds)
+                    "all selected gates are in the sidecar (unresolved)"
+
+                for g in gateIds do
+                    Expect.isFalse
+                        (cacheDoc.Contains g)
+                        (sprintf "%s is unresolved ⇒ absent from cache-eligibility.json" g)
+
+                Expect.equal model.Exit Loop.Success "unresolved is information ⇒ exit 0"
+            }
+        ]

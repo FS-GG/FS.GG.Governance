@@ -36,36 +36,42 @@ let private classify (rawPath: string) : RoutingResult * FindingId option =
 let tests =
     testList
         "F028 route classes"
-        [ test "routine — out-of-scope, no finding, never default-denies even under the strictest dials" {
-              let outcome, finding = classify "docs/readme.md"
-              Expect.equal outcome OutOfScope "a path outside the governed root is out-of-scope"
-              Expect.equal finding None "an out-of-scope path is never a finding (no global default-deny)"
+        [
+            test "routine — out-of-scope, no finding, never default-denies even under the strictest dials" {
+                let outcome, finding = classify "docs/readme.md"
+                Expect.equal outcome OutOfScope "a path outside the governed root is out-of-scope"
+                Expect.equal finding None "an out-of-scope path is never a finding (no global default-deny)"
 
-              // A routine path selects nothing, so the whole-change rollup at the STRICTEST dials is a
-              // clean pass — never a default-deny (Edge: routine under strictest dials).
-              let decision = rollup (mkRoute [] []) RunMode.Release Profile.Release
-              Expect.equal decision.Verdict Pass "an empty change passes even at release/release"
-              Expect.isEmpty decision.Blockers "a routine change yields no blockers at any dial"
-          }
+                // A routine path selects nothing, so the whole-change rollup at the STRICTEST dials is a
+                // clean pass — never a default-deny (Edge: routine under strictest dials).
+                let decision = rollup (mkRoute [] []) RunMode.Release Profile.Release
+                Expect.equal decision.Verdict Pass "an empty change passes even at release/release"
+                Expect.isEmpty decision.Blockers "a routine change yields no blockers at any dial"
+            }
 
-          test "fenced — routes into its capability domain, no finding" {
-              let outcome, finding = classify "src/build/Main.fs"
+            test "fenced — routes into its capability domain, no finding" {
+                let outcome, finding = classify "src/build/Main.fs"
 
-              match outcome with
-              | Routed(DomainId d, _, _) -> Expect.equal d "build" "a fenced path routes into its declared domain"
-              | other -> failtestf "expected Routed, got %A" other
+                match outcome with
+                | Routed(DomainId d, _, _) -> Expect.equal d "build" "a fenced path routes into its declared domain"
+                | other -> failtestf "expected Routed, got %A" other
 
-              Expect.equal finding None "a routed path is never an unknown-governed-path finding"
-          }
+                Expect.equal finding None "a routed path is never an unknown-governed-path finding"
+            }
 
-          test "unknown-governed-path — unmatched in root, ordinary explicit finding" {
-              let outcome, finding = classify "src/new/Thing.fs"
-              Expect.equal outcome UnmatchedInRoot "an in-root path matching no glob is unmatched-in-root"
-              Expect.equal finding (Some UnknownGovernedPath) "an ordinary in-root unknown is an explicit finding"
-          }
+            test "unknown-governed-path — unmatched in root, ordinary explicit finding" {
+                let outcome, finding = classify "src/new/Thing.fs"
+                Expect.equal outcome UnmatchedInRoot "an in-root path matching no glob is unmatched-in-root"
+                Expect.equal finding (Some UnknownGovernedPath) "an ordinary in-root unknown is an explicit finding"
+            }
 
-          test "protected-surface unknown — unmatched in root, escalated finding" {
-              let outcome, finding = classify "src/boundary/Api.fs"
-              Expect.equal outcome UnmatchedInRoot "an unknown on a protected boundary is still unmatched-in-root"
-              Expect.equal finding (Some UnknownProtectedBoundaryPath) "an unknown on a declared protected surface escalates"
-          } ]
+            test "protected-surface unknown — unmatched in root, escalated finding" {
+                let outcome, finding = classify "src/boundary/Api.fs"
+                Expect.equal outcome UnmatchedInRoot "an unknown on a protected boundary is still unmatched-in-root"
+
+                Expect.equal
+                    finding
+                    (Some UnknownProtectedBoundaryPath)
+                    "an unknown on a declared protected surface escalates"
+            }
+        ]

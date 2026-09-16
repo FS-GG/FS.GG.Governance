@@ -22,25 +22,29 @@ let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 /// `FreshnessKey` matter to the sensing assembly; the rest is real-but-unread metadata.
 let gateWith (domain: string) (check: string) (command: CommandId option) : Gate =
     let fk: FreshnessKey =
-        { Check = CheckId check
-          Domain = DomainId domain
-          Cost = Cost.Medium
-          Environment = EnvironmentClass.Ci
-          Command = command }
+        {
+            Check = CheckId check
+            Domain = DomainId domain
+            Cost = Cost.Medium
+            Environment = EnvironmentClass.Ci
+            Command = command
+        }
 
-    { Id = GateId(domain + ":" + check)
-      Domain = DomainId domain
-      Description = sprintf "gate %s:%s" domain check
-      Prerequisites =
-        (match command with
-         | Some c -> [ RequiresCommand c ]
-         | None -> [])
-      Cost = Cost.Medium
-      Timeout = TimeoutLimit 60
-      Owner = Owner "team"
-      Maturity = Observe
-      ProductCheck = false
-      FreshnessKey = fk }
+    {
+        Id = GateId(domain + ":" + check)
+        Domain = DomainId domain
+        Description = sprintf "gate %s:%s" domain check
+        Prerequisites =
+            (match command with
+             | Some c -> [ RequiresCommand c ]
+             | None -> [])
+        Cost = Cost.Medium
+        Timeout = TimeoutLimit 60
+        Owner = Owner "team"
+        Maturity = Observe
+        ProductCheck = false
+        FreshnessKey = fk
+    }
 
 let dotnetCmd = CommandId "dotnet"
 
@@ -49,16 +53,18 @@ let dotnetCmd = CommandId "dotnet"
 /// The freshness inputs of the single recorded entry the well-formed store fixture carries — built via the
 /// public F029 constructors, the exact value the real deserializer must reconstruct (round-trip equality).
 let sampleInputs: FreshnessInputs =
-    { Check = CheckId "tests"
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = EnvironmentClass.Ci
-      RuleHash = RuleHash "rule-1"
-      CoveredArtifacts = [ ArtifactHash "artA"; ArtifactHash "artB" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "gen-1"
-      Base = Revision "base-1"
-      Head = Revision "head-1" }
+    {
+        Check = CheckId "tests"
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = EnvironmentClass.Ci
+        RuleHash = RuleHash "rule-1"
+        CoveredArtifacts = [ ArtifactHash "artA"; ArtifactHash "artB" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "gen-1"
+        Base = Revision "base-1"
+        Head = Revision "head-1"
+    }
 
 let sampleEvidence = EvidenceRef "ev-1"
 
@@ -79,10 +85,12 @@ let private malformedStoreJson =
 // ── a disposable temp directory with real catalog/src bytes + the store fixtures ──
 
 type TempRepo =
-    { Dir: string
-      WellFormedStorePath: string
-      MalformedStorePath: string
-      AbsentStorePath: string }
+    {
+        Dir: string
+        WellFormedStorePath: string
+        MalformedStorePath: string
+        AbsentStorePath: string
+    }
 
 let writeFile (dir: string) (relPath: string) (content: string) : unit =
     let full = Path.Combine(dir, relPath)
@@ -96,7 +104,9 @@ let writeFile (dir: string) (relPath: string) (content: string) : unit =
 /// Create a disposable temp directory with a minimal `.fsgg/*.yml` catalog, a couple of `src/**` files, a
 /// well-formed and a malformed store on disk, run `body`, then delete it.
 let withTempDir (body: TempRepo -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-sense-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-sense-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
 
     try
@@ -113,10 +123,12 @@ let withTempDir (body: TempRepo -> 'a) : 'a =
         File.WriteAllText(mf, malformedStoreJson)
 
         body
-            { Dir = dir
-              WellFormedStorePath = wf
-              MalformedStorePath = mf
-              AbsentStorePath = Path.Combine(dir, "no-such-store.json") }
+            {
+                Dir = dir
+                WellFormedStorePath = wf
+                MalformedStorePath = mf
+                AbsentStorePath = Path.Combine(dir, "no-such-store.json")
+            }
     finally
         try
             Directory.Delete(dir, true)
@@ -125,7 +137,9 @@ let withTempDir (body: TempRepo -> 'a) : 'a =
 
 /// Create a disposable temp directory that has NO `.fsgg` catalog and NO `src/` surface (the unsensed case).
 let withBareDir (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-bare-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-bare-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
 
     try

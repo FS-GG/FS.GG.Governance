@@ -7,7 +7,7 @@
 namespace FS.GG.Governance.VerifyCommand
 
 open FS.GG.Governance.Enforcement.Enforcement // RunMode (Verify), Profile, Severity (Blocking), EnforcementDecision
-open FS.GG.Governance.Ship.Model               // ShipDecision, Verdict (Fail), ExitCodeBasis
+open FS.GG.Governance.Ship.Model // ShipDecision, Verdict (Fail), ExitCodeBasis
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
 
@@ -30,7 +30,8 @@ module ViewCurrencyFold =
         if viewCurrencyBlocks profile findings then
             { decision with
                 Verdict = Fail
-                ExitCodeBasis = ExitCodeBasis.Blocked }
+                ExitCodeBasis = ExitCodeBasis.Blocked
+            }
         else
             decision
 

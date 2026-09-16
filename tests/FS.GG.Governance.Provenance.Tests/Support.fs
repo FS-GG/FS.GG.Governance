@@ -28,7 +28,17 @@ let makeCommandRecord (duration: int64) : CommandRecord =
         (Executable "gcc")
         [ Argument "-c"; Argument "main.c" ]
         (WorkingDirectory "/work")
-        { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]; Changed = []; Removed = [] }
+        {
+            Added =
+                [
+                    {
+                        Name = EnvVarName "CI"
+                        Value = EnvVarValue "1"
+                    }
+                ]
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 30)
         (ExitCode 0)
         (OutputDigest "sha-out")
@@ -84,26 +94,51 @@ let rebuild (p: Provenance) : Provenance =
 // per-field-sensitivity tests (SC-004). The artifact-digest set adds a new digest; the command records are
 // reordered (order is significant — D4).
 
-let variantSourceCommit (p: Provenance) = { p with SourceCommit = Revision "deadbeef" }
+let variantSourceCommit (p: Provenance) =
+    { p with
+        SourceCommit = Revision "deadbeef"
+    }
+
 let variantBase (p: Provenance) = { p with Base = Revision "base9" }
 let variantHead (p: Provenance) = { p with Head = Revision "head9" }
 let variantRuleHash (p: Provenance) = { p with RuleHash = RuleHash "rule-y" }
-let variantGeneratorVersion (p: Provenance) = { p with GeneratorVersion = GeneratorVersion "gen-2" }
-let variantArtifactAdded (p: Provenance) = { p with ArtifactDigests = p.ArtifactDigests @ [ ArtifactHash "a3" ] }
+
+let variantGeneratorVersion (p: Provenance) =
+    { p with
+        GeneratorVersion = GeneratorVersion "gen-2"
+    }
+
+let variantArtifactAdded (p: Provenance) =
+    { p with
+        ArtifactDigests = p.ArtifactDigests @ [ ArtifactHash "a3" ]
+    }
+
 let variantCommandRecordFact (p: Provenance) =
     let other =
         CommandRecord.build
             (Executable "clang")
             [ Argument "-c"; Argument "main.c" ]
             (WorkingDirectory "/work")
-            { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]; Changed = []; Removed = [] }
+            {
+                Added =
+                    [
+                        {
+                            Name = EnvVarName "CI"
+                            Value = EnvVarValue "1"
+                        }
+                    ]
+                Changed = []
+                Removed = []
+            }
             (TimeoutLimit 30)
             (ExitCode 0)
             (OutputDigest "sha-out")
             (OutputDigest "sha-err")
             NoCapturedOutput
             (SensedDuration 123_456L)
+
     { p with CommandRecords = [ other ] }
+
 let variantCommandRecordOrder (p: Provenance) =
     // Two distinct records; reversing them changes the (order-significant) cmds segment.
     let r2 =
@@ -111,41 +146,69 @@ let variantCommandRecordOrder (p: Provenance) =
             (Executable "ld")
             []
             (WorkingDirectory "/work")
-            { Added = []; Changed = []; Removed = [] }
+            {
+                Added = []
+                Changed = []
+                Removed = []
+            }
             (TimeoutLimit 30)
             (ExitCode 0)
             (OutputDigest "o2")
             (OutputDigest "e2")
             NoCapturedOutput
             (SensedDuration 1L)
-    { p with CommandRecords = [ p.CommandRecords.Head; r2 ] |> List.rev }
+
+    { p with
+        CommandRecords = [ p.CommandRecords.Head; r2 ] |> List.rev
+    }
+
 let variantEnvironment (p: Provenance) = { p with Environment = Ci }
-let variantBuilder (p: Provenance) = { p with Builder = BuilderIdentity "other-agent" }
+
+let variantBuilder (p: Provenance) =
+    { p with
+        Builder = BuilderIdentity "other-agent"
+    }
 
 /// Every reproducible fact paired with a single-field variation, each labelled. Table-driven sensitivity
 /// tests iterate this so EVERY reproducible fact (including a command record's reproducible facts AND the
 /// command-record order) is covered (SC-004).
 let allReproducibleVariants: (string * (Provenance -> Provenance)) list =
-    [ "source commit", variantSourceCommit
-      "base", variantBase
-      "head", variantHead
-      "rule hash", variantRuleHash
-      "generator version", variantGeneratorVersion
-      "artifact digest added", variantArtifactAdded
-      "command record fact", variantCommandRecordFact
-      "command record order", variantCommandRecordOrder
-      "environment", variantEnvironment
-      "builder", variantBuilder ]
+    [
+        "source commit", variantSourceCommit
+        "base", variantBase
+        "head", variantHead
+        "rule hash", variantRuleHash
+        "generator version", variantGeneratorVersion
+        "artifact digest added", variantArtifactAdded
+        "command record fact", variantCommandRecordFact
+        "command record order", variantCommandRecordOrder
+        "environment", variantEnvironment
+        "builder", variantBuilder
+    ]
 
 // ── FsCheck generators (real values, no mocks) ──
 
 let private shortStringGen: Gen<string> =
-    Gen.elements [ ""; "a"; "b"; "c0ffee"; "base1"; "head2"; "rule-x"; "gen-1"; "ci-runner"; "héllo"; "x:y=z;|" ]
+    Gen.elements
+        [
+            ""
+            "a"
+            "b"
+            "c0ffee"
+            "base1"
+            "head2"
+            "rule-x"
+            "gen-1"
+            "ci-runner"
+            "héllo"
+            "x:y=z;|"
+        ]
 
 let private genEnvironmentClass: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
 
-let private genArtifactHash: Gen<ArtifactHash> = shortStringGen |> Gen.map ArtifactHash
+let private genArtifactHash: Gen<ArtifactHash> =
+    shortStringGen |> Gen.map ArtifactHash
 
 let private genCommandRecord: Gen<CommandRecord> =
     gen {
@@ -161,7 +224,11 @@ let private genCommandRecord: Gen<CommandRecord> =
                 (Executable exe)
                 [ Argument arg ]
                 (WorkingDirectory cwd)
-                { Added = []; Changed = []; Removed = [] }
+                {
+                    Added = []
+                    Changed = []
+                    Removed = []
+                }
                 (TimeoutLimit 30)
                 (ExitCode 0)
                 (OutputDigest out)
@@ -201,7 +268,9 @@ type Generators =
 
 /// FsCheck config registering the real F033 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 
 /// A same-SET permutation+duplication of an artifact-digest list: reverse it and duplicate the head, so the
 /// underlying set is preserved while order and multiplicity change (for the order/dup-invariance properties).

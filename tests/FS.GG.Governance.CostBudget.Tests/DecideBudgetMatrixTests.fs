@@ -24,46 +24,51 @@ let private decisionFor (cost: Cost) (mode: RunMode) (profile: Profile) : CacheD
 let tests =
     testList
         "DecideBudgetMatrix"
-        [ test "a MustRecompute gate with cost <= ceiling is Recompute (naming its cause)" {
-              for p in profiles do
-                  for m in modes do
-                      let ceiling = (Budget.budgetFor p m).Ceiling
-                      for cost in costs do
-                          if cost <= ceiling then
-                              match decisionFor cost m p with
-                              | Recompute(InputsChanged [ RuleHashCat ]) -> ()
-                              | other -> failtestf "expected Recompute for %A/%A cost %A, got %A" p m cost other
-          }
+        [
+            test "a MustRecompute gate with cost <= ceiling is Recompute (naming its cause)" {
+                for p in profiles do
+                    for m in modes do
+                        let ceiling = (Budget.budgetFor p m).Ceiling
 
-          test "a MustRecompute gate with cost > ceiling is OverBudget — Deferred in boundary modes" {
-              for p in profiles do
-                  for m in boundaryModes do
-                      let ceiling = (Budget.budgetFor p m).Ceiling
-                      for cost in costs do
-                          if cost > ceiling then
-                              match decisionFor cost m p with
-                              | OverBudget r ->
-                                  Expect.equal r.Class Deferred (sprintf "%A/%A cost %A defers" p m cost)
-                                  Expect.equal r.Cost cost "reason names the cost"
-                                  Expect.equal r.Ceiling ceiling "reason names the exceeded ceiling"
-                                  Expect.equal r.Gate (gid "build" "tests") "reason names the gate"
-                              | other -> failtestf "expected OverBudget for %A/%A cost %A, got %A" p m cost other
-          }
+                        for cost in costs do
+                            if cost <= ceiling then
+                                match decisionFor cost m p with
+                                | Recompute(InputsChanged [ RuleHashCat ]) -> ()
+                                | other -> failtestf "expected Recompute for %A/%A cost %A, got %A" p m cost other
+            }
 
-          test "a MustRecompute gate with cost > ceiling is OverBudget — Skipped in inner-loop modes" {
-              for p in profiles do
-                  for m in innerModes do
-                      let ceiling = (Budget.budgetFor p m).Ceiling
-                      for cost in costs do
-                          if cost > ceiling then
-                              match decisionFor cost m p with
-                              | OverBudget r -> Expect.equal r.Class Skipped (sprintf "%A/%A cost %A skips" p m cost)
-                              | other -> failtestf "expected OverBudget for %A/%A cost %A, got %A" p m cost other
-          }
+            test "a MustRecompute gate with cost > ceiling is OverBudget — Deferred in boundary modes" {
+                for p in profiles do
+                    for m in boundaryModes do
+                        let ceiling = (Budget.budgetFor p m).Ceiling
 
-          test "a cost == ceiling gate is Recompute (inclusive boundary)" {
-              // Strict/Verify ceiling = High; a High-cost MustRecompute fits exactly.
-              match decisionFor High Verify Strict with
-              | Recompute _ -> ()
-              | other -> failtestf "expected Recompute at the exact boundary, got %A" other
-          } ]
+                        for cost in costs do
+                            if cost > ceiling then
+                                match decisionFor cost m p with
+                                | OverBudget r ->
+                                    Expect.equal r.Class Deferred (sprintf "%A/%A cost %A defers" p m cost)
+                                    Expect.equal r.Cost cost "reason names the cost"
+                                    Expect.equal r.Ceiling ceiling "reason names the exceeded ceiling"
+                                    Expect.equal r.Gate (gid "build" "tests") "reason names the gate"
+                                | other -> failtestf "expected OverBudget for %A/%A cost %A, got %A" p m cost other
+            }
+
+            test "a MustRecompute gate with cost > ceiling is OverBudget — Skipped in inner-loop modes" {
+                for p in profiles do
+                    for m in innerModes do
+                        let ceiling = (Budget.budgetFor p m).Ceiling
+
+                        for cost in costs do
+                            if cost > ceiling then
+                                match decisionFor cost m p with
+                                | OverBudget r -> Expect.equal r.Class Skipped (sprintf "%A/%A cost %A skips" p m cost)
+                                | other -> failtestf "expected OverBudget for %A/%A cost %A, got %A" p m cost other
+            }
+
+            test "a cost == ceiling gate is Recompute (inclusive boundary)" {
+                // Strict/Verify ceiling = High; a High-cost MustRecompute fits exactly.
+                match decisionFor High Verify Strict with
+                | Recompute _ -> ()
+                | other -> failtestf "expected Recompute at the exact boundary, got %A" other
+            }
+        ]

@@ -10,13 +10,21 @@ open FS.GG.Governance.Routing.Tests.Support
 // re-ordering the authored path map does not change it.
 
 let private basePairs =
-    [ "src/**", "core"
-      "src/Adapters/**", "adapters"
-      "src/Kernel/Eval.fs", "kernel-eval"
-      "docs/**", "docs" ]
+    [
+        "src/**", "core"
+        "src/Adapters/**", "adapters"
+        "src/Kernel/Eval.fs", "kernel-eval"
+        "docs/**", "docs"
+    ]
 
 let private candidates =
-    [ gp "src/Kernel/Eval.fs"; gp "src/Adapters/X.fs"; gp "src/Cli/Host.fs"; gp "docs/g.md"; gp "README.md" ]
+    [
+        gp "src/Kernel/Eval.fs"
+        gp "src/Adapters/X.fs"
+        gp "src/Cli/Host.fs"
+        gp "docs/g.md"
+        gp "README.md"
+    ]
 
 let private baseline = Routing.route (facts "." basePairs) candidates
 
@@ -24,7 +32,9 @@ let private baseline = Routing.route (facts "." basePairs) candidates
 let rec private permutations =
     function
     | [] -> [ [] ]
-    | xs -> xs |> List.collect (fun x -> permutations (List.filter ((<>) x) xs) |> List.map (fun p -> x :: p))
+    | xs ->
+        xs
+        |> List.collect (fun x -> permutations (List.filter ((<>) x) xs) |> List.map (fun p -> x :: p))
 
 type Perm = Perm of (string * string) list
 
@@ -35,15 +45,20 @@ type PermArb =
 let private cfg =
     { FsCheckConfig.defaultConfig with
         arbitrary = [ typeof<PermArb> ]
-        maxTest = 200 }
+        maxTest = 200
+    }
 
 [<Tests>]
 let tests =
     testList
         "Determinism"
-        [ test "route twice on the same input → structurally identical RouteReport (SC-002)" {
-              Expect.equal (Routing.route (facts "." basePairs) candidates) baseline "two routes identical"
-          }
+        [
+            test "route twice on the same input → structurally identical RouteReport (SC-002)" {
+                Expect.equal (Routing.route (facts "." basePairs) candidates) baseline "two routes identical"
+            }
 
-          testPropertyWithConfig cfg "permuting the authored PathMap yields an identical RouteReport (FR-012, SC-003)" (fun (Perm pairs) ->
-              Routing.route (facts "." pairs) candidates = baseline) ]
+            testPropertyWithConfig
+                cfg
+                "permuting the authored PathMap yields an identical RouteReport (FR-012, SC-003)"
+                (fun (Perm pairs) -> Routing.route (facts "." pairs) candidates = baseline)
+        ]

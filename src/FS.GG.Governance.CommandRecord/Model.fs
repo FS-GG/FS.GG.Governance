@@ -30,32 +30,44 @@ module Model =
 
     type CommandIdentity = CommandIdentity of string
 
-    type AddedVar = { Name: EnvVarName; Value: EnvVarValue }
+    type AddedVar =
+        { Name: EnvVarName; Value: EnvVarValue }
 
-    type ChangedVar = { Name: EnvVarName; Old: EnvVarValue; New: EnvVarValue }
+    type ChangedVar =
+        {
+            Name: EnvVarName
+            Old: EnvVarValue
+            New: EnvVarValue
+        }
 
     type RemovedVar = { Name: EnvVarName; Old: EnvVarValue }
 
     type EnvironmentDelta =
-        { Added: AddedVar list
-          Changed: ChangedVar list
-          Removed: RemovedVar list }
+        {
+            Added: AddedVar list
+            Changed: ChangedVar list
+            Removed: RemovedVar list
+        }
 
     type CapturedOutput =
         | CapturedAt of CapturedOutputPath
         | NoCapturedOutput
 
     type ReproducibleFacts =
-        { Executable: Executable
-          Arguments: Argument list
-          WorkingDirectory: WorkingDirectory
-          Environment: EnvironmentDelta
-          Timeout: TimeoutLimit
-          ExitCode: ExitCode
-          StdoutDigest: OutputDigest
-          StderrDigest: OutputDigest
-          CapturedOutput: CapturedOutput }
+        {
+            Executable: Executable
+            Arguments: Argument list
+            WorkingDirectory: WorkingDirectory
+            Environment: EnvironmentDelta
+            Timeout: TimeoutLimit
+            ExitCode: ExitCode
+            StdoutDigest: OutputDigest
+            StderrDigest: OutputDigest
+            CapturedOutput: CapturedOutput
+        }
 
     type CommandRecord =
-        { Reproducible: ReproducibleFacts
-          Duration: SensedDuration }
+        {
+            Reproducible: ReproducibleFacts
+            Duration: SensedDuration
+        }

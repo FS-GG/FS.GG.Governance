@@ -23,10 +23,12 @@ module Loop =
         | Json
 
     type RunRequest =
-        { Repo: string
-          Out: string
-          Format: OutputFormat
-          ExplicitPlain: bool }
+        {
+            Repo: string
+            Out: string
+            Format: OutputFormat
+            ExplicitPlain: bool
+        }
 
     type UsageError =
         | UnknownFlag of string
@@ -56,8 +58,10 @@ module Loop =
         | Emitted
 
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     type Phase =
         | Parsed
@@ -67,24 +71,29 @@ module Loop =
         | Done
 
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Report: ProjectEvidenceReport option
-          Document: EvidenceDocument option
-          Doc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Report: ProjectEvidenceReport option
+            Document: EvidenceDocument option
+            Doc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     // ── parse ──
 
     /// Mutable-free accumulator threaded through the argv fold.
     type private Acc =
-        { Repo: string
-          Out: string option
-          Format: OutputFormat
-          ExplicitPlain: bool }
+        {
+            Repo: string
+            Out: string option
+            Format: OutputFormat
+            ExplicitPlain: bool
+        }
 
-    let private defaultOut (repo: string) = Path.Combine(repo, "readiness", "evidence.json")
+    let private defaultOut (repo: string) =
+        Path.Combine(repo, "readiness", "evidence.json")
 
     let parse (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `evidence` verb so both `fsgg evidence …` and a direct `… ` invocation
@@ -109,7 +118,8 @@ module Loop =
                 // this is backward-compatible and does not contradict ADR-0006 (nothing is renamed or
                 // removed) — it realizes that ADR's deferred `--format text|json|both`-everywhere direction
                 // one non-breaking step early. See docs/decisions/0006-cli-format-flag-vocabularies.md.
-                | "human" | "text" -> loop { acc with Format = Human } rest
+                | "human"
+                | "text" -> loop { acc with Format = Human } rest
                 | "json" -> loop { acc with Format = Json } rest
                 | other -> Error(BadFormat other)
             // M-CLI-7 (#49): `--plain` is an ADDITIVE ANSI-free signal that never overrides `--format` (the
@@ -123,28 +133,34 @@ module Loop =
             | other :: _ -> Error(UnexpectedArgument other)
 
         loop
-            { Repo = "."
-              Out = None
-              Format = Human
-              ExplicitPlain = false }
+            {
+                Repo = "."
+                Out = None
+                Format = Human
+                ExplicitPlain = false
+            }
             argv
         |> Result.map (fun acc ->
-            { Repo = acc.Repo
-              Out = acc.Out |> Option.defaultValue (defaultOut acc.Repo)
-              Format = acc.Format
-              ExplicitPlain = acc.ExplicitPlain })
+            {
+                Repo = acc.Repo
+                Out = acc.Out |> Option.defaultValue (defaultOut acc.Repo)
+                Format = acc.Format
+                ExplicitPlain = acc.ExplicitPlain
+            })
 
     // ── init ──
 
     let init (request: RunRequest) : Model * Effect list =
         let model =
-            { Request = request
-              Phase = Parsed
-              Report = None
-              Document = None
-              Doc = None
-              Diagnostics = []
-              Exit = Success }
+            {
+                Request = request
+                Phase = Parsed
+                Report = None
+                Document = None
+                Doc = None
+                Diagnostics = []
+                Exit = Success
+            }
 
         model, [ SenseReport request.Repo ]
 
@@ -167,7 +183,8 @@ module Loop =
         // here (never fabricated). Node ids are strings, so `Evidence.build` yields a `GraphError<string>`
         // directly usable as the `Malformed` content.
         let declared =
-            report.Nodes |> List.choose (fun n -> n.Declared |> Option.map (fun d -> n.Id, d))
+            report.Nodes
+            |> List.choose (fun n -> n.Declared |> Option.map (fun d -> n.Id, d))
 
         let content =
             match Evidence.build declared report.Dependencies with
@@ -182,20 +199,28 @@ module Loop =
                         | None -> None
                         | Some declaredState ->
                             Some
-                                { Id = n.Id
-                                  Declared = declaredState
-                                  Effective = Map.tryFind n.Id effective |> Option.defaultValue declaredState
-                                  Freshness = freshnessOf n.Freshness
-                                  Source = n.Source })
+                                {
+                                    Id = n.Id
+                                    Declared = declaredState
+                                    Effective = Map.tryFind n.Id effective |> Option.defaultValue declaredState
+                                    Freshness = freshnessOf n.Freshness
+                                    Source = n.Source
+                                })
 
                 WellFormed(nodes, report.Dependencies)
 
-        { Content = content
-          Disclosures = report.Disclosures |> List.map (fun d -> ruleIdText d.Rule, d.Justification) }
+        {
+            Content = content
+            Disclosures = report.Disclosures |> List.map (fun d -> ruleIdText d.Rule, d.Justification)
+        }
 
     // ── update ──
 
-    let private diag (category: ExitDecision) (message: string) = { Category = category; Message = message }
+    let private diag (category: ExitDecision) (message: string) =
+        {
+            Category = category
+            Message = message
+        }
 
     let rec update (msg: Msg) (model: Model) : Model * Effect list =
         match msg with
@@ -209,14 +234,16 @@ module Loop =
             { model with
                 Phase = Done
                 Exit = InputUnavailable
-                Diagnostics = model.Diagnostics @ [ diag InputUnavailable reason ] },
+                Diagnostics = model.Diagnostics @ [ diag InputUnavailable reason ]
+            },
             []
 
         | Reported(Error(ToolFault reason)) ->
             { model with
                 Phase = Done
                 Exit = ToolError
-                Diagnostics = model.Diagnostics @ [ diag ToolError reason ] },
+                Diagnostics = model.Diagnostics @ [ diag ToolError reason ]
+            },
             []
 
         | Reported(Ok report) ->
@@ -227,28 +254,40 @@ module Loop =
                 Phase = Projected
                 Report = Some report
                 Document = Some document
-                Doc = Some doc },
+                Doc = Some doc
+            },
             [ WriteArtifact(model.Request.Out, doc) ]
 
         | Wrote(Error reason) ->
             { model with
                 Phase = Done
                 Exit = ToolError
-                Diagnostics = model.Diagnostics @ [ diag ToolError ("evidence.json write failed: " + reason) ] },
+                Diagnostics = model.Diagnostics @ [ diag ToolError ("evidence.json write failed: " + reason) ]
+            },
             []
 
         | Wrote(Ok()) ->
             let next = { model with Phase = Persisted }
             next, [ EmitSummary(render next model.Request.Format) ]
 
-        | Emitted -> { model with Phase = Done; Exit = Success }, []
+        | Emitted ->
+            { model with
+                Phase = Done
+                Exit = Success
+            },
+            []
 
     // ── render (pure summary; no HumanText/Spectre dependency — keeps cores untouched) ──
 
     and render (model: Model) (format: OutputFormat) : string =
         match format, model.Doc with
         | Json, Some doc -> doc
-        | Json, None -> EvidenceJson.ofReport { Content = WellFormed([], []); Disclosures = [] }
+        | Json, None ->
+            EvidenceJson.ofReport
+                {
+                    Content = WellFormed([], [])
+                    Disclosures = []
+                }
         | Human, _ ->
             match model.Document with
             | None -> "evidence: no document"

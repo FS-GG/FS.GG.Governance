@@ -17,9 +17,11 @@ open FS.GG.Governance.Adapters.SddHandoff.Model
 module Consumer =
 
     type ConsumeResult =
-        { Gates: Gate list
-          Selected: SelectedGate list
-          Diagnostics: Diagnostic list }
+        {
+            Gates: Gate list
+            Selected: SelectedGate list
+            Diagnostics: Diagnostic list
+        }
 
     // The `<id>` segment of `readiness/<id>/governance-handoff.json` (falls back to the whole source).
     // Local copy — the `Readiness` equivalent is hidden behind its .fsi (only `toGate` is public).
@@ -39,21 +41,25 @@ module Consumer =
     // A handoff `Gate` carrying the declared maturity verbatim — no command, default timeout, advisory
     // owner. Mirrors `Readiness.buildGate` (kept local — the helper is hidden behind each .fsi).
     let private buildGate (checkId: string) (maturity: Maturity) (description: string) : Gate =
-        { Id = GateId(sprintf "sdd-handoff:%s" checkId)
-          Domain = DomainId "sdd-handoff"
-          Description = description
-          Prerequisites = []
-          Cost = Cheap
-          Timeout = Gates.defaultTimeout
-          Owner = Owner "sdd-handoff"
-          Maturity = maturity
-          ProductCheck = false
-          FreshnessKey =
-            { Check = CheckId checkId
-              Domain = DomainId "sdd-handoff"
-              Cost = Cheap
-              Environment = LocalOrCi
-              Command = None } }
+        {
+            Id = GateId(sprintf "sdd-handoff:%s" checkId)
+            Domain = DomainId "sdd-handoff"
+            Description = description
+            Prerequisites = []
+            Cost = Cheap
+            Timeout = Gates.defaultTimeout
+            Owner = Owner "sdd-handoff"
+            Maturity = maturity
+            ProductCheck = false
+            FreshnessKey =
+                {
+                    Check = CheckId checkId
+                    Domain = DomainId "sdd-handoff"
+                    Cost = Cheap
+                    Environment = LocalOrCi
+                    Command = None
+                }
+        }
 
     // The `SelectingPath` provenance for a document's gates: the declared `governedReferences` paths
     // (each path won "on itself" — synthetic glob), or empty when absent (correctness independent of it
@@ -85,22 +91,26 @@ module Consumer =
                 let rendered = String.concat "; " values
                 $" Failures: {rendered}."
 
-        { Id = GateId($"sdd-handoff:performance:{id}:{evaluation.EvidenceId}")
-          Domain = DomainId "interactive-performance"
-          Description =
-            $"Interactive performance evidence '{evaluation.EvidenceId}' is {state} (Governance recomputation: {measurements}).{failures} Remediation: {evaluation.Remediation}"
-          Prerequisites = []
-          Cost = Medium
-          Timeout = Gates.defaultTimeout
-          Owner = Owner "sdd-handoff"
-          Maturity = maturity
-          ProductCheck = true
-          FreshnessKey =
-            { Check = CheckId($"performance:{evaluation.EvidenceId}")
-              Domain = DomainId "interactive-performance"
-              Cost = Medium
-              Environment = Ci
-              Command = None } }
+        {
+            Id = GateId($"sdd-handoff:performance:{id}:{evaluation.EvidenceId}")
+            Domain = DomainId "interactive-performance"
+            Description =
+                $"Interactive performance evidence '{evaluation.EvidenceId}' is {state} (Governance recomputation: {measurements}).{failures} Remediation: {evaluation.Remediation}"
+            Prerequisites = []
+            Cost = Medium
+            Timeout = Gates.defaultTimeout
+            Owner = Owner "sdd-handoff"
+            Maturity = maturity
+            ProductCheck = true
+            FreshnessKey =
+                {
+                    Check = CheckId($"performance:{evaluation.EvidenceId}")
+                    Domain = DomainId "interactive-performance"
+                    Cost = Medium
+                    Environment = Ci
+                    Command = None
+                }
+        }
 
     let private performancePairs id paths (handoff: Handoff) =
         let isStale evidenceId =
@@ -108,9 +118,7 @@ module Consumer =
             |> List.exists (fun diagnostic ->
                 diagnostic.Id.EndsWith("staleEvidence", System.StringComparison.Ordinal)
                 && (diagnostic.RelatedIds
-                    |> List.exists (fun related ->
-                        related = evidenceId
-                        || related = $"evidence:{evidenceId}")))
+                    |> List.exists (fun related -> related = evidenceId || related = $"evidence:{evidenceId}")))
 
         handoff.PerformanceEvidence
         |> List.choose (fun evidence ->
@@ -193,7 +201,10 @@ module Consumer =
                                 "SDD declared evidence for '%s' (effective: %s)%s"
                                 id
                                 states
-                                (if blocking then " — blocking (failed/auto-synthetic effective state)" else " — advisory (all satisfied)"))
+                                (if blocking then
+                                     " — blocking (failed/auto-synthetic effective state)"
+                                 else
+                                     " — advisory (all satisfied)"))
 
                     let readinessGates =
                         match handoff.Readiness with
@@ -217,12 +228,17 @@ module Consumer =
         // by `GateId` (the gate pipeline's existing stable key — FR-012, research D7).
         let ordered = reads |> List.sortBy (fun r -> idOf r.Source)
         let perDoc = ordered |> List.map consumeOne
-        let pairs = perDoc |> List.collect fst |> List.sortBy (fun (g, _) -> gateIdValue g.Id)
+
+        let pairs =
+            perDoc |> List.collect fst |> List.sortBy (fun (g, _) -> gateIdValue g.Id)
+
         let diagnostics = perDoc |> List.collect snd
 
-        { Gates = pairs |> List.map fst
-          Selected = pairs |> List.map (fun (g, sp) -> { Gate = g; SelectingPaths = sp })
-          Diagnostics = diagnostics }
+        {
+            Gates = pairs |> List.map fst
+            Selected = pairs |> List.map (fun (g, sp) -> { Gate = g; SelectingPaths = sp })
+            Diagnostics = diagnostics
+        }
 
     // F082: the declared `governedReferences` paths of every CONSUMABLE document, projected as
     // first-class routing candidates. A document `Reader.parse` refuses contributes nothing —
@@ -234,7 +250,6 @@ module Consumer =
             match Reader.parse r with
             | Ok handoff -> Some handoff
             | Error _ -> None) // bad document ⇒ no candidates (FR-008)
-        |> List.collect (fun handoff ->
-            handoff.GovernedReferences |> List.map (fun reference -> reference.Path))
+        |> List.collect (fun handoff -> handoff.GovernedReferences |> List.map (fun reference -> reference.Path))
         |> List.distinct // dedup across work items / docs (FR-006)
         |> List.sortBy (fun (GovernedPath p) -> p)

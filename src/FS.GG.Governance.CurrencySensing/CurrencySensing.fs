@@ -58,16 +58,18 @@ module CurrencySensing =
         | :? YamlMappingNode as m ->
             match scalarField m "id" |> Option.map (fun s -> s.Trim()) with
             | Some viewId when viewId <> "" ->
-                { ViewId = viewId
-                  Kind = scalarField m "kind" |> Option.map viewKindOfToken |> Option.defaultValue (Other "")
-                  // OutputPath/Generator are NOT used by the currency decision — left empty here.
-                  OutputPath = ""
-                  Sources =
-                    childByKey m "sources"
-                    |> Option.map scalarList
-                    |> Option.defaultValue []
-                  Generator = []
-                  GeneratorBasis = scalarField m "generatorBasis" |> Option.defaultValue "" }
+                {
+                    ViewId = viewId
+                    Kind =
+                        scalarField m "kind"
+                        |> Option.map viewKindOfToken
+                        |> Option.defaultValue (Other "")
+                    // OutputPath/Generator are NOT used by the currency decision — left empty here.
+                    OutputPath = ""
+                    Sources = childByKey m "sources" |> Option.map scalarList |> Option.defaultValue []
+                    Generator = []
+                    GeneratorBasis = scalarField m "generatorBasis" |> Option.defaultValue ""
+                }
                 |> Some
             | _ -> None
         | _ -> None
@@ -101,7 +103,10 @@ module CurrencySensing =
 
     let sha256Hex (bytes: byte[]) : string =
         use sha = SHA256.Create()
-        sha.ComputeHash bytes |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+        sha.ComputeHash bytes
+        |> Array.map (fun b -> b.ToString("x2"))
+        |> String.concat ""
 
     // Digest a declared source: a file's bytes, or a directory's sorted relative-path:hash combination.
     let digestPath (full: string) (rel: string) : Result<string, string> =
@@ -138,20 +143,22 @@ module CurrencySensing =
 
                 match doc.RootElement.TryGetProperty "views" with
                 | true, views ->
-                    [ for p in views.EnumerateObject() ->
-                          let v = p.Value
+                    [
+                        for p in views.EnumerateObject() ->
+                            let v = p.Value
 
-                          let srcs =
-                              match v.TryGetProperty "sources" with
-                              | true, a -> [ for e in a.EnumerateArray() -> ArtifactHash(str e) ]
-                              | _ -> []
+                            let srcs =
+                                match v.TryGetProperty "sources" with
+                                | true, a -> [ for e in a.EnumerateArray() -> ArtifactHash(str e) ]
+                                | _ -> []
 
-                          let gen =
-                              match v.TryGetProperty "generatorVersion" with
-                              | true, g -> str g
-                              | _ -> ""
+                            let gen =
+                                match v.TryGetProperty "generatorVersion" with
+                                | true, g -> str g
+                                | _ -> ""
 
-                          p.Name, (srcs, GeneratorVersion gen) ]
+                            p.Name, (srcs, GeneratorVersion gen)
+                    ]
                     |> Map.ofList
                 | _ -> Map.empty
         with _ ->
@@ -186,7 +193,10 @@ module CurrencySensing =
                 match parseManifest (File.ReadAllLines refreshYml |> List.ofArray) with
                 // `parseManifest` returns `None` ONLY for a present-but-malformed document (a parse throw or a
                 // non-mapping root); a validly-EMPTY document yields `Some(None, [])` ⇒ the normal empty path.
-                | None -> [ CE.manifestUnreadableFinding "refresh.yml is present but is not a valid YAML mapping" ]
+                | None ->
+                    [
+                        CE.manifestUnreadableFinding "refresh.yml is present but is not a valid YAML mapping"
+                    ]
                 | Some(dial, entries) ->
                     let lockMap = readLock repo
 
@@ -199,4 +209,6 @@ module CurrencySensing =
                     CE.findingsOf dial decisions
             with ex ->
                 // A read/IO failure on a PRESENT manifest is fail-closed, never swallowed to `[]`.
-                [ CE.manifestUnreadableFinding (sprintf "refresh.yml is present but could not be read: %s" ex.Message) ]
+                [
+                    CE.manifestUnreadableFinding (sprintf "refresh.yml is present but could not be read: %s" ex.Message)
+                ]

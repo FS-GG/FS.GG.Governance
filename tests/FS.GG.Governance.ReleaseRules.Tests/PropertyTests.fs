@@ -13,26 +13,28 @@ open FS.GG.Governance.ReleaseRules.Tests.Support
 let tests =
     testList
         "PropertyTests"
-        [ testPropertyWithConfig fsCheckConfig "|evaluate rules facts| = |rules| (one-in-one-out)"
-          <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
-              (Release.evaluate rules facts).Length = rules.Length
+        [
+            testPropertyWithConfig fsCheckConfig "|evaluate rules facts| = |rules| (one-in-one-out)"
+            <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
+                (Release.evaluate rules facts).Length = rules.Length
 
-          testPropertyWithConfig fsCheckConfig "|Blockers|+|Warnings|+|Passing| = |findings| (no drop)"
-          <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
-              let findings = Release.evaluate rules facts
-              let d = Release.rollup findings
-              d.Blockers.Length + d.Warnings.Length + d.Passing.Length = findings.Length
+            testPropertyWithConfig fsCheckConfig "|Blockers|+|Warnings|+|Passing| = |findings| (no drop)"
+            <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
+                let findings = Release.evaluate rules facts
+                let d = Release.rollup findings
+                d.Blockers.Length + d.Warnings.Length + d.Passing.Length = findings.Length
 
-          testPropertyWithConfig fsCheckConfig "Verdict = Fail ⟺ Blockers ≠ []"
-          <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
-              let d = Release.evaluateRelease rules facts
-              (d.Verdict = Fail) = (not (List.isEmpty d.Blockers))
+            testPropertyWithConfig fsCheckConfig "Verdict = Fail ⟺ Blockers ≠ []"
+            <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
+                let d = Release.evaluateRelease rules facts
+                (d.Verdict = Fail) = (not (List.isEmpty d.Blockers))
 
-          testPropertyWithConfig fsCheckConfig "ExitCodeBasis = Blocked ⟺ Verdict = Fail"
-          <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
-              let d = Release.evaluateRelease rules facts
-              (d.ExitCodeBasis = Blocked) = (d.Verdict = Fail)
+            testPropertyWithConfig fsCheckConfig "ExitCodeBasis = Blocked ⟺ Verdict = Fail"
+            <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
+                let d = Release.evaluateRelease rules facts
+                (d.ExitCodeBasis = Blocked) = (d.Verdict = Fail)
 
-          testPropertyWithConfig fsCheckConfig "evaluateRelease = rollup ∘ evaluate (composition law)"
-          <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
-              Release.evaluateRelease rules facts = Release.rollup (Release.evaluate rules facts) ]
+            testPropertyWithConfig fsCheckConfig "evaluateRelease = rollup ∘ evaluate (composition law)"
+            <| fun (rules: ReleaseRule list) (facts: ReleaseFacts) ->
+                Release.evaluateRelease rules facts = Release.rollup (Release.evaluate rules facts)
+        ]

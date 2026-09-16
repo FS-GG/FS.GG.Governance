@@ -18,49 +18,77 @@ open FS.GG.Governance.AgentReviewKey.Model
 /// A complete, literal `AgentReviewInputs` — every input present and distinct so a single-input change is
 /// unambiguous. The worked-example values from contracts/agent-review-key-format.md.
 let baseInputs: AgentReviewInputs =
-    { Model = ModelId "claude-opus-4"
-      ModelVersion = ModelVersion "20260101"
-      Config = ModelConfig "temp=0"
-      PromptHash = ReviewerPromptHash "p1"
-      Question = QuestionText "explains API?"
-      Check = RuleHash "c1"
-      ReviewedArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ] }
+    {
+        Model = ModelId "claude-opus-4"
+        ModelVersion = ModelVersion "20260101"
+        Config = ModelConfig "temp=0"
+        PromptHash = ReviewerPromptHash "p1"
+        Question = QuestionText "explains API?"
+        Check = RuleHash "c1"
+        ReviewedArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1"; ArtifactHash "h1" ]
+    }
 
 /// The exact canonical key for `baseInputs` (contracts/agent-review-key-format.md worked example). The
 /// artifact set is deduped to {h1,h2} and ordinally sorted; there is NO trailing newline.
 let exampleKey =
     String.concat
         "\n"
-        [ "mid=13:claude-opus-4"
-          "mver=8:20260101"
-          "prompt=2:p1"
-          "cfg=6:temp=0"
-          "chk=2:c1"
-          "art=2;2:h1;2:h2"
-          "q=13:explains API?" ]
+        [
+            "mid=13:claude-opus-4"
+            "mver=8:20260101"
+            "prompt=2:p1"
+            "cfg=6:temp=0"
+            "chk=2:c1"
+            "art=2;2:h1;2:h2"
+            "q=13:explains API?"
+        ]
 
 // ── One representative single-input variant per comparable input ──
 // Each takes `baseInputs` and changes EXACTLY the named input to a distinct value. Paired with its
 // `ReviewInput` for table-driven tests.
 
-let private variantModel (i: AgentReviewInputs) = { i with Model = ModelId "claude-sonnet-4" }
-let private variantModelVersion (i: AgentReviewInputs) = { i with ModelVersion = ModelVersion "20260202" }
-let private variantPromptHash (i: AgentReviewInputs) = { i with PromptHash = ReviewerPromptHash "p2" }
-let private variantConfig (i: AgentReviewInputs) = { i with Config = ModelConfig "temp=1" }
+let private variantModel (i: AgentReviewInputs) =
+    { i with
+        Model = ModelId "claude-sonnet-4"
+    }
+
+let private variantModelVersion (i: AgentReviewInputs) =
+    { i with
+        ModelVersion = ModelVersion "20260202"
+    }
+
+let private variantPromptHash (i: AgentReviewInputs) =
+    { i with
+        PromptHash = ReviewerPromptHash "p2"
+    }
+
+let private variantConfig (i: AgentReviewInputs) =
+    { i with Config = ModelConfig "temp=1" }
+
 let private variantCheck (i: AgentReviewInputs) = { i with Check = RuleHash "c2" }
-let private variantArtifacts (i: AgentReviewInputs) = { i with ReviewedArtifacts = [ ArtifactHash "h3" ] }
-let private variantQuestion (i: AgentReviewInputs) = { i with Question = QuestionText "different?" }
+
+let private variantArtifacts (i: AgentReviewInputs) =
+    { i with
+        ReviewedArtifacts = [ ArtifactHash "h3" ]
+    }
+
+let private variantQuestion (i: AgentReviewInputs) =
+    { i with
+        Question = QuestionText "different?"
+    }
 
 /// The 7 comparable inputs, each paired with a single-input variation function. Table-driven
 /// distinction/diff tests iterate this so EVERY input is covered (SC-001, SC-003).
 let allInputs: (ReviewInput * (AgentReviewInputs -> AgentReviewInputs)) list =
-    [ ModelIdInput, variantModel
-      ModelVersionInput, variantModelVersion
-      PromptHashInput, variantPromptHash
-      ModelConfigInput, variantConfig
-      CheckHashInput, variantCheck
-      ReviewedArtifactsInput, variantArtifacts
-      QuestionTextInput, variantQuestion ]
+    [
+        ModelIdInput, variantModel
+        ModelVersionInput, variantModelVersion
+        PromptHashInput, variantPromptHash
+        ModelConfigInput, variantConfig
+        CheckHashInput, variantCheck
+        ReviewedArtifactsInput, variantArtifacts
+        QuestionTextInput, variantQuestion
+    ]
 
 /// All 7 `ReviewInput` cases (for total/injective `inputToken` coverage).
 let allInputCases: ReviewInput list = allInputs |> List.map fst
@@ -69,7 +97,21 @@ let allInputCases: ReviewInput list = allInputs |> List.map fst
 
 let private shortStringGen: Gen<string> =
     Gen.elements
-        [ ""; "a"; "b"; "h1"; "h2"; "h3"; "c1"; "p1"; "temp=0"; "claude-opus-4"; "20260101"; "héllo"; "x:y=z" ]
+        [
+            ""
+            "a"
+            "b"
+            "h1"
+            "h2"
+            "h3"
+            "c1"
+            "p1"
+            "temp=0"
+            "claude-opus-4"
+            "20260101"
+            "héllo"
+            "x:y=z"
+        ]
 
 let private genAgentReviewInputs: Gen<AgentReviewInputs> =
     gen {
@@ -82,13 +124,15 @@ let private genAgentReviewInputs: Gen<AgentReviewInputs> =
         let! arts = Gen.listOf shortStringGen
 
         return
-            { Model = ModelId model
-              ModelVersion = ModelVersion modelVersion
-              Config = ModelConfig config
-              PromptHash = ReviewerPromptHash promptHash
-              Question = QuestionText question
-              Check = RuleHash check
-              ReviewedArtifacts = arts |> List.map ArtifactHash }
+            {
+                Model = ModelId model
+                ModelVersion = ModelVersion modelVersion
+                Config = ModelConfig config
+                PromptHash = ReviewerPromptHash promptHash
+                Question = QuestionText question
+                Check = RuleHash check
+                ReviewedArtifacts = arts |> List.map ArtifactHash
+            }
     }
 
 /// A permutation+duplication of an `ArtifactHash list` that preserves its SET (for order/dup invariance
@@ -112,7 +156,9 @@ type Generators =
 
 /// FsCheck config registering the real `AgentReviewInputs` generator.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 
 /// Build a same-set permutation generator for a given input's reviewed artifacts (used by the
 /// set-semantics order/dup invariance properties).

@@ -25,7 +25,9 @@ module Model =
         | DurationValue of SensedDuration
 
     type SensedMetadatum =
-        { Label: SensedLabel
-          Value: SensedValue }
+        {
+            Label: SensedLabel
+            Value: SensedValue
+        }
 
     type SensedRendering = SensedRendering of string

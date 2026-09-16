@@ -11,8 +11,8 @@
 
 namespace FS.GG.Governance.GateRun
 
-open FS.GG.Governance.Gates.Model            // GateId
-open FS.GG.Governance.CommandRecord.Model     // ExitCode
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.CommandRecord.Model // ExitCode
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -40,8 +40,10 @@ module Model =
     /// `fsgg ship`, fed to the verdict relocation (D3). The exit code + pass/fail live on `Disposition` (they
     /// are only meaningful when the gate ran or reused a run), so no illegal exit-less-Executed state exists.
     type GateOutcome =
-        { GateId: GateId
-          Disposition: GateDisposition }
+        {
+            GateId: GateId
+            Disposition: GateDisposition
+        }
 
     /// `true` iff the gate ran (or reused a prior run) and its exit code was a pass; a `NotExecuted` gate is
     /// never passing — it is structurally excluded from the passed set (SC-002), never coerced to pass.

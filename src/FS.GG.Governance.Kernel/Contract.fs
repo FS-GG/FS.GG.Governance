@@ -7,10 +7,12 @@ namespace FS.GG.Governance.Kernel
 // (Principle II).
 
 type ContractEntry =
-    { Id: RuleId
-      Severity: Severity
-      Spec: SpecSource
-      Statement: string }
+    {
+        Id: RuleId
+        Severity: Severity
+        Spec: SpecSource
+        Statement: string
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Contract =
@@ -22,10 +24,12 @@ module Contract =
         // folds structure only; no probe runs, no I/O (R-C4).
         rules
         |> List.map (fun rule ->
-            { Id = rule.Id
-              Severity = rule.Severity
-              Spec = rule.Spec
-              Statement = Check.render rule.Check })
+            {
+                Id = rule.Id
+                Severity = rule.Severity
+                Spec = rule.Spec
+                Statement = Check.render rule.Check
+            })
 
     let render (contract: ContractEntry list) : string =
         // One deterministic stanza per entry: "<id> [<severity>] (<document> §<section>)"

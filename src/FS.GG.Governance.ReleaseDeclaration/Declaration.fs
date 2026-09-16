@@ -23,16 +23,20 @@ open FS.GG.Governance.ReleaseFactsSensing.Model
 module Declaration =
 
     type PackableProject =
-        { Surface: SurfaceId
-          PackCommand: GateCommand
-          Baseline: string option }
+        {
+            Surface: SurfaceId
+            PackCommand: GateCommand
+            Baseline: string option
+        }
 
     type ReleaseDeclaration =
-        { Rules: ReleaseRule list
-          Expectations: ReleaseExpectations
-          Layout: SourceLayout
-          PackableProjects: PackableProject list
-          Matrix: ExhaustiveMatrix option }
+        {
+            Rules: ReleaseRule list
+            Expectations: ReleaseExpectations
+            Layout: SourceLayout
+            PackableProjects: PackableProject list
+            Matrix: ExhaustiveMatrix option
+        }
 
     type DeclError = { Reason: string }
 
@@ -145,7 +149,14 @@ module Declaration =
         | _ -> None
 
     let allFamilies: ReleaseRuleKind list =
-        [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
+        [
+            VersionBump
+            PackageMetadata
+            TemplatePins
+            PublishPlan
+            TrustedPublishing
+            Provenance
+        ]
 
     // ── per-section parsers (hidden) ──
 
@@ -160,16 +171,21 @@ module Declaration =
                 | None -> Error(sprintf "unrecognized rule kind: %s" kindRaw)
                 | Some kind ->
                     match scalarField m "severity" |> Option.bind recognizeSeverity with
-                    | None -> Error(sprintf "rule '%s' has a missing/unrecognized severity (expected blocking|advisory)" kindRaw)
+                    | None ->
+                        Error(
+                            sprintf "rule '%s' has a missing/unrecognized severity (expected blocking|advisory)" kindRaw
+                        )
                     | Some severity ->
                         match scalarField m "maturity" |> Option.bind recognizeMaturity with
                         | None -> Error(sprintf "rule '%s' has a missing/unrecognized maturity" kindRaw)
                         | Some maturity ->
                             Ok
-                                { Kind = kind
-                                  Surface = surface
-                                  BaseSeverity = severity
-                                  Maturity = maturity }
+                                {
+                                    Kind = kind
+                                    Surface = surface
+                                    BaseSeverity = severity
+                                    Maturity = maturity
+                                }
 
     /// Fold a `Result` list into a `Result` of the list, first error wins (total, no exceptions).
     let sequenceResults (rs: Result<'a, string> list) : Result<'a list, string> =
@@ -193,14 +209,28 @@ module Declaration =
                 // ordering is normalized to the F053 stable composite key.
                 let kinds = rules |> List.map (fun r -> r.Kind)
                 let missing = allFamilies |> List.filter (fun k -> not (List.contains k kinds))
-                let duplicated = kinds |> List.countBy id |> List.filter (fun (_, n) -> n > 1) |> List.map fst
+
+                let duplicated =
+                    kinds |> List.countBy id |> List.filter (fun (_, n) -> n > 1) |> List.map fst
 
                 if not (List.isEmpty missing) then
-                    Error(sprintf "release.yml does not declare every release family (missing: %s)" (missing |> List.map Release.releaseRuleKindToken |> String.concat ", "))
+                    Error(
+                        sprintf
+                            "release.yml does not declare every release family (missing: %s)"
+                            (missing |> List.map Release.releaseRuleKindToken |> String.concat ", ")
+                    )
                 elif not (List.isEmpty duplicated) then
-                    Error(sprintf "release.yml declares a family more than once (%s)" (duplicated |> List.map Release.releaseRuleKindToken |> String.concat ", "))
+                    Error(
+                        sprintf
+                            "release.yml declares a family more than once (%s)"
+                            (duplicated |> List.map Release.releaseRuleKindToken |> String.concat ", ")
+                    )
                 else
-                    Ok(rules |> List.sortBy (fun r -> Release.releaseRuleKindOrdinal r.Kind, (let (SurfaceId s) = r.Surface in s)))
+                    Ok(
+                        rules
+                        |> List.sortBy (fun r ->
+                            Release.releaseRuleKindOrdinal r.Kind, (let (SurfaceId s) = r.Surface in s))
+                    )
 
     let parseExpectations (surface: SurfaceId) (root: YamlMappingNode) : Result<ReleaseExpectations, string> =
         // The whole section is optional, and every criterion within it is optional (an ABSENT criterion ⇒
@@ -210,13 +240,15 @@ module Declaration =
         // criterion, violating this file's "never partial facts" header. Mirrors `parseMatrix`/`parsePackables`
         // (Ok None ⇒ absent, Error ⇒ present-but-malformed). All values come from the file (FR-014).
         let empty =
-            { Surface = surface
-              VersionBaseline = None
-              RequiredMetadataFields = None
-              ExpectedPins = None
-              RequiredPublishPosture = None
-              RequiredTrustedPublishing = None
-              RequiredProvenance = None }
+            {
+                Surface = surface
+                VersionBaseline = None
+                RequiredMetadataFields = None
+                ExpectedPins = None
+                RequiredPublishPosture = None
+                RequiredTrustedPublishing = None
+                RequiredProvenance = None
+            }
 
         match childByKey root "expectations" with
         | None -> Ok empty
@@ -254,33 +286,35 @@ module Declaration =
                 | Error e -> Error e
                 | Ok versionBaseline ->
 
-                match listCriterion "requiredMetadataFields" with
-                | Error e -> Error e
-                | Ok requiredMetadataFields ->
+                    match listCriterion "requiredMetadataFields" with
+                    | Error e -> Error e
+                    | Ok requiredMetadataFields ->
 
-                match pinsCriterion with
-                | Error e -> Error e
-                | Ok expectedPins ->
+                        match pinsCriterion with
+                        | Error e -> Error e
+                        | Ok expectedPins ->
 
-                match listCriterion "requiredPublishPosture" with
-                | Error e -> Error e
-                | Ok requiredPublishPosture ->
+                            match listCriterion "requiredPublishPosture" with
+                            | Error e -> Error e
+                            | Ok requiredPublishPosture ->
 
-                match listCriterion "requiredTrustedPublishing" with
-                | Error e -> Error e
-                | Ok requiredTrustedPublishing ->
+                                match listCriterion "requiredTrustedPublishing" with
+                                | Error e -> Error e
+                                | Ok requiredTrustedPublishing ->
 
-                match listCriterion "requiredProvenance" with
-                | Error e -> Error e
-                | Ok requiredProvenance ->
-                    Ok
-                        { Surface = surface
-                          VersionBaseline = versionBaseline
-                          RequiredMetadataFields = requiredMetadataFields
-                          ExpectedPins = expectedPins
-                          RequiredPublishPosture = requiredPublishPosture
-                          RequiredTrustedPublishing = requiredTrustedPublishing
-                          RequiredProvenance = requiredProvenance }
+                                    match listCriterion "requiredProvenance" with
+                                    | Error e -> Error e
+                                    | Ok requiredProvenance ->
+                                        Ok
+                                            {
+                                                Surface = surface
+                                                VersionBaseline = versionBaseline
+                                                RequiredMetadataFields = requiredMetadataFields
+                                                ExpectedPins = expectedPins
+                                                RequiredPublishPosture = requiredPublishPosture
+                                                RequiredTrustedPublishing = requiredTrustedPublishing
+                                                RequiredProvenance = requiredProvenance
+                                            }
 
     let parseLayout (root: YamlMappingNode) : Result<SourceLayout, string> =
         match childByKey root "layout" |> Option.bind asMapping with
@@ -288,22 +322,38 @@ module Declaration =
         | Some m ->
             let path name = scalarField m name
 
-            match path "versionPath", path "metadataPath", path "pinsPath", path "publishPlanPath", path "trustedPublishingPath", path "provenancePath" with
+            match
+                path "versionPath",
+                path "metadataPath",
+                path "pinsPath",
+                path "publishPlanPath",
+                path "trustedPublishingPath",
+                path "provenancePath"
+            with
             | Some v, Some md, Some p, Some pp, Some tp, Some pr ->
                 Ok
-                    { VersionPath = v
-                      MetadataPath = md
-                      PinsPath = p
-                      PublishPlanPath = pp
-                      TrustedPublishingPath = tp
-                      ProvenancePath = pr }
-            | _ -> Error "release.yml 'layout' must declare all six source paths (versionPath, metadataPath, pinsPath, publishPlanPath, trustedPublishingPath, provenancePath)"
+                    {
+                        VersionPath = v
+                        MetadataPath = md
+                        PinsPath = p
+                        PublishPlanPath = pp
+                        TrustedPublishingPath = tp
+                        ProvenancePath = pr
+                    }
+            | _ ->
+                Error
+                    "release.yml 'layout' must declare all six source paths (versionPath, metadataPath, pinsPath, publishPlanPath, trustedPublishingPath, provenancePath)"
 
     // ── additive section parsers (065) — packable projects + the optional matrix ──
 
     /// An empty environment delta — a pack command inherits the host environment (the common case; the F051
     /// `GateCommand` carries a three-class DELTA, not a full snapshot).
-    let emptyEnv: EnvironmentDelta = { Added = []; Changed = []; Removed = [] }
+    let emptyEnv: EnvironmentDelta =
+        {
+            Added = []
+            Changed = []
+            Removed = []
+        }
 
     /// Build one project's pack `GateCommand` from its declared `executable`/`arguments`/`workingDirectory?`/
     /// `timeoutSeconds?`. `executable` + `arguments` are required (a pack with no program is malformed);
@@ -338,12 +388,14 @@ module Declaration =
                 | Error e -> Error e
                 | Ok timeout ->
                     Ok
-                        { Executable = Executable exe
-                          Arguments = args |> List.map Argument
-                          WorkingDirectory = WorkingDirectory workDir
-                          Environment = emptyEnv
-                          Timeout = TimeoutLimit timeout
-                          CapturedOutput = NoCapturedOutput }
+                        {
+                            Executable = Executable exe
+                            Arguments = args |> List.map Argument
+                            WorkingDirectory = WorkingDirectory workDir
+                            Environment = emptyEnv
+                            Timeout = TimeoutLimit timeout
+                            CapturedOutput = NoCapturedOutput
+                        }
 
     let parsePackable (n: YamlNode) : Result<PackableProject, string> =
         match asMapping n with
@@ -359,9 +411,11 @@ module Declaration =
                     | Error e -> Error e
                     | Ok command ->
                         Ok
-                            { Surface = SurfaceId s
-                              PackCommand = command
-                              Baseline = scalarField m "baseline" }
+                            {
+                                Surface = SurfaceId s
+                                PackCommand = command
+                                Baseline = scalarField m "baseline"
+                            }
 
     /// The optional `packableProjects` sequence. ABSENT ⇒ `Ok []` (GD-3 backward-compat — vacuously
     /// satisfied). Present-but-not-a-sequence, or a malformed entry, ⇒ `Error` (never partial facts).
@@ -386,12 +440,21 @@ module Declaration =
                 | None -> Error "release.yml 'matrix' is missing its 'name'"
                 | Some name ->
                     match scalarField m "cost" |> Option.bind recognizeCost with
-                    | None -> Error "release.yml 'matrix' has a missing/unrecognized 'cost' (expected cheap|medium|high|exhaustive)"
+                    | None ->
+                        Error
+                            "release.yml 'matrix' has a missing/unrecognized 'cost' (expected cheap|medium|high|exhaustive)"
                     | Some cost ->
                         match childByKey m "dimensions" |> Option.bind scalarList with
                         | None -> Error "release.yml 'matrix' must declare a 'dimensions' sequence of scalars"
                         | Some dimensions ->
-                            Ok(Some { Name = name; Cost = cost; Dimensions = dimensions })
+                            Ok(
+                                Some
+                                    {
+                                        Name = name
+                                        Cost = cost
+                                        Dimensions = dimensions
+                                    }
+                            )
 
     // ── the public entry point ──
 
@@ -423,10 +486,12 @@ module Declaration =
                                     | Error e -> Error e
                                     | Ok expectations ->
                                         Ok
-                                            { Rules = rules
-                                              Expectations = expectations
-                                              Layout = layout
-                                              PackableProjects = packables
-                                              Matrix = matrix }
+                                            {
+                                                Rules = rules
+                                                Expectations = expectations
+                                                Layout = layout
+                                                PackableProjects = packables
+                                                Matrix = matrix
+                                            }
 
         result |> Result.mapError (fun reason -> { Reason = reason })

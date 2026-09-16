@@ -18,28 +18,56 @@ let private src = normalizePath "docs/guide.md"
 let tests =
     testList
         "DocsChecks.advisoryBoundary"
-        [ test "judgement-heavy example staleness ⇒ Advisory docs.example-freshness (never Blocking)" {
-              let facts =
-                  { Sources = [ src ]
-                    Links = []
-                    References = []
-                    Examples = [ { Source = src; Example = "snippet-1"; Outcome = ExampleStale "signature may differ" } ]
-                    Unreadable = [] }
+        [
+            test "judgement-heavy example staleness ⇒ Advisory docs.example-freshness (never Blocking)" {
+                let facts =
+                    {
+                        Sources = [ src ]
+                        Links = []
+                        References = []
+                        Examples =
+                            [
+                                {
+                                    Source = src
+                                    Example = "snippet-1"
+                                    Outcome = ExampleStale "signature may differ"
+                                }
+                            ]
+                        Unreadable = []
+                    }
 
-              let f = List.head (DocsChecks.evaluate req facts)
-              Expect.equal f.Code "docs.example-freshness" "code"
-              Expect.equal f.BaseSeverity Advisory "judgement-heavy ⇒ Advisory"
-          }
+                let f = List.head (DocsChecks.evaluate req facts)
+                Expect.equal f.Code "docs.example-freshness" "code"
+                Expect.equal f.BaseSeverity Advisory "judgement-heavy ⇒ Advisory"
+            }
 
-          test "current example ⇒ no finding; advisory is distinguishable from a Blocking link finding" {
-              let facts =
-                  { Sources = [ src ]
-                    Links = [ { Source = src; LinkText = "x"; Target = "y"; Outcome = LinkDangling "y" } ]
-                    References = []
-                    Examples = [ { Source = src; Example = "ok"; Outcome = ExampleCurrent } ]
-                    Unreadable = [] }
+            test "current example ⇒ no finding; advisory is distinguishable from a Blocking link finding" {
+                let facts =
+                    {
+                        Sources = [ src ]
+                        Links =
+                            [
+                                {
+                                    Source = src
+                                    LinkText = "x"
+                                    Target = "y"
+                                    Outcome = LinkDangling "y"
+                                }
+                            ]
+                        References = []
+                        Examples =
+                            [
+                                {
+                                    Source = src
+                                    Example = "ok"
+                                    Outcome = ExampleCurrent
+                                }
+                            ]
+                        Unreadable = []
+                    }
 
-              let findings = DocsChecks.evaluate req facts
-              Expect.hasLength findings 1 "only the link finding"
-              Expect.equal (List.head findings).BaseSeverity Blocking "the deterministic link finding is Blocking"
-          } ]
+                let findings = DocsChecks.evaluate req facts
+                Expect.hasLength findings 1 "only the link finding"
+                Expect.equal (List.head findings).BaseSeverity Blocking "the deterministic link finding is Blocking"
+            }
+        ]

@@ -13,6 +13,8 @@ let private host = typeof<Effect>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "V13 Host" "FS.GG.Governance.Host" host
+        [
+            SurfaceDrift.surfaceTest "V13 Host" "FS.GG.Governance.Host" host
 
-          SurfaceDrift.referencesOnly "V13 Host" (fun n -> n = "FS.GG.Governance.Kernel") host ]
+            SurfaceDrift.referencesOnly "V13 Host" (fun n -> n = "FS.GG.Governance.Kernel") host
+        ]

@@ -17,47 +17,60 @@ let tests =
     testList
         "CloseLoop"
         [
-          // (1) referenceOf reproducible over a fake-port record ─────────────────────────────────────────
-          test "fake port: referenceOf of an assembled record is defined and reproducible" {
-              let port = fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
-              let record = Interpreter.senseExecution port baseCommand
-              Expect.equal
-                  (EvidenceCapture.referenceOf record)
-                  (EvidenceCapture.referenceOf record)
-                  "referenceOf is byte-stable"
-          }
+            // (1) referenceOf reproducible over a fake-port record ─────────────────────────────────────────
+            test "fake port: referenceOf of an assembled record is defined and reproducible" {
+                let port =
+                    fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
 
-          // (2) capture makes the world reusable for the derived reference (fake port) ────────────────────
-          test "fake port: capture into the empty store makes the world reusable for the derived reference" {
-              let port = fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
-              let record = Interpreter.senseExecution port baseCommand
-              let world = inputs "build:main"
-              let grown = EvidenceCapture.capture world record EvidenceReuse.empty
-              Expect.equal
-                  (EvidenceReuse.decide world grown)
-                  (Reuse(EvidenceCapture.referenceOf record))
-                  "captured world reusable with the derived reference"
-          }
+                let record = Interpreter.senseExecution port baseCommand
 
-          test "fake port: an unrelated world is still Recompute after capture (recompute-safety)" {
-              let port = fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
-              let record = Interpreter.senseExecution port baseCommand
-              let world = inputs "build:main"
-              let grown = EvidenceCapture.capture world record EvidenceReuse.empty
-              Expect.equal
-                  (EvidenceReuse.decide differentInputs grown)
-                  (Recompute NoPriorEvidence)
-                  "capture added no spurious match for a different world"
-          }
+                Expect.equal
+                    (EvidenceCapture.referenceOf record)
+                    (EvidenceCapture.referenceOf record)
+                    "referenceOf is byte-stable"
+            }
 
-          // (3) THE REAL EDGE: the loop closes from a GENUINELY EXECUTED gate ─────────────────────────────
-          test "real port: a real executed gate's record closes the loop (capture ⇒ reusable)" {
-              withTempDir (fun dir ->
-                  let record = Interpreter.senseExecution Interpreter.realPort (cleanFixture dir).Command
-                  let world = inputs "build:real"
-                  let grown = EvidenceCapture.capture world record EvidenceReuse.empty
-                  Expect.equal
-                      (EvidenceReuse.decide world grown)
-                      (Reuse(EvidenceCapture.referenceOf record))
-                      "a gate the system actually ran becomes reusable evidence")
-          } ]
+            // (2) capture makes the world reusable for the derived reference (fake port) ────────────────────
+            test "fake port: capture into the empty store makes the world reusable for the derived reference" {
+                let port =
+                    fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
+
+                let record = Interpreter.senseExecution port baseCommand
+                let world = inputs "build:main"
+                let grown = EvidenceCapture.capture world record EvidenceReuse.empty
+
+                Expect.equal
+                    (EvidenceReuse.decide world grown)
+                    (Reuse(EvidenceCapture.referenceOf record))
+                    "captured world reusable with the derived reference"
+            }
+
+            test "fake port: an unrelated world is still Recompute after capture (recompute-safety)" {
+                let port =
+                    fakePort (System.Text.Encoding.UTF8.GetBytes "hello\n") [||] (ExitCode 0) (SensedDuration 1L)
+
+                let record = Interpreter.senseExecution port baseCommand
+                let world = inputs "build:main"
+                let grown = EvidenceCapture.capture world record EvidenceReuse.empty
+
+                Expect.equal
+                    (EvidenceReuse.decide differentInputs grown)
+                    (Recompute NoPriorEvidence)
+                    "capture added no spurious match for a different world"
+            }
+
+            // (3) THE REAL EDGE: the loop closes from a GENUINELY EXECUTED gate ─────────────────────────────
+            test "real port: a real executed gate's record closes the loop (capture ⇒ reusable)" {
+                withTempDir (fun dir ->
+                    let record =
+                        Interpreter.senseExecution Interpreter.realPort (cleanFixture dir).Command
+
+                    let world = inputs "build:real"
+                    let grown = EvidenceCapture.capture world record EvidenceReuse.empty
+
+                    Expect.equal
+                        (EvidenceReuse.decide world grown)
+                        (Reuse(EvidenceCapture.referenceOf record))
+                        "a gate the system actually ran becomes reusable evidence")
+            }
+        ]

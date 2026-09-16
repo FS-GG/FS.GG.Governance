@@ -12,16 +12,20 @@ type ArtifactReader = ArtifactRef -> Result<string, string>
 type Judge = ReviewTask -> Result<JudgeVerdict, string>
 
 type ReviewStore =
-    { Load: string -> Result<RecordedReview option, string>
-      Save: RecordedReview -> Result<unit, string> }
+    {
+        Load: string -> Result<RecordedReview option, string>
+        Save: RecordedReview -> Result<unit, string>
+    }
 
 type OutputSink = Output -> unit
 
 type Ports =
-    { Read: ArtifactReader
-      Judge: Judge
-      Store: ReviewStore
-      Sink: OutputSink }
+    {
+        Read: ArtifactReader
+        Judge: Judge
+        Store: ReviewStore
+        Sink: OutputSink
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -47,9 +51,20 @@ module Interpreter =
                 guard (fun () ->
                     let samples = [ for _ in 1 .. max 1 dispatch.Samples -> ports.Judge dispatch.Task ]
 
-                    match samples |> List.tryPick (function | Error e -> Some e | Ok _ -> None) with
+                    match
+                        samples
+                        |> List.tryPick (function
+                            | Error e -> Some e
+                            | Ok _ -> None)
+                    with
                     | Some e -> Error e
-                    | None -> Ok(samples |> List.choose (function | Ok s -> Some s | Error _ -> None)))
+                    | None ->
+                        Ok(
+                            samples
+                            |> List.choose (function
+                                | Ok s -> Some s
+                                | Error _ -> None)
+                        ))
 
             [ Msg.Reviewed(dispatch.Task.Key, result) ]
 

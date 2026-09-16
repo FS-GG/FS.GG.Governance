@@ -14,7 +14,8 @@ open FS.GG.Governance.Tests.Common
 
 let private repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 
-let private projectSensing = SurfaceDrift.assemblyNamed "FS.GG.Governance.ProjectSensing"
+let private projectSensing =
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.ProjectSensing"
 
 let private baselinePath =
     Path.Combine(repoRoot, "surface", "FS.GG.Governance.ProjectSensing.surface.txt")
@@ -43,43 +44,50 @@ let private normalize (s: string) = s.Replace("\r\n", "\n").TrimEnd()
 let tests =
     testList
         "SurfaceDrift"
-        [ test "ProjectSensing public surface equals the committed baseline" {
-              let actual = renderSurface projectSensing
+        [
+            test "ProjectSensing public surface equals the committed baseline" {
+                let actual = renderSurface projectSensing
 
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(baselinePath, actual + "\n")
+                if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
+                    File.WriteAllText(baselinePath, actual + "\n")
 
-              let baseline = File.ReadAllText baselinePath
+                let baseline = File.ReadAllText baselinePath
 
-              Expect.equal
-                  (normalize actual)
-                  (normalize baseline)
-                  "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+                Expect.equal
+                    (normalize actual)
+                    (normalize baseline)
+                    "public surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
+            }
 
-          test "the Project composition root is public" {
-              let typeNames = projectSensing.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
+            test "the Project composition root is public" {
+                let typeNames =
+                    projectSensing.GetExportedTypes()
+                    |> Array.choose (fun t -> Option.ofObj t.FullName)
 
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n.Contains "FS.GG.Governance.Cli.ProjectModule"))
-                  "Project module is public"
+                Expect.isTrue
+                    (typeNames
+                     |> Array.exists (fun n -> n.Contains "FS.GG.Governance.Cli.ProjectModule"))
+                    "Project module is public"
 
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n = "FS.GG.Governance.Cli.ProjectFact"))
-                  "ProjectFact coproduct is public"
-          }
+                Expect.isTrue
+                    (typeNames |> Array.exists (fun n -> n = "FS.GG.Governance.Cli.ProjectFact"))
+                    "ProjectFact coproduct is public"
+            }
 
-          test "ProjectSensing sits below the command executables (references no exe)" {
-              let forbidden =
-                  projectSensing.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (fun n ->
-                      n = "FS.GG.Governance.Cli"
-                      || n = "FS.GG.Governance.EvidenceCommand"
-                      || n = "FS.GG.Governance.RouteCommand"
-                      || n = "FS.GG.Governance.RoutePipeline")
+            test "ProjectSensing sits below the command executables (references no exe)" {
+                let forbidden =
+                    projectSensing.GetReferencedAssemblies()
+                    |> Array.choose (fun a -> Option.ofObj a.Name)
+                    |> Array.filter (fun n ->
+                        n = "FS.GG.Governance.Cli"
+                        || n = "FS.GG.Governance.EvidenceCommand"
+                        || n = "FS.GG.Governance.RouteCommand"
+                        || n = "FS.GG.Governance.RoutePipeline")
 
-              Expect.isEmpty
-                  forbidden
-                  (sprintf "ProjectSensing must not reference a command executable or the route pipeline; found: %A" forbidden)
-          } ]
+                Expect.isEmpty
+                    forbidden
+                    (sprintf
+                        "ProjectSensing must not reference a command executable or the route pipeline; found: %A"
+                        forbidden)
+            }
+        ]

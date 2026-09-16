@@ -31,9 +31,11 @@ module Declaration =
     /// through the F051 execution port, and the released-version baseline the packed version is compared
     /// against. `Baseline = None ⇒ first release` (F26 `versionPolicy ⇒ NoBaseline`, not a downgrade).
     type PackableProject =
-        { Surface: SurfaceId
-          PackCommand: GateCommand
-          Baseline: string option }
+        {
+            Surface: SurfaceId
+            PackCommand: GateCommand
+            Baseline: string option
+        }
 
     /// The typed result of parsing `.fsgg/release.yml` — the F055 trio (rules/expectations/layout, the
     /// EXACT inputs the F053/F054 cores need) PLUS the two additive sections this row introduces:
@@ -41,11 +43,13 @@ module Declaration =
     /// satisfied) and `Matrix` (the optional declared exhaustive validation matrix — `None` ⇒
     /// `NotDeclared`, never invented). No raw YAML, host path, or timestamp is carried.
     type ReleaseDeclaration =
-        { Rules: ReleaseRule list
-          Expectations: ReleaseExpectations
-          Layout: SourceLayout
-          PackableProjects: PackableProject list
-          Matrix: ExhaustiveMatrix option }
+        {
+            Rules: ReleaseRule list
+            Expectations: ReleaseExpectations
+            Layout: SourceLayout
+            PackableProjects: PackableProject list
+            Matrix: ExhaustiveMatrix option
+        }
 
     /// A closed, explained reason a `release.yml` was rejected (the F014 `Diagnostic` spirit): actionable,
     /// product-neutral text identifying the missing/invalid declaration. Distinct from a sensing

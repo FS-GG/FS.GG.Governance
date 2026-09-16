@@ -20,12 +20,19 @@ open FS.GG.Governance.CommandKind.Model
 // ── Real command-run fixtures via the real ExecutionPort ──
 
 let private echoCommand (args: string list) : GateCommand =
-    { Executable = Executable "/bin/echo"
-      Arguments = args |> List.map Argument
-      WorkingDirectory = WorkingDirectory "/tmp"
-      Environment = { Added = []; Changed = []; Removed = [] }
-      Timeout = TimeoutLimit 30
-      CapturedOutput = NoCapturedOutput }
+    {
+        Executable = Executable "/bin/echo"
+        Arguments = args |> List.map Argument
+        WorkingDirectory = WorkingDirectory "/tmp"
+        Environment =
+            {
+                Added = []
+                Changed = []
+                Removed = []
+            }
+        Timeout = TimeoutLimit 30
+        CapturedOutput = NoCapturedOutput
+    }
 
 /// Run a real `/bin/echo` through the real port and wrap the resulting F032 record with the given kind.
 let realRun (kind: CommandKind) (args: string list) : KindedCommandRun =
@@ -36,25 +43,37 @@ let realRun (kind: CommandKind) (args: string list) : KindedCommandRun =
 /// F051 `startFailureExitCode` sentinel (never an exception, never dropped).
 let sentinelRun (kind: CommandKind) : KindedCommandRun =
     let command =
-        { Executable = Executable "/no/such/executable-fsgg-test"
-          Arguments = [ Argument "x" ]
-          WorkingDirectory = WorkingDirectory "/tmp"
-          Environment = { Added = []; Changed = []; Removed = [] }
-          Timeout = TimeoutLimit 30
-          CapturedOutput = NoCapturedOutput }
+        {
+            Executable = Executable "/no/such/executable-fsgg-test"
+            Arguments = [ Argument "x" ]
+            WorkingDirectory = WorkingDirectory "/tmp"
+            Environment =
+                {
+                    Added = []
+                    Changed = []
+                    Removed = []
+                }
+            Timeout = TimeoutLimit 30
+            CapturedOutput = NoCapturedOutput
+        }
 
-    { Kind = kind; Record = Interpreter.senseExecution Interpreter.realPort command }
+    {
+        Kind = kind
+        Record = Interpreter.senseExecution Interpreter.realPort command
+    }
 
 /// One run of EACH of the seven kinds (real `/bin/echo`, the kind as its argument so each command is
 /// distinct).
 let everyKindRun: (CommandKind * KindedCommandRun) list =
-    [ Build, realRun Build [ "build" ]
-      Test, realRun Test [ "test" ]
-      Pack, realRun Pack [ "pack" ]
-      TemplateInstantiation, realRun TemplateInstantiation [ "template" ]
-      GitDiff, realRun GitDiff [ "diff" ]
-      PackageInspection, realRun PackageInspection [ "inspect" ]
-      VisualCapture, realRun VisualCapture [ "capture" ] ]
+    [
+        Build, realRun Build [ "build" ]
+        Test, realRun Test [ "test" ]
+        Pack, realRun Pack [ "pack" ]
+        TemplateInstantiation, realRun TemplateInstantiation [ "template" ]
+        GitDiff, realRun GitDiff [ "diff" ]
+        PackageInspection, realRun PackageInspection [ "inspect" ]
+        VisualCapture, realRun VisualCapture [ "capture" ]
+    ]
 
 // ── A literal F032 record (for duration-invariance) built through the public `CommandRecord.build` ──
 
@@ -63,7 +82,17 @@ let makeRecord (duration: int64) : CommandRecord =
         (Executable "gcc")
         [ Argument "-c"; Argument "main.c" ]
         (WorkingDirectory "/work")
-        { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]; Changed = []; Removed = [] }
+        {
+            Added =
+                [
+                    {
+                        Name = EnvVarName "CI"
+                        Value = EnvVarValue "1"
+                    }
+                ]
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 30)
         (ExitCode 0)
         (OutputDigest "sha-out")

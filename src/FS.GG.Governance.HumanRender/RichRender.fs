@@ -22,9 +22,12 @@ module RichRender =
 
     // A verdict color keyed off the exit-status line (non-contractual styling only).
     let private bannerColor (exitStatus: string) =
-        if exitStatus.Contains "blocked" then "red"
-        elif exitStatus.Contains "clean" || exitStatus.Contains "success" then "green"
-        else "yellow"
+        if exitStatus.Contains "blocked" then
+            "red"
+        elif exitStatus.Contains "clean" || exitStatus.Contains "success" then
+            "green"
+        else
+            "yellow"
 
     let private emitRich (view: ReportView) (console: IAnsiConsole) =
         let color = bannerColor view.ExitStatus
@@ -42,12 +45,7 @@ module RichRender =
         console.Write(table)
         console.Write(Markup(sprintf "[dim]exit status: %s[/]\n" (Markup.Escape view.ExitStatus)))
 
-    let emit
-        (mode: RenderMode.RenderMode)
-        (view: ReportView)
-        (plain: string)
-        (console: IAnsiConsole)
-        : unit =
+    let emit (mode: RenderMode.RenderMode) (view: ReportView) (plain: string) (console: IAnsiConsole) : unit =
         match mode with
         | RenderMode.Json -> () // host writes the byte-identical *Json string directly
         | RenderMode.Plain ->

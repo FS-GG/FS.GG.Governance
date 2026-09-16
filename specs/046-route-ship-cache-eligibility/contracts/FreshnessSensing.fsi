@@ -15,11 +15,11 @@
 
 namespace FS.GG.Governance.FreshnessSensing
 
-open FS.GG.Governance.Config.Model              // CommandId
-open FS.GG.Governance.Gates.Model               // Gate
-open FS.GG.Governance.FreshnessKey.Model         // RuleHash, ArtifactHash, CommandVersion, GeneratorVersion, Revision
-open FS.GG.Governance.FreshnessResolution.Model  // SensedFacts
-open FS.GG.Governance.EvidenceReuse.Model        // ReuseStore
+open FS.GG.Governance.Config.Model // CommandId
+open FS.GG.Governance.Gates.Model // Gate
+open FS.GG.Governance.FreshnessKey.Model // RuleHash, ArtifactHash, CommandVersion, GeneratorVersion, Revision
+open FS.GG.Governance.FreshnessResolution.Model // SensedFacts
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module FreshnessSensing =
@@ -31,10 +31,12 @@ module FreshnessSensing =
     /// — never fabricated. The real port computes BCL-crypto digests over real on-disk bytes; tests back it
     /// with fixed literal values (Synthetic).
     type FreshnessSensor =
-        { SenseRuleHash: unit -> RuleHash option
-          SenseGeneratorVersion: unit -> GeneratorVersion option
-          SenseCoveredArtifacts: Gate -> ArtifactHash list option
-          SenseCommandVersion: CommandId -> CommandVersion option }
+        {
+            SenseRuleHash: unit -> RuleHash option
+            SenseGeneratorVersion: unit -> GeneratorVersion option
+            SenseCoveredArtifacts: Gate -> ArtifactHash list option
+            SenseCommandVersion: CommandId -> CommandVersion option
+        }
 
     /// The injected READ-ONLY evidence-reuse store port. `Ok None` = the file is ABSENT; `Ok (Some store)` =
     /// present + well-formed; `Error reason` = present but MALFORMED. Writing/evicting evidence is OUT OF

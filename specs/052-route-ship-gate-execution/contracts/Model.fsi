@@ -11,8 +11,8 @@
 
 namespace FS.GG.Governance.GateRun
 
-open FS.GG.Governance.Gates.Model            // GateId
-open FS.GG.Governance.CommandRecord.Model     // ExitCode
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.CommandRecord.Model // ExitCode
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -36,7 +36,9 @@ module Model =
     /// `None` only for `NotExecuted`. `Passed` is `Some true` iff the exit code is success (`0`) — a non-zero
     /// or sentinel exit is a fail (FR-006).
     type GateOutcome =
-        { GateId: GateId
-          Disposition: GateDisposition
-          ExitCode: ExitCode option
-          Passed: bool option }
+        {
+            GateId: GateId
+            Disposition: GateDisposition
+            ExitCode: ExitCode option
+            Passed: bool option
+        }

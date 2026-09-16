@@ -13,6 +13,8 @@ let private kernel = typeof<FactId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "V11" "FS.GG.Governance.Kernel" kernel
+        [
+            SurfaceDrift.surfaceTest "V11" "FS.GG.Governance.Kernel" kernel
 
-          SurfaceDrift.referencesOnly "V11" (fun _ -> false) kernel ]
+            SurfaceDrift.referencesOnly "V11" (fun _ -> false) kernel
+        ]

@@ -29,40 +29,65 @@ let gid (domain: string) (check: string) : GateId = GateId(domain + ":" + check)
 // ── A real base input set every test varies from (the F029/F030/F041 worked example) ──
 
 let baseInputs: FreshnessInputs =
-    { Check = CheckId "build:tests"
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId "build:tests"
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
-let private variantCheck (i: FreshnessInputs) = { i with Check = CheckId "build:other" }
+let private variantCheck (i: FreshnessInputs) =
+    { i with Check = CheckId "build:other" }
+
 let private variantDomain (i: FreshnessInputs) = { i with Domain = DomainId "release" }
-let private variantCommand (i: FreshnessInputs) = { i with Command = None; CommandVersion = None }
+
+let private variantCommand (i: FreshnessInputs) =
+    { i with
+        Command = None
+        CommandVersion = None
+    }
+
 let private variantEnvironment (i: FreshnessInputs) = { i with Environment = Ci }
 let private variantRuleHash (i: FreshnessInputs) = { i with RuleHash = RuleHash "r2" }
-let private variantCoveredArtifacts (i: FreshnessInputs) = { i with CoveredArtifacts = [ ArtifactHash "h3" ] }
-let private variantCommandVersion (i: FreshnessInputs) = { i with CommandVersion = Some(CommandVersion "9.0") }
-let private variantGeneratorVersion (i: FreshnessInputs) = { i with GeneratorVersion = GeneratorVersion "g2" }
+
+let private variantCoveredArtifacts (i: FreshnessInputs) =
+    { i with
+        CoveredArtifacts = [ ArtifactHash "h3" ]
+    }
+
+let private variantCommandVersion (i: FreshnessInputs) =
+    { i with
+        CommandVersion = Some(CommandVersion "9.0")
+    }
+
+let private variantGeneratorVersion (i: FreshnessInputs) =
+    { i with
+        GeneratorVersion = GeneratorVersion "g2"
+    }
+
 let private variantBase (i: FreshnessInputs) = { i with Base = Revision "ccc" }
 let private variantHead (i: FreshnessInputs) = { i with Head = Revision "ddd" }
 
 /// The 10 comparable categories, each paired with a single-field variation function.
 let allCategories: (InputCategory * (FreshnessInputs -> FreshnessInputs)) list =
-    [ CheckIdentity, variantCheck
-      DomainIdentity, variantDomain
-      CommandIdentity, variantCommand
-      EnvironmentClassCat, variantEnvironment
-      RuleHashCat, variantRuleHash
-      CoveredArtifactsCat, variantCoveredArtifacts
-      CommandVersionCat, variantCommandVersion
-      GeneratorVersionCat, variantGeneratorVersion
-      BaseRevisionCat, variantBase
-      HeadRevisionCat, variantHead ]
+    [
+        CheckIdentity, variantCheck
+        DomainIdentity, variantDomain
+        CommandIdentity, variantCommand
+        EnvironmentClassCat, variantEnvironment
+        RuleHashCat, variantRuleHash
+        CoveredArtifactsCat, variantCoveredArtifacts
+        CommandVersionCat, variantCommandVersion
+        GeneratorVersionCat, variantGeneratorVersion
+        BaseRevisionCat, variantBase
+        HeadRevisionCat, variantHead
+    ]
 
 /// The NON-identity categories — those that change WITHOUT touching the gate identity (Check/Domain), so a
 /// single-field change of one of these against a recorded base entry keeps the entry same-gate ⇒ the
@@ -85,15 +110,30 @@ let baseStore: ReuseStore = storeOf [ baseInputs, refA ]
 
 /// The REAL F041 verdict for a candidate gate's inputs against a store (never mocked).
 let verdictFor (inputs: FreshnessInputs) (store: ReuseStore) : CacheEligibilityVerdict =
-    CacheEligibility.evaluateGate { Gate = gid "build" "tests"; Inputs = inputs } store
+    CacheEligibility.evaluateGate
+        {
+            Gate = gid "build" "tests"
+            Inputs = inputs
+        }
+        store
 
 // ── CandidateCost builders ──
 
 let cc (gate: GateId) (cost: Cost) (verdict: CacheEligibilityVerdict) : CandidateCost =
-    { Gate = gate; Cost = cost; Verdict = verdict; Review = Deterministic }
+    {
+        Gate = gate
+        Cost = cost
+        Verdict = verdict
+        Review = Deterministic
+    }
 
 let ccReviewed (gate: GateId) (cost: Cost) (verdict: CacheEligibilityVerdict) (key: CacheKey) : CandidateCost =
-    { Gate = gate; Cost = cost; Verdict = verdict; Review = AgentReviewed key }
+    {
+        Gate = gate
+        Cost = cost
+        Verdict = verdict
+        Review = AgentReviewed key
+    }
 
 /// A literal must-recompute candidate naming a single changed freshness dimension.
 let mustRecompute (gate: GateId) (cost: Cost) (cats: InputCategory list) : CandidateCost =
@@ -107,17 +147,21 @@ let reusable (gate: GateId) (cost: Cost) : CandidateCost = cc gate cost (Reusabl
 // ── Real F036 agent-review inputs / key (built from the real `AgentReviewKey.compute`, never mocked) ──
 
 let reviewInputsBase: AgentReviewInputs =
-    { Model = ModelId "claude"
-      ModelVersion = ModelVersion "1"
-      Config = ModelConfig "cfg"
-      PromptHash = ReviewerPromptHash "p1"
-      Question = QuestionText "is it safe?"
-      Check = RuleHash "chk-1"
-      ReviewedArtifacts = [ ArtifactHash "a1"; ArtifactHash "a2" ] }
+    {
+        Model = ModelId "claude"
+        ModelVersion = ModelVersion "1"
+        Config = ModelConfig "cfg"
+        PromptHash = ReviewerPromptHash "p1"
+        Question = QuestionText "is it safe?"
+        Check = RuleHash "chk-1"
+        ReviewedArtifacts = [ ArtifactHash "a1"; ArtifactHash "a2" ]
+    }
 
 /// The same inputs with exactly the judge model version changed — `matches` no longer holds.
 let reviewInputsChanged: AgentReviewInputs =
-    { reviewInputsBase with ModelVersion = ModelVersion "2" }
+    { reviewInputsBase with
+        ModelVersion = ModelVersion "2"
+    }
 
 let reviewKey: CacheKey = AgentReviewKey.compute reviewInputsBase
 let reviewKeyChanged: CacheKey = AgentReviewKey.compute reviewInputsChanged

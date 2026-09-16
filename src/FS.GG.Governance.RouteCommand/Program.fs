@@ -36,7 +36,9 @@ let main argv =
         // F27 wiring (063, US3): the read-only watch loop. A burst of edits coalesces into ONE settled
         // re-render via the pure `Watch.update` debounce; each re-render re-runs the EXISTING route
         // evaluation and re-projects — it writes NO new contract (FR-009). Stop on a `q` keypress.
-        let mode = RenderMode.selectMode false (Capability.senseCapability request.ExplicitPlain)
+        let mode =
+            RenderMode.selectMode false (Capability.senseCapability request.ExplicitPlain)
+
         let mode = if mode = RenderMode.Json then RenderMode.Plain else mode // watch is interactive, never Json
         let sw = Stopwatch.StartNew()
 
@@ -47,7 +49,8 @@ let main argv =
                 let roPorts =
                     { Interpreter.realPorts root with
                         Write = (fun _ _ -> Ok())
-                        Out = (fun _ -> ()) }
+                        Out = (fun _ -> ())
+                    }
 
                 let m = Interpreter.run roPorts { request with Watch = false }
 

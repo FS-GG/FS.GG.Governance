@@ -16,7 +16,7 @@ open FS.GG.Governance.Gates.Tests.Support
 
 /// Generate a `Valid TypedFacts`: a set of declared commands, then checks with catalog-wide unique
 /// (domain, checkId) ids whose optional `Command`, when present, references a declared command.
-let private genValidFacts : Gen<TypedFacts> =
+let private genValidFacts: Gen<TypedFacts> =
     gen {
         let token prefix n = sprintf "%s%d" prefix n
 
@@ -56,7 +56,11 @@ let private genValidFacts : Gen<TypedFacts> =
         return factsOf checks commands
     }
 
-let private config = { FsCheckConfig.defaultConfig with maxTest = 300; arbitrary = [] }
+let private config =
+    { FsCheckConfig.defaultConfig with
+        maxTest = 300
+        arbitrary = []
+    }
 
 let private declaredCommandIds (facts: TypedFacts) =
     facts.Tooling
@@ -68,30 +72,34 @@ let private declaredCommandIds (facts: TypedFacts) =
 let tests =
     testList
         "RegistryInvariants"
-        [ testPropertyWithConfig config "all GateIds are distinct — injective derivation (SC-002, AS1)"
-          <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
-              let reg = Gates.buildRegistry facts
-              let ids = reg.Gates |> List.map (fun g -> gateIdValue g.Id)
-              List.length ids = List.length (List.distinct ids))
+        [
+            testPropertyWithConfig config "all GateIds are distinct — injective derivation (SC-002, AS1)"
+            <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
+                let reg = Gates.buildRegistry facts
+                let ids = reg.Gates |> List.map (fun g -> gateIdValue g.Id)
+                List.length ids = List.length (List.distinct ids))
 
-          testPropertyWithConfig config "gate count = declared check count (parity)"
-          <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
-              let reg = Gates.buildRegistry facts
-              reg.Gates.Length = facts.Capabilities.Checks.Length)
+            testPropertyWithConfig config "gate count = declared check count (parity)"
+            <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
+                let reg = Gates.buildRegistry facts
+                reg.Gates.Length = facts.Capabilities.Checks.Length)
 
-          testPropertyWithConfig config "every RequiresCommand resolves to a declared command (AS2)"
-          <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
-              let reg = Gates.buildRegistry facts
-              let declared = declaredCommandIds facts
+            testPropertyWithConfig config "every RequiresCommand resolves to a declared command (AS2)"
+            <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
+                let reg = Gates.buildRegistry facts
+                let declared = declaredCommandIds facts
 
-              reg.Gates
-              |> List.forall (fun g ->
-                  g.Prerequisites
-                  |> List.forall (fun (RequiresCommand c) -> Set.contains c declared)))
+                reg.Gates
+                |> List.forall (fun g ->
+                    g.Prerequisites
+                    |> List.forall (fun (RequiresCommand c) -> Set.contains c declared)))
 
-          testPropertyWithConfig config "Gates.buildRegistry never throws and yields one gate per check (AS3, totality)"
-          <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
-              // Forcing the whole list proves no lazy throw and no partial result.
-              let reg = Gates.buildRegistry facts
-              reg.Gates |> List.forall (fun g -> gateIdValue g.Id <> "") |> ignore
-              reg.Gates.Length = facts.Capabilities.Checks.Length) ]
+            testPropertyWithConfig
+                config
+                "Gates.buildRegistry never throws and yields one gate per check (AS3, totality)"
+            <| Prop.forAll (Arb.fromGen genValidFacts) (fun facts ->
+                // Forcing the whole list proves no lazy throw and no partial result.
+                let reg = Gates.buildRegistry facts
+                reg.Gates |> List.forall (fun g -> gateIdValue g.Id <> "") |> ignore
+                reg.Gates.Length = facts.Capabilities.Checks.Length)
+        ]

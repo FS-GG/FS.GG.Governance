@@ -34,10 +34,7 @@ module PackageChecks =
         : SC.SurfaceFinding =
         SC.mkFinding SC.PackageDomain checkMaturity request source code detail severity isInput message
 
-    let baselineFindings
-        (request: SC.SurfaceCheckRequest)
-        (facts: PackageFacts)
-        : SC.SurfaceFinding list =
+    let baselineFindings (request: SC.SurfaceCheckRequest) (facts: PackageFacts) : SC.SurfaceFinding list =
         match facts.Baseline with
         | BaselineMatches -> []
         | BaselineDrift(added, removed) ->
@@ -53,48 +50,56 @@ module PackageChecks =
             let message =
                 sprintf "public surface drifted: added [%s], removed [%s]" (render addedS) (render removedS)
 
-            [ mkFinding request "package.baseline-drift" facts.BaselineSource detail Blocking false message ]
+            [
+                mkFinding request "package.baseline-drift" facts.BaselineSource detail Blocking false message
+            ]
         | BaselineAbsent(SurfaceTokens tokens) ->
             let message =
                 sprintf "no committed baseline; generated a %d-token baseline — commit it" (List.length tokens)
 
-            [ mkFinding request "package.baseline-absent" facts.BaselineSource "baseline-absent" Blocking true message ]
+            [
+                mkFinding request "package.baseline-absent" facts.BaselineSource "baseline-absent" Blocking true message
+            ]
         | BaselineUnreadable source ->
             let message = sprintf "baseline source could not be read: %s" source
 
-            [ mkFinding
-                  request
-                  "package.baseline-unreadable"
-                  facts.BaselineSource
-                  "baseline-unreadable"
-                  Blocking
-                  true
-                  message ]
+            [
+                mkFinding
+                    request
+                    "package.baseline-unreadable"
+                    facts.BaselineSource
+                    "baseline-unreadable"
+                    Blocking
+                    true
+                    message
+            ]
 
-    let transcriptFindings
-        (request: SC.SurfaceCheckRequest)
-        (facts: PackageFacts)
-        : SC.SurfaceFinding list =
+    let transcriptFindings (request: SC.SurfaceCheckRequest) (facts: PackageFacts) : SC.SurfaceFinding list =
         facts.Transcripts
         |> List.collect (fun t ->
             match t.Outcome with
             | TranscriptPasses -> []
             | TranscriptCompileFailed detail ->
                 let message = sprintf "transcript '%s' no longer compiles: %s" t.ExampleId detail
-                [ mkFinding request "package.transcript-compile" t.Source t.ExampleId Blocking false message ]
+
+                [
+                    mkFinding request "package.transcript-compile" t.Source t.ExampleId Blocking false message
+                ]
             | TranscriptResultChanged(expected, actual) ->
                 let message =
                     sprintf "transcript '%s' result changed: expected '%s', got '%s'" t.ExampleId expected actual
 
-                [ mkFinding request "package.transcript-result" t.Source t.ExampleId Blocking false message ]
+                [
+                    mkFinding request "package.transcript-result" t.Source t.ExampleId Blocking false message
+                ]
             | TranscriptUnlocatable source ->
                 let message = sprintf "transcript '%s' could not be located: %s" t.ExampleId source
-                [ mkFinding request "package.transcript-unlocatable" t.Source t.ExampleId Blocking true message ])
 
-    let evaluate
-        (request: SC.SurfaceCheckRequest)
-        (facts: PackageFacts)
-        : SC.SurfaceFinding list =
+                [
+                    mkFinding request "package.transcript-unlocatable" t.Source t.ExampleId Blocking true message
+                ])
+
+    let evaluate (request: SC.SurfaceCheckRequest) (facts: PackageFacts) : SC.SurfaceFinding list =
         List.append (baselineFindings request facts) (transcriptFindings request facts)
         |> List.sortBy (fun (f: SC.SurfaceFinding) ->
             let (GovernedPath file) = f.Location.File

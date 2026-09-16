@@ -18,11 +18,13 @@ module Interpreter =
     /// `RunTranscript` needs a list to drive — discovery is part of the same seam); `RunTranscript` shells
     /// FSI via the injected `ExecutionPort`.
     type PackagePort =
-        { RegenerateSurface: GovernedPath -> Result<SurfaceTokens, string>
-          ReadBaseline: GovernedPath -> Result<SurfaceTokens option, string>
-          WriteBaseline: GovernedPath -> SurfaceTokens -> Result<unit, string>
-          ListTranscripts: GovernedPath -> Result<GovernedPath list, string>
-          RunTranscript: GovernedPath -> Result<TranscriptOutcome, string> }
+        {
+            RegenerateSurface: GovernedPath -> Result<SurfaceTokens, string>
+            ReadBaseline: GovernedPath -> Result<SurfaceTokens option, string>
+            WriteBaseline: GovernedPath -> SurfaceTokens -> Result<unit, string>
+            ListTranscripts: GovernedPath -> Result<GovernedPath list, string>
+            RunTranscript: GovernedPath -> Result<TranscriptOutcome, string>
+        }
 
     /// Build the REAL port for a repo working directory, reusing the F051/F052 `ExecutionPort` for FSI runs.
     /// The committed baseline lives at `<surface-path>.baseline`; transcripts are the `*.fsx` files under a
@@ -34,6 +36,4 @@ module Interpreter =
     /// On an absent baseline, regenerates + writes it and yields `BaselineAbsent` (FR-002). DETERMINISTIC:
     /// identical repository state ⇒ a structurally identical `PackageFacts` (normalized token diff — D5).
     val sensePackage:
-        port: PackagePort ->
-        request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest ->
-            Model.PackageFacts
+        port: PackagePort -> request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest -> Model.PackageFacts

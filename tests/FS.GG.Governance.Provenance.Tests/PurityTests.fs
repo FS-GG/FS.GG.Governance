@@ -14,31 +14,37 @@ open FS.GG.Governance.Provenance.Tests.Support
 let tests =
     testList
         "Purity"
-        [ test "provenance and identity are unchanged across cwd / filesystem changes" {
-              let p0 = rebuild baseProvenance
-              let id0 = Provenance.canonicalId p0
+        [
+            test "provenance and identity are unchanged across cwd / filesystem changes" {
+                let p0 = rebuild baseProvenance
+                let id0 = Provenance.canonicalId p0
 
-              let originalCwd = Directory.GetCurrentDirectory()
-              let tempDir = Path.GetTempPath()
-              let tempFile = Path.Combine(tempDir, sprintf "f033-purity-%s.tmp" (Guid.NewGuid().ToString("N")))
+                let originalCwd = Directory.GetCurrentDirectory()
+                let tempDir = Path.GetTempPath()
 
-              try
-                  // Change cwd and touch an unrelated file — neither must influence the pure functions.
-                  Directory.SetCurrentDirectory tempDir
-                  File.WriteAllText(tempFile, "unrelated")
+                let tempFile =
+                    Path.Combine(tempDir, sprintf "f033-purity-%s.tmp" (Guid.NewGuid().ToString("N")))
 
-                  let p1 = rebuild baseProvenance
-                  let id1 = Provenance.canonicalId p1
+                try
+                    // Change cwd and touch an unrelated file — neither must influence the pure functions.
+                    Directory.SetCurrentDirectory tempDir
+                    File.WriteAllText(tempFile, "unrelated")
 
-                  File.Delete tempFile
-                  let p2 = rebuild baseProvenance
-                  let id2 = Provenance.canonicalId p2
+                    let p1 = rebuild baseProvenance
+                    let id1 = Provenance.canonicalId p1
 
-                  Expect.equal p1 p0 "provenance unaffected by cwd / filesystem state"
-                  Expect.equal p2 p0 "provenance unaffected after deleting the temp file"
-                  Expect.equal id1 id0 "identity unaffected by cwd / filesystem state"
-                  Expect.equal id2 id0 "identity unaffected after deleting the temp file"
-              finally
-                  Directory.SetCurrentDirectory originalCwd
-                  if File.Exists tempFile then File.Delete tempFile
-          } ]
+                    File.Delete tempFile
+                    let p2 = rebuild baseProvenance
+                    let id2 = Provenance.canonicalId p2
+
+                    Expect.equal p1 p0 "provenance unaffected by cwd / filesystem state"
+                    Expect.equal p2 p0 "provenance unaffected after deleting the temp file"
+                    Expect.equal id1 id0 "identity unaffected by cwd / filesystem state"
+                    Expect.equal id2 id0 "identity unaffected after deleting the temp file"
+                finally
+                    Directory.SetCurrentDirectory originalCwd
+
+                    if File.Exists tempFile then
+                        File.Delete tempFile
+            }
+        ]

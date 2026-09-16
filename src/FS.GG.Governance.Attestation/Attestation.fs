@@ -25,23 +25,29 @@ module Attestation =
                 match v.Outcome with
                 | Packed(art, _) ->
                     Some
-                        { Name = art.ArtifactPath
-                          Digest = art.Digest
-                          Version = art.PackedVersion }
+                        {
+                            Name = art.ArtifactPath
+                            Digest = art.Digest
+                            Version = art.PackedVersion
+                        }
                 | PackedNoArtifact _
                 | PackFailed _ -> None)
             |> List.sortWith (fun a b -> String.CompareOrdinal(a.Name, b.Name))
 
-        { Subjects = subjects
-          Builder = p.Builder
-          Materials =
-            { RuleHash = p.RuleHash
-              GeneratorVersion = p.GeneratorVersion
-              BaseRevision = p.Base
-              HeadRevision = p.Head
-              SourceCommit = p.SourceCommit
-              ArtifactDigests = p.ArtifactDigests
-              Environment = p.Environment }
-          Invocation = { Runs = snapshot.Runs }
-          Identity = Audit.snapshotIdentity snapshot
-          Compliance = CompatibleShapeNotFormalCompliance }
+        {
+            Subjects = subjects
+            Builder = p.Builder
+            Materials =
+                {
+                    RuleHash = p.RuleHash
+                    GeneratorVersion = p.GeneratorVersion
+                    BaseRevision = p.Base
+                    HeadRevision = p.Head
+                    SourceCommit = p.SourceCommit
+                    ArtifactDigests = p.ArtifactDigests
+                    Environment = p.Environment
+                }
+            Invocation = { Runs = snapshot.Runs }
+            Identity = Audit.snapshotIdentity snapshot
+            Compliance = CompatibleShapeNotFormalCompliance
+        }

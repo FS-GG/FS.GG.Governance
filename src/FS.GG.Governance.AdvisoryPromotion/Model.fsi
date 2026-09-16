@@ -55,10 +55,12 @@ module Model =
     /// field (the caller associates the result with its finding); the finding's verdict is NOT a field — the
     /// verdict is an opaque fact this core never produces, interprets, or re-scores (FR-007).
     type PromotionFacts =
-        { BackingEvidence: EvidenceRef option
-          Confirmations: ConfirmationCount
-          ConfidenceThreshold: ConfidenceThreshold
-          SignOff: SignOff option }
+        {
+            BackingEvidence: EvidenceRef option
+            Confirmations: ConfirmationCount
+            ConfidenceThreshold: ConfidenceThreshold
+            SignOff: SignOff option
+        }
 
     /// The two-outcome gate verdict (FR-001, research D6). `StaysAdvisory` carries its no-hide reason;
     /// `EligibleToBlock` names EVERY satisfied basis as a head + tail, in the fixed order

@@ -17,10 +17,14 @@ module SkillInterp = FS.GG.Governance.SkillChecks.Interpreter
 
 let private withStandaloneProduct (body: string -> string -> 'a) : 'a =
     // parent/ (monorepo)  ;  parent/product/ (the standalone product root)
-    let parent = Path.Combine(Path.GetTempPath(), "fsgg-standalone-" + Guid.NewGuid().ToString("N"))
+    let parent =
+        Path.Combine(Path.GetTempPath(), "fsgg-standalone-" + Guid.NewGuid().ToString("N"))
+
     let product = Path.Combine(parent, "product")
     Directory.CreateDirectory(Path.Combine(product, "docs")) |> ignore
-    Directory.CreateDirectory(Path.Combine(product, ".claude", "skills", "foo")) |> ignore
+
+    Directory.CreateDirectory(Path.Combine(product, ".claude", "skills", "foo"))
+    |> ignore
 
     try
         body parent product
@@ -34,31 +38,39 @@ let private withStandaloneProduct (body: string -> string -> 'a) : 'a =
 let tests =
     testList
         "SurfaceChecks.standalone"
-        [ test "a docs link escaping the product root via `..` is dangling, never a fabricated pass" {
-              withStandaloneProduct (fun parent product ->
-                  // A real file exists OUTSIDE the product root (in the monorepo parent).
-                  File.WriteAllText(Path.Combine(parent, "outside.md"), "# Secret\n")
-                  File.WriteAllText(Path.Combine(product, "docs", "guide.md"), "See [Esc](../outside.md).\n")
+        [
+            test "a docs link escaping the product root via `..` is dangling, never a fabricated pass" {
+                withStandaloneProduct (fun parent product ->
+                    // A real file exists OUTSIDE the product root (in the monorepo parent).
+                    File.WriteAllText(Path.Combine(parent, "outside.md"), "# Secret\n")
+                    File.WriteAllText(Path.Combine(product, "docs", "guide.md"), "See [Esc](../outside.md).\n")
 
-                  let req =
-                      { (requestForDocs "docs" "docs/guide.md") with EvidenceTag = None }
+                    let req =
+                        { (requestForDocs "docs" "docs/guide.md") with
+                            EvidenceTag = None
+                        }
 
-                  let facts = DocsInterp.senseDocs (DocsInterp.realPort product) req
+                    let facts = DocsInterp.senseDocs (DocsInterp.realPort product) req
 
-                  match (List.head facts.Links).Outcome with
-                  | Docs.LinkDangling _ -> ()
-                  | other -> failtestf "a `..` escape must not resolve, got %A" other)
-          }
+                    match (List.head facts.Links).Outcome with
+                    | Docs.LinkDangling _ -> ()
+                    | other -> failtestf "a `..` escape must not resolve, got %A" other)
+            }
 
-          test "a skill path escaping the product root is flagged PathEscapesBounds (not silently read)" {
-              withStandaloneProduct (fun _ product ->
-                  File.WriteAllText(
-                      Path.Combine(product, ".claude", "skills", "foo", "SKILL.md"),
-                      "path: ../../../outside\n"
-                  )
+            test "a skill path escaping the product root is flagged PathEscapesBounds (not silently read)" {
+                withStandaloneProduct (fun _ product ->
+                    File.WriteAllText(
+                        Path.Combine(product, ".claude", "skills", "foo", "SKILL.md"),
+                        "path: ../../../outside\n"
+                    )
 
-                  let req = requestForSkill "skill-foo" ".claude/skills/foo/SKILL.md"
-                  let facts = SkillInterp.senseSkill (SkillInterp.realPort product) req
-                  let outcomes = facts.PathContract |> List.map (fun p -> p.Outcome)
-                  Expect.contains outcomes (Skill.PathEscapesBounds "../../../outside") "the escape is flagged, never read")
-          } ]
+                    let req = requestForSkill "skill-foo" ".claude/skills/foo/SKILL.md"
+                    let facts = SkillInterp.senseSkill (SkillInterp.realPort product) req
+                    let outcomes = facts.PathContract |> List.map (fun p -> p.Outcome)
+
+                    Expect.contains
+                        outcomes
+                        (Skill.PathEscapesBounds "../../../outside")
+                        "the escape is flagged, never read")
+            }
+        ]

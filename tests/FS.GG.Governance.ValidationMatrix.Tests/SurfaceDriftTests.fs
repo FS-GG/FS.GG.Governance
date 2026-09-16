@@ -10,4 +10,8 @@ let private asm = SurfaceDrift.assemblyNamed "FS.GG.Governance.ValidationMatrix"
 
 [<Tests>]
 let tests =
-    testList "SurfaceDrift" [ SurfaceDrift.surfaceTest "ValidationMatrix" "FS.GG.Governance.ValidationMatrix" asm ]
+    testList
+        "SurfaceDrift"
+        [
+            SurfaceDrift.surfaceTest "ValidationMatrix" "FS.GG.Governance.ValidationMatrix" asm
+        ]

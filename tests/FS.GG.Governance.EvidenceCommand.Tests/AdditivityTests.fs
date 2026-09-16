@@ -27,23 +27,25 @@ let private committedGoldens () =
 let tests =
     testList
         "Additivity"
-        [ test "the new evidence schema is a fresh v1 that collides with no existing sibling schema" {
-              Expect.equal EvidenceJson.schemaVersion "fsgg.evidence/v1" "new schema version"
+        [
+            test "the new evidence schema is a fresh v1 that collides with no existing sibling schema" {
+                Expect.equal EvidenceJson.schemaVersion "fsgg.evidence/v1" "new schema version"
 
-              for existing in [ "fsgg.cache-eligibility/v1"; "fsgg.route/v2"; "fsgg.verify/v1" ] do
-                  Expect.notEqual EvidenceJson.schemaVersion existing (sprintf "no collision with %s" existing)
-          }
+                for existing in [ "fsgg.cache-eligibility/v1"; "fsgg.route/v2"; "fsgg.verify/v1" ] do
+                    Expect.notEqual EvidenceJson.schemaVersion existing (sprintf "no collision with %s" existing)
+            }
 
-          test "no existing committed golden contains the new evidence schema (no leakage, SC-005)" {
-              let goldens = committedGoldens ()
-              Expect.isGreaterThan goldens.Length 0 "found committed sibling goldens to guard"
+            test "no existing committed golden contains the new evidence schema (no leakage, SC-005)" {
+                let goldens = committedGoldens ()
+                Expect.isGreaterThan goldens.Length 0 "found committed sibling goldens to guard"
 
-              for file in goldens do
-                  let text = File.ReadAllText file
-                  // Still valid JSON (not corrupted by this feature) …
-                  JsonDocument.Parse(text) |> ignore
-                  // … and never carrying the new evidence schema token.
-                  Expect.isFalse
-                      (text.Contains "fsgg.evidence/v1")
-                      (sprintf "sibling golden %s must be untouched by 069" (Path.GetFileName file))
-          } ]
+                for file in goldens do
+                    let text = File.ReadAllText file
+                    // Still valid JSON (not corrupted by this feature) …
+                    JsonDocument.Parse(text) |> ignore
+                    // … and never carrying the new evidence schema token.
+                    Expect.isFalse
+                        (text.Contains "fsgg.evidence/v1")
+                        (sprintf "sibling golden %s must be untouched by 069" (Path.GetFileName file))
+            }
+        ]

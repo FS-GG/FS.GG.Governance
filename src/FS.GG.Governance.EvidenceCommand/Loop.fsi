@@ -34,10 +34,12 @@ module Loop =
     /// The normalized invocation. Defaults applied in `parse`: `Repo = "."`,
     /// `Out = <repo>/readiness/evidence.json`, `Format = Human`, `ExplicitPlain = false`.
     type RunRequest =
-        { Repo: string
-          Out: string
-          Format: OutputFormat
-          ExplicitPlain: bool }
+        {
+            Repo: string
+            Out: string
+            Format: OutputFormat
+            ExplicitPlain: bool
+        }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2.
     type UsageError =
@@ -78,8 +80,10 @@ module Loop =
     /// A host-edge diagnostic — actionable text carrying NO clock, machine-absolute path, or environment
     /// value. Distinct from the F014 catalog `Diagnostic`.
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed.
     type Phase =
@@ -92,13 +96,15 @@ module Loop =
     /// The durable state the workflow owns. `Document` is the typed projection value and `Doc` its rendered
     /// `evidence.json` string, BOTH computed (in pure `update`) before the write effect is emitted.
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Report: ProjectEvidenceReport option
-          Document: EvidenceDocument option
-          Doc: string option
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Report: ProjectEvidenceReport option
+            Document: EvidenceDocument option
+            Doc: string option
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
     /// exceptions. Tolerates a leading `evidence` verb. `--format` accepts `human` (canonical/default),

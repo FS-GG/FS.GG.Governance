@@ -10,4 +10,6 @@ let private library = typeof<DesignFacts>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "DesignChecks" "FS.GG.Governance.DesignChecks" library ]
+        [
+            SurfaceDrift.surfaceTest "DesignChecks" "FS.GG.Governance.DesignChecks" library
+        ]

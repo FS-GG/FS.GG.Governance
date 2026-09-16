@@ -16,10 +16,12 @@ open FS.GG.Governance.Scaffold.Model
 module Interpreter =
 
     type Ports =
-        { Invoke: TemplateProvider -> ScaffoldRequest -> Result<ProviderEmission, ProviderError>
-          Probe: string list -> Result<string list, string>
-          Write: (string * string) list -> Result<unit, string>
-          Out: string -> unit }
+        {
+            Invoke: TemplateProvider -> ScaffoldRequest -> Result<ProviderEmission, ProviderError>
+            Probe: string list -> Result<string list, string>
+            Write: (string * string) list -> Result<unit, string>
+            Out: string -> unit
+        }
 
     // Run a port call, converting BOTH an `Error` and a thrown exception into `Error` so the
     // interpreter never throws out of itself (the RouteCommand.Interpreter discipline).
@@ -166,10 +168,12 @@ module Interpreter =
                 Error e.Message
 
     let realPorts (target: string) : Ports =
-        { Invoke = fun provider request -> provider.Emit request
-          Probe = probeUnder target
-          Write = writeAllUnder target
-          Out = fun text -> Console.Out.WriteLine text }
+        {
+            Invoke = fun provider request -> provider.Emit request
+            Probe = probeUnder target
+            Write = writeAllUnder target
+            Out = fun text -> Console.Out.WriteLine text
+        }
 
     let step (ports: Ports) (effect: Loop.Effect) : Loop.Msg =
         match effect with

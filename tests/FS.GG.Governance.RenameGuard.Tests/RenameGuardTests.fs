@@ -28,11 +28,13 @@ open Expecto
 // ---------------------------------------------------------------------------------------------------
 
 type Violation =
-    { File: string
-      Line: int
-      Class: string
-      Matched: string
-      Replacement: string }
+    {
+        File: string
+        Line: int
+        Class: string
+        Matched: string
+        Replacement: string
+    }
 
 // ---------------------------------------------------------------------------------------------------
 // data-model §ForbiddenToken — the legacy version-machinery set.
@@ -54,12 +56,15 @@ let private bomWord = "b" + "om"
 let private sep = @"[ _.\-]" // a REQUIRED separator: space, underscore, dot, or hyphen.
 let private sepOpt = @"[ _.\-]?" // an OPTIONAL separator (the PascalCase CPM property carries none).
 
-let private rx (pattern: string) = Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
+let private rx (pattern: string) =
+    Regex(pattern, RegexOptions.IgnoreCase ||| RegexOptions.Compiled)
 
 type private ForbiddenToken =
-    { Class: string
-      Pattern: Regex
-      Replacement: string }
+    {
+        Class: string
+        Pattern: Regex
+        Replacement: string
+    }
 
 // Order matters for the per-line span dedup in `scanText`: the kebab/dot/underscore contract-id forms
 // are declared BEFORE the PascalCase CPM property, so a separated form like `fs-skia-ui-version`
@@ -67,19 +72,29 @@ type private ForbiddenToken =
 // the same span) is attributed to its kebab replacement `fs-gg-ui-version`. The no-separator form
 // `FsSkiaUiVersion` is matched ONLY by the CPM pattern (the contract patterns require a separator), so
 // it correctly keeps the `FsGgUiVersion` replacement (data-model §ForbiddenToken; FR-004).
-let private forbiddenTokens : ForbiddenToken list =
-    [ { Class = "contract id (version)"
-        Pattern = rx (fs + sep + skia + sep + ui + sep + versionWord)
-        Replacement = "fs-gg-ui-version" }
-      { Class = "contract id (bom)"
-        Pattern = rx (fs + sep + skia + sep + ui + sep + bomWord)
-        Replacement = "fs-gg-ui-bom" }
-      { Class = "snapshot-tag namespace"
-        Pattern = rx (fs + sep + skia + sep + ui + "/v([0-9]|\\*)")
-        Replacement = "fs-gg-ui/v*" }
-      { Class = "CPM property"
-        Pattern = rx (fs + sepOpt + skia + sepOpt + ui + sepOpt + versionWord)
-        Replacement = "FsGgUiVersion" } ]
+let private forbiddenTokens: ForbiddenToken list =
+    [
+        {
+            Class = "contract id (version)"
+            Pattern = rx (fs + sep + skia + sep + ui + sep + versionWord)
+            Replacement = "fs-gg-ui-version"
+        }
+        {
+            Class = "contract id (bom)"
+            Pattern = rx (fs + sep + skia + sep + ui + sep + bomWord)
+            Replacement = "fs-gg-ui-bom"
+        }
+        {
+            Class = "snapshot-tag namespace"
+            Pattern = rx (fs + sep + skia + sep + ui + "/v([0-9]|\\*)")
+            Replacement = "fs-gg-ui/v*"
+        }
+        {
+            Class = "CPM property"
+            Pattern = rx (fs + sepOpt + skia + sepOpt + ui + sepOpt + versionWord)
+            Replacement = "FsGgUiVersion"
+        }
+    ]
 
 // ---------------------------------------------------------------------------------------------------
 // data-model §ProvenanceAllowlist — the four documentary files whose lineage prose legitimately names
@@ -87,11 +102,13 @@ let private forbiddenTokens : ForbiddenToken list =
 // is tolerated; it never disables a pattern.
 // ---------------------------------------------------------------------------------------------------
 
-let private provenanceAllowlist : string list =
-    [ ".specify/memory/constitution.md"
-      "docs/governance-design/index.md"
-      "docs/initial-design.md"
-      "docs/reports/2026-06-18-233718-fsgg-governance-capability-design.md" ]
+let private provenanceAllowlist: string list =
+    [
+        ".specify/memory/constitution.md"
+        "docs/governance-design/index.md"
+        "docs/initial-design.md"
+        "docs/reports/2026-06-18-233718-fsgg-governance-capability-design.md"
+    ]
 
 // ---------------------------------------------------------------------------------------------------
 // data-model §GuardSelfExclusion — the guard's own scaffolding, excluded from the PRODUCTION scan
@@ -107,9 +124,11 @@ let private provenanceAllowlist : string list =
 // the test dir (the guard's own scaffolding documenting/testing the ban), so it is excluded on the
 // identical rationale. Verified minimal: no OTHER tracked spec (older features) names the machinery
 // tokens, so coverage elsewhere is unaffected. Neither exclusion disables a pattern.
-let private scanExclusions : string list =
-    [ "tests/FS.GG.Governance.RenameGuard.Tests/" // the guard's own test source (red-path literals).
-      "specs/083-fs-gg-ui-rename-guard/" ] // the guard's own spec scaffolding (worked-example literals).
+let private scanExclusions: string list =
+    [
+        "tests/FS.GG.Governance.RenameGuard.Tests/" // the guard's own test source (red-path literals).
+        "specs/083-fs-gg-ui-rename-guard/"
+    ] // the guard's own spec scaffolding (worked-example literals).
 
 // ---------------------------------------------------------------------------------------------------
 // The PURE matcher (no I/O) — data-model §ScanResult.
@@ -122,23 +141,27 @@ let private scanExclusions : string list =
 let scanText (path: string) (contents: string) : Violation list =
     let lines = contents.Split('\n')
 
-    [ for i in 0 .. lines.Length - 1 do
-          let line = lines.[i]
-          let mutable claimed = Set.empty
+    [
+        for i in 0 .. lines.Length - 1 do
+            let line = lines.[i]
+            let mutable claimed = Set.empty
 
-          for token in forbiddenTokens do
-              for m in token.Pattern.Matches line do
-                  let span = (m.Index, m.Length)
+            for token in forbiddenTokens do
+                for m in token.Pattern.Matches line do
+                    let span = (m.Index, m.Length)
 
-                  if not (Set.contains span claimed) then
-                      claimed <- Set.add span claimed
+                    if not (Set.contains span claimed) then
+                        claimed <- Set.add span claimed
 
-                      yield
-                          { File = path
-                            Line = i + 1
-                            Class = token.Class
-                            Matched = m.Value
-                            Replacement = token.Replacement } ]
+                        yield
+                            {
+                                File = path
+                                Line = i + 1
+                                Class = token.Class
+                                Matched = m.Value
+                                Replacement = token.Replacement
+                            }
+    ]
 
 // ---------------------------------------------------------------------------------------------------
 // The failure-message renderer — data-model §Failure-message shape (FR-005/SC-006).
@@ -200,13 +223,15 @@ let scanTrackedTree () : Violation list =
         |> Array.map (fun s -> s.Trim())
         |> Array.filter (fun s -> s <> "")
 
-    [ for rel in files do
-          let relForwardSlash = rel.Replace('\\', '/')
+    [
+        for rel in files do
+            let relForwardSlash = rel.Replace('\\', '/')
 
-          if not (isExcluded relForwardSlash) then
-              match tryReadAllText (Path.Combine(repoRoot, rel)) with
-              | Some text -> yield! scanText relForwardSlash text
-              | None -> () ]
+            if not (isExcluded relForwardSlash) then
+                match tryReadAllText (Path.Combine(repoRoot, rel)) with
+                | Some text -> yield! scanText relForwardSlash text
+                | None -> ()
+    ]
 
 // ---------------------------------------------------------------------------------------------------
 // The contract suite (R1-R7) — contracts/rename-guard.contract.md. Each rule is one named test.
@@ -217,104 +242,106 @@ let renameGuard =
     testList
         "fs-gg-ui rename guard"
         [
-          // R1 — Clean tree passes (FR-001, FR-008, SC-001).
-          test "Production scan of the tracked tree finds zero legacy version-machinery identifiers" {
-              let violations = scanTrackedTree ()
+            // R1 — Clean tree passes (FR-001, FR-008, SC-001).
+            test "Production scan of the tracked tree finds zero legacy version-machinery identifiers" {
+                let violations = scanTrackedTree ()
 
-              let offenders =
-                  violations |> List.map render |> String.concat Environment.NewLine
+                let offenders = violations |> List.map render |> String.concat Environment.NewLine
 
-              Expect.isEmpty
-                  violations
-                  (sprintf "the tracked tree must carry no legacy version-machinery identifier, found:%s%s" Environment.NewLine offenders)
-          }
+                Expect.isEmpty
+                    violations
+                    (sprintf
+                        "the tracked tree must carry no legacy version-machinery identifier, found:%s%s"
+                        Environment.NewLine
+                        offenders)
+            }
 
-          // R2 — Provenance passes untouched (FR-003, FR-006, SC-003).
-          test "The four provenance files are present, allowlisted, and not flagged" {
-              for rel in provenanceAllowlist do
-                  let full = Path.Combine(repoRoot, rel)
-                  Expect.isTrue (File.Exists full) (sprintf "provenance file should exist: %s" rel)
-                  Expect.isTrue (isExcluded rel) (sprintf "provenance file should be allowlisted: %s" rel)
+            // R2 — Provenance passes untouched (FR-003, FR-006, SC-003).
+            test "The four provenance files are present, allowlisted, and not flagged" {
+                for rel in provenanceAllowlist do
+                    let full = Path.Combine(repoRoot, rel)
+                    Expect.isTrue (File.Exists full) (sprintf "provenance file should exist: %s" rel)
+                    Expect.isTrue (isExcluded rel) (sprintf "provenance file should be allowlisted: %s" rel)
 
-              // With the four provenance files present, the production scan is still empty (their bare
-              // `FS-Skia-UI` prose matches no suffix-anchored pattern, and they are allowlisted regardless).
-              Expect.isEmpty (scanTrackedTree ()) "provenance files must not cause any violation"
-          }
+                // With the four provenance files present, the production scan is still empty (their bare
+                // `FS-Skia-UI` prose matches no suffix-anchored pattern, and they are allowlisted regardless).
+                Expect.isEmpty (scanTrackedTree ()) "provenance files must not cause any violation"
+            }
 
-          // R3 — A legacy CPM property is caught with the canonical PascalCase replacement
-          // (FR-002, FR-005, SC-002).
-          test "A FsSkiaUiVersion reference is caught with the FsGgUiVersion replacement" {
-              let violations =
-                  scanText "fake/Directory.Packages.props" "<FsSkiaUiVersion>1.0.0</FsSkiaUiVersion>"
+            // R3 — A legacy CPM property is caught with the canonical PascalCase replacement
+            // (FR-002, FR-005, SC-002).
+            test "A FsSkiaUiVersion reference is caught with the FsGgUiVersion replacement" {
+                let violations =
+                    scanText "fake/Directory.Packages.props" "<FsSkiaUiVersion>1.0.0</FsSkiaUiVersion>"
 
-              Expect.isNonEmpty violations "a legacy CPM property must be caught"
+                Expect.isNonEmpty violations "a legacy CPM property must be caught"
 
-              let cpm =
-                  violations |> List.tryFind (fun v -> v.Class = "CPM property")
+                let cpm = violations |> List.tryFind (fun v -> v.Class = "CPM property")
 
-              match cpm with
-              | None -> failtest "expected a CPM-property violation"
-              | Some v ->
-                  Expect.stringContains v.Matched "FsSkiaUiVersion" "the matched text names the legacy property"
-                  Expect.equal v.Replacement "FsGgUiVersion" "the canonical PascalCase replacement is surfaced"
-          }
+                match cpm with
+                | None -> failtest "expected a CPM-property violation"
+                | Some v ->
+                    Expect.stringContains v.Matched "FsSkiaUiVersion" "the matched text names the legacy property"
+                    Expect.equal v.Replacement "FsGgUiVersion" "the canonical PascalCase replacement is surfaced"
+            }
 
-          // R4 — Legacy contract ids and the tag namespace are caught (FR-002, FR-004).
-          test "Legacy contract ids and the fs-skia-ui tag namespace are caught" {
-              let expectReplacement (input: string) (replacement: string) =
-                  let violations = scanText "fake/contract.md" input
+            // R4 — Legacy contract ids and the tag namespace are caught (FR-002, FR-004).
+            test "Legacy contract ids and the fs-skia-ui tag namespace are caught" {
+                let expectReplacement (input: string) (replacement: string) =
+                    let violations = scanText "fake/contract.md" input
 
-                  Expect.isTrue
-                      (violations |> List.exists (fun v -> v.Replacement = replacement))
-                      (sprintf "input %A must yield a violation naming replacement %s" input replacement)
+                    Expect.isTrue
+                        (violations |> List.exists (fun v -> v.Replacement = replacement))
+                        (sprintf "input %A must yield a violation naming replacement %s" input replacement)
 
-              expectReplacement "id: fs-skia-ui-version" "fs-gg-ui-version"
-              expectReplacement "id: fs-skia-ui-bom" "fs-gg-ui-bom"
-              expectReplacement "tag: fs-skia-ui/v1" "fs-gg-ui/v*"
-          }
+                expectReplacement "id: fs-skia-ui-version" "fs-gg-ui-version"
+                expectReplacement "id: fs-skia-ui-bom" "fs-gg-ui-bom"
+                expectReplacement "tag: fs-skia-ui/v1" "fs-gg-ui/v*"
+            }
 
-          // R5 — Separator/case variants caught; the bare repo name not (Edge: variants; FR-003).
-          test "Case and separator variants match; the bare FS-Skia-UI repo name does not" {
-              let matches (input: string) =
-                  scanText "fake/x.txt" input |> List.isEmpty |> not
+            // R5 — Separator/case variants caught; the bare repo name not (Edge: variants; FR-003).
+            test "Case and separator variants match; the bare FS-Skia-UI repo name does not" {
+                let matches (input: string) =
+                    scanText "fake/x.txt" input |> List.isEmpty |> not
 
-              // Version-pinning variants (underscore / dot / all-caps tag) all match.
-              Expect.isTrue (matches "Fs_Skia_Ui_Version") "underscore PascalCase variant matches"
-              Expect.isTrue (matches "fs.skia.ui.bom") "dotted contract-id variant matches"
-              Expect.isTrue (matches "FS-SKIA-UI/V2") "all-caps tag variant matches"
+                // Version-pinning variants (underscore / dot / all-caps tag) all match.
+                Expect.isTrue (matches "Fs_Skia_Ui_Version") "underscore PascalCase variant matches"
+                Expect.isTrue (matches "fs.skia.ui.bom") "dotted contract-id variant matches"
+                Expect.isTrue (matches "FS-SKIA-UI/V2") "all-caps tag variant matches"
 
-              // The bare predecessor repo name (no version/bom/v suffix) matches nothing (research D3).
-              Expect.isFalse (matches "source-analysis of FS-Skia-UI") "the bare repo name must not match"
+                // The bare predecessor repo name (no version/bom/v suffix) matches nothing (research D3).
+                Expect.isFalse (matches "source-analysis of FS-Skia-UI") "the bare repo name must not match"
 
-              Expect.isFalse
-                  (matches "https://github.com/EHotwagner/FS-Skia-UI/blob/main/x.md")
-                  "a repo URL (suffix /blob, not /v<n>) must not match"
-          }
+                Expect.isFalse
+                    (matches "https://github.com/EHotwagner/FS-Skia-UI/blob/main/x.md")
+                    "a repo URL (suffix /blob, not /v<n>) must not match"
+            }
 
-          // R6 — Canonical fs-gg-ui passes; the guard does not self-match (Edge: canonical / own fixtures).
-          test "Canonical fs-gg-ui identifiers pass and the guard source does not self-trip" {
-              let canonical =
-                  "<FsGgUiVersion>1.0.0</FsGgUiVersion> id: fs-gg-ui-version id: fs-gg-ui-bom tag: fs-gg-ui/v1"
+            // R6 — Canonical fs-gg-ui passes; the guard does not self-match (Edge: canonical / own fixtures).
+            test "Canonical fs-gg-ui identifiers pass and the guard source does not self-trip" {
+                let canonical =
+                    "<FsGgUiVersion>1.0.0</FsGgUiVersion> id: fs-gg-ui-version id: fs-gg-ui-bom tag: fs-gg-ui/v1"
 
-              Expect.isEmpty
-                  (scanText "fake/canonical.txt" canonical)
-                  "the canonical fs-gg-ui root is permitted (the guard forbids only the legacy root)"
+                Expect.isEmpty
+                    (scanText "fake/canonical.txt" canonical)
+                    "the canonical fs-gg-ui root is permitted (the guard forbids only the legacy root)"
 
-              // Mechanism (1) fragment-assembled patterns + (2) the scan exclusion together keep the
-              // production scan empty even though the red-path literals live in the tracked test source.
-              Expect.isEmpty (scanTrackedTree ()) "the guard's own red-path literals must not self-trip R1"
-          }
+                // Mechanism (1) fragment-assembled patterns + (2) the scan exclusion together keep the
+                // production scan empty even though the red-path literals live in the tracked test source.
+                Expect.isEmpty (scanTrackedTree ()) "the guard's own red-path literals must not self-trip R1"
+            }
 
-          // R7 — Diagnostic is actionable and self-describing (FR-005, SC-006).
-          test "A violation message names the file, identifier, and fs-gg-ui replacement" {
-              let violations =
-                  scanText "src/Directory.Packages.props" "<FsSkiaUiVersion>1.0.0</FsSkiaUiVersion>"
+            // R7 — Diagnostic is actionable and self-describing (FR-005, SC-006).
+            test "A violation message names the file, identifier, and fs-gg-ui replacement" {
+                let violations =
+                    scanText "src/Directory.Packages.props" "<FsSkiaUiVersion>1.0.0</FsSkiaUiVersion>"
 
-              let v = List.head violations
-              let message = render v
+                let v = List.head violations
+                let message = render v
 
-              Expect.stringContains message "src/Directory.Packages.props" "names the file"
-              Expect.stringContains message (string v.Line) "names the line"
-              Expect.stringContains message "FsSkiaUiVersion" "names the offending identifier"
-              Expect.stringContains message "FsGgUiVersion" "names the canonical replacement"
-          } ]
+                Expect.stringContains message "src/Directory.Packages.props" "names the file"
+                Expect.stringContains message (string v.Line) "names the line"
+                Expect.stringContains message "FsSkiaUiVersion" "names the offending identifier"
+                Expect.stringContains message "FsGgUiVersion" "names the canonical replacement"
+            }
+        ]

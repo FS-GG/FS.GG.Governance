@@ -17,23 +17,32 @@ let private allKinds = [ Stale [ RuleHashCat ]; SyntheticTaint; NoEvidence ]
 let tests =
     testList
         "FindingsEnforce"
-        [ test "every finding kind derives Advisory across the full Profile × RunMode grid" {
-              for kind in allKinds do
-                  let finding =
-                      { Gate = gid "build" "tests"
-                        Kind = kind
-                        BaseSeverity = Advisory
-                        Message = "m" }
+        [
+            test "every finding kind derives Advisory across the full Profile × RunMode grid" {
+                for kind in allKinds do
+                    let finding =
+                        {
+                            Gate = gid "build" "tests"
+                            Kind = kind
+                            BaseSeverity = Advisory
+                            Message = "m"
+                        }
 
-                  for p in profiles do
-                      for m in modes do
-                          let decision = Findings.enforce m p finding
-                          Expect.equal decision.EffectiveSeverity Advisory (sprintf "%A at %A/%A stays advisory" kind p m)
-                          Expect.equal decision.BaseSeverity Advisory "base severity echoed unchanged"
-          }
+                    for p in profiles do
+                        for m in modes do
+                            let decision = Findings.enforce m p finding
 
-          test "kindToken is the exhaustive stale|syntheticTaint|noEvidence table" {
-              Expect.equal (Findings.kindToken (Stale [])) "stale" "stale"
-              Expect.equal (Findings.kindToken SyntheticTaint) "syntheticTaint" "syntheticTaint"
-              Expect.equal (Findings.kindToken NoEvidence) "noEvidence" "noEvidence"
-          } ]
+                            Expect.equal
+                                decision.EffectiveSeverity
+                                Advisory
+                                (sprintf "%A at %A/%A stays advisory" kind p m)
+
+                            Expect.equal decision.BaseSeverity Advisory "base severity echoed unchanged"
+            }
+
+            test "kindToken is the exhaustive stale|syntheticTaint|noEvidence table" {
+                Expect.equal (Findings.kindToken (Stale [])) "stale" "stale"
+                Expect.equal (Findings.kindToken SyntheticTaint) "syntheticTaint" "syntheticTaint"
+                Expect.equal (Findings.kindToken NoEvidence) "noEvidence" "noEvidence"
+            }
+        ]

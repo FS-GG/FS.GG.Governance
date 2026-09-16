@@ -20,17 +20,22 @@ module Model =
         | OrdinalSurfaceTiebreak
 
     type ProductClassification =
-        { Path: GovernedPath
-          Capability: DomainId
-          Surface: SurfaceId
-          Class: SurfaceClass
-          SelectedTier: GeneratedProductTier
-          TierIsDeclared: bool
-          Alternative: TierAlternative
-          Reason: ClassificationReason
-          Explanation: string }
+        {
+            Path: GovernedPath
+            Capability: DomainId
+            Surface: SurfaceId
+            Class: SurfaceClass
+            SelectedTier: GeneratedProductTier
+            TierIsDeclared: bool
+            Alternative: TierAlternative
+            Reason: ClassificationReason
+            Explanation: string
+        }
 
-    type ProductSurfaceReport = { Classifications: ProductClassification list }
+    type ProductSurfaceReport =
+        {
+            Classifications: ProductClassification list
+        }
 
     // Total, deterministic: a new ClassificationReason case is a compile error here until it gets a token.
     let classificationReasonToken (reason: ClassificationReason) : string =

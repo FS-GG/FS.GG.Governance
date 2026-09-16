@@ -21,45 +21,50 @@ let private isError argv =
 let tests =
     testList
         "Parse"
-        [ test "valid --repo parses with text default and repo-relative release.json out" {
-              let r = ok [ "--repo"; "/x" ]
-              Expect.equal r.Repo "/x" "repo"
-              Expect.equal r.Format Loop.Text "default format is text"
-              Expect.equal r.ReleaseOut "/x/release.json" "default out is <repo>/release.json"
-          }
+        [
+            test "valid --repo parses with text default and repo-relative release.json out" {
+                let r = ok [ "--repo"; "/x" ]
+                Expect.equal r.Repo "/x" "repo"
+                Expect.equal r.Format Loop.Text "default format is text"
+                Expect.equal r.ReleaseOut "/x/release.json" "default out is <repo>/release.json"
+            }
 
-          test "a '.' repo yields the clean relative release.json default" {
-              let r = ok [ "--repo"; "." ]
-              Expect.equal r.ReleaseOut "release.json" "clean relative default"
-          }
+            test "a '.' repo yields the clean relative release.json default" {
+                let r = ok [ "--repo"; "." ]
+                Expect.equal r.ReleaseOut "release.json" "clean relative default"
+            }
 
-          test "--format both maps to TextAndJson; json maps to Json" {
-              Expect.equal (ok [ "--repo"; "/x"; "--format"; "both" ]).Format Loop.TextAndJson "both"
-              Expect.equal (ok [ "--repo"; "/x"; "--format"; "json" ]).Format Loop.Json "json"
-              Expect.equal (ok [ "--repo"; "/x"; "--format"; "text" ]).Format Loop.Text "text"
-          }
+            test "--format both maps to TextAndJson; json maps to Json" {
+                Expect.equal (ok [ "--repo"; "/x"; "--format"; "both" ]).Format Loop.TextAndJson "both"
+                Expect.equal (ok [ "--repo"; "/x"; "--format"; "json" ]).Format Loop.Json "json"
+                Expect.equal (ok [ "--repo"; "/x"; "--format"; "text" ]).Format Loop.Text "text"
+            }
 
-          test "--out overrides the artifact destination" {
-              Expect.equal (ok [ "--repo"; "/x"; "--out"; "/o.json" ]).ReleaseOut "/o.json" "explicit out"
-          }
+            test "--out overrides the artifact destination" {
+                Expect.equal (ok [ "--repo"; "/x"; "--out"; "/o.json" ]).ReleaseOut "/o.json" "explicit out"
+            }
 
-          test "missing --repo is a usage error" { Expect.isTrue (isError [ "--format"; "text" ]) "no --repo" }
+            test "missing --repo is a usage error" { Expect.isTrue (isError [ "--format"; "text" ]) "no --repo" }
 
-          test "an unknown flag is a usage error" { Expect.isTrue (isError [ "--repo"; "/x"; "--bogus" ]) "unknown flag" }
+            test "an unknown flag is a usage error" {
+                Expect.isTrue (isError [ "--repo"; "/x"; "--bogus" ]) "unknown flag"
+            }
 
-          test "a malformed --format value is a usage error" {
-              Expect.isTrue (isError [ "--repo"; "/x"; "--format"; "xml" ]) "bad format"
-          }
+            test "a malformed --format value is a usage error" {
+                Expect.isTrue (isError [ "--repo"; "/x"; "--format"; "xml" ]) "bad format"
+            }
 
-          test "--repo with no value is a usage error" { Expect.isTrue (isError [ "--repo" ]) "missing value" }
+            test "--repo with no value is a usage error" { Expect.isTrue (isError [ "--repo" ]) "missing value" }
 
-          test "a leading bare 'release' token is an unexpected argument (flags-only contract)" {
-              // No central fsgg dispatcher: parse does not expect/strip a leading `release` token.
-              Expect.isTrue (isError [ "release"; "--repo"; "/x" ]) "leading release rejected"
-              // CLI-5: a stray non-`--` positional reads as "unexpected argument", not "unknown flag".
-              match Loop.parse [ "release"; "--repo"; "/x" ] with
-              | Error e -> Expect.stringContains e.Message "unexpected argument: release" "names the unexpected positional"
-              | Ok _ -> failtest "expected an error for a leading positional"
-              // ...while the flags-only argv parses Ok.
-              Expect.equal (ok [ "--repo"; "/x" ]).Repo "/x" "flags-only Ok"
-          } ]
+            test "a leading bare 'release' token is an unexpected argument (flags-only contract)" {
+                // No central fsgg dispatcher: parse does not expect/strip a leading `release` token.
+                Expect.isTrue (isError [ "release"; "--repo"; "/x" ]) "leading release rejected"
+                // CLI-5: a stray non-`--` positional reads as "unexpected argument", not "unknown flag".
+                match Loop.parse [ "release"; "--repo"; "/x" ] with
+                | Error e ->
+                    Expect.stringContains e.Message "unexpected argument: release" "names the unexpected positional"
+                | Ok _ -> failtest "expected an error for a leading positional"
+                // ...while the flags-only argv parses Ok.
+                Expect.equal (ok [ "--repo"; "/x" ]).Repo "/x" "flags-only Ok"
+            }
+        ]

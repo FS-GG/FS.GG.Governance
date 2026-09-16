@@ -19,7 +19,7 @@ type GitCommand =
     | StatusPorcelain
     | CurrentBranch
 
-    member this.Token : string =
+    member this.Token: string =
         match this with
         | RepoCheck -> "repo-check"
         | RevParse _ -> "rev-parse"
@@ -32,9 +32,7 @@ type GitPort = GitCommand -> Result<string, string>
 
 type CiPort = unit -> CiContext option
 
-type Ports =
-    { Git: GitPort
-      Ci: CiPort }
+type Ports = { Git: GitPort; Ci: CiPort }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -91,15 +89,29 @@ module Interpreter =
                 let errTask = proc.StandardError.ReadToEndAsync()
 
                 if not (proc.WaitForExit gitProcessTimeoutMs) then
-                    (try proc.Kill true with _ -> ())
-                    Error(sprintf "%s: git '%s' exceeded %d ms and was terminated" gitUnavailableMarker cmd.Token gitProcessTimeoutMs)
+                    (try
+                        proc.Kill true
+                     with _ ->
+                         ())
+
+                    Error(
+                        sprintf
+                            "%s: git '%s' exceeded %d ms and was terminated"
+                            gitUnavailableMarker
+                            cmd.Token
+                            gitProcessTimeoutMs
+                    )
                 else
                     // git exited; the reads should reach EOF momentarily. Wait BOUNDED so an orphaned
                     // pipe-holder cannot hang us, then read a task's result only if it actually completed.
                     (try
                         System.Threading.Tasks.Task.WaitAll(
-                            [| (outTask :> System.Threading.Tasks.Task); (errTask :> System.Threading.Tasks.Task) |],
-                            gitDrainTimeoutMs)
+                            [|
+                                (outTask :> System.Threading.Tasks.Task)
+                                (errTask :> System.Threading.Tasks.Task)
+                            |],
+                            gitDrainTimeoutMs
+                        )
                         |> ignore
                      with _ ->
                          ())
@@ -121,10 +133,21 @@ module Interpreter =
                         if outTask.IsCompletedSuccessfully then
                             Ok stdout
                         else
-                            Error(sprintf "git '%s' exited but its output could not be read within %d ms" cmd.Token gitDrainTimeoutMs)
+                            Error(
+                                sprintf
+                                    "git '%s' exited but its output could not be read within %d ms"
+                                    cmd.Token
+                                    gitDrainTimeoutMs
+                            )
                     else
                         let reason = stderr.Trim()
-                        Error(if reason <> "" then reason else sprintf "git exited with code %d" proc.ExitCode)
+
+                        Error(
+                            if reason <> "" then
+                                reason
+                            else
+                                sprintf "git exited with code %d" proc.ExitCode
+                        )
         with ex ->
             Error(gitUnavailableMarker + ": " + ex.Message)
 
@@ -141,7 +164,12 @@ module Interpreter =
             System.Environment.GetEnvironmentVariable(name: string) |> Option.ofObj
 
         let labels = env "FSGG_PR_LABELS" |> Option.map splitCsv |> Option.defaultValue []
-        let checks = env "FSGG_REQUIRED_STATUS_CHECKS" |> Option.map splitCsv |> Option.defaultValue []
+
+        let checks =
+            env "FSGG_REQUIRED_STATUS_CHECKS"
+            |> Option.map splitCsv
+            |> Option.defaultValue []
+
         let ciFlag = env "CI"
 
         let isTruthy (v: string) =
@@ -159,13 +187,13 @@ module Interpreter =
 
             // Ordered deterministically here so the edge never depends on environment ordering.
             Some
-                { Environment = environment
-                  PrLabels = labels |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b))
-                  RequiredStatusChecks = checks |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b)) }
+                {
+                    Environment = environment
+                    PrLabels = labels |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b))
+                    RequiredStatusChecks = checks |> List.sortWith (fun a b -> System.String.CompareOrdinal(a, b))
+                }
 
-    let realPorts (repoDir: string) : Ports =
-        { Git = runGit repoDir
-          Ci = ciPort }
+    let realPorts (repoDir: string) : Ports = { Git = runGit repoDir; Ci = ciPort }
 
     // A short, stable hash of normalized output — the provenance digest (FR-010). The raw stdout,
     // stderr, timing, and pid are NEVER placed in the snapshot facts; an Error digests a constant so
@@ -183,8 +211,18 @@ module Interpreter =
 
         let run (cmd: GitCommand) : Result<string, string> =
             let r = ports.Git cmd
-            let digestText = match r with Ok t -> t | Error _ -> "error"
-            digests.Add { Command = cmd.Token; Digest = digestOf digestText }
+
+            let digestText =
+                match r with
+                | Ok t -> t
+                | Error _ -> "error"
+
+            digests.Add
+                {
+                    Command = cmd.Token
+                    Digest = digestOf digestText
+                }
+
             r
 
         let ci = ports.Ci()
@@ -200,16 +238,18 @@ module Interpreter =
             let skipped = Error "skipped: git is not available"
 
             Snapshot.assemble
-                { RepoState = Snapshot.GitAbsent
-                  BaseResolved = skipped
-                  HeadResolved = skipped
-                  MergeBaseResolved = skipped
-                  DiffRaw = skipped
-                  StatusRaw = skipped
-                  BranchRaw = skipped
-                  RawCi = ci
-                  Digests = List.ofSeq digests
-                  Plan = plan }
+                {
+                    RepoState = Snapshot.GitAbsent
+                    BaseResolved = skipped
+                    HeadResolved = skipped
+                    MergeBaseResolved = skipped
+                    DiffRaw = skipped
+                    StatusRaw = skipped
+                    BranchRaw = skipped
+                    RawCi = ci
+                    Digests = List.ofSeq digests
+                    Plan = plan
+                }
         | _ ->
             let repoOk =
                 match repoCheck with
@@ -222,16 +262,18 @@ module Interpreter =
                 let skipped = Error "skipped: target is not a git repository"
 
                 Snapshot.assemble
-                    { RepoState = Snapshot.NotAWorkTree
-                      BaseResolved = skipped
-                      HeadResolved = skipped
-                      MergeBaseResolved = skipped
-                      DiffRaw = skipped
-                      StatusRaw = skipped
-                      BranchRaw = skipped
-                      RawCi = ci
-                      Digests = List.ofSeq digests
-                      Plan = plan }
+                    {
+                        RepoState = Snapshot.NotAWorkTree
+                        BaseResolved = skipped
+                        HeadResolved = skipped
+                        MergeBaseResolved = skipped
+                        DiffRaw = skipped
+                        StatusRaw = skipped
+                        BranchRaw = skipped
+                        RawCi = ci
+                        Digests = List.ofSeq digests
+                        Plan = plan
+                    }
             else
                 let asCommit (r: Result<string, string>) =
                     r |> Result.map (fun s -> CommitId(s.Trim()))
@@ -256,13 +298,15 @@ module Interpreter =
                 let branchRaw = run CurrentBranch
 
                 Snapshot.assemble
-                    { RepoState = Snapshot.WorkTree
-                      BaseResolved = baseResolved
-                      HeadResolved = headResolved
-                      MergeBaseResolved = mergeBaseResolved
-                      DiffRaw = diffRaw
-                      StatusRaw = statusRaw
-                      BranchRaw = branchRaw
-                      RawCi = ci
-                      Digests = List.ofSeq digests
-                      Plan = plan }
+                    {
+                        RepoState = Snapshot.WorkTree
+                        BaseResolved = baseResolved
+                        HeadResolved = headResolved
+                        MergeBaseResolved = mergeBaseResolved
+                        DiffRaw = diffRaw
+                        StatusRaw = statusRaw
+                        BranchRaw = branchRaw
+                        RawCi = ci
+                        Digests = List.ofSeq digests
+                        Plan = plan
+                    }

@@ -6,25 +6,29 @@
 
 namespace FS.GG.Governance.GateExecution
 
-open FS.GG.Governance.Config.Model           // TimeoutLimit
-open FS.GG.Governance.CommandRecord.Model     // Executable, Argument, WorkingDirectory, EnvironmentDelta,
-                                              // ExitCode, CapturedOutput, SensedDuration
+open FS.GG.Governance.Config.Model // TimeoutLimit
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, WorkingDirectory, EnvironmentDelta,
+// ExitCode, CapturedOutput, SensedDuration
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
 
     type GateCommand =
-        { Executable: Executable
-          Arguments: Argument list
-          WorkingDirectory: WorkingDirectory
-          Environment: EnvironmentDelta
-          Timeout: TimeoutLimit
-          CapturedOutput: CapturedOutput }
+        {
+            Executable: Executable
+            Arguments: Argument list
+            WorkingDirectory: WorkingDirectory
+            Environment: EnvironmentDelta
+            Timeout: TimeoutLimit
+            CapturedOutput: CapturedOutput
+        }
 
     type ExecutionOutcome =
-        { Stdout: byte[]
-          Stderr: byte[]
-          ExitCode: ExitCode
-          Duration: SensedDuration }
+        {
+            Stdout: byte[]
+            Stderr: byte[]
+            ExitCode: ExitCode
+            Duration: SensedDuration
+        }
 
     type ExecutionPort = GateCommand -> ExecutionOutcome

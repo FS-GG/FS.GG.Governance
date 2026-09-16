@@ -39,18 +39,22 @@ module Journey =
                 (String.concat ", " readiness.BlockingDiagnosticIds)
                 (String.concat ", " readiness.RelatedIds)
 
-        { Id = GateId(sprintf "gameplay:production-journey:%s" id)
-          Domain = domain
-          Description = description
-          Prerequisites = []
-          Cost = High
-          Timeout = Gates.defaultTimeout
-          Owner = Owner "platform"
-          Maturity = maturity
-          ProductCheck = false
-          FreshnessKey =
-            { Check = checkId
-              Domain = domain
-              Cost = High
-              Environment = Ci
-              Command = None } }
+        {
+            Id = GateId(sprintf "gameplay:production-journey:%s" id)
+            Domain = domain
+            Description = description
+            Prerequisites = []
+            Cost = High
+            Timeout = Gates.defaultTimeout
+            Owner = Owner "platform"
+            Maturity = maturity
+            ProductCheck = false
+            FreshnessKey =
+                {
+                    Check = checkId
+                    Domain = domain
+                    Cost = High
+                    Environment = Ci
+                    Command = None
+                }
+        }

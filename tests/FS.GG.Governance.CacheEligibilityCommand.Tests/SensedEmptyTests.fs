@@ -26,45 +26,55 @@ let private resolvedGates (gates: Gate list) (sensed) : string list =
 let private unresolvedInDoc (json: string) : (string * string list) list =
     use doc = JsonDocument.Parse json
 
-    [ for e in doc.RootElement.GetProperty("unresolved").EnumerateArray() ->
-          jsonProp e "gate", [ for f in e.GetProperty("missingFacts").EnumerateArray() -> jsonStr f ] ]
+    [
+        for e in doc.RootElement.GetProperty("unresolved").EnumerateArray() ->
+            jsonProp e "gate", [ for f in e.GetProperty("missingFacts").EnumerateArray() -> jsonStr f ]
+    ]
 
 [<Tests>]
 let tests =
     testList
         "SensedEmpty"
-        [ test "a sensed-EMPTY covered set (Some []) RESOLVES; an unsensed one does not (L4, SC-005)" {
-              let g = mkGate "build" "format" Cheap LocalOrCi (Some(CommandId "dotnet-format"))
+        [
+            test "a sensed-EMPTY covered set (Some []) RESOLVES; an unsensed one does not (L4, SC-005)" {
+                let g = mkGate "build" "format" Cheap LocalOrCi (Some(CommandId "dotnet-format"))
 
-              let emptyCovered =
-                  { fullSensed [ g ] with CoveredArtifacts = Map.ofList [ g.Id, [] ] }
+                let emptyCovered =
+                    { fullSensed [ g ] with
+                        CoveredArtifacts = Map.ofList [ g.Id, [] ]
+                    }
 
-              Expect.equal (resolvedGates [ g ] emptyCovered) [ "build:format" ] "sensed-empty covered set resolves"
+                Expect.equal (resolvedGates [ g ] emptyCovered) [ "build:format" ] "sensed-empty covered set resolves"
 
-              let unsensedCovered = { fullSensed [ g ] with CoveredArtifacts = Map.empty }
-              Expect.equal (resolvedGates [ g ] unsensedCovered) [] "unsensed covered set does NOT resolve"
-          }
+                let unsensedCovered =
+                    { fullSensed [ g ] with
+                        CoveredArtifacts = Map.empty
+                    }
 
-          test "a command-less gate resolves with absent command, never unresolved on that basis (L5)" {
-              let g = mkGate "docs" "check" High Local None // no command declared
-              let sensed = fullSensed [ g ] // CommandVersions has no key for this gate
-              Expect.equal (resolvedGates [ g ] sensed) [ "docs:check" ] "command-less gate resolves"
+                Expect.equal (resolvedGates [ g ] unsensedCovered) [] "unsensed covered set does NOT resolve"
+            }
 
-              let _, effs = driveProjection (selectedModel [ g ] req) sensed EvidenceReuse.empty
+            test "a command-less gate resolves with absent command, never unresolved on that basis (L5)" {
+                let g = mkGate "docs" "check" High Local None // no command declared
+                let sensed = fullSensed [ g ] // CommandVersions has no key for this gate
+                Expect.equal (resolvedGates [ g ] sensed) [ "docs:check" ] "command-less gate resolves"
 
-              let sidecar =
-                  effs
-                  |> List.pick (function
-                      | Loop.WriteArtifact(Loop.UnresolvedArtifact, _, c) -> Some c
-                      | _ -> None)
+                let _, effs = driveProjection (selectedModel [ g ] req) sensed EvidenceReuse.empty
 
-              Expect.equal (unresolvedInDoc sidecar) [] "a command-less gate is never reported unresolved"
+                let sidecar =
+                    effs
+                    |> List.pick (function
+                        | Loop.WriteArtifact(Loop.UnresolvedArtifact, _, c) -> Some c
+                        | _ -> None)
 
-              let cacheDoc =
-                  effs
-                  |> List.pick (function
-                      | Loop.WriteArtifact(Loop.CacheArtifact, _, c) -> Some c
-                      | _ -> None)
+                Expect.equal (unresolvedInDoc sidecar) [] "a command-less gate is never reported unresolved"
 
-              Expect.isTrue (cacheDoc.Contains "docs:check") "the command-less gate is evaluated (appears resolved)"
-          } ]
+                let cacheDoc =
+                    effs
+                    |> List.pick (function
+                        | Loop.WriteArtifact(Loop.CacheArtifact, _, c) -> Some c
+                        | _ -> None)
+
+                Expect.isTrue (cacheDoc.Contains "docs:check") "the command-less gate is evaluated (appears resolved)"
+            }
+        ]

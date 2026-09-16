@@ -21,8 +21,7 @@ let allModes: RunMode list =
     [ Sandbox; Inner; Focused; Verify; Gate; RunMode.Release ]
 
 /// All four profiles, least -> most strict.
-let allProfiles: Profile list =
-    [ Light; Standard; Strict; Profile.Release ]
+let allProfiles: Profile list = [ Light; Standard; Strict; Profile.Release ]
 
 /// Both severities.
 let allSeverities: Severity list = [ Advisory; Blocking ]
@@ -34,11 +33,18 @@ let allMaturities: Maturity list =
 /// The full cross-product (2 × 5 × 6 × 4 = 240 inputs) driving the enumeration-based
 /// totality/determinism/carry tests.
 let allInputs: EnforcementInput list =
-    [ for s in allSeverities do
-          for m in allMaturities do
-              for md in allModes do
-                  for p in allProfiles do
-                      { BaseSeverity = s; Maturity = m; Mode = md; Profile = p } ]
+    [
+        for s in allSeverities do
+            for m in allMaturities do
+                for md in allModes do
+                    for p in allProfiles do
+                        {
+                            BaseSeverity = s
+                            Maturity = m
+                            Mode = md
+                            Profile = p
+                        }
+    ]
 
 // ── FsCheck arbitraries over the finite enumerations ──
 
@@ -56,31 +62,44 @@ type EnforcementArbs =
             let! m = elements allMaturities
             let! md = elements allModes
             let! p = elements allProfiles
-            return { BaseSeverity = s; Maturity = m; Mode = md; Profile = p }
+
+            return
+                {
+                    BaseSeverity = s
+                    Maturity = m
+                    Mode = md
+                    Profile = p
+                }
         }
         |> Arb.fromGen
 
 /// FsCheck config wiring the lever arbitraries (used by the property tests).
 let fsCheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<EnforcementArbs> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<EnforcementArbs> ]
+    }
 
 // ── Canonical / invalid token tables for recognition assertions (enforcement-decision §3) ──
 
 /// The six canonical run-mode tokens paired with their typed value.
 let canonicalModeTokens: (string * RunMode) list =
-    [ "sandbox", Sandbox
-      "inner", Inner
-      "focused", Focused
-      "verify", Verify
-      "gate", Gate
-      "release", RunMode.Release ]
+    [
+        "sandbox", Sandbox
+        "inner", Inner
+        "focused", Focused
+        "verify", Verify
+        "gate", Gate
+        "release", RunMode.Release
+    ]
 
 /// The four canonical profile tokens paired with their typed value.
 let canonicalProfileTokens: (string * Profile) list =
-    [ "light", Light
-      "standard", Standard
-      "strict", Strict
-      "release", Profile.Release ]
+    [
+        "light", Light
+        "standard", Standard
+        "strict", Strict
+        "release", Profile.Release
+    ]
 
 /// A representative invalid set: a case-variant, a non-token, the empty string, a whitespace-padded
 /// token, and two near-misses (enforcement-decision §3). None of these is canonical.

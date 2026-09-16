@@ -7,19 +7,19 @@ namespace FS.GG.Governance.JsonWriters
 // modifiers — the surface is JsonWriters.fsi (Principle II).
 
 open System.Text.Json
-open FS.GG.Governance.Config.Model             // CheckId, DomainId, CommandId (freshness-key / prerequisite)
-open FS.GG.Governance.Gates.Model              // gateIdValue, GateId, GatePrerequisite (RequiresCommand)
-open FS.GG.Governance.GateRun.Model            // GateOutcome
-open FS.GG.Governance.CommandRecord.Model      // ExitCode
-open FS.GG.Governance.EvidenceReuse            // referenceValue
-open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause (NoPriorEvidence, InputsChanged)
-open FS.GG.Governance.FreshnessKey.Model       // categoryToken, FreshnessKey
-open FS.GG.Governance.CacheEligibility         // entries
-open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, CacheEligibilityVerdict, entry fields
-open FS.GG.Governance.CommandKind              // Audit (kindToken / runIdentity) — JSON-3
-open FS.GG.Governance.CommandKind.Model        // KindedCommandRun — JSON-3
-open FS.GG.Governance.Provenance.Model         // BuilderIdentity — JSON-3
-open FS.GG.Governance.JsonTokens               // dispositionToken (module-qualified)
+open FS.GG.Governance.Config.Model // CheckId, DomainId, CommandId (freshness-key / prerequisite)
+open FS.GG.Governance.Gates.Model // gateIdValue, GateId, GatePrerequisite (RequiresCommand)
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.CommandRecord.Model // ExitCode
+open FS.GG.Governance.EvidenceReuse // referenceValue
+open FS.GG.Governance.EvidenceReuse.Model // RecomputeCause (NoPriorEvidence, InputsChanged)
+open FS.GG.Governance.FreshnessKey.Model // categoryToken, FreshnessKey
+open FS.GG.Governance.CacheEligibility // entries
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport, CacheEligibilityVerdict, entry fields
+open FS.GG.Governance.CommandKind // Audit (kindToken / runIdentity) — JSON-3
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun — JSON-3
+open FS.GG.Governance.Provenance.Model // BuilderIdentity — JSON-3
+open FS.GG.Governance.JsonTokens // dispositionToken (module-qualified)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module JsonWriters =
@@ -33,8 +33,10 @@ module JsonWriters =
             w.WriteString("kind", "inputsChanged")
             w.WritePropertyName "categories"
             w.WriteStartArray()
+
             for c in cats do
                 w.WriteStringValue(categoryToken c)
+
             w.WriteEndArray()
 
         w.WriteEndObject()

@@ -19,29 +19,45 @@ let private routeDocOf git =
 let tests =
     testList
         "Determinism"
-        [ test "same repo state ⇒ byte-identical route.json incl the cache section over two runs (SC-007, L5)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let d1 = routeDocOf git
-              let d2 = routeDocOf git
-              Expect.equal d1 d2 "route.json byte-identical across runs (cache section included)"
-              Expect.stringContains d1 "\"cacheEligibilityEvaluated\":true" "the compared documents carry an evaluated cache section"
-          }
+        [
+            test "same repo state ⇒ byte-identical route.json incl the cache section over two runs (SC-007, L5)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let d1 = routeDocOf git
+                let d2 = routeDocOf git
+                Expect.equal d1 d2 "route.json byte-identical across runs (cache section included)"
 
-          test "the same diff sensed via Since vs DefaultRange yields the same route.json cache section" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                Expect.stringContains
+                    d1
+                    "\"cacheEligibilityEvaluated\":true"
+                    "the compared documents carry an evaluated cache section"
+            }
 
-              let docOf scope =
-                  let req = { requestFor scope Loop.Json with Repo = "." }
-                  let cap = newCapture ()
-                  Interpreter.run (fakePorts validCatalog git cap req) req |> ignore
-                  writtenOf cap Loop.RouteArtifact |> Option.map snd |> Option.defaultValue ""
+            test "the same diff sensed via Since vs DefaultRange yields the same route.json cache section" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
 
-              Expect.equal (docOf (Loop.Since "HEAD~2")) (docOf Loop.DefaultRange) "identical faked diff ⇒ identical route.json across scopes"
-          }
+                let docOf scope =
+                    let req =
+                        { requestFor scope Loop.Json with
+                            Repo = "."
+                        }
 
-          test "no wall-clock / cwd / absolute-path text leaks into route.json (incl the cache section)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let doc = (routeDocOf git).ToLowerInvariant()
-              for token in [ "/tmp/"; "/home/"; "c:\\"; "timestamp"; "datetime"; "utc" ] do
-                  Expect.isFalse (doc.Contains token) (sprintf "excluded token %s must not appear in route.json" token)
-          } ]
+                    let cap = newCapture ()
+                    Interpreter.run (fakePorts validCatalog git cap req) req |> ignore
+                    writtenOf cap Loop.RouteArtifact |> Option.map snd |> Option.defaultValue ""
+
+                Expect.equal
+                    (docOf (Loop.Since "HEAD~2"))
+                    (docOf Loop.DefaultRange)
+                    "identical faked diff ⇒ identical route.json across scopes"
+            }
+
+            test "no wall-clock / cwd / absolute-path text leaks into route.json (incl the cache section)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let doc = (routeDocOf git).ToLowerInvariant()
+
+                for token in [ "/tmp/"; "/home/"; "c:\\"; "timestamp"; "datetime"; "utc" ] do
+                    Expect.isFalse
+                        (doc.Contains token)
+                        (sprintf "excluded token %s must not appear in route.json" token)
+            }
+        ]

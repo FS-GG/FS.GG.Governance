@@ -5,9 +5,9 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open FS.GG.Governance.Gates.Model              // Gate
-open FS.GG.Governance.Ship.Model               // ShipDecision
-open FS.GG.Governance.Adapters.SddHandoff       // Reader.parse, Consumer.consume, Model.*
+open FS.GG.Governance.Gates.Model // Gate
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.Adapters.SddHandoff // Reader.parse, Consumer.consume, Model.*
 open FS.GG.Governance.Adapters.SddHandoff.Model // DeclaredState, DeclaredNode, Diagnostic
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -18,19 +18,21 @@ module Simulate =
         | RequiredAbsent
         | NotRequired
 
-    type SignalSufficiency =
-        { Signal: string
-          Class: SignalClass }
+    type SignalSufficiency = { Signal: string; Class: SignalClass }
 
     type Sufficiency =
-        { Signals: SignalSufficiency list
-          RequiredAbsentCount: int
-          AllNotEvaluated: bool }
+        {
+            Signals: SignalSufficiency list
+            RequiredAbsentCount: int
+            AllNotEvaluated: bool
+        }
 
     type SimulatedResult =
-        { Decision: ShipDecision
-          Sufficiency: Sufficiency
-          HandoffDiagnostics: Diagnostic list }
+        {
+            Decision: ShipDecision
+            Sufficiency: Sufficiency
+            HandoffDiagnostics: Diagnostic list
+        }
 
     // The sufficiency breakdown classifies the handoff's *declared* evidence — a preview heuristic over what the
     // producer wrote, NOT the kernel's taint-closed *effective* state. The effective state (e.g. a `Real` node
@@ -64,7 +66,12 @@ module Simulate =
         // diagnostic is surfaced (below, via Consumer.consume) so a malformed/version-mismatched handoff is not
         // silently dropped (FR-008).
         let parsed = reads |> List.map Reader.parse
-        let handoffs = parsed |> List.choose (function | Ok h -> Some h | Error _ -> None)
+
+        let handoffs =
+            parsed
+            |> List.choose (function
+                | Ok h -> Some h
+                | Error _ -> None)
 
         // Consumer.consume is the authoritative diagnostic source (parse + version + integrity + staleness).
         let consumed = Consumer.consume reads
@@ -73,8 +80,10 @@ module Simulate =
             handoffs
             |> List.collect (fun h -> h.Evidence.Nodes)
             |> List.map (fun (n: DeclaredNode) ->
-                { Signal = n.Id
-                  Class = classify n.State n.Stale })
+                {
+                    Signal = n.Id
+                    Class = classify n.State n.Stale
+                })
 
         let requiredAbsentCount =
             signals |> List.filter (fun s -> s.Class = RequiredAbsent) |> List.length
@@ -85,9 +94,13 @@ module Simulate =
         // handoff carried no real, non-stale signal. Surfaced explicitly so it is never read as a clean Pass.
         let allNotEvaluated = not (List.isEmpty selectedGates) && not anySatisfied
 
-        { Decision = decision
-          Sufficiency =
-            { Signals = signals
-              RequiredAbsentCount = requiredAbsentCount
-              AllNotEvaluated = allNotEvaluated }
-          HandoffDiagnostics = consumed.Diagnostics }
+        {
+            Decision = decision
+            Sufficiency =
+                {
+                    Signals = signals
+                    RequiredAbsentCount = requiredAbsentCount
+                    AllNotEvaluated = allNotEvaluated
+                }
+            HandoffDiagnostics = consumed.Diagnostics
+        }

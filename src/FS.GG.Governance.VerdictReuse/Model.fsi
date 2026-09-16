@@ -33,8 +33,10 @@ module Model =
     /// One cached entry: the F035 seven-input identity a verdict was produced under, paired with its opaque
     /// reference (FR-001).
     type CachedVerdict =
-        { Inputs: AgentReviewInputs
-          Verdict: VerdictRef }
+        {
+            Inputs: AgentReviewInputs
+            Verdict: VerdictRef
+        }
 
     // ── Key entity: the in-value store ──
 

@@ -48,21 +48,23 @@ module Model =
     /// a SET in identity (research D4); a review over ZERO artifacts is the ordinary empty list, never
     /// malformed (Edge Cases).
     type ReproducibleFacts =
-        { /// F037 — the prompt-isolated review request; its identity contribution is
-          /// `PromptIsolation.render request` (research D5).
-          Request: ReviewRequest
-          /// F035 — the judge's id; half of model identity.
-          Model: ModelId
-          /// F035 — the judge's version; half of model identity.
-          ModelVersion: ModelVersion
-          /// F035 — the reviewer-prompt hash; prompt identity.
-          PromptHash: ReviewerPromptHash
-          /// F029 — the reviewed-artifact content hashes; carried verbatim, compared as a SET in identity.
-          ReviewedArtifacts: ArtifactHash list
-          /// New — the supplied hash of the reviewer's response; carries NO response bytes.
-          ResponseDigest: ResponseDigest
-          /// New — the final verdict, an opaque recorded fact, never interpreted here.
-          Verdict: RecordedVerdict }
+        {
+            /// F037 — the prompt-isolated review request; its identity contribution is
+            /// `PromptIsolation.render request` (research D5).
+            Request: ReviewRequest
+            /// F035 — the judge's id; half of model identity.
+            Model: ModelId
+            /// F035 — the judge's version; half of model identity.
+            ModelVersion: ModelVersion
+            /// F035 — the reviewer-prompt hash; prompt identity.
+            PromptHash: ReviewerPromptHash
+            /// F029 — the reviewed-artifact content hashes; carried verbatim, compared as a SET in identity.
+            ReviewedArtifacts: ArtifactHash list
+            /// New — the supplied hash of the reviewer's response; carries NO response bytes.
+            ResponseDigest: ResponseDigest
+            /// New — the final verdict, an opaque recorded fact, never interpreted here.
+            Verdict: RecordedVerdict
+        }
 
     /// The complete, immutable review record (FR-001): all six reproducible audit facts plus any sensed
     /// metadata, none dropped or optional-by-omission. The sensed metadata is a SEPARATE field of a distinct
@@ -73,5 +75,7 @@ module Model =
     /// appears only inside the F037-bounded `Request` (whose excerpts are bounded by construction), and the
     /// response appears only as `Reproducible.ResponseDigest` (FR-001, US3, SC-004).
     type ReviewRecord =
-        { Reproducible: ReproducibleFacts
-          Sensed: SensedMetadatum list }
+        {
+            Reproducible: ReproducibleFacts
+            Sensed: SensedMetadatum list
+        }

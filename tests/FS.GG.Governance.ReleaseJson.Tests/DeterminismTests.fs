@@ -21,25 +21,35 @@ let private rotate (k: int) (xs: 'a list) : 'a list =
 let tests =
     testList
         "Determinism"
-        [ test "ofRelease called twice on the same inputs is byte-identical" {
-              Expect.equal (ReleaseJson.ofRelease decisionMixed sensedMixed) (ReleaseJson.ofRelease decisionMixed sensedMixed) "identical bytes"
-          }
+        [
+            test "ofRelease called twice on the same inputs is byte-identical" {
+                Expect.equal
+                    (ReleaseJson.ofRelease decisionMixed sensedMixed)
+                    (ReleaseJson.ofRelease decisionMixed sensedMixed)
+                    "identical bytes"
+            }
 
-          test "reversing the partition lists does not change the bytes" {
-              let reversed =
-                  { decisionMixed with
-                      Blockers = List.rev decisionMixed.Blockers
-                      Warnings = List.rev decisionMixed.Warnings
-                      Passing = List.rev decisionMixed.Passing }
+            test "reversing the partition lists does not change the bytes" {
+                let reversed =
+                    { decisionMixed with
+                        Blockers = List.rev decisionMixed.Blockers
+                        Warnings = List.rev decisionMixed.Warnings
+                        Passing = List.rev decisionMixed.Passing
+                    }
 
-              Expect.equal (ReleaseJson.ofRelease reversed sensedMixed) (ReleaseJson.ofRelease decisionMixed sensedMixed) "reorder-invariant"
-          }
+                Expect.equal
+                    (ReleaseJson.ofRelease reversed sensedMixed)
+                    (ReleaseJson.ofRelease decisionMixed sensedMixed)
+                    "reorder-invariant"
+            }
 
-          testProperty "rotating the partition lists by any amount yields identical bytes" (fun (k: int) ->
-              let shuffled =
-                  { decisionMixed with
-                      Blockers = rotate k decisionMixed.Blockers
-                      Warnings = rotate k decisionMixed.Warnings
-                      Passing = rotate k decisionMixed.Passing }
+            testProperty "rotating the partition lists by any amount yields identical bytes" (fun (k: int) ->
+                let shuffled =
+                    { decisionMixed with
+                        Blockers = rotate k decisionMixed.Blockers
+                        Warnings = rotate k decisionMixed.Warnings
+                        Passing = rotate k decisionMixed.Passing
+                    }
 
-              ReleaseJson.ofRelease shuffled sensedMixed = ReleaseJson.ofRelease decisionMixed sensedMixed) ]
+                ReleaseJson.ofRelease shuffled sensedMixed = ReleaseJson.ofRelease decisionMixed sensedMixed)
+        ]

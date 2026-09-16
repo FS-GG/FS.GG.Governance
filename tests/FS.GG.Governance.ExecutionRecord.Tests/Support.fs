@@ -51,9 +51,17 @@ let emptySha256Hex: string =
 
 /// The base environment delta — one added var, the other two classes empty.
 let baseEnv: EnvironmentDelta =
-    { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]
-      Changed = []
-      Removed = [] }
+    {
+        Added =
+            [
+                {
+                    Name = EnvVarName "CI"
+                    Value = EnvVarValue "1"
+                }
+            ]
+        Changed = []
+        Removed = []
+    }
 
 /// Assemble a real F032 `CommandRecord` through the PUBLIC `ExecutionRecord.recordOf` over RAW output bytes,
 /// with sensible defaults and a per-field override for EVERY reproducible fact AND the one sensed duration — so
@@ -99,58 +107,77 @@ let slowerOutcome: CommandRecord = Build.outcome (duration = 999_999L)
 /// env-delta variant adds a var (compared as a SET); argument order is reversed (order is significant); the
 /// captured-output variant flips `NoCapturedOutput` to a present path.
 let reproducibleVariants: (string * CommandRecord) list =
-    [ "executable", Build.outcome (executable = "clang")
-      "argument value", Build.outcome (arguments = [ Argument "-c"; Argument "other.c" ])
-      "argument order", Build.outcome (arguments = [ Argument "main.c"; Argument "-c" ])
-      "working directory", Build.outcome (workingDirectory = "/elsewhere")
-      "env delta set",
-      Build.outcome (
-          environment =
-              { baseEnv with
-                  Added = baseEnv.Added @ [ { Name = EnvVarName "X"; Value = EnvVarValue "2" } ] }
-      )
-      "timeout", Build.outcome (timeout = 60)
-      "exit code", Build.outcome (exitCode = 1)
-      "stdout byte", Build.outcome (stdout = Encoding.UTF8.GetBytes "out-bytez")
-      "stderr byte", Build.outcome (stderr = Encoding.UTF8.GetBytes "err-bytez")
-      "captured output", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath "x")) ]
+    [
+        "executable", Build.outcome (executable = "clang")
+        "argument value", Build.outcome (arguments = [ Argument "-c"; Argument "other.c" ])
+        "argument order", Build.outcome (arguments = [ Argument "main.c"; Argument "-c" ])
+        "working directory", Build.outcome (workingDirectory = "/elsewhere")
+        "env delta set",
+        Build.outcome (
+            environment =
+                { baseEnv with
+                    Added =
+                        baseEnv.Added
+                        @ [
+                            {
+                                Name = EnvVarName "X"
+                                Value = EnvVarValue "2"
+                            }
+                        ]
+                }
+        )
+        "timeout", Build.outcome (timeout = 60)
+        "exit code", Build.outcome (exitCode = 1)
+        "stdout byte", Build.outcome (stdout = Encoding.UTF8.GetBytes "out-bytez")
+        "stderr byte", Build.outcome (stderr = Encoding.UTF8.GetBytes "err-bytez")
+        "captured output", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath "x"))
+    ]
 
 /// Edge outcomes exercising totality (FR-008): empty stdout/stderr bytes, a non-zero exit code, an applied
 /// timeout, and all three captured-output outcomes — `recordOf` is defined and never throws on every one.
 let edgeOutcomes: (string * CommandRecord) list =
-    [ "empty stdout", Build.outcome (stdout = [||])
-      "empty stderr", Build.outcome (stderr = [||])
-      "both empty", Build.outcome (stdout = [||], stderr = [||])
-      "non-zero exit", Build.outcome (exitCode = 1)
-      "applied timeout", Build.outcome (timeout = 0)
-      "no captured output", Build.outcome (capturedOutput = NoCapturedOutput)
-      "captured at empty path", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath ""))
-      "captured at path x", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath "x")) ]
+    [
+        "empty stdout", Build.outcome (stdout = [||])
+        "empty stderr", Build.outcome (stderr = [||])
+        "both empty", Build.outcome (stdout = [||], stderr = [||])
+        "non-zero exit", Build.outcome (exitCode = 1)
+        "applied timeout", Build.outcome (timeout = 0)
+        "no captured output", Build.outcome (capturedOutput = NoCapturedOutput)
+        "captured at empty path", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath ""))
+        "captured at path x", Build.outcome (capturedOutput = CapturedAt(CapturedOutputPath "x"))
+    ]
 
 // ── Real freshness-world builders (the F029/F030 worked example, for close-the-loop only) ──
 
 /// A complete, literal `FreshnessInputs` for `check` — every category present and distinct so a mismatch is
 /// observable, with a multi-element verbatim `CoveredArtifacts` list.
 let inputs (check: string) : FreshnessInputs =
-    { Check = CheckId check
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId check
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 /// A DIFFERENT freshness world (the head revision moved) — for the recompute-safety / no-spurious-match tests.
-let differentInputs: FreshnessInputs = { inputs "build:tests" with Head = Revision "ccc" }
+let differentInputs: FreshnessInputs =
+    { inputs "build:tests" with
+        Head = Revision "ccc"
+    }
 
 // ── FsCheck generators (real values, no mocks) ──
 
 /// Arbitrary `byte[]` (incl. empty), so the agreement/sensitivity/determinism properties range over real bytes.
 let private genBytes: Gen<byte[]> =
-    Gen.sized (fun n -> Gen.listOfLength (max 0 (n % 64)) (ArbMap.defaults |> ArbMap.generate<byte>) |> Gen.map List.toArray)
+    Gen.sized (fun n ->
+        Gen.listOfLength (max 0 (n % 64)) (ArbMap.defaults |> ArbMap.generate<byte>)
+        |> Gen.map List.toArray)
 
 let private shortStringGen: Gen<string> =
     Gen.elements [ ""; "a"; "gcc"; "clang"; "main.c"; "-c"; "/work"; "héllo"; "x:y=z" ]
@@ -162,15 +189,38 @@ let private genEnvironmentDelta: Gen<EnvironmentDelta> =
         let! removed = Gen.listOf (Gen.zip shortStringGen shortStringGen)
 
         return
-            { Added = added |> List.map (fun (n, v) -> { Name = EnvVarName n; Value = EnvVarValue v })
-              Changed = changed |> List.map (fun (n, v) -> { Name = EnvVarName n; Old = EnvVarValue v; New = EnvVarValue v })
-              Removed = removed |> List.map (fun (n, v) -> { Name = EnvVarName n; Old = EnvVarValue v }) }
+            {
+                Added =
+                    added
+                    |> List.map (fun (n, v) ->
+                        {
+                            Name = EnvVarName n
+                            Value = EnvVarValue v
+                        })
+                Changed =
+                    changed
+                    |> List.map (fun (n, v) ->
+                        {
+                            Name = EnvVarName n
+                            Old = EnvVarValue v
+                            New = EnvVarValue v
+                        })
+                Removed =
+                    removed
+                    |> List.map (fun (n, v) ->
+                        {
+                            Name = EnvVarName n
+                            Old = EnvVarValue v
+                        })
+            }
     }
 
 let private genCapturedOutput: Gen<CapturedOutput> =
     Gen.oneof
-        [ Gen.constant NoCapturedOutput
-          shortStringGen |> Gen.map (fun p -> CapturedAt(CapturedOutputPath p)) ]
+        [
+            Gen.constant NoCapturedOutput
+            shortStringGen |> Gen.map (fun p -> CapturedAt(CapturedOutputPath p))
+        ]
 
 /// An arbitrary well-typed captured outcome — varying EVERY reproducible fact (executable, arguments incl. `[]`
 /// and multi-element verbatim order, working dir, the three-class env delta, timeout, exit code, BOTH raw output
@@ -210,6 +260,8 @@ type Generators =
 
 /// FsCheck config registering the real F050 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

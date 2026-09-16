@@ -18,8 +18,10 @@ let private fixtureFacts: TypedFacts =
         "src"
         [ "src/build/**", "build"; "src/docs/**", "docs" ]
         [ surface GovernedRoot "root" [ "src" ] ]
-        [ check "build" "tests" (Some "dotnet-test") Medium Local BlockOnShip
-          check "docs" "lint" None Cheap Local Warn ]
+        [
+            check "build" "tests" (Some "dotnet-test") Medium Local BlockOnShip
+            check "docs" "lint" None Cheap Local Warn
+        ]
         [ command "dotnet-test" 600 ]
 
 let private fixtureResult =
@@ -31,68 +33,87 @@ let private emit (result: RouteResult) : string = RouteJson.ofRouteResult result
 let tests =
     testList
         "RuleId"
-        [ test "every selected gate carries ruleId (gate:<domain>:<check>) as the field right after id (C2)" {
-              use doc = parse (emit fixtureResult)
-              let gates = selectedGates doc
-              Expect.isNonEmpty gates "the fixture selects gates"
+        [
+            test "every selected gate carries ruleId (gate:<domain>:<check>) as the field right after id (C2)" {
+                use doc = parse (emit fixtureResult)
+                let gates = selectedGates doc
+                Expect.isNonEmpty gates "the fixture selects gates"
 
-              for g in gates do
-                  let order = fieldOrder g
-                  Expect.equal (List.findIndex ((=) "ruleId") order) (List.findIndex ((=) "id") order + 1) "ruleId after id"
-                  Expect.equal (strField g "ruleId") ("gate:" + strField g "id") "gate ruleId = gate:<id>"
-          }
+                for g in gates do
+                    let order = fieldOrder g
 
-          test "Boundary: every finding carries ruleId (boundary:<token>) after id and before path, distinguishable from gate ids (T014, FR-008, SC-006)" {
-              use doc = parse (emit fixtureResult)
-              let fs = findings doc
-              Expect.isNonEmpty fs "the fixture produces a boundary finding"
+                    Expect.equal
+                        (List.findIndex ((=) "ruleId") order)
+                        (List.findIndex ((=) "id") order + 1)
+                        "ruleId after id"
 
-              let gateRuleIds = selectedGates doc |> List.map (fun g -> strField g "ruleId") |> Set.ofList
+                    Expect.equal (strField g "ruleId") ("gate:" + strField g "id") "gate ruleId = gate:<id>"
+            }
 
-              for f in fs do
-                  let order = fieldOrder f
-                  let ruleIdx = List.findIndex ((=) "ruleId") order
-                  Expect.equal ruleIdx (List.findIndex ((=) "id") order + 1) "ruleId after id"
-                  Expect.isLessThan ruleIdx (List.findIndex ((=) "path") order) "ruleId before path"
+            test
+                "Boundary: every finding carries ruleId (boundary:<token>) after id and before path, distinguishable from gate ids (T014, FR-008, SC-006)" {
+                use doc = parse (emit fixtureResult)
+                let fs = findings doc
+                Expect.isNonEmpty fs "the fixture produces a boundary finding"
 
-                  let ruleId = strField f "ruleId"
-                  Expect.equal ruleId ("boundary:" + strField f "id") "finding ruleId = boundary:<token>"
-                  Expect.isTrue (ruleId.StartsWith "boundary:") "boundary-prefixed"
-                  Expect.isFalse (ruleId = "") "non-empty"
-                  Expect.isFalse (Set.contains ruleId gateRuleIds) "boundary id distinguishable from any gate id"
-          }
+                let gateRuleIds =
+                    selectedGates doc |> List.map (fun g -> strField g "ruleId") |> Set.ofList
 
-          test "no route object emits an unattributed: ruleId for the standard fixture (T014, FR-010)" {
-              use doc = parse (emit fixtureResult)
+                for f in fs do
+                    let order = fieldOrder f
+                    let ruleIdx = List.findIndex ((=) "ruleId") order
+                    Expect.equal ruleIdx (List.findIndex ((=) "id") order + 1) "ruleId after id"
+                    Expect.isLessThan ruleIdx (List.findIndex ((=) "path") order) "ruleId before path"
 
-              let ids =
-                  (selectedGates doc |> List.map (fun g -> strField g "ruleId"))
-                  @ (findings doc |> List.map (fun f -> strField f "ruleId"))
+                    let ruleId = strField f "ruleId"
+                    Expect.equal ruleId ("boundary:" + strField f "id") "finding ruleId = boundary:<token>"
+                    Expect.isTrue (ruleId.StartsWith "boundary:") "boundary-prefixed"
+                    Expect.isFalse (ruleId = "") "non-empty"
+                    Expect.isFalse (Set.contains ruleId gateRuleIds) "boundary id distinguishable from any gate id"
+            }
 
-              for ruleId in ids do
-                  Expect.isFalse (ruleId.StartsWith "unattributed:") (sprintf "%s is not unattributed" ruleId)
-          }
+            test "no route object emits an unattributed: ruleId for the standard fixture (T014, FR-010)" {
+                use doc = parse (emit fixtureResult)
 
-          test "message-perturbation: changing a finding's Message leaves its ruleId unchanged (T012, FR-009, C3.3)" {
-              // Two findings identical but for `Message` (and path) → identical `ruleId` (derived from the
-              // FindingId token alone, never the free-text message).
-              let mk (msg: string) (p: string) : UnknownGovernedPathFinding =
-                  { Id = UnknownGovernedPath
-                    Path = GovernedPath p
-                    Zone = GovernedRootUnknown
-                    Message = msg }
+                let ids =
+                    (selectedGates doc |> List.map (fun g -> strField g "ruleId"))
+                    @ (findings doc |> List.map (fun f -> strField f "ruleId"))
 
-              let resultOfFinding (f: UnknownGovernedPathFinding) : RouteResult =
-                  { SelectedGates = []
-                    Findings = { Findings = [ f ] }
-                    Cost = { Cheap = 0; Medium = 0; High = 0; Exhaustive = 0 } }
+                for ruleId in ids do
+                    Expect.isFalse (ruleId.StartsWith "unattributed:") (sprintf "%s is not unattributed" ruleId)
+            }
 
-              let ruleIdOf (f: UnknownGovernedPathFinding) =
-                  use doc = parse (emit (resultOfFinding f))
-                  strField (List.head (findings doc)) "ruleId"
+            test "message-perturbation: changing a finding's Message leaves its ruleId unchanged (T012, FR-009, C3.3)" {
+                // Two findings identical but for `Message` (and path) → identical `ruleId` (derived from the
+                // FindingId token alone, never the free-text message).
+                let mk (msg: string) (p: string) : UnknownGovernedPathFinding =
+                    {
+                        Id = UnknownGovernedPath
+                        Path = GovernedPath p
+                        Zone = GovernedRootUnknown
+                        Message = msg
+                    }
 
-              Expect.equal
-                  (ruleIdOf (mk "first wording here" "src/a.fs"))
-                  (ruleIdOf (mk "totally different message" "src/b.fs"))
-                  "ruleId is message-invariant"
-          } ]
+                let resultOfFinding (f: UnknownGovernedPathFinding) : RouteResult =
+                    {
+                        SelectedGates = []
+                        Findings = { Findings = [ f ] }
+                        Cost =
+                            {
+                                Cheap = 0
+                                Medium = 0
+                                High = 0
+                                Exhaustive = 0
+                            }
+                    }
+
+                let ruleIdOf (f: UnknownGovernedPathFinding) =
+                    use doc = parse (emit (resultOfFinding f))
+                    strField (List.head (findings doc)) "ruleId"
+
+                Expect.equal
+                    (ruleIdOf (mk "first wording here" "src/a.fs"))
+                    (ruleIdOf (mk "totally different message" "src/b.fs"))
+                    "ruleId is message-invariant"
+            }
+        ]

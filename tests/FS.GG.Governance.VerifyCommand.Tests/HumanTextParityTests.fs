@@ -27,7 +27,10 @@ let private cacheReportOf (model: Loop.Model) : CacheEligibilityReport option =
     match model.Sensed, model.Store with
     | Some sensed, Some store ->
         let r = FreshnessResolution.resolve model.SelectedGates sensed
-        let cands = FreshnessResolution.entries r |> List.choose FreshnessResolution.candidate
+
+        let cands =
+            FreshnessResolution.entries r |> List.choose FreshnessResolution.candidate
+
         Some(CacheEligibility.evaluate cands store)
     | _ -> None
 
@@ -35,42 +38,70 @@ let private cacheReportOf (model: Loop.Model) : CacheEligibilityReport option =
 let tests =
     testList
         "HumanTextParity (US1)"
-        [ test "no-`--json`: the text summary contains the HumanText.ofVerifyDecision projection of the resolved ShipDecision, ANSI-free, with the host `wrote` line" {
-              let cap = newCapture ()
-              let req = requestForProfile srcScope Loop.Text Standard
-              let model = Interpreter.run (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap) req
-              let summary = Expect.wantSome (List.tryHead cap.Emits) "a text summary was emitted"
+        [
+            test
+                "no-`--json`: the text summary contains the HumanText.ofVerifyDecision projection of the resolved ShipDecision, ANSI-free, with the host `wrote` line" {
+                let cap = newCapture ()
+                let req = requestForProfile srcScope Loop.Text Standard
 
-              let decision = Expect.wantSome model.Decision "the run resolved a verify decision"
-              Expect.isNonEmpty model.SelectedGates "the src change selects gates"
+                let model =
+                    Interpreter.run
+                        (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap)
+                        req
 
-              // Report-object identity: the value handed to HumanText.of* is the SAME ShipDecision (+ cache
-              // report + outcomes) the host holds — not a separately-computed summary.
-              let projection = HumanText.ofVerifyDecision decision (cacheReportOf model) model.Outcomes
-              Expect.stringContains summary projection "summary embeds the shared HumanText projection verbatim"
+                let summary = Expect.wantSome (List.tryHead cap.Emits) "a text summary was emitted"
 
-              // ANSI-free (SC-003): no escape introducer anywhere in the plain summary.
-              Expect.isFalse (summary.Contains esc) "plain summary carries no ANSI/CSI escape"
+                let decision = Expect.wantSome model.Decision "the run resolved a verify decision"
+                Expect.isNonEmpty model.SelectedGates "the src change selects gates"
 
-              // Host operational line preserved and distinct from the report facts (FR-003).
-              Expect.stringContains summary "wrote " "host `wrote` operational line preserved"
-              Expect.stringContains summary req.VerifyOut "names the verify.json path it wrote"
-          }
+                // Report-object identity: the value handed to HumanText.of* is the SAME ShipDecision (+ cache
+                // report + outcomes) the host holds — not a separately-computed summary.
+                let projection =
+                    HumanText.ofVerifyDecision decision (cacheReportOf model) model.Outcomes
 
-          // ── verify.json byte-identity golden (SC-002) — the wiring touches the human branch only ──
+                Expect.stringContains summary projection "summary embeds the shared HumanText projection verbatim"
 
-          test "JsonGolden: verify.json is byte-identical to the F056 VerifyJson projection for identical repo state (SC-002)" {
-              let cap = newCapture ()
-              let req = requestForProfile srcScope Loop.Json Strict
-              Interpreter.run (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap) req |> ignore
+                // ANSI-free (SC-003): no escape introducer anywhere in the plain summary.
+                Expect.isFalse (summary.Contains esc) "plain summary carries no ANSI/CSI escape"
 
-              let snap = snapshotOf gitSrcChange (sinceOpts "HEAD~1")
-              let expected = verifyExpectedWith fakeExecPortFail validCatalog srcCandidates Strict (Some snap)
+                // Host operational line preserved and distinct from the report facts (FR-003).
+                Expect.stringContains summary "wrote " "host `wrote` operational line preserved"
+                Expect.stringContains summary req.VerifyOut "names the verify.json path it wrote"
+            }
 
-              Expect.equal (writtenVerify cap |> Option.map snd) (Some expected) "verify.json bytes unchanged by the human-branch wiring"
+            // ── verify.json byte-identity golden (SC-002) — the wiring touches the human branch only ──
 
-              // The `--json` stdout summary stays the persisted document verbatim, byte-identical across runs.
-              let cap2 = newCapture ()
-              Interpreter.run (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap2) req |> ignore
-              Expect.equal (writtenVerify cap2 |> Option.map snd) (writtenVerify cap |> Option.map snd) "verify.json byte-identical across runs"
-          } ]
+            test
+                "JsonGolden: verify.json is byte-identical to the F056 VerifyJson projection for identical repo state (SC-002)" {
+                let cap = newCapture ()
+                let req = requestForProfile srcScope Loop.Json Strict
+
+                Interpreter.run
+                    (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap)
+                    req
+                |> ignore
+
+                let snap = snapshotOf gitSrcChange (sinceOpts "HEAD~1")
+
+                let expected =
+                    verifyExpectedWith fakeExecPortFail validCatalog srcCandidates Strict (Some snap)
+
+                Expect.equal
+                    (writtenVerify cap |> Option.map snd)
+                    (Some expected)
+                    "verify.json bytes unchanged by the human-branch wiring"
+
+                // The `--json` stdout summary stays the persisted document verbatim, byte-identical across runs.
+                let cap2 = newCapture ()
+
+                Interpreter.run
+                    (fakePortsExec validCatalog gitSrcChange fakeSensor absentStoreReader fakeExecPortFail cap2)
+                    req
+                |> ignore
+
+                Expect.equal
+                    (writtenVerify cap2 |> Option.map snd)
+                    (writtenVerify cap |> Option.map snd)
+                    "verify.json byte-identical across runs"
+            }
+        ]

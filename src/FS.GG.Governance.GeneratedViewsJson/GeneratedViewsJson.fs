@@ -16,10 +16,10 @@
 namespace FS.GG.Governance.GeneratedViewsJson
 
 open System.Text.Json
-open FS.GG.Governance.FreshnessKey.Model       // categoryToken
-open FS.GG.Governance.Enforcement.Enforcement  // EnforcementDecision
-open FS.GG.Governance.JsonTokens               // severityToken
-open FS.GG.Governance.RefreshJson              // F070: RefreshModel.viewKindToken for the generatedViews kind
+open FS.GG.Governance.FreshnessKey.Model // categoryToken
+open FS.GG.Governance.Enforcement.Enforcement // EnforcementDecision
+open FS.GG.Governance.JsonTokens // severityToken
+open FS.GG.Governance.RefreshJson // F070: RefreshModel.viewKindToken for the generatedViews kind
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary
 

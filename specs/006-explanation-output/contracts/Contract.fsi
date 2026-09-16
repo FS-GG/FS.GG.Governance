@@ -25,10 +25,12 @@ namespace FS.GG.Governance.Kernel
 /// Non-generic (it drops `'fact`) so the contract is domain-neutral (FR-012). `Statement`
 /// is `Check.render` of the rule's check — the single source, so it cannot drift (FR-006).
 type ContractEntry =
-    { Id: RuleId
-      Severity: Severity
-      Spec: SpecSource
-      Statement: string }
+    {
+        Id: RuleId
+        Severity: Severity
+        Spec: SpecSource
+        Statement: string
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Contract =

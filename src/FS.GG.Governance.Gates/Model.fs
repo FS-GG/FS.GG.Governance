@@ -17,23 +17,27 @@ module Model =
     type GatePrerequisite = RequiresCommand of command: CommandId
 
     type FreshnessKey =
-        { Check: CheckId
-          Domain: DomainId
-          Cost: Cost
-          Environment: EnvironmentClass
-          Command: CommandId option }
+        {
+            Check: CheckId
+            Domain: DomainId
+            Cost: Cost
+            Environment: EnvironmentClass
+            Command: CommandId option
+        }
 
     type Gate =
-        { Id: GateId
-          Domain: DomainId
-          Description: string
-          Prerequisites: GatePrerequisite list
-          Cost: Cost
-          Timeout: TimeoutLimit
-          Owner: Owner
-          Maturity: Maturity
-          ProductCheck: bool
-          FreshnessKey: FreshnessKey }
+        {
+            Id: GateId
+            Domain: DomainId
+            Description: string
+            Prerequisites: GatePrerequisite list
+            Cost: Cost
+            Timeout: TimeoutLimit
+            Owner: Owner
+            Maturity: Maturity
+            ProductCheck: bool
+            FreshnessKey: FreshnessKey
+        }
 
     type GateRegistry = { Gates: Gate list }
 

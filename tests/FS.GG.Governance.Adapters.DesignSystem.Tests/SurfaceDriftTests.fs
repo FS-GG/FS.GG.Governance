@@ -22,31 +22,47 @@ let private surfacePath (name: string) =
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest
-              "V8 DesignSystem"
-              "FS.GG.Governance.Adapters.DesignSystem"
-              designSystem
+        [
+            SurfaceDrift.surfaceTest "V8 DesignSystem" "FS.GG.Governance.Adapters.DesignSystem" designSystem
 
-          // Scope guard: the shipped adapter references only the Spi + kernel — SpecKit is deliberately
-          // absent from the allowed set, so an F10 edge from the shipped adapter is reported as offending.
-          SurfaceDrift.referencesOnly
-              "V8 DesignSystem"
-              (fun n -> n = "FS.GG.Governance.Adapters.Spi" || n = "FS.GG.Governance.Kernel")
-              designSystem
+            // Scope guard: the shipped adapter references only the Spi + kernel — SpecKit is deliberately
+            // absent from the allowed set, so an F10 edge from the shipped adapter is reported as offending.
+            SurfaceDrift.referencesOnly
+                "V8 DesignSystem"
+                (fun n -> n = "FS.GG.Governance.Adapters.Spi" || n = "FS.GG.Governance.Kernel")
+                designSystem
 
-          // Direction guard: nothing upstream (kernel or Spi) references the built-in adapter assembly.
-          SurfaceDrift.noInboundReferences "V8 DesignSystem" [ kernel; spi ] designSystem
+            // Direction guard: nothing upstream (kernel or Spi) references the built-in adapter assembly.
+            SurfaceDrift.noInboundReferences "V8 DesignSystem" [ kernel; spi ] designSystem
 
-          test "V3 no rendering/token/colour/layout vocabulary leaks into the kernel or SPI surfaces (FR-011, N1)" {
-              let banned =
-                  [ "Token"; "Colour"; "Color"; "Contrast"; "Layout"; "Spacing"; "Motion"; "Elevation"
-                    "Rendered"; "PagePattern"; "InteractionState"; "DesignArtifactRef"; "DesignSystem" ]
+            test "V3 no rendering/token/colour/layout vocabulary leaks into the kernel or SPI surfaces (FR-011, N1)" {
+                let banned =
+                    [
+                        "Token"
+                        "Colour"
+                        "Color"
+                        "Contrast"
+                        "Layout"
+                        "Spacing"
+                        "Motion"
+                        "Elevation"
+                        "Rendered"
+                        "PagePattern"
+                        "InteractionState"
+                        "DesignArtifactRef"
+                        "DesignSystem"
+                    ]
 
-              for file in [ "FS.GG.Governance.Kernel.surface.txt"; "FS.GG.Governance.Adapters.Spi.surface.txt" ] do
-                  let text = (File.ReadAllText(surfacePath file)).ToLowerInvariant()
+                for file in
+                    [
+                        "FS.GG.Governance.Kernel.surface.txt"
+                        "FS.GG.Governance.Adapters.Spi.surface.txt"
+                    ] do
+                    let text = (File.ReadAllText(surfacePath file)).ToLowerInvariant()
 
-                  for word in banned do
-                      Expect.isFalse
-                          (text.Contains(word.ToLowerInvariant()))
-                          (sprintf "the generic %s surface must carry no design vocabulary — found '%s'" file word)
-          } ]
+                    for word in banned do
+                        Expect.isFalse
+                            (text.Contains(word.ToLowerInvariant()))
+                            (sprintf "the generic %s surface must carry no design vocabulary — found '%s'" file word)
+            }
+        ]

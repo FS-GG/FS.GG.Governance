@@ -20,7 +20,11 @@ module Glob =
 
     let checkSyntax (glob: GovernedPath) : Result<unit, unit> =
         let (GovernedPath g) = glob
-        if g |> Seq.exists reservedChars.Contains then Error() else Ok()
+
+        if g |> Seq.exists reservedChars.Contains then
+            Error()
+        else
+            Ok()
 
     // ── Matching (FR-002) ──
 
@@ -77,11 +81,14 @@ module Glob =
     /// (fewer ⇒ smaller).
     [<CustomEquality; CustomComparison>]
     type Specificity =
-        { WildcardFree: int
-          NegLiteralSegmentCount: int
-          StarStarCount: int }
+        {
+            WildcardFree: int
+            NegLiteralSegmentCount: int
+            StarStarCount: int
+        }
 
-        member private this.Key = (this.WildcardFree, this.NegLiteralSegmentCount, this.StarStarCount)
+        member private this.Key =
+            (this.WildcardFree, this.NegLiteralSegmentCount, this.StarStarCount)
 
         override this.Equals(o: obj | null) =
             match o with
@@ -102,12 +109,16 @@ module Glob =
         let hasWild (s: string) = s.Contains '*' || s.Contains '?'
         let literalSegments = segs |> Array.filter (hasWild >> not) |> Array.length
         let starStar = segs |> Array.filter (fun s -> s = "**") |> Array.length
-        { WildcardFree = (if segs |> Array.exists hasWild then 1 else 0)
-          NegLiteralSegmentCount = -literalSegments
-          StarStarCount = starStar }
+
+        {
+            WildcardFree = (if segs |> Array.exists hasWild then 1 else 0)
+            NegLiteralSegmentCount = -literalSegments
+            StarStarCount = starStar
+        }
 
     let compare (a: GovernedPath) (b: GovernedPath) : int =
         let c = Operators.compare (specificity a) (specificity b)
+
         if c <> 0 then
             c
         else
@@ -116,5 +127,4 @@ module Glob =
             let (GovernedPath gb) = b
             System.String.CompareOrdinal(ga, gb)
 
-    let isAmbiguousPair (a: GovernedPath) (b: GovernedPath) : bool =
-        specificity a = specificity b
+    let isAmbiguousPair (a: GovernedPath) (b: GovernedPath) : bool = specificity a = specificity b

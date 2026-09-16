@@ -13,32 +13,42 @@ open FS.GG.Governance.ReviewRecord.Model
 module Model =
 
     type JudgeIdentity =
-        { Model: ModelId
-          ModelVersion: ModelVersion
-          PromptHash: ReviewerPromptHash }
+        {
+            Model: ModelId
+            ModelVersion: ModelVersion
+            PromptHash: ReviewerPromptHash
+        }
 
     type ComparisonSample =
-        { JudgeVerdict: RecordedVerdict
-          HumanVerdict: RecordedVerdict }
+        {
+            JudgeVerdict: RecordedVerdict
+            HumanVerdict: RecordedVerdict
+        }
 
     type SampleCount = SampleCount of int
 
     type AgreementLevel = AgreementLevel of int
 
     type CalibrationEvidence =
-        { Scope: JudgeIdentity
-          Samples: ComparisonSample list
-          ObservedAgreement: AgreementLevel }
+        {
+            Scope: JudgeIdentity
+            Samples: ComparisonSample list
+            ObservedAgreement: AgreementLevel
+        }
 
     type CalibrationThresholds =
-        { MinimumSamples: SampleCount
-          MinimumAgreement: AgreementLevel }
+        {
+            MinimumSamples: SampleCount
+            MinimumAgreement: AgreementLevel
+        }
 
     type CalibrationMetrics =
-        { ObservedSamples: SampleCount
-          RequiredSamples: SampleCount
-          ObservedAgreement: AgreementLevel
-          RequiredAgreement: AgreementLevel }
+        {
+            ObservedSamples: SampleCount
+            RequiredSamples: SampleCount
+            ObservedAgreement: AgreementLevel
+            RequiredAgreement: AgreementLevel
+        }
 
     type CalibrationReason =
         | NoCalibrationEvidence

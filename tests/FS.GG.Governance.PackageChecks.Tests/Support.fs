@@ -19,8 +19,10 @@ let repoRoot =
 
 /// Build a package-domain request for a surface id + path (+ optional declared evidence tag).
 let requestFor (surfaceId: string) (path: string) (tag: string option) : SC.SurfaceCheckRequest =
-    { Domain = SC.PackageDomain
-      Surface = SurfaceId surfaceId
-      Class = PackageSurface
-      Path = normalizePath path
-      EvidenceTag = tag |> Option.map EvidenceTag }
+    {
+        Domain = SC.PackageDomain
+        Surface = SurfaceId surfaceId
+        Class = PackageSurface
+        Path = normalizePath path
+        EvidenceTag = tag |> Option.map EvidenceTag
+    }

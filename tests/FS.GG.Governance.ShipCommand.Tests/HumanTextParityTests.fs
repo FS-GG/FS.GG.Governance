@@ -27,7 +27,10 @@ let private cacheReportOf (model: Loop.Model) : CacheEligibilityReport option =
     match model.Sensed, model.Store with
     | Some sensed, Some store ->
         let r = FreshnessResolution.resolve model.SelectedGates sensed
-        let cands = FreshnessResolution.entries r |> List.choose FreshnessResolution.candidate
+
+        let cands =
+            FreshnessResolution.entries r |> List.choose FreshnessResolution.candidate
+
         Some(CacheEligibility.evaluate cands store)
     | _ -> None
 
@@ -35,39 +38,54 @@ let private cacheReportOf (model: Loop.Model) : CacheEligibilityReport option =
 let tests =
     testList
         "HumanTextParity"
-        [ test "no-`--json`: the text summary contains the HumanText.ofShipDecision projection of the resolved ShipDecision, ANSI-free, with the host `wrote` line (US1)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text
-              let summary = Expect.wantSome (List.tryHead cap.Emits) "a text summary was emitted"
+        [
+            test
+                "no-`--json`: the text summary contains the HumanText.ofShipDecision projection of the resolved ShipDecision, ANSI-free, with the host `wrote` line (US1)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req, cap, model = runWith validCatalog git Loop.DefaultRange Loop.Text
+                let summary = Expect.wantSome (List.tryHead cap.Emits) "a text summary was emitted"
 
-              let decision = Expect.wantSome model.Decision "the host resolved a ShipDecision"
+                let decision = Expect.wantSome model.Decision "the host resolved a ShipDecision"
 
-              // Report-object identity (SC-001): the value handed to HumanText.of* is the SAME ShipDecision
-              // (+ cache report + outcomes) the host holds — not a separately-computed summary.
-              let projection = HumanText.ofShipDecision decision (cacheReportOf model) model.Outcomes
-              Expect.stringContains summary projection "summary embeds the shared HumanText projection verbatim"
+                // Report-object identity (SC-001): the value handed to HumanText.of* is the SAME ShipDecision
+                // (+ cache report + outcomes) the host holds — not a separately-computed summary.
+                let projection =
+                    HumanText.ofShipDecision decision (cacheReportOf model) model.Outcomes
 
-              // ANSI-free (SC-003): no escape introducer anywhere in the plain summary.
-              Expect.isFalse (summary.Contains esc) "plain summary carries no ANSI/CSI escape"
+                Expect.stringContains summary projection "summary embeds the shared HumanText projection verbatim"
 
-              // Host operational line preserved and distinct from the report facts (FR-003).
-              Expect.stringContains summary "wrote " "host `wrote` operational line preserved"
-              Expect.stringContains summary req.AuditOut "names the audit.json path it wrote"
-          }
+                // ANSI-free (SC-003): no escape introducer anywhere in the plain summary.
+                Expect.isFalse (summary.Contains esc) "plain summary carries no ANSI/CSI escape"
 
-          // ── JSON byte-identity golden (SC-002) — the wiring touches the human branch only ──
+                // Host operational line preserved and distinct from the report facts (FR-003).
+                Expect.stringContains summary "wrote " "host `wrote` operational line preserved"
+                Expect.stringContains summary req.AuditOut "names the audit.json path it wrote"
+            }
 
-          test "JsonGolden: audit.json is byte-identical to the F025 projection for identical repo state (SC-002)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let _, cap, _ = runWith validCatalog git Loop.DefaultRange Loop.Json
-              let candidates = candidatesOf git defaultOpts
-              let expected = auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
+            // ── JSON byte-identity golden (SC-002) — the wiring touches the human branch only ──
 
-              Expect.equal (writtenAudit cap |> Option.map snd) (Some expected) "audit.json bytes unchanged by the human-branch wiring"
+            test "JsonGolden: audit.json is byte-identical to the F025 projection for identical repo state (SC-002)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let _, cap, _ = runWith validCatalog git Loop.DefaultRange Loop.Json
+                let candidates = candidatesOf git defaultOpts
 
-              // The `--json` stdout summary equals the persisted contract and is stable across runs.
-              let _, capJson, _ = runWith validCatalog git Loop.DefaultRange Loop.Json
-              let j = Expect.wantSome (List.tryHead capJson.Emits) "json summary emitted"
-              Expect.equal j (writtenAudit capJson |> Option.map snd |> Option.defaultValue "") "--json stdout = the persisted audit.json"
-              Expect.equal (writtenAudit capJson) (writtenAudit cap) "audit.json byte-identical across runs"
-          } ]
+                let expected =
+                    auditExpected validCatalog candidates Gate Standard (Some(snapshotOf git defaultOpts))
+
+                Expect.equal
+                    (writtenAudit cap |> Option.map snd)
+                    (Some expected)
+                    "audit.json bytes unchanged by the human-branch wiring"
+
+                // The `--json` stdout summary equals the persisted contract and is stable across runs.
+                let _, capJson, _ = runWith validCatalog git Loop.DefaultRange Loop.Json
+                let j = Expect.wantSome (List.tryHead capJson.Emits) "json summary emitted"
+
+                Expect.equal
+                    j
+                    (writtenAudit capJson |> Option.map snd |> Option.defaultValue "")
+                    "--json stdout = the persisted audit.json"
+
+                Expect.equal (writtenAudit capJson) (writtenAudit cap) "audit.json byte-identical across runs"
+            }
+        ]

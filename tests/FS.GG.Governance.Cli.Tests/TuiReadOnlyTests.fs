@@ -19,27 +19,29 @@ let private onlyKnownEffects =
 let tests =
     testList
         "TuiReadOnly"
-        [ test "navigation changes only Path/Expanded and the View is never mutated" {
-              let model0, _ = init blockedView
-              let m1, _ = update MoveDown model0
-              let m2, _ = update Expand m1
-              let m3, _ = update MoveUp m2
-              let m4, _ = update Collapse m3
+        [
+            test "navigation changes only Path/Expanded and the View is never mutated" {
+                let model0, _ = init blockedView
+                let m1, _ = update MoveDown model0
+                let m2, _ = update Expand m1
+                let m3, _ = update MoveUp m2
+                let m4, _ = update Collapse m3
 
-              Expect.equal m4.View blockedView "the navigated report view is never mutated"
-          }
+                Expect.equal m4.View blockedView "the navigated report view is never mutated"
+            }
 
-          test "every effect is ReadKey/Draw/Exit; Quit ⇒ Exit" {
-              let model0, e0 = init blockedView
-              let _, eQuit = update Quit model0
-              let _, eMove = update MoveDown model0
+            test "every effect is ReadKey/Draw/Exit; Quit ⇒ Exit" {
+                let model0, e0 = init blockedView
+                let _, eQuit = update Quit model0
+                let _, eMove = update MoveDown model0
 
-              Expect.isTrue (onlyKnownEffects (e0 @ eQuit @ eMove)) "only read-only navigation effects appear"
-              Expect.contains eQuit Exit "Quit exits"
-          }
+                Expect.isTrue (onlyKnownEffects (e0 @ eQuit @ eMove)) "only read-only navigation effects appear"
+                Expect.contains eQuit Exit "Quit exits"
+            }
 
-          test "Expand records the current path as expanded (read-only selection state)" {
-              let model0, _ = init blockedView
-              let m1, _ = update Expand model0
-              Expect.isTrue (Set.contains m1.Path m1.Expanded) "expand toggles only selection state"
-          } ]
+            test "Expand records the current path as expanded (read-only selection state)" {
+                let model0, _ = init blockedView
+                let m1, _ = update Expand model0
+                Expect.isTrue (Set.contains m1.Path m1.Expanded) "expand toggles only selection state"
+            }
+        ]

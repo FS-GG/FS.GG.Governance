@@ -20,7 +20,11 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         (Executable "dotnet")
         [ Argument "pack" ]
         (WorkingDirectory "/work")
-        { Added = []; Changed = []; Removed = [] }
+        {
+            Added = []
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 600)
         (ExitCode exit)
         (OutputDigest "sha-out")
@@ -28,9 +32,23 @@ let makeRecord (exit: int) (duration: int64) : CommandRecord =
         NoCapturedOutput
         (SensedDuration duration)
 
-let buildRun = { Kind = Build; Record = makeRecord 0 100L }
-let packRun = { Kind = Pack; Record = makeRecord 0 200L }
-let failedPackRun = { Kind = Pack; Record = makeRecord 137 200L }
+let buildRun =
+    {
+        Kind = Build
+        Record = makeRecord 0 100L
+    }
+
+let packRun =
+    {
+        Kind = Pack
+        Record = makeRecord 0 200L
+    }
+
+let failedPackRun =
+    {
+        Kind = Pack
+        Record = makeRecord 137 200L
+    }
 
 let srcCommit = Revision "c0ffee"
 let baseRev = Revision "base1"
@@ -51,23 +69,26 @@ let private surface s = SurfaceId s
 
 let packedOutcome (s: string) (path: string) (version: string) (digest: string) : PackOutcome =
     Packed(
-        { Surface = surface s
-          ArtifactPath = path
-          PackedVersion = version
-          Digest = ArtifactHash digest },
+        {
+            Surface = surface s
+            ArtifactPath = path
+            PackedVersion = version
+            Digest = ArtifactHash digest
+        },
         packRun
     )
 
 let failedOutcome (s: string) (sentinel: int) : PackOutcome =
     PackFailed(surface s, sentinel, failedPackRun)
 
-let packOf (outcomes: PackOutcome list) : PackEvidenceSet =
-    Pack.evaluatePack Map.empty outcomes
+let packOf (outcomes: PackOutcome list) : PackEvidenceSet = Pack.evaluatePack Map.empty outcomes
 
 /// A two-project packed evidence set (deliberately unsorted to observe subject sorting).
 let twoPacked: PackEvidenceSet =
     packOf
-        [ packedOutcome "B" "out/B.nupkg" "1.1.0" "dB"
-          packedOutcome "A" "out/A.nupkg" "1.1.0" "dA" ]
+        [
+            packedOutcome "B" "out/B.nupkg" "1.1.0" "dB"
+            packedOutcome "A" "out/A.nupkg" "1.1.0" "dA"
+        ]
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

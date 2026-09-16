@@ -8,20 +8,28 @@ open FS.GG.Governance.Findings.Model
 module Model =
 
     type SelectingPath =
-        { Path: GovernedPath
-          MatchedGlob: GovernedPath }
+        {
+            Path: GovernedPath
+            MatchedGlob: GovernedPath
+        }
 
     type SelectedGate =
-        { Gate: Gate
-          SelectingPaths: SelectingPath list }
+        {
+            Gate: Gate
+            SelectingPaths: SelectingPath list
+        }
 
     type CostRollup =
-        { Cheap: int
-          Medium: int
-          High: int
-          Exhaustive: int }
+        {
+            Cheap: int
+            Medium: int
+            High: int
+            Exhaustive: int
+        }
 
     type RouteResult =
-        { SelectedGates: SelectedGate list
-          Findings: FindingReport
-          Cost: CostRollup }
+        {
+            SelectedGates: SelectedGate list
+            Findings: FindingReport
+            Cost: CostRollup
+        }

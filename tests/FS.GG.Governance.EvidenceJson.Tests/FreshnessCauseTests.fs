@@ -21,50 +21,72 @@ let private freshnessOf (freshness: NodeFreshness) : JsonElement =
 let tests =
     testList
         "FreshnessCause"
-        [ test "Fresh renders { kind: fresh }" {
-              let f = freshnessOf NodeFreshness.Fresh
-              Expect.equal (strProp "kind" f) "fresh" "fresh kind"
-          }
+        [
+            test "Fresh renders { kind: fresh }" {
+                let f = freshnessOf NodeFreshness.Fresh
+                Expect.equal (strProp "kind" f) "fresh" "fresh kind"
+            }
 
-          test "Stale (InputsChanged cats) names the exact category tokens in core order" {
-              let f = freshnessOf (NodeFreshness.Stale(InputsChanged [ RuleHashCat; CoveredArtifactsCat ]))
-              Expect.equal (strProp "kind" f) "stale" "stale kind"
-              let cause = f.GetProperty("cause")
-              Expect.equal (strProp "kind" cause) "inputsChanged" "inputsChanged cause"
+            test "Stale (InputsChanged cats) names the exact category tokens in core order" {
+                let f =
+                    freshnessOf (NodeFreshness.Stale(InputsChanged [ RuleHashCat; CoveredArtifactsCat ]))
 
-              let cats = [ for c in cause.GetProperty("categories").EnumerateArray() -> str c ]
-              Expect.equal cats [ categoryToken RuleHashCat; categoryToken CoveredArtifactsCat ] "exact category tokens in core order"
-          }
+                Expect.equal (strProp "kind" f) "stale" "stale kind"
+                let cause = f.GetProperty("cause")
+                Expect.equal (strProp "kind" cause) "inputsChanged" "inputsChanged cause"
 
-          test "Stale NoPriorEvidence renders cause.kind=noPriorEvidence with NO categories (distinct from inputsChanged [])" {
-              let f = freshnessOf (NodeFreshness.Stale NoPriorEvidence)
-              let cause = f.GetProperty("cause")
-              Expect.equal (strProp "kind" cause) "noPriorEvidence" "noPriorEvidence cause"
+                let cats = [ for c in cause.GetProperty("categories").EnumerateArray() -> str c ]
 
-              let hasCategories =
-                  cause.EnumerateObject() |> Seq.exists (fun p -> p.Name = "categories")
+                Expect.equal
+                    cats
+                    [ categoryToken RuleHashCat; categoryToken CoveredArtifactsCat ]
+                    "exact category tokens in core order"
+            }
 
-              Expect.isFalse hasCategories "noPriorEvidence carries no categories field"
+            test
+                "Stale NoPriorEvidence renders cause.kind=noPriorEvidence with NO categories (distinct from inputsChanged [])" {
+                let f = freshnessOf (NodeFreshness.Stale NoPriorEvidence)
+                let cause = f.GetProperty("cause")
+                Expect.equal (strProp "kind" cause) "noPriorEvidence" "noPriorEvidence cause"
 
-              // And it is genuinely distinct from an empty inputsChanged.
-              let empty = freshnessOf (NodeFreshness.Stale(InputsChanged []))
-              Expect.equal (strProp "kind" (empty.GetProperty("cause"))) "inputsChanged" "inputsChanged [] keeps its kind"
-              Expect.equal (empty.GetProperty("cause").GetProperty("categories").GetArrayLength()) 0 "inputsChanged [] has an empty categories array"
-          }
+                let hasCategories =
+                    cause.EnumerateObject() |> Seq.exists (fun p -> p.Name = "categories")
 
-          test "Unresolved names every missing fact via missingFactToken (non-empty)" {
-              let missing = [ MissingCoveredArtifacts; MissingHeadRevision ]
-              let f = freshnessOf (NodeFreshness.Unresolved missing)
-              Expect.equal (strProp "kind" f) "unresolved" "unresolved kind"
+                Expect.isFalse hasCategories "noPriorEvidence carries no categories field"
 
-              let named = [ for m in f.GetProperty("missing").EnumerateArray() -> str m ]
-              // Assert against the real token authority, not a guess.
-              Expect.equal named (missing |> List.map FS.GG.Governance.FreshnessResolution.FreshnessResolution.missingFactToken) "named via missingFactToken"
-              Expect.isGreaterThan named.Length 0 "non-empty missing list"
-          }
+                // And it is genuinely distinct from an empty inputsChanged.
+                let empty = freshnessOf (NodeFreshness.Stale(InputsChanged []))
 
-          test "Unknown renders { kind: unknown } — the only causeless freshness (never a guessed fresh)" {
-              let f = freshnessOf NodeFreshness.Unknown
-              Expect.equal (strProp "kind" f) "unknown" "unknown kind"
-              Expect.isFalse (f.EnumerateObject() |> Seq.exists (fun p -> p.Name = "cause")) "no cause on unknown"
-          } ]
+                Expect.equal
+                    (strProp "kind" (empty.GetProperty("cause")))
+                    "inputsChanged"
+                    "inputsChanged [] keeps its kind"
+
+                Expect.equal
+                    (empty.GetProperty("cause").GetProperty("categories").GetArrayLength())
+                    0
+                    "inputsChanged [] has an empty categories array"
+            }
+
+            test "Unresolved names every missing fact via missingFactToken (non-empty)" {
+                let missing = [ MissingCoveredArtifacts; MissingHeadRevision ]
+                let f = freshnessOf (NodeFreshness.Unresolved missing)
+                Expect.equal (strProp "kind" f) "unresolved" "unresolved kind"
+
+                let named = [ for m in f.GetProperty("missing").EnumerateArray() -> str m ]
+                // Assert against the real token authority, not a guess.
+                Expect.equal
+                    named
+                    (missing
+                     |> List.map FS.GG.Governance.FreshnessResolution.FreshnessResolution.missingFactToken)
+                    "named via missingFactToken"
+
+                Expect.isGreaterThan named.Length 0 "non-empty missing list"
+            }
+
+            test "Unknown renders { kind: unknown } — the only causeless freshness (never a guessed fresh)" {
+                let f = freshnessOf NodeFreshness.Unknown
+                Expect.equal (strProp "kind" f) "unknown" "unknown kind"
+                Expect.isFalse (f.EnumerateObject() |> Seq.exists (fun p -> p.Name = "cause")) "no cause on unknown"
+            }
+        ]

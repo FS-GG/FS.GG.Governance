@@ -44,7 +44,10 @@ module Catalog =
         mkRule
             "token-drift"
             Deterministic
-            { Document = "design-system"; Section = "token-currency" }
+            {
+                Document = "design-system"
+                Section = "token-currency"
+            }
             (DesignSystem.surfaceMatches GeneratedTokenSurface TokenDocument)
         |> CheckRule.blocking
 
@@ -52,7 +55,10 @@ module Catalog =
         mkRule
             "contrast-policy"
             Deterministic
-            { Document = "design-system"; Section = "contrast" }
+            {
+                Document = "design-system"
+                Section = "contrast"
+            }
             (DesignSystem.contrastMeets "ant-aa" GeneratedTokenSurface)
         |> CheckRule.blocking
 
@@ -60,7 +66,10 @@ module Catalog =
         mkRule
             "token-surface-gate"
             Deterministic
-            { Document = "design-system"; Section = "token-surface" }
+            {
+                Document = "design-system"
+                Section = "token-surface"
+            }
             (DesignSystem.surfaceObserved "token-surface-gate" GeneratedTokenSurface)
         |> CheckRule.blocking
 
@@ -68,7 +77,10 @@ module Catalog =
         mkRule
             "evidence-measured"
             Deterministic
-            { Document = "design-system"; Section = "evidence" }
+            {
+                Document = "design-system"
+                Section = "evidence"
+            }
             DesignSystem.evidenceMeasured
         |> CheckRule.blocking
 
@@ -79,28 +91,40 @@ module Catalog =
         mkRule
             "spacing-scale"
             Deterministic
-            { Document = "design-system"; Section = "spacing" }
+            {
+                Document = "design-system"
+                Section = "spacing"
+            }
             (DesignSystem.surfaceObserved "spacing-scale" GeneratedTokenSurface)
 
     let controlHeightDefaults: CheckRule<DesignSystemFact> =
         mkRule
             "control-height"
             Deterministic
-            { Document = "design-system"; Section = "control-height" }
+            {
+                Document = "design-system"
+                Section = "control-height"
+            }
             (DesignSystem.surfaceObserved "control-height" GeneratedTokenSurface)
 
     let intentCoverage: CheckRule<DesignSystemFact> =
         mkRule
             "intent-coverage"
             Deterministic
-            { Document = "design-system"; Section = "intent" }
+            {
+                Document = "design-system"
+                Section = "intent"
+            }
             (DesignSystem.surfaceObserved "intent-coverage" GeneratedTokenSurface)
 
     let visualStateResolution: CheckRule<DesignSystemFact> =
         mkRule
             "visual-state"
             Deterministic
-            { Document = "design-system"; Section = "visual-state" }
+            {
+                Document = "design-system"
+                Section = "visual-state"
+            }
             (DesignSystem.surfaceObserved "visual-state" InteractionStateSpec)
 
     // ── AgentReviewed, ADVISORY (FR-007/FR-008) — `Opaque`, so they can NEVER be
@@ -119,7 +143,10 @@ module Catalog =
         mkRule
             "rendered-matches-intent"
             AgentReviewed
-            { Document = "design-system"; Section = "rendered-intent" }
+            {
+                Document = "design-system"
+                Section = "rendered-intent"
+            }
             (DesignSystem.reviewing [ RenderedCapture; InteractionStateSpec ] (judgement "rendered-matches-intent"))
         |> CheckRule.asking "Does the rendered control match the spec intent? List divergences."
 
@@ -127,7 +154,10 @@ module Catalog =
         mkRule
             "four-values"
             AgentReviewed
-            { Document = "design-system"; Section = "four-values" }
+            {
+                Document = "design-system"
+                Section = "four-values"
+            }
             (DesignSystem.reviewing [ RenderedCapture ] (judgement "four-values"))
         |> CheckRule.asking "Are the four values — natural/certain/meaningful/growing — honoured?"
 
@@ -135,7 +165,10 @@ module Catalog =
         mkRule
             "page-pattern"
             AgentReviewed
-            { Document = "design-system"; Section = "page-pattern" }
+            {
+                Document = "design-system"
+                Section = "page-pattern"
+            }
             (DesignSystem.reviewing [ PagePatternSpec; RenderedCapture ] (judgement "page-pattern"))
         |> CheckRule.asking "Is the page pattern correct for this composition?"
 
@@ -143,7 +176,10 @@ module Catalog =
         mkRule
             "colour-informational"
             AgentReviewed
-            { Document = "design-system"; Section = "colour" }
+            {
+                Document = "design-system"
+                Section = "colour"
+            }
             (DesignSystem.reviewing [ RenderedCapture ] (judgement "colour-informational"))
         |> CheckRule.asking "Does colour carry information here, or is it decoration?"
 
@@ -151,7 +187,10 @@ module Catalog =
         mkRule
             "motion-restraint"
             AgentReviewed
-            { Document = "design-system"; Section = "motion" }
+            {
+                Document = "design-system"
+                Section = "motion"
+            }
             (DesignSystem.reviewing [ RenderedCapture ] (judgement "motion-restraint"))
         |> CheckRule.asking "Is motion used with restraint?"
 
@@ -159,7 +198,10 @@ module Catalog =
         mkRule
             "elevation-layering"
             AgentReviewed
-            { Document = "design-system"; Section = "elevation" }
+            {
+                Document = "design-system"
+                Section = "elevation"
+            }
             (DesignSystem.reviewing [ RenderedCapture ] (judgement "elevation-layering"))
         |> CheckRule.asking "Is elevation/overlay layering correct?"
 
@@ -170,37 +212,46 @@ module Catalog =
         mkRule
             "adopt-new-policy"
             HumanOnly
-            { Document = "design-system"; Section = "policy-adoption" }
+            {
+                Document = "design-system"
+                Section = "policy-adoption"
+            }
             (judgement "adopt-new-policy")
         |> CheckRule.blocking
 
     let catalog: CheckRule<DesignSystemFact> list =
-        [ tokenDrift
-          contrastPolicy
-          tokenSurfaceGate
-          evidenceMeasured
-          spacingScale
-          controlHeightDefaults
-          intentCoverage
-          visualStateResolution
-          renderedMatchesIntent
-          fourValues
-          pagePatternCorrect
-          colourInformational
-          motionRestraint
-          elevationLayering
-          adoptNewPolicy ]
+        [
+            tokenDrift
+            contrastPolicy
+            tokenSurfaceGate
+            evidenceMeasured
+            spacingScale
+            controlHeightDefaults
+            intentCoverage
+            visualStateResolution
+            renderedMatchesIntent
+            fourValues
+            pagePatternCorrect
+            colourInformational
+            motionRestraint
+            elevationLayering
+            adoptNewPolicy
+        ]
 
     let tokenSurfaceFence: Fence<DesignChange> =
-        { Name = "token-surface"
-          Trips = fun c -> c.Surfaces.Contains GeneratedTokenSurface }
+        {
+            Name = "token-surface"
+            Trips = fun c -> c.Surfaces.Contains GeneratedTokenSurface
+        }
 
     let fences: Fence<DesignChange> list = [ tokenSurfaceFence ]
 
     let adapter (judge: JudgeId) : Adapter<DesignSystemFact, DesignArtifactRef, DesignChange> =
-        { Identify = DesignSystem.identify
-          ToRef = DesignSystem.toRef
-          Probes = DesignSystem.probes
-          Rules = catalog
-          Fences = fences
-          Bridge = DesignSystem.bridge judge }
+        {
+            Identify = DesignSystem.identify
+            ToRef = DesignSystem.toRef
+            Probes = DesignSystem.probes
+            Rules = catalog
+            Fences = fences
+            Bridge = DesignSystem.bridge judge
+        }

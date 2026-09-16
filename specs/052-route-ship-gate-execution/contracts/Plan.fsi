@@ -12,11 +12,11 @@
 
 namespace FS.GG.Governance.GateRun
 
-open FS.GG.Governance.CommandRecord.Model      // Executable, Argument, ExitCode
-open FS.GG.Governance.EvidenceReuse.Model       // EvidenceRef
-open FS.GG.Governance.Config.Model              // ToolingFacts
-open FS.GG.Governance.Gates.Model               // Gate
-open FS.GG.Governance.GateExecution.Model        // GateCommand
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, ExitCode
+open FS.GG.Governance.EvidenceReuse.Model // EvidenceRef
+open FS.GG.Governance.Config.Model // ToolingFacts
+open FS.GG.Governance.Gates.Model // Gate
+open FS.GG.Governance.GateExecution.Model // GateCommand
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Plan =

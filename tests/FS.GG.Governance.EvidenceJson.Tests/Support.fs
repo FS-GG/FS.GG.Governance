@@ -12,22 +12,38 @@ open FS.GG.Governance.EvidenceJson
 // projection-test pattern. No I/O beyond repo-root resolution.
 
 /// Build one evidence node.
-let mkNode (id: string) (declared: EvidenceState) (effective: EvidenceState) (freshness: NodeFreshness) (source: string) : EvidenceNode =
-    { Id = id
-      Declared = declared
-      Effective = effective
-      Freshness = freshness
-      Source = source }
+let mkNode
+    (id: string)
+    (declared: EvidenceState)
+    (effective: EvidenceState)
+    (freshness: NodeFreshness)
+    (source: string)
+    : EvidenceNode =
+    {
+        Id = id
+        Declared = declared
+        Effective = effective
+        Freshness = freshness
+        Source = source
+    }
 
 /// A well-formed document.
-let wellFormed (nodes: EvidenceNode list) (deps: (string * string) list) (disclosures: (string * string) list) : EvidenceDocument =
-    { Content = WellFormed(nodes, deps)
-      Disclosures = disclosures }
+let wellFormed
+    (nodes: EvidenceNode list)
+    (deps: (string * string) list)
+    (disclosures: (string * string) list)
+    : EvidenceDocument =
+    {
+        Content = WellFormed(nodes, deps)
+        Disclosures = disclosures
+    }
 
 /// A malformed document.
 let malformed (failure: GraphError<string>) (disclosures: (string * string) list) : EvidenceDocument =
-    { Content = Malformed failure
-      Disclosures = disclosures }
+    {
+        Content = Malformed failure
+        Disclosures = disclosures
+    }
 
 /// Render and parse the emitted bytes into a read-only DOM.
 let parse (document: EvidenceDocument) : JsonElement =

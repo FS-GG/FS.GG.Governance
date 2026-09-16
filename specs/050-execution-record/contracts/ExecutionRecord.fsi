@@ -31,9 +31,9 @@
 
 namespace FS.GG.Governance.ExecutionRecord
 
-open FS.GG.Governance.Config.Model          // TimeoutLimit (F014, transitive via F032)
-open FS.GG.Governance.CommandRecord.Model    // Executable, Argument, WorkingDirectory, EnvironmentDelta, ExitCode,
-                                             // OutputDigest, CapturedOutput, SensedDuration, CommandRecord
+open FS.GG.Governance.Config.Model // TimeoutLimit (F014, transitive via F032)
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, WorkingDirectory, EnvironmentDelta, ExitCode,
+// OutputDigest, CapturedOutput, SensedDuration, CommandRecord
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ExecutionRecord =

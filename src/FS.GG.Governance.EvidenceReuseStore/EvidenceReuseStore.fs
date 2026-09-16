@@ -70,8 +70,10 @@ module EvidenceReuseStore =
 
         w.WritePropertyName "coveredArtifacts"
         w.WriteStartArray()
+
         for ArtifactHash art in i.CoveredArtifacts do
             w.WriteStringValue art
+
         w.WriteEndArray()
 
         match i.CommandVersion with
@@ -95,8 +97,10 @@ module EvidenceReuseStore =
             w.WriteString("schemaVersion", schemaVersion)
             w.WritePropertyName "recorded"
             w.WriteStartArray()
+
             for entry in EvidenceReuse.entries store do
                 writeEntry w entry
+
             w.WriteEndArray()
             w.WriteEndObject())
 
@@ -105,9 +109,7 @@ module EvidenceReuseStore =
         // (⇒ empty); `List.truncate` returns the list unchanged when shorter than the bound (idempotent
         // at/under bound — no reorder/rewrite). Removes only whole entries — never mutates or fabricates
         // (research D8, FR-006/FR-009).
-        EvidenceReuse.entries store
-        |> List.truncate (max 0 maxEntries)
-        |> ReuseStore
+        EvidenceReuse.entries store |> List.truncate (max 0 maxEntries) |> ReuseStore
 
     let prune (store: ReuseStore) : ReuseStore =
         // Remove every entry a STRICTLY-NEWER entry already full-matches: a single fold over the newest-first

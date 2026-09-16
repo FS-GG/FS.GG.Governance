@@ -10,12 +10,14 @@ namespace FS.GG.Governance.Adapters.Spi
 open FS.GG.Governance.Kernel
 
 type Adapter<'fact, 'artifact, 'change> =
-    { Identify: 'fact -> FactId
-      ToRef: 'artifact -> ArtifactRef
-      Probes: Probe<'fact> list
-      Rules: CheckRule<'fact> list
-      Fences: Fence<'change> list
-      Bridge: Bridge<'fact> }
+    {
+        Identify: 'fact -> FactId
+        ToRef: 'artifact -> ArtifactRef
+        Probes: Probe<'fact> list
+        Rules: CheckRule<'fact> list
+        Fences: Fence<'change> list
+        Bridge: Bridge<'fact>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Adapter =
@@ -34,7 +36,12 @@ module Lift =
         facts
         |> List.choose (fun fa ->
             project fa.Value
-            |> Option.map (fun v -> { Id = fa.Id; Value = v; Provenance = fa.Provenance }))
+            |> Option.map (fun v ->
+                {
+                    Id = fa.Id
+                    Value = v
+                    Provenance = fa.Provenance
+                }))
 
     let check (project: 'big -> 'small option) (check: Check<'small>) : Check<'big> =
         let pf bigFacts = projectFacts project bigFacts
@@ -45,37 +52,50 @@ module Lift =
             match c with
             | Atom probe ->
                 Atom
-                    { Name = probe.Name
-                      Reads = probe.Reads
-                      Args = probe.Args
-                      Eval = fun bigFacts -> probe.Eval (pf bigFacts) }
+                    {
+                        Name = probe.Name
+                        Reads = probe.Reads
+                        Args = probe.Args
+                        Eval = fun bigFacts -> probe.Eval(pf bigFacts)
+                    }
             | All checks -> All(checks |> List.map go)
             | Any checks -> Any(checks |> List.map go)
             | Not c -> Not(go c)
-            | Implies (a, b) -> Implies(go a, go b)
+            | Implies(a, b) -> Implies(go a, go b)
             // Opaque stays opaque (name preserved, no inspectable structure), so `isReified`
             // stays false and a lifted Opaque rule still routes to review (law L1, US2-3).
-            | Opaque (name, eval) -> Opaque(name, fun bigFacts -> eval (pf bigFacts))
+            | Opaque(name, eval) -> Opaque(name, fun bigFacts -> eval (pf bigFacts))
 
         go check
 
     let checkRule (project: 'big -> 'small option) (rule: CheckRule<'small>) : CheckRule<'big> =
-        { Id = rule.Id
-          Tier = rule.Tier
-          Spec = rule.Spec
-          Severity = rule.Severity
-          Check = check project rule.Check
-          Question = rule.Question }
+        {
+            Id = rule.Id
+            Tier = rule.Tier
+            Spec = rule.Spec
+            Severity = rule.Severity
+            Check = check project rule.Check
+            Question = rule.Question
+        }
 
     let rule (inject: 'small -> 'big) (project: 'big -> 'small option) (rule: Rule<'small>) : Rule<'big> =
-        { Id = rule.Id
-          Description = rule.Description
-          Apply =
-            fun bigFacts ->
-                projectFacts project bigFacts
-                |> rule.Apply
-                |> List.map (fun fa -> { Id = fa.Id; Value = inject fa.Value; Provenance = fa.Provenance }) }
+        {
+            Id = rule.Id
+            Description = rule.Description
+            Apply =
+                fun bigFacts ->
+                    projectFacts project bigFacts
+                    |> rule.Apply
+                    |> List.map (fun fa ->
+                        {
+                            Id = fa.Id
+                            Value = inject fa.Value
+                            Provenance = fa.Provenance
+                        })
+        }
 
     let fence (narrow: 'big -> 'small) (fence: Fence<'small>) : Fence<'big> =
-        { Name = fence.Name
-          Trips = fence.Trips << narrow }
+        {
+            Name = fence.Name
+            Trips = fence.Trips << narrow
+        }

@@ -13,16 +13,22 @@ open FS.GG.Governance.RefreshJson.Tests.Support
 let tests =
     testList
         "Golden"
-        [ test "ofRefreshDecision over the mixed fixture equals the committed golden baseline" {
-              let actual = RefreshJson.ofRefreshDecision decisionMixed
+        [
+            test "ofRefreshDecision over the mixed fixture equals the committed golden baseline" {
+                let actual = RefreshJson.ofRefreshDecision decisionMixed
 
-              if Environment.GetEnvironmentVariable "BLESS_REFRESH_GOLDEN" = "1" then
-                  match Path.GetDirectoryName goldenPath with
-                  | null -> ()
-                  | dir -> Directory.CreateDirectory dir |> ignore
+                if Environment.GetEnvironmentVariable "BLESS_REFRESH_GOLDEN" = "1" then
+                    match Path.GetDirectoryName goldenPath with
+                    | null -> ()
+                    | dir -> Directory.CreateDirectory dir |> ignore
 
-                  File.WriteAllText(goldenPath, actual)
+                    File.WriteAllText(goldenPath, actual)
 
-              let golden = File.ReadAllText goldenPath
-              Expect.equal actual golden "refresh.json drifted from the golden baseline — if intended, regenerate with BLESS_REFRESH_GOLDEN=1"
-          } ]
+                let golden = File.ReadAllText goldenPath
+
+                Expect.equal
+                    actual
+                    golden
+                    "refresh.json drifted from the golden baseline — if intended, regenerate with BLESS_REFRESH_GOLDEN=1"
+            }
+        ]

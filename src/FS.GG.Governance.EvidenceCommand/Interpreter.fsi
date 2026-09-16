@@ -25,9 +25,11 @@ module Interpreter =
     /// failure into `InputMissing`/`ToolFault`. `Write` persists atomically (temp+rename); `Out` is the stdout
     /// sink. Wholly faked in tests so no real git/filesystem is reached.
     type Ports =
-        { SenseReport: string -> Result<ProjectEvidenceReport, Loop.ReportFault>
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+        {
+            SenseReport: string -> Result<ProjectEvidenceReport, Loop.ReportFault>
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+        }
 
     /// Build the REAL ports for a repository working directory: the F12 project sensing (`Project.compose` +
     /// `Host.Loop` drive over real on-disk SpecKit/design artifacts) folded by `Project.evidenceReport`, a

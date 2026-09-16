@@ -21,31 +21,34 @@ let private registry = catalog workedExampleGates
 let tests =
     testList
         "Purity"
-        [ test "the explanation is identical across cwd / filesystem changes and repeated calls (L8, SC-006)" {
-              let baseline = RouteExplain.explain route registry
+        [
+            test "the explanation is identical across cwd / filesystem changes and repeated calls (L8, SC-006)" {
+                let baseline = RouteExplain.explain route registry
 
-              // Repeated calls are identical (no hidden state).
-              Expect.equal (RouteExplain.explain route registry) baseline "repeated call identical"
+                // Repeated calls are identical (no hidden state).
+                Expect.equal (RouteExplain.explain route registry) baseline "repeated call identical"
 
-              let originalCwd = Directory.GetCurrentDirectory()
-              let tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
-              Directory.CreateDirectory tempDir |> ignore
-              let tempFile = Path.Combine(tempDir, "unrelated.tmp")
+                let originalCwd = Directory.GetCurrentDirectory()
+                let tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
+                Directory.CreateDirectory tempDir |> ignore
+                let tempFile = Path.Combine(tempDir, "unrelated.tmp")
 
-              try
-                  // Change the current directory.
-                  Directory.SetCurrentDirectory tempDir
-                  Expect.equal (RouteExplain.explain route registry) baseline "unchanged after cwd change"
+                try
+                    // Change the current directory.
+                    Directory.SetCurrentDirectory tempDir
+                    Expect.equal (RouteExplain.explain route registry) baseline "unchanged after cwd change"
 
-                  // Create an unrelated file.
-                  File.WriteAllText(tempFile, "noise")
-                  Expect.equal (RouteExplain.explain route registry) baseline "unchanged after creating a file"
+                    // Create an unrelated file.
+                    File.WriteAllText(tempFile, "noise")
+                    Expect.equal (RouteExplain.explain route registry) baseline "unchanged after creating a file"
 
-                  // Delete it again.
-                  File.Delete tempFile
-                  Expect.equal (RouteExplain.explain route registry) baseline "unchanged after deleting the file"
-              finally
-                  Directory.SetCurrentDirectory originalCwd
-                  if Directory.Exists tempDir then
-                      Directory.Delete(tempDir, true)
-          } ]
+                    // Delete it again.
+                    File.Delete tempFile
+                    Expect.equal (RouteExplain.explain route registry) baseline "unchanged after deleting the file"
+                finally
+                    Directory.SetCurrentDirectory originalCwd
+
+                    if Directory.Exists tempDir then
+                        Directory.Delete(tempDir, true)
+            }
+        ]

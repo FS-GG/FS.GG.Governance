@@ -13,8 +13,10 @@ module Model =
     type VerdictRef = VerdictRef of string
 
     type CachedVerdict =
-        { Inputs: AgentReviewInputs
-          Verdict: VerdictRef }
+        {
+            Inputs: AgentReviewInputs
+            Verdict: VerdictRef
+        }
 
     type VerdictStore = VerdictStore of CachedVerdict list
 

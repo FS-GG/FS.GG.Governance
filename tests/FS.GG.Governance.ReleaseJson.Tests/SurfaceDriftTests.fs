@@ -13,4 +13,6 @@ let private library = SurfaceDrift.assemblyNamed "FS.GG.Governance.ReleaseJson"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "ReleaseJson" "FS.GG.Governance.ReleaseJson" library ]
+        [
+            SurfaceDrift.surfaceTest "ReleaseJson" "FS.GG.Governance.ReleaseJson" library
+        ]

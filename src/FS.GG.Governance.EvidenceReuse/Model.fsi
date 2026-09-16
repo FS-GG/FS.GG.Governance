@@ -27,8 +27,10 @@ module Model =
     /// One stored entry: the world the evidence was recorded against (F029 `FreshnessInputs`) paired with
     /// its opaque reference (FR-001).
     type RecordedEvidence =
-        { Inputs: FreshnessInputs
-          Evidence: EvidenceRef }
+        {
+            Inputs: FreshnessInputs
+            Evidence: EvidenceRef
+        }
 
     /// The immutable collection of recorded entries — the supplied, in-value "what has been recorded so
     /// far" (FR-002). Newest-first by `record` convention (research D4). NOT a live cache, connection, or

@@ -14,10 +14,12 @@ module Watch =
         | InputUnreadable of reason: string
 
     type WatchModel =
-        { Root: string
-          Mode: RenderMode.RenderMode
-          PendingSince: int64 option
-          LastSignal: WatchSignal }
+        {
+            Root: string
+            Mode: RenderMode.RenderMode
+            PendingSince: int64 option
+            LastSignal: WatchSignal
+        }
 
     type WatchMsg =
         | ChangeDetected of at: int64
@@ -32,10 +34,12 @@ module Watch =
     let debounceWindow = 200L
 
     let init (root: string) (mode: RenderMode.RenderMode) : WatchModel * WatchEffect list =
-        { Root = root
-          Mode = mode
-          PendingSince = None
-          LastSignal = Idle },
+        {
+            Root = root
+            Mode = mode
+            PendingSince = None
+            LastSignal = Idle
+        },
         [ SenseChanges root ]
 
     let update (msg: WatchMsg) (model: WatchModel) : WatchModel * WatchEffect list =
@@ -84,7 +88,12 @@ module Watch =
         // Guard watcher construction: a nonexistent / unreadable root makes `new FileSystemWatcher`
         // throw. Surface it as `InputUnreadable` (the host maps this to its input-unavailable exit
         // code — 3 / 66) instead of letting the process crash, matching the key-poll guard above.
-        match (try Ok(new FileSystemWatcher(root)) with e -> Error e.Message) with
+        match
+            (try
+                Ok(new FileSystemWatcher(root))
+             with e ->
+                 Error e.Message)
+        with
         | Error reason -> InputUnreadable reason
         | Ok w ->
             use watcher = w

@@ -17,8 +17,10 @@ let repoRoot =
     find (Directory.GetCurrentDirectory())
 
 let requestFor (surfaceId: string) (path: string) (tag: string option) : SC.SurfaceCheckRequest =
-    { Domain = SC.SkillDomain
-      Surface = SurfaceId surfaceId
-      Class = SkillSurface
-      Path = normalizePath path
-      EvidenceTag = tag |> Option.map EvidenceTag }
+    {
+        Domain = SC.SkillDomain
+        Surface = SurfaceId surfaceId
+        Class = SkillSurface
+        Path = normalizePath path
+        EvidenceTag = tag |> Option.map EvidenceTag
+    }

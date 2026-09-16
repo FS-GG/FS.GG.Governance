@@ -75,4 +75,3 @@ module AuditJson =
     /// verdict, raw YAML, host/absolute path, wall-clock timestamp, or environment value (FR-012,
     /// SC-007).
     val ofShipDecision: decision: ShipDecision -> string
-</content>

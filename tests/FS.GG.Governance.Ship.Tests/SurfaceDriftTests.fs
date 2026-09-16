@@ -12,28 +12,45 @@ let private shipAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Ship"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Ship" "FS.GG.Governance.Ship" shipAsm
+        [
+            SurfaceDrift.surfaceTest "Ship" "FS.GG.Governance.Ship" shipAsm
 
-          test "the hidden mappings, item-identity builder, and sort key never leak into the public surface" {
-              let surfaceText = SurfaceDrift.renderSurface shipAsm
+            test "the hidden mappings, item-identity builder, and sort key never leak into the public surface" {
+                let surfaceText = SurfaceDrift.renderSurface shipAsm
 
-              for hidden in [ "gateToInput"; "findingToInput"; "itemSortKey" ] do
-                  Expect.isFalse (surfaceText.Contains hidden) (sprintf "%s must be hidden (absent from Ship.fsi)" hidden)
-          }
+                for hidden in [ "gateToInput"; "findingToInput"; "itemSortKey" ] do
+                    Expect.isFalse
+                        (surfaceText.Contains hidden)
+                        (sprintf "%s must be hidden (absent from Ship.fsi)" hidden)
+            }
 
-          test "the surface exposes no audit-doc/exit-code-number/cache/freshness/policy/IO/CLI member (FR-012/SC-007)" {
-              let surfaceText = (SurfaceDrift.renderSurface shipAsm).ToLowerInvariant()
+            test
+                "the surface exposes no audit-doc/exit-code-number/cache/freshness/policy/IO/CLI member (FR-012/SC-007)" {
+                let surfaceText = (SurfaceDrift.renderSurface shipAsm).ToLowerInvariant()
 
-              for forbidden in [ "audit"; "writeall"; "filestream"; "httpclient"; "policy"; "freshness"; "cache"; "exitcode get_" ] do
-                  Expect.isFalse (surfaceText.Contains forbidden) (sprintf "no %s member (pure decision only)" forbidden)
-          }
+                for forbidden in
+                    [
+                        "audit"
+                        "writeall"
+                        "filestream"
+                        "httpclient"
+                        "policy"
+                        "freshness"
+                        "cache"
+                        "exitcode get_"
+                    ] do
+                    Expect.isFalse
+                        (surfaceText.Contains forbidden)
+                        (sprintf "no %s member (pure decision only)" forbidden)
+            }
 
-          SurfaceDrift.referencesOnly
-              "Ship"
-              (fun n ->
-                  n = "FS.GG.Governance.Enforcement"
-                  || n = "FS.GG.Governance.Route"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.Findings"
-                  || n = "FS.GG.Governance.Config")
-              shipAsm ]
+            SurfaceDrift.referencesOnly
+                "Ship"
+                (fun n ->
+                    n = "FS.GG.Governance.Enforcement"
+                    || n = "FS.GG.Governance.Route"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.Findings"
+                    || n = "FS.GG.Governance.Config")
+                shipAsm
+        ]

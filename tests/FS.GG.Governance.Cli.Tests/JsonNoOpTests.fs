@@ -12,8 +12,10 @@ open FS.GG.Governance.Cli.Tests.RenderSupport
 let tests =
     testList
         "JsonNoOp"
-        [ test "emit Json writes nothing to the console (JSON bypasses RichRender)" {
-              let console, sw = colorConsole 120
-              RichRender.emit RenderMode.Json blockedView blockedPlain console
-              Expect.equal (sw.ToString()) "" "Json mode is a no-op in RichRender"
-          } ]
+        [
+            test "emit Json writes nothing to the console (JSON bypasses RichRender)" {
+                let console, sw = colorConsole 120
+                RichRender.emit RenderMode.Json blockedView blockedPlain console
+                Expect.equal (sw.ToString()) "" "Json mode is a no-op in RichRender"
+            }
+        ]

@@ -20,10 +20,12 @@ module Model =
     /// The real output of packing one project, read at the host edge. Path is normalized (repo-relative,
     /// forward-slash). PackedVersion is the source of truth for releasability (D1).
     type PackArtifact =
-        { Surface: SurfaceId
-          ArtifactPath: string
-          PackedVersion: string
-          Digest: ArtifactHash }
+        {
+            Surface: SurfaceId
+            ArtifactPath: string
+            PackedVersion: string
+            Digest: ArtifactHash
+        }
 
     /// Why a zero-exit pack produced nothing usable (an input signal, never a fabricated pass — D6).
     type NoArtifactReason =
@@ -48,18 +50,22 @@ module Model =
     /// One project's rollup: surface, pack outcome, version verdict, self-explaining product-neutral reason.
     /// Exactly one per packable project (never dropped, never fabricated, FR-001/FR-011).
     type PackVerdict =
-        { Surface: SurfaceId
-          Outcome: PackOutcome
-          Version: VersionVerdict
-          Reason: string }
+        {
+            Surface: SurfaceId
+            Outcome: PackOutcome
+            Version: VersionVerdict
+            Reason: string
+        }
 
     /// The whole-product pack evidence — immutable input to the report and attestation. Verdicts sorted by
     /// SurfaceId then ArtifactPath; Runs order-significant for the snapshot (D7). NoPackableProjects is the
     /// vacuously-satisfied edge (no project blocks on packing — D6).
     type PackEvidenceSet =
-        { Verdicts: PackVerdict list
-          Runs: KindedCommandRun list
-          NoPackableProjects: bool }
+        {
+            Verdicts: PackVerdict list
+            Runs: KindedCommandRun list
+            NoPackableProjects: bool
+        }
 
     // ── 088 Breaking-Change (API-Compat) gate: pure, product-neutral break/verdict vocabulary ──
     // These types carry the assembly/package comparison conclusion as DATA. No type carries raw `.nupkg`
@@ -90,9 +96,11 @@ module Model =
     /// public member as ApiCompat reports it; `Origin` distinguishes a local from an inherited break
     /// (FR-013). Product-neutral text; no raw bytes, path, or exit code.
     type ApiBreak =
-        { Member: string
-          Kind: ApiBreakKind
-          Origin: ApiBreakOrigin }
+        {
+            Member: string
+            Kind: ApiBreakKind
+            Origin: ApiBreakOrigin
+        }
 
     /// 088: what the assembly/package comparison concluded for ONE package, as DATA. Produced by the
     /// ApiCompat sensor at the I/O edge; consumed by the pure verdict helper `Pack.apiCompatibilityFact`.
@@ -134,5 +142,7 @@ module Model =
     /// 088: one package's coverage row. The coverage list (sorted by `Surface`) feeds both the human/JSON
     /// projection and SC-001's "100% covered-or-reported, zero silent passes."
     type ApiCompatCoverage =
-        { Surface: SurfaceId
-          Outcome: ApiCompatCoverageOutcome }
+        {
+            Surface: SurfaceId
+            Outcome: ApiCompatCoverageOutcome
+        }

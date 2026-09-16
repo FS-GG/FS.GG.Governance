@@ -26,162 +26,239 @@ let private gateItemById (doc: JsonDocument) (gid: string) : JsonElement =
 let tests =
     testList
         "VerifyJson shape (US3)"
-        [ test "schemaVersion is fsgg.verify/v1" {
-              Expect.equal VerifyJson.schemaVersion "fsgg.verify/v1" "constant is v1"
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              Expect.equal (strField doc.RootElement "schemaVersion") "fsgg.verify/v1" "document schemaVersion"
-          }
+        [
+            test "schemaVersion is fsgg.verify/v1" {
+                Expect.equal VerifyJson.schemaVersion "fsgg.verify/v1" "constant is v1"
 
-          test "top-level field order is fixed" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-              Expect.equal
-                  (topLevelFieldOrder doc)
-                  [ "schemaVersion"; "verdict"; "exitCodeBasis"; "blockers"; "warnings"; "passing"; "currency" ]
-                  "fixed top-level field order"
-          }
+                Expect.equal (strField doc.RootElement "schemaVersion") "fsgg.verify/v1" "document schemaVersion"
+            }
 
-          test "verdict is pass|blocked; a blocked decision renders blocked" {
-              use docBlocked = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              Expect.equal (strField docBlocked.RootElement "verdict") "blocked" "rich decision blocks"
-              Expect.equal (strField docBlocked.RootElement "exitCodeBasis") "blocked" "blocked basis"
+            test "top-level field order is fixed" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-              use docClean = parse (VerifyJson.ofVerifyDecision emptyCleanDecision None [])
-              Expect.equal (strField docClean.RootElement "verdict") "pass" "empty decision passes"
-              Expect.equal (strField docClean.RootElement "exitCodeBasis") "clean" "clean basis"
-          }
+                Expect.equal
+                    (topLevelFieldOrder doc)
+                    [
+                        "schemaVersion"
+                        "verdict"
+                        "exitCodeBasis"
+                        "blockers"
+                        "warnings"
+                        "passing"
+                        "currency"
+                    ]
+                    "fixed top-level field order"
+            }
 
-          test "a gate item id is a tagged { kind:gate, gate } object" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let item = gateItemById doc "build:ship"
-              let id = item.GetProperty "id"
-              Expect.equal (fieldOrder id) [ "kind"; "gate" ] "gate id field order"
-              Expect.equal (strField id "kind") "gate" "kind gate"
-              Expect.equal (strField id "gate") "build:ship" "gate id verbatim"
-          }
+            test "verdict is pass|blocked; a blocked decision renders blocked" {
+                use docBlocked =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          test "a finding item id is a tagged { kind:finding, finding, path } object" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
+                Expect.equal (strField docBlocked.RootElement "verdict") "blocked" "rich decision blocks"
+                Expect.equal (strField docBlocked.RootElement "exitCodeBasis") "blocked" "blocked basis"
 
-              let findingItem =
-                  allItems doc |> List.find (fun it -> strField (it.GetProperty "id") "kind" = "finding")
+                use docClean = parse (VerifyJson.ofVerifyDecision emptyCleanDecision None [])
+                Expect.equal (strField docClean.RootElement "verdict") "pass" "empty decision passes"
+                Expect.equal (strField docClean.RootElement "exitCodeBasis") "clean" "clean basis"
+            }
 
-              let id = findingItem.GetProperty "id"
-              Expect.equal (fieldOrder id) [ "kind"; "finding"; "path" ] "finding id field order"
-              Expect.equal (strField id "kind") "finding" "kind finding"
-          }
+            test "a gate item id is a tagged { kind:gate, gate } object" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          test "each item carries id/ruleId/enforcement/cache/execution in order; enforcement mode is verify" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let item = gateItemById doc "build:ship"
-              // 068: the additive per-finding `ruleId` is emitted right after the `id` object.
-              Expect.equal (fieldOrder item) [ "id"; "ruleId"; "enforcement"; "cache"; "execution" ] "item field order"
+                let item = gateItemById doc "build:ship"
+                let id = item.GetProperty "id"
+                Expect.equal (fieldOrder id) [ "kind"; "gate" ] "gate id field order"
+                Expect.equal (strField id "kind") "gate" "kind gate"
+                Expect.equal (strField id "gate") "build:ship" "gate id verbatim"
+            }
 
-              Expect.equal
-                  (fieldOrder (item.GetProperty "enforcement"))
-                  [ "baseSeverity"; "maturity"; "mode"; "profile"; "effectiveSeverity"; "reason" ]
-                  "enforcement field order"
+            test "a finding item id is a tagged { kind:finding, finding, path } object" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-              Expect.equal (strField (item.GetProperty "enforcement") "mode") "verify" "mode is always verify"
-          }
+                let findingItem =
+                    allItems doc
+                    |> List.find (fun it -> strField (it.GetProperty "id") "kind" = "finding")
 
-          test "a reusable gate carries { kind:reusable, evidence } cache verbatim" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let cache = (gateItemById doc "build:ship").GetProperty "cache"
-              Expect.equal (strField cache "kind") "reusable" "reusable"
-              Expect.equal (strField cache "evidence") "ev-A" "evidence verbatim"
-          }
+                let id = findingItem.GetProperty "id"
+                Expect.equal (fieldOrder id) [ "kind"; "finding"; "path" ] "finding id field order"
+                Expect.equal (strField id "kind") "finding" "kind finding"
+            }
 
-          test "an inputsChanged gate carries { kind:mustRecompute, cause:{ kind:inputsChanged, categories } }" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let cache = (gateItemById doc "build:rel").GetProperty "cache"
-              Expect.equal (strField cache "kind") "mustRecompute" "mustRecompute"
-              let cause = cache.GetProperty "cause"
-              Expect.equal (strField cause "kind") "inputsChanged" "inputsChanged"
-              Expect.equal cause.ValueKind JsonValueKind.Object "inputsChanged cause is an object"
-          }
+            test "each item carries id/ruleId/enforcement/cache/execution in order; enforcement mode is verify" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          test "a noPriorEvidence cause is the bare string \"noPriorEvidence\" (not an object)" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some noPriorReport) mixedOutcomes)
-              let cause = ((gateItemById doc "build:ship").GetProperty "cache").GetProperty "cause"
-              Expect.equal cause.ValueKind JsonValueKind.String "noPriorEvidence is a bare string"
-              Expect.equal (cause.GetString()) "noPriorEvidence" "noPriorEvidence token"
-          }
+                let item = gateItemById doc "build:ship"
+                // 068: the additive per-finding `ruleId` is emitted right after the `id` object.
+                Expect.equal
+                    (fieldOrder item)
+                    [ "id"; "ruleId"; "enforcement"; "cache"; "execution" ]
+                    "item field order"
 
-          test "an unevaluated gate and every finding carry cache:null" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              Expect.equal ((gateItemById doc "docs:lint").GetProperty("cache")).ValueKind JsonValueKind.Null "docs:lint cache null"
+                Expect.equal
+                    (fieldOrder (item.GetProperty "enforcement"))
+                    [ "baseSeverity"; "maturity"; "mode"; "profile"; "effectiveSeverity"; "reason" ]
+                    "enforcement field order"
 
-              let findingItem =
-                  allItems doc |> List.find (fun it -> strField (it.GetProperty "id") "kind" = "finding")
+                Expect.equal (strField (item.GetProperty "enforcement") "mode") "verify" "mode is always verify"
+            }
 
-              Expect.equal (findingItem.GetProperty("cache")).ValueKind JsonValueKind.Null "finding cache null"
-          }
+            test "a reusable gate carries { kind:reusable, evidence } cache verbatim" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          test "execution carries disposition/exitCode/passed; a not-executed gate uses null exitCode/passed" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let exec = (gateItemById doc "build:ship").GetProperty "execution"
-              Expect.equal (fieldOrder exec) [ "disposition"; "exitCode"; "passed" ] "execution field order"
-              Expect.equal (strField exec "disposition") "reused" "reused disposition"
-              Expect.equal (exec.GetProperty("exitCode").GetInt32()) 0 "exit 0"
-              Expect.isTrue (exec.GetProperty("passed").GetBoolean()) "passed true"
+                let cache = (gateItemById doc "build:ship").GetProperty "cache"
+                Expect.equal (strField cache "kind") "reusable" "reusable"
+                Expect.equal (strField cache "evidence") "ev-A" "evidence verbatim"
+            }
 
-              let execLint = (gateItemById doc "docs:lint").GetProperty "execution"
-              Expect.equal (strField execLint "disposition") "not-executed" "not-executed"
-              Expect.equal (execLint.GetProperty "exitCode").ValueKind JsonValueKind.Null "null exitCode"
-              Expect.equal (execLint.GetProperty "passed").ValueKind JsonValueKind.Null "null passed"
-          }
+            test "an inputsChanged gate carries { kind:mustRecompute, cause:{ kind:inputsChanged, categories } }" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          test "currency has fresh/recomputed/unresolved arrays in order" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-              let cur = doc.RootElement.GetProperty "currency"
-              Expect.equal (fieldOrder cur) [ "fresh"; "recomputed"; "unresolved" ] "currency field order"
+                let cache = (gateItemById doc "build:rel").GetProperty "cache"
+                Expect.equal (strField cache "kind") "mustRecompute" "mustRecompute"
+                let cause = cache.GetProperty "cause"
+                Expect.equal (strField cause "kind") "inputsChanged" "inputsChanged"
+                Expect.equal cause.ValueKind JsonValueKind.Object "inputsChanged cause is an object"
+            }
 
-              let fresh = currency doc "fresh"
-              Expect.equal (List.length fresh) 1 "one fresh entry (build:ship)"
-              Expect.equal (strField fresh.Head "gate") "build:ship" "fresh gate"
-              Expect.equal (strField fresh.Head "evidence") "ev-A" "fresh evidence"
+            test "a noPriorEvidence cause is the bare string \"noPriorEvidence\" (not an object)" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some noPriorReport) mixedOutcomes)
 
-              let recomputed = currency doc "recomputed"
-              Expect.equal (List.length recomputed) 1 "one recomputed entry (build:rel)"
-              Expect.equal (strField recomputed.Head "gate") "build:rel" "recomputed gate"
-              Expect.equal ((recomputed.Head.GetProperty("cause").GetProperty "kind").GetString()) "inputsChanged" "recomputed inputsChanged"
+                let cause =
+                    ((gateItemById doc "build:ship").GetProperty "cache").GetProperty "cause"
 
-              // docs:lint is a selected gate item absent from the cache report ⇒ unresolved with missing:[].
-              let unresolved = currency doc "unresolved"
-              Expect.contains (unresolved |> List.map (fun e -> strField e "gate")) "docs:lint" "docs:lint unresolved"
-              let lint = unresolved |> List.find (fun e -> strField e "gate" = "docs:lint")
-              Expect.equal (fieldOrder lint) [ "gate"; "missing" ] "unresolved entry shape"
-              Expect.equal (lint.GetProperty("missing").ValueKind) JsonValueKind.Array "missing is a present array"
-          }
+                Expect.equal cause.ValueKind JsonValueKind.String "noPriorEvidence is a bare string"
+                Expect.equal (cause.GetString()) "noPriorEvidence" "noPriorEvidence token"
+            }
 
-          test "recomputed.cause for noPriorEvidence is the bare string" {
-              use doc = parse (VerifyJson.ofVerifyDecision richDecision (Some noPriorReport) mixedOutcomes)
-              let recomputed = currency doc "recomputed"
-              let ship = recomputed |> List.find (fun e -> strField e "gate" = "build:ship")
-              Expect.equal (ship.GetProperty("cause").ValueKind) JsonValueKind.String "bare string cause"
-              Expect.equal (ship.GetProperty("cause").GetString()) "noPriorEvidence" "noPriorEvidence" }
+            test "an unevaluated gate and every finding carry cache:null" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-          // JSON-2: the `currency.unresolved[].missing` array now carries the caller-supplied missing-fact
-          // wire tokens (was structurally always-empty). `ofVerifyDecisionWithGeneratedViews` is the sole
-          // overload threading the `missingByGate` map (keyed on the gate id value).
-          test "unresolved[].missing carries the caller-supplied missing-fact tokens for that gate" {
-              // docs:lint is richDecision's selected gate absent from mixedReport ⇒ the sole unresolved entry.
-              let missingByGate = Map.ofList [ "docs:lint", [ "coveredArtifacts"; "commandVersion" ] ]
+                Expect.equal
+                    ((gateItemById doc "docs:lint").GetProperty("cache")).ValueKind
+                    JsonValueKind.Null
+                    "docs:lint cache null"
 
-              use doc =
-                  parse (VerifyJson.ofVerifyDecisionWithGeneratedViews richDecision (Some mixedReport) mixedOutcomes [] None [] missingByGate)
+                let findingItem =
+                    allItems doc
+                    |> List.find (fun it -> strField (it.GetProperty "id") "kind" = "finding")
 
-              let lint = currency doc "unresolved" |> List.find (fun e -> strField e "gate" = "docs:lint")
-              let missing = [ for m in lint.GetProperty("missing").EnumerateArray() -> m.GetString() ]
-              Expect.equal missing [ "coveredArtifacts"; "commandVersion" ] "missing tokens emitted verbatim, in the supplied order" }
+                Expect.equal (findingItem.GetProperty("cache")).ValueKind JsonValueKind.Null "finding cache null"
+            }
 
-          test "an empty missingByGate reproduces the always-empty missing array (byte-identical to ofVerifyDecision)" {
-              // Map.empty is the caller-with-no-resolution path (and the pre-JSON-2 behaviour of every overload).
-              let withEmptyMap =
-                  VerifyJson.ofVerifyDecisionWithGeneratedViews richDecision (Some mixedReport) mixedOutcomes [] None [] Map.empty
+            test "execution carries disposition/exitCode/passed; a not-executed gate uses null exitCode/passed" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
 
-              Expect.equal
-                  withEmptyMap
-                  (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
-                  "empty map ⇒ byte-identical to the base projection (no surfaceChecks/preview/generatedViews, empty missing)" } ]
+                let exec = (gateItemById doc "build:ship").GetProperty "execution"
+                Expect.equal (fieldOrder exec) [ "disposition"; "exitCode"; "passed" ] "execution field order"
+                Expect.equal (strField exec "disposition") "reused" "reused disposition"
+                Expect.equal (exec.GetProperty("exitCode").GetInt32()) 0 "exit 0"
+                Expect.isTrue (exec.GetProperty("passed").GetBoolean()) "passed true"
+
+                let execLint = (gateItemById doc "docs:lint").GetProperty "execution"
+                Expect.equal (strField execLint "disposition") "not-executed" "not-executed"
+                Expect.equal (execLint.GetProperty "exitCode").ValueKind JsonValueKind.Null "null exitCode"
+                Expect.equal (execLint.GetProperty "passed").ValueKind JsonValueKind.Null "null passed"
+            }
+
+            test "currency has fresh/recomputed/unresolved arrays in order" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
+
+                let cur = doc.RootElement.GetProperty "currency"
+                Expect.equal (fieldOrder cur) [ "fresh"; "recomputed"; "unresolved" ] "currency field order"
+
+                let fresh = currency doc "fresh"
+                Expect.equal (List.length fresh) 1 "one fresh entry (build:ship)"
+                Expect.equal (strField fresh.Head "gate") "build:ship" "fresh gate"
+                Expect.equal (strField fresh.Head "evidence") "ev-A" "fresh evidence"
+
+                let recomputed = currency doc "recomputed"
+                Expect.equal (List.length recomputed) 1 "one recomputed entry (build:rel)"
+                Expect.equal (strField recomputed.Head "gate") "build:rel" "recomputed gate"
+
+                Expect.equal
+                    ((recomputed.Head.GetProperty("cause").GetProperty "kind").GetString())
+                    "inputsChanged"
+                    "recomputed inputsChanged"
+
+                // docs:lint is a selected gate item absent from the cache report ⇒ unresolved with missing:[].
+                let unresolved = currency doc "unresolved"
+                Expect.contains (unresolved |> List.map (fun e -> strField e "gate")) "docs:lint" "docs:lint unresolved"
+                let lint = unresolved |> List.find (fun e -> strField e "gate" = "docs:lint")
+                Expect.equal (fieldOrder lint) [ "gate"; "missing" ] "unresolved entry shape"
+                Expect.equal (lint.GetProperty("missing").ValueKind) JsonValueKind.Array "missing is a present array"
+            }
+
+            test "recomputed.cause for noPriorEvidence is the bare string" {
+                use doc =
+                    parse (VerifyJson.ofVerifyDecision richDecision (Some noPriorReport) mixedOutcomes)
+
+                let recomputed = currency doc "recomputed"
+                let ship = recomputed |> List.find (fun e -> strField e "gate" = "build:ship")
+                Expect.equal (ship.GetProperty("cause").ValueKind) JsonValueKind.String "bare string cause"
+                Expect.equal (ship.GetProperty("cause").GetString()) "noPriorEvidence" "noPriorEvidence"
+            }
+
+            // JSON-2: the `currency.unresolved[].missing` array now carries the caller-supplied missing-fact
+            // wire tokens (was structurally always-empty). `ofVerifyDecisionWithGeneratedViews` is the sole
+            // overload threading the `missingByGate` map (keyed on the gate id value).
+            test "unresolved[].missing carries the caller-supplied missing-fact tokens for that gate" {
+                // docs:lint is richDecision's selected gate absent from mixedReport ⇒ the sole unresolved entry.
+                let missingByGate =
+                    Map.ofList [ "docs:lint", [ "coveredArtifacts"; "commandVersion" ] ]
+
+                use doc =
+                    parse (
+                        VerifyJson.ofVerifyDecisionWithGeneratedViews
+                            richDecision
+                            (Some mixedReport)
+                            mixedOutcomes
+                            []
+                            None
+                            []
+                            missingByGate
+                    )
+
+                let lint =
+                    currency doc "unresolved"
+                    |> List.find (fun e -> strField e "gate" = "docs:lint")
+
+                let missing =
+                    [ for m in lint.GetProperty("missing").EnumerateArray() -> m.GetString() ]
+
+                Expect.equal
+                    missing
+                    [ "coveredArtifacts"; "commandVersion" ]
+                    "missing tokens emitted verbatim, in the supplied order"
+            }
+
+            test "an empty missingByGate reproduces the always-empty missing array (byte-identical to ofVerifyDecision)" {
+                // Map.empty is the caller-with-no-resolution path (and the pre-JSON-2 behaviour of every overload).
+                let withEmptyMap =
+                    VerifyJson.ofVerifyDecisionWithGeneratedViews
+                        richDecision
+                        (Some mixedReport)
+                        mixedOutcomes
+                        []
+                        None
+                        []
+                        Map.empty
+
+                Expect.equal
+                    withEmptyMap
+                    (VerifyJson.ofVerifyDecision richDecision (Some mixedReport) mixedOutcomes)
+                    "empty map ⇒ byte-identical to the base projection (no surfaceChecks/preview/generatedViews, empty missing)"
+            }
+        ]

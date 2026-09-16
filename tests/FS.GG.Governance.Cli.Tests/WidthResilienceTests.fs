@@ -30,8 +30,7 @@ let private viewStrings (view: ReportView) : string list =
             | None -> [ label ]
         | Group(title, children) -> title :: List.collect ofNode children
 
-    [ view.Title; view.ExitStatus ]
-    @ List.collect ofNode view.Sections
+    [ view.Title; view.ExitStatus ] @ List.collect ofNode view.Sections
 
 let private tokensOf (s: string) =
     s.Split([| ' '; '\t'; '\n'; '\r' |], StringSplitOptions.RemoveEmptyEntries)
@@ -56,26 +55,28 @@ let private chromeColumns = borderColumns + paddingColumns + indentColumns
 let tests =
     testList
         "WidthResilience"
-        [ for width in [ 200; 80; 40; 20; 10 ] do
-              yield
-                  test (sprintf "rich render at width %d produces output without throwing" width) {
-                      let console, sw = plainConsole width
-                      RichRender.emit RenderMode.Rich blockedView blockedPlain console
-                      let out = sw.ToString()
-                      Expect.isGreaterThan out.Length 0 "render produced output"
-                      // Each emitted line fits the folding contract: at a forced width narrower than the
-                      // longest unbreakable token, a line MAY reach that token's boundary (plus chrome);
-                      // anything beyond it is runaway/corrupted layout and MUST fail (contract C1).
-                      let bound = max width (longestUnbreakableToken + chromeColumns)
+        [
+            for width in [ 200; 80; 40; 20; 10 ] do
+                yield
+                    test (sprintf "rich render at width %d produces output without throwing" width) {
+                        let console, sw = plainConsole width
+                        RichRender.emit RenderMode.Rich blockedView blockedPlain console
+                        let out = sw.ToString()
+                        Expect.isGreaterThan out.Length 0 "render produced output"
+                        // Each emitted line fits the folding contract: at a forced width narrower than the
+                        // longest unbreakable token, a line MAY reach that token's boundary (plus chrome);
+                        // anything beyond it is runaway/corrupted layout and MUST fail (contract C1).
+                        let bound = max width (longestUnbreakableToken + chromeColumns)
 
-                      for line in out.Replace("\r\n", "\n").Split('\n') do
-                          Expect.isLessThanOrEqual
-                              line.Length
-                              bound
-                              (sprintf "line within folding bound %d (forced width %d)" bound width)
-                  }
+                        for line in out.Replace("\r\n", "\n").Split('\n') do
+                            Expect.isLessThanOrEqual
+                                line.Length
+                                bound
+                                (sprintf "line within folding bound %d (forced width %d)" bound width)
+                    }
 
-          yield
-              test "the safe default width is a sane positive value" {
-                  Expect.isGreaterThan RichRender.defaultWidth 0 "default width is positive"
-              } ]
+            yield
+                test "the safe default width is a sane positive value" {
+                    Expect.isGreaterThan RichRender.defaultWidth 0 "default width is positive"
+                }
+        ]

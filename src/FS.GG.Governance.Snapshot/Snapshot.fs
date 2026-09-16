@@ -22,10 +22,12 @@ module Snapshot =
         | Default
 
     type ResolutionPlan =
-        { Form: RangeForm
-          BaseRef: GitRef option
-          HeadRef: GitRef option
-          UseMergeBase: bool }
+        {
+            Form: RangeForm
+            BaseRef: GitRef option
+            HeadRef: GitRef option
+            UseMergeBase: bool
+        }
 
     // The documented default base/head (git-sensing.md §4): `HEAD`. The default range compares the
     // working position against `HEAD`, so the committed diff is empty and only uncommitted work is
@@ -38,32 +40,42 @@ module Snapshot =
         // for every form. A `None` `HeadRef` means "the current working position" (`HEAD`).
         match options.Since with
         | Some r ->
-            { Form = Since r
-              BaseRef = Some r
-              HeadRef = None
-              UseMergeBase = true }
+            {
+                Form = Since r
+                BaseRef = Some r
+                HeadRef = None
+                UseMergeBase = true
+            }
         | None ->
             match options.Base, options.Head with
             | Some b, Some h ->
-                { Form = BaseHead(b, h)
-                  BaseRef = Some b
-                  HeadRef = Some h
-                  UseMergeBase = true }
+                {
+                    Form = BaseHead(b, h)
+                    BaseRef = Some b
+                    HeadRef = Some h
+                    UseMergeBase = true
+                }
             | Some b, None ->
-                { Form = BaseHead(b, headRef)
-                  BaseRef = Some b
-                  HeadRef = Some headRef
-                  UseMergeBase = true }
+                {
+                    Form = BaseHead(b, headRef)
+                    BaseRef = Some b
+                    HeadRef = Some headRef
+                    UseMergeBase = true
+                }
             | None, Some h ->
-                { Form = BaseHead(headRef, h)
-                  BaseRef = Some headRef
-                  HeadRef = Some h
-                  UseMergeBase = true }
+                {
+                    Form = BaseHead(headRef, h)
+                    BaseRef = Some headRef
+                    HeadRef = Some h
+                    UseMergeBase = true
+                }
             | None, None ->
-                { Form = Default
-                  BaseRef = Some headRef
-                  HeadRef = None
-                  UseMergeBase = true }
+                {
+                    Form = Default
+                    BaseRef = Some headRef
+                    HeadRef = None
+                    UseMergeBase = true
+                }
 
     // ── Raw sensing intermediate (filled by the edge, consumed here) ──
 
@@ -73,16 +85,18 @@ module Snapshot =
         | GitAbsent
 
     type RawSensing =
-        { RepoState: RepoState
-          BaseResolved: Result<CommitId, string>
-          HeadResolved: Result<CommitId, string>
-          MergeBaseResolved: Result<CommitId, string>
-          DiffRaw: Result<string, string>
-          StatusRaw: Result<string, string>
-          BranchRaw: Result<string, string>
-          RawCi: CiContext option
-          Digests: CommandRunDigest list
-          Plan: ResolutionPlan }
+        {
+            RepoState: RepoState
+            BaseResolved: Result<CommitId, string>
+            HeadResolved: Result<CommitId, string>
+            MergeBaseResolved: Result<CommitId, string>
+            DiffRaw: Result<string, string>
+            StatusRaw: Result<string, string>
+            BranchRaw: Result<string, string>
+            RawCi: CiContext option
+            Digests: CommandRunDigest list
+            Plan: ResolutionPlan
+        }
 
     // ── Stable operation tokens (mirror GitCommand.Token; used in digests + diagnostics) ──
     // Kept identical to the `GitCommand.Token` strings the edge emits so a diagnostic's
@@ -117,7 +131,11 @@ module Snapshot =
             let ka = sensingDiagnosticIdToken a.Id, a.Operation
             let kb = sensingDiagnosticIdToken b.Id, b.Operation
             let c = System.String.CompareOrdinal(fst ka, fst kb)
-            if c <> 0 then c else System.String.CompareOrdinal(snd ka, snd kb))
+
+            if c <> 0 then
+                c
+            else
+                System.String.CompareOrdinal(snd ka, snd kb))
 
     // ── Porcelain parsers (pure; literal-`-z`-fixture tested) ──
 
@@ -132,9 +150,11 @@ module Snapshot =
     /// silent drop). A rename/copy record spans three NUL fields (`<X>`, `<old>`, `<new>`).
     let private parseDiff (raw: string) : ChangedPath list * SensingDiagnostic list =
         let unparsable =
-            { Id = UnparsableGitOutput
-              Operation = "diff-name-status"
-              Message = "git emitted a --name-status record this version cannot decode; re-run with a supported git" }
+            {
+                Id = UnparsableGitOutput
+                Operation = "diff-name-status"
+                Message = "git emitted a --name-status record this version cannot decode; re-run with a supported git"
+            }
 
         // mutable: a tail-recursive fold would be equivalent; the explicit loop keeps the
         // three-field rename branch readable (Principle III disclosure — no shared mutable state).
@@ -147,7 +167,14 @@ module Snapshot =
                 let single kind =
                     match rest with
                     | path :: more ->
-                        loop more ({ Path = normalizePath path; Kind = kind; OldPath = None } :: acc)
+                        loop
+                            more
+                            ({
+                                Path = normalizePath path
+                                Kind = kind
+                                OldPath = None
+                             }
+                             :: acc)
                     | [] -> List.rev acc, [ unparsable ]
 
                 let pair kind =
@@ -155,9 +182,11 @@ module Snapshot =
                     | oldPath :: newPath :: more ->
                         loop
                             more
-                            ({ Path = normalizePath newPath
-                               Kind = kind
-                               OldPath = Some(normalizePath oldPath) }
+                            ({
+                                Path = normalizePath newPath
+                                Kind = kind
+                                OldPath = Some(normalizePath oldPath)
+                             }
                              :: acc)
                     | _ -> List.rev acc, [ unparsable ]
 
@@ -207,7 +236,11 @@ module Snapshot =
     // ── Pure assembly (the heart of the feature) ──
 
     let private diag id operation message : SensingDiagnostic =
-        { Id = id; Operation = operation; Message = message }
+        {
+            Id = id
+            Operation = operation
+            Message = message
+        }
 
     let private emptyWorkingTree: WorkingTreeState = { Dirty = []; Untracked = [] }
 
@@ -218,13 +251,15 @@ module Snapshot =
         // Range = None, empty path sets, one stable diagnostic — structurally DISTINCT from an empty-but-
         // successful snapshot (FR-011). The two cases differ only in the diagnostic id + message (111/B9).
         let repoCheckFailure (id: SensingDiagnosticId) (message: string) : RepoSnapshot =
-            { Range = None
-              Changed = []
-              WorkingTree = emptyWorkingTree
-              Branch = None
-              Ci = raw.RawCi
-              Digests = digests
-              Diagnostics = [ diag id repoCheckOp message ] }
+            {
+                Range = None
+                Changed = []
+                WorkingTree = emptyWorkingTree
+                Branch = None
+                Ci = raw.RawCi
+                Digests = digests
+                Diagnostics = [ diag id repoCheckOp message ]
+            }
 
         match raw.RepoState with
         | NotAWorkTree ->
@@ -237,22 +272,31 @@ module Snapshot =
 
             // Range resolution: each ref/merge-base Error becomes a diagnostic and forces Range=None
             // (FR-008); all three Ok ⇒ Some range.
-            let baseOk = match raw.BaseResolved with Ok _ -> true | Error _ -> false
-            let headOk = match raw.HeadResolved with Ok _ -> true | Error _ -> false
+            let baseOk =
+                match raw.BaseResolved with
+                | Ok _ -> true
+                | Error _ -> false
+
+            let headOk =
+                match raw.HeadResolved with
+                | Ok _ -> true
+                | Error _ -> false
 
             let rangeDiags =
-                [ match raw.BaseResolved with
-                  | Error msg -> diag UnknownRef revParseOp (sprintf "could not resolve the base ref: %s" msg)
-                  | Ok _ -> ()
-                  match raw.HeadResolved with
-                  | Error msg -> diag UnknownRef revParseOp (sprintf "could not resolve the head ref: %s" msg)
-                  | Ok _ -> ()
-                  // A merge-base failure is only meaningful (and only reported) when both endpoints
-                  // resolved — otherwise the base/head diagnostics above already explain the gap.
-                  match raw.MergeBaseResolved with
-                  | Error msg when baseOk && headOk ->
-                      diag GitCommandFailed mergeBaseOp (sprintf "could not compute the merge base: %s" msg)
-                  | _ -> () ]
+                [
+                    match raw.BaseResolved with
+                    | Error msg -> diag UnknownRef revParseOp (sprintf "could not resolve the base ref: %s" msg)
+                    | Ok _ -> ()
+                    match raw.HeadResolved with
+                    | Error msg -> diag UnknownRef revParseOp (sprintf "could not resolve the head ref: %s" msg)
+                    | Ok _ -> ()
+                    // A merge-base failure is only meaningful (and only reported) when both endpoints
+                    // resolved — otherwise the base/head diagnostics above already explain the gap.
+                    match raw.MergeBaseResolved with
+                    | Error msg when baseOk && headOk ->
+                        diag GitCommandFailed mergeBaseOp (sprintf "could not compute the merge base: %s" msg)
+                    | _ -> ()
+                ]
 
             let range =
                 match raw.BaseResolved, raw.HeadResolved, raw.MergeBaseResolved with
@@ -266,7 +310,10 @@ module Snapshot =
                 match range, raw.DiffRaw with
                 | Some _, Ok text -> parseDiff text
                 | Some _, Error msg ->
-                    [], [ diag GitCommandFailed diffOp (sprintf "the committed diff could not be read: %s" msg) ]
+                    [],
+                    [
+                        diag GitCommandFailed diffOp (sprintf "the committed diff could not be read: %s" msg)
+                    ]
                 | None, _ -> [], []
 
             // Working tree: read independently of the range (FR-003). A read failure is
@@ -275,24 +322,41 @@ module Snapshot =
                 match raw.StatusRaw with
                 | Ok text ->
                     let dirty, untracked = parseStatus text
-                    { Dirty = sortPaths dirty; Untracked = sortPaths untracked }, []
+
+                    {
+                        Dirty = sortPaths dirty
+                        Untracked = sortPaths untracked
+                    },
+                    []
                 | Error msg ->
                     emptyWorkingTree,
-                    [ diag UnreadableWorkingTree statusOp (sprintf "the working tree could not be read: %s" msg) ]
+                    [
+                        diag UnreadableWorkingTree statusOp (sprintf "the working tree could not be read: %s" msg)
+                    ]
 
             // Branch: `"HEAD"` ⇒ detached (None, never fabricated, FR-005); any other ⇒ Some.
             let branch, branchDiags =
                 match raw.BranchRaw with
                 | Ok name ->
                     let trimmed = name.Trim()
-                    (if trimmed = "HEAD" || trimmed = "" then None else Some(BranchName trimmed)), []
-                | Error msg ->
-                    None, [ diag GitCommandFailed currentBranchOp (sprintf "the current branch could not be read: %s" msg) ]
 
-            { Range = range
-              Changed = sortChanged changed
-              WorkingTree = workingTree
-              Branch = branch
-              Ci = raw.RawCi
-              Digests = digests
-              Diagnostics = sortDiagnostics (rangeDiags @ diffDiags @ statusDiags @ branchDiags) }
+                    (if trimmed = "HEAD" || trimmed = "" then
+                         None
+                     else
+                         Some(BranchName trimmed)),
+                    []
+                | Error msg ->
+                    None,
+                    [
+                        diag GitCommandFailed currentBranchOp (sprintf "the current branch could not be read: %s" msg)
+                    ]
+
+            {
+                Range = range
+                Changed = sortChanged changed
+                WorkingTree = workingTree
+                Branch = branch
+                Ci = raw.RawCi
+                Digests = digests
+                Diagnostics = sortDiagnostics (rangeDiags @ diffDiags @ statusDiags @ branchDiags)
+            }

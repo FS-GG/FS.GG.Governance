@@ -21,14 +21,18 @@ module Model =
     type BranchName = BranchName of string
 
     type SnapshotOptions =
-        { Since: GitRef option
-          Base: GitRef option
-          Head: GitRef option }
+        {
+            Since: GitRef option
+            Base: GitRef option
+            Head: GitRef option
+        }
 
     type DiffRange =
-        { Base: CommitId
-          Head: CommitId
-          MergeBase: CommitId }
+        {
+            Base: CommitId
+            Head: CommitId
+            MergeBase: CommitId
+        }
 
     // ── Paths & changes ──
 
@@ -41,13 +45,17 @@ module Model =
         | TypeChanged
 
     type ChangedPath =
-        { Path: GovernedPath
-          Kind: ChangeKind
-          OldPath: GovernedPath option }
+        {
+            Path: GovernedPath
+            Kind: ChangeKind
+            OldPath: GovernedPath option
+        }
 
     type WorkingTreeState =
-        { Dirty: GovernedPath list
-          Untracked: GovernedPath list }
+        {
+            Dirty: GovernedPath list
+            Untracked: GovernedPath list
+        }
 
     // ── CI / PR context (optional, never fabricated) ──
 
@@ -57,15 +65,15 @@ module Model =
         | Unknown
 
     type CiContext =
-        { Environment: CiEnvironment
-          PrLabels: string list
-          RequiredStatusChecks: string list }
+        {
+            Environment: CiEnvironment
+            PrLabels: string list
+            RequiredStatusChecks: string list
+        }
 
     // ── Provenance & diagnostics ──
 
-    type CommandRunDigest =
-        { Command: string
-          Digest: string }
+    type CommandRunDigest = { Command: string; Digest: string }
 
     type SensingDiagnosticId =
         | NotARepository
@@ -76,20 +84,24 @@ module Model =
         | UnparsableGitOutput
 
     type SensingDiagnostic =
-        { Id: SensingDiagnosticId
-          Operation: string
-          Message: string }
+        {
+            Id: SensingDiagnosticId
+            Operation: string
+            Message: string
+        }
 
     // ── The aggregate ──
 
     type RepoSnapshot =
-        { Range: DiffRange option
-          Changed: ChangedPath list
-          WorkingTree: WorkingTreeState
-          Branch: BranchName option
-          Ci: CiContext option
-          Digests: CommandRunDigest list
-          Diagnostics: SensingDiagnostic list }
+        {
+            Range: DiffRange option
+            Changed: ChangedPath list
+            WorkingTree: WorkingTreeState
+            Branch: BranchName option
+            Ci: CiContext option
+            Digests: CommandRunDigest list
+            Diagnostics: SensingDiagnostic list
+        }
 
     // ── Stable rendering (for messages, tests, and any later JSON) ──
 

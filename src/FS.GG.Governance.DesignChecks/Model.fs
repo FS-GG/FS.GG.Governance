@@ -13,19 +13,37 @@ module Model =
         | Resolves
         | Absent of entry: string
 
-    type TokenFact = { Token: string; Outcome: ResolveOutcome }
-    type CaptureFact = { Capture: string; Outcome: ResolveOutcome }
-    type ControlFact = { Control: string; Outcome: ResolveOutcome }
+    type TokenFact =
+        {
+            Token: string
+            Outcome: ResolveOutcome
+        }
+
+    type CaptureFact =
+        {
+            Capture: string
+            Outcome: ResolveOutcome
+        }
+
+    type ControlFact =
+        {
+            Control: string
+            Outcome: ResolveOutcome
+        }
 
     type ContrastFact =
-        { Pair: string
-          Ratio: decimal
-          Threshold: decimal
-          Meets: bool }
+        {
+            Pair: string
+            Ratio: decimal
+            Threshold: decimal
+            Meets: bool
+        }
 
     type DesignFacts =
-        { Tokens: TokenFact list
-          Captures: CaptureFact list
-          Controls: ControlFact list
-          Contrasts: ContrastFact list
-          CatalogUnavailable: string list }
+        {
+            Tokens: TokenFact list
+            Captures: CaptureFact list
+            Controls: ControlFact list
+            Contrasts: ContrastFact list
+            CatalogUnavailable: string list
+        }

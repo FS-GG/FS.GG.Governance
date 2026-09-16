@@ -7,8 +7,10 @@ module FSharpSurface =
 
     /// A declaration exported by a curated F# signature, with the documentation observed on that contract.
     type SignatureDeclaration =
-        { Name: string
-          HasXmlDocumentation: bool }
+        {
+            Name: string
+            HasXmlDocumentation: bool
+        }
 
     /// The machine-checked posture of a narrow exception to the curated-signature requirement.
     type Exemption =
@@ -19,45 +21,57 @@ module FSharpSurface =
     /// Facts for one compiled F# implementation module. Paths are repo-relative and compile indexes are the
     /// order from the owning project file; a signature must immediately precede its implementation.
     type ModuleFacts =
-        { Project: string
-          Source: GovernedPath
-          Signature: GovernedPath option
-          SourceCompileIndex: int
-          SignatureCompileIndex: int option
-          IsTestProject: bool
-          IsExplicitlyInternal: bool
-          IsEntryPoint: bool
-          IsGenerated: bool
-          Exemption: Exemption
-          Declarations: SignatureDeclaration list
-          SignatureMatchesSource: bool
-          RequiresSurfaceBaseline: bool
-          SurfaceBaselineCurrent: bool }
+        {
+            Project: string
+            Source: GovernedPath
+            Signature: GovernedPath option
+            SourceCompileIndex: int
+            SignatureCompileIndex: int option
+            IsTestProject: bool
+            IsExplicitlyInternal: bool
+            IsEntryPoint: bool
+            IsGenerated: bool
+            Exemption: Exemption
+            Declarations: SignatureDeclaration list
+            SignatureMatchesSource: bool
+            RequiresSurfaceBaseline: bool
+            SurfaceBaselineCurrent: bool
+        }
 
     /// Versioned, deterministic evidence for a single F# project evaluation.  `Malformed` is explicit so
     /// callers can fail closed instead of treating an unreadable project as a clean non-applicable surface.
     type ReceiptFinding =
-        { Code: string; File: string; Detail: string; IsInputState: bool
-          BaseSeverity: string; EffectiveSeverity: string; Evidence: string option }
+        {
+            Code: string
+            File: string
+            Detail: string
+            IsInputState: bool
+            BaseSeverity: string
+            EffectiveSeverity: string
+            Evidence: string option
+        }
+
     type Receipt =
-        { SchemaVersion: int
-          Kind: string
-          Applicability: string
-          Applicable: bool
-          ApplicabilityReason: string
-          Project: string
-          DeclaredGlob: string
-          CompiledSources: string list
-          MatchedModules: string list
-          MatchedModuleCount: int
-          Cardinality: string
-          Maturity: string
-          Findings: ReceiptFinding list
-          FreshnessDigest: string option
-          ConfigDigest: string option
-          PolicyDigest: string option
-          SourceDigest: string option
-          Malformed: string option }
+        {
+            SchemaVersion: int
+            Kind: string
+            Applicability: string
+            Applicable: bool
+            ApplicabilityReason: string
+            Project: string
+            DeclaredGlob: string
+            CompiledSources: string list
+            MatchedModules: string list
+            MatchedModuleCount: int
+            Cardinality: string
+            Maturity: string
+            Findings: ReceiptFinding list
+            FreshnessDigest: string option
+            ConfigDigest: string option
+            PolicyDigest: string option
+            SourceDigest: string option
+            Malformed: string option
+        }
 
     /// Read one SDK-style F# project and produce the ordered, compiled-module facts used by the policy.
     /// The sensor is deliberately conservative: unreadable project/source/signature input is an error, and

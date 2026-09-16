@@ -22,91 +22,100 @@ let private sid = SurfaceId "FS.GG.Governance.Sample"
 let tests =
     testList
         "ApiCompatibility rule (evaluate/rollup, additive)"
-        [ test "Met ⇒ exactly one Satisfied finding ⇒ Passing" {
-              let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Met ])
+        [
+            test "Met ⇒ exactly one Satisfied finding ⇒ Passing" {
+                let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
+                let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Met ])
 
-              Expect.equal decision.Passing.Length 1 "one passing finding"
-              Expect.isEmpty decision.Blockers "no blockers when Met"
-              Expect.isEmpty decision.Warnings "no warnings when Met"
-              Expect.equal decision.Verdict Pass "Met ⇒ Pass"
+                Expect.equal decision.Passing.Length 1 "one passing finding"
+                Expect.isEmpty decision.Blockers "no blockers when Met"
+                Expect.isEmpty decision.Warnings "no warnings when Met"
+                Expect.equal decision.Verdict Pass "Met ⇒ Pass"
 
-              let f = decision.Passing.Head.Finding
-              Expect.equal f.Kind ApiCompatibility "the finding is the ApiCompatibility rule"
-              Expect.equal f.Outcome Satisfied "Met ⇒ Satisfied"
-              Expect.stringContains f.Reason "apiCompatibility" "reason names the kind token (FR-003)"
-              Expect.stringContains f.Reason "FS.GG.Governance.Sample" "reason names the governed surface"
-          }
+                let f = decision.Passing.Head.Finding
+                Expect.equal f.Kind ApiCompatibility "the finding is the ApiCompatibility rule"
+                Expect.equal f.Outcome Satisfied "Met ⇒ Satisfied"
+                Expect.stringContains f.Reason "apiCompatibility" "reason names the kind token (FR-003)"
+                Expect.stringContains f.Reason "FS.GG.Governance.Sample" "reason names the governed surface"
+            }
 
-          test "Unmet under ADVISORY maturity ⇒ one Violated finding in Warnings (visible, non-blocking)" {
-              // advisory = base Blocking relaxed to effective Advisory → the Warnings bucket (US1).
-              let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unmet ])
+            test "Unmet under ADVISORY maturity ⇒ one Violated finding in Warnings (visible, non-blocking)" {
+                // advisory = base Blocking relaxed to effective Advisory → the Warnings bucket (US1).
+                let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
+                let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unmet ])
 
-              Expect.equal decision.Warnings.Length 1 "the breaking-under-bump violation is a visible Warning"
-              Expect.isEmpty decision.Blockers "advisory ⇒ never a blocker (Verdict unaffected)"
-              Expect.equal decision.Verdict Pass "advisory violation does not fail the verdict (US1)"
+                Expect.equal decision.Warnings.Length 1 "the breaking-under-bump violation is a visible Warning"
+                Expect.isEmpty decision.Blockers "advisory ⇒ never a blocker (Verdict unaffected)"
+                Expect.equal decision.Verdict Pass "advisory violation does not fail the verdict (US1)"
 
-              let f = decision.Warnings.Head.Finding
-              Expect.equal f.Outcome Violated "Unmet ⇒ Violated"
-              Expect.stringContains f.Reason "is not met" "reason states the expectation was not met"
-          }
+                let f = decision.Warnings.Head.Finding
+                Expect.equal f.Outcome Violated "Unmet ⇒ Violated"
+                Expect.stringContains f.Reason "is not met" "reason states the expectation was not met"
+            }
 
-          test "Unrecoverable (indeterminate / un-overlaid) ⇒ Violated, fail-safe (FR-008)" {
-              let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unrecoverable ])
+            test "Unrecoverable (indeterminate / un-overlaid) ⇒ Violated, fail-safe (FR-008)" {
+                let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
 
-              Expect.equal decision.Warnings.Length 1 "advisory ⇒ Warning"
+                let decision =
+                    Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unrecoverable ])
 
-              let f = decision.Warnings.Head.Finding
-              Expect.equal f.Outcome Violated "Unrecoverable ⇒ Violated (never silently satisfied)"
-              Expect.stringContains f.Reason "no recoverable evidence" "reason states no recoverable evidence"
-          }
+                Expect.equal decision.Warnings.Length 1 "advisory ⇒ Warning"
 
-          test "an ABSENT ApiCompatibility fact ⇒ Unrecoverable ⇒ Violated (foundational fail-safe by construction)" {
-              // No fact supplied for the kind ⇒ factFor returns Unrecoverable ⇒ Violated.
-              let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [])
+                let f = decision.Warnings.Head.Finding
+                Expect.equal f.Outcome Violated "Unrecoverable ⇒ Violated (never silently satisfied)"
+                Expect.stringContains f.Reason "no recoverable evidence" "reason states no recoverable evidence"
+            }
 
-              Expect.equal decision.Warnings.Length 1 "an un-overlaid declared rule is a visible advisory violation"
-              Expect.equal decision.Warnings.Head.Finding.Outcome Violated "absent fact ⇒ Violated"
-          }
+            test "an ABSENT ApiCompatibility fact ⇒ Unrecoverable ⇒ Violated (foundational fail-safe by construction)" {
+                // No fact supplied for the kind ⇒ factFor returns Unrecoverable ⇒ Violated.
+                let rules = [ relaxed ApiCompatibility "FS.GG.Governance.Sample" ]
+                let decision = Release.evaluateRelease rules (factsOf [])
 
-          // 088 US2 (T021): once promoted to BlockOnRelease, the SAME fact lands in Blockers with Verdict=Fail.
-          test "US2: Unmet under BlockOnRelease ⇒ Blockers + Verdict Fail (the required phase)" {
-              let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ] // base Blocking + BlockOnRelease
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unmet ])
+                Expect.equal decision.Warnings.Length 1 "an un-overlaid declared rule is a visible advisory violation"
+                Expect.equal decision.Warnings.Head.Finding.Outcome Violated "absent fact ⇒ Violated"
+            }
 
-              Expect.equal decision.Blockers.Length 1 "breaking-under-bump BLOCKS at BlockOnRelease"
-              Expect.isEmpty decision.Warnings "required ⇒ not a mere warning"
-              Expect.equal decision.Verdict Fail "Verdict = Fail"
-              Expect.equal decision.ExitCodeBasis ExitCodeBasis.Blocked "ExitCodeBasis = Blocked"
-          }
+            // 088 US2 (T021): once promoted to BlockOnRelease, the SAME fact lands in Blockers with Verdict=Fail.
+            test "US2: Unmet under BlockOnRelease ⇒ Blockers + Verdict Fail (the required phase)" {
+                let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ] // base Blocking + BlockOnRelease
+                let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unmet ])
 
-          test "US2: Unrecoverable under BlockOnRelease ⇒ Blockers (fail-safe required)" {
-              let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unrecoverable ])
-              Expect.equal decision.Blockers.Length 1 "indeterminate BLOCKS at BlockOnRelease (FR-008)"
-              Expect.equal decision.Verdict Fail "Verdict = Fail"
-          }
+                Expect.equal decision.Blockers.Length 1 "breaking-under-bump BLOCKS at BlockOnRelease"
+                Expect.isEmpty decision.Warnings "required ⇒ not a mere warning"
+                Expect.equal decision.Verdict Fail "Verdict = Fail"
+                Expect.equal decision.ExitCodeBasis ExitCodeBasis.Blocked "ExitCodeBasis = Blocked"
+            }
 
-          test "US2: Met under BlockOnRelease ⇒ Passing, Verdict Pass (a major-bumped break / no break)" {
-              let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ]
-              let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Met ])
-              Expect.equal decision.Passing.Length 1 "Met ⇒ Passing even when required"
-              Expect.equal decision.Verdict Pass "no-break / major-bump ⇒ Pass"
-          }
+            test "US2: Unrecoverable under BlockOnRelease ⇒ Blockers (fail-safe required)" {
+                let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ]
 
-          test "the additive case never disturbs the other rules' findings (additivity)" {
-              let rules =
-                  [ blocking VersionBump "pkg"
-                    relaxed ApiCompatibility "pkg" ]
+                let decision =
+                    Release.evaluateRelease rules (factsOf [ ApiCompatibility, Unrecoverable ])
 
-              let decision =
-                  Release.evaluateRelease rules (factsOf [ VersionBump, Met; ApiCompatibility, Unmet ])
+                Expect.equal decision.Blockers.Length 1 "indeterminate BLOCKS at BlockOnRelease (FR-008)"
+                Expect.equal decision.Verdict Fail "Verdict = Fail"
+            }
 
-              Expect.equal (decision.Passing.Length + decision.Warnings.Length + decision.Blockers.Length) 2 "one finding per rule"
-              Expect.equal decision.Passing.Length 1 "VersionBump Met ⇒ Passing"
-              Expect.equal decision.Warnings.Length 1 "ApiCompatibility Unmet (advisory) ⇒ Warnings"
-              ignore sid
-          } ]
+            test "US2: Met under BlockOnRelease ⇒ Passing, Verdict Pass (a major-bumped break / no break)" {
+                let rules = [ blocking ApiCompatibility "FS.GG.Governance.Sample" ]
+                let decision = Release.evaluateRelease rules (factsOf [ ApiCompatibility, Met ])
+                Expect.equal decision.Passing.Length 1 "Met ⇒ Passing even when required"
+                Expect.equal decision.Verdict Pass "no-break / major-bump ⇒ Pass"
+            }
+
+            test "the additive case never disturbs the other rules' findings (additivity)" {
+                let rules = [ blocking VersionBump "pkg"; relaxed ApiCompatibility "pkg" ]
+
+                let decision =
+                    Release.evaluateRelease rules (factsOf [ VersionBump, Met; ApiCompatibility, Unmet ])
+
+                Expect.equal
+                    (decision.Passing.Length + decision.Warnings.Length + decision.Blockers.Length)
+                    2
+                    "one finding per rule"
+
+                Expect.equal decision.Passing.Length 1 "VersionBump Met ⇒ Passing"
+                Expect.equal decision.Warnings.Length 1 "ApiCompatibility Unmet (advisory) ⇒ Warnings"
+                ignore sid
+            }
+        ]

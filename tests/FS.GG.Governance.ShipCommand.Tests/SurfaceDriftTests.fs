@@ -15,76 +15,87 @@ let private shipCommand = SurfaceDrift.assemblyNamed "FS.GG.Governance.ShipComma
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "ShipCommand" "FS.GG.Governance.ShipCommand" shipCommand
+        [
+            SurfaceDrift.surfaceTest "ShipCommand" "FS.GG.Governance.ShipCommand" shipCommand
 
-          test "the public API surface is exactly the Loop + Interpreter (+ 112 dry-run) modules (plus the Exe entry)" {
-              let typeNames = shipCommand.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
+            test "the public API surface is exactly the Loop + Interpreter (+ 112 dry-run) modules (plus the Exe entry)" {
+                let typeNames =
+                    shipCommand.GetExportedTypes()
+                    |> Array.choose (fun t -> Option.ofObj t.FullName)
 
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n.Contains "FS.GG.Governance.ShipCommand.LoopModule"))
-                  "Loop module is public"
+                Expect.isTrue
+                    (typeNames
+                     |> Array.exists (fun n -> n.Contains "FS.GG.Governance.ShipCommand.LoopModule"))
+                    "Loop module is public"
 
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n.Contains "FS.GG.Governance.ShipCommand.InterpreterModule"))
-                  "Interpreter module is public"
+                Expect.isTrue
+                    (typeNames
+                     |> Array.exists (fun n -> n.Contains "FS.GG.Governance.ShipCommand.InterpreterModule"))
+                    "Interpreter module is public"
 
-              // The non-Loop/Interpreter exported modules are the thin `Program` Exe entry (an
-              // [<EntryPoint>] module is always public) and the 112 dry-run cores (`Simulate` +
-              // `SimulateProjection`) — the intended Tier-1 surface delta. No argv-matcher / composition /
-              // writer helper leaks — those stay hidden by the `.fsi` contracts (Principle II).
-              let unexpected =
-                  typeNames
-                  |> Array.filter (fun n ->
-                      not (
-                          n.Contains "ShipCommand.LoopModule"
-                          || n.Contains "ShipCommand.InterpreterModule"
-                          || n.Contains "ShipCommand.SimulateModule" // 112: dry-run simulation core
-                          || n.Contains "ShipCommand.SimulateProjectionModule" // 112: dry-run projections
-                          || n.Contains "ShipCommand.Loop+" // nested DUs/records of Loop
-                          || n.Contains "ShipCommand.Interpreter+" // nested types of Interpreter
-                          || n.Contains "ShipCommand.Simulate+" // nested DUs/records of Simulate
-                          || n.Contains "ShipCommand.SimulateProjection+" // nested types of SimulateProjection
-                          || n.Contains "ShipCommand.Program"))
+                // The non-Loop/Interpreter exported modules are the thin `Program` Exe entry (an
+                // [<EntryPoint>] module is always public) and the 112 dry-run cores (`Simulate` +
+                // `SimulateProjection`) — the intended Tier-1 surface delta. No argv-matcher / composition /
+                // writer helper leaks — those stay hidden by the `.fsi` contracts (Principle II).
+                let unexpected =
+                    typeNames
+                    |> Array.filter (fun n ->
+                        not (
+                            n.Contains "ShipCommand.LoopModule"
+                            || n.Contains "ShipCommand.InterpreterModule"
+                            || n.Contains "ShipCommand.SimulateModule" // 112: dry-run simulation core
+                            || n.Contains "ShipCommand.SimulateProjectionModule" // 112: dry-run projections
+                            || n.Contains "ShipCommand.Loop+" // nested DUs/records of Loop
+                            || n.Contains "ShipCommand.Interpreter+" // nested types of Interpreter
+                            || n.Contains "ShipCommand.Simulate+" // nested DUs/records of Simulate
+                            || n.Contains "ShipCommand.SimulateProjection+" // nested types of SimulateProjection
+                            || n.Contains "ShipCommand.Program"
+                        ))
 
-              Expect.isEmpty unexpected (sprintf "only Loop/Interpreter/Simulate/SimulateProjection (+ Program entry) are public; found extra: %A" unexpected)
-          }
+                Expect.isEmpty
+                    unexpected
+                    (sprintf
+                        "only Loop/Interpreter/Simulate/SimulateProjection (+ Program entry) are public; found extra: %A"
+                        unexpected)
+            }
 
-          SurfaceDrift.referencesOnly
-              "ShipCommand"
-              (fun n ->
-                  n = "FS.GG.Governance.Config"
-                  || n = "FS.GG.Governance.Snapshot"
-                  || n = "FS.GG.Governance.Routing"
-                  || n = "FS.GG.Governance.Findings"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.Route"
-                  || n = "FS.GG.Governance.Adapters.SddHandoff"
-                  || n = "FS.GG.Governance.Enforcement"
-                  || n = "FS.GG.Governance.Ship"
-                  || n = "FS.GG.Governance.Inheritance" // WI-5/ADR-0049: profile-bound gate floor, folded pre-rollup
-                  || n = "FS.GG.Governance.AuditJson"
-                  || n = "FS.GG.Governance.JsonText" // 112: shared compact JSON writer for SimulateProjection
-                  || n = "FS.GG.Governance.HumanText"
-                  || n = "FS.GG.Governance.HumanRender"
-                  || n = "FS.GG.Governance.CacheEligibility"
-                  || n = "FS.GG.Governance.FreshnessSensing"
-                  || n = "FS.GG.Governance.FreshnessResolution"
-                  || n = "FS.GG.Governance.EvidenceReuse"
-                  || n = "FS.GG.Governance.FreshnessKey"
-                  || n = "FS.GG.Governance.EvidenceReuseStore"
-                  || n = "FS.GG.Governance.GateRun"
-                  || n = "FS.GG.Governance.GateExecution"
-                  || n = "FS.GG.Governance.EvidenceCapture"
-                  || n = "FS.GG.Governance.CommandHost"
-                  || n = "FS.GG.Governance.ExecutionRecord"
-                  || n = "FS.GG.Governance.CommandRecord"
-                  || n = "FS.GG.Governance.CostBudget"
-                  || n = "FS.GG.Governance.CommandKind"
-                  || n = "FS.GG.Governance.CostBudgetJson"
-                  || n = "FS.GG.Governance.ProvenanceJson"
-                  || n = "FS.GG.Governance.Provenance"
-                  || n = "FS.GG.Governance.AgentReviewKey"
-                  || n = "FS.GG.Governance.CurrencyEnforcement"
-                  || n = "FS.GG.Governance.CurrencySensing"
-                  || n = "FS.GG.Governance.RefreshJson")
-              shipCommand ]
+            SurfaceDrift.referencesOnly
+                "ShipCommand"
+                (fun n ->
+                    n = "FS.GG.Governance.Config"
+                    || n = "FS.GG.Governance.Snapshot"
+                    || n = "FS.GG.Governance.Routing"
+                    || n = "FS.GG.Governance.Findings"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.Route"
+                    || n = "FS.GG.Governance.Adapters.SddHandoff"
+                    || n = "FS.GG.Governance.Enforcement"
+                    || n = "FS.GG.Governance.Ship"
+                    || n = "FS.GG.Governance.Inheritance" // WI-5/ADR-0049: profile-bound gate floor, folded pre-rollup
+                    || n = "FS.GG.Governance.AuditJson"
+                    || n = "FS.GG.Governance.JsonText" // 112: shared compact JSON writer for SimulateProjection
+                    || n = "FS.GG.Governance.HumanText"
+                    || n = "FS.GG.Governance.HumanRender"
+                    || n = "FS.GG.Governance.CacheEligibility"
+                    || n = "FS.GG.Governance.FreshnessSensing"
+                    || n = "FS.GG.Governance.FreshnessResolution"
+                    || n = "FS.GG.Governance.EvidenceReuse"
+                    || n = "FS.GG.Governance.FreshnessKey"
+                    || n = "FS.GG.Governance.EvidenceReuseStore"
+                    || n = "FS.GG.Governance.GateRun"
+                    || n = "FS.GG.Governance.GateExecution"
+                    || n = "FS.GG.Governance.EvidenceCapture"
+                    || n = "FS.GG.Governance.CommandHost"
+                    || n = "FS.GG.Governance.ExecutionRecord"
+                    || n = "FS.GG.Governance.CommandRecord"
+                    || n = "FS.GG.Governance.CostBudget"
+                    || n = "FS.GG.Governance.CommandKind"
+                    || n = "FS.GG.Governance.CostBudgetJson"
+                    || n = "FS.GG.Governance.ProvenanceJson"
+                    || n = "FS.GG.Governance.Provenance"
+                    || n = "FS.GG.Governance.AgentReviewKey"
+                    || n = "FS.GG.Governance.CurrencyEnforcement"
+                    || n = "FS.GG.Governance.CurrencySensing"
+                    || n = "FS.GG.Governance.RefreshJson")
+                shipCommand
+        ]

@@ -3,16 +3,16 @@ module FS.GG.Governance.JsonWriters.Tests.JsonWritersTests
 open Expecto
 open FS.GG.Governance.JsonText
 open FS.GG.Governance.JsonWriters
-open FS.GG.Governance.Config.Model             // TimeoutLimit
-open FS.GG.Governance.Gates.Model              // GateId
-open FS.GG.Governance.GateRun.Model            // GateOutcome, GateDisposition
-open FS.GG.Governance.CommandRecord            // CommandRecord.build
-open FS.GG.Governance.CommandRecord.Model      // ExitCode, ReproducibleFacts, SensedDuration, …
-open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause, InputCategory via FreshnessKey
-open FS.GG.Governance.FreshnessKey.Model       // InputCategory
-open FS.GG.Governance.CommandKind              // Audit (runIdentity)
-open FS.GG.Governance.CommandKind.Model        // KindedCommandRun, CommandKind
-open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, entry, verdict
+open FS.GG.Governance.Config.Model // TimeoutLimit
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.GateRun.Model // GateOutcome, GateDisposition
+open FS.GG.Governance.CommandRecord // CommandRecord.build
+open FS.GG.Governance.CommandRecord.Model // ExitCode, ReproducibleFacts, SensedDuration, …
+open FS.GG.Governance.EvidenceReuse.Model // RecomputeCause, InputCategory via FreshnessKey
+open FS.GG.Governance.FreshnessKey.Model // InputCategory
+open FS.GG.Governance.CommandKind // Audit (runIdentity)
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun, CommandKind
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport, entry, verdict
 
 // Semantic tests for the 073 sub-object/map writer leaf, exercising the PUBLIC surface over REAL,
 // literally-constructed domain values (Principle V — real values, no mocks). The emitted byte-shape is
@@ -25,86 +25,107 @@ let private render f = JsonText.writeToString f
 let tests =
     testList
         "JsonWriters"
-        [ test "writeCause emits the tagged noPriorEvidence object (no categories field)" {
-              let actual = render (fun w -> JsonWriters.writeCause w NoPriorEvidence)
-              Expect.equal actual """{"kind":"noPriorEvidence"}""" "noPriorEvidence"
-          }
+        [
+            test "writeCause emits the tagged noPriorEvidence object (no categories field)" {
+                let actual = render (fun w -> JsonWriters.writeCause w NoPriorEvidence)
+                Expect.equal actual """{"kind":"noPriorEvidence"}""" "noPriorEvidence"
+            }
 
-          test "writeCause emits inputsChanged with categories in order" {
-              let actual =
-                  render (fun w -> JsonWriters.writeCause w (InputsChanged [ CheckIdentity; DomainIdentity ]))
+            test "writeCause emits inputsChanged with categories in order" {
+                let actual =
+                    render (fun w -> JsonWriters.writeCause w (InputsChanged [ CheckIdentity; DomainIdentity ]))
 
-              Expect.equal actual """{"kind":"inputsChanged","categories":["check","domain"]}""" "inputsChanged"
-          }
+                Expect.equal actual """{"kind":"inputsChanged","categories":["check","domain"]}""" "inputsChanged"
+            }
 
-          test "writeExecution emits disposition/exitCode/passed for an executed gate" {
-              let outcome =
-                  { GateId = GateId "g1"
-                    Disposition = Executed(ExitCode 0, true) }
+            test "writeExecution emits disposition/exitCode/passed for an executed gate" {
+                let outcome =
+                    {
+                        GateId = GateId "g1"
+                        Disposition = Executed(ExitCode 0, true)
+                    }
 
-              let actual = render (fun w -> JsonWriters.writeExecution w outcome)
-              Expect.equal actual """{"disposition":"executed","exitCode":0,"passed":true}""" "executed"
-          }
+                let actual = render (fun w -> JsonWriters.writeExecution w outcome)
+                Expect.equal actual """{"disposition":"executed","exitCode":0,"passed":true}""" "executed"
+            }
 
-          test "writeExecution omits exitCode/passed for a not-executed gate (camelCase notExecuted)" {
-              let outcome =
-                  { GateId = GateId "g1"
-                    Disposition = NotExecuted }
+            test "writeExecution omits exitCode/passed for a not-executed gate (camelCase notExecuted)" {
+                let outcome =
+                    {
+                        GateId = GateId "g1"
+                        Disposition = NotExecuted
+                    }
 
-              let actual = render (fun w -> JsonWriters.writeExecution w outcome)
-              Expect.equal actual """{"disposition":"notExecuted"}""" "notExecuted omits fields"
-          }
+                let actual = render (fun w -> JsonWriters.writeExecution w outcome)
+                Expect.equal actual """{"disposition":"notExecuted"}""" "notExecuted omits fields"
+            }
 
-          test "outcomeByGate keys by gate-id string, first-by-list-order-wins" {
-              let a =
-                  { GateId = GateId "g1"
-                    Disposition = Executed(ExitCode 0, true) }
+            test "outcomeByGate keys by gate-id string, first-by-list-order-wins" {
+                let a =
+                    {
+                        GateId = GateId "g1"
+                        Disposition = Executed(ExitCode 0, true)
+                    }
 
-              let b =
-                  { GateId = GateId "g1"
-                    Disposition = NotExecuted }
+                let b =
+                    {
+                        GateId = GateId "g1"
+                        Disposition = NotExecuted
+                    }
 
-              let m = JsonWriters.outcomeByGate [ (GateId "g1", a); (GateId "g1", b) ]
-              Expect.equal (Map.find "g1" m) a "first entry by list order wins"
-          }
+                let m = JsonWriters.outcomeByGate [ (GateId "g1", a); (GateId "g1", b) ]
+                Expect.equal (Map.find "g1" m) a "first entry by list order wins"
+            }
 
-          test "verdictByGate keys by gate-id string, first-by-report-order-wins" {
-              let report =
-                  CacheEligibilityReport
-                      [ { Gate = GateId "g1"; Verdict = MustRecompute NoPriorEvidence }
-                        { Gate = GateId "g1"; Verdict = MustRecompute(InputsChanged []) } ]
+            test "verdictByGate keys by gate-id string, first-by-report-order-wins" {
+                let report =
+                    CacheEligibilityReport
+                        [
+                            {
+                                Gate = GateId "g1"
+                                Verdict = MustRecompute NoPriorEvidence
+                            }
+                            {
+                                Gate = GateId "g1"
+                                Verdict = MustRecompute(InputsChanged [])
+                            }
+                        ]
 
-              let m = JsonWriters.verdictByGate report
-              Expect.equal (Map.find "g1" m) (MustRecompute NoPriorEvidence) "first entry by report order wins"
-          }
+                let m = JsonWriters.verdictByGate report
+                Expect.equal (Map.find "g1" m) (MustRecompute NoPriorEvidence) "first entry by report order wins"
+            }
 
-          // JSON-3: writeRun was hoisted here from AttestationJson/ProvenanceJson (byte-identical copies). Its
-          // field order `kind`, `identity`, `exitCode`, `durationNanos` is what both projection goldens depend
-          // on; `identity` is re-derived here through the real Audit.runIdentity (Principle V — real values).
-          test "writeRun emits kind/identity/exitCode/durationNanos in order over a real record" {
-              let record =
-                  CommandRecord.build
-                      (Executable "gcc")
-                      [ Argument "-c"; Argument "main.c" ]
-                      (WorkingDirectory "/work")
-                      { Added = []; Changed = []; Removed = [] }
-                      (TimeoutLimit 30)
-                      (ExitCode 137)
-                      (OutputDigest "sha-out")
-                      (OutputDigest "sha-err")
-                      NoCapturedOutput
-                      (SensedDuration 333L)
+            // JSON-3: writeRun was hoisted here from AttestationJson/ProvenanceJson (byte-identical copies). Its
+            // field order `kind`, `identity`, `exitCode`, `durationNanos` is what both projection goldens depend
+            // on; `identity` is re-derived here through the real Audit.runIdentity (Principle V — real values).
+            test "writeRun emits kind/identity/exitCode/durationNanos in order over a real record" {
+                let record =
+                    CommandRecord.build
+                        (Executable "gcc")
+                        [ Argument "-c"; Argument "main.c" ]
+                        (WorkingDirectory "/work")
+                        {
+                            Added = []
+                            Changed = []
+                            Removed = []
+                        }
+                        (TimeoutLimit 30)
+                        (ExitCode 137)
+                        (OutputDigest "sha-out")
+                        (OutputDigest "sha-err")
+                        NoCapturedOutput
+                        (SensedDuration 333L)
 
-              let run = { Kind = Pack; Record = record }
+                let run = { Kind = Pack; Record = record }
 
-              // identity is a multi-line canonical string; encode it exactly as the writer does so the
-              // expected bytes (and field ORDER) are pinned without hand-escaping.
-              let identityJson =
-                  System.Text.Json.JsonSerializer.Serialize(Audit.runIdentity run)
+                // identity is a multi-line canonical string; encode it exactly as the writer does so the
+                // expected bytes (and field ORDER) are pinned without hand-escaping.
+                let identityJson = System.Text.Json.JsonSerializer.Serialize(Audit.runIdentity run)
 
-              let expected =
-                  sprintf """{"kind":"pack","identity":%s,"exitCode":137,"durationNanos":333}""" identityJson
+                let expected =
+                    sprintf """{"kind":"pack","identity":%s,"exitCode":137,"durationNanos":333}""" identityJson
 
-              let actual = render (fun w -> JsonWriters.writeRun w run)
-              Expect.equal actual expected "writeRun field order + values"
-          } ]
+                let actual = render (fun w -> JsonWriters.writeRun w run)
+                Expect.equal actual expected "writeRun field order + values"
+            }
+        ]

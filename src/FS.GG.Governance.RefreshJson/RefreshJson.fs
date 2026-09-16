@@ -61,8 +61,10 @@ module RefreshJson =
         w.WriteString("status", statusToken view.Status)
         w.WritePropertyName "drifted"
         w.WriteStartArray()
+
         for cat in view.Drifted do
             w.WriteStringValue(categoryToken cat)
+
         w.WriteEndArray()
 
         match reasonOf view.Status with
@@ -93,8 +95,10 @@ module RefreshJson =
 
             w.WritePropertyName "views"
             w.WriteStartArray()
+
             for v in decision.Views do
                 writeView w v
+
             w.WriteEndArray()
 
             w.WriteEndObject())

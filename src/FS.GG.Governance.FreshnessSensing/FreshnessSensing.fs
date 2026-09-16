@@ -26,10 +26,12 @@ open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, RecordedEvidence, Evide
 module FreshnessSensing =
 
     type FreshnessSensor =
-        { SenseRuleHash: unit -> RuleHash option
-          SenseGeneratorVersion: unit -> GeneratorVersion option
-          SenseCoveredArtifacts: Gate -> ArtifactHash list option
-          SenseCommandVersion: CommandId -> CommandVersion option }
+        {
+            SenseRuleHash: unit -> RuleHash option
+            SenseGeneratorVersion: unit -> GeneratorVersion option
+            SenseCoveredArtifacts: Gate -> ArtifactHash list option
+            SenseCommandVersion: CommandId -> CommandVersion option
+        }
 
     type StoreReader = string -> Result<ReuseStore option, string>
 
@@ -37,7 +39,10 @@ module FreshnessSensing =
 
     let sha256Hex (bytes: byte[]) : string =
         use sha = SHA256.Create()
-        sha.ComputeHash bytes |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+        sha.ComputeHash bytes
+        |> Array.map (fun b -> b.ToString("x2"))
+        |> String.concat ""
 
     // Injective concatenation of byte segments: each segment is preceded by its big-endian 4-byte length,
     // so a reader (and the hash) can never confuse where one segment ends and the next begins. This is the
@@ -146,32 +151,38 @@ module FreshnessSensing =
     let strArr (el: JsonElement) (name: string) : string list =
         match el.TryGetProperty name with
         | true, v when v.ValueKind = JsonValueKind.Array ->
-            [ for x in v.EnumerateArray() ->
-                  match x.ValueKind with
-                  | JsonValueKind.String ->
-                      match x.GetString() with
-                      | null -> failwithf "null element in %s" name
-                      | s -> s
-                  | _ -> failwithf "non-string element in %s" name ]
+            [
+                for x in v.EnumerateArray() ->
+                    match x.ValueKind with
+                    | JsonValueKind.String ->
+                        match x.GetString() with
+                        | null -> failwithf "null element in %s" name
+                        | s -> s
+                    | _ -> failwithf "non-string element in %s" name
+            ]
         | _ -> failwithf "missing or non-array field: %s" name
 
     let parseEntry (el: JsonElement) : RecordedEvidence =
         // Built via the public F029/F030 constructors only — computes NO hash/key/digest (FR-013); the
         // opaque newtype strings are taken verbatim from the document.
         let inputs: FreshnessInputs =
-            { Check = CheckId(reqStr el "check")
-              Domain = DomainId(reqStr el "domain")
-              Command = optStr el "command" |> Option.map CommandId
-              Environment = parseEnv (reqStr el "environment")
-              RuleHash = RuleHash(reqStr el "ruleHash")
-              CoveredArtifacts = strArr el "coveredArtifacts" |> List.map ArtifactHash
-              CommandVersion = optStr el "commandVersion" |> Option.map CommandVersion
-              GeneratorVersion = GeneratorVersion(reqStr el "generatorVersion")
-              Base = Revision(reqStr el "base")
-              Head = Revision(reqStr el "head") }
+            {
+                Check = CheckId(reqStr el "check")
+                Domain = DomainId(reqStr el "domain")
+                Command = optStr el "command" |> Option.map CommandId
+                Environment = parseEnv (reqStr el "environment")
+                RuleHash = RuleHash(reqStr el "ruleHash")
+                CoveredArtifacts = strArr el "coveredArtifacts" |> List.map ArtifactHash
+                CommandVersion = optStr el "commandVersion" |> Option.map CommandVersion
+                GeneratorVersion = GeneratorVersion(reqStr el "generatorVersion")
+                Base = Revision(reqStr el "base")
+                Head = Revision(reqStr el "head")
+            }
 
-        { Inputs = inputs
-          Evidence = EvidenceRef(reqStr el "evidence") }
+        {
+            Inputs = inputs
+            Evidence = EvidenceRef(reqStr el "evidence")
+        }
 
     let parseStore (json: string) : Result<ReuseStore, string> =
         try
@@ -213,17 +224,20 @@ module FreshnessSensing =
         let covered = senseSrcHashes repo
         let gv = toolVersion ()
 
-        { SenseRuleHash = fun () -> catalogHash |> Option.map RuleHash
-          SenseGeneratorVersion = fun () -> Some(GeneratorVersion gv)
-          // MVP: a gate covers the repo's `src/**` surface (finer per-gate scoping deferred).
-          SenseCoveredArtifacts = fun _gate -> Some covered
-          // MVP coarse command version: a short digest of the command id stamped against the rule pack
-          // it is declared in (changes when the rule pack changes). Cheap, real, deterministic; richer
-          // command-version sensing is a later refinement. `None` when no catalog (unsensed, no-hide).
-          SenseCommandVersion =
-            fun (CommandId c) ->
-                catalogHash
-                |> Option.map (fun h -> CommandVersion((sha256Hex (Encoding.UTF8.GetBytes(c + "@" + h))).Substring(0, 12))) }
+        {
+            SenseRuleHash = fun () -> catalogHash |> Option.map RuleHash
+            SenseGeneratorVersion = fun () -> Some(GeneratorVersion gv)
+            // MVP: a gate covers the repo's `src/**` surface (finer per-gate scoping deferred).
+            SenseCoveredArtifacts = fun _gate -> Some covered
+            // MVP coarse command version: a short digest of the command id stamped against the rule pack
+            // it is declared in (changes when the rule pack changes). Cheap, real, deterministic; richer
+            // command-version sensing is a later refinement. `None` when no catalog (unsensed, no-hide).
+            SenseCommandVersion =
+                fun (CommandId c) ->
+                    catalogHash
+                    |> Option.map (fun h ->
+                        CommandVersion((sha256Hex (Encoding.UTF8.GetBytes(c + "@" + h))).Substring(0, 12)))
+        }
 
     // ── senseFreshness — assemble SensedFacts (the F044 SenseFreshness handler body); TOTAL/guarded ──
 
@@ -254,12 +268,14 @@ module FreshnessSensing =
                 |> Map.ofList
 
             let facts: SensedFacts =
-                { RuleHash = ruleHash
-                  GeneratorVersion = genVer
-                  Base = baseOpt
-                  Head = headOpt
-                  CoveredArtifacts = covered
-                  CommandVersions = commandVersions }
+                {
+                    RuleHash = ruleHash
+                    GeneratorVersion = genVer
+                    Base = baseOpt
+                    Head = headOpt
+                    CoveredArtifacts = covered
+                    CommandVersions = commandVersions
+                }
 
             Ok facts
         with e ->

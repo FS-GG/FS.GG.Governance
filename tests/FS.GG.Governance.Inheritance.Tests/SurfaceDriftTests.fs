@@ -13,37 +13,43 @@ let private asm = SurfaceDrift.assemblyNamed "FS.GG.Governance.Inheritance"
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Inheritance" "FS.GG.Governance.Inheritance" asm
+        [
+            SurfaceDrift.surfaceTest "Inheritance" "FS.GG.Governance.Inheritance" asm
 
-          test "the embedded reference-floor table and facts skeleton stay hidden" {
-              let surfaceText = SurfaceDrift.renderSurface asm
+            test "the embedded reference-floor table and facts skeleton stay hidden" {
+                let surfaceText = SurfaceDrift.renderSurface asm
 
-              for hidden in [ "referenceChecks"; "refFacts" ] do
-                  Expect.isFalse (surfaceText.Contains hidden) (sprintf "%s must be hidden (absent from Inheritance.fsi)" hidden)
-          }
+                for hidden in [ "referenceChecks"; "refFacts" ] do
+                    Expect.isFalse
+                        (surfaceText.Contains hidden)
+                        (sprintf "%s must be hidden (absent from Inheritance.fsi)" hidden)
+            }
 
-          test "the surface exposes no verdict/ship/IO/CLI member (pure composition only)" {
-              let surfaceText = (SurfaceDrift.renderSurface asm).ToLowerInvariant()
+            test "the surface exposes no verdict/ship/IO/CLI member (pure composition only)" {
+                let surfaceText = (SurfaceDrift.renderSurface asm).ToLowerInvariant()
 
-              for forbidden in [ "verdict"; "rollup"; "writeall"; "filestream"; "httpclient" ] do
-                  Expect.isFalse (surfaceText.Contains forbidden) (sprintf "no %s member (pure composition)" forbidden)
-          }
+                for forbidden in [ "verdict"; "rollup"; "writeall"; "filestream"; "httpclient" ] do
+                    Expect.isFalse
+                        (surfaceText.Contains forbidden)
+                        (sprintf "no %s member (pure composition)" forbidden)
+            }
 
-          SurfaceDrift.referencesOnly
-              "Inheritance"
-              (fun n ->
-                  n = "FS.GG.Governance.Config"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.Route"
-                  || n = "FS.GG.Governance.Findings"
-                  || n = "FS.GG.Governance.Routing"
-                  // #385 / docs/decisions/0012: `ReferenceProfile.checksFor` BINDS the composed F#
-                  // constitution profile (`SurfaceChecks.Profile.checks`) rather than restating it,
-                  // so the org profile keeps one authority. `SurfaceChecks` is a pure vocabulary
-                  // project referencing only Config and Enforcement — it reaches no verdict, no
-                  // ship rollup and no I/O, so this edge does not widen what the assertions above
-                  // fence. Acyclic: nothing in SurfaceChecks reaches Inheritance.
-                  || n = "FS.GG.Governance.SurfaceChecks"
-                  // …and Enforcement arrives transitively through it.
-                  || n = "FS.GG.Governance.Enforcement")
-              asm ]
+            SurfaceDrift.referencesOnly
+                "Inheritance"
+                (fun n ->
+                    n = "FS.GG.Governance.Config"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.Route"
+                    || n = "FS.GG.Governance.Findings"
+                    || n = "FS.GG.Governance.Routing"
+                    // #385 / docs/decisions/0012: `ReferenceProfile.checksFor` BINDS the composed F#
+                    // constitution profile (`SurfaceChecks.Profile.checks`) rather than restating it,
+                    // so the org profile keeps one authority. `SurfaceChecks` is a pure vocabulary
+                    // project referencing only Config and Enforcement — it reaches no verdict, no
+                    // ship rollup and no I/O, so this edge does not widen what the assertions above
+                    // fence. Acyclic: nothing in SurfaceChecks reaches Inheritance.
+                    || n = "FS.GG.Governance.SurfaceChecks"
+                    // …and Enforcement arrives transitively through it.
+                    || n = "FS.GG.Governance.Enforcement")
+                asm
+        ]

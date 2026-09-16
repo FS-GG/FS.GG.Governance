@@ -15,11 +15,13 @@ module Interpreter =
     /// Injected port — the four catalog readers. The ONLY seam through which a design catalog is read.
     /// `System.IO` / `System.Text.Json` only (FR-007).
     type DesignPort =
-        { ReadDescriptor: GovernedPath -> Result<string, string>
-          ReadTokenCatalog: unit -> Result<Set<string>, string>
-          ReadCaptureCatalog: unit -> Result<Set<string>, string>
-          ReadControlCatalog: unit -> Result<Set<string>, string>
-          ReadContrastCatalog: unit -> Result<Map<string, decimal * decimal>, string> }
+        {
+            ReadDescriptor: GovernedPath -> Result<string, string>
+            ReadTokenCatalog: unit -> Result<Set<string>, string>
+            ReadCaptureCatalog: unit -> Result<Set<string>, string>
+            ReadControlCatalog: unit -> Result<Set<string>, string>
+            ReadContrastCatalog: unit -> Result<Map<string, decimal * decimal>, string>
+        }
 
     /// Build the REAL port for a repo working dir + a catalog layout `(token, capture, control, contrast)` of
     /// repo-relative JSON catalog paths. Reads via `System.IO` / `System.Text.Json` only (no rendering).
@@ -29,6 +31,4 @@ module Interpreter =
     /// control ids) and the four catalogs, resolves each reference + every contrast pair, and records an
     /// absent/unreadable catalog or descriptor in `CatalogUnavailable` (every exception caught, FR-012).
     val senseDesign:
-        port: DesignPort ->
-        request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest ->
-            Model.DesignFacts
+        port: DesignPort -> request: FS.GG.Governance.SurfaceChecks.Model.SurfaceCheckRequest -> Model.DesignFacts

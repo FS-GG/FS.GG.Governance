@@ -22,54 +22,72 @@ let private schemaOf (text: string) =
 let tests =
     testList
         "EndToEnd"
-        [ test "real repo + real store ⇒ schema-valid artifacts, a reusable gate, byte-identical re-run" {
-              withTempRepo (fun dir ->
-                  let ports = Interpreter.realPorts dir
-                  // DefaultRange over a clean working tree senses nothing; `--since HEAD~1` senses the
-                  // committed src edit (the RouteCommand e2e precedent).
-                  let snap = FS.GG.Governance.Snapshot.Interpreter.senseSnapshot ports.Git (sinceOpts "HEAD~1")
-                  let baseHead = baseHeadOfSnapshot snap
-                  let candidates = snap.Changed |> List.map (fun c -> c.Path)
-                  let gates = selectedGatesOf validCatalog candidates
+        [
+            test "real repo + real store ⇒ schema-valid artifacts, a reusable gate, byte-identical re-run" {
+                withTempRepo (fun dir ->
+                    let ports = Interpreter.realPorts dir
+                    // DefaultRange over a clean working tree senses nothing; `--since HEAD~1` senses the
+                    // committed src edit (the RouteCommand e2e precedent).
+                    let snap =
+                        FS.GG.Governance.Snapshot.Interpreter.senseSnapshot ports.Git (sinceOpts "HEAD~1")
 
-                  Expect.isNonEmpty gates "the committed src edit selects gates"
+                    let baseHead = baseHeadOfSnapshot snap
+                    let candidates = snap.Changed |> List.map (fun c -> c.Path)
+                    let gates = selectedGatesOf validCatalog candidates
 
-                  // Assemble the SensedFacts the real sensor produces, resolve, and prepare a store entry from
-                  // a genuinely-resolved gate's inputs (so the match is real, never fabricated).
-                  let sensed = assembleSensed ports.Freshness gates baseHead
-                  let resolved = FreshnessResolution.resolve gates sensed |> FreshnessResolution.entries |> List.choose FreshnessResolution.candidate
+                    Expect.isNonEmpty gates "the committed src edit selects gates"
 
-                  Expect.isNonEmpty resolved "the real sensor fully senses at least one gate ⇒ it resolves"
+                    // Assemble the SensedFacts the real sensor produces, resolve, and prepare a store entry from
+                    // a genuinely-resolved gate's inputs (so the match is real, never fabricated).
+                    let sensed = assembleSensed ports.Freshness gates baseHead
 
-                  let store =
-                      resolved
-                      |> List.truncate 1
-                      |> List.map (fun c -> { Inputs = c.Inputs; Evidence = EvidenceRef "ev-e2e" })
-                      |> ReuseStore
+                    let resolved =
+                        FreshnessResolution.resolve gates sensed
+                        |> FreshnessResolution.entries
+                        |> List.choose FreshnessResolution.candidate
 
-                  writeFile dir "readiness/evidence-reuse.json" (serializeStore store)
+                    Expect.isNonEmpty resolved "the real sensor fully senses at least one gate ⇒ it resolves"
 
-                  let req =
-                      { requestFor (Loop.Since "HEAD~1") Loop.Human with
-                          Repo = dir
-                          StorePath = Path.Combine(dir, "readiness/evidence-reuse.json")
-                          CacheOut = Path.Combine(dir, "readiness/cache-eligibility.json")
-                          UnresolvedOut = Path.Combine(dir, "readiness/cache-eligibility.unresolved.json") }
+                    let store =
+                        resolved
+                        |> List.truncate 1
+                        |> List.map (fun c ->
+                            {
+                                Inputs = c.Inputs
+                                Evidence = EvidenceRef "ev-e2e"
+                            })
+                        |> ReuseStore
 
-                  let model = Interpreter.run ports req
-                  Expect.equal model.Exit Loop.Success "exit 0"
+                    writeFile dir "readiness/evidence-reuse.json" (serializeStore store)
 
-                  let cacheText = File.ReadAllText req.CacheOut
-                  let sideText = File.ReadAllText req.UnresolvedOut
+                    let req =
+                        { requestFor (Loop.Since "HEAD~1") Loop.Human with
+                            Repo = dir
+                            StorePath = Path.Combine(dir, "readiness/evidence-reuse.json")
+                            CacheOut = Path.Combine(dir, "readiness/cache-eligibility.json")
+                            UnresolvedOut = Path.Combine(dir, "readiness/cache-eligibility.unresolved.json")
+                        }
 
-                  Expect.equal (schemaOf cacheText) "fsgg.cache-eligibility/v1" "cache-eligibility.json schema id"
-                  Expect.equal (schemaOf sideText) Loop.unresolvedSchemaVersion "sidecar schema id"
-                  Expect.stringContains cacheText "reusable" "the prepared gate is reusable over the real path (L13)"
-                  Expect.stringContains cacheText "ev-e2e" "carries the real evidence reference"
+                    let model = Interpreter.run ports req
+                    Expect.equal model.Exit Loop.Success "exit 0"
 
-                  // Re-run over the same state ⇒ byte-identical artifacts (determinism, SC-004).
-                  let model2 = Interpreter.run ports req
-                  Expect.equal model2.Exit Loop.Success "re-run exit 0"
-                  Expect.equal (File.ReadAllText req.CacheOut) cacheText "cache-eligibility.json byte-identical on re-run"
-                  Expect.equal (File.ReadAllText req.UnresolvedOut) sideText "sidecar byte-identical on re-run")
-          } ]
+                    let cacheText = File.ReadAllText req.CacheOut
+                    let sideText = File.ReadAllText req.UnresolvedOut
+
+                    Expect.equal (schemaOf cacheText) "fsgg.cache-eligibility/v1" "cache-eligibility.json schema id"
+                    Expect.equal (schemaOf sideText) Loop.unresolvedSchemaVersion "sidecar schema id"
+                    Expect.stringContains cacheText "reusable" "the prepared gate is reusable over the real path (L13)"
+                    Expect.stringContains cacheText "ev-e2e" "carries the real evidence reference"
+
+                    // Re-run over the same state ⇒ byte-identical artifacts (determinism, SC-004).
+                    let model2 = Interpreter.run ports req
+                    Expect.equal model2.Exit Loop.Success "re-run exit 0"
+
+                    Expect.equal
+                        (File.ReadAllText req.CacheOut)
+                        cacheText
+                        "cache-eligibility.json byte-identical on re-run"
+
+                    Expect.equal (File.ReadAllText req.UnresolvedOut) sideText "sidecar byte-identical on re-run")
+            }
+        ]

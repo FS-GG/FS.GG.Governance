@@ -24,78 +24,111 @@ let repoRoot =
 
 /// A declared surface with an optional evidence tag.
 let surface (id: string) (cls: SurfaceClass) (tag: string option) : Surface =
-    { Id = SurfaceId id
-      Class = cls
-      Paths = [ normalizePath (id + "/path") ]
-      Owner = Owner "team"
-      Maturity = Warn
-      EvidenceTag = tag |> Option.map EvidenceTag
-      TemplateProfile = None
-      Baseline = None }
+    {
+        Id = SurfaceId id
+        Class = cls
+        Paths = [ normalizePath (id + "/path") ]
+        Owner = Owner "team"
+        Maturity = Warn
+        EvidenceTag = tag |> Option.map EvidenceTag
+        TemplateProfile = None
+        Baseline = None
+    }
 
 let typedFacts (surfaces: Surface list) : TypedFacts =
-    { Project =
-        { SchemaVersion = SchemaVersion 2
-          Id = ProjectId "p"
-          Domains = []
-          GovernedRoot = normalizePath "."
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 2
-          Domains = []
-          PathMap = []
-          Surfaces = surfaces
-          Checks = [] }
-      Tooling = None }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 2
+                Id = ProjectId "p"
+                Domains = []
+                GovernedRoot = normalizePath "."
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 2
+                Domains = []
+                PathMap = []
+                Surfaces = surfaces
+                Checks = []
+            }
+        Tooling = None
+    }
 
 let requestForDocs (surfaceId: string) (path: string) : SC.SurfaceCheckRequest =
-    { Domain = SC.DocsDomain
-      Surface = SurfaceId surfaceId
-      Class = DocsSurface
-      Path = normalizePath path
-      EvidenceTag = Some(EvidenceTag (surfaceId + "-tag")) }
+    {
+        Domain = SC.DocsDomain
+        Surface = SurfaceId surfaceId
+        Class = DocsSurface
+        Path = normalizePath path
+        EvidenceTag = Some(EvidenceTag(surfaceId + "-tag"))
+    }
 
 let requestForSkill (surfaceId: string) (path: string) : SC.SurfaceCheckRequest =
-    { Domain = SC.SkillDomain
-      Surface = SurfaceId surfaceId
-      Class = SkillSurface
-      Path = normalizePath path
-      EvidenceTag = None }
+    {
+        Domain = SC.SkillDomain
+        Surface = SurfaceId surfaceId
+        Class = SkillSurface
+        Path = normalizePath path
+        EvidenceTag = None
+    }
 
 let classification (path: string) (surfaceId: string) (cls: SurfaceClass) : ProductClassification =
-    { Path = normalizePath path
-      Capability = DomainId "cap"
-      Surface = SurfaceId surfaceId
-      Class = cls
-      SelectedTier = StructuralScan
-      TierIsDeclared = false
-      Alternative = NoCheaperLocalTier
-      Reason = OnlySurface
-      Explanation = "" }
+    {
+        Path = normalizePath path
+        Capability = DomainId "cap"
+        Surface = SurfaceId surfaceId
+        Class = cls
+        SelectedTier = StructuralScan
+        TierIsDeclared = false
+        Alternative = NoCheaperLocalTier
+        Reason = OnlySurface
+        Explanation = ""
+    }
 
-let report (classifications: ProductClassification list) : ProductSurfaceReport =
-    { Classifications = classifications }
+let report (classifications: ProductClassification list) : ProductSurfaceReport = { Classifications = classifications }
 
 // ── Fact builders that produce exactly one finding per domain ──
 
 let packageDriftFacts (path: string) : Pkg.PackageFacts =
-    { BaselineSource = normalizePath path
-      Baseline = Pkg.BaselineDrift([ "val added" ], [])
-      Transcripts = [] }
+    {
+        BaselineSource = normalizePath path
+        Baseline = Pkg.BaselineDrift([ "val added" ], [])
+        Transcripts = []
+    }
 
 let docsDanglingFacts (path: string) : Docs.DocsFacts =
-    { Sources = [ normalizePath path ]
-      Links = [ { Source = normalizePath path; LinkText = "x"; Target = "missing"; Outcome = Docs.LinkDangling "missing" } ]
-      References = []
-      Examples = []
-      Unreadable = [] }
+    {
+        Sources = [ normalizePath path ]
+        Links =
+            [
+                {
+                    Source = normalizePath path
+                    LinkText = "x"
+                    Target = "missing"
+                    Outcome = Docs.LinkDangling "missing"
+                }
+            ]
+        References = []
+        Examples = []
+        Unreadable = []
+    }
 
 let skillBrokenFacts (id: string) : Skill.SkillFacts =
-    { SkillId = id
-      PathContract = [ { Claimed = "ghost"; Outcome = Skill.PathUnresolved "ghost" } ]
-      TaskList = Skill.TaskListConsistent
-      Mirror = Skill.NoMirrorDeclared
-      Unreadable = [] }
+    {
+        SkillId = id
+        PathContract =
+            [
+                {
+                    Claimed = "ghost"
+                    Outcome = Skill.PathUnresolved "ghost"
+                }
+            ]
+        TaskList = Skill.TaskListConsistent
+        Mirror = Skill.NoMirrorDeclared
+        Unreadable = []
+    }

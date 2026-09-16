@@ -8,30 +8,42 @@ open FS.GG.Governance.Cli.Tests.ParserTests.Support
 let tests =
     testList
         "Packaging"
-        [ test "packaged tool installs from local feed and runs route" {
-              let feed = Path.Combine(System.Environment.GetFolderPath System.Environment.SpecialFolder.UserProfile, ".local", "share", "nuget-local")
-              Directory.CreateDirectory feed |> ignore
+        [
+            test "packaged tool installs from local feed and runs route" {
+                let feed =
+                    Path.Combine(
+                        System.Environment.GetFolderPath System.Environment.SpecialFolder.UserProfile,
+                        ".local",
+                        "share",
+                        "nuget-local"
+                    )
 
-              let pack = runProcess "dotnet" [ "pack"; "src/FS.GG.Governance.Cli"; "-c"; "Release"; "-o"; feed ]
-              Expect.equal pack.ExitCode 0 (pack.Stdout + pack.Stderr)
+                Directory.CreateDirectory feed |> ignore
 
-              let toolPath = Path.Combine(repoRoot, ".tmp", "f12-tool-tests")
-              if Directory.Exists toolPath then Directory.Delete(toolPath, true)
+                let pack =
+                    runProcess "dotnet" [ "pack"; "src/FS.GG.Governance.Cli"; "-c"; "Release"; "-o"; feed ]
 
-              // The repo nuget.config declares packageSourceMapping (FS.GG.Contracts resolves from
-              // the private org GitHub Packages feed). `dotnet tool install --add-source` is REJECTED
-              // whenever a source mapping is in effect, and the mapping would otherwise misroute the
-              // freshly-packed FS.GG.Governance.Cli away from this local feed. So install from a
-              // self-contained temp config that maps: this local feed for the packed FS.GG.Governance.*
-              // tool, the org feed for its FS.GG.Contracts dependency, and nuget.org for the rest.
-              let cfgDir = Path.Combine(repoRoot, ".tmp", "f12-tool-cfg")
-              Directory.CreateDirectory cfgDir |> ignore
-              let configFile = Path.Combine(cfgDir, "tool-install.nuget.config")
+                Expect.equal pack.ExitCode 0 (pack.Stdout + pack.Stderr)
 
-              File.WriteAllText(
-                  configFile,
-                  sprintf
-                      "<?xml version=\"1.0\" encoding=\"utf-8\"?>
+                let toolPath = Path.Combine(repoRoot, ".tmp", "f12-tool-tests")
+
+                if Directory.Exists toolPath then
+                    Directory.Delete(toolPath, true)
+
+                // The repo nuget.config declares packageSourceMapping (FS.GG.Contracts resolves from
+                // the private org GitHub Packages feed). `dotnet tool install --add-source` is REJECTED
+                // whenever a source mapping is in effect, and the mapping would otherwise misroute the
+                // freshly-packed FS.GG.Governance.Cli away from this local feed. So install from a
+                // self-contained temp config that maps: this local feed for the packed FS.GG.Governance.*
+                // tool, the org feed for its FS.GG.Contracts dependency, and nuget.org for the rest.
+                let cfgDir = Path.Combine(repoRoot, ".tmp", "f12-tool-cfg")
+                Directory.CreateDirectory cfgDir |> ignore
+                let configFile = Path.Combine(cfgDir, "tool-install.nuget.config")
+
+                File.WriteAllText(
+                    configFile,
+                    sprintf
+                        "<?xml version=\"1.0\" encoding=\"utf-8\"?>
 <configuration>
   <packageSources>
     <clear />
@@ -58,24 +70,30 @@ let tests =
   </packageSourceMapping>
 </configuration>
 "
-                      feed
-              )
+                        feed
+                )
 
-              let install =
-                  runProcess
-                      "dotnet"
-                      [ "tool"
-                        "install"
-                        "FS.GG.Governance.Cli"
-                        "--tool-path"
-                        toolPath
-                        "--configfile"
-                        configFile ]
+                let install =
+                    runProcess
+                        "dotnet"
+                        [
+                            "tool"
+                            "install"
+                            "FS.GG.Governance.Cli"
+                            "--tool-path"
+                            toolPath
+                            "--configfile"
+                            configFile
+                        ]
 
-              Expect.equal install.ExitCode 0 (install.Stdout + install.Stderr)
+                Expect.equal install.ExitCode 0 (install.Stdout + install.Stderr)
 
-              let exe = Path.Combine(toolPath, "fsgg-governance")
-              let run = runProcess exe [ "route"; "--root"; fixture "light"; "--mode"; "inner"; "--json" ]
-              Expect.equal run.ExitCode 0 (run.Stdout + run.Stderr)
-              Expect.stringContains run.Stdout "\"command\":\"route\"" "route command"
-          } ]
+                let exe = Path.Combine(toolPath, "fsgg-governance")
+
+                let run =
+                    runProcess exe [ "route"; "--root"; fixture "light"; "--mode"; "inner"; "--json" ]
+
+                Expect.equal run.ExitCode 0 (run.Stdout + run.Stderr)
+                Expect.stringContains run.Stdout "\"command\":\"route\"" "route command"
+            }
+        ]

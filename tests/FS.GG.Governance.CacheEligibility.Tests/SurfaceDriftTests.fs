@@ -8,37 +8,45 @@ open FS.GG.Governance.CacheEligibility
 // Reflective API surface-drift + dependency/scope-hygiene checks (Principle II, SC-008), now via the shared
 // SurfaceDrift helper (101/M-CI-3).
 
-let private cacheEligibilityAsm = SurfaceDrift.assemblyNamed "FS.GG.Governance.CacheEligibility"
+let private cacheEligibilityAsm =
+    SurfaceDrift.assemblyNamed "FS.GG.Governance.CacheEligibility"
 
 [<Tests>]
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "CacheEligibility" "FS.GG.Governance.CacheEligibility" cacheEligibilityAsm
+        [
+            SurfaceDrift.surfaceTest "CacheEligibility" "FS.GG.Governance.CacheEligibility" cacheEligibilityAsm
 
-          test "the public surface is exactly the two modules (Model + CacheEligibility), nothing else" {
-              let typeNames =
-                  cacheEligibilityAsm.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
+            test "the public surface is exactly the two modules (Model + CacheEligibility), nothing else" {
+                let typeNames =
+                    cacheEligibilityAsm.GetExportedTypes()
+                    |> Array.choose (fun t -> Option.ofObj t.FullName)
 
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n.EndsWith "FS.GG.Governance.CacheEligibility.ModelModule"))
-                  "Model module is public"
-              Expect.isTrue
-                  (typeNames |> Array.exists (fun n -> n.EndsWith "FS.GG.Governance.CacheEligibility.CacheEligibilityModule"))
-                  "CacheEligibility operations module is public"
-              Expect.isFalse
-                  (typeNames
-                   |> Array.exists (fun n ->
-                       let l = n.ToLowerInvariant()
-                       l.Contains "helper" || l.Contains "internal" || l.Contains "comparator"))
-                  "no helper/internal/comparator module leaks into the public surface"
-          }
+                Expect.isTrue
+                    (typeNames
+                     |> Array.exists (fun n -> n.EndsWith "FS.GG.Governance.CacheEligibility.ModelModule"))
+                    "Model module is public"
 
-          SurfaceDrift.referencesOnly
-              "CacheEligibility"
-              (fun n ->
-                  n = "FS.GG.Governance.EvidenceReuse"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.FreshnessKey"
-                  || n = "FS.GG.Governance.Config")
-              cacheEligibilityAsm ]
+                Expect.isTrue
+                    (typeNames
+                     |> Array.exists (fun n -> n.EndsWith "FS.GG.Governance.CacheEligibility.CacheEligibilityModule"))
+                    "CacheEligibility operations module is public"
+
+                Expect.isFalse
+                    (typeNames
+                     |> Array.exists (fun n ->
+                         let l = n.ToLowerInvariant()
+                         l.Contains "helper" || l.Contains "internal" || l.Contains "comparator"))
+                    "no helper/internal/comparator module leaks into the public surface"
+            }
+
+            SurfaceDrift.referencesOnly
+                "CacheEligibility"
+                (fun n ->
+                    n = "FS.GG.Governance.EvidenceReuse"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.FreshnessKey"
+                    || n = "FS.GG.Governance.Config")
+                cacheEligibilityAsm
+        ]

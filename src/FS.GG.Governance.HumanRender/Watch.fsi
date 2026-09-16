@@ -26,10 +26,12 @@ module Watch =
     /// Durable watch state. `PendingSince` is the logical time of the latest un-settled change
     /// (`None` = idle); `Mode` is `Plain` or `Rich` (never `Json` — watch is interactive).
     type WatchModel =
-        { Root: string
-          Mode: RenderMode.RenderMode
-          PendingSince: int64 option
-          LastSignal: WatchSignal }
+        {
+            Root: string
+            Mode: RenderMode.RenderMode
+            PendingSince: int64 option
+            LastSignal: WatchSignal
+        }
 
     /// Inputs to the pure transition (logical time supplied by the edge).
     type WatchMsg =

@@ -26,35 +26,45 @@ type ProjectFact =
     | FreshnessFact of node: string * recorded: int64 * covered: int64 list
 
 type ProjectChange =
-    { SpecKit: SpecKitChange option
-      DesignSystem: DesignChange option
-      Scope: string list }
+    {
+        SpecKit: SpecKitChange option
+        DesignSystem: DesignChange option
+        Scope: string list
+    }
 
 type ProjectSnapshot =
-    { Root: string
-      Supplied: FactSet<ProjectFact>
-      Change: ProjectChange
-      Artifacts: ArtifactRef list
-      Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
-      DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option }
+    {
+        Root: string
+        Supplied: FactSet<ProjectFact>
+        Change: ProjectChange
+        Artifacts: ArtifactRef list
+        Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+        DefaultProfile: FS.GG.Governance.Config.Model.ProfileId option
+    }
 
 type ProjectOptions =
-    { Domains: Set<Domain>
-      Judge: JudgeId
-      SpecKitDial: ConstitutionDial }
+    {
+        Domains: Set<Domain>
+        Judge: JudgeId
+        SpecKitDial: ConstitutionDial
+    }
 
 type EvidenceNodeReport =
-    { Id: string
-      Declared: EvidenceState option
-      Effective: EvidenceState option
-      Freshness: Freshness option
-      Source: string }
+    {
+        Id: string
+        Declared: EvidenceState option
+        Effective: EvidenceState option
+        Freshness: Freshness option
+        Source: string
+    }
 
 type ProjectEvidenceReport =
-    { Nodes: EvidenceNodeReport list
-      Dependencies: (string * string) list
-      Disclosures: Disclosure list
-      Failures: Failure list }
+    {
+        Nodes: EvidenceNodeReport list
+        Dependencies: (string * string) list
+        Disclosures: Disclosure list
+        Failures: Failure list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Project =
@@ -62,8 +72,10 @@ module Project =
     // 100 (M-ARCH-2): relocated verbatim from the `Cli` module so EvidenceCommand consumes it here
     // (breaking EvidenceCommand → Cli). The identity string is unchanged.
     let defaultJudge =
-        { ModelId = "fsgg-governance-default"
-          Version = "2026-06" }
+        {
+            ModelId = "fsgg-governance-default"
+            Version = "2026-06"
+        }
 
     let (|SpecKitProject|_|) (fact: ProjectFact) =
         match fact with
@@ -83,7 +95,7 @@ module Project =
 
     let outcomeKey (outcome: RuleOutcome) =
         match outcome with
-        | RuleOutcome.Decided (rule, verdict) -> "decided:" + ruleIdText rule + ":" + sprintf "%A" verdict
+        | RuleOutcome.Decided(rule, verdict) -> "decided:" + ruleIdText rule + ":" + sprintf "%A" verdict
         | RuleOutcome.NeedsReview request -> "needs:" + request.Key
         | RuleOutcome.Reviewed review -> "reviewed:" + review.Key
         | RuleOutcome.Escalated rule -> "escalated:" + ruleIdText rule
@@ -93,56 +105,68 @@ module Project =
         | SpecKitProjectFact f -> FactId("speckit:" + factIdText (SpecKit.identify f))
         | DesignSystemProjectFact f -> FactId("design:" + factIdText (DesignSystem.identify f))
         | GovernanceFact outcome -> FactId("governance:" + outcomeKey outcome)
-        | ArtifactContentFact (artifact, _, _) -> FactId("artifact-content:" + artifactKey artifact)
-        | EvidenceStateFact (node, _) -> FactId("evidence-state:" + node)
-        | EvidenceDependencyFact (dependent, dependency) -> FactId("evidence-dependency:" + dependent + "->" + dependency)
-        | FreshnessFact (node, _, _) -> FactId("freshness:" + node)
+        | ArtifactContentFact(artifact, _, _) -> FactId("artifact-content:" + artifactKey artifact)
+        | EvidenceStateFact(node, _) -> FactId("evidence-state:" + node)
+        | EvidenceDependencyFact(dependent, dependency) ->
+            FactId("evidence-dependency:" + dependent + "->" + dependency)
+        | FreshnessFact(node, _, _) -> FactId("freshness:" + node)
 
     let hash (content: string) =
         use sha = SHA256.Create()
+
         sha.ComputeHash(Encoding.UTF8.GetBytes content)
         |> Array.map (fun b -> b.ToString "x2")
         |> String.concat ""
 
     let bridge (judge: JudgeId) : Bridge<ProjectFact> =
-        { Judge = judge
-          ArtifactHash =
-            fun facts artifact ->
-                facts
-                |> List.tryPick (fun fact ->
-                    match fact.Value with
-                    | ArtifactContentFact (a, h, _) when a = artifact -> Some h
-                    | _ -> None)
-                |> Option.defaultValue ""
-          Embed = GovernanceFact
-          Project =
-            function
-            | GovernanceFact outcome -> Some outcome
-            | _ -> None }
+        {
+            Judge = judge
+            ArtifactHash =
+                fun facts artifact ->
+                    facts
+                    |> List.tryPick (fun fact ->
+                        match fact.Value with
+                        | ArtifactContentFact(a, h, _) when a = artifact -> Some h
+                        | _ -> None)
+                    |> Option.defaultValue ""
+            Embed = GovernanceFact
+            Project =
+                function
+                | GovernanceFact outcome -> Some outcome
+                | _ -> None
+        }
 
     let compose (options: ProjectOptions) : Composed<ProjectFact, ProjectChange> =
         let lifted =
-            [ if options.Domains.Contains SpecKitDomain then
-                  let adapter = SpecKitCatalog.adapter options.Judge options.SpecKitDial
+            [
+                if options.Domains.Contains SpecKitDomain then
+                    let adapter = SpecKitCatalog.adapter options.Judge options.SpecKitDial
 
-                  Composition.lift
-                      (fun fact -> match fact with | SpecKitProjectFact value -> Some value | _ -> None)
-                      (fun change ->
-                          change.SpecKit
-                          |> Option.defaultValue
-                              { Phase = FS.GG.Governance.Adapters.SpecKit.Phase.Implement
-                                Surfaces = Set.empty })
-                      adapter
+                    Composition.lift
+                        (fun fact ->
+                            match fact with
+                            | SpecKitProjectFact value -> Some value
+                            | _ -> None)
+                        (fun change ->
+                            change.SpecKit
+                            |> Option.defaultValue
+                                {
+                                    Phase = FS.GG.Governance.Adapters.SpecKit.Phase.Implement
+                                    Surfaces = Set.empty
+                                })
+                        adapter
 
-              if options.Domains.Contains DesignSystemDomain then
-                  let adapter = DesignCatalog.adapter options.Judge
+                if options.Domains.Contains DesignSystemDomain then
+                    let adapter = DesignCatalog.adapter options.Judge
 
-                  Composition.lift
-                      (fun fact -> match fact with | DesignSystemProjectFact value -> Some value | _ -> None)
-                      (fun change ->
-                          change.DesignSystem
-                          |> Option.defaultValue { Surfaces = Set.empty })
-                      adapter ]
+                    Composition.lift
+                        (fun fact ->
+                            match fact with
+                            | DesignSystemProjectFact value -> Some value
+                            | _ -> None)
+                        (fun change -> change.DesignSystem |> Option.defaultValue { Surfaces = Set.empty })
+                        adapter
+            ]
 
         Composition.compose lifted []
 
@@ -153,7 +177,7 @@ module Project =
         facts
         |> List.tryPick (fun fact ->
             match fact.Value with
-            | ArtifactContentFact (a, _, content) when a = artifact -> Some content
+            | ArtifactContentFact(a, _, content) when a = artifact -> Some content
             | _ -> None)
 
     let toLoopConfig
@@ -164,35 +188,37 @@ module Project =
         ignore snapshot
         let composed = compose options
 
-        { Identify = identify
-          Rules = composed.Catalog
-          Bridge = bridge options.Judge
-          Fences = composed.Fences
-          Mode = mode
-          Policy = Loop.defaultPolicy
-          SenseArtifact = senseArtifact
-          ReadContent = readContent }
+        {
+            Identify = identify
+            Rules = composed.Catalog
+            Bridge = bridge options.Judge
+            Fences = composed.Fences
+            Mode = mode
+            Policy = Loop.defaultPolicy
+            SenseArtifact = senseArtifact
+            ReadContent = readContent
+        }
 
     let declaredEvidence (facts: FactSet<ProjectFact>) =
         facts
         |> List.choose (fun fact ->
             match fact.Value with
-            | EvidenceStateFact (node, state) -> Some(node, state, "project")
-            | SpecKitProjectFact (TaskState (taskId, state)) -> Some("speckit:" + taskId, state, "speckit")
-            | DesignSystemProjectFact (MeasurementState (measurementId, state)) ->
+            | EvidenceStateFact(node, state) -> Some(node, state, "project")
+            | SpecKitProjectFact(TaskState(taskId, state)) -> Some("speckit:" + taskId, state, "speckit")
+            | DesignSystemProjectFact(MeasurementState(measurementId, state)) ->
                 Some("design:" + measurementId, state, "design-system")
-            | GovernanceFact (RuleOutcome.NeedsReview request) -> Some("review:" + request.Key, Pending, "review-cache")
-            | GovernanceFact (RuleOutcome.Reviewed review) -> Some("review:" + review.Key, Real, "review-cache")
+            | GovernanceFact(RuleOutcome.NeedsReview request) -> Some("review:" + request.Key, Pending, "review-cache")
+            | GovernanceFact(RuleOutcome.Reviewed review) -> Some("review:" + review.Key, Real, "review-cache")
             | _ -> None)
 
     let evidenceDependencies (facts: FactSet<ProjectFact>) =
         facts
         |> List.choose (fun fact ->
             match fact.Value with
-            | EvidenceDependencyFact (dependent, dependency) -> Some(dependent, dependency)
-            | SpecKitProjectFact (TaskDependsOn (dependent, dependency)) ->
+            | EvidenceDependencyFact(dependent, dependency) -> Some(dependent, dependency)
+            | SpecKitProjectFact(TaskDependsOn(dependent, dependency)) ->
                 Some("speckit:" + dependent, "speckit:" + dependency)
-            | DesignSystemProjectFact (VerdictRestsOn (verdict, measurement)) ->
+            | DesignSystemProjectFact(VerdictRestsOn(verdict, measurement)) ->
                 Some("design:" + verdict, "design:" + measurement)
             | _ -> None)
         |> List.distinct
@@ -202,7 +228,7 @@ module Project =
         facts
         |> List.choose (fun fact ->
             match fact.Value with
-            | FreshnessFact (node, recorded, covered) -> Some(node, Freshness.decide recorded covered)
+            | FreshnessFact(node, recorded, covered) -> Some(node, Freshness.decide recorded covered)
             | _ -> None)
         |> Map.ofList
 
@@ -227,13 +253,17 @@ module Project =
         let nodes =
             declared
             |> List.map (fun (id, state, source) ->
-                { Id = id
-                  Declared = Some state
-                  Effective = Map.tryFind id effective
-                  Freshness = Map.tryFind id freshness
-                  Source = source })
+                {
+                    Id = id
+                    Declared = Some state
+                    Effective = Map.tryFind id effective
+                    Freshness = Map.tryFind id freshness
+                    Source = source
+                })
 
-        { Nodes = nodes
-          Dependencies = dependencies
-          Disclosures = host.Disclosures |> List.sort
-          Failures = host.Failures |> List.sort }
+        {
+            Nodes = nodes
+            Dependencies = dependencies
+            Disclosures = host.Disclosures |> List.sort
+            Failures = host.Failures |> List.sort
+        }

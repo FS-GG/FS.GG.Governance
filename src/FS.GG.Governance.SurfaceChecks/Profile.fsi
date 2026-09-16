@@ -102,9 +102,7 @@ module Profile =
     // ── Conflict resolution (AC6) ────────────────────────────────────────────────────────────
 
     /// Two rule identities that collide across packs, with every pack declaring them.
-    type Collision =
-        { RuleId: string
-          Packs: Pack list }
+    type Collision = { RuleId: string; Packs: Pack list }
 
     /// Every `(pack, ruleId)` pair the composed profile declares — `ruleIds` flattened over `packs`,
     /// in `packs` order. This is the input `collisions` and `ruleOwner` are both computed from, so a

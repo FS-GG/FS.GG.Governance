@@ -29,14 +29,18 @@ type SpecSource = { Document: string; Section: string }
 type JudgeId = { ModelId: string; Version: string }
 
 type ReviewRequest =
-    { Rule: RuleId
-      Question: string option
-      Key: string }
+    {
+        Rule: RuleId
+        Question: string option
+        Key: string
+    }
 
 type RecordedReview =
-    { Rule: RuleId
-      Key: string
-      Verdict: Verdict }
+    {
+        Rule: RuleId
+        Key: string
+        Verdict: Verdict
+    }
 
 type RuleOutcome =
     | Decided of rule: RuleId * verdict: Verdict
@@ -45,21 +49,24 @@ type RuleOutcome =
     | Escalated of rule: RuleId
 
 type CheckRule<'fact> =
-    { Id: RuleId
-      Tier: CheckTier
-      Spec: SpecSource
-      Severity: Severity
-      Check: Check<'fact>
-      Question: string option }
+    {
+        Id: RuleId
+        Tier: CheckTier
+        Spec: SpecSource
+        Severity: Severity
+        Check: Check<'fact>
+        Question: string option
+    }
 
-type RuleRejection =
-    | OpaqueCannotBeDeterministic of RuleId
+type RuleRejection = OpaqueCannotBeDeterministic of RuleId
 
 type Bridge<'fact> =
-    { Judge: JudgeId
-      ArtifactHash: FactSet<'fact> -> ArtifactRef -> string
-      Embed: RuleOutcome -> 'fact
-      Project: 'fact -> RuleOutcome option }
+    {
+        Judge: JudgeId
+        ArtifactHash: FactSet<'fact> -> ArtifactRef -> string
+        Embed: RuleOutcome -> 'fact
+        Project: 'fact -> RuleOutcome option
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CheckRule =
@@ -80,12 +87,14 @@ module CheckRule =
         | Deterministic when not (Check.isReified check) -> Error(OpaqueCannotBeDeterministic id)
         | _ ->
             Ok
-                { Id = id
-                  Tier = tier
-                  Spec = spec
-                  Severity = Advisory
-                  Check = check
-                  Question = None }
+                {
+                    Id = id
+                    Tier = tier
+                    Spec = spec
+                    Severity = Advisory
+                    Check = check
+                    Question = None
+                }
 
     let blocking (rule: CheckRule<'fact>) : CheckRule<'fact> = { rule with Severity = Blocking }
 
@@ -94,7 +103,8 @@ module CheckRule =
         // constructor for an agent rule over an Opaque check and never trips FR-006.
         { rule with
             Tier = AgentReviewed
-            Question = Some prompt }
+            Question = Some prompt
+        }
 
     // ── The cache key: decision #1, a pure fold over its ingredients (FR-011/FR-012) ──
 
@@ -103,16 +113,12 @@ module CheckRule =
     // F03's Check.hash uses (System.* only — zero new deps, FR-016/SC-009).
     let digest (s: string) : string =
         use sha = SHA256.Create()
+
         sha.ComputeHash(Encoding.UTF8.GetBytes s)
         |> Array.map (fun b -> b.ToString("x2"))
         |> String.concat ""
 
-    let cacheKey
-        (judge: JudgeId)
-        (checkHash: string)
-        (artifactHashes: string list)
-        (question: string option)
-        : string =
+    let cacheKey (judge: JudgeId) (checkHash: string) (artifactHashes: string list) (question: string option) : string =
         // The artifact half is the SET of read-artifact hashes: de-duplicated and
         // ordinal-sorted so probe order or a duplicate read does not change the key
         // (the F04 policy F03's `reads` deferred — order-independent, culture-invariant).
@@ -132,13 +138,16 @@ module CheckRule =
         digest (
             String.concat
                 "|"
-                ([ "checkrule"
-                   digest judge.ModelId
-                   digest judge.Version
-                   digest checkHash
-                   string artifactDigests.Length ]
+                ([
+                    "checkrule"
+                    digest judge.ModelId
+                    digest judge.Version
+                    digest checkHash
+                    string artifactDigests.Length
+                 ]
                  @ artifactDigests
-                 @ [ questionDigest ]))
+                 @ [ questionDigest ])
+        )
 
     // ── The bridge to the executable kernel rule (FR-007 … FR-010) ──
 
@@ -152,40 +161,62 @@ module CheckRule =
         // re-keys every produced fact at evaluation time (F01), so the bridge does not
         // own fact identity. `inputs` are the FactIds the rule consumed this run.
         let embed (inputs: FactId list) (outcome: RuleOutcome) : FactAssertion<'fact> =
-            { Id = FactId ""
-              Value = bridge.Embed outcome
-              Provenance = [ { Rule = rule.Id; Inputs = inputs; Note = note } ] }
+            {
+                Id = FactId ""
+                Value = bridge.Embed outcome
+                Provenance =
+                    [
+                        {
+                            Rule = rule.Id
+                            Inputs = inputs
+                            Note = note
+                        }
+                    ]
+            }
 
-        { Id = rule.Id
-          Description = note
-          Apply =
-            fun facts ->
-                match rule.Tier with
-                // A machine decides: assert the three-valued verdict VERBATIM — never
-                // coerced (an Uncertain stays Uncertain) (FR-008, SC-005).
-                | Deterministic -> [ embed [] (Decided(rule.Id, Check.eval facts rule.Check)) ]
-                // A person decides: escalate (a blocker), regardless of severity, and
-                // never assert a decided verdict (FR-010, SC-008).
-                | HumanOnly -> [ embed [] (Escalated rule.Id) ]
-                // An AI agent decides: key the review (decision #1), then short-circuit
-                // on a recorded verdict (cache HIT) or emit exactly one request (MISS).
-                | AgentReviewed ->
-                    let key =
-                        cacheKey
-                            bridge.Judge
-                            (Check.hash rule.Check)
-                            (Check.reads rule.Check |> List.map (bridge.ArtifactHash facts))
-                            rule.Question
-                    // Find a recorded verdict for THIS key, capturing its fact id so the
-                    // consumed input is recorded in provenance. Keyed by `key` (not by
-                    // RuleId), so a stale verdict under an old judge no longer matches —
-                    // the re-review-on-judge-change policy falls out for free (FR-013).
-                    let hit =
-                        facts
-                        |> List.tryPick (fun f ->
-                            match bridge.Project f.Value with
-                            | Some(Reviewed r) when r.Key = key -> Some(f.Id, r.Verdict)
-                            | _ -> None)
-                    match hit with
-                    | Some(fid, v) -> [ embed [ fid ] (Decided(rule.Id, v)) ] // cache hit: no request, no agent call
-                    | None -> [ embed [] (NeedsReview { Rule = rule.Id; Question = rule.Question; Key = key }) ] }
+        {
+            Id = rule.Id
+            Description = note
+            Apply =
+                fun facts ->
+                    match rule.Tier with
+                    // A machine decides: assert the three-valued verdict VERBATIM — never
+                    // coerced (an Uncertain stays Uncertain) (FR-008, SC-005).
+                    | Deterministic -> [ embed [] (Decided(rule.Id, Check.eval facts rule.Check)) ]
+                    // A person decides: escalate (a blocker), regardless of severity, and
+                    // never assert a decided verdict (FR-010, SC-008).
+                    | HumanOnly -> [ embed [] (Escalated rule.Id) ]
+                    // An AI agent decides: key the review (decision #1), then short-circuit
+                    // on a recorded verdict (cache HIT) or emit exactly one request (MISS).
+                    | AgentReviewed ->
+                        let key =
+                            cacheKey
+                                bridge.Judge
+                                (Check.hash rule.Check)
+                                (Check.reads rule.Check |> List.map (bridge.ArtifactHash facts))
+                                rule.Question
+                        // Find a recorded verdict for THIS key, capturing its fact id so the
+                        // consumed input is recorded in provenance. Keyed by `key` (not by
+                        // RuleId), so a stale verdict under an old judge no longer matches —
+                        // the re-review-on-judge-change policy falls out for free (FR-013).
+                        let hit =
+                            facts
+                            |> List.tryPick (fun f ->
+                                match bridge.Project f.Value with
+                                | Some(Reviewed r) when r.Key = key -> Some(f.Id, r.Verdict)
+                                | _ -> None)
+
+                        match hit with
+                        | Some(fid, v) -> [ embed [ fid ] (Decided(rule.Id, v)) ] // cache hit: no request, no agent call
+                        | None ->
+                            [
+                                embed
+                                    []
+                                    (NeedsReview
+                                        {
+                                            Rule = rule.Id
+                                            Question = rule.Question
+                                            Key = key
+                                        })
+                            ]
+        }

@@ -41,18 +41,22 @@ module Enforcement =
     // ── Input / result ──
 
     type EnforcementInput =
-        { BaseSeverity: Severity
-          Maturity: Maturity
-          Mode: RunMode
-          Profile: Profile }
+        {
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Mode: RunMode
+            Profile: Profile
+        }
 
     type EnforcementDecision =
-        { BaseSeverity: Severity
-          Maturity: Maturity
-          Mode: RunMode
-          Profile: Profile
-          EffectiveSeverity: Severity
-          Reason: string }
+        {
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Mode: RunMode
+            Profile: Profile
+            EffectiveSeverity: Severity
+            Reason: string
+        }
 
     // ── Ordering (exposed: the order IS the enforcement semantics, research D3) ──
 
@@ -210,9 +214,11 @@ module Enforcement =
                         else
                             Advisory, relaxedReason input.Profile input.Maturity floorMode input.Mode
 
-        { BaseSeverity = input.BaseSeverity
-          Maturity = input.Maturity
-          Mode = input.Mode
-          Profile = input.Profile
-          EffectiveSeverity = effective
-          Reason = reason }
+        {
+            BaseSeverity = input.BaseSeverity
+            Maturity = input.Maturity
+            Mode = input.Mode
+            Profile = input.Profile
+            EffectiveSeverity = effective
+            Reason = reason
+        }

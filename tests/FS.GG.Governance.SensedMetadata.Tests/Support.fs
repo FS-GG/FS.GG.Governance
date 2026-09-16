@@ -27,10 +27,12 @@ let timestamp (s: string) : SensedTimestamp = SensedTimestamp s
 let duration (ns: int64) : SensedDuration = SensedDuration ns
 
 /// Convenience: mark a duration metadatum with a label, through the PUBLIC `markDuration`.
-let markDur (l: string) (ns: int64) : SensedMetadatum = SensedMetadata.markDuration (label l) (duration ns)
+let markDur (l: string) (ns: int64) : SensedMetadatum =
+    SensedMetadata.markDuration (label l) (duration ns)
 
 /// Convenience: mark a timestamp metadatum with a label, through the PUBLIC `markTimestamp`.
-let markTs (l: string) (s: string) : SensedMetadatum = SensedMetadata.markTimestamp (label l) (timestamp s)
+let markTs (l: string) (s: string) : SensedMetadatum =
+    SensedMetadata.markTimestamp (label l) (timestamp s)
 
 // ── The worked-example metadata (contracts/sensed-metadata-format.md) ──
 
@@ -46,33 +48,34 @@ let workedDuration: SensedMetadatum = markDur "elapsed" 1_830_000_000L
 
 let private spoofyStringGen: Gen<string> =
     Gen.elements
-        [ ""
-          "a"
-          "at"
-          "elapsed"
-          "!sensed!"
-          "!sensed-section!"
-          ";"
-          ":"
-          "="
-          "0:"
-          "x:y=z;|"
-          "!sensed!=timestamp;2:at"
-          "héllo"
-          "2026-06-21T12:00:00Z" ]
+        [
+            ""
+            "a"
+            "at"
+            "elapsed"
+            "!sensed!"
+            "!sensed-section!"
+            ";"
+            ":"
+            "="
+            "0:"
+            "x:y=z;|"
+            "!sensed!=timestamp;2:at"
+            "héllo"
+            "2026-06-21T12:00:00Z"
+        ]
 
 let private genLabel: Gen<SensedLabel> = spoofyStringGen |> Gen.map SensedLabel
 
-let private genTimestamp: Gen<SensedTimestamp> = spoofyStringGen |> Gen.map SensedTimestamp
+let private genTimestamp: Gen<SensedTimestamp> =
+    spoofyStringGen |> Gen.map SensedTimestamp
 
 let private genDuration: Gen<SensedDuration> =
     Gen.elements [ 0L; 1L; -1L; 1_830_000_000L; Int64.MaxValue; Int64.MinValue; 123_456L ]
     |> Gen.map SensedDuration
 
 let private genSensedValue: Gen<SensedValue> =
-    Gen.oneof
-        [ genTimestamp |> Gen.map TimestampValue
-          genDuration |> Gen.map DurationValue ]
+    Gen.oneof [ genTimestamp |> Gen.map TimestampValue; genDuration |> Gen.map DurationValue ]
 
 let private genMetadatum: Gen<SensedMetadatum> =
     gen {
@@ -93,6 +96,8 @@ type Generators =
 
 /// FsCheck config registering the real F034 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

@@ -90,13 +90,21 @@ let git = SnapshotHelpers.git
 let writeFile = SnapshotHelpers.writeFile
 
 let fakeSenseEnvironment: unit -> EnvironmentClass = fun () -> Local // SYNTHETIC: fixed env class
+
 let fakeSenseBuilder: unit -> FS.GG.Governance.Provenance.Model.BuilderIdentity =
     fun () -> FS.GG.Governance.Provenance.Model.BuilderIdentity "fsgg-test" // SYNTHETIC: fixed builder id
+
 let gitSrcChange: GitPort = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
 
 /// A workflow change under work/** (selects the High-cost `audit` gate — the over-budget probe for F25 wiring).
 let gitWorkChange: GitPort = gitWithChanges [ 'M', "work/flow/Step.fs" ]
-let resultAndDecisionOf (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) =
+
+let resultAndDecisionOf
+    (files: Map<string, string>)
+    (candidates: GovernedPath list)
+    (mode: RunMode)
+    (profile: Profile)
+    =
     let facts = factsOf files
     let report = Routing.route facts candidates
     let registry = Gates.buildRegistry facts
@@ -104,8 +112,14 @@ let resultAndDecisionOf (files: Map<string, string>) (candidates: GovernedPath l
     let result = Route.select registry report findings
     result, Ship.rollup result mode profile
 
-let decisionOf (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) : ShipDecision =
+let decisionOf
+    (files: Map<string, string>)
+    (candidates: GovernedPath list)
+    (mode: RunMode)
+    (profile: Profile)
+    : ShipDecision =
     snd (resultAndDecisionOf files candidates mode profile)
+
 let fakeExecPortFail: ExecutionPort = fakeExecPortExiting 1
 
 /// A passing fake port (exit 0): a passing command-gate is RELOCATED to `Passing` and the verdict recomputed.
@@ -121,6 +135,7 @@ let countingExecPort (counter: ExecCounter) (code: int) : ExecutionPort =
     fun command ->
         counter.Calls <- counter.Calls + 1
         fakeExecPortExiting code command
+
 let expectedCacheReportWith
     (sensor: FreshnessSensing.FreshnessSensor)
     (store: ReuseStore)
@@ -130,12 +145,19 @@ let expectedCacheReportWith
     match FreshnessSensing.senseFreshness sensor selectedGates baseHead with
     | Ok sensed ->
         let report = FreshnessResolution.resolve selectedGates sensed
-        let cands = FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
+        let cands =
+            FreshnessResolution.entries report |> List.choose FreshnessResolution.candidate
+
         CacheEligibility.evaluate cands store
     | Error _ -> CacheEligibility.evaluate [] store
 
-let expectedCacheReport (selectedGates: Gate list) (baseHead: Revision option * Revision option) : CacheEligibilityReport =
+let expectedCacheReport
+    (selectedGates: Gate list)
+    (baseHead: Revision option * Revision option)
+    : CacheEligibilityReport =
     expectedCacheReportWith fakeSensor EvidenceReuse.empty selectedGates baseHead
+
 let expectedOutcomes (files: Map<string, string>) (selectedGates: Gate list) : (GateId * GateOutcome) list =
     expectedOutcomesWith fakeExecPortFail files selectedGates
 
@@ -151,31 +173,46 @@ let budgetDeferredIds (selectedGates: Gate list) (mode: RunMode) (profile: Profi
     let candidates: FS.GG.Governance.CostBudget.Model.CandidateCost list =
         selectedGates
         |> List.map (fun g ->
-            { Gate = g.Id
-              Cost = g.Cost
-              Verdict = MustRecompute NoPriorEvidence
-              Review = FS.GG.Governance.CostBudget.Model.Deterministic })
+            {
+                Gate = g.Id
+                Cost = g.Cost
+                Verdict = MustRecompute NoPriorEvidence
+                Review = FS.GG.Governance.CostBudget.Model.Deterministic
+            })
 
     FS.GG.Governance.CostBudget.Budget.decide budget mode candidates
     |> FS.GG.Governance.CostBudget.Budget.overBudget
     |> List.map (fst >> gateIdValue)
     |> Set.ofList
 
-let private applyDeferrals (deferred: Set<string>) (outcomes: (GateId * GateOutcome) list) : (GateId * GateOutcome) list =
+let private applyDeferrals
+    (deferred: Set<string>)
+    (outcomes: (GateId * GateOutcome) list)
+    : (GateId * GateOutcome) list =
     outcomes
     |> List.map (fun (gid, o) ->
         if Set.contains (gateIdValue gid) deferred then
             gid,
-            { GateId = gid
-              Disposition = NotExecuted }
+            {
+                GateId = gid
+                Disposition = NotExecuted
+            }
         else
             gid, o)
 
-let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (mode: RunMode) (profile: Profile) : ShipDecision * (GateId * GateOutcome) list =
+let relocatedDecisionWith
+    (port: ExecutionPort)
+    (files: Map<string, string>)
+    (candidates: GovernedPath list)
+    (mode: RunMode)
+    (profile: Profile)
+    : ShipDecision * (GateId * GateOutcome) list =
     let result, decision = resultAndDecisionOf files candidates mode profile
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
     let deferred = budgetDeferredIds selectedGates mode profile
-    let outcomes = expectedOutcomesWith port files selectedGates |> applyDeferrals deferred
+
+    let outcomes =
+        expectedOutcomesWith port files selectedGates |> applyDeferrals deferred
 
     let passedIds =
         outcomes
@@ -187,7 +224,10 @@ let relocatedDecisionWith (port: ExecutionPort) (files: Map<string, string>) (ca
 /// JSON-2: the missing-fact wire tokens per unresolved gate the host threads into
 /// `currency.unresolved[].missing`, rebuilt here from the SAME freshness resolution the cache report is
 /// (`fakeSensor` + the snapshot's base/head), so the oracle stays byte-identical to `projectExecuted`.
-let expectedMissingByGate (selectedGates: Gate list) (baseHead: Revision option * Revision option) : Map<string, string list> =
+let expectedMissingByGate
+    (selectedGates: Gate list)
+    (baseHead: Revision option * Revision option)
+    : Map<string, string list> =
     match FreshnessSensing.senseFreshness fakeSensor selectedGates baseHead with
     | Ok sensed ->
         FreshnessResolution.resolve selectedGates sensed
@@ -203,7 +243,13 @@ let expectedMissingByGate (selectedGates: Gate list) (baseHead: Revision option 
 /// decision + the LIVE cache report + the per-gate execution embed + (JSON-2) the unresolved-gate missing-fact
 /// tokens. Uses the fullest overload with empty surfaceChecks/preview/generatedViews ⇒ byte-identical to the
 /// base projection except for the now-honest `missing` arrays.
-let verifyExpectedWith (port: ExecutionPort) (files: Map<string, string>) (candidates: GovernedPath list) (profile: Profile) (snap: RepoSnapshot option) : string =
+let verifyExpectedWith
+    (port: ExecutionPort)
+    (files: Map<string, string>)
+    (candidates: GovernedPath list)
+    (profile: Profile)
+    (snap: RepoSnapshot option)
+    : string =
     let result, _ = resultAndDecisionOf files candidates Verify profile
     let selectedGates = result.SelectedGates |> List.map (fun sg -> sg.Gate)
     let cacheReport = expectedCacheReport selectedGates (baseHeadOfSnap snap)
@@ -211,14 +257,21 @@ let verifyExpectedWith (port: ExecutionPort) (files: Map<string, string>) (candi
     let relocated, outcomes = relocatedDecisionWith port files candidates Verify profile
     VerifyJson.ofVerifyDecisionWithGeneratedViews relocated (Some cacheReport) outcomes [] None [] missingByGate
 
-let verifyExpected (files: Map<string, string>) (candidates: GovernedPath list) (profile: Profile) (snap: RepoSnapshot option) : string =
+let verifyExpected
+    (files: Map<string, string>)
+    (candidates: GovernedPath list)
+    (profile: Profile)
+    (snap: RepoSnapshot option)
+    : string =
     verifyExpectedWith fakeExecPortFail files candidates profile snap
 
 // ── Capturing write/output edges ──
 
 type Capture =
-    { mutable Writes: (Loop.ArtifactKind * string * string) list
-      mutable Emits: string list }
+    {
+        mutable Writes: (Loop.ArtifactKind * string * string) list
+        mutable Emits: string list
+    }
 
 let newCapture () : Capture = { Writes = []; Emits = [] }
 
@@ -238,8 +291,8 @@ let capturingSink (cap: Capture) : Interpreter.OutputSink =
 // supplies its own declaration + sense). Loud failure if that invariant is ever violated.
 let fakeSenseRelease
     : FS.GG.Governance.ReleaseFactsSensing.Model.SourceLayout
-        -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
-        -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease =
+          -> FS.GG.Governance.ReleaseFactsSensing.Model.ReleaseExpectations
+          -> FS.GG.Governance.ReleaseFactsSensing.Model.SensedRelease =
     fun _ _ -> failwith "fakeSenseRelease: no .fsgg/release.yml in this fixture"
 
 // 067: the default surface-sense port for the legacy faked-port fixtures. SYNTHETIC: returns no findings (the
@@ -248,7 +301,7 @@ let fakeSenseRelease
 // temp-tree sense (`realSurfaceSense`) or a hand-built advisory port (disclosed at the use site).
 let fakeSenseSurfaces
     : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
-        -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+          -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
     fun _ -> [] // SYNTHETIC: no product surfaces in the legacy catalogs ⇒ empty, matching the real sense
 
 // F070: the default fake currency sense — no stale generated views (unconfigured / no refresh.yml). The
@@ -260,118 +313,163 @@ let fakeSenseViewCurrency: string -> FS.GG.Governance.CurrencyEnforcement.Curren
 // `Interpreter.realPorts` so the E2E proofs drive the exact production sense (real package/docs/skill/design
 // file reads, read-only package port) while git/exec stay faked. Reuses the real port without growing the
 // public surface (the field is already on the `realPorts` record).
-let realSurfaceSense (repo: string) : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+let realSurfaceSense
+    (repo: string)
+    : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+          -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+    =
     (FS.GG.Governance.VerifyCommand.Interpreter.realPorts repo).SenseSurfaces
 
 /// Assemble faked Interpreter.Ports from a catalog map, a git port, and a capture (no failing writes). The
 /// F046 sensing ports default to the fully-sensing fake sensor + an absent (⇒ empty) store; the F052 exec
 /// port defaults to the failing port (advisory under Standard, blocking under Strict).
 let fakePorts (files: Map<string, string>) (g: GitPort) (cap: Capture) : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = fakeSensor
-      Store = absentStoreReader
-      Write = capturingWriter cap Set.empty
-      Out = capturingSink cap
-      Execute = fakeExecPortFail
-      SenseCapability = plainCapability
-      RenderReport = noRichRender
-      SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency
-      Handoffs = fun _ -> [] }
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = fakeSensor
+        Store = absentStoreReader
+        Write = capturingWriter cap Set.empty
+        Out = capturingSink cap
+        Execute = fakeExecPortFail
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+        SenseEnvironment = fakeSenseEnvironment
+        SenseBuilder = fakeSenseBuilder
+        SenseRelease = fakeSenseRelease
+        SenseSurfaces = fakeSenseSurfaces
+        SenseViewCurrency = fakeSenseViewCurrency
+        Handoffs = fun _ -> []
+    }
 
-let fakePortsWith (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (cap: Capture) : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = sensor
-      Store = store
-      Write = capturingWriter cap Set.empty
-      Out = capturingSink cap
-      Execute = fakeExecPortFail
-      SenseCapability = plainCapability
-      RenderReport = noRichRender
-      SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency
-      Handoffs = fun _ -> [] }
+let fakePortsWith
+    (files: Map<string, string>)
+    (g: GitPort)
+    (sensor: FreshnessSensing.FreshnessSensor)
+    (store: FreshnessSensing.StoreReader)
+    (cap: Capture)
+    : Interpreter.Ports =
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = sensor
+        Store = store
+        Write = capturingWriter cap Set.empty
+        Out = capturingSink cap
+        Execute = fakeExecPortFail
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+        SenseEnvironment = fakeSenseEnvironment
+        SenseBuilder = fakeSenseBuilder
+        SenseRelease = fakeSenseRelease
+        SenseSurfaces = fakeSenseSurfaces
+        SenseViewCurrency = fakeSenseViewCurrency
+        Handoffs = fun _ -> []
+    }
 
-let fakePortsFailingWrites (files: Map<string, string>) (g: GitPort) (cap: Capture) (failPaths: Set<string>) : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = fakeSensor
-      Store = absentStoreReader
-      Write = capturingWriter cap failPaths
-      Out = capturingSink cap
-      Execute = fakeExecPortFail
-      SenseCapability = plainCapability
-      RenderReport = noRichRender
-      SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency
-      Handoffs = fun _ -> [] }
+let fakePortsFailingWrites
+    (files: Map<string, string>)
+    (g: GitPort)
+    (cap: Capture)
+    (failPaths: Set<string>)
+    : Interpreter.Ports =
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = fakeSensor
+        Store = absentStoreReader
+        Write = capturingWriter cap failPaths
+        Out = capturingSink cap
+        Execute = fakeExecPortFail
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+        SenseEnvironment = fakeSenseEnvironment
+        SenseBuilder = fakeSenseBuilder
+        SenseRelease = fakeSenseRelease
+        SenseSurfaces = fakeSenseSurfaces
+        SenseViewCurrency = fakeSenseViewCurrency
+        Handoffs = fun _ -> []
+    }
 
-let fakePortsExec (files: Map<string, string>) (g: GitPort) (sensor: FreshnessSensing.FreshnessSensor) (store: FreshnessSensing.StoreReader) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
-    { Files = readerOf files
-      Git = portsGit g
-      Freshness = sensor
-      Store = store
-      Write = capturingWriter cap Set.empty
-      Out = capturingSink cap
-      Execute = exec
-      SenseCapability = plainCapability
-      RenderReport = noRichRender
-      SenseEnvironment = fakeSenseEnvironment
-      SenseBuilder = fakeSenseBuilder
-      SenseRelease = fakeSenseRelease
-      SenseSurfaces = fakeSenseSurfaces
-      SenseViewCurrency = fakeSenseViewCurrency
-      Handoffs = fun _ -> [] }
+let fakePortsExec
+    (files: Map<string, string>)
+    (g: GitPort)
+    (sensor: FreshnessSensing.FreshnessSensor)
+    (store: FreshnessSensing.StoreReader)
+    (exec: ExecutionPort)
+    (cap: Capture)
+    : Interpreter.Ports =
+    {
+        Files = readerOf files
+        Git = portsGit g
+        Freshness = sensor
+        Store = store
+        Write = capturingWriter cap Set.empty
+        Out = capturingSink cap
+        Execute = exec
+        SenseCapability = plainCapability
+        RenderReport = noRichRender
+        SenseEnvironment = fakeSenseEnvironment
+        SenseBuilder = fakeSenseBuilder
+        SenseRelease = fakeSenseRelease
+        SenseSurfaces = fakeSenseSurfaces
+        SenseViewCurrency = fakeSenseViewCurrency
+        Handoffs = fun _ -> []
+    }
+
 let writtenVerify (cap: Capture) : (string * string) option =
-    cap.Writes |> List.tryPick (fun (_, p, c) -> if p = "readiness/verify.json" then Some(p, c) else None)
+    cap.Writes
+    |> List.tryPick (fun (_, p, c) -> if p = "readiness/verify.json" then Some(p, c) else None)
 
 // F25 wiring (064): the capturing writer is a path→content port (it cannot see the ArtifactKind), so sidecar
 // writes are located by their default path.
 let writtenAt (path: string) (cap: Capture) : string option =
     cap.Writes |> List.tryPick (fun (_, p, c) -> if p = path then Some c else None)
 
-let writtenCostBudget (cap: Capture) : string option = writtenAt "readiness/cost-budget.json" cap
-let writtenProvenance (cap: Capture) : string option = writtenAt "readiness/provenance.json" cap
+let writtenCostBudget (cap: Capture) : string option =
+    writtenAt "readiness/cost-budget.json" cap
+
+let writtenProvenance (cap: Capture) : string option =
+    writtenAt "readiness/provenance.json" cap
 
 // ── Request builders ──
 
 /// The canonical pre-PR request: `--profile standard`, verify at the default `readiness/verify.json`.
 let requestFor (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) : Loop.RunRequest =
-    { Repo = "."
-      Scope = scope
-      Profile = Standard
-      Format = format
-      VerifyOut = "readiness/verify.json"
-      StorePath = "readiness/evidence-reuse.json"
-      PersistStore = false
-      ExplicitPlain = false
-      CostBudgetOut = "readiness/cost-budget.json"
-      ProvenanceOut = "readiness/provenance.json" }
+    {
+        Repo = "."
+        Scope = scope
+        Profile = Standard
+        Format = format
+        VerifyOut = "readiness/verify.json"
+        StorePath = "readiness/evidence-reuse.json"
+        PersistStore = false
+        ExplicitPlain = false
+        CostBudgetOut = "readiness/cost-budget.json"
+        ProvenanceOut = "readiness/provenance.json"
+    }
 
 /// A request under an explicit profile (for the blocking / uncertain scenarios at Strict).
 let requestForProfile (scope: Loop.ScopeSelector) (format: Loop.OutputFormat) (profile: Profile) : Loop.RunRequest =
-    { requestFor scope format with Profile = profile }
+    { requestFor scope format with
+        Profile = profile
+    }
+
 let withTempRepo (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-verify-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
+
     try
         git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
         git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
         git dir [ "config"; "user.name"; "FSGG Fixture" ] |> ignore
         git dir [ "config"; "commit.gpgsign"; "false" ] |> ignore
+
         for KeyValue(name, content) in validCatalog do
             writeFile dir (".fsgg/" + name) content
+
         writeFile dir "src/Lib/Thing.fs" "module Thing\nlet v = 1\n"
         git dir [ "add"; "-A" ] |> ignore
         git dir [ "commit"; "-qm"; "base" ] |> ignore
@@ -380,21 +478,28 @@ let withTempRepo (body: string -> 'a) : 'a =
         git dir [ "commit"; "-qm"; "head" ] |> ignore
         body dir
     finally
-        try Directory.Delete(dir, true) with _ -> ()
+        try
+            Directory.Delete(dir, true)
+        with _ ->
+            ()
+
 let surfaceE2EPorts (dir: string) (exec: ExecutionPort) (cap: Capture) : Interpreter.Ports =
     { FS.GG.Governance.VerifyCommand.Interpreter.realPorts dir with
         Execute = exec
         Write = capturingWriter cap Set.empty
-        Out = capturingSink cap }
+        Out = capturingSink cap
+    }
 
 // A package-surface catalog: one declared `kind: package` surface over `src/**/*.fsi` (with an evidenceTag)
 // plus a single block-on-ship `build` gate. A drifted `.fsi` ⇒ a `package.baseline-drift` BLOCKING surface
 // finding; the gate exercises the executed projection path so the fold runs over a relocated decision.
 let surfaceCatalog: Map<string, string> =
     Map
-        [ "governance.yml", projectYml
-          "capabilities.yml",
-          yaml """
+        [
+            "governance.yml", projectYml
+            "capabilities.yml",
+            yaml
+                """
 schemaVersion: 2
 domains:
   - package-api
@@ -417,8 +522,9 @@ checks:
     environment: local-or-ci
     maturity: block-on-ship
 """
-          "policy.yml", policyYml
-          "tooling.yml", toolingYml ]
+            "policy.yml", policyYml
+            "tooling.yml", toolingYml
+        ]
 
 // A no-product-surface catalog over a real temp tree: the byte-identity anchor (US2). Reuses `validCatalog`
 // (its only surface is `protected` ⇒ not a product domain ⇒ no requests ⇒ no findings ⇒ `surfaceChecks`
@@ -432,8 +538,11 @@ let private writeCatalog (dir: string) (catalog: Map<string, string>) : unit =
 // deliberately-stale `src/Api.fsi.baseline`; head edits `src/Api.fsi` so the regenerated token set diverges
 // from the committed baseline. The changed `.fsi` is the routed/classified path. `body` runs against the path.
 let withDriftedPackageRepo (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-surface-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-verify-surface-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
+
     try
         git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
         git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
@@ -452,13 +561,19 @@ let withDriftedPackageRepo (body: string -> 'a) : 'a =
         git dir [ "commit"; "-qm"; "head" ] |> ignore
         body dir
     finally
-        try Directory.Delete(dir, true) with _ -> ()
+        try
+            Directory.Delete(dir, true)
+        with _ ->
+            ()
 
 // Create a disposable temp git repo declaring NO product surface (the `validCatalog` no-surface case) with a
 // real two-commit `.fs` edit. The byte-identity anchor for SC-002.
 let withNoSurfaceRepo (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-nosurface-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-verify-nosurface-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
+
     try
         git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
         git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
@@ -473,7 +588,10 @@ let withNoSurfaceRepo (body: string -> 'a) : 'a =
         git dir [ "commit"; "-qm"; "head" ] |> ignore
         body dir
     finally
-        try Directory.Delete(dir, true) with _ -> ()
+        try
+            Directory.Delete(dir, true)
+        with _ ->
+            ()
 
 // A request rooted at a real temp repo (so the default artifact paths sit under it). The capturing writer
 // records the bytes; nothing is written to disk.
@@ -483,27 +601,35 @@ let requestForRepo (dir: string) (scope: Loop.ScopeSelector) (format: Loop.Outpu
         VerifyOut = dir + "/readiness/verify.json"
         StorePath = dir + "/readiness/evidence-reuse.json"
         CostBudgetOut = dir + "/readiness/cost-budget.json"
-        ProvenanceOut = dir + "/readiness/provenance.json" }
+        ProvenanceOut = dir + "/readiness/provenance.json"
+    }
 
 // ── 067: hand-built (SYNTHETIC, disclosed) surface findings for the verdict-fold proofs ──
 // The real domain sensors emit only Blocking findings from disk today (the lone Advisory finding,
 // `docs.example-freshness`, the real docs sensor does not yet populate). These literal findings drive the
 // PURE verdict fold (a blocking finding fails, an advisory one does not) through the public interpreter.
 
-let private mkSyntheticFinding (code: string) (severity: Severity) : FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
+let private mkSyntheticFinding
+    (code: string)
+    (severity: Severity)
+    : FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
     // SYNTHETIC: a hand-built finding, not sensed from disk — used only to drive the verdict fold under test.
-    { Domain = FS.GG.Governance.SurfaceChecks.Model.DocsDomain
-      Surface = SurfaceId "synthetic-surface"
-      Code = code
-      Location =
-        ({ File = gp "docs/synthetic.md"
-           Detail = "synthetic" }
-        : FS.GG.Governance.SurfaceChecks.Model.FindingLocation)
-      BaseSeverity = severity
-      Maturity = BlockOnPr
-      EvidenceTag = None
-      IsInputState = false
-      Message = "SYNTHETIC: hand-built finding for the verify verdict-fold test" }
+    {
+        Domain = FS.GG.Governance.SurfaceChecks.Model.DocsDomain
+        Surface = SurfaceId "synthetic-surface"
+        Code = code
+        Location =
+            ({
+                File = gp "docs/synthetic.md"
+                Detail = "synthetic"
+            }
+            : FS.GG.Governance.SurfaceChecks.Model.FindingLocation)
+        BaseSeverity = severity
+        Maturity = BlockOnPr
+        EvidenceTag = None
+        IsInputState = false
+        Message = "SYNTHETIC: hand-built finding for the verify verdict-fold test"
+    }
 
 let blockingSurfaceFinding: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding =
     mkSyntheticFinding "package.baseline-drift" Blocking
@@ -513,16 +639,22 @@ let advisorySurfaceFinding: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding 
 
 // A synthetic surface-sense port returning a fixed finding list regardless of the report (disclosed). Lets a
 // faked-port run drive the verdict fold without a real drifted tree.
-let syntheticSurfaceSense (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list) : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list =
+let syntheticSurfaceSense
+    (findings: FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list)
+    : FS.GG.Governance.ProductSurfaces.Model.ProductSurfaceReport
+          -> FS.GG.Governance.SurfaceChecks.Model.SurfaceFinding list
+    =
     fun _ -> findings // SYNTHETIC: ignores the report, returns the literal findings under test
 
 // A package-surface catalog with NO gates (empty `checks`) — isolates the read-only surface sense (no gate
 // ever shells a process), for the no-write / no-spawn proof (FR-012, T009b) and the absent-baseline case.
 let surfaceCatalogNoGates: Map<string, string> =
     Map
-        [ "governance.yml", projectYml
-          "capabilities.yml",
-          yaml """
+        [
+            "governance.yml", projectYml
+            "capabilities.yml",
+            yaml
+                """
 schemaVersion: 2
 domains:
   - package-api
@@ -538,15 +670,19 @@ surfaces:
     evidenceTag: api-contract
 checks: []
 """
-          "policy.yml", policyYml
-          "tooling.yml", toolingYml ]
+            "policy.yml", policyYml
+            "tooling.yml", toolingYml
+        ]
 
 // A temp repo declaring a package surface with NO committed baseline and a declared transcript file. A
 // read-only verify MUST report `package.baseline-absent` (blocking) WITHOUT writing the `.baseline` and
 // WITHOUT executing the transcript (no process). `body` runs against the repo path.
 let withAbsentBaselineRepo (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-verify-absent-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-verify-absent-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
+
     try
         git dir [ "init"; "-q"; "-b"; "main" ] |> ignore
         git dir [ "config"; "user.email"; "fixture@fsgg.test" ] |> ignore
@@ -563,4 +699,7 @@ let withAbsentBaselineRepo (body: string -> 'a) : 'a =
         git dir [ "commit"; "-qm"; "head" ] |> ignore
         body dir
     finally
-        try Directory.Delete(dir, true) with _ -> ()
+        try
+            Directory.Delete(dir, true)
+        with _ ->
+            ()

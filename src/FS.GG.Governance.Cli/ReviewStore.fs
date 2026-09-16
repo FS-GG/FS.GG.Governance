@@ -12,7 +12,11 @@ module ReviewStore =
 
     let safeFileName (key: string) =
         key
-        |> Seq.map (fun ch -> if Char.IsLetterOrDigit ch || ch = '-' || ch = '_' then ch else '_')
+        |> Seq.map (fun ch ->
+            if Char.IsLetterOrDigit ch || ch = '-' || ch = '_' then
+                ch
+            else
+                '_')
         |> Seq.toArray
         |> String
 
@@ -22,11 +26,13 @@ module ReviewStore =
     // them apart. SHA-256 — never String.GetHashCode, which is randomized per process.
     let keyHash (key: string) =
         use sha = SHA256.Create()
+
         (Encoding.UTF8.GetBytes key |> sha.ComputeHash).[..7]
         |> Array.map (fun b -> b.ToString("x2"))
         |> String.concat ""
 
-    let storeFileName (key: string) = safeFileName key + "-" + keyHash key + ".txt"
+    let storeFileName (key: string) =
+        safeFileName key + "-" + keyHash key + ".txt"
 
     let reviewStoreRoot (request: RunRequest) =
         match request.ReviewStore with
@@ -61,9 +67,11 @@ module ReviewStore =
                 // SHA-256 filename collision) is a MISS, never a wrong-verdict hit (the bug this fixes).
                 | storedKey :: rule :: verdict :: _ when storedKey = key ->
                     let review: RecordedReview =
-                        { Rule = RuleId rule
-                          Key = key
-                          Verdict = parseVerdict verdict }
+                        {
+                            Rule = RuleId rule
+                            Key = key
+                            Verdict = parseVerdict verdict
+                        }
 
                     Ok(Some review)
                 | _ :: _ :: _ :: _ -> Ok None

@@ -14,7 +14,11 @@ module Model =
         | PathUnresolved of claimed: string
         | PathEscapesBounds of claimed: string
 
-    type PathContractFact = { Claimed: string; Outcome: PathContractOutcome }
+    type PathContractFact =
+        {
+            Claimed: string
+            Outcome: PathContractOutcome
+        }
 
     /// Task-skill-list internal consistency.
     type TaskListOutcome =
@@ -32,8 +36,10 @@ module Model =
         | MirrorUnreadable of mirror: string * detail: string
 
     type SkillFacts =
-        { SkillId: string
-          PathContract: PathContractFact list
-          TaskList: TaskListOutcome
-          Mirror: MirrorOutcome
-          Unreadable: string list }
+        {
+            SkillId: string
+            PathContract: PathContractFact list
+            TaskList: TaskListOutcome
+            Mirror: MirrorOutcome
+            Unreadable: string list
+        }

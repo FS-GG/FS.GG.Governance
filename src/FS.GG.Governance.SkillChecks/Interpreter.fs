@@ -16,9 +16,11 @@ module SC = FS.GG.Governance.SurfaceChecks.Model
 module Interpreter =
 
     type SkillPort =
-        { ReadManifest: GovernedPath -> Result<string, string>
-          ResolvePath: string -> Result<bool, string>
-          ReadMirror: string -> Result<string option, string> }
+        {
+            ReadManifest: GovernedPath -> Result<string, string>
+            ResolvePath: string -> Result<bool, string>
+            ReadMirror: string -> Result<string option, string>
+        }
 
     // BCL Path.GetDirectoryName is nullable; coalesce to "" (Nullable=enable). Hidden by ABSENCE from .fsi.
     let dirOrEmpty (p: string) : string =
@@ -64,9 +66,11 @@ module Interpreter =
             Error(sprintf "mirror unreadable: %s" ex.Message)
 
     let realPort (repo: string) : SkillPort =
-        { ReadManifest = readManifest repo
-          ResolvePath = resolvePath repo
-          ReadMirror = readMirror repo }
+        {
+            ReadManifest = readManifest repo
+            ResolvePath = resolvePath repo
+            ReadMirror = readMirror repo
+        }
 
     // Parse the neutral manifest: collect `path:` / `task:` / `mirror:` values (trimmed, in order).
     let parseManifest (text: string) : string list * string list * string option =
@@ -98,11 +102,13 @@ module Interpreter =
 
         match SC.safe (fun () -> port.ReadManifest request.Path) with
         | Error e ->
-            { SkillId = skillId
-              PathContract = []
-              TaskList = TaskListConsistent
-              Mirror = NoMirrorDeclared
-              Unreadable = [ e ] }
+            {
+                SkillId = skillId
+                PathContract = []
+                TaskList = TaskListConsistent
+                Mirror = NoMirrorDeclared
+                Unreadable = [ e ]
+            }
         | Ok text ->
             let paths, tasks, mirror = parseManifest text
             let mutable unreadable = []
@@ -112,23 +118,31 @@ module Interpreter =
                 paths
                 |> List.map (fun claimed ->
                     if escapesBounds claimed then
-                        { Claimed = claimed
-                          Outcome = PathEscapesBounds claimed }
+                        {
+                            Claimed = claimed
+                            Outcome = PathEscapesBounds claimed
+                        }
                     else
                         let combined = Path.Combine(skillDir, claimed)
 
                         match SC.safe (fun () -> port.ResolvePath combined) with
                         | Ok true ->
-                            { Claimed = claimed
-                              Outcome = PathHolds }
+                            {
+                                Claimed = claimed
+                                Outcome = PathHolds
+                            }
                         | Ok false ->
-                            { Claimed = claimed
-                              Outcome = PathUnresolved claimed }
+                            {
+                                Claimed = claimed
+                                Outcome = PathUnresolved claimed
+                            }
                         | Error e ->
                             unreadable <- e :: unreadable
 
-                            { Claimed = claimed
-                              Outcome = PathUnresolved claimed })
+                            {
+                                Claimed = claimed
+                                Outcome = PathUnresolved claimed
+                            })
 
             // Task-list consistency: a duplicate task id is the canonical inconsistency.
             let taskList =
@@ -159,8 +173,10 @@ module Interpreter =
                         // claim the mirror was absent.
                         MirrorUnreadable(m, e)
 
-            { SkillId = skillId
-              PathContract = pathFacts
-              TaskList = taskList
-              Mirror = mirrorOutcome
-              Unreadable = List.rev unreadable }
+            {
+                SkillId = skillId
+                PathContract = pathFacts
+                TaskList = taskList
+                Mirror = mirrorOutcome
+                Unreadable = List.rev unreadable
+            }

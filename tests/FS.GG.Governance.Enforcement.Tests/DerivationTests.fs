@@ -102,80 +102,134 @@ let private oracle (i: EnforcementInput) : Severity * string =
 let tests =
     testList
         "Derivation"
-        [ test "worked example: blocking/block-on-ship/inner/light => advisory + exact reason (SC-002)" {
-              let d =
-                  deriveEffectiveSeverity { BaseSeverity = Blocking; Maturity = BlockOnShip; Mode = Inner; Profile = Light }
+        [
+            test "worked example: blocking/block-on-ship/inner/light => advisory + exact reason (SC-002)" {
+                let d =
+                    deriveEffectiveSeverity
+                        {
+                            BaseSeverity = Blocking
+                            Maturity = BlockOnShip
+                            Mode = Inner
+                            Profile = Light
+                        }
 
-              Expect.equal d.EffectiveSeverity Advisory "inner is below the gate floor for block-on-ship under light"
-              Expect.equal d.BaseSeverity Blocking "base severity carried unchanged"
+                Expect.equal d.EffectiveSeverity Advisory "inner is below the gate floor for block-on-ship under light"
+                Expect.equal d.BaseSeverity Blocking "base severity carried unchanged"
 
-              Expect.equal
-                  d.Reason
-                  "'light' profile does not block this 'block-on-ship' finding outside the 'gate' boundary (run mode 'inner')"
-                  "exact relaxed reason naming profile, maturity, boundary, run mode"
-          }
+                Expect.equal
+                    d.Reason
+                    "'light' profile does not block this 'block-on-ship' finding outside the 'gate' boundary (run mode 'inner')"
+                    "exact relaxed reason naming profile, maturity, boundary, run mode"
+            }
 
-          test "same finding at gate and at release => blocking (FR-008)" {
-              let baseInput = { BaseSeverity = Blocking; Maturity = BlockOnShip; Mode = Inner; Profile = Light }
-              let atGate = deriveEffectiveSeverity { baseInput with Mode = Gate }
-              let atRelease = deriveEffectiveSeverity { baseInput with Mode = RunMode.Release }
+            test "same finding at gate and at release => blocking (FR-008)" {
+                let baseInput =
+                    {
+                        BaseSeverity = Blocking
+                        Maturity = BlockOnShip
+                        Mode = Inner
+                        Profile = Light
+                    }
 
-              Expect.equal atGate.EffectiveSeverity Blocking "gate reaches the block-on-ship floor"
-              Expect.equal atRelease.EffectiveSeverity Blocking "release is above the block-on-ship floor"
+                let atGate = deriveEffectiveSeverity { baseInput with Mode = Gate }
 
-              Expect.equal
-                  atGate.Reason
-                  "run mode 'gate' reaches the 'gate' blocking boundary for maturity 'block-on-ship' under 'light' profile"
-                  "exact blocking reason at the boundary"
-          }
+                let atRelease =
+                    deriveEffectiveSeverity
+                        { baseInput with
+                            Mode = RunMode.Release
+                        }
 
-          test "observe/warn withhold blocking under every mode × profile (FR-007)" {
-              for m in [ Observe; Warn ] do
-                  for md in allModes do
-                      for p in allProfiles do
-                          let d = deriveEffectiveSeverity { BaseSeverity = Blocking; Maturity = m; Mode = md; Profile = p }
-                          Expect.equal d.EffectiveSeverity Advisory (sprintf "%A withholds blocking under %A/%A" m md p)
+                Expect.equal atGate.EffectiveSeverity Blocking "gate reaches the block-on-ship floor"
+                Expect.equal atRelease.EffectiveSeverity Blocking "release is above the block-on-ship floor"
 
-                          Expect.equal
-                              d.Reason
-                              (sprintf "maturity '%s' withholds blocking; no run mode or profile can make it block" (maturityToken m))
-                              "withhold reason"
-          }
+                Expect.equal
+                    atGate.Reason
+                    "run mode 'gate' reaches the 'gate' blocking boundary for maturity 'block-on-ship' under 'light' profile"
+                    "exact blocking reason at the boundary"
+            }
 
-          test "base-blocking boundary matches the truth table for every maturity × mode × profile (FR-008)" {
-              for m in [ BlockOnPr; BlockOnShip; BlockOnRelease ] do
-                  for md in allModes do
-                      for p in allProfiles do
-                          let i = { BaseSeverity = Blocking; Maturity = m; Mode = md; Profile = p }
-                          let d = deriveEffectiveSeverity i
-                          let expectedSev, expectedReason = oracle i
-                          Expect.equal d.EffectiveSeverity expectedSev (sprintf "effective severity for %A" i)
-                          Expect.equal d.Reason expectedReason (sprintf "reason for %A" i)
-          }
+            test "observe/warn withhold blocking under every mode × profile (FR-007)" {
+                for m in [ Observe; Warn ] do
+                    for md in allModes do
+                        for p in allProfiles do
+                            let d =
+                                deriveEffectiveSeverity
+                                    {
+                                        BaseSeverity = Blocking
+                                        Maturity = m
+                                        Mode = md
+                                        Profile = p
+                                    }
 
-          test "base-advisory never escalates, under every maturity × mode × profile (research D4)" {
-              for m in allMaturities do
-                  for md in allModes do
-                      for p in allProfiles do
-                          let i = { BaseSeverity = Advisory; Maturity = m; Mode = md; Profile = p }
-                          let d = deriveEffectiveSeverity i
-                          Expect.equal d.EffectiveSeverity Advisory (sprintf "base advisory stays advisory for %A" i)
-          }
+                            Expect.equal
+                                d.EffectiveSeverity
+                                Advisory
+                                (sprintf "%A withholds blocking under %A/%A" m md p)
 
-          test "base-advisory (maturity permits blocking) carries the non-escalation reason" {
-              let d = deriveEffectiveSeverity { BaseSeverity = Advisory; Maturity = BlockOnShip; Mode = Gate; Profile = Strict }
+                            Expect.equal
+                                d.Reason
+                                (sprintf
+                                    "maturity '%s' withholds blocking; no run mode or profile can make it block"
+                                    (maturityToken m))
+                                "withhold reason"
+            }
 
-              Expect.equal
-                  d.Reason
-                  "base severity is advisory; 'strict' profile does not escalate it (per-class strictness dials deferred)"
-                  "base-advisory reason"
-          }
+            test "base-blocking boundary matches the truth table for every maturity × mode × profile (FR-008)" {
+                for m in [ BlockOnPr; BlockOnShip; BlockOnRelease ] do
+                    for md in allModes do
+                        for p in allProfiles do
+                            let i =
+                                {
+                                    BaseSeverity = Blocking
+                                    Maturity = m
+                                    Mode = md
+                                    Profile = p
+                                }
 
-          test "every decision over the full sweep matches the oracle and has a non-empty reason (FR-010)" {
-              for i in allInputs do
-                  let d = deriveEffectiveSeverity i
-                  let expectedSev, expectedReason = oracle i
-                  Expect.equal d.EffectiveSeverity expectedSev (sprintf "effective severity for %A" i)
-                  Expect.equal d.Reason expectedReason (sprintf "reason for %A" i)
-                  Expect.isNotEmpty d.Reason "reason is non-empty"
-          } ]
+                            let d = deriveEffectiveSeverity i
+                            let expectedSev, expectedReason = oracle i
+                            Expect.equal d.EffectiveSeverity expectedSev (sprintf "effective severity for %A" i)
+                            Expect.equal d.Reason expectedReason (sprintf "reason for %A" i)
+            }
+
+            test "base-advisory never escalates, under every maturity × mode × profile (research D4)" {
+                for m in allMaturities do
+                    for md in allModes do
+                        for p in allProfiles do
+                            let i =
+                                {
+                                    BaseSeverity = Advisory
+                                    Maturity = m
+                                    Mode = md
+                                    Profile = p
+                                }
+
+                            let d = deriveEffectiveSeverity i
+                            Expect.equal d.EffectiveSeverity Advisory (sprintf "base advisory stays advisory for %A" i)
+            }
+
+            test "base-advisory (maturity permits blocking) carries the non-escalation reason" {
+                let d =
+                    deriveEffectiveSeverity
+                        {
+                            BaseSeverity = Advisory
+                            Maturity = BlockOnShip
+                            Mode = Gate
+                            Profile = Strict
+                        }
+
+                Expect.equal
+                    d.Reason
+                    "base severity is advisory; 'strict' profile does not escalate it (per-class strictness dials deferred)"
+                    "base-advisory reason"
+            }
+
+            test "every decision over the full sweep matches the oracle and has a non-empty reason (FR-010)" {
+                for i in allInputs do
+                    let d = deriveEffectiveSeverity i
+                    let expectedSev, expectedReason = oracle i
+                    Expect.equal d.EffectiveSeverity expectedSev (sprintf "effective severity for %A" i)
+                    Expect.equal d.Reason expectedReason (sprintf "reason for %A" i)
+                    Expect.isNotEmpty d.Reason "reason is non-empty"
+            }
+        ]

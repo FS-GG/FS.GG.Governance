@@ -27,32 +27,43 @@ module Model =
         | Unrecoverable
 
     type ReleaseRule =
-        { Kind: ReleaseRuleKind
-          Surface: SurfaceId
-          BaseSeverity: Severity
-          Maturity: Maturity }
+        {
+            Kind: ReleaseRuleKind
+            Surface: SurfaceId
+            BaseSeverity: Severity
+            Maturity: Maturity
+        }
 
-    type ReleaseFacts = { States: Map<ReleaseRuleKind, FactState> }
+    type ReleaseFacts =
+        {
+            States: Map<ReleaseRuleKind, FactState>
+        }
 
     type RuleOutcome =
         | Satisfied
         | Violated
 
     type ReleaseFinding =
-        { Kind: ReleaseRuleKind
-          Surface: SurfaceId
-          Outcome: RuleOutcome
-          BaseSeverity: Severity
-          Maturity: Maturity
-          Reason: string }
+        {
+            Kind: ReleaseRuleKind
+            Surface: SurfaceId
+            Outcome: RuleOutcome
+            BaseSeverity: Severity
+            Maturity: Maturity
+            Reason: string
+        }
 
     type EnforcedReleaseFinding =
-        { Finding: ReleaseFinding
-          Decision: EnforcementDecision }
+        {
+            Finding: ReleaseFinding
+            Decision: EnforcementDecision
+        }
 
     type ReleaseDecision =
-        { Verdict: Verdict
-          Blockers: EnforcedReleaseFinding list
-          Warnings: EnforcedReleaseFinding list
-          Passing: EnforcedReleaseFinding list
-          ExitCodeBasis: ExitCodeBasis }
+        {
+            Verdict: Verdict
+            Blockers: EnforcedReleaseFinding list
+            Warnings: EnforcedReleaseFinding list
+            Passing: EnforcedReleaseFinding list
+            ExitCodeBasis: ExitCodeBasis
+        }

@@ -13,23 +13,23 @@ namespace FS.GG.Governance.CommandHost
 // is CommandHost.fsi (Principle II).
 
 open System.IO
-open FS.GG.Governance.Config.Model            // Diagnostic, diagnosticIdToken, ToolingFacts, Environment, LocalOrCi
-open FS.GG.Governance.Snapshot.Model          // CommitId, DiffRange
-open FS.GG.Governance.FreshnessKey.Model      // Revision, RuleHash, GeneratorVersion, FreshnessInputs, CommandId
-open FS.GG.Governance.Gates                   // gateIdValue
-open FS.GG.Governance.Gates.Model             // Gate, GateId
-open FS.GG.Governance.GateExecution.Model     // GateCommand
-open FS.GG.Governance.CommandRecord.Model     // CommandRecord, ExitCode
-open FS.GG.Governance.FreshnessResolution     // resolve, entries, candidate
+open FS.GG.Governance.Config.Model // Diagnostic, diagnosticIdToken, ToolingFacts, Environment, LocalOrCi
+open FS.GG.Governance.Snapshot.Model // CommitId, DiffRange
+open FS.GG.Governance.FreshnessKey.Model // Revision, RuleHash, GeneratorVersion, FreshnessInputs, CommandId
+open FS.GG.Governance.Gates // gateIdValue
+open FS.GG.Governance.Gates.Model // Gate, GateId
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.CommandRecord.Model // CommandRecord, ExitCode
+open FS.GG.Governance.FreshnessResolution // resolve, entries, candidate
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts
-open FS.GG.Governance.CacheEligibility        // evaluate, entries
-open FS.GG.Governance.CacheEligibility.Model  // CacheEligibilityVerdict, Reusable, MustRecompute
-open FS.GG.Governance.EvidenceReuse.Model     // ReuseStore, NoPriorEvidence
-open FS.GG.Governance.EvidenceReuseStore      // prune, retain, serialise, defaultRetentionBound
-open FS.GG.Governance.GateRun                 // Plan.commandFor / priorExitOf
-open FS.GG.Governance.CostBudget.Model        // BudgetReason, CacheDecisionReport
-open FS.GG.Governance.CommandKind.Model       // CommandKind, KindedCommandRun, AuditSnapshot
-open FS.GG.Governance.Provenance.Model        // BuilderIdentity
+open FS.GG.Governance.CacheEligibility // evaluate, entries
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityVerdict, Reusable, MustRecompute
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore, NoPriorEvidence
+open FS.GG.Governance.EvidenceReuseStore // prune, retain, serialise, defaultRetentionBound
+open FS.GG.Governance.GateRun // Plan.commandFor / priorExitOf
+open FS.GG.Governance.CostBudget.Model // BudgetReason, CacheDecisionReport
+open FS.GG.Governance.CommandKind.Model // CommandKind, KindedCommandRun, AuditSnapshot
+open FS.GG.Governance.Provenance.Model // BuilderIdentity
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CommandHost =
@@ -53,15 +53,19 @@ module CommandHost =
     // the leaf stays command-agnostic: `None` ⇒ no demotion, empty report (Route); `Some f` ⇒ Ship/Verify
     // compute the F25 over-budget map + the `CacheDecisionReport`.
     type ExecutionPlanParams =
-        { BudgetFold:
-            (Map<string, CacheEligibilityVerdict> -> Map<string, BudgetReason> * CacheDecisionReport) option }
+        {
+            BudgetFold: (Map<string, CacheEligibilityVerdict> -> Map<string, BudgetReason> * CacheDecisionReport) option
+        }
 
     // ── micro-helpers (verbatim relocations — research audit table) ──
 
     // Join a repo dir with a default relative artifact location. A `.` (or empty) repo yields the clean
     // relative form; any other repo is prefixed so the artifact lands inside it. Pure string composition.
     let under (repo: string) (rel: string) : string =
-        if repo = "." || repo = "" then rel else repo.TrimEnd('/') + "/" + rel
+        if repo = "." || repo = "" then
+            rel
+        else
+            repo.TrimEnd('/') + "/" + rel
 
     // CommitId -> Revision (never re-sensed or fabricated).
     let revOfCommit (CommitId c) = Revision c
@@ -75,12 +79,14 @@ module CommandHost =
 
     // The all-`None`/empty `SensedFacts` substituted when freshness sensing fails. NEVER fabricates a value.
     let emptySensedFacts: SensedFacts =
-        { RuleHash = None
-          GeneratorVersion = None
-          Base = None
-          Head = None
-          CoveredArtifacts = Map.empty
-          CommandVersions = Map.empty }
+        {
+            RuleHash = None
+            GeneratorVersion = None
+            Base = None
+            Head = None
+            CoveredArtifacts = Map.empty
+            CommandVersions = Map.empty
+        }
 
     // Human-readable catalog-invalid summary over Config diagnostics.
     let describeInvalid (diags: Diagnostic list) : string =
@@ -108,14 +114,22 @@ module CommandHost =
 
         let has (sub: string) = token.Contains sub
 
-        if has "test" then Test
-        elif has "pack" then Pack
-        elif has "template" || has "scaffold" || has "instantiate" then TemplateInstantiation
-        elif has "diff" then GitDiff
-        elif has "audit" || has "inspect" || has "restore" || has "list" then PackageInspection
-        elif has "capture" || has "visual" || has "screenshot" || has "snapshot" then VisualCapture
-        elif has "build" || has "format" || has "lint" || has "compile" then Build
-        else Build // documented default for an unrecognized command token (no silent mislabel)
+        if has "test" then
+            Test
+        elif has "pack" then
+            Pack
+        elif has "template" || has "scaffold" || has "instantiate" then
+            TemplateInstantiation
+        elif has "diff" then
+            GitDiff
+        elif has "audit" || has "inspect" || has "restore" || has "list" then
+            PackageInspection
+        elif has "capture" || has "visual" || has "screenshot" || has "snapshot" then
+            VisualCapture
+        elif has "build" || has "format" || has "lint" || has "compile" then
+            Build
+        else
+            Build // documented default for an unrecognized command token (no silent mislabel)
 
     // Pair executed records with their gate kind, keyed via the selected gates. Verify↔Ship common form
     // (decomposed: takes the selected-gate list rather than the host `Model`).
@@ -141,14 +155,29 @@ module CommandHost =
         : AuditSnapshot =
         let sensed = sensed |> Option.defaultValue emptySensedFacts
         let baseSnap, headSnap = baseHeadOf range
-        let baseRev = sensed.Base |> Option.orElse baseSnap |> Option.defaultValue (Revision "")
-        let headRev = sensed.Head |> Option.orElse headSnap |> Option.defaultValue (Revision "")
+
+        let baseRev =
+            sensed.Base |> Option.orElse baseSnap |> Option.defaultValue (Revision "")
+
+        let headRev =
+            sensed.Head |> Option.orElse headSnap |> Option.defaultValue (Revision "")
+
         let ruleHash = sensed.RuleHash |> Option.defaultValue (RuleHash "")
         let genVer = sensed.GeneratorVersion |> Option.defaultValue (GeneratorVersion "")
         let digests = sensed.CoveredArtifacts |> Map.toList |> List.collect snd
         let env = environment |> Option.defaultValue LocalOrCi
         let builder = builder |> Option.defaultValue (BuilderIdentity "fsgg")
-        FS.GG.Governance.CommandKind.Audit.auditSnapshot headRev baseRev headRev ruleHash genVer digests runs env builder
+
+        FS.GG.Governance.CommandKind.Audit.auditSnapshot
+            headRev
+            baseRev
+            headRev
+            ruleHash
+            genVer
+            digests
+            runs
+            env
+            builder
 
     // ── parameterized gate-execution plan (research D4, FR-006) ──
 
@@ -168,7 +197,11 @@ module CommandHost =
         match sensed, store with
         | Some sensed, Some store ->
             let resReport = FreshnessResolution.resolve selectedGates sensed
-            let candidates = FreshnessResolution.entries resReport |> List.choose FreshnessResolution.candidate
+
+            let candidates =
+                FreshnessResolution.entries resReport
+                |> List.choose FreshnessResolution.candidate
+
             let cacheReport = CacheEligibility.evaluate candidates store
 
             let verdictMap =
@@ -331,7 +364,10 @@ module CommandHost =
 
                     try
                         let read: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =
-                            { Source = source; Json = File.ReadAllText file }
+                            {
+                                Source = source
+                                Json = File.ReadAllText file
+                            }
 
                         readAll (read :: reads) rest
                     with
@@ -368,9 +404,12 @@ module CommandHost =
             let diagnosticText = "unreadable handoff state: " + message
             let encoded = System.Text.Json.JsonSerializer.Serialize diagnosticText
 
-            [ { FS.GG.Governance.Adapters.SddHandoff.Reader.Source = source
-                FS.GG.Governance.Adapters.SddHandoff.Reader.Json =
-                    sprintf """{"contractVersion":%s}""" encoded } ]
+            [
+                {
+                    FS.GG.Governance.Adapters.SddHandoff.Reader.Source = source
+                    FS.GG.Governance.Adapters.SddHandoff.Reader.Json = sprintf """{"contractVersion":%s}""" encoded
+                }
+            ]
 
     // Sense the runner environment from the `CI` variable: set ⇒ `Ci`, unset/empty ⇒ `Local`. Fully qualified
     // to avoid the `Ci` clash with `Snapshot.Model.CiEnvironment` in scope here (#49, D1).
@@ -413,7 +452,11 @@ module CommandHost =
             |> FS.GG.Governance.Config.Schema.validate
         with e ->
             Invalid
-                [ { Id = MissingRequiredFile
-                    File = Project
-                    Locator = { Field = None; Id = None; Line = None }
-                    Message = "catalog read failed: " + e.Message } ]
+                [
+                    {
+                        Id = MissingRequiredFile
+                        File = Project
+                        Locator = { Field = None; Id = None; Line = None }
+                        Message = "catalog read failed: " + e.Message
+                    }
+                ]

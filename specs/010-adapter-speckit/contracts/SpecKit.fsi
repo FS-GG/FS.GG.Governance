@@ -93,8 +93,10 @@ type SpecKitFact =
 /// project root narrows its composite change onto this via `Lift.fence` when the Spec Kit
 /// adapter is composed with another domain (FR-014).
 type SpecKitChange =
-    { Phase: Phase
-      Surfaces: Set<SpecKitArtifact> }
+    {
+        Phase: Phase
+        Surfaces: Set<SpecKitArtifact>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Phase =

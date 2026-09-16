@@ -13,4 +13,6 @@ let private currencySensing =
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "CurrencySensing" "FS.GG.Governance.CurrencySensing" currencySensing ]
+        [
+            SurfaceDrift.surfaceTest "CurrencySensing" "FS.GG.Governance.CurrencySensing" currencySensing
+        ]

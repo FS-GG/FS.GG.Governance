@@ -51,8 +51,10 @@ module Model =
     /// is never folded into any reproducible identity — D5). Its kind/label/value are all readable:
     /// `metadatum.Label`, `metadatum.Value` (match for kind + value), and `SensedMetadata.kindOf metadatum`.
     type SensedMetadatum =
-        { Label: SensedLabel
-          Value: SensedValue }
+        {
+            Label: SensedLabel
+            Value: SensedValue
+        }
 
     /// The deterministic, byte-stable, unambiguously-flagged rendering of a sensed metadatum (or of a group
     /// as one `!sensed-section!`), produced by `render` / `renderSection`

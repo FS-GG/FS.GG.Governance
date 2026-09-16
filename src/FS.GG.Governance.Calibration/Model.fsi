@@ -26,9 +26,11 @@ module Model =
     /// hash does not calibrate a different identity. This core RECORDS the scope (no-hide / audit) and trusts
     /// the supplied evidence is already filtered to one identity; it does not itself filter.
     type JudgeIdentity =
-        { Model: ModelId
-          ModelVersion: ModelVersion
-          PromptHash: ReviewerPromptHash }
+        {
+            Model: ModelId
+            ModelVersion: ModelVersion
+            PromptHash: ReviewerPromptHash
+        }
 
     /// One judge-vs-human comparison (FR-002, research D3/D4). Pairs the agent reviewer's verdict with a
     /// human's verdict on the same item (reusing F038 `RecordedVerdict` for both, opaque — never parsed,
@@ -36,8 +38,10 @@ module Model =
     /// the evidence-level `ObservedAgreement` aggregate — never a per-sample classification (111/B6: the former
     /// `Agreement` field and its `AgreementClassification` type were unread and are removed).
     type ComparisonSample =
-        { JudgeVerdict: RecordedVerdict
-          HumanVerdict: RecordedVerdict }
+        {
+            JudgeVerdict: RecordedVerdict
+            HumanVerdict: RecordedVerdict
+        }
 
     /// A comparison-sample count (observed-derived or threshold-minimum). Single-case newtype preserving
     /// type-distinctness from `AgreementLevel` (a swapped count/level is a compile error). Supplied as data —
@@ -54,25 +58,31 @@ module Model =
     /// (`observedSampleCount`), not a separate supplied field — the honest count of evidence actually present.
     /// An empty `Samples` list is the ordinary "no calibration evidence" value (Edge Cases), never malformed.
     type CalibrationEvidence =
-        { Scope: JudgeIdentity
-          Samples: ComparisonSample list
-          ObservedAgreement: AgreementLevel }
+        {
+            Scope: JudgeIdentity
+            Samples: ComparisonSample list
+            ObservedAgreement: AgreementLevel
+        }
 
     /// The two SUPPLIED thresholds the evidence is measured against (FR-003): a minimum comparison-sample count
     /// and a minimum agreement level. Supplied values, not parsed by this core. No freshness window — recency
     /// is not modelled here (research D8).
     type CalibrationThresholds =
-        { MinimumSamples: SampleCount
-          MinimumAgreement: AgreementLevel }
+        {
+            MinimumSamples: SampleCount
+            MinimumAgreement: AgreementLevel
+        }
 
     /// The no-hide record of exactly what cleared the gate (FR-005, US2 scenario 3). `RequiredSamples` is the
     /// EFFECTIVE minimum applied `max(MinimumSamples, 2)` (research D7), so the named bar is truthful even
     /// under a degenerate supplied minimum.
     type CalibrationMetrics =
-        { ObservedSamples: SampleCount
-          RequiredSamples: SampleCount
-          ObservedAgreement: AgreementLevel
-          RequiredAgreement: AgreementLevel }
+        {
+            ObservedSamples: SampleCount
+            RequiredSamples: SampleCount
+            ObservedAgreement: AgreementLevel
+            RequiredAgreement: AgreementLevel
+        }
 
     /// Why a reviewer stays uncalibrated — the no-hide attribution carried by an *uncalibrated* outcome, always
     /// present (FR-005, Principle VI). `NoCalibrationEvidence`: no comparison samples at all (the design's

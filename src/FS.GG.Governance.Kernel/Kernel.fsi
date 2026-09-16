@@ -20,16 +20,20 @@ type RuleId = RuleId of string
 /// One justification step: the rule that fired and the input facts it consumed.
 /// `Note` is a short human-/agent-readable description of the inference.
 type ProvenanceStep =
-    { Rule: RuleId
-      Inputs: FactId list
-      Note: string }
+    {
+        Rule: RuleId
+        Inputs: FactId list
+        Note: string
+    }
 
 /// A fact together with its identity and justification.
 /// `Provenance` is EMPTY for supplied (asserted) facts and non-empty for derived facts.
 type FactAssertion<'fact> =
-    { Id: FactId
-      Value: 'fact
-      Provenance: ProvenanceStep list }
+    {
+        Id: FactId
+        Value: 'fact
+        Provenance: ProvenanceStep list
+    }
 
 /// The working set of facts. Deduplicated by `FactId` in any value the kernel returns.
 type FactSet<'fact> = FactAssertion<'fact> list
@@ -38,15 +42,15 @@ type FactSet<'fact> = FactAssertion<'fact> list
 /// newly asserted facts, each carrying the `ProvenanceStep` that justifies it.
 /// Rules are ordinary typed F# functions — there is no external rule language.
 type Rule<'fact> =
-    { Id: RuleId
-      Description: string
-      Apply: FactSet<'fact> -> FactAssertion<'fact> list }
+    {
+        Id: RuleId
+        Description: string
+        Apply: FactSet<'fact> -> FactAssertion<'fact> list
+    }
 
 /// The outcome of evaluation: the complete, deduplicated fact set (supplied + derived)
 /// and the number of rounds that produced at least one new fact before quiescence.
-type EvaluationResult<'fact> =
-    { Facts: FactSet<'fact>
-      Rounds: int }
+type EvaluationResult<'fact> = { Facts: FactSet<'fact>; Rounds: int }
 
 module FixedPoint =
 
@@ -64,7 +68,4 @@ module FixedPoint =
     /// Negated, aggregated, or recursively-negated facts are SUPPLIED from a lower
     /// stratum, never derived within this fixed point.
     val evaluate:
-        identify: ('fact -> FactId) ->
-        rules: Rule<'fact> list ->
-        supplied: FactSet<'fact> ->
-        EvaluationResult<'fact>
+        identify: ('fact -> FactId) -> rules: Rule<'fact> list -> supplied: FactSet<'fact> -> EvaluationResult<'fact>

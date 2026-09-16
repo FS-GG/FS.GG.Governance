@@ -15,27 +15,29 @@ open System.IO
 open System.Text
 open System.Text.Json
 open System.Security.Cryptography
-open FS.GG.Governance.Config                       // Loader
-open FS.GG.Governance.CommandRecord.Model           // Executable, Argument, WorkingDirectory, EnvironmentDelta, ExitCode, CapturedOutput
-open FS.GG.Governance.Config.Model                  // TimeoutLimit
-open FS.GG.Governance.GateExecution.Model            // GateCommand
-open FS.GG.Governance.FreshnessKey.Model             // ArtifactHash, GeneratorVersion
-open FS.GG.Governance.RefreshJson.RefreshModel       // GenerationEntry
+open FS.GG.Governance.Config // Loader
+open FS.GG.Governance.CommandRecord.Model // Executable, Argument, WorkingDirectory, EnvironmentDelta, ExitCode, CapturedOutput
+open FS.GG.Governance.Config.Model // TimeoutLimit
+open FS.GG.Governance.GateExecution.Model // GateCommand
+open FS.GG.Governance.FreshnessKey.Model // ArtifactHash, GeneratorVersion
+open FS.GG.Governance.RefreshJson.RefreshModel // GenerationEntry
 
 open FS.GG.Governance.JsonText // 073: the shared deterministic-emit helper JsonText.writeToString
-open FS.GG.Governance.CommandHost           // 049: shared host-loop combinators (guard/drive)
+open FS.GG.Governance.CommandHost // 049: shared host-loop combinators (guard/drive)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
 
     type Ports =
-        { Files: Loader.FileReader
-          Sense: GenerationEntry -> Result<ArtifactHash list * GeneratorVersion, string>
-          ReadProv: string -> (ArtifactHash list * GeneratorVersion) option
-          Generate: GenerationEntry -> Result<ArtifactHash, string>
-          WriteProv: string -> (ArtifactHash list * GeneratorVersion * ArtifactHash) -> Result<unit, string>
-          Write: string -> string -> Result<unit, string>
-          Out: string -> unit }
+        {
+            Files: Loader.FileReader
+            Sense: GenerationEntry -> Result<ArtifactHash list * GeneratorVersion, string>
+            ReadProv: string -> (ArtifactHash list * GeneratorVersion) option
+            Generate: GenerationEntry -> Result<ArtifactHash, string>
+            WriteProv: string -> (ArtifactHash list * GeneratorVersion * ArtifactHash) -> Result<unit, string>
+            Write: string -> string -> Result<unit, string>
+            Out: string -> unit
+        }
 
     // ── shared helpers (hidden — absent from Interpreter.fsi) ──
 
@@ -47,7 +49,10 @@ module Interpreter =
 
     let sha256Hex (bytes: byte[]) : string =
         use sha = SHA256.Create()
-        sha.ComputeHash bytes |> Array.map (fun b -> b.ToString("x2")) |> String.concat ""
+
+        sha.ComputeHash bytes
+        |> Array.map (fun b -> b.ToString("x2"))
+        |> String.concat ""
 
     /// Digest a declared source PATH content. A file digests its bytes; a directory digests the
     /// ordinal-sorted sequence of (relative-path, per-file digest) pairs (deterministic, content-based, never
@@ -91,12 +96,19 @@ module Interpreter =
         | [] -> Error "empty generator command"
         | exe :: args ->
             let command: GateCommand =
-                { Executable = Executable exe
-                  Arguments = args |> List.map Argument
-                  WorkingDirectory = WorkingDirectory repo
-                  Environment = { Added = []; Changed = []; Removed = [] }
-                  Timeout = TimeoutLimit 300
-                  CapturedOutput = NoCapturedOutput }
+                {
+                    Executable = Executable exe
+                    Arguments = args |> List.map Argument
+                    WorkingDirectory = WorkingDirectory repo
+                    Environment =
+                        {
+                            Added = []
+                            Changed = []
+                            Removed = []
+                        }
+                    Timeout = TimeoutLimit 300
+                    CapturedOutput = NoCapturedOutput
+                }
 
             let outcome = FS.GG.Governance.GateExecution.Interpreter.realPort command
             let (ExitCode code) = outcome.ExitCode
@@ -131,25 +143,27 @@ module Interpreter =
 
                 match doc.RootElement.TryGetProperty "views" with
                 | true, views ->
-                    [ for p in views.EnumerateObject() ->
-                          let v = p.Value
+                    [
+                        for p in views.EnumerateObject() ->
+                            let v = p.Value
 
-                          let srcs =
-                              match v.TryGetProperty "sources" with
-                              | true, a -> [ for e in a.EnumerateArray() -> str e ]
-                              | _ -> []
+                            let srcs =
+                                match v.TryGetProperty "sources" with
+                                | true, a -> [ for e in a.EnumerateArray() -> str e ]
+                                | _ -> []
 
-                          let gen =
-                              match v.TryGetProperty "generatorVersion" with
-                              | true, g -> str g
-                              | _ -> ""
+                            let gen =
+                                match v.TryGetProperty "generatorVersion" with
+                                | true, g -> str g
+                                | _ -> ""
 
-                          let out =
-                              match v.TryGetProperty "output" with
-                              | true, o -> str o
-                              | _ -> ""
+                            let out =
+                                match v.TryGetProperty "output" with
+                                | true, o -> str o
+                                | _ -> ""
 
-                          p.Name, (srcs, gen, out) ]
+                            p.Name, (srcs, gen, out)
+                    ]
                     |> Map.ofList
                 | _ -> Map.empty
         with _ ->
@@ -184,7 +198,11 @@ module Interpreter =
         | Some(srcs, gen, _out) -> Some(srcs |> List.map ArtifactHash, GeneratorVersion gen)
         | None -> None
 
-    let writeProv (repo: string) (viewId: string) (provenance: ArtifactHash list * GeneratorVersion * ArtifactHash) : Result<unit, string> =
+    let writeProv
+        (repo: string)
+        (viewId: string)
+        (provenance: ArtifactHash list * GeneratorVersion * ArtifactHash)
+        : Result<unit, string> =
         try
             let digests, generator, output = provenance
             let (GeneratorVersion gen) = generator
@@ -227,9 +245,11 @@ module Interpreter =
 
             Loop.RecordedRead(viewId, recorded)
 
-        | Loop.RegenerateView entry -> Loop.Regenerated'(entry.ViewId, CommandHost.guard (fun () -> ports.Generate entry))
+        | Loop.RegenerateView entry ->
+            Loop.Regenerated'(entry.ViewId, CommandHost.guard (fun () -> ports.Generate entry))
 
-        | Loop.RecordProvenance(viewId, provenance) -> Loop.ProvenanceWritten(CommandHost.guard (fun () -> ports.WriteProv viewId provenance))
+        | Loop.RecordProvenance(viewId, provenance) ->
+            Loop.ProvenanceWritten(CommandHost.guard (fun () -> ports.WriteProv viewId provenance))
 
         | Loop.WriteArtifact(path, content) -> Loop.Wrote(CommandHost.guard (fun () -> ports.Write path content))
 
@@ -238,13 +258,15 @@ module Interpreter =
             Loop.Emitted
 
     let realPorts (repo: string) : Ports =
-        { Files = Loader.fileSystemReader repo
-          Sense = senseEntry repo
-          ReadProv = readProv repo
-          Generate = generateEntry repo
-          WriteProv = writeProv repo
-          Write = CommandHost.writeAtomic
-          Out = fun text -> Console.Out.WriteLine text }
+        {
+            Files = Loader.fileSystemReader repo
+            Sense = senseEntry repo
+            ReadProv = readProv repo
+            Generate = generateEntry repo
+            WriteProv = writeProv repo
+            Write = CommandHost.writeAtomic
+            Out = fun text -> Console.Out.WriteLine text
+        }
 
     let run (ports: Ports) (request: Loop.RunRequest) : Loop.Model =
         let m0, eff0 = Loop.init request

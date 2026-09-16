@@ -7,9 +7,11 @@ open FS.GG.Governance.HumanText.ReportView
 module Tui =
 
     type TuiModel =
-        { View: ReportView
-          Path: int list
-          Expanded: Set<int list> }
+        {
+            View: ReportView
+            Path: int list
+            Expanded: Set<int list>
+        }
 
     type TuiMsg =
         | MoveUp
@@ -25,9 +27,11 @@ module Tui =
 
     let init (view: ReportView) : TuiModel * TuiEffect list =
         let model =
-            { View = view
-              Path = (if List.isEmpty view.Sections then [] else [ 0 ])
-              Expanded = Set.empty }
+            {
+                View = view
+                Path = (if List.isEmpty view.Sections then [] else [ 0 ])
+                Expanded = Set.empty
+            }
 
         model, [ Draw model; ReadKey ]
 
@@ -45,8 +49,14 @@ module Tui =
             match msg with
             | MoveUp -> withCursor model (max 0 (cursor model - 1))
             | MoveDown -> withCursor model (min (max 0 lastIndex) (cursor model + 1))
-            | Expand -> { model with Expanded = Set.add model.Path model.Expanded }
-            | Collapse -> { model with Expanded = Set.remove model.Path model.Expanded }
+            | Expand ->
+                { model with
+                    Expanded = Set.add model.Path model.Expanded
+                }
+            | Collapse ->
+                { model with
+                    Expanded = Set.remove model.Path model.Expanded
+                }
             | Quit -> model
 
         match msg with

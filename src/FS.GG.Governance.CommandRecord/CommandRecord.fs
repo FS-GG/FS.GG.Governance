@@ -31,17 +31,21 @@ module CommandRecord =
         : CommandRecord =
         // Verbatim carriage — no normalization, no reordering (canonicalization is `canonicalId`'s job).
         // The sensed duration is held structurally apart in `Duration`, never inside `Reproducible` (D2).
-        { Reproducible =
-            { Executable = executable
-              Arguments = arguments
-              WorkingDirectory = workingDirectory
-              Environment = environment
-              Timeout = timeout
-              ExitCode = exitCode
-              StdoutDigest = stdoutDigest
-              StderrDigest = stderrDigest
-              CapturedOutput = capturedOutput }
-          Duration = duration }
+        {
+            Reproducible =
+                {
+                    Executable = executable
+                    Arguments = arguments
+                    WorkingDirectory = workingDirectory
+                    Environment = environment
+                    Timeout = timeout
+                    ExitCode = exitCode
+                    StdoutDigest = stdoutDigest
+                    StderrDigest = stderrDigest
+                    CapturedOutput = capturedOutput
+                }
+            Duration = duration
+        }
 
     // ── Segment encoders (internal; hidden by CommandRecord.fsi) — the F029 discipline (D6) ──
 
@@ -58,7 +62,7 @@ module CommandRecord =
     let capSegment (c: CapturedOutput) : string =
         match c with
         | NoCapturedOutput -> "cap=0"
-        | CapturedAt (CapturedOutputPath p) -> req "cap" p
+        | CapturedAt(CapturedOutputPath p) -> req "cap" p
 
     // The arguments segment: "args=<count>;<len1>:<a1>;<len2>:<a2>;…" rendered in given ORDER, NOT sorted or
     // deduplicated (argument order is significant; a repeated argument is a real repeat — D6). Empty list ⇒
@@ -116,17 +120,19 @@ module CommandRecord =
 
         // Fixed field order, joined by '\n', no trailing newline
         // (contracts/command-record-identity-format.md).
-        [ req "exe" exe
-          argsSegment r.Arguments
-          req "cwd" cwd
-          envClassSegment "env+" (r.Environment.Added |> List.map addedEntry)
-          envClassSegment "env~" (r.Environment.Changed |> List.map changedEntry)
-          envClassSegment "env-" (r.Environment.Removed |> List.map removedEntry)
-          req "to" (string timeoutSeconds)
-          req "exit" (string exitCode)
-          req "out" stdout
-          req "err" stderr
-          capSegment r.CapturedOutput ]
+        [
+            req "exe" exe
+            argsSegment r.Arguments
+            req "cwd" cwd
+            envClassSegment "env+" (r.Environment.Added |> List.map addedEntry)
+            envClassSegment "env~" (r.Environment.Changed |> List.map changedEntry)
+            envClassSegment "env-" (r.Environment.Removed |> List.map removedEntry)
+            req "to" (string timeoutSeconds)
+            req "exit" (string exitCode)
+            req "out" stdout
+            req "err" stderr
+            capSegment r.CapturedOutput
+        ]
         |> String.concat "\n"
         |> CommandIdentity
 

@@ -43,7 +43,8 @@ module DesignChecks =
 
     let evaluate (request: SC.SurfaceCheckRequest) (facts: DesignFacts) : SC.SurfaceFinding list =
         let tokenFindings =
-            facts.Tokens |> List.choose (fun t -> resolveFinding request "design.token" "token" t.Token t.Outcome)
+            facts.Tokens
+            |> List.choose (fun t -> resolveFinding request "design.token" "token" t.Token t.Outcome)
 
         let captureFindings =
             facts.Captures
@@ -70,10 +71,12 @@ module DesignChecks =
                 let message = sprintf "design catalog could not be read: %s" cat
                 mkFinding request "design.catalog-unavailable" cat Blocking true message)
 
-        [ tokenFindings
-          captureFindings
-          controlFindings
-          contrastFindings
-          catalogFindings ]
+        [
+            tokenFindings
+            captureFindings
+            controlFindings
+            contrastFindings
+            catalogFindings
+        ]
         |> List.concat
         |> List.sortBy (fun (f: SC.SurfaceFinding) -> f.Code, f.Location.Detail)

@@ -20,13 +20,18 @@ let private hashTree (root: string) : Map<string, string> =
     |> Map.ofArray
 
 let private runBoth repo outPath =
-    let ports = { Interpreter.realPorts repo with Out = ignore }
+    let ports =
+        { Interpreter.realPorts repo with
+            Out = ignore
+        }
 
     let request =
-        { Loop.Repo = repo
-          Loop.Format = Loop.TextAndJson
-          Loop.ReleaseOut = outPath
-          Loop.AttestationOut = outPath + ".attestation.json" }
+        {
+            Loop.Repo = repo
+            Loop.Format = Loop.TextAndJson
+            Loop.ReleaseOut = outPath
+            Loop.AttestationOut = outPath + ".attestation.json"
+        }
 
     Interpreter.run ports request
 
@@ -34,34 +39,45 @@ let private runBoth repo outPath =
 let tests =
     testList
         "NoMutation"
-        [ test "writing --out OUTSIDE the repo leaves the working tree byte-for-byte unchanged" {
-              withTempRepo releaseYmlAllBlocking writeMetSources (fun repo ->
-                  let before = hashTree repo
+        [
+            test "writing --out OUTSIDE the repo leaves the working tree byte-for-byte unchanged" {
+                withTempRepo releaseYmlAllBlocking writeMetSources (fun repo ->
+                    let before = hashTree repo
 
-                  withTempDir (fun outDir ->
-                      let outPath = Path.Combine(outDir, "release.json")
-                      let model = runBoth repo outPath
-                      Expect.equal model.Exit Loop.Success "run succeeded"
-                      Expect.isTrue (File.Exists outPath) "artifact written outside the repo"
-                      Expect.equal (hashTree repo) before "repo tree unchanged"))
-          }
+                    withTempDir (fun outDir ->
+                        let outPath = Path.Combine(outDir, "release.json")
+                        let model = runBoth repo outPath
+                        Expect.equal model.Exit Loop.Success "run succeeded"
+                        Expect.isTrue (File.Exists outPath) "artifact written outside the repo"
+                        Expect.equal (hashTree repo) before "repo tree unchanged"))
+            }
 
-          test "writing --out INSIDE the repo adds only the requested release.json" {
-              withTempRepo releaseYmlAllBlocking writeMetSources (fun repo ->
-                  let before = hashTree repo
-                  let outPath = Path.Combine(repo, "release.json")
-                  let model = runBoth repo outPath
-                  Expect.equal model.Exit Loop.Success "run succeeded"
+            test "writing --out INSIDE the repo adds only the requested release.json" {
+                withTempRepo releaseYmlAllBlocking writeMetSources (fun repo ->
+                    let before = hashTree repo
+                    let outPath = Path.Combine(repo, "release.json")
+                    let model = runBoth repo outPath
+                    Expect.equal model.Exit Loop.Success "run succeeded"
 
-                  let after = hashTree repo
-                  let added = Map.toList after |> List.map fst |> List.filter (fun p -> not (Map.containsKey p before))
-                  // 065: the publication boundary writes BOTH the release doc and the attestation sidecar
-                  // (here both requested INSIDE the repo via `runBoth`); nothing else is added (FR-016).
-                  Expect.equal added [ "release.json"; "release.json.attestation.json" ] "only the two requested artifacts are added"
+                    let after = hashTree repo
 
-                  // No pre-existing file changed.
-                  let changed =
-                      before |> Map.toList |> List.filter (fun (p, h) -> Map.tryFind p after <> Some h)
+                    let added =
+                        Map.toList after
+                        |> List.map fst
+                        |> List.filter (fun p -> not (Map.containsKey p before))
+                    // 065: the publication boundary writes BOTH the release doc and the attestation sidecar
+                    // (here both requested INSIDE the repo via `runBoth`); nothing else is added (FR-016).
+                    Expect.equal
+                        added
+                        [ "release.json"; "release.json.attestation.json" ]
+                        "only the two requested artifacts are added"
 
-                  Expect.isEmpty changed "no pre-existing file was modified")
-          } ]
+                    // No pre-existing file changed.
+                    let changed =
+                        before
+                        |> Map.toList
+                        |> List.filter (fun (p, h) -> Map.tryFind p after <> Some h)
+
+                    Expect.isEmpty changed "no pre-existing file was modified")
+            }
+        ]

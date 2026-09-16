@@ -12,7 +12,9 @@ module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest
-              "CurrencyEnforcement"
-              "FS.GG.Governance.CurrencyEnforcement"
-              typeof<CE.CurrencyFinding>.Assembly ]
+        [
+            SurfaceDrift.surfaceTest
+                "CurrencyEnforcement"
+                "FS.GG.Governance.CurrencyEnforcement"
+                typeof<CE.CurrencyFinding>.Assembly
+        ]

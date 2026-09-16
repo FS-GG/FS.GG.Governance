@@ -17,28 +17,34 @@ let private exportedTypeNames =
     verifyJson.GetExportedTypes() |> Array.choose (fun t -> Option.ofObj t.FullName)
 
 let private seamModules =
-    [ "FS.GG.Governance.VerifyJson.CoreModule"
-      "FS.GG.Governance.VerifyJson.SurfaceChecksModule"
-      "FS.GG.Governance.VerifyJson.ReleaseReadinessModule"
-      "FS.GG.Governance.VerifyJson.GeneratedViewsModule" ]
+    [
+        "FS.GG.Governance.VerifyJson.CoreModule"
+        "FS.GG.Governance.VerifyJson.SurfaceChecksModule"
+        "FS.GG.Governance.VerifyJson.ReleaseReadinessModule"
+        "FS.GG.Governance.VerifyJson.GeneratedViewsModule"
+    ]
 
 [<Tests>]
 let tests =
     testList
         "SeamModuleScopeGuard (076 projection seams)"
-        [ test "the four additive projection seam modules are present and public" {
-              for m in seamModules do
-                  Expect.isTrue
-                      (exportedTypeNames |> Array.exists (fun n -> n = m))
-                      (sprintf "expected additive seam module %s to be public" m)
-          }
+        [
+            test "the four additive projection seam modules are present and public" {
+                for m in seamModules do
+                    Expect.isTrue
+                        (exportedTypeNames |> Array.exists (fun n -> n = m))
+                        (sprintf "expected additive seam module %s to be public" m)
+            }
 
-          test "the projection references no command host (no host-Model edge into a projection seam)" {
-              let referenced =
-                  verifyJson.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
+            test "the projection references no command host (no host-Model edge into a projection seam)" {
+                let referenced =
+                    verifyJson.GetReferencedAssemblies()
+                    |> Array.choose (fun a -> Option.ofObj a.Name)
 
-              let hostEdges = referenced |> Array.filter (fun n -> n.EndsWith "Command")
+                let hostEdges = referenced |> Array.filter (fun n -> n.EndsWith "Command")
 
-              Expect.isEmpty hostEdges (sprintf "the projection must not reference a command host; found: %A" hostEdges)
-          } ]
+                Expect.isEmpty
+                    hostEdges
+                    (sprintf "the projection must not reference a command host; found: %A" hostEdges)
+            }
+        ]

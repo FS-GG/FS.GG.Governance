@@ -6,13 +6,13 @@ open FS.GG.Governance.Gates.Model
 open FS.GG.Governance.Findings.Model
 open FS.GG.Governance.Enforcement.Enforcement
 open FS.GG.Governance.Ship.Model
-open FS.GG.Governance.RuleIdentity         // 068: the additive per-finding `ruleId` source-prefixed token
+open FS.GG.Governance.RuleIdentity // 068: the additive per-finding `ruleId` source-prefixed token
 open FS.GG.Governance.EvidenceReuse
 open FS.GG.Governance.EvidenceReuse.Model
 open FS.GG.Governance.CacheEligibility.Model
 open FS.GG.Governance.CacheEligibility
-open FS.GG.Governance.CommandRecord.Model       // F052: ExitCode (the execution embed's exit code)
-open FS.GG.Governance.GateRun.Model             // F052: GateDisposition, GateOutcome
+open FS.GG.Governance.CommandRecord.Model // F052: ExitCode (the execution embed's exit code)
+open FS.GG.Governance.GateRun.Model // F052: GateDisposition, GateOutcome
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: the stale-view finding vocabulary (CurrencyFinding in the generatedViews overload signature)
 
@@ -157,8 +157,10 @@ module AuditJson =
         =
         w.WritePropertyName name
         w.WriteStartArray()
+
         for item in items do
             writeItem w lookup execLookup item
+
         w.WriteEndArray()
 
     // F070/JSON-4: the additive `generatedViews` array writer now lives ONCE in the shared
@@ -194,7 +196,9 @@ module AuditJson =
 
         // F052: the per-gate execution lookup, built once from the supplied outcomes (empty ⇒ always None).
         let execByGate = JsonWriters.outcomeByGate execution
-        let execLookup: GateId -> GateOutcome option = fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
+
+        let execLookup: GateId -> GateOutcome option =
+            fun gateId -> Map.tryFind (gateIdValue gateId) execByGate
 
         JsonText.writeToString (fun w ->
             w.WriteStartObject()

@@ -15,8 +15,10 @@ let private kernel = typeof<FactId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "V72 Spi" "FS.GG.Governance.Adapters.Spi" spi
+        [
+            SurfaceDrift.surfaceTest "V72 Spi" "FS.GG.Governance.Adapters.Spi" spi
 
-          SurfaceDrift.referencesOnly "V72 Spi" (fun n -> n = "FS.GG.Governance.Kernel") spi
+            SurfaceDrift.referencesOnly "V72 Spi" (fun n -> n = "FS.GG.Governance.Kernel") spi
 
-          SurfaceDrift.noInboundReferences "V72 Spi" [ kernel ] spi ]
+            SurfaceDrift.noInboundReferences "V72 Spi" [ kernel ] spi
+        ]

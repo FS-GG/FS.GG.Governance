@@ -9,20 +9,26 @@ open FS.GG.Governance.Config.Model
 module FSharpSurfacePolicy =
 
     type Exemption =
-        { Module: string
-          Owner: string
-          Rationale: string
-          ReviewBy: DateOnly }
+        {
+            Module: string
+            Owner: string
+            Rationale: string
+            ReviewBy: DateOnly
+        }
 
     type ProjectPolicy =
-        { RequiresBaseline: bool
-          BaselineCurrent: bool }
+        {
+            RequiresBaseline: bool
+            BaselineCurrent: bool
+        }
 
     type Facts =
-        { DeclaredGlob: string
-          Maturity: Maturity
-          Projects: Map<string, ProjectPolicy>
-          Exemptions: Exemption list }
+        {
+            DeclaredGlob: string
+            Maturity: Maturity
+            Projects: Map<string, ProjectPolicy>
+            Exemptions: Exemption list
+        }
 
     type LoadResult =
         | Missing of Facts
@@ -30,27 +36,44 @@ module FSharpSurfacePolicy =
         | Invalid of reason: string
 
     let defaultFacts =
-        { DeclaredGlob = "src/**/*.fsi"
-          Maturity = Warn
-          Projects = Map.empty
-          Exemptions = [] }
+        {
+            DeclaredGlob = "src/**/*.fsi"
+            Maturity = Warn
+            Projects = Map.empty
+            Exemptions = []
+        }
 
     let load root =
         let path = Path.Combine(root, ".fsgg", "fsharp-surface.json")
-        if not (File.Exists path) then Missing defaultFacts
+
+        if not (File.Exists path) then
+            Missing defaultFacts
         else
             try
                 use document = JsonDocument.Parse(File.ReadAllText path)
                 let top = document.RootElement
-                if top.ValueKind <> JsonValueKind.Object then Invalid "policy root must be a JSON object"
+
+                if top.ValueKind <> JsonValueKind.Object then
+                    Invalid "policy root must be a JSON object"
                 else
                     let tryProperty (name: string) (element: JsonElement) =
-                        match element.TryGetProperty name with true, value -> Some value | _ -> None
+                        match element.TryGetProperty name with
+                        | true, value -> Some value
+                        | _ -> None
+
                     let requiredText (name: string) (element: JsonElement) : Result<string, string> =
-                        match tryProperty name element |> Option.bind (fun value -> if value.ValueKind = JsonValueKind.String then value.GetString() |> Option.ofObj else None) with
+                        match
+                            tryProperty name element
+                            |> Option.bind (fun value ->
+                                if value.ValueKind = JsonValueKind.String then
+                                    value.GetString() |> Option.ofObj
+                                else
+                                    None)
+                        with
                         | Some value when not (String.IsNullOrWhiteSpace value) -> Ok value
                         | _ -> Error(sprintf "%s must be a non-empty string" name)
-                    let declaredGlob : Result<string, string> =
+
+                    let declaredGlob: Result<string, string> =
                         match tryProperty "declaredGlob" top with
                         | None -> Ok defaultFacts.DeclaredGlob
                         | Some value when value.ValueKind = JsonValueKind.String ->
@@ -58,7 +81,8 @@ module FSharpSurfacePolicy =
                             | Some text when not (String.IsNullOrWhiteSpace text) -> Ok text
                             | _ -> Error "declaredGlob must be a non-empty string"
                         | _ -> Error "declaredGlob must be a non-empty string"
-                    let maturity : Result<Maturity, string> =
+
+                    let maturity: Result<Maturity, string> =
                         match tryProperty "maturity" top with
                         | None -> Ok defaultFacts.Maturity
                         | Some value when value.ValueKind = JsonValueKind.String ->
@@ -68,9 +92,11 @@ module FSharpSurfacePolicy =
                             | Some "block-on-pr" -> Ok BlockOnPr
                             | Some "block-on-ship" -> Ok BlockOnShip
                             | Some "block-on-release" -> Ok BlockOnRelease
-                            | _ -> Error "maturity must be observe, warn, block-on-pr, block-on-ship, or block-on-release"
+                            | _ ->
+                                Error "maturity must be observe, warn, block-on-pr, block-on-ship, or block-on-release"
                         | _ -> Error "maturity must be observe, warn, block-on-pr, block-on-ship, or block-on-release"
-                    let projects : Result<Map<string, ProjectPolicy>, string> =
+
+                    let projects: Result<Map<string, ProjectPolicy>, string> =
                         match tryProperty "projects" top with
                         | None -> Ok Map.empty
                         | Some value when value.ValueKind = JsonValueKind.Object ->
@@ -79,40 +105,88 @@ module FSharpSurfacePolicy =
                                 let boolean (name: string) (fallback: bool) : Result<bool, string> =
                                     match tryProperty name property.Value with
                                     | None -> Ok fallback
-                                    | Some setting when setting.ValueKind = JsonValueKind.True || setting.ValueKind = JsonValueKind.False -> Ok(setting.GetBoolean())
+                                    | Some setting when
+                                        setting.ValueKind = JsonValueKind.True
+                                        || setting.ValueKind = JsonValueKind.False
+                                        ->
+                                        Ok(setting.GetBoolean())
                                     | _ -> Error(sprintf "project '%s' %s must be boolean" property.Name name)
-                                if property.Value.ValueKind <> JsonValueKind.Object then Error(sprintf "project '%s' must be an object" property.Name)
+
+                                if property.Value.ValueKind <> JsonValueKind.Object then
+                                    Error(sprintf "project '%s' must be an object" property.Name)
                                 else
                                     match boolean "requiresBaseline" false, boolean "baselineCurrent" true with
-                                    | Ok required, Ok current -> Ok(property.Name, { RequiresBaseline = required; BaselineCurrent = current })
-                                    | Error reason, _ | _, Error reason -> Error reason)
-                            |> Seq.fold (fun state item ->
-                                match state, item with
-                                | Ok values, Ok(name, value) -> Ok(Map.add name value values)
-                                | Error reason, _ | _, Error reason -> Error reason) (Ok Map.empty)
+                                    | Ok required, Ok current ->
+                                        Ok(
+                                            property.Name,
+                                            {
+                                                RequiresBaseline = required
+                                                BaselineCurrent = current
+                                            }
+                                        )
+                                    | Error reason, _
+                                    | _, Error reason -> Error reason)
+                            |> Seq.fold
+                                (fun state item ->
+                                    match state, item with
+                                    | Ok values, Ok(name, value) -> Ok(Map.add name value values)
+                                    | Error reason, _
+                                    | _, Error reason -> Error reason)
+                                (Ok Map.empty)
                         | _ -> Error "projects must be an object"
-                    let exemptions : Result<Exemption list, string> =
+
+                    let exemptions: Result<Exemption list, string> =
                         match tryProperty "exemptions" top with
                         | None -> Ok []
                         | Some value when value.ValueKind = JsonValueKind.Array ->
                             value.EnumerateArray()
                             |> Seq.map (fun entry ->
-                                if entry.ValueKind <> JsonValueKind.Object then Error "each exemption must be an object"
+                                if entry.ValueKind <> JsonValueKind.Object then
+                                    Error "each exemption must be an object"
                                 else
-                                    match requiredText "module" entry, requiredText "owner" entry, requiredText "rationale" entry, requiredText "reviewBy" entry with
+                                    match
+                                        requiredText "module" entry,
+                                        requiredText "owner" entry,
+                                        requiredText "rationale" entry,
+                                        requiredText "reviewBy" entry
+                                    with
                                     | Ok moduleName, Ok owner, Ok rationale, Ok reviewBy ->
                                         match DateOnly.TryParse(reviewBy: string) with
-                                        | true, date -> Ok { Module = moduleName; Owner = owner; Rationale = rationale; ReviewBy = date }
+                                        | true, date ->
+                                            Ok
+                                                {
+                                                    Module = moduleName
+                                                    Owner = owner
+                                                    Rationale = rationale
+                                                    ReviewBy = date
+                                                }
                                         | _ -> Error(sprintf "exemption '%s' reviewBy must be a date" moduleName)
-                                    | Error reason, _, _, _ | _, Error reason, _, _ | _, _, Error reason, _ | _, _, _, Error reason -> Error reason)
-                            |> Seq.fold (fun state item ->
-                                match state, item with
-                                | Ok values, Ok value -> Ok(value :: values)
-                                | Error reason, _ | _, Error reason -> Error reason) (Ok [])
+                                    | Error reason, _, _, _
+                                    | _, Error reason, _, _
+                                    | _, _, Error reason, _
+                                    | _, _, _, Error reason -> Error reason)
+                            |> Seq.fold
+                                (fun state item ->
+                                    match state, item with
+                                    | Ok values, Ok value -> Ok(value :: values)
+                                    | Error reason, _
+                                    | _, Error reason -> Error reason)
+                                (Ok [])
                             |> Result.map List.rev
                         | _ -> Error "exemptions must be an array"
+
                     match declaredGlob, maturity, projects, exemptions with
                     | Ok glob, Ok policyMaturity, Ok projectFacts, Ok exemptionFacts ->
-                        Loaded { DeclaredGlob = glob; Maturity = policyMaturity; Projects = projectFacts; Exemptions = exemptionFacts }
-                    | Error reason, _, _, _ | _, Error reason, _, _ | _, _, Error reason, _ | _, _, _, Error reason -> Invalid reason
-            with ex -> Invalid ex.Message
+                        Loaded
+                            {
+                                DeclaredGlob = glob
+                                Maturity = policyMaturity
+                                Projects = projectFacts
+                                Exemptions = exemptionFacts
+                            }
+                    | Error reason, _, _, _
+                    | _, Error reason, _, _
+                    | _, _, Error reason, _
+                    | _, _, _, Error reason -> Invalid reason
+            with ex ->
+                Invalid ex.Message

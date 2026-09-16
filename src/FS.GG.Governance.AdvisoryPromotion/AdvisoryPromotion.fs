@@ -36,12 +36,14 @@ module AdvisoryPromotion =
         // Build the satisfied-basis list in the FIXED order, so the no-hide payload names every basis the
         // facts justify (L-D6). A list comprehension keeps the order by construction.
         let bases =
-            [ if facts.BackingEvidence.IsSome then
-                  DeterministicBackingEvidence
-              if confidenceMet facts then
-                  RepeatedReviewConfidence
-              if facts.SignOff.IsSome then
-                  HumanSignOff ]
+            [
+                if facts.BackingEvidence.IsSome then
+                    DeterministicBackingEvidence
+                if confidenceMet facts then
+                    RepeatedReviewConfidence
+                if facts.SignOff.IsSome then
+                    HumanSignOff
+            ]
 
         match bases with
         | b :: rest -> EligibleToBlock(b, rest) // ≥1 basis ⇒ eligible, naming all (L-D1)

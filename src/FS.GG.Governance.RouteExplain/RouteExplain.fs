@@ -67,8 +67,13 @@ module RouteExplain =
                 let canonicalTrace =
                     sg.SelectingPaths |> List.distinct |> List.sortWith bySelectingPath
 
-                { Selected = { sg with SelectingPaths = canonicalTrace }
-                  Alternative = resolveAlternative registry sg.Gate })
+                {
+                    Selected =
+                        { sg with
+                            SelectingPaths = canonicalTrace
+                        }
+                    Alternative = resolveAlternative registry sg.Gate
+                })
             // Findings sorted by `GateId` ordinal — order-independent of the inputs (FR-008, D5).
             |> List.sortWith (fun a b ->
                 String.CompareOrdinal(gateIdValue a.Selected.Gate.Id, gateIdValue b.Selected.Gate.Id))

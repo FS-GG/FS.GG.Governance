@@ -29,15 +29,24 @@ let private cleanReadinessJson =
                         "blockingDiagnosticIds": [], "counts": { "blocking": 0 }, "perViewState": { "ledger": "fresh" } } }"""
 
 let private handoffRead json : FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead =
-    { Source = "readiness/wi-1/governance-handoff.json"; Json = json }
+    {
+        Source = "readiness/wi-1/governance-handoff.json"
+        Json = json
+    }
 
 let private runVerify profile json =
     let req = requestForProfile (Loop.ExplicitPaths []) Loop.Text profile
     let cap = newCapture ()
-    let ports = { fakePorts validCatalog gitSrcChange cap with Handoffs = fun _ -> [ handoffRead json ] }
+
+    let ports =
+        { fakePorts validCatalog gitSrcChange cap with
+            Handoffs = fun _ -> [ handoffRead json ]
+        }
+
     Interpreter.run ports req
 
-let private selectedGateIds (m: Loop.Model) = m.SelectedGates |> List.map (fun g -> gateIdValue g.Id)
+let private selectedGateIds (m: Loop.Model) =
+    m.SelectedGates |> List.map (fun g -> gateIdValue g.Id)
 
 let private blockerGateIds (d: ShipDecision) =
     d.Blockers
@@ -47,7 +56,9 @@ let private blockerGateIds (d: ShipDecision) =
         | FindingItem _ -> None)
 
 let private withLockedHandoff body =
-    let repo = Path.Combine(Path.GetTempPath(), "fsgg-verify-handoff-" + Guid.NewGuid().ToString("N"))
+    let repo =
+        Path.Combine(Path.GetTempPath(), "fsgg-verify-handoff-" + Guid.NewGuid().ToString("N"))
+
     let dir = Path.Combine(repo, "readiness", "locked")
     Directory.CreateDirectory dir |> ignore
     let path = Path.Combine(dir, "governance-handoff.json")
@@ -63,53 +74,66 @@ let private withLockedHandoff body =
 let tests =
     testList
         "HandoffReadiness"
-        [ test "blocking readiness ⇒ a selected blocking readiness gate in Blockers ⇒ Fail under Strict (SC-005)" {
-              let m = runVerify Strict blockingReadinessJson
+        [
+            test "blocking readiness ⇒ a selected blocking readiness gate in Blockers ⇒ Fail under Strict (SC-005)" {
+                let m = runVerify Strict blockingReadinessJson
 
-              Expect.exists (selectedGateIds m) (fun id -> id.Contains "sdd-handoff:readiness") "the readiness gate is selected"
-              Expect.equal (Option.get m.Decision).Verdict Fail "blocking readiness under verify/strict ⇒ Fail"
+                Expect.exists
+                    (selectedGateIds m)
+                    (fun id -> id.Contains "sdd-handoff:readiness")
+                    "the readiness gate is selected"
 
-              Expect.exists
-                  (blockerGateIds (Option.get m.Decision))
-                  (fun id -> id.Contains "sdd-handoff:readiness")
-                  "the readiness gate is a blocker"
-          }
+                Expect.equal (Option.get m.Decision).Verdict Fail "blocking readiness under verify/strict ⇒ Fail"
 
-          test "clean readiness ⇒ a present, non-blocking readiness gate (Pass)" {
-              let m = runVerify Strict cleanReadinessJson
+                Expect.exists
+                    (blockerGateIds (Option.get m.Decision))
+                    (fun id -> id.Contains "sdd-handoff:readiness")
+                    "the readiness gate is a blocker"
+            }
 
-              Expect.exists (selectedGateIds m) (fun id -> id.Contains "sdd-handoff:readiness") "the readiness gate is still selected"
-              Expect.equal (Option.get m.Decision).Verdict Pass "clean readiness ⇒ Pass"
+            test "clean readiness ⇒ a present, non-blocking readiness gate (Pass)" {
+                let m = runVerify Strict cleanReadinessJson
 
-              Expect.isFalse
-                  (blockerGateIds (Option.get m.Decision) |> List.exists (fun id -> id.Contains "sdd-handoff:readiness"))
-                  "a clean readiness gate is NOT a blocker"
-          }
+                Expect.exists
+                    (selectedGateIds m)
+                    (fun id -> id.Contains "sdd-handoff:readiness")
+                    "the readiness gate is still selected"
 
-          test "unreadable readiness emits an integrity diagnostic and exits non-zero" {
-              withLockedHandoff (fun repo ->
-                  let req =
-                      { requestForProfile (Loop.ExplicitPaths []) Loop.Text Strict with
-                          Repo = repo }
+                Expect.equal (Option.get m.Decision).Verdict Pass "clean readiness ⇒ Pass"
 
-                  let cap = newCapture ()
+                Expect.isFalse
+                    (blockerGateIds (Option.get m.Decision)
+                     |> List.exists (fun id -> id.Contains "sdd-handoff:readiness"))
+                    "a clean readiness gate is NOT a blocker"
+            }
 
-                  let ports =
-                      { fakePorts validCatalog gitSrcChange cap with
-                          Handoffs = CommandHost.realHandoffs }
+            test "unreadable readiness emits an integrity diagnostic and exits non-zero" {
+                withLockedHandoff (fun repo ->
+                    let req =
+                        { requestForProfile (Loop.ExplicitPaths []) Loop.Text Strict with
+                            Repo = repo
+                        }
 
-                  let m = Interpreter.run ports req
+                    let cap = newCapture ()
 
-                  let integrityGate =
-                      m.SelectedGates
-                      |> List.tryFind (fun gate -> gateIdValue gate.Id = "sdd-handoff:integrity:locked")
+                    let ports =
+                        { fakePorts validCatalog gitSrcChange cap with
+                            Handoffs = CommandHost.realHandoffs
+                        }
 
-                  Expect.isSome integrityGate "unreadable state emits the pre-selected integrity gate"
+                    let m = Interpreter.run ports req
 
-                  Expect.stringContains
-                      (Option.get integrityGate).Description
-                      "unreadable handoff state"
-                      "the gate carries a descriptive diagnostic"
+                    let integrityGate =
+                        m.SelectedGates
+                        |> List.tryFind (fun gate -> gateIdValue gate.Id = "sdd-handoff:integrity:locked")
 
-                  Expect.equal (Loop.exitCode m.Exit) 1 "strict verify fails closed with exit 1")
-          } ]
+                    Expect.isSome integrityGate "unreadable state emits the pre-selected integrity gate"
+
+                    Expect.stringContains
+                        (Option.get integrityGate).Description
+                        "unreadable handoff state"
+                        "the gate carries a descriptive diagnostic"
+
+                    Expect.equal (Loop.exitCode m.Exit) 1 "strict verify fails closed with exit 1")
+            }
+        ]

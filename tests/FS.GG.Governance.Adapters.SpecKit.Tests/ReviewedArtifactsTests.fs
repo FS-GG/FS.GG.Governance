@@ -22,40 +22,52 @@ let private keyOf (rule: CheckRule<SpecKitFact>) (hashOf: ArtifactRef -> string)
 let tests =
     testList
         "ReviewedArtifacts"
-        [ test "plan-satisfies-spec declares plan.md and spec.md as reviewed artifacts" {
-              let reads = Check.reads Catalog.planSatisfiesSpec.Check
-              Expect.contains reads planRef "reviews plan.md"
-              Expect.contains reads specRef "reviews spec.md"
-          }
+        [
+            test "plan-satisfies-spec declares plan.md and spec.md as reviewed artifacts" {
+                let reads = Check.reads Catalog.planSatisfiesSpec.Check
+                Expect.contains reads planRef "reviews plan.md"
+                Expect.contains reads specRef "reviews spec.md"
+            }
 
-          test "tasks-complete-ordered declares tasks.md and plan.md as reviewed artifacts" {
-              let reads = Check.reads Catalog.tasksCompleteOrdered.Check
-              Expect.contains reads tasksRef "reviews tasks.md"
-              Expect.contains reads planRef "reviews plan.md"
-          }
+            test "tasks-complete-ordered declares tasks.md and plan.md as reviewed artifacts" {
+                let reads = Check.reads Catalog.tasksCompleteOrdered.Check
+                Expect.contains reads tasksRef "reviews tasks.md"
+                Expect.contains reads planRef "reviews plan.md"
+            }
 
-          test "a changed reviewed-artifact hash moves the review cache key (no stale reuse)" {
-              let baseHash (_: ArtifactRef) = "h0"
-              let changedPlan (r: ArtifactRef) = if r = planRef then "h-CHANGED" else "h0"
-              let k0 = keyOf Catalog.planSatisfiesSpec baseHash
-              Expect.notEqual (keyOf Catalog.planSatisfiesSpec changedPlan) k0 "changing plan.md's content hash must change the key"
-              Expect.equal (keyOf Catalog.planSatisfiesSpec baseHash) k0 "identical inputs ⇒ identical key"
-          }
+            test "a changed reviewed-artifact hash moves the review cache key (no stale reuse)" {
+                let baseHash (_: ArtifactRef) = "h0"
 
-          test "the reviewing wrapper is verdict-neutral — eval matches the bare Opaque judgement at every phase" {
-              // The SAME guarded Opaque WITHOUT the reviewing wrapper: its verdict must be preserved.
-              let bare = SpecKit.whenPhase Phase.Plan (Opaque("plan-satisfies-spec", fun _ -> Unknown "judgement"))
-              let wrapped = Catalog.planSatisfiesSpec.Check
+                let changedPlan (r: ArtifactRef) =
+                    if r = planRef then "h-CHANGED" else "h0"
 
-              for phase in allPhases do
-                  let facts = [ fact (PhaseReached phase) ]
+                let k0 = keyOf Catalog.planSatisfiesSpec baseHash
 
-                  Expect.equal
-                      (Check.eval facts wrapped)
-                      (Check.eval facts bare)
-                      (sprintf "the reads wrapper must not change the verdict at phase %A" phase)
-          }
+                Expect.notEqual
+                    (keyOf Catalog.planSatisfiesSpec changedPlan)
+                    k0
+                    "changing plan.md's content hash must change the key"
 
-          test "the reviewing wrapper keeps the check non-reified (stays AgentReviewed, never Deterministic)" {
-              Expect.isFalse (Check.isReified Catalog.planSatisfiesSpec.Check) "still carries an Opaque judgement"
-          } ]
+                Expect.equal (keyOf Catalog.planSatisfiesSpec baseHash) k0 "identical inputs ⇒ identical key"
+            }
+
+            test "the reviewing wrapper is verdict-neutral — eval matches the bare Opaque judgement at every phase" {
+                // The SAME guarded Opaque WITHOUT the reviewing wrapper: its verdict must be preserved.
+                let bare =
+                    SpecKit.whenPhase Phase.Plan (Opaque("plan-satisfies-spec", fun _ -> Unknown "judgement"))
+
+                let wrapped = Catalog.planSatisfiesSpec.Check
+
+                for phase in allPhases do
+                    let facts = [ fact (PhaseReached phase) ]
+
+                    Expect.equal
+                        (Check.eval facts wrapped)
+                        (Check.eval facts bare)
+                        (sprintf "the reads wrapper must not change the verdict at phase %A" phase)
+            }
+
+            test "the reviewing wrapper keeps the check non-reified (stays AgentReviewed, never Deterministic)" {
+                Expect.isFalse (Check.isReified Catalog.planSatisfiesSpec.Check) "still carries an Opaque judgement"
+            }
+        ]

@@ -53,15 +53,16 @@ module Model =
     /// contracts/agent-review-key-format.md and the `ReviewInput` DU below.
     type AgentReviewInputs =
         { // ── judge identity ──
-          Model: ModelId
-          ModelVersion: ModelVersion
-          Config: ModelConfig
-          // ── prompt / question identity ──
-          PromptHash: ReviewerPromptHash
-          Question: QuestionText
-          // ── check / reviewed-artifact identity (reused F029 vocabulary) ──
-          Check: RuleHash
-          ReviewedArtifacts: ArtifactHash list }
+            Model: ModelId
+            ModelVersion: ModelVersion
+            Config: ModelConfig
+            // ── prompt / question identity ──
+            PromptHash: ReviewerPromptHash
+            Question: QuestionText
+            // ── check / reviewed-artifact identity (reused F029 vocabulary) ──
+            Check: RuleHash
+            ReviewedArtifacts: ArtifactHash list
+        }
 
     // ── Key entity: the computed cache key ──
 

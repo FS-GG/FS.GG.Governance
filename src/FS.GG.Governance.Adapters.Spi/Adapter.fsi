@@ -38,28 +38,30 @@ open FS.GG.Governance.Kernel
 /// judge identity, the artifact-content hash read from facts) — not a re-implementation of any
 /// cross-cutting facility (research D2).
 type Adapter<'fact, 'artifact, 'change> =
-    { /// (1) Identity of the closed `'fact` union — the SOLE authority on fact identity the
-      /// kernel folds with (F01 `FixedPoint.evaluate`). MUST be injective on value-bearing
-      /// facts (theory Hazard 4), and at a composition root the project `Identify` MUST agree
-      /// with this on injected facts, so provenance ids survive the lift (data-model law L3).
-      Identify: 'fact -> FactId
-      /// (2) The artifact mapping: the domain's own artifact vocabulary onto the kernel's
-      /// structural `ArtifactRef` (F03) — the single point where domain artifacts meet the
-      /// otherwise domain-neutral algebra.
-      ToRef: 'artifact -> ArtifactRef
-      /// (3) The declared atomic predicates the catalog composes (F03 `Probe`). The DECLARED
-      /// probe vocabulary, carried for the contract and for testing; the `Rules`' checks are
-      /// authoritative for evaluation (research D2).
-      Probes: Probe<'fact> list
-      /// (4) The rule catalog: each rule a `Check` + `CheckTier` + `Severity` (+ `Spec`/
-      /// `Question`) — an F04 `CheckRule<'fact>`. MAY be empty where a domain has no rules.
-      Rules: CheckRule<'fact> list
-      /// (5) The high-stakes surfaces for routing (F07 `Fence`). MAY be empty.
-      Fences: Fence<'change> list
-      /// F04 kernel wiring: how the domain-neutral `RuleOutcome` embeds into and projects out of
-      /// `'fact`, the judge identity folded into the agent-review cache key, and the
-      /// artifact-content hash read FROM the facts (no live I/O). NOT new cross-cutting code.
-      Bridge: Bridge<'fact> }
+    {
+        /// (1) Identity of the closed `'fact` union — the SOLE authority on fact identity the
+        /// kernel folds with (F01 `FixedPoint.evaluate`). MUST be injective on value-bearing
+        /// facts (theory Hazard 4), and at a composition root the project `Identify` MUST agree
+        /// with this on injected facts, so provenance ids survive the lift (data-model law L3).
+        Identify: 'fact -> FactId
+        /// (2) The artifact mapping: the domain's own artifact vocabulary onto the kernel's
+        /// structural `ArtifactRef` (F03) — the single point where domain artifacts meet the
+        /// otherwise domain-neutral algebra.
+        ToRef: 'artifact -> ArtifactRef
+        /// (3) The declared atomic predicates the catalog composes (F03 `Probe`). The DECLARED
+        /// probe vocabulary, carried for the contract and for testing; the `Rules`' checks are
+        /// authoritative for evaluation (research D2).
+        Probes: Probe<'fact> list
+        /// (4) The rule catalog: each rule a `Check` + `CheckTier` + `Severity` (+ `Spec`/
+        /// `Question`) — an F04 `CheckRule<'fact>`. MAY be empty where a domain has no rules.
+        Rules: CheckRule<'fact> list
+        /// (5) The high-stakes surfaces for routing (F07 `Fence`). MAY be empty.
+        Fences: Fence<'change> list
+        /// F04 kernel wiring: how the domain-neutral `RuleOutcome` embeds into and projects out of
+        /// `'fact`, the judge identity folded into the agent-review cache key, and the
+        /// artifact-content hash read FROM the facts (no live I/O). NOT new cross-cutting code.
+        Bridge: Bridge<'fact>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Adapter =
@@ -108,9 +110,7 @@ module Lift =
     /// coproduct-wrapped facts yields the IDENTICAL `(verdict, provenance)` as the standalone
     /// original, provided the project `Identify` agrees with the domain's on injected facts
     /// (data-model law L3) (FR-004, SC-002). Total.
-    val rule:
-        inject: ('small -> 'big) -> project: ('big -> 'small option) -> rule: Rule<'small> ->
-            Rule<'big>
+    val rule: inject: ('small -> 'big) -> project: ('big -> 'small option) -> rule: Rule<'small> -> Rule<'big>
 
     /// Lift a `Fence<'small>` to `Fence<'big>` by re-targeting its `Trips` predicate via
     /// `narrow` (`Trips << narrow`), KEEPING its `Name` (so the composed fence set dedups by

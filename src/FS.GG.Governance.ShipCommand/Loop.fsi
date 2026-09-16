@@ -17,24 +17,24 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open FS.GG.Governance.Config.Model            // GovernedPath, Validation
-open FS.GG.Governance.Snapshot.Model           // RepoSnapshot
-open FS.GG.Governance.Enforcement.Enforcement  // RunMode, Profile
-open FS.GG.Governance.Ship.Model               // ShipDecision
-open FS.GG.Governance.Gates.Model              // Gate (F046 — the selected gates to sense)
-open FS.GG.Governance.Adapters.SddHandoff       // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
-open FS.GG.Governance.FreshnessKey.Model        // Revision (F046 — base/head from RepoSnapshot.Range)
+open FS.GG.Governance.Config.Model // GovernedPath, Validation
+open FS.GG.Governance.Snapshot.Model // RepoSnapshot
+open FS.GG.Governance.Enforcement.Enforcement // RunMode, Profile
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.Gates.Model // Gate (F046 — the selected gates to sense)
+open FS.GG.Governance.Adapters.SddHandoff // F081 — Reader.HandoffRead, Consumer.consume (handoff gates)
+open FS.GG.Governance.FreshnessKey.Model // Revision (F046 — base/head from RepoSnapshot.Range)
 open FS.GG.Governance.FreshnessResolution.Model // SensedFacts (F046 — the sensed facts join input)
-open FS.GG.Governance.EvidenceReuse.Model       // ReuseStore (F046 — the read-only reuse store join input)
-open FS.GG.Governance.CommandRecord.Model        // CommandRecord (F052 — the assembled run record)
-open FS.GG.Governance.GateExecution.Model         // GateCommand (F052 — the command-to-run)
-open FS.GG.Governance.GateRun.Model               // GateOutcome (F052 — the per-gate execution outcome)
-open FS.GG.Governance.HumanText                   // F27 wiring (063): ReportView (the rich/plain view payload)
+open FS.GG.Governance.EvidenceReuse.Model // ReuseStore (F046 — the read-only reuse store join input)
+open FS.GG.Governance.CommandRecord.Model // CommandRecord (F052 — the assembled run record)
+open FS.GG.Governance.GateExecution.Model // GateCommand (F052 — the command-to-run)
+open FS.GG.Governance.GateRun.Model // GateOutcome (F052 — the per-gate execution outcome)
+open FS.GG.Governance.HumanText // F27 wiring (063): ReportView (the rich/plain view payload)
 // F25 host wiring (064): the four consumed cost-cache/provenance cores + F033 Provenance.
-open FS.GG.Governance.Config.Model               // Cost, EnvironmentClass (already in Config.Model)
-open FS.GG.Governance.CostBudget.Model            // CacheDecisionReport (budget-filter carrier → cost-budget.json)
-open FS.GG.Governance.CommandKind.Model           // CommandKind, AuditSnapshot (kinded runs → provenance.json)
-open FS.GG.Governance.Provenance.Model            // BuilderIdentity (normalized edge sense)
+open FS.GG.Governance.Config.Model // Cost, EnvironmentClass (already in Config.Model)
+open FS.GG.Governance.CostBudget.Model // CacheDecisionReport (budget-filter carrier → cost-budget.json)
+open FS.GG.Governance.CommandKind.Model // CommandKind, AuditSnapshot (kinded runs → provenance.json)
+open FS.GG.Governance.Provenance.Model // BuilderIdentity (normalized edge sense)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -57,33 +57,35 @@ module Loop =
     /// `Profile = Standard` (research D5), `AuditOut = <repo>/readiness/audit.json` (research D7).
     /// `Mode`/`Profile` are the F023 typed levers threaded into `Ship.rollup`.
     type RunRequest =
-        { Repo: string
-          Scope: ScopeSelector
-          Mode: RunMode
-          Profile: Profile
-          Format: OutputFormat
-          AuditOut: string
-          StorePath: string
-          /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
-          /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts and
-          /// an unchanged verdict/exit (FR-004/FR-007).
-          PersistStore: bool
-          /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
-          /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
-          ExplicitPlain: bool
-          /// F25 wiring (064): the deterministic cost-budget sidecar path (`--cost-budget-out`); default
-          /// `<repo>/readiness/cost-budget.json`. A NEW contract (`fsgg.cost-budget/v1`) written beside the
-          /// existing artifacts — never folded into `audit.json`, which stays byte-identical (FR-005/FR-007).
-          CostBudgetOut: string
-          /// F25 wiring (064): the deterministic provenance sidecar path (`--provenance-out`); default
-          /// `<repo>/readiness/provenance.json`. A NEW contract (`fsgg.provenance/v1`).
-          ProvenanceOut: string
-          /// 112 (`--dry-run`): when `true`, run the SIMULATED gate — no gate command is executed (every
-          /// selected gate is `NotExecuted`), NOTHING is written to `readiness/` and the store is never
-          /// persisted, and the printed output is the marked `SimulateProjection` (schema `fsgg.audit.dryrun/v1`)
-          /// with a handoff-sufficiency breakdown. A preview: the process exits 0 regardless of the simulated
-          /// verdict. `false` ⇒ the ordinary ship path, byte-identical to before (spec FR-005/FR-006).
-          DryRun: bool }
+        {
+            Repo: string
+            Scope: ScopeSelector
+            Mode: RunMode
+            Profile: Profile
+            Format: OutputFormat
+            AuditOut: string
+            StorePath: string
+            /// F048 opt-in: when `true` (`--persist-store`), the loaded store is pruned/bounded and written
+            /// back to `StorePath` atomically; default `false` ⇒ no store write, byte-identical artifacts and
+            /// an unchanged verdict/exit (FR-004/FR-007).
+            PersistStore: bool
+            /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+            /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). Never affects JSON.
+            ExplicitPlain: bool
+            /// F25 wiring (064): the deterministic cost-budget sidecar path (`--cost-budget-out`); default
+            /// `<repo>/readiness/cost-budget.json`. A NEW contract (`fsgg.cost-budget/v1`) written beside the
+            /// existing artifacts — never folded into `audit.json`, which stays byte-identical (FR-005/FR-007).
+            CostBudgetOut: string
+            /// F25 wiring (064): the deterministic provenance sidecar path (`--provenance-out`); default
+            /// `<repo>/readiness/provenance.json`. A NEW contract (`fsgg.provenance/v1`).
+            ProvenanceOut: string
+            /// 112 (`--dry-run`): when `true`, run the SIMULATED gate — no gate command is executed (every
+            /// selected gate is `NotExecuted`), NOTHING is written to `readiness/` and the store is never
+            /// persisted, and the printed output is the marked `SimulateProjection` (schema `fsgg.audit.dryrun/v1`)
+            /// with a handoff-sufficiency breakdown. A preview: the process exits 0 regardless of the simulated
+            /// verdict. `false` ⇒ the ordinary ship path, byte-identical to before (spec FR-005/FR-006).
+            DryRun: bool
+        }
 
     /// Pure-parser rejections — each maps to `UsageError'`/exit 2 (research D9). `UnrecognizedMode`/
     /// `UnrecognizedProfile` carry the offending string from F023 `recognizeMode`/`recognizeProfile`
@@ -178,8 +180,10 @@ module Loop =
     /// A host-edge diagnostic — distinct from the F014 catalog `Diagnostic`. Actionable text carrying
     /// NO clock, machine-absolute path, or environment value (FR-006, SC-005).
     type Diagnostic =
-        { Category: ExitDecision
-          Message: string }
+        {
+            Category: ExitDecision
+            Message: string
+        }
 
     /// How far the pipeline has progressed (data-model §3). `Rolled` collapses F022's `Selected`/
     /// `Projected`: select -> rollup -> project are all pure and happen in one `Loaded(Valid)` step.
@@ -198,48 +202,50 @@ module Loop =
     /// state: `Snapshot` (base/head — D5), `SelectedGates`, `Sensed`/`Store` (join inputs), `CacheNotes`
     /// (non-fatal degrade notes — D7). None of these participate in the verdict or the exit decision.
     type Model =
-        { Request: RunRequest
-          Phase: Phase
-          Candidates: GovernedPath list option
-          Decision: ShipDecision option
-          AuditDoc: string option
-          Snapshot: RepoSnapshot option
-          SelectedGates: Gate list
-          Sensed: SensedFacts option
-          Store: ReuseStore option
-          /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
-          /// classify/execute step can derive each gate's command-to-run (`commandFor`).
-          Tooling: ToolingFacts option
-          /// F052: the per-gate execution outcomes built on `GatesExecuted`; embedded in `audit.json`, fed to
-          /// the verdict relocation (`applyExecution`), and surfaced in the summary. Empty until execution.
-          Outcomes: (GateId * GateOutcome) list
-          CacheNotes: string list
-          /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
-          /// malformed file is never clobbered (D6).
-          StoreDegraded: bool
-          /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
-          /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
-          PersistAcked: bool
-          /// F25 wiring (064): the normalized provenance edge senses, set by `ProvenanceSensed`. `None` until
-          /// sensed (then a deterministic default is used when projecting the sidecar).
-          Environment: EnvironmentClass option
-          Builder: BuilderIdentity option
-          /// F25 wiring (064): the budgeted cache-decision report built in `executionPlan` (the budget filter),
-          /// carried to the persist phase for the `cost-budget.json` projection.
-          CacheDecision: CacheDecisionReport option
-          /// F25 wiring (064): the provenance audit snapshot built on `GatesExecuted`, carried to the persist
-          /// phase for the `provenance.json` projection.
-          Audit: AuditSnapshot option
-          /// F070: the stale-generated-view currency findings sensed at the edge (`[]` until `ViewCurrencySensed`;
-          /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
-          /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).
-          ViewCurrencyFindings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
-          /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
-          /// `Loaded(Valid)` fold: `Consumer.consume` derives the handoff gates, which are unioned into the
-          /// routed selection BEFORE `Ship.rollup`. `[]` ⇒ identity fold ⇒ byte-identical ship (FR-001).
-          Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
-          Diagnostics: Diagnostic list
-          Exit: ExitDecision }
+        {
+            Request: RunRequest
+            Phase: Phase
+            Candidates: GovernedPath list option
+            Decision: ShipDecision option
+            AuditDoc: string option
+            Snapshot: RepoSnapshot option
+            SelectedGates: Gate list
+            Sensed: SensedFacts option
+            Store: ReuseStore option
+            /// F052: the declared tooling (command specs) carried from the loaded catalog, so the
+            /// classify/execute step can derive each gate's command-to-run (`commandFor`).
+            Tooling: ToolingFacts option
+            /// F052: the per-gate execution outcomes built on `GatesExecuted`; embedded in `audit.json`, fed to
+            /// the verdict relocation (`applyExecution`), and surfaced in the summary. Empty until execution.
+            Outcomes: (GateId * GateOutcome) list
+            CacheNotes: string list
+            /// F048: set `true` on `StoreLoaded(Error _)` (malformed on load) — suppresses the store write so a
+            /// malformed file is never clobbered (D6).
+            StoreDegraded: bool
+            /// F048: set `true` once the store-write ack (`StorePersisted`) has arrived (or the write was
+            /// suppressed) — gates `EmitSummary` when persistence is enabled (D10).
+            PersistAcked: bool
+            /// F25 wiring (064): the normalized provenance edge senses, set by `ProvenanceSensed`. `None` until
+            /// sensed (then a deterministic default is used when projecting the sidecar).
+            Environment: EnvironmentClass option
+            Builder: BuilderIdentity option
+            /// F25 wiring (064): the budgeted cache-decision report built in `executionPlan` (the budget filter),
+            /// carried to the persist phase for the `cost-budget.json` projection.
+            CacheDecision: CacheDecisionReport option
+            /// F25 wiring (064): the provenance audit snapshot built on `GatesExecuted`, carried to the persist
+            /// phase for the `provenance.json` projection.
+            Audit: AuditSnapshot option
+            /// F070: the stale-generated-view currency findings sensed at the edge (`[]` until `ViewCurrencySensed`;
+            /// default `[]`). Folded into the verdict via the existing `deriveEffectiveSeverity` (no truth-table
+            /// change — FR-003) and projected additively into `generatedViews` (omitted when `[]` — FR-004).
+            ViewCurrencyFindings: FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding list
+            /// F081: the located handoff reads, set by `HandoffsLoaded` (default `[]`). Consumed at the
+            /// `Loaded(Valid)` fold: `Consumer.consume` derives the handoff gates, which are unioned into the
+            /// routed selection BEFORE `Ship.rollup`. `[]` ⇒ identity fold ⇒ byte-identical ship (FR-001).
+            Handoffs: FS.GG.Governance.Adapters.SddHandoff.Reader.HandoffRead list
+            Diagnostics: Diagnostic list
+            Exit: ExitDecision
+        }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values,
     /// never exceptions (research D9). Tolerates a leading `ship` verb. `--paths` and `--since` together

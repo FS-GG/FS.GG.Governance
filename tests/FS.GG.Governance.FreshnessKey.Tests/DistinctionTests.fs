@@ -13,16 +13,18 @@ open FS.GG.Governance.FreshnessKey.Tests.Support
 let tests =
     testList
         "Distinction"
-        [ for (category, vary) in allCategories ->
-              test (sprintf "changing %s ⇒ key differs and matches = false" (Model.categoryToken category)) {
-                  let variant = vary baseInputs
+        [
+            for (category, vary) in allCategories ->
+                test (sprintf "changing %s ⇒ key differs and matches = false" (Model.categoryToken category)) {
+                    let variant = vary baseInputs
 
-                  Expect.notEqual
-                      (FreshnessKey.value (FreshnessKey.compute baseInputs))
-                      (FreshnessKey.value (FreshnessKey.compute variant))
-                      (sprintf "a single change in %A must change the key" category)
+                    Expect.notEqual
+                        (FreshnessKey.value (FreshnessKey.compute baseInputs))
+                        (FreshnessKey.value (FreshnessKey.compute variant))
+                        (sprintf "a single change in %A must change the key" category)
 
-                  Expect.isFalse
-                      (FreshnessKey.matches baseInputs variant)
-                      (sprintf "a single change in %A must forbid reuse" category)
-              } ]
+                    Expect.isFalse
+                        (FreshnessKey.matches baseInputs variant)
+                        (sprintf "a single change in %A must forbid reuse" category)
+                }
+        ]

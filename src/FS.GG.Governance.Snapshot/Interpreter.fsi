@@ -59,9 +59,7 @@ type CiPort = unit -> CiContext option
 /// The bundle of injected edge ports — everything impure the sensing touches (FR-007). Wholly
 /// faked/realised in tests (a real-git `Git` over a temp repo, a deterministic `Ci`) so no
 /// hosting-provider API is ever reached (SC-007).
-type Ports =
-    { Git: GitPort
-      Ci: CiPort }
+type Ports = { Git: GitPort; Ci: CiPort }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =

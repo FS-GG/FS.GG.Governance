@@ -18,13 +18,16 @@ open Expecto
 
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
 let packScript = Path.Combine(repoRoot, "pack-reference-gate-set.fsx")
-let samplesFsgg = Path.Combine(repoRoot, "samples", "sdd-reference-gate-set", ".fsgg")
+
+let samplesFsgg =
+    Path.Combine(repoRoot, "samples", "sdd-reference-gate-set", ".fsgg")
 
 let packagingProject =
     Path.Combine(repoRoot, "packaging", "FS.GG.Governance.ReferenceGateSet", "FS.GG.Governance.ReferenceGateSet.fsproj")
 
 /// Fixed YAML order — the schema-manifest field order (must match the pack script and ADR-0055).
-let orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
+let orderedFiles =
+    [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
 
 /// The configuration THIS assembly was built in, read from the attribute the SDK generates from
 /// $(Configuration) — the real build fact, not a guess (`#if DEBUG` would re-encode the assumption
@@ -73,7 +76,9 @@ let runPack (args: string list) : int * string * string =
 /// Copy the four canonical YAML reference files into a fresh temp `<dir>/.fsgg/`; return <dir> (the
 /// directory that CONTAINS `.fsgg/`, i.e. the `--source` value). Real I/O, no mock.
 let copyReferenceTo () : string =
-    let tmp = Path.Combine(Path.GetTempPath(), "fsgg-pack-test-" + Guid.NewGuid().ToString("N"))
+    let tmp =
+        Path.Combine(Path.GetTempPath(), "fsgg-pack-test-" + Guid.NewGuid().ToString("N"))
+
     let fsgg = Path.Combine(tmp, ".fsgg")
     Directory.CreateDirectory fsgg |> ignore
 
@@ -89,7 +94,9 @@ let copyReferenceTo () : string =
 /// The directory holding the produced package — usable directly as a NuGet source.
 let producedFeedDir =
     lazy
-        (let outDir = Path.Combine(Path.GetTempPath(), "fsgg-pack-out-" + Guid.NewGuid().ToString("N"))
+        (let outDir =
+            Path.Combine(Path.GetTempPath(), "fsgg-pack-out-" + Guid.NewGuid().ToString("N"))
+
          Directory.CreateDirectory outDir |> ignore
          let code, out, err = runPack [ "--output"; outDir ]
 

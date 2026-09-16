@@ -26,10 +26,14 @@ module Model =
 
     /// An F032 `CommandRecord` wrapped (NOT extended) with its kind. Identity is the record's identity.
     type KindedCommandRun =
-        { Kind: CommandKind
-          Record: CommandRecord }
+        {
+            Kind: CommandKind
+            Record: CommandRecord
+        }
 
     /// The provenance audit snapshot: the F033 `Provenance` roll-up plus the kind labels for projection.
     type AuditSnapshot =
-        { Provenance: Provenance
-          Runs: KindedCommandRun list }
+        {
+            Provenance: Provenance
+            Runs: KindedCommandRun list
+        }

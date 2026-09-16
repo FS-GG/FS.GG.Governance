@@ -13,32 +13,35 @@ let private library = typeof<Loop.RunRequest>.Assembly
 let tests =
     testList
         "ScopeGuard"
-        [ test "RefreshCommand references only FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet" {
-              let allowed (name: string) =
-                  name = "FSharp.Core"
-                  || name = "YamlDotNet"
-                  || name = "System.Private.CoreLib"
-                  || name = "netstandard"
-                  || name = "mscorlib"
-                  || name.StartsWith "System."
-                  || name.StartsWith "FS.GG.Governance."
+        [
+            test "RefreshCommand references only FS.GG.Governance.*/BCL/FSharp.Core/YamlDotNet" {
+                let allowed (name: string) =
+                    name = "FSharp.Core"
+                    || name = "YamlDotNet"
+                    || name = "System.Private.CoreLib"
+                    || name = "netstandard"
+                    || name = "mscorlib"
+                    || name.StartsWith "System."
+                    || name.StartsWith "FS.GG.Governance."
 
-              let offending =
-                  library.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
-                  |> Array.filter (allowed >> not)
+                let offending =
+                    library.GetReferencedAssemblies()
+                    |> Array.choose (fun a -> Option.ofObj a.Name)
+                    |> Array.filter (allowed >> not)
 
-              Expect.isEmpty offending (sprintf "found unexpected references: %A" offending)
-          }
+                Expect.isEmpty offending (sprintf "found unexpected references: %A" offending)
+            }
 
-          test "no network / hosting-provider / registry / VCS symbol is referenced (SC-007)" {
-              let banned = [ "System.Net.Http"; "System.Net.Sockets"; "Octokit"; "GitHub"; "LibGit2Sharp" ]
+            test "no network / hosting-provider / registry / VCS symbol is referenced (SC-007)" {
+                let banned =
+                    [ "System.Net.Http"; "System.Net.Sockets"; "Octokit"; "GitHub"; "LibGit2Sharp" ]
 
-              let referenced =
-                  library.GetReferencedAssemblies() |> Array.choose (fun a -> Option.ofObj a.Name)
+                let referenced =
+                    library.GetReferencedAssemblies() |> Array.choose (fun a -> Option.ofObj a.Name)
 
-              for b in banned do
-                  Expect.isFalse
-                      (referenced |> Array.exists (fun n -> n.Contains b))
-                      (sprintf "RefreshCommand must not reference %s (network-free, SC-007)" b)
-          } ]
+                for b in banned do
+                    Expect.isFalse
+                        (referenced |> Array.exists (fun n -> n.Contains b))
+                        (sprintf "RefreshCommand must not reference %s (network-free, SC-007)" b)
+            }
+        ]

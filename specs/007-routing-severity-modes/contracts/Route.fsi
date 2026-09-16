@@ -46,8 +46,7 @@ type Stakes =
 /// generic surfaces (`Check<'fact>`, `EvidenceGraph<'id>`) (FR-001, FR-017). `Trips` is a
 /// pure predicate; it is only ever RUN, never rendered or hashed.
 type Fence<'change> =
-    { Name: string
-      Trips: 'change -> bool }
+    { Name: string; Trips: 'change -> bool }
 
 /// The lifecycle position at which a change is evaluated — the dial that decides WHEN a
 /// stake is enforced (advisory vs blocking), orthogonal to WHETHER the change is high-stakes
@@ -71,10 +70,12 @@ type RunMode =
 /// FR-012). `Blocking` is the short, filterable subset bounded by the applicable rules, not
 /// the catalog (the caller passes only the rules that apply to the change) (FR-013).
 type Route =
-    { Stakes: Stakes
-      Advisory: ContractEntry list
-      Blocking: ContractEntry list
-      Reason: string }
+    {
+        Stakes: Stakes
+        Advisory: ContractEntry list
+        Blocking: ContractEntry list
+        Reason: string
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Route =
@@ -104,12 +105,7 @@ module Route =
     /// domain-neutral kernel (FR-017); this keeps `Blocking` short (FR-013, SC-007). Pure and
     /// TOTAL for every input, including the empty fence set and the empty rule set (FR-015,
     /// SC-009); runs no probe and dispatches no review (FR-016, SC-010).
-    val route:
-        fences: Fence<'change> list ->
-        rules: CheckRule<'fact> list ->
-        mode: RunMode ->
-        change: 'change ->
-            Route
+    val route: fences: Fence<'change> list -> rules: CheckRule<'fact> list -> mode: RunMode -> change: 'change -> Route
 
     /// Render a route as a deterministic, human- and agent-readable explanation naming the
     /// stakes, the reason, and each applicable requirement (blocking gates then advisory),

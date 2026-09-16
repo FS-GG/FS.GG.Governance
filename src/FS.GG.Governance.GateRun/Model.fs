@@ -5,8 +5,8 @@
 
 namespace FS.GG.Governance.GateRun
 
-open FS.GG.Governance.Gates.Model            // GateId
-open FS.GG.Governance.CommandRecord.Model     // ExitCode
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.CommandRecord.Model // ExitCode
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Model =
@@ -17,8 +17,10 @@ module Model =
         | NotExecuted
 
     type GateOutcome =
-        { GateId: GateId
-          Disposition: GateDisposition }
+        {
+            GateId: GateId
+            Disposition: GateDisposition
+        }
 
     let isPassing (disposition: GateDisposition) : bool =
         match disposition with

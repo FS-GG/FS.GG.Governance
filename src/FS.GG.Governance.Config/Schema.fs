@@ -23,11 +23,13 @@ module Schema =
         | Unreadable of error: string
 
     type RawSource =
-        { Root: GovernedPath
-          Project: FileSlot
-          Policy: FileSlot
-          Capabilities: FileSlot
-          Tooling: FileSlot }
+        {
+            Root: GovernedPath
+            Project: FileSlot
+            Policy: FileSlot
+            Capabilities: FileSlot
+            Tooling: FileSlot
+        }
 
     // ── Supported versions (F23 D1: per-file) ──
 
@@ -50,10 +52,17 @@ module Schema =
     // ── Diagnostic constructor ──
 
     let private diag id file field idOpt line message : Diagnostic =
-        { Id = id
-          File = file
-          Locator = { Field = field; Id = idOpt; Line = line }
-          Message = message }
+        {
+            Id = id
+            File = file
+            Locator =
+                {
+                    Field = field
+                    Id = idOpt
+                    Line = line
+                }
+            Message = message
+        }
 
     // ── YamlDotNet node helpers (parse-to-node only) ──
 
@@ -65,6 +74,7 @@ module Schema =
             let stream = YamlStream()
             use reader = new StringReader(content)
             stream.Load reader
+
             if stream.Documents.Count = 0 then
                 Error "the file contains no YAML document"
             else
@@ -127,7 +137,11 @@ module Schema =
         // routing and F016 sensing consume. That normalizer is total and RETAINS an unpoppable `..`
         // as a literal segment; F014 rejects root escape by detecting that segment here.
         let (GovernedPath p) = Model.normalizePath raw
-        if p.Split('/') |> Array.exists (fun s -> s = "..") then Error() else Ok(GovernedPath p)
+
+        if p.Split('/') |> Array.exists (fun s -> s = "..") then
+            Error()
+        else
+            Ok(GovernedPath p)
 
     // ── schemaVersion handling ──
 
@@ -135,6 +149,7 @@ module Schema =
     /// the v1→v2 migration pointer (SC-006). Per-file as of F23 (D1).
     let private unsupportedMessage (file: FsggFile) (actual: int) : string =
         let (SchemaVersion want) = supportedVersionFor file
+
         match file with
         | Capabilities ->
             sprintf
@@ -146,9 +161,18 @@ module Schema =
 
     let private readSchemaVersion (m: YamlMappingNode) (file: FsggFile) : Result<SchemaVersion, Diagnostic> =
         let (SchemaVersion want) = supportedVersionFor file
+
         match getField m "schemaVersion" with
         | None ->
-            Error(diag MissingSchemaVersion file (Some "schemaVersion") None None (sprintf "every `.fsgg` file must declare 'schemaVersion: %d'" want))
+            Error(
+                diag
+                    MissingSchemaVersion
+                    file
+                    (Some "schemaVersion")
+                    None
+                    None
+                    (sprintf "every `.fsgg` file must declare 'schemaVersion: %d'" want)
+            )
         | Some node ->
             match scalarValue node with
             | Some v ->
@@ -157,7 +181,15 @@ module Schema =
                     if n = want then
                         Ok(SchemaVersion n)
                     else
-                        Error(diag UnsupportedSchemaVersion file (Some "schemaVersion") None (lineOf node) (unsupportedMessage file n))
+                        Error(
+                            diag
+                                UnsupportedSchemaVersion
+                                file
+                                (Some "schemaVersion")
+                                None
+                                (lineOf node)
+                                (unsupportedMessage file n)
+                        )
                 | _ ->
                     Error(
                         diag
@@ -170,7 +202,13 @@ module Schema =
                     )
             | None ->
                 Error(
-                    diag MalformedSchemaVersion file (Some "schemaVersion") None (lineOf node) "schemaVersion must be an integer scalar"
+                    diag
+                        MalformedSchemaVersion
+                        file
+                        (Some "schemaVersion")
+                        None
+                        (lineOf node)
+                        "schemaVersion must be an integer scalar"
                 )
 
     // ── Enum readers ──
@@ -265,9 +303,17 @@ module Schema =
         match reqString diags m file name with
         | Some v when v.Contains(":") ->
             let line = getField m name |> Option.bind lineOf
+
             diags.Add(
-                diag MalformedValue file (Some name) None line
-                    (sprintf "field '%s' must not contain ':' (reserved as the gate-id delimiter)" name))
+                diag
+                    MalformedValue
+                    file
+                    (Some name)
+                    None
+                    line
+                    (sprintf "field '%s' must not contain ':' (reserved as the gate-id delimiter)" name)
+            )
+
             None
         | other -> other
 
@@ -306,9 +352,17 @@ module Schema =
         match reqInt diags m file name with
         | Some n when n <= 0 ->
             let line = getField m name |> Option.bind lineOf
+
             diags.Add(
-                diag MalformedValue file (Some name) None line
-                    (sprintf "field '%s' must be a positive integer (was %d)" name n))
+                diag
+                    MalformedValue
+                    file
+                    (Some name)
+                    None
+                    line
+                    (sprintf "field '%s' must be a positive integer (was %d)" name n)
+            )
+
             None
         | other -> other
 
@@ -369,7 +423,10 @@ module Schema =
             match normalizePath raw with
             | Ok p -> Some p
             | Error() ->
-                diags.Add(diag PathEscapesRoot file (Some name) None None (sprintf "path '%s' escapes the governed root" raw))
+                diags.Add(
+                    diag PathEscapesRoot file (Some name) None None (sprintf "path '%s' escapes the governed root" raw)
+                )
+
                 None
 
     let private optPath (diags: ResizeArray<Diagnostic>) m file name : GovernedPath option =
@@ -381,7 +438,16 @@ module Schema =
                 match normalizePath raw with
                 | Ok p -> Some p
                 | Error() ->
-                    diags.Add(diag PathEscapesRoot file (Some name) None (lineOf node) (sprintf "path '%s' escapes the governed root" raw))
+                    diags.Add(
+                        diag
+                            PathEscapesRoot
+                            file
+                            (Some name)
+                            None
+                            (lineOf node)
+                            (sprintf "path '%s' escapes the governed root" raw)
+                    )
+
                     None
             | None ->
                 addMalformed diags file name node (sprintf "field '%s' must be a path scalar" name)
@@ -398,7 +464,13 @@ module Schema =
             | :? YamlSequenceNode as seq ->
                 let items = seq.Children |> List.ofSeq
                 let parsed = items |> List.map scalarValue
-                if parsed |> List.forall (function Some v -> v.Trim() <> "" | None -> false) then
+
+                if
+                    parsed
+                    |> List.forall (function
+                        | Some v -> v.Trim() <> ""
+                        | None -> false)
+                then
                     // Every element is Some here (the guard just proved it); `choose id` unwraps them totally,
                     // with no `Option.get` force-unwrap (111/B5).
                     Some(parsed |> List.choose id)
@@ -407,7 +479,9 @@ module Schema =
                     |> List.iteri (fun i c ->
                         match scalarValue c with
                         | Some v when v.Trim() <> "" -> ()
-                        | _ -> addMalformed diags file (sprintf "%s[%d]" name i) c "list entry must be a non-empty scalar")
+                        | _ ->
+                            addMalformed diags file (sprintf "%s[%d]" name i) c "list entry must be a non-empty scalar")
+
                     None
             | _ ->
                 addMalformed diags file name node (sprintf "field '%s' must be a list" name)
@@ -419,15 +493,31 @@ module Schema =
         | None -> None
         | Some raws ->
             let parsed = raws |> List.map (fun r -> r, normalizePath r)
+
             if parsed |> List.forall (fun (_, r) -> Result.isOk r) then
-                Some(parsed |> List.map (fun (_, r) -> match r with Ok p -> p | Error() -> GovernedPath ""))
+                Some(
+                    parsed
+                    |> List.map (fun (_, r) ->
+                        match r with
+                        | Ok p -> p
+                        | Error() -> GovernedPath "")
+                )
             else
                 parsed
                 |> List.iter (fun (raw, r) ->
                     match r with
                     | Ok _ -> ()
                     | Error() ->
-                        diags.Add(diag PathEscapesRoot file (Some name) None None (sprintf "path '%s' escapes the governed root" raw)))
+                        diags.Add(
+                            diag
+                                PathEscapesRoot
+                                file
+                                (Some name)
+                                None
+                                None
+                                (sprintf "path '%s' escapes the governed root" raw)
+                        ))
+
                 None
 
     /// An optional sequence of mapping nodes (absent → empty list).
@@ -438,12 +528,17 @@ module Schema =
             match node with
             | :? YamlSequenceNode as seq ->
                 let items = seq.Children |> List.ofSeq
+
                 items
                 |> List.iteri (fun i c ->
                     match c with
                     | :? YamlMappingNode -> ()
                     | _ -> addMalformed diags file (sprintf "%s[%d]" name i) c "list entry must be a mapping")
-                items |> List.choose (function :? YamlMappingNode as mm -> Some mm | _ -> None)
+
+                items
+                |> List.choose (function
+                    | :? YamlMappingNode as mm -> Some mm
+                    | _ -> None)
             | _ ->
                 addMalformed diags file name node (sprintf "field '%s' must be a list" name)
                 []
@@ -467,7 +562,13 @@ module Schema =
         |> List.iter (fun (k, n) ->
             if n > 1 then
                 diags.Add(
-                    diag DuplicateId file (Some fieldName) (Some k) None (sprintf "id '%s' is declared %d times in '%s'; ids must be unique" k n fieldName)
+                    diag
+                        DuplicateId
+                        file
+                        (Some fieldName)
+                        (Some k)
+                        None
+                        (sprintf "id '%s' is declared %d times in '%s'; ids must be unique" k n fieldName)
                 ))
 
     // ── Ordering helpers (FR-012, D8 — sort every emitted list by a stable key) ──
@@ -480,36 +581,75 @@ module Schema =
         diags.AddRange(unknownFields m (set [ "glob"; "capability" ]) Capabilities)
         let glob = reqPath diags m Capabilities "glob"
         let capability = reqString diags m Capabilities "capability" |> Option.map DomainId
+
         match glob, capability with
         | Some g, Some c -> Some { Glob = g; Capability = c }
         | _ -> None
 
     let private parseSurface (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : Surface option =
-        diags.AddRange(unknownFields m (set [ "id"; "kind"; "paths"; "owner"; "maturity"; "evidenceTag"; "templateProfile"; "baseline" ]) Capabilities)
+        diags.AddRange(
+            unknownFields
+                m
+                (set
+                    [
+                        "id"
+                        "kind"
+                        "paths"
+                        "owner"
+                        "maturity"
+                        "evidenceTag"
+                        "templateProfile"
+                        "baseline"
+                    ])
+                Capabilities
+        )
+
         let id = reqString diags m Capabilities "id" |> Option.map SurfaceId
         let kind = reqEnum parseSurfaceClass diags m Capabilities "kind"
         let paths = reqPathList diags m Capabilities "paths"
         let owner = reqString diags m Capabilities "owner" |> Option.map Owner
         let maturity = reqEnum parseMaturity diags m Capabilities "maturity"
         // F23 optional product attributes — all None for an MVP-shaped surface (data-model §1.4).
-        let evidenceTag = optString diags m Capabilities "evidenceTag" |> Option.map EvidenceTag
-        let templateProfile = optString diags m Capabilities "templateProfile" |> Option.map TemplateProfile
+        let evidenceTag =
+            optString diags m Capabilities "evidenceTag" |> Option.map EvidenceTag
+
+        let templateProfile =
+            optString diags m Capabilities "templateProfile" |> Option.map TemplateProfile
+
         let baseline = optString diags m Capabilities "baseline" |> Option.map Baseline
+
         match id, kind, paths, owner, maturity with
         | Some i, Some k, Some ps, Some o, Some mt ->
             Some
-                { Id = i
-                  Class = k
-                  Paths = ps |> sortByKey (fun (GovernedPath p) -> p)
-                  Owner = o
-                  Maturity = mt
-                  EvidenceTag = evidenceTag
-                  TemplateProfile = templateProfile
-                  Baseline = baseline }
+                {
+                    Id = i
+                    Class = k
+                    Paths = ps |> sortByKey (fun (GovernedPath p) -> p)
+                    Owner = o
+                    Maturity = mt
+                    EvidenceTag = evidenceTag
+                    TemplateProfile = templateProfile
+                    Baseline = baseline
+                }
         | _ -> None
 
     let private parseCheck (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : Check option =
-        diags.AddRange(unknownFields m (set [ "id"; "domain"; "command"; "owner"; "cost"; "environment"; "maturity"; "tier" ]) Capabilities)
+        diags.AddRange(
+            unknownFields
+                m
+                (set
+                    [
+                        "id"
+                        "domain"
+                        "command"
+                        "owner"
+                        "cost"
+                        "environment"
+                        "maturity"
+                        "tier"
+                    ])
+                Capabilities
+        )
         // `id` and `domain` compose the gate id (`Gates.gateIdOf`), so both reject the reserved `:`
         // delimiter here to keep that composition injective (CORE-1).
         let id = reqIdString diags m Capabilities "id" |> Option.map CheckId
@@ -521,33 +661,48 @@ module Schema =
         let maturity = reqEnum parseMaturity diags m Capabilities "maturity"
         // F23 optional tier — present on cost-tiered generated-product checks (data-model §1.5).
         let tier = optEnum parseTier diags m Capabilities "tier"
+
         match id, domain, owner, cost, env, maturity with
         | Some i, Some d, Some o, Some c, Some e, Some mt ->
             Some
-                { Id = i
-                  Domain = d
-                  Command = command
-                  Owner = o
-                  Cost = c
-                  Environment = e
-                  Maturity = mt
-                  Tier = tier }
+                {
+                    Id = i
+                    Domain = d
+                    Command = command
+                    Owner = o
+                    Cost = c
+                    Environment = e
+                    Maturity = mt
+                    Tier = tier
+                }
         | _ -> None
 
     let private parseCommandSpec (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : CommandSpec option =
         diags.AddRange(unknownFields m (set [ "id"; "command"; "timeout"; "environment" ]) Tooling)
         let id = reqString diags m Tooling "id" |> Option.map CommandId
         let command = reqString diags m Tooling "command"
-        let timeout = reqPositiveInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
+
+        let timeout =
+            reqPositiveInt diags m Tooling "timeout" |> Option.map (fun s -> TimeoutLimit s)
+
         let env = reqEnum parseEnvironment diags m Tooling "environment"
+
         match id, command, timeout, env with
-        | Some i, Some c, Some t, Some e -> Some { Id = i; Command = c; Timeout = t; Environment = e }
+        | Some i, Some c, Some t, Some e ->
+            Some
+                {
+                    Id = i
+                    Command = c
+                    Timeout = t
+                    Environment = e
+                }
         | _ -> None
 
     let private parseExternalTool (diags: ResizeArray<Diagnostic>) (m: YamlMappingNode) : ExternalToolReq option =
         diags.AddRange(unknownFields m (set [ "tool"; "minVersion" ]) Tooling)
         let tool = reqString diags m Tooling "tool"
         let minVersion = reqString diags m Tooling "minVersion"
+
         match tool, minVersion with
         | Some t, Some v -> Some { Tool = t; MinVersion = v }
         | _ -> None
@@ -555,20 +710,47 @@ module Schema =
     // ── Per-file parsers ──
 
     let private finish (diags: ResizeArray<Diagnostic>) (build: unit -> 'f) : Result<'f, Diagnostic list> =
-        if diags.Count = 0 then Ok(build ()) else Error(List.ofSeq diags)
+        if diags.Count = 0 then
+            Ok(build ())
+        else
+            Error(List.ofSeq diags)
 
     let private parseProject (m: YamlMappingNode) : Result<ProjectFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
-        diags.AddRange(unknownFields m (set [ "schemaVersion"; "id"; "governedRoot"; "domains"; "packageSurfaces"; "policyRef"; "capabilitiesRef" ]) Project)
-        let sv = match readSchemaVersion m Project with Ok v -> Some v | Error d -> diags.Add d; None
+
+        diags.AddRange(
+            unknownFields
+                m
+                (set
+                    [
+                        "schemaVersion"
+                        "id"
+                        "governedRoot"
+                        "domains"
+                        "packageSurfaces"
+                        "policyRef"
+                        "capabilitiesRef"
+                    ])
+                Project
+        )
+
+        let sv =
+            match readSchemaVersion m Project with
+            | Ok v -> Some v
+            | Error d ->
+                diags.Add d
+                None
+
         let id = reqString diags m Project "id" |> Option.map ProjectId
         let governedRoot = reqPath diags m Project "governedRoot"
         let domains = reqStringList diags m Project "domains"
         domains |> Option.iter (checkDuplicates diags Project "domains")
+
         let packageSurfaces =
             match getField m "packageSurfaces" with
             | None -> Some []
             | Some _ -> reqPathList diags m Project "packageSurfaces"
+
         let policyRef = optPath diags m Project "policyRef"
         let capabilitiesRef = optPath diags m Project "capabilitiesRef"
         // Thread the parsed required values (bound by the match) instead of force-unwrapping with `.Value`
@@ -577,73 +759,139 @@ module Schema =
         match sv, id, governedRoot, domains, packageSurfaces with
         | Some sv, Some id, Some governedRoot, Some domains, Some packageSurfaces ->
             finish diags (fun () ->
-                { SchemaVersion = sv
-                  Id = id
-                  Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
-                  GovernedRoot = governedRoot
-                  PackageSurfaces = packageSurfaces |> sortByKey (fun (GovernedPath p) -> p)
-                  PolicyRef = policyRef
-                  CapabilitiesRef = capabilitiesRef })
+                {
+                    SchemaVersion = sv
+                    Id = id
+                    Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
+                    GovernedRoot = governedRoot
+                    PackageSurfaces = packageSurfaces |> sortByKey (fun (GovernedPath p) -> p)
+                    PolicyRef = policyRef
+                    CapabilitiesRef = capabilitiesRef
+                })
         | _ -> Error(List.ofSeq diags)
 
     let private parsePolicy (m: YamlMappingNode) : Result<PolicyFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
-        diags.AddRange(unknownFields m (set [ "schemaVersion"; "defaultProfile"; "profiles"; "branchPolicy"; "reviewBudget" ]) Policy)
-        let sv = match readSchemaVersion m Policy with Ok v -> Some v | Error d -> diags.Add d; None
+
+        diags.AddRange(
+            unknownFields
+                m
+                (set
+                    [
+                        "schemaVersion"
+                        "defaultProfile"
+                        "profiles"
+                        "branchPolicy"
+                        "reviewBudget"
+                    ])
+                Policy
+        )
+
+        let sv =
+            match readSchemaVersion m Policy with
+            | Ok v -> Some v
+            | Error d ->
+                diags.Add d
+                None
+
         let profiles = reqStringList diags m Policy "profiles"
         profiles |> Option.iter (checkDuplicates diags Policy "profiles")
-        let defaultProfile = reqString diags m Policy "defaultProfile" |> Option.map ProfileId
+
+        let defaultProfile =
+            reqString diags m Policy "defaultProfile" |> Option.map ProfileId
+
         let branchPolicy =
             optMapping diags m Policy "branchPolicy"
             |> Option.bind (fun bm ->
                 diags.AddRange(unknownFields bm (set [ "pattern"; "requirePr" ]) Policy)
                 let pattern = reqString diags bm Policy "pattern"
                 let requirePr = reqBool diags bm Policy "requirePr"
+
                 match pattern, requirePr with
                 | Some p, Some r -> Some { Pattern = p; RequirePr = r }
                 | _ -> None)
+
         let reviewBudget =
             optMapping diags m Policy "reviewBudget"
             |> Option.bind (fun rm ->
                 diags.AddRange(unknownFields rm (set [ "maxReviews" ]) Policy)
                 reqInt diags rm Policy "maxReviews" |> Option.map (fun n -> { MaxReviews = n }))
+
         match sv, profiles, defaultProfile with
         | Some sv, Some profiles, Some defaultProfile ->
             finish diags (fun () ->
-                { SchemaVersion = sv
-                  Profiles = profiles |> List.map ProfileId |> sortByKey (fun (ProfileId p) -> p)
-                  DefaultProfile = defaultProfile
-                  BranchPolicy = branchPolicy
-                  ReviewBudget = reviewBudget })
+                {
+                    SchemaVersion = sv
+                    Profiles = profiles |> List.map ProfileId |> sortByKey (fun (ProfileId p) -> p)
+                    DefaultProfile = defaultProfile
+                    BranchPolicy = branchPolicy
+                    ReviewBudget = reviewBudget
+                })
         | _ -> Error(List.ofSeq diags)
 
     let private parseCapabilities (m: YamlMappingNode) : Result<CapabilityFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
-        diags.AddRange(unknownFields m (set [ "schemaVersion"; "domains"; "pathMap"; "surfaces"; "checks" ]) Capabilities)
-        let sv = match readSchemaVersion m Capabilities with Ok v -> Some v | Error d -> diags.Add d; None
+
+        diags.AddRange(
+            unknownFields m (set [ "schemaVersion"; "domains"; "pathMap"; "surfaces"; "checks" ]) Capabilities
+        )
+
+        let sv =
+            match readSchemaVersion m Capabilities with
+            | Ok v -> Some v
+            | Error d ->
+                diags.Add d
+                None
+
         let domains = reqStringList diags m Capabilities "domains"
         domains |> Option.iter (checkDuplicates diags Capabilities "domains")
-        let pathMap = optMappingSeq diags m Capabilities "pathMap" |> List.choose (parsePathMapEntry diags)
-        let surfaces = optMappingSeq diags m Capabilities "surfaces" |> List.choose (parseSurface diags)
+
+        let pathMap =
+            optMappingSeq diags m Capabilities "pathMap"
+            |> List.choose (parsePathMapEntry diags)
+
+        let surfaces =
+            optMappingSeq diags m Capabilities "surfaces"
+            |> List.choose (parseSurface diags)
+
         checkDuplicates diags Capabilities "surfaces" (surfaces |> List.map (fun s -> let (SurfaceId i) = s.Id in i))
-        let checks = optMappingSeq diags m Capabilities "checks" |> List.choose (parseCheck diags)
+
+        let checks =
+            optMappingSeq diags m Capabilities "checks" |> List.choose (parseCheck diags)
+
         checkDuplicates diags Capabilities "checks" (checks |> List.map (fun c -> let (CheckId i) = c.Id in i))
+
         match sv, domains with
         | Some sv, Some domains ->
             finish diags (fun () ->
-                { SchemaVersion = sv
-                  Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
-                  PathMap = pathMap |> sortByKey (fun e -> let (GovernedPath g) = e.Glob in g)
-                  Surfaces = surfaces |> sortByKey (fun s -> let (SurfaceId i) = s.Id in i)
-                  Checks = checks |> sortByKey (fun c -> let (CheckId i) = c.Id in i) })
+                {
+                    SchemaVersion = sv
+                    Domains = domains |> List.map DomainId |> sortByKey (fun (DomainId d) -> d)
+                    PathMap = pathMap |> sortByKey (fun e -> let (GovernedPath g) = e.Glob in g)
+                    Surfaces = surfaces |> sortByKey (fun s -> let (SurfaceId i) = s.Id in i)
+                    Checks = checks |> sortByKey (fun c -> let (CheckId i) = c.Id in i)
+                })
         | _ -> Error(List.ofSeq diags)
 
     let private parseTooling (m: YamlMappingNode) : Result<ToolingFacts, Diagnostic list> =
         let diags = ResizeArray<Diagnostic>()
-        diags.AddRange(unknownFields m (set [ "schemaVersion"; "commands"; "environmentClasses"; "externalTools" ]) Tooling)
-        let sv = match readSchemaVersion m Tooling with Ok v -> Some v | Error d -> diags.Add d; None
-        let commands = optMappingSeq diags m Tooling "commands" |> List.choose (parseCommandSpec diags)
+
+        diags.AddRange(
+            unknownFields m (set [ "schemaVersion"; "commands"; "environmentClasses"; "externalTools" ]) Tooling
+        )
+
+        let sv =
+            match readSchemaVersion m Tooling with
+            | Ok v -> Some v
+            | Error d ->
+                diags.Add d
+                None
+
+        let commands =
+            optMappingSeq diags m Tooling "commands" |> List.choose (parseCommandSpec diags)
+
         checkDuplicates diags Tooling "commands" (commands |> List.map (fun c -> let (CommandId i) = c.Id in i))
+
         let environmentClasses =
             match getField m "environmentClasses" with
             | None -> []
@@ -655,7 +903,13 @@ module Schema =
                         match parseEnvironment v with
                         | Some e -> Some e
                         | None ->
-                            addMalformed diags Tooling "environmentClasses" c (sprintf "'%s' is not a known environment class" v)
+                            addMalformed
+                                diags
+                                Tooling
+                                "environmentClasses"
+                                c
+                                (sprintf "'%s' is not a known environment class" v)
+
                             None
                     | None ->
                         addMalformed diags Tooling "environmentClasses" c "environment class must be a scalar"
@@ -664,14 +918,20 @@ module Schema =
             | Some node ->
                 addMalformed diags Tooling "environmentClasses" node "field 'environmentClasses' must be a list"
                 []
-        let externalTools = optMappingSeq diags m Tooling "externalTools" |> List.choose (parseExternalTool diags)
+
+        let externalTools =
+            optMappingSeq diags m Tooling "externalTools"
+            |> List.choose (parseExternalTool diags)
+
         match sv with
         | Some sv ->
             finish diags (fun () ->
-                { SchemaVersion = sv
-                  Commands = commands |> sortByKey (fun c -> let (CommandId i) = c.Id in i)
-                  EnvironmentClasses = environmentClasses |> List.distinct |> sortByKey environmentToken
-                  ExternalTools = externalTools |> sortByKey (fun t -> t.Tool) })
+                {
+                    SchemaVersion = sv
+                    Commands = commands |> sortByKey (fun c -> let (CommandId i) = c.Id in i)
+                    EnvironmentClasses = environmentClasses |> List.distinct |> sortByKey environmentToken
+                    ExternalTools = externalTools |> sortByKey (fun t -> t.Tool)
+                })
         | None -> Error(List.ofSeq diags)
 
     // ── Cross-reference resolution (FR-009) ──
@@ -682,38 +942,77 @@ module Schema =
         (toolingOpt: ToolingFacts option)
         : Diagnostic list =
         let domainSet = caps.Domains |> List.map (fun (DomainId d) -> d) |> Set.ofList
+
         let commandSet =
             match toolingOpt with
             | Some t -> t.Commands |> List.map (fun c -> let (CommandId i) = c.Id in i) |> Set.ofList
             | None -> Set.empty
+
         let dangling file field target message =
             diag DanglingReference file (Some field) (Some target) None message
+
         let pathMapDiags =
             caps.PathMap
             |> List.choose (fun e ->
                 let (DomainId d) = e.Capability
-                if domainSet.Contains d then None
-                else Some(dangling Capabilities "pathMap.capability" d (sprintf "pathMap entry references undeclared capability domain '%s'" d)))
+
+                if domainSet.Contains d then
+                    None
+                else
+                    Some(
+                        dangling
+                            Capabilities
+                            "pathMap.capability"
+                            d
+                            (sprintf "pathMap entry references undeclared capability domain '%s'" d)
+                    ))
+
         let checkDomainDiags =
             caps.Checks
             |> List.choose (fun c ->
                 let (DomainId d) = c.Domain
-                if domainSet.Contains d then None
-                else Some(dangling Capabilities "check.domain" d (sprintf "check '%s' references undeclared domain '%s'" (let (CheckId i) = c.Id in i) d)))
+
+                if domainSet.Contains d then
+                    None
+                else
+                    Some(
+                        dangling
+                            Capabilities
+                            "check.domain"
+                            d
+                            (sprintf "check '%s' references undeclared domain '%s'" (let (CheckId i) = c.Id in i) d)
+                    ))
+
         let checkCommandDiags =
             caps.Checks
             |> List.choose (fun c ->
                 match c.Command with
                 | Some(CommandId cmd) when not (commandSet.Contains cmd) ->
-                    Some(dangling Capabilities "check.command" cmd (sprintf "check '%s' references command '%s' not declared in tooling.yml" (let (CheckId i) = c.Id in i) cmd))
+                    Some(
+                        dangling
+                            Capabilities
+                            "check.command"
+                            cmd
+                            (sprintf
+                                "check '%s' references command '%s' not declared in tooling.yml"
+                                (let (CheckId i) = c.Id in i)
+                                cmd)
+                    )
                 | _ -> None)
+
         let profileDiags =
             match policyOpt with
             | Some p ->
                 let (ProfileId dp) = p.DefaultProfile
-                if p.Profiles |> List.exists (fun (ProfileId x) -> x = dp) then []
-                else [ dangling Policy "defaultProfile" dp (sprintf "defaultProfile '%s' is not a declared profile" dp) ]
+
+                if p.Profiles |> List.exists (fun (ProfileId x) -> x = dp) then
+                    []
+                else
+                    [
+                        dangling Policy "defaultProfile" dp (sprintf "defaultProfile '%s' is not a declared profile" dp)
+                    ]
             | None -> []
+
         pathMapDiags @ checkDomainDiags @ checkCommandDiags @ profileDiags
 
     // ── Deterministic diagnostic ordering (by file, then locator, then id) ──
@@ -742,30 +1041,55 @@ module Schema =
         diag MalformedValue file None None None (sprintf "could not parse YAML: %s" msg)
 
     let validate (source: RawSource) : Validation =
-        let handleRequired file slot (parser: YamlMappingNode -> Result<'f, Diagnostic list>) : Result<'f, Diagnostic list> =
+        let handleRequired
+            file
+            slot
+            (parser: YamlMappingNode -> Result<'f, Diagnostic list>)
+            : Result<'f, Diagnostic list> =
             match slot with
-            | Absent -> Error [ diag MissingRequiredFile file None None None "this required `.fsgg` file is absent" ]
-            | Unreadable err -> Error [ diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err) ]
-            | Present content when isWhitespace content -> Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
+            | Absent ->
+                Error
+                    [
+                        diag MissingRequiredFile file None None None "this required `.fsgg` file is absent"
+                    ]
+            | Unreadable err ->
+                Error
+                    [
+                        diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err)
+                    ]
+            | Present content when isWhitespace content ->
+                Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
             | Present content ->
                 match loadRoot content with
                 | Error msg -> Error [ parseError file msg ]
                 | Ok root -> parser root
 
-        let handleOptional file slot (parser: YamlMappingNode -> Result<'f, Diagnostic list>) : Result<'f option, Diagnostic list> =
+        let handleOptional
+            file
+            slot
+            (parser: YamlMappingNode -> Result<'f, Diagnostic list>)
+            : Result<'f option, Diagnostic list> =
             match slot with
             | Absent -> Ok None
             // A present-but-unreadable optional file must FAIL, never degrade to `None` (an absent optional) —
             // a genuine read error is surfaced with its cause, distinct from `EmptyFile` (Principle VI).
-            | Unreadable err -> Error [ diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err) ]
-            | Present content when isWhitespace content -> Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
+            | Unreadable err ->
+                Error
+                    [
+                        diag UnreadableFile file None None None (sprintf "this `.fsgg` file could not be read: %s" err)
+                    ]
+            | Present content when isWhitespace content ->
+                Error [ diag EmptyFile file None None None "this `.fsgg` file is empty" ]
             | Present content ->
                 match loadRoot content with
                 | Error msg -> Error [ parseError file msg ]
                 | Ok root -> parser root |> Result.map Some
 
         let projectR = handleRequired Project source.Project parseProject
-        let capabilitiesR = handleRequired Capabilities source.Capabilities parseCapabilities
+
+        let capabilitiesR =
+            handleRequired Capabilities source.Capabilities parseCapabilities
+
         let policyR = handleOptional Policy source.Policy parsePolicy
         let toolingR = handleOptional Tooling source.Tooling parseTooling
 
@@ -774,11 +1098,19 @@ module Schema =
             | Ok _ -> []
             | Error ds -> ds
 
-        let fileDiags = errOf projectR @ errOf policyR @ errOf capabilitiesR @ errOf toolingR
+        let fileDiags =
+            errOf projectR @ errOf policyR @ errOf capabilitiesR @ errOf toolingR
 
         match fileDiags, projectR, capabilitiesR, policyR, toolingR with
         | [], Ok project, Ok caps, Ok policyOpt, Ok toolingOpt ->
             match resolveCrossRefs caps policyOpt toolingOpt with
-            | [] -> Valid { Project = project; Policy = policyOpt; Capabilities = caps; Tooling = toolingOpt }
+            | [] ->
+                Valid
+                    {
+                        Project = project
+                        Policy = policyOpt
+                        Capabilities = caps
+                        Tooling = toolingOpt
+                    }
             | crossDiags -> Invalid(sortDiagnostics crossDiags)
         | _ -> Invalid(sortDiagnostics fileDiags)

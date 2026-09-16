@@ -43,7 +43,7 @@ module FakePorts =
     //   val fakeExecPortExiting: code:int -> ExecutionPort
     //   val fakeSensor / throwingSensor: FreshnessSensor
     //   val absentStoreReader / malformedStoreReader: StoreReader
-    ()
+    val placeholder: unit
 
 /// Shared YAML catalog inputs: project/policy/tooling YAML + valid/empty/invalid catalog
 /// builders (~387 LOC across the 3 command suites). String literals are dependency-free.
@@ -51,7 +51,7 @@ module FakePorts =
 module CatalogFixtures =
     //   val projectYml / policyYml / toolingYml: string
     //   val validCatalog / emptyCatalog / invalidCatalog: Map<string,string>
-    ()
+    val placeholder: unit
 
 /// Temp-repo + file-writing snapshot builders that drive REAL git for end-to-end proofs
 /// (Principle V). Writes into caller-provided temp dirs; owns no durable state.
@@ -59,10 +59,10 @@ module CatalogFixtures =
 module SnapshotHelpers =
     //   val writeFile: dir:string -> relative:string -> contents:string -> unit
     //   val withTempRepo: (string -> 'a) -> 'a
-    ()
+    val placeholder: unit
 
 /// stdout/stderr/exit-code capture utilities used to assert against goldens.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module CaptureHelpers =
     //   capturing OutputSink / ArtifactWriter; redirect-and-collect helpers
-    ()
+    val placeholder: unit

@@ -55,12 +55,7 @@ let repoRoot = scriptDir // the script lives at the repo root, next to build.fsx
 let defaultSource = Path.Combine(repoRoot, "samples", "sdd-reference-gate-set")
 
 let packagingProject =
-    Path.Combine(
-        repoRoot,
-        "packaging",
-        "FS.GG.Governance.ReferenceGateSet",
-        "FS.GG.Governance.ReferenceGateSet.fsproj"
-    )
+    Path.Combine(repoRoot, "packaging", "FS.GG.Governance.ReferenceGateSet", "FS.GG.Governance.ReferenceGateSet.fsproj")
 
 let guardTestProject =
     Path.Combine(
@@ -136,10 +131,7 @@ let gateConfiguration =
 
     if not (knownConfigurations |> List.contains resolved) then
         fail (
-            sprintf
-                "unknown configuration '%s' — expected one of: %s"
-                resolved
-                (String.concat ", " knownConfigurations)
+            sprintf "unknown configuration '%s' — expected one of: %s" resolved (String.concat ", " knownConfigurations)
         )
 
     resolved
@@ -205,21 +197,27 @@ let private packageVersion = "1.7.0"
 // "which schema generation?" fact is a queryable field rather than something parsed out of the
 // version string. Fixed field order (stable JSON) — do NOT reorder. This order also matches the
 // pack order the .fsproj uses for the .fsgg files.
-let private orderedFiles = [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
+let private orderedFiles =
+    [ "governance.yml"; "capabilities.yml"; "policy.yml"; "tooling.yml" ]
 
-let private schemaVersionRegex = Regex(@"^\s*schemaVersion:\s*(\d+)\s*$", RegexOptions.Multiline)
+let private schemaVersionRegex =
+    Regex(@"^\s*schemaVersion:\s*(\d+)\s*$", RegexOptions.Multiline)
 
 /// Read the single `schemaVersion:` integer from one file under <source>/.fsgg/.
 /// Distinguishes a missing file / missing-or-unparseable line (malformed INPUT) from a tool defect
 /// by naming the exact file and what was expected (Principle VI).
 let private readSchemaVersion (fileName: string) : int =
     let path = Path.Combine(fsggDir, fileName)
+
     if not (File.Exists path) then
         fail (sprintf "reference file not found: %s (expected under %s)" fileName fsggDir)
+
     let text = File.ReadAllText path
     let m = schemaVersionRegex.Match text
+
     if not m.Success then
         fail (sprintf "no parseable `schemaVersion: <int>` line in %s — cannot read its schema generation" path)
+
     match Int32.TryParse m.Groups.[1].Value with
     | true, v -> v
     | false, _ -> fail (sprintf "schemaVersion in %s is not an integer: %s" path m.Groups.[1].Value)
@@ -238,6 +236,7 @@ let private schemaManifestJson () : string =
         schemaManifestFields ()
         |> List.map (fun (k, v) -> sprintf "  \"%s\": %d" k v)
         |> String.concat ",\n"
+
     sprintf "{\n%s\n}\n" body
 
 // ── Process edge (mirrors build.fsx) ──
@@ -265,16 +264,20 @@ let runDotnet = runDotnetWithEnv []
 // for standalone/CI use, where the gate builds the guard itself.
 let noBuildGate =
     match Environment.GetEnvironmentVariable "FSGG_PACK_GATE_NO_BUILD" with
-    | null | "" | "0" -> false
+    | null
+    | ""
+    | "0" -> false
     | _ -> true
 
 let gateArgs =
-    [ "test"
-      guardTestProject
-      "-c"
-      gateConfiguration
-      "--filter"
-      "FullyQualifiedName~ReferenceGateSetGuard" ]
+    [
+        "test"
+        guardTestProject
+        "-c"
+        gateConfiguration
+        "--filter"
+        "FullyQualifiedName~ReferenceGateSetGuard"
+    ]
     @ (if noBuildGate then [ "--no-build" ] else [])
 
 if printGateCommandOnly then
@@ -311,6 +314,7 @@ if not noGate then
     // the canonical samples.
     let gateExit =
         runDotnetWithEnv [ ("FSGG_REFERENCE_GATE_SET_DIR", Path.GetFullPath sourceDir) ] gateArgs
+
     if gateExit <> 0 then
         fail (
             sprintf
@@ -330,23 +334,29 @@ Directory.CreateDirectory outputDir |> ignore
 // and content are fixed, so the artifact stays deterministic (SC-005).
 let manifestDir =
     Path.Combine(Path.GetTempPath(), "fsgg-manifest-" + Guid.NewGuid().ToString("N"))
+
 Directory.CreateDirectory manifestDir |> ignore
 let manifestPath = Path.Combine(manifestDir, "schema-manifest.json")
 File.WriteAllText(manifestPath, schemaManifestJson ())
 
 let packExit =
     runDotnet
-        [ "pack"
-          packagingProject
-          "-c"
-          "Release"
-          (sprintf "-p:Version=%s" version)
-          (sprintf "-p:SchemaManifestPath=%s" manifestPath)
-          "-o"
-          outputDir ]
+        [
+            "pack"
+            packagingProject
+            "-c"
+            "Release"
+            (sprintf "-p:Version=%s" version)
+            (sprintf "-p:SchemaManifestPath=%s" manifestPath)
+            "-o"
+            outputDir
+        ]
 
 // Tidy the temp manifest (best-effort — the OS reaps /tmp regardless).
-try Directory.Delete(manifestDir, true) with _ -> ()
+try
+    Directory.Delete(manifestDir, true)
+with _ ->
+    ()
 
 if packExit <> 0 then
     fail (sprintf "dotnet pack failed (exit %d)" packExit)

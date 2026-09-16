@@ -23,50 +23,69 @@ let surfaceId = SurfaceId "pkg"
 
 /// The six closed release families, in declaration order — for the family-set assertions (SC-006).
 let allFamilies: ReleaseRuleKind list =
-    [ VersionBump; PackageMetadata; TemplatePins; PublishPlan; TrustedPublishing; Provenance ]
+    [
+        VersionBump
+        PackageMetadata
+        TemplatePins
+        PublishPlan
+        TrustedPublishing
+        Provenance
+    ]
 
 // ── Caller expectations (product-neutral, all criteria present) ──
 
 /// A product-neutral expectation set with every family's criterion declared.
 let expectations: ReleaseExpectations =
-    { Surface = surfaceId
-      VersionBaseline = Some "1.2.0"
-      RequiredMetadataFields = Some [ "authors"; "license" ]
-      ExpectedPins = Some(Map [ "base", "9.0.0" ])
-      RequiredPublishPosture = Some [ "plan-present" ]
-      RequiredTrustedPublishing = Some [ "oidc" ]
-      RequiredProvenance = Some [ "attestation" ] }
+    {
+        Surface = surfaceId
+        VersionBaseline = Some "1.2.0"
+        RequiredMetadataFields = Some [ "authors"; "license" ]
+        ExpectedPins = Some(Map [ "base", "9.0.0" ])
+        RequiredPublishPosture = Some [ "plan-present" ]
+        RequiredTrustedPublishing = Some [ "oidc" ]
+        RequiredProvenance = Some [ "attestation" ]
+    }
 
 // ── Hand-built recovered evidence (the pure-core input, no disk) ──
 
 /// An all-satisfying recovered bundle matching `expectations` (version bumped past, all fields/pins/tokens).
 let recoveredMet: RecoveredEvidence =
-    { Version = Ok { Declared = "1.3.0" }
-      Metadata = Ok { PresentFields = [ "authors"; "license" ] }
-      Pins = Ok { Resolved = Map [ "base", "9.0.0" ] }
-      PublishPlan = Ok { Observed = [ "plan-present" ] }
-      TrustedPublishing = Ok { Observed = [ "oidc" ] }
-      Provenance = Ok { Observed = [ "attestation" ] } }
+    {
+        Version = Ok { Declared = "1.3.0" }
+        Metadata =
+            Ok
+                {
+                    PresentFields = [ "authors"; "license" ]
+                }
+        Pins = Ok { Resolved = Map [ "base", "9.0.0" ] }
+        PublishPlan = Ok { Observed = [ "plan-present" ] }
+        TrustedPublishing = Ok { Observed = [ "oidc" ] }
+        Provenance = Ok { Observed = [ "attestation" ] }
+    }
 
 /// An all-violating recovered bundle (each family recovered, none satisfies `expectations`).
 let recoveredAllUnmet: RecoveredEvidence =
-    { Version = Ok { Declared = "1.2.0" } // equals baseline ⇒ not bumped past
-      Metadata = Ok { PresentFields = [ "authors" ] } // missing "license"
-      Pins = Ok { Resolved = Map [ "base", "8.0.0" ] } // drifted from 9.0.0
-      PublishPlan = Ok { Observed = [] } // missing "plan-present"
-      TrustedPublishing = Ok { Observed = [] } // missing "oidc"
-      Provenance = Ok { Observed = [] } } // missing "attestation"
+    {
+        Version = Ok { Declared = "1.2.0" } // equals baseline ⇒ not bumped past
+        Metadata = Ok { PresentFields = [ "authors" ] } // missing "license"
+        Pins = Ok { Resolved = Map [ "base", "8.0.0" ] } // drifted from 9.0.0
+        PublishPlan = Ok { Observed = [] } // missing "plan-present"
+        TrustedPublishing = Ok { Observed = [] } // missing "oidc"
+        Provenance = Ok { Observed = [] }
+    } // missing "attestation"
 
 // ── Fake ports backed by a recovered bundle (real records, no mock framework) ──
 
 /// A fake `RepositoryPort` returning the given bundle verbatim.
 let portOf (r: RecoveredEvidence) : Interpreter.RepositoryPort =
-    { ReadVersion = fun () -> r.Version
-      ReadMetadata = fun () -> r.Metadata
-      ReadPins = fun () -> r.Pins
-      ReadPublishPlan = fun () -> r.PublishPlan
-      ReadTrustedPublishing = fun () -> r.TrustedPublishing
-      ReadProvenance = fun () -> r.Provenance }
+    {
+        ReadVersion = fun () -> r.Version
+        ReadMetadata = fun () -> r.Metadata
+        ReadPins = fun () -> r.Pins
+        ReadPublishPlan = fun () -> r.PublishPlan
+        ReadTrustedPublishing = fun () -> r.TrustedPublishing
+        ReadProvenance = fun () -> r.Provenance
+    }
 
 /// The all-satisfying fake port.
 let metPort: Interpreter.RepositoryPort = portOf recoveredMet
@@ -77,25 +96,31 @@ let metPort: Interpreter.RepositoryPort = portOf recoveredMet
 let rulesForFamilies (families: ReleaseRuleKind list) : ReleaseRule list =
     families
     |> List.map (fun k ->
-        { Kind = k
-          Surface = surfaceId
-          BaseSeverity = Blocking
-          Maturity = BlockOnRelease })
+        {
+            Kind = k
+            Surface = surfaceId
+            BaseSeverity = Blocking
+            Maturity = BlockOnRelease
+        })
 
 // ── Real temp-fixture repository (the edge tests' Principle-V input) ──
 
 /// The neutral source layout the fixtures + `realPort` share.
 let layout: SourceLayout =
-    { VersionPath = "version.txt"
-      MetadataPath = "metadata.txt"
-      PinsPath = "pins.txt"
-      PublishPlanPath = "publish-plan.txt"
-      TrustedPublishingPath = "trusted-publishing.txt"
-      ProvenancePath = "provenance.txt" }
+    {
+        VersionPath = "version.txt"
+        MetadataPath = "metadata.txt"
+        PinsPath = "pins.txt"
+        PublishPlanPath = "publish-plan.txt"
+        TrustedPublishingPath = "trusted-publishing.txt"
+        ProvenancePath = "provenance.txt"
+    }
 
 /// Create a disposable temp dir, run `body` against it, then delete it.
 let withTempDir (body: string -> 'a) : 'a =
-    let dir = Path.Combine(Path.GetTempPath(), "fsgg-relsense-" + Guid.NewGuid().ToString("N"))
+    let dir =
+        Path.Combine(Path.GetTempPath(), "fsgg-relsense-" + Guid.NewGuid().ToString("N"))
+
     Directory.CreateDirectory dir |> ignore
 
     try
@@ -140,7 +165,8 @@ let private genVersion: Gen<string> =
     }
 
 let private genPins: Gen<Map<string, string>> =
-    genTokens |> Gen.map (fun ts -> ts |> List.map (fun t -> t, "1.0.0") |> Map.ofList)
+    genTokens
+    |> Gen.map (fun ts -> ts |> List.map (fun t -> t, "1.0.0") |> Map.ofList)
 
 let private genOpt (g: Gen<'a>) : Gen<'a option> =
     Gen.oneof [ Gen.constant None; g |> Gen.map Some ]
@@ -158,13 +184,15 @@ let genExpectations: Gen<ReleaseExpectations> =
         let! pr = genOpt genTokens
 
         return
-            { Surface = surfaceId
-              VersionBaseline = vb
-              RequiredMetadataFields = mf
-              ExpectedPins = pins
-              RequiredPublishPosture = pp
-              RequiredTrustedPublishing = tp
-              RequiredProvenance = pr }
+            {
+                Surface = surfaceId
+                VersionBaseline = vb
+                RequiredMetadataFields = mf
+                ExpectedPins = pins
+                RequiredPublishPosture = pp
+                RequiredTrustedPublishing = tp
+                RequiredProvenance = pr
+            }
     }
 
 let genRecovered: Gen<RecoveredEvidence> =
@@ -177,12 +205,14 @@ let genRecovered: Gen<RecoveredEvidence> =
         let! pr = genResult (genTokens |> Gen.map (fun ts -> { Observed = ts }))
 
         return
-            { Version = v
-              Metadata = m
-              Pins = p
-              PublishPlan = pl
-              TrustedPublishing = tp
-              Provenance = pr }
+            {
+                Version = v
+                Metadata = m
+                Pins = p
+                PublishPlan = pl
+                TrustedPublishing = tp
+                Provenance = pr
+            }
     }
 
 let genExpRec: Gen<ReleaseExpectations * RecoveredEvidence> =
@@ -200,6 +230,7 @@ type SensingArbs =
 /// FsCheck config wiring the sensing arbitraries (used by the property tests).
 let fsCheckConfig =
     { FsCheckConfig.defaultConfig with
-        arbitrary = [ typeof<SensingArbs> ] }
+        arbitrary = [ typeof<SensingArbs> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

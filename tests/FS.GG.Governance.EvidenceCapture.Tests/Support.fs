@@ -25,9 +25,17 @@ open FS.GG.Governance.EvidenceReuse.Model
 
 /// The base environment delta — one added var, the other two classes empty.
 let baseEnv: EnvironmentDelta =
-    { Added = [ { Name = EnvVarName "CI"; Value = EnvVarValue "1" } ]
-      Changed = []
-      Removed = [] }
+    {
+        Added =
+            [
+                {
+                    Name = EnvVarName "CI"
+                    Value = EnvVarValue "1"
+                }
+            ]
+        Changed = []
+        Removed = []
+    }
 
 /// Build a real F032 `CommandRecord` through the PUBLIC `CommandRecord.build` (never a record literal), with
 /// sensible defaults and a per-field override for EVERY reproducible fact AND the one sensed duration — so a
@@ -72,68 +80,103 @@ let slowerRecord: CommandRecord = Build.record (duration = 999_999L)
 /// The env-delta variant adds a var (the delta is compared as a SET); argument order is reversed (order is
 /// significant); the captured-output variant flips `NoCapturedOutput` to a present path.
 let reproducibleVariants: (string * CommandRecord) list =
-    [ "executable", Build.record (executable = "clang")
-      "argument value", Build.record (arguments = [ Argument "-c"; Argument "other.c" ])
-      "argument order", Build.record (arguments = [ Argument "main.c"; Argument "-c" ])
-      "working directory", Build.record (workingDirectory = "/elsewhere")
-      "env delta set",
-      Build.record (
-          environment =
-              { baseEnv with
-                  Added = baseEnv.Added @ [ { Name = EnvVarName "X"; Value = EnvVarValue "2" } ] }
-      )
-      "timeout", Build.record (timeout = 60)
-      "exit code", Build.record (exitCode = 1)
-      "stdout digest", Build.record (stdoutDigest = "sha-out-2")
-      "stderr digest", Build.record (stderrDigest = "sha-err-2")
-      "captured output", Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x")) ]
+    [
+        "executable", Build.record (executable = "clang")
+        "argument value", Build.record (arguments = [ Argument "-c"; Argument "other.c" ])
+        "argument order", Build.record (arguments = [ Argument "main.c"; Argument "-c" ])
+        "working directory", Build.record (workingDirectory = "/elsewhere")
+        "env delta set",
+        Build.record (
+            environment =
+                { baseEnv with
+                    Added =
+                        baseEnv.Added
+                        @ [
+                            {
+                                Name = EnvVarName "X"
+                                Value = EnvVarValue "2"
+                            }
+                        ]
+                }
+        )
+        "timeout", Build.record (timeout = 60)
+        "exit code", Build.record (exitCode = 1)
+        "stdout digest", Build.record (stdoutDigest = "sha-out-2")
+        "stderr digest", Build.record (stderrDigest = "sha-err-2")
+        "captured output", Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x"))
+    ]
 
 /// Edge records exercising totality (FR-007): empty stdout/stderr digests, a non-zero exit code, and all three
 /// captured-output outcomes — `referenceOf` is defined and never throws on every one.
 let edgeRecords: (string * CommandRecord) list =
-    [ "empty stdout digest", Build.record (stdoutDigest = "")
-      "empty stderr digest", Build.record (stderrDigest = "")
-      "both digests empty", Build.record (stdoutDigest = "", stderrDigest = "")
-      "non-zero exit", Build.record (exitCode = 1)
-      "no captured output", Build.record (capturedOutput = NoCapturedOutput)
-      "captured at empty path", Build.record (capturedOutput = CapturedAt(CapturedOutputPath ""))
-      "captured at path x", Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x")) ]
+    [
+        "empty stdout digest", Build.record (stdoutDigest = "")
+        "empty stderr digest", Build.record (stderrDigest = "")
+        "both digests empty", Build.record (stdoutDigest = "", stderrDigest = "")
+        "non-zero exit", Build.record (exitCode = 1)
+        "no captured output", Build.record (capturedOutput = NoCapturedOutput)
+        "captured at empty path", Build.record (capturedOutput = CapturedAt(CapturedOutputPath ""))
+        "captured at path x", Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x"))
+    ]
 
 /// The three captured-output outcomes, each a record differing ONLY in its captured-output fact — their
 /// references must be pairwise distinct (F032 FR-011: absence never collides with an empty present path).
 let capturedOutputRecords: CommandRecord list =
-    [ Build.record (capturedOutput = NoCapturedOutput)
-      Build.record (capturedOutput = CapturedAt(CapturedOutputPath ""))
-      Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x")) ]
+    [
+        Build.record (capturedOutput = NoCapturedOutput)
+        Build.record (capturedOutput = CapturedAt(CapturedOutputPath ""))
+        Build.record (capturedOutput = CapturedAt(CapturedOutputPath "x"))
+    ]
 
 // ── Real freshness-world builders (the F029/F030 worked example) ──
 
 /// A complete, literal `FreshnessInputs` for `check` — every category present and distinct so a mismatch is
 /// observable, with a multi-element verbatim `CoveredArtifacts` list.
 let inputs (check: string) : FreshnessInputs =
-    { Check = CheckId check
-      Domain = DomainId "build"
-      Command = Some(CommandId "dotnet")
-      Environment = Local
-      RuleHash = RuleHash "r1"
-      CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
-      CommandVersion = Some(CommandVersion "8.0")
-      GeneratorVersion = GeneratorVersion "g1"
-      Base = Revision "aaa"
-      Head = Revision "bbb" }
+    {
+        Check = CheckId check
+        Domain = DomainId "build"
+        Command = Some(CommandId "dotnet")
+        Environment = Local
+        RuleHash = RuleHash "r1"
+        CoveredArtifacts = [ ArtifactHash "h2"; ArtifactHash "h1" ]
+        CommandVersion = Some(CommandVersion "8.0")
+        GeneratorVersion = GeneratorVersion "g1"
+        Base = Revision "aaa"
+        Head = Revision "bbb"
+    }
 
 /// A DIFFERENT freshness world (the head revision moved) — for the recompute-safety / no-spurious-match tests.
-let differentInputs: FreshnessInputs = { inputs "build:tests" with Head = Revision "ccc" }
+let differentInputs: FreshnessInputs =
+    { inputs "build:tests" with
+        Head = Revision "ccc"
+    }
 
 /// A spread of freshness worlds covering every `EnvironmentClass` case and the `Command`/`CommandVersion`
 /// `Some`/`None` variants, so capture's recompute-safety is exercised across the category space.
 let inputsVariants: FreshnessInputs list =
-    [ { inputs "env-local" with Environment = Local }
-      { inputs "env-ci" with Environment = Ci }
-      { inputs "env-localorci" with Environment = LocalOrCi }
-      { inputs "env-release" with Environment = Release }
-      { inputs "cmd-none" with Command = None; CommandVersion = None }
-      { inputs "cmd-some-ver-none" with Command = Some(CommandId "x"); CommandVersion = None } ]
+    [
+        { inputs "env-local" with
+            Environment = Local
+        }
+        { inputs "env-ci" with
+            Environment = Ci
+        }
+        { inputs "env-localorci" with
+            Environment = LocalOrCi
+        }
+        { inputs "env-release" with
+            Environment = Release
+        }
+        { inputs "cmd-none" with
+            Command = None
+            CommandVersion = None
+        }
+        { inputs "cmd-some-ver-none" with
+            Command = Some(CommandId "x")
+            CommandVersion = None
+        }
+    ]
 
 // ── Real store builder (prior entries carry disclosed Synthetic refs) ──
 
@@ -152,7 +195,19 @@ let storeOf (entries: (FreshnessInputs * EvidenceRef) list) : ReuseStore =
 // ── FsCheck generators (real values, no mocks) ──
 
 let private shortStringGen: Gen<string> =
-    Gen.elements [ ""; "a"; "gcc"; "clang"; "main.c"; "-c"; "/work"; "sha-out"; "héllo"; "x:y=z" ]
+    Gen.elements
+        [
+            ""
+            "a"
+            "gcc"
+            "clang"
+            "main.c"
+            "-c"
+            "/work"
+            "sha-out"
+            "héllo"
+            "x:y=z"
+        ]
 
 let private genEnvironmentClass: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -171,15 +226,19 @@ let private genEnvironmentDelta: Gen<EnvironmentDelta> =
         let! removed = Gen.listOf genEnvVar
 
         return
-            { Added = added |> List.map (fun (n, v) -> { Name = n; Value = v })
-              Changed = changed |> List.map (fun (n, v) -> { Name = n; Old = v; New = v })
-              Removed = removed |> List.map (fun (n, v) -> { Name = n; Old = v }) }
+            {
+                Added = added |> List.map (fun (n, v) -> { Name = n; Value = v })
+                Changed = changed |> List.map (fun (n, v) -> { Name = n; Old = v; New = v })
+                Removed = removed |> List.map (fun (n, v) -> { Name = n; Old = v })
+            }
     }
 
 let private genCapturedOutput: Gen<CapturedOutput> =
     Gen.oneof
-        [ Gen.constant NoCapturedOutput
-          shortStringGen |> Gen.map (fun p -> CapturedAt(CapturedOutputPath p)) ]
+        [
+            Gen.constant NoCapturedOutput
+            shortStringGen |> Gen.map (fun p -> CapturedAt(CapturedOutputPath p))
+        ]
 
 /// Arbitrary well-typed `CommandRecord`s, varying EVERY reproducible fact (executable, an argument list incl.
 /// `[]` and multi-element verbatim order, working dir, the three-class env delta, timeout, exit code, both
@@ -228,16 +287,22 @@ let private genFreshnessInputs: Gen<FreshnessInputs> =
         let! headRev = shortStringGen
 
         return
-            { Check = CheckId check
-              Domain = DomainId domain
-              Command = (if hasCommand then Some(CommandId command) else None)
-              Environment = env
-              RuleHash = RuleHash ruleHash
-              CoveredArtifacts = arts |> List.map ArtifactHash
-              CommandVersion = (if hasCmdVersion then Some(CommandVersion cmdVersion) else None)
-              GeneratorVersion = GeneratorVersion genVersion
-              Base = Revision baseRev
-              Head = Revision headRev }
+            {
+                Check = CheckId check
+                Domain = DomainId domain
+                Command = (if hasCommand then Some(CommandId command) else None)
+                Environment = env
+                RuleHash = RuleHash ruleHash
+                CoveredArtifacts = arts |> List.map ArtifactHash
+                CommandVersion =
+                    (if hasCmdVersion then
+                         Some(CommandVersion cmdVersion)
+                     else
+                         None)
+                GeneratorVersion = GeneratorVersion genVersion
+                Base = Revision baseRev
+                Head = Revision headRev
+            }
     }
 
 let private genEvidenceRef: Gen<EvidenceRef> =
@@ -266,6 +331,8 @@ type Generators =
 
 /// FsCheck config registering the real F049 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

@@ -19,12 +19,14 @@ module Model =
     type ProvenanceIdentity = ProvenanceIdentity of string
 
     type Provenance =
-        { SourceCommit: Revision
-          Base: Revision
-          Head: Revision
-          RuleHash: RuleHash
-          GeneratorVersion: GeneratorVersion
-          ArtifactDigests: ArtifactHash list
-          CommandRecords: CommandRecord list
-          Environment: EnvironmentClass
-          Builder: BuilderIdentity }
+        {
+            SourceCommit: Revision
+            Base: Revision
+            Head: Revision
+            RuleHash: RuleHash
+            GeneratorVersion: GeneratorVersion
+            ArtifactDigests: ArtifactHash list
+            CommandRecords: CommandRecord list
+            Environment: EnvironmentClass
+            Builder: BuilderIdentity
+        }

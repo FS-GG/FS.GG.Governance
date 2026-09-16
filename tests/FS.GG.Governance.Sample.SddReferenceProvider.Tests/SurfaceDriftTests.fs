@@ -15,7 +15,10 @@ open FS.GG.Governance.Tests.Common
 
 let private renderSurface (asm: Assembly) =
     let memberFlags =
-        BindingFlags.Public ||| BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.DeclaredOnly
+        BindingFlags.Public
+        ||| BindingFlags.Instance
+        ||| BindingFlags.Static
+        ||| BindingFlags.DeclaredOnly
 
     asm.GetExportedTypes()
     |> Array.sortBy (fun t -> t.FullName)
@@ -38,6 +41,7 @@ let private baseline (name: string) =
 let private assertCoreUnchanged (name: string) =
     let actual = renderSurface (SurfaceDrift.assemblyNamed name)
     let committed = File.ReadAllText(baseline name)
+
     Expect.equal
         (normalize actual)
         (normalize committed)
@@ -47,22 +51,26 @@ let private assertCoreUnchanged (name: string) =
 let tests =
     testList
         "SurfaceDrift"
-        [ test "sample provider public surface equals its own committed baseline" {
-              let actual = renderSurface (SurfaceDrift.assemblyNamed "FS.GG.Governance.Sample.SddReferenceProvider")
-              let path = baseline "FS.GG.Governance.Sample.SddReferenceProvider"
+        [
+            test "sample provider public surface equals its own committed baseline" {
+                let actual =
+                    renderSurface (SurfaceDrift.assemblyNamed "FS.GG.Governance.Sample.SddReferenceProvider")
 
-              if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
-                  File.WriteAllText(path, actual + "\n")
+                let path = baseline "FS.GG.Governance.Sample.SddReferenceProvider"
 
-              let committed = File.ReadAllText path
+                if Environment.GetEnvironmentVariable "BLESS_SURFACE" = "1" then
+                    File.WriteAllText(path, actual + "\n")
 
-              Expect.equal
-                  (normalize actual)
-                  (normalize committed)
-                  "sample surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
-          }
+                let committed = File.ReadAllText path
 
-          test "generic-core baselines are byte-identical (SC-006 no-delta guard)" {
-              assertCoreUnchanged "FS.GG.Governance.Scaffold"
-              assertCoreUnchanged "FS.GG.Governance.ScaffoldManifestJson"
-          } ]
+                Expect.equal
+                    (normalize actual)
+                    (normalize committed)
+                    "sample surface drifted — if intended, regenerate with BLESS_SURFACE=1 dotnet test"
+            }
+
+            test "generic-core baselines are byte-identical (SC-006 no-delta guard)" {
+                assertCoreUnchanged "FS.GG.Governance.Scaffold"
+                assertCoreUnchanged "FS.GG.Governance.ScaffoldManifestJson"
+            }
+        ]

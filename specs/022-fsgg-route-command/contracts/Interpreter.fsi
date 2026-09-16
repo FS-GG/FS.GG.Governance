@@ -13,8 +13,8 @@
 
 namespace FS.GG.Governance.RouteCommand
 
-open FS.GG.Governance.Config              // Loader.FileReader
-open FS.GG.Governance.Snapshot            // Interpreter.Ports
+open FS.GG.Governance.Config // Loader.FileReader
+open FS.GG.Governance.Snapshot // Interpreter.Ports
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -34,10 +34,12 @@ module Interpreter =
     /// new. Wholly faked in tests (in-memory reader, an in-memory git `Ports`, a capturing writer/sink)
     /// so no real `git` process or real filesystem is reached (FR-012, SC-007).
     type Ports =
-        { Files: Loader.FileReader
-          Git: FS.GG.Governance.Snapshot.Ports
-          Write: ArtifactWriter
-          Out: OutputSink }
+        {
+            Files: Loader.FileReader
+            Git: FS.GG.Governance.Snapshot.Ports
+            Write: ArtifactWriter
+            Out: OutputSink
+        }
 
     /// Build the REAL ports for a repository working directory: `Config.Loader.fileSystemReader repo`,
     /// `Snapshot.Interpreter.realPorts repo`, a temp+rename `ArtifactWriter`, and a `Console.Out` sink.

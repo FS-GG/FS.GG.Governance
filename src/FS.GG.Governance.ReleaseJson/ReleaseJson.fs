@@ -80,8 +80,10 @@ module ReleaseJson =
     let writeStringArray (w: Utf8JsonWriter) (name: string) (items: string list) =
         w.WritePropertyName name
         w.WriteStartArray()
+
         for s in items do
             w.WriteStringValue s
+
         w.WriteEndArray()
 
     /// A pin association list as an array of two-element `[name, version]` arrays (key order is fixed
@@ -89,16 +91,19 @@ module ReleaseJson =
     let writePinPairs (w: Utf8JsonWriter) (name: string) (pairs: (string * string) list) =
         w.WritePropertyName name
         w.WriteStartArray()
+
         for (k, v) in pairs do
             w.WriteStartArray()
             w.WriteStringValue k
             w.WriteStringValue v
             w.WriteEndArray()
+
         w.WriteEndArray()
 
     /// `version` — `{ observed, baseline }` or `null` (unrecoverable).
     let writeVersion (w: Utf8JsonWriter) (fact: VersionFact option) =
         w.WritePropertyName "version"
+
         match fact with
         | None -> w.WriteNullValue()
         | Some v ->
@@ -110,6 +115,7 @@ module ReleaseJson =
     /// `metadata` — `{ present, missing }` or `null`.
     let writeMetadata (w: Utf8JsonWriter) (fact: MetadataFact option) =
         w.WritePropertyName "metadata"
+
         match fact with
         | None -> w.WriteNullValue()
         | Some m ->
@@ -121,6 +127,7 @@ module ReleaseJson =
     /// `pins` — `{ resolved, expected, drifted }` or `null`.
     let writePins (w: Utf8JsonWriter) (fact: PinsFact option) =
         w.WritePropertyName "pins"
+
         match fact with
         | None -> w.WriteNullValue()
         | Some p ->
@@ -134,6 +141,7 @@ module ReleaseJson =
     /// or `null`.
     let writePosture (w: Utf8JsonWriter) (name: string) (fact: PostureFact option) =
         w.WritePropertyName name
+
         match fact with
         | None -> w.WriteNullValue()
         | Some p ->
@@ -161,8 +169,10 @@ module ReleaseJson =
         writePosture w "provenance" snapshot.Provenance
         w.WritePropertyName "diagnostics"
         w.WriteStartArray()
+
         for d in snapshot.Diagnostics do
             writeDiagnostic w d
+
         w.WriteEndArray()
         w.WriteEndObject()
 
@@ -189,12 +199,16 @@ module ReleaseJson =
     let private writeNullableString (w: Utf8JsonWriter) (name: string) (value: string option) =
         match value with
         | Some s -> w.WriteString(name, s)
-        | None -> w.WritePropertyName name; w.WriteNullValue()
+        | None ->
+            w.WritePropertyName name
+            w.WriteNullValue()
 
     let private writeNullableInt (w: Utf8JsonWriter) (name: string) (value: int option) =
         match value with
         | Some i -> w.WriteNumber(name, i)
-        | None -> w.WritePropertyName name; w.WriteNullValue()
+        | None ->
+            w.WritePropertyName name
+            w.WriteNullValue()
 
     /// One package-evidence project — surface/outcome/artifactPath/packedVersion/digest/sentinel/reason.
     /// artifactPath/packedVersion/digest are null when no artifact; sentinel is the pack exit when failed.
@@ -233,15 +247,21 @@ module ReleaseJson =
             pack.Verdicts
             |> List.sortWith (fun a b ->
                 let s = String.CompareOrdinal(surfaceValue a.Surface, surfaceValue b.Surface)
-                if s <> 0 then s else String.CompareOrdinal(pathOf a, pathOf b))
+
+                if s <> 0 then
+                    s
+                else
+                    String.CompareOrdinal(pathOf a, pathOf b))
 
         w.WritePropertyName "packageEvidence"
         w.WriteStartObject()
         w.WriteBoolean("noPackableProjects", pack.NoPackableProjects)
         w.WritePropertyName "projects"
         w.WriteStartArray()
+
         for v in sorted do
             writePackProject w v
+
         w.WriteEndArray()
         w.WriteEndObject()
 
@@ -263,6 +283,7 @@ module ReleaseJson =
         w.WriteStartObject()
         w.WritePropertyName "projects"
         w.WriteStartArray()
+
         for v in sorted do
             let baseline, packed = baselineAndPacked v.Version
             w.WriteStartObject()
@@ -271,12 +292,14 @@ module ReleaseJson =
             writeNullableString w "baseline" baseline
             writeNullableString w "packed" packed
             w.WriteEndObject()
+
         w.WriteEndArray()
         w.WriteEndObject()
 
     /// `attestation` — a self-contained identity reference, or `null` when there is no attestation input.
     let private writeAttestationRef (w: Utf8JsonWriter) (attestation: AttestationSummary option) =
         w.WritePropertyName "attestation"
+
         match attestation with
         | None -> w.WriteNullValue()
         | Some a ->
@@ -289,7 +312,11 @@ module ReleaseJson =
 
     /// Empty package evidence — the retained `ofRelease` path emits an empty package/version block.
     let private emptyPackEvidence: PackEvidenceSet =
-        { Verdicts = []; Runs = []; NoPackableProjects = true }
+        {
+            Verdicts = []
+            Runs = []
+            NoPackableProjects = true
+        }
 
     // ── the v1 body (shared by both entry points) ──
 
@@ -303,8 +330,10 @@ module ReleaseJson =
         w.WriteString("exitCodeBasis", JsonTokens.basisToken decision.ExitCodeBasis)
         w.WritePropertyName "rules"
         w.WriteStartArray()
+
         for r in rules do
             writeRule w sensed.Facts r
+
         w.WriteEndArray()
         w.WritePropertyName "evidence"
         writeEvidence w sensed.Snapshot

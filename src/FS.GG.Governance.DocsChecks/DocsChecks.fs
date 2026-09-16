@@ -35,7 +35,10 @@ module DocsChecks =
             | LinkResolves -> None
             | LinkDangling target ->
                 let (GovernedPath src) = l.Source
-                let message = sprintf "link '%s' in %s does not resolve to '%s'" l.LinkText src target
+
+                let message =
+                    sprintf "link '%s' in %s does not resolve to '%s'" l.LinkText src target
+
                 Some(mkFinding request "docs.link-currency" l.Source l.LinkText Blocking false message))
 
     let referenceFindings (request: SC.SurfaceCheckRequest) (facts: DocsFacts) : SC.SurfaceFinding list =
@@ -44,7 +47,9 @@ module DocsChecks =
             match r.Outcome with
             | ReferenceResolves -> None
             | ReferenceStale symbol ->
-                let message = sprintf "reference '%s' is stale (symbol/anchor '%s' not found)" r.Reference symbol
+                let message =
+                    sprintf "reference '%s' is stale (symbol/anchor '%s' not found)" r.Reference symbol
+
                 Some(mkFinding request "docs.reference-currency" r.Source r.Reference Blocking false message))
 
     let exampleFindings (request: SC.SurfaceCheckRequest) (facts: DocsFacts) : SC.SurfaceFinding list =
@@ -55,7 +60,9 @@ module DocsChecks =
             // Judgement-heavy: "match the current product surface" requires intent judgement ⇒ Advisory,
             // never blocks (C3, FR-011, US5). Deterministic compile/evaluate staleness is a package transcript.
             | ExampleStale detail ->
-                let message = sprintf "example '%s' may no longer match the product surface: %s" e.Example detail
+                let message =
+                    sprintf "example '%s' may no longer match the product surface: %s" e.Example detail
+
                 Some(mkFinding request "docs.example-freshness" e.Source e.Example Advisory false message))
 
     let sourceFindings (request: SC.SurfaceCheckRequest) (facts: DocsFacts) : SC.SurfaceFinding list =
@@ -65,10 +72,12 @@ module DocsChecks =
             mkFinding request "docs.source-unreadable" (normalizePath src) "source-unreadable" Blocking true message)
 
     let evaluate (request: SC.SurfaceCheckRequest) (facts: DocsFacts) : SC.SurfaceFinding list =
-        [ linkFindings request facts
-          referenceFindings request facts
-          exampleFindings request facts
-          sourceFindings request facts ]
+        [
+            linkFindings request facts
+            referenceFindings request facts
+            exampleFindings request facts
+            sourceFindings request facts
+        ]
         |> List.concat
         |> List.sortBy (fun (f: SC.SurfaceFinding) ->
             let (GovernedPath file) = f.Location.File

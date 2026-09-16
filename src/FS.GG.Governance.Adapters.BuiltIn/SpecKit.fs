@@ -43,8 +43,10 @@ type SpecKitFact =
     | SpecKitGov of RuleOutcome
 
 type SpecKitChange =
-    { Phase: Phase
-      Surfaces: Set<SpecKitArtifact> }
+    {
+        Phase: Phase
+        Surfaces: Set<SpecKitArtifact>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Phase =
@@ -96,10 +98,10 @@ module Naming =
     /// injective over the `SpecKitGov` case.
     let govKey (o: RuleOutcome) : string =
         match o with
-        | Decided (RuleId r, _) -> "decided:" + r
+        | Decided(RuleId r, _) -> "decided:" + r
         | NeedsReview req -> "needs:" + req.Key
         | Reviewed rr -> "reviewed:" + rr.Key
-        | Escalated (RuleId r) -> "escalated:" + r
+        | Escalated(RuleId r) -> "escalated:" + r
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module SpecKit =
@@ -108,36 +110,41 @@ module SpecKit =
     /// over. `required` rides in `Args` as a `LiteralArg`, so render/hash see it (law P4).
     /// Not in SpecKit.fsi → module-private by the signature (Principle II).
     let phaseAtLeast (required: Phase) : Probe<SpecKitFact> =
-        { Name = "phase-reached-at-least"
-          Reads = []
-          Args = [ LiteralArg(Naming.phaseName required) ]
-          Eval =
-            fun fs ->
-                let satisfied =
-                    fs
-                    |> List.exists (fun f ->
-                        match f.Value with
-                        | PhaseReached current -> Phase.reached current required
-                        | _ -> false)
+        {
+            Name = "phase-reached-at-least"
+            Reads = []
+            Args = [ LiteralArg(Naming.phaseName required) ]
+            Eval =
+                fun fs ->
+                    let satisfied =
+                        fs
+                        |> List.exists (fun f ->
+                            match f.Value with
+                            | PhaseReached current -> Phase.reached current required
+                            | _ -> false)
 
-                if satisfied then
-                    Met
-                else
-                    Unmet(sprintf "phase before %s" (Naming.phaseName required)) }
+                    if satisfied then
+                        Met
+                    else
+                        Unmet(sprintf "phase before %s" (Naming.phaseName required))
+        }
 
     let toRef (artifact: SpecKitArtifact) : ArtifactRef =
-        { Kind = "speckit"; Key = Naming.artifactName artifact }
+        {
+            Kind = "speckit"
+            Key = Naming.artifactName artifact
+        }
 
     let identify (fact: SpecKitFact) : FactId =
         match fact with
         // value-distinguishing facts key by full value …
         | PhaseReached p -> FactId("phase:" + Naming.phaseName p)
         | ArtifactPresent a -> FactId("artifact:" + Naming.artifactName a)
-        | TaskDependsOn (t, d) -> FactId("dep:" + t + "->" + d)
-        | SkillBound (t, s) -> FactId("skill:" + t + ":" + s)
+        | TaskDependsOn(t, d) -> FactId("dep:" + t + "->" + d)
+        | SkillBound(t, s) -> FactId("skill:" + t + ":" + s)
         // … entity-keyed facts key by the entity, so a later fact supersedes (dedup) …
-        | TaskState (t, _) -> FactId("task:" + t)
-        | ConstitutionArea (area, _) -> FactId("area:" + area)
+        | TaskState(t, _) -> FactId("task:" + t)
+        | ConstitutionArea(area, _) -> FactId("area:" + area)
         // … and the governance embed keys by its outcome.
         | SpecKitGov o -> FactId("gov:" + Naming.govKey o)
 
@@ -149,13 +156,15 @@ module SpecKit =
     // `Check.reads`, so the loop senses their content and the real bridge folds their hashes into the cache
     // key. A content-bearing `SpecKitFact` case would be needed only to make THIS standalone stub honest too.
     let bridge (judge: JudgeId) : Bridge<SpecKitFact> =
-        { Judge = judge
-          ArtifactHash = fun _ _ -> ""
-          Embed = SpecKitGov
-          Project =
-            function
-            | SpecKitGov o -> Some o
-            | _ -> None }
+        {
+            Judge = judge
+            ArtifactHash = fun _ _ -> ""
+            Embed = SpecKitGov
+            Project =
+                function
+                | SpecKitGov o -> Some o
+                | _ -> None
+        }
 
     let whenPhase (required: Phase) (check: Check<SpecKitFact>) : Check<SpecKitFact> =
         Implies(Atom(phaseAtLeast required), check)
@@ -169,19 +178,23 @@ module SpecKit =
     /// (and, still carrying an `Opaque`, the check stays non-reified ⇒ `AgentReviewed`, not `Deterministic`).
     let reviewing (artifacts: SpecKitArtifact list) (check: Check<SpecKitFact>) : Check<SpecKitFact> =
         let readsAtom =
-            { Name = "reviews-artifacts"
-              Reads = artifacts |> List.map toRef
-              Args = artifacts |> List.map (Naming.artifactName >> LiteralArg)
-              Eval = fun _ -> Met }
+            {
+                Name = "reviews-artifacts"
+                Reads = artifacts |> List.map toRef
+                Args = artifacts |> List.map (Naming.artifactName >> LiteralArg)
+                Eval = fun _ -> Met
+            }
 
         All [ Atom readsAtom; check ]
 
     let probes: Probe<SpecKitFact> list =
-        [ phaseAtLeast Phase.Constitution
-          phaseAtLeast Phase.Specify
-          phaseAtLeast Phase.Clarify
-          phaseAtLeast Phase.Plan
-          phaseAtLeast Phase.Tasks
-          phaseAtLeast Phase.Analyze
-          phaseAtLeast Phase.Implement
-          phaseAtLeast Phase.Merge ]
+        [
+            phaseAtLeast Phase.Constitution
+            phaseAtLeast Phase.Specify
+            phaseAtLeast Phase.Clarify
+            phaseAtLeast Phase.Plan
+            phaseAtLeast Phase.Tasks
+            phaseAtLeast Phase.Analyze
+            phaseAtLeast Phase.Implement
+            phaseAtLeast Phase.Merge
+        ]

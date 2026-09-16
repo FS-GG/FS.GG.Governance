@@ -17,7 +17,11 @@ let makePackRecord (exit: int) (duration: int64) : CommandRecord =
         (Executable "dotnet")
         [ Argument "pack"; Argument "-c"; Argument "Release" ]
         (WorkingDirectory "/work")
-        { Added = []; Changed = []; Removed = [] }
+        {
+            Added = []
+            Changed = []
+            Removed = []
+        }
         (TimeoutLimit 600)
         (ExitCode exit)
         (OutputDigest "sha-out")
@@ -26,15 +30,20 @@ let makePackRecord (exit: int) (duration: int64) : CommandRecord =
         (SensedDuration duration)
 
 let packRun (exit: int) (duration: int64) : KindedCommandRun =
-    { Kind = Pack; Record = makePackRecord exit duration }
+    {
+        Kind = Pack
+        Record = makePackRecord exit duration
+    }
 
 let surface (s: string) = SurfaceId s
 
 let artifact (s: string) (path: string) (version: string) (digest: string) : PackArtifact =
-    { Surface = surface s
-      ArtifactPath = path
-      PackedVersion = version
-      Digest = ArtifactHash digest }
+    {
+        Surface = surface s
+        ArtifactPath = path
+        PackedVersion = version
+        Digest = ArtifactHash digest
+    }
 
 /// A successful pack of a project at the given version (real Pack run, exit 0).
 let packed (s: string) (path: string) (version: string) (digest: string) : PackOutcome =

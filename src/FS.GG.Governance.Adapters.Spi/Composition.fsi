@@ -31,16 +31,20 @@ open FS.GG.Governance.Kernel
 /// An adapter stays DUMB and INDEPENDENT — this value is the only thing the root holds about it,
 /// and dropping it from the `compose` list removes the domain cleanly (the boundary test, FR-009).
 type Lifted<'project, 'change> =
-    { Rules: CheckRule<'project> list
-      Fences: Fence<'change> list }
+    {
+        Rules: CheckRule<'project> list
+        Fences: Fence<'change> list
+    }
 
 /// The assembled project: the single catalog the kernel evaluates and routes (every adapter's
 /// lifted rules followed by the small, named cross-domain rule set) and the deduped-by-name union
 /// of all fences. Non-generic over the domains — it carries only coproduct `CheckRule<'project>`
 /// and `Fence<'change>`, so the kernel folds it with NO adapter-specific code (FR-005).
 type Composed<'project, 'change> =
-    { Catalog: CheckRule<'project> list
-      Fences: Fence<'change> list }
+    {
+        Catalog: CheckRule<'project> list
+        Fences: Fence<'change> list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Composition =
@@ -71,9 +75,7 @@ module Composition =
     /// antecedent probe reports `Unmet`, so the `Implies` is vacuously satisfied — never an error,
     /// FR-009, research D9). Total; pure.
     val compose:
-        lifted: Lifted<'project, 'change> list ->
-        crossDomain: CheckRule<'project> list ->
-            Composed<'project, 'change>
+        lifted: Lifted<'project, 'change> list -> crossDomain: CheckRule<'project> list -> Composed<'project, 'change>
 
     /// Translate the composed catalog into the kernel's executable `Rule<'project>` list via the
     /// UNCHANGED `CheckRule.toRule bridge` (FR-005). `bridge` is the project `Bridge<'project>`
@@ -83,5 +85,4 @@ module Composition =
     /// supplied` and routes with `Route.route composed.Fences composed.Catalog mode change` — the
     /// composed project governs itself through the kernel with NO new evaluation logic (SC-006).
     /// Total; performs no I/O and no agent call.
-    val toRules:
-        bridge: Bridge<'project> -> composed: Composed<'project, 'change> -> Rule<'project> list
+    val toRules: bridge: Bridge<'project> -> composed: Composed<'project, 'change> -> Rule<'project> list

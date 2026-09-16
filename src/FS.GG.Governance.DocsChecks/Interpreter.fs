@@ -24,14 +24,18 @@ module Interpreter =
         | UnexpectedIo
 
     type DocsReadError =
-        { Path: string
-          Kind: DocsReadErrorKind
-          Detail: string }
+        {
+            Path: string
+            Kind: DocsReadErrorKind
+            Detail: string
+        }
 
     type DocsPort =
-        { ReadSource: GovernedPath -> Result<string, string>
-          ResolveTarget: string -> bool
-          ResolveSymbol: string -> Result<bool, DocsReadError list> }
+        {
+            ReadSource: GovernedPath -> Result<string, string>
+            ResolveTarget: string -> bool
+            ResolveSymbol: string -> Result<bool, DocsReadError list>
+        }
 
     // ── Deterministic markdown extraction (no clock, no order dependence) ──
 
@@ -94,9 +98,11 @@ module Interpreter =
             | :? IOException -> TransientIo
             | _ -> UnexpectedIo
 
-        { Path = path
-          Kind = kind
-          Detail = ex.Message }
+        {
+            Path = path
+            Kind = kind
+            Detail = ex.Message
+        }
 
     // Strict UTF-8 (while still honoring a BOM) makes malformed encoding observable. File.ReadAllText's
     // replacement fallback would otherwise turn corrupt bytes into text and fabricate a symbol verdict.
@@ -150,9 +156,11 @@ module Interpreter =
         sprintf "%s: %s: %s" error.Path kind error.Detail
 
     let realPort (repo: string) : DocsPort =
-        { ReadSource = readSource repo
-          ResolveTarget = resolveTarget repo
-          ResolveSymbol = resolveSymbol repo }
+        {
+            ReadSource = readSource repo
+            ResolveTarget = resolveTarget repo
+            ResolveSymbol = resolveSymbol repo
+        }
 
     let senseDocs (port: DocsPort) (request: SC.SurfaceCheckRequest) : DocsFacts =
         let source = request.Path
@@ -160,21 +168,29 @@ module Interpreter =
 
         match SC.safe (fun () -> port.ReadSource source) with
         | Error _ ->
-            { Sources = [ source ]
-              Links = []
-              References = []
-              Examples = []
-              Unreadable = [ srcStr ] }
+            {
+                Sources = [ source ]
+                Links = []
+                References = []
+                Examples = []
+                Unreadable = [ srcStr ]
+            }
         | Ok text ->
             let links =
                 extractLinks text
                 |> List.map (fun (linkText, target) ->
-                    let outcome = if port.ResolveTarget target then LinkResolves else LinkDangling target
+                    let outcome =
+                        if port.ResolveTarget target then
+                            LinkResolves
+                        else
+                            LinkDangling target
 
-                    { Source = source
-                      LinkText = linkText
-                      Target = target
-                      Outcome = outcome })
+                    {
+                        Source = source
+                        LinkText = linkText
+                        Target = target
+                        Outcome = outcome
+                    })
 
             let references, symbolReadErrors =
                 extractReferences text
@@ -188,19 +204,26 @@ module Interpreter =
 
                         match resolution with
                         | Ok resolves ->
-                            let outcome = if resolves then ReferenceResolves else ReferenceStale symbol
+                            let outcome =
+                                if resolves then
+                                    ReferenceResolves
+                                else
+                                    ReferenceStale symbol
 
-                            { Source = source
-                              Reference = symbol
-                              Outcome = outcome }
+                            {
+                                Source = source
+                                Reference = symbol
+                                Outcome = outcome
+                            }
                             :: facts,
                             unreadable
-                        | Error errors ->
-                            facts, (errors |> List.map renderReadError) @ unreadable)
+                        | Error errors -> facts, (errors |> List.map renderReadError) @ unreadable)
                     ([], [])
 
-            { Sources = [ source ]
-              Links = links
-              References = List.rev references
-              Examples = []
-              Unreadable = symbolReadErrors |> List.distinct |> List.sort }
+            {
+                Sources = [ source ]
+                Links = links
+                References = List.rev references
+                Examples = []
+                Unreadable = symbolReadErrors |> List.distinct |> List.sort
+            }

@@ -13,9 +13,9 @@
 
 namespace FS.GG.Governance.ShipCommand
 
-open FS.GG.Governance.Gates.Model              // Gate (the selected gates — what the change requires)
-open FS.GG.Governance.Ship.Model               // ShipDecision (the reused verdict core)
-open FS.GG.Governance.Adapters.SddHandoff       // Reader.HandoffRead, Model.Diagnostic
+open FS.GG.Governance.Gates.Model // Gate (the selected gates — what the change requires)
+open FS.GG.Governance.Ship.Model // ShipDecision (the reused verdict core)
+open FS.GG.Governance.Adapters.SddHandoff // Reader.HandoffRead, Model.Diagnostic
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Simulate =
@@ -30,25 +30,27 @@ module Simulate =
         | NotRequired
 
     /// One classified evidence signal (a declared node id + its class).
-    type SignalSufficiency =
-        { Signal: string
-          Class: SignalClass }
+    type SignalSufficiency = { Signal: string; Class: SignalClass }
 
     /// The handoff-sufficiency breakdown (US2). `RequiredAbsentCount` > 0 ⇒ the handoff is insufficient;
     /// `AllNotEvaluated` = true ⇒ the change is gate-worthy yet NOTHING real was carried (the exact
     /// all-`notEvaluated` state the dry run must surface rather than hide behind an empty blocker list).
     type Sufficiency =
-        { Signals: SignalSufficiency list
-          RequiredAbsentCount: int
-          AllNotEvaluated: bool }
+        {
+            Signals: SignalSufficiency list
+            RequiredAbsentCount: int
+            AllNotEvaluated: bool
+        }
 
     /// The whole simulated dry-run result. `Decision` is the reused `Ship.rollup` verdict (no gate executed);
     /// `Sufficiency` names the required-but-absent signals; `HandoffDiagnostics` carries the parse / version /
     /// staleness diagnostics so a malformed or version-mismatched handoff can never read as a bare Pass (FR-008).
     type SimulatedResult =
-        { Decision: ShipDecision
-          Sufficiency: Sufficiency
-          HandoffDiagnostics: Model.Diagnostic list }
+        {
+            Decision: ShipDecision
+            Sufficiency: Sufficiency
+            HandoffDiagnostics: Model.Diagnostic list
+        }
 
     /// Classify one declared evidence node's state+staleness into a `SignalClass`. PURE and TOTAL.
     val classify: state: Model.DeclaredState -> stale: bool -> SignalClass
@@ -58,7 +60,4 @@ module Simulate =
     /// consumer diagnostics, and computes the sufficiency breakdown. `selectedGates` drives `AllNotEvaluated`
     /// (a change with required gates but no satisfied signal is the all-absent case).
     val assemble:
-        decision: ShipDecision ->
-        selectedGates: Gate list ->
-        reads: Reader.HandoffRead list ->
-            SimulatedResult
+        decision: ShipDecision -> selectedGates: Gate list -> reads: Reader.HandoffRead list -> SimulatedResult

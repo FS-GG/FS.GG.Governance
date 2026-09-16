@@ -97,7 +97,10 @@ module SnapshotHelpers =
     val revOfCommit: CommitId -> Revision
     val baseHeadOfSnap: snap: RepoSnapshot option -> Revision option * Revision option
     val selectedGatesFor: files: Map<string, string> -> candidates: GovernedPath list -> Gate list
-    val expectedOutcomesWith: port: ExecutionPort -> files: Map<string, string> -> selectedGates: Gate list -> (GateId * GateOutcome) list
+
+    val expectedOutcomesWith:
+        port: ExecutionPort -> files: Map<string, string> -> selectedGates: Gate list -> (GateId * GateOutcome) list
+
     val storeOf: entries: (FreshnessInputs * EvidenceRef) list -> ReuseStore
     val persistInputs: check: string -> head: string -> FreshnessInputs
     val syntheticRef: label: string -> EvidenceRef

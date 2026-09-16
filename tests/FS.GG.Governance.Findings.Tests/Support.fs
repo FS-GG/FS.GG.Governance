@@ -16,14 +16,16 @@ let sid (s: string) = SurfaceId s
 /// Build a `Surface` from `(class, id, paths)` with fixed inert defaults for the fields the
 /// F017 decision never reads (`Owner`/`Maturity`).
 let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
-    { Id = SurfaceId id
-      Class = cls
-      Paths = paths |> List.map GovernedPath
-      Owner = Owner "fixture"
-      Maturity = Observe
-      EvidenceTag = None
-      TemplateProfile = None
-      Baseline = None }
+    {
+        Id = SurfaceId id
+        Class = cls
+        Paths = paths |> List.map GovernedPath
+        Owner = Owner "fixture"
+        Maturity = Observe
+        EvidenceTag = None
+        TemplateProfile = None
+        Baseline = None
+    }
 
 /// Assemble a real `TypedFacts` with the given governed root, a `glob → domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), and a
@@ -32,26 +34,37 @@ let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
 /// policy/tooling files are absent.
 let facts (root: string) (pairs: (string * string) list) (surfaces: Surface list) : TypedFacts =
     let entries =
-        pairs |> List.map (fun (g, d) -> { Glob = GovernedPath g; Capability = DomainId d })
+        pairs
+        |> List.map (fun (g, d) ->
+            {
+                Glob = GovernedPath g
+                Capability = DomainId d
+            })
 
     let domains = entries |> List.map (fun e -> e.Capability) |> List.distinct
 
-    { Project =
-        { SchemaVersion = SchemaVersion 1
-          Id = ProjectId "fixture"
-          Domains = domains
-          GovernedRoot = GovernedPath root
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 1
-          Domains = domains
-          PathMap = entries
-          Surfaces = surfaces
-          Checks = [] }
-      Tooling = None }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 1
+                Id = ProjectId "fixture"
+                Domains = domains
+                GovernedRoot = GovernedPath root
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 1
+                Domains = domains
+                PathMap = entries
+                Surfaces = surfaces
+                Checks = []
+            }
+        Tooling = None
+    }
 
 /// Route a set of raw candidate path strings against the facts — normalizing them exactly as a
 /// downstream caller would (via `Config.Model.normalizePath`) and calling the genuine
@@ -66,8 +79,14 @@ let routeOf (facts: TypedFacts) (rawPaths: string list) : RouteReport =
 /// routed planes, and routing is a pure function of the path so the duplicate carries the same
 /// `RoutingResult`).
 let routingsWith (routings: PathRouting list) : RouteReport =
-    { Routings = routings; Diagnostics = [] }
+    {
+        Routings = routings
+        Diagnostics = []
+    }
 
 /// One `PathRouting` from a raw path string and a result.
 let routing (rawPath: string) (result: RoutingResult) : PathRouting =
-    { Path = normalizePath rawPath; Result = result }
+    {
+        Path = normalizePath rawPath
+        Result = result
+    }

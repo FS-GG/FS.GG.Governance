@@ -13,6 +13,8 @@ let private routing = typeof<RoutingDiagnosticId>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Routing" "FS.GG.Governance.Routing" routing
+        [
+            SurfaceDrift.surfaceTest "Routing" "FS.GG.Governance.Routing" routing
 
-          SurfaceDrift.referencesOnly "Routing" (fun n -> n = "FS.GG.Governance.Config") routing ]
+            SurfaceDrift.referencesOnly "Routing" (fun n -> n = "FS.GG.Governance.Config") routing
+        ]

@@ -22,14 +22,18 @@ module Model =
     type RecordIdentity = RecordIdentity of string
 
     type ReproducibleFacts =
-        { Request: ReviewRequest
-          Model: ModelId
-          ModelVersion: ModelVersion
-          PromptHash: ReviewerPromptHash
-          ReviewedArtifacts: ArtifactHash list
-          ResponseDigest: ResponseDigest
-          Verdict: RecordedVerdict }
+        {
+            Request: ReviewRequest
+            Model: ModelId
+            ModelVersion: ModelVersion
+            PromptHash: ReviewerPromptHash
+            ReviewedArtifacts: ArtifactHash list
+            ResponseDigest: ResponseDigest
+            Verdict: RecordedVerdict
+        }
 
     type ReviewRecord =
-        { Reproducible: ReproducibleFacts
-          Sensed: SensedMetadatum list }
+        {
+            Reproducible: ReproducibleFacts
+            Sensed: SensedMetadatum list
+        }

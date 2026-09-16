@@ -38,14 +38,16 @@ module Snapshot =
     /// The pure plan of which refs to resolve and whether a merge base is needed before any git
     /// runs. The edge consults this to know which read-only resolutions to perform (research D8).
     type ResolutionPlan =
-        { Form: RangeForm
-          /// the ref to resolve as the diff base (None for `Since` head-side / `Default` until the
-          /// documented default ref is applied — see git-sensing.md).
-          BaseRef: GitRef option
-          /// the ref to resolve as the diff head; None ⇒ the current working position.
-          HeadRef: GitRef option
-          /// whether the committed diff is computed against the merge base (the three-dot default).
-          UseMergeBase: bool }
+        {
+            Form: RangeForm
+            /// the ref to resolve as the diff base (None for `Since` head-side / `Default` until the
+            /// documented default ref is applied — see git-sensing.md).
+            BaseRef: GitRef option
+            /// the ref to resolve as the diff head; None ⇒ the current working position.
+            HeadRef: GitRef option
+            /// whether the committed diff is computed against the merge base (the three-dot default).
+            UseMergeBase: bool
+        }
 
     /// PURE, TOTAL: map the caller's loose `SnapshotOptions` to a concrete `ResolutionPlan` by the
     /// documented contract (US3, FR-004). Identical options ⇒ identical plan, with no git
@@ -59,24 +61,26 @@ module Snapshot =
     /// `-z` output here (not pre-parsed) is what makes porcelain parsing a PURE, literal-fixture-
     /// tested function rather than repo-only impure logic.
     type RawSensing =
-        { /// `false` ⇒ `RepoCheck` said this is not a work tree ⇒ `NotARepository` (FR-008).
-          RepoOk: bool
-          /// resolved base/head/merge-base commit ids, or an error reason (unknown ref, etc.).
-          BaseResolved: Result<CommitId, string>
-          HeadResolved: Result<CommitId, string>
-          MergeBaseResolved: Result<CommitId, string>
-          /// raw `git diff --name-status -z -M <base> <head>` stdout, or an error reason.
-          DiffRaw: Result<string, string>
-          /// raw `git status --porcelain=v1 -z` stdout (dirty + untracked), or an error reason.
-          StatusRaw: Result<string, string>
-          /// raw `git rev-parse --abbrev-ref HEAD` stdout (`"HEAD"` ⇒ detached), or an error.
-          BranchRaw: Result<string, string>
-          /// runner-supplied CI context, already read from the environment by the edge (D9).
-          RawCi: CiContext option
-          /// the provenance digests the edge accumulated, in command order (FR-010).
-          Digests: CommandRunDigest list
-          /// which plan the edge resolved against (echoed for assembly + diagnostics).
-          Plan: ResolutionPlan }
+        {
+            /// `false` ⇒ `RepoCheck` said this is not a work tree ⇒ `NotARepository` (FR-008).
+            RepoOk: bool
+            /// resolved base/head/merge-base commit ids, or an error reason (unknown ref, etc.).
+            BaseResolved: Result<CommitId, string>
+            HeadResolved: Result<CommitId, string>
+            MergeBaseResolved: Result<CommitId, string>
+            /// raw `git diff --name-status -z -M <base> <head>` stdout, or an error reason.
+            DiffRaw: Result<string, string>
+            /// raw `git status --porcelain=v1 -z` stdout (dirty + untracked), or an error reason.
+            StatusRaw: Result<string, string>
+            /// raw `git rev-parse --abbrev-ref HEAD` stdout (`"HEAD"` ⇒ detached), or an error.
+            BranchRaw: Result<string, string>
+            /// runner-supplied CI context, already read from the environment by the edge (D9).
+            RawCi: CiContext option
+            /// the provenance digests the edge accumulated, in command order (FR-010).
+            Digests: CommandRunDigest list
+            /// which plan the edge resolved against (echoed for assembly + diagnostics).
+            Plan: ResolutionPlan
+        }
 
     // ── Pure assembly (the heart of the feature) ──
 

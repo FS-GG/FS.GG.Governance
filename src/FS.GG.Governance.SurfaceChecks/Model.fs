@@ -17,27 +17,29 @@ module Model =
         | SkillDomain
         | DesignDomain
 
-    type FindingLocation =
-        { File: GovernedPath
-          Detail: string }
+    type FindingLocation = { File: GovernedPath; Detail: string }
 
     type SurfaceFinding =
-        { Domain: CheckDomain
-          Surface: SurfaceId
-          Code: string
-          Location: FindingLocation
-          BaseSeverity: Severity
-          Maturity: Maturity
-          EvidenceTag: EvidenceTag option
-          IsInputState: bool
-          Message: string }
+        {
+            Domain: CheckDomain
+            Surface: SurfaceId
+            Code: string
+            Location: FindingLocation
+            BaseSeverity: Severity
+            Maturity: Maturity
+            EvidenceTag: EvidenceTag option
+            IsInputState: bool
+            Message: string
+        }
 
     type SurfaceCheckRequest =
-        { Domain: CheckDomain
-          Surface: SurfaceId
-          Class: SurfaceClass
-          Path: GovernedPath
-          EvidenceTag: EvidenceTag option }
+        {
+            Domain: CheckDomain
+            Surface: SurfaceId
+            Class: SurfaceClass
+            Path: GovernedPath
+            EvidenceTag: EvidenceTag option
+        }
 
     let checkDomainToken (domain: CheckDomain) : string =
         match domain with
@@ -59,10 +61,12 @@ module Model =
         | Blocking -> "blocking"
 
     let enforcementInputOf (finding: SurfaceFinding) (mode: RunMode) (profile: Profile) : EnforcementInput =
-        { BaseSeverity = finding.BaseSeverity
-          Maturity = finding.Maturity
-          Mode = mode
-          Profile = profile }
+        {
+            BaseSeverity = finding.BaseSeverity
+            Maturity = finding.Maturity
+            Mode = mode
+            Profile = profile
+        }
 
     // 111/A6: the shared finding-builder + read-guard the four *Checks packs used to hand-copy. `mkFinding`
     // is parameterized by domain + maturity + source path (each pack keeps a one-line wrapper binding those);
@@ -81,15 +85,21 @@ module Model =
         : SurfaceFinding =
         let (GovernedPath raw) = source
 
-        { Domain = domain
-          Surface = request.Surface
-          Code = code
-          Location = { File = normalizePath raw; Detail = detail }
-          BaseSeverity = severity
-          Maturity = maturity
-          EvidenceTag = request.EvidenceTag
-          IsInputState = isInput
-          Message = message }
+        {
+            Domain = domain
+            Surface = request.Surface
+            Code = code
+            Location =
+                {
+                    File = normalizePath raw
+                    Detail = detail
+                }
+            BaseSeverity = severity
+            Maturity = maturity
+            EvidenceTag = request.EvidenceTag
+            IsInputState = isInput
+            Message = message
+        }
 
     let safe (read: unit -> Result<'a, string>) : Result<'a, string> =
         try

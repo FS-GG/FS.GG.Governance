@@ -37,17 +37,19 @@ type ReviewBudget =
 
 /// Normalized command invocation.
 type RunRequest =
-    { Root: string
-      Command: CommandKind
-      Mode: RunMode
-      Format: OutputFormat
-      Scope: string list
-      Domains: Set<Domain>
-      ReviewBudget: ReviewBudget
-      ReviewStore: string option
-      OutputPath: string option
-      Judge: JudgeId
-      /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
-      /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). It is NOT serialized
-      /// into the JSON envelope (`requestJson` is unchanged), so every JSON contract stays byte-identical.
-      ExplicitPlain: bool }
+    {
+        Root: string
+        Command: CommandKind
+        Mode: RunMode
+        Format: OutputFormat
+        Scope: string list
+        Domains: Set<Domain>
+        ReviewBudget: ReviewBudget
+        ReviewStore: string option
+        OutputPath: string option
+        Judge: JudgeId
+        /// F27 wiring (063): the host-parsed `--plain` flag, carried to the capability-sensing edge so a
+        /// piped/explicit-plain run renders ANSI-free even on a TTY (FR-004/FR-012). It is NOT serialized
+        /// into the JSON envelope (`requestJson` is unchanged), so every JSON contract stays byte-identical.
+        ExplicitPlain: bool
+    }

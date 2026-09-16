@@ -17,31 +17,35 @@ let private testFacts =
     facts
         "."
         [ "routed/**", "d" ]
-        [ surface PackageSurface "pkg" [ "pkg-area" ]
-          surface ReleaseSurface "rel" [ "rel-area" ]
-          surface GeneratedProductRoot "groot" [ "gp-area" ]
-          surface DocsSurface "docs" [ "docs-area" ]
-          surface SkillSurface "skill" [ "skill-area" ]
-          surface DesignSurface "design" [ "design-area" ]
-          surface SampleAppSurface "sample" [ "sample-area" ]
-          surface GeneratedView "gv" [ "gv-area" ]
-          surface Routine "routine" [ "routine-area" ] ]
+        [
+            surface PackageSurface "pkg" [ "pkg-area" ]
+            surface ReleaseSurface "rel" [ "rel-area" ]
+            surface GeneratedProductRoot "groot" [ "gp-area" ]
+            surface DocsSurface "docs" [ "docs-area" ]
+            surface SkillSurface "skill" [ "skill-area" ]
+            surface DesignSurface "design" [ "design-area" ]
+            surface SampleAppSurface "sample" [ "sample-area" ]
+            surface GeneratedView "gv" [ "gv-area" ]
+            surface Routine "routine" [ "routine-area" ]
+        ]
 
 let private report =
     Findings.findUnknownGovernedPaths
         testFacts
         (routeOf
             testFacts
-            [ "pkg-area/Api.fsi"
-              "rel-area/notes.md"
-              "gp-area/file.fs"
-              "docs-area/guide.md"
-              "skill-area/s.md"
-              "design-area/t.json"
-              "sample-area/app.fs"
-              "gv-area/gen.fs"
-              "routine-area/free.txt"
-              "routed/ok.fs" ])
+            [
+                "pkg-area/Api.fsi"
+                "rel-area/notes.md"
+                "gp-area/file.fs"
+                "docs-area/guide.md"
+                "skill-area/s.md"
+                "design-area/t.json"
+                "sample-area/app.fs"
+                "gv-area/gen.fs"
+                "routine-area/free.txt"
+                "routed/ok.fs"
+            ])
 
 let private find path =
     report.Findings |> List.tryFind (fun f -> f.Path = normalizePath path)
@@ -62,21 +66,25 @@ let private expectOrdinary path =
 let tests =
     testList
         "Findings.BoundaryWidening.F23"
-        [ test "PackageSurface boundary escalates" { expectProtected "pkg-area/Api.fsi" "pkg" }
-          test "ReleaseSurface boundary escalates" { expectProtected "rel-area/notes.md" "rel" }
-          test "GeneratedProductRoot boundary escalates" { expectProtected "gp-area/file.fs" "groot" }
+        [
+            test "PackageSurface boundary escalates" { expectProtected "pkg-area/Api.fsi" "pkg" }
+            test "ReleaseSurface boundary escalates" { expectProtected "rel-area/notes.md" "rel" }
+            test "GeneratedProductRoot boundary escalates" { expectProtected "gp-area/file.fs" "groot" }
 
-          test "DocsSurface boundary stays ordinary" { expectOrdinary "docs-area/guide.md" }
-          test "SkillSurface boundary stays ordinary" { expectOrdinary "skill-area/s.md" }
-          test "DesignSurface boundary stays ordinary" { expectOrdinary "design-area/t.json" }
-          test "SampleAppSurface boundary stays ordinary" { expectOrdinary "sample-area/app.fs" }
-          test "GeneratedView boundary stays ordinary" { expectOrdinary "gv-area/gen.fs" }
+            test "DocsSurface boundary stays ordinary" { expectOrdinary "docs-area/guide.md" }
+            test "SkillSurface boundary stays ordinary" { expectOrdinary "skill-area/s.md" }
+            test "DesignSurface boundary stays ordinary" { expectOrdinary "design-area/t.json" }
+            test "SampleAppSurface boundary stays ordinary" { expectOrdinary "sample-area/app.fs" }
+            test "GeneratedView boundary stays ordinary" { expectOrdinary "gv-area/gen.fs" }
 
-          test "routine surface suppresses the unknown" { Expect.isNone (find "routine-area/free.txt") "routine suppresses" }
-          test "a Routed path is never a finding" { Expect.isNone (find "routed/ok.fs") "routed ⇒ no finding" }
+            test "routine surface suppresses the unknown" {
+                Expect.isNone (find "routine-area/free.txt") "routine suppresses"
+            }
+            test "a Routed path is never a finding" { Expect.isNone (find "routed/ok.fs") "routed ⇒ no finding" }
 
-          test "the Findings public surface (Findings.surface.txt) is unchanged — behavior-only widening" {
-              // No public type changed; the widening is internal. (Surface drift is asserted in
-              // SurfaceDriftTests; this is the documentary anchor for the behavior-only contract.)
-              Expect.isLessThan 0 (List.length report.Findings) "the widening produces real findings"
-          } ]
+            test "the Findings public surface (Findings.surface.txt) is unchanged — behavior-only widening" {
+                // No public type changed; the widening is internal. (Surface drift is asserted in
+                // SurfaceDriftTests; this is the documentary anchor for the behavior-only contract.)
+                Expect.isLessThan 0 (List.length report.Findings) "the widening produces real findings"
+            }
+        ]

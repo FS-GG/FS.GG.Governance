@@ -28,13 +28,17 @@ module Model =
         | TranscriptUnlocatable of source: string
 
     type TranscriptFact =
-        { ExampleId: string
-          Source: GovernedPath
-          Outcome: TranscriptOutcome }
+        {
+            ExampleId: string
+            Source: GovernedPath
+            Outcome: TranscriptOutcome
+        }
 
     /// Everything the package sensor produced for one surface. An empty `Transcripts` list ⇒ no transcripts
     /// declared (not an error).
     type PackageFacts =
-        { BaselineSource: GovernedPath
-          Baseline: FsiBaselineFact
-          Transcripts: TranscriptFact list }
+        {
+            BaselineSource: GovernedPath
+            Baseline: FsiBaselineFact
+            Transcripts: TranscriptFact list
+        }

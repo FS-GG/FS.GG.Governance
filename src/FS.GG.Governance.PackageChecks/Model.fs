@@ -23,11 +23,15 @@ module Model =
         | TranscriptUnlocatable of source: string
 
     type TranscriptFact =
-        { ExampleId: string
-          Source: GovernedPath
-          Outcome: TranscriptOutcome }
+        {
+            ExampleId: string
+            Source: GovernedPath
+            Outcome: TranscriptOutcome
+        }
 
     type PackageFacts =
-        { BaselineSource: GovernedPath
-          Baseline: FsiBaselineFact
-          Transcripts: TranscriptFact list }
+        {
+            BaselineSource: GovernedPath
+            Baseline: FsiBaselineFact
+            Transcripts: TranscriptFact list
+        }

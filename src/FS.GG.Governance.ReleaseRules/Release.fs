@@ -75,10 +75,12 @@ module Release =
     /// Build one finding's F023 `EnforcementInput` from its declared `BaseSeverity` + `Maturity`, fixed to
     /// `RunMode.Release` / `Profile.Release` (research D2/D6) — fed VERBATIM into `deriveEffectiveSeverity`.
     let inputFor (finding: ReleaseFinding) : EnforcementInput =
-        { BaseSeverity = finding.BaseSeverity
-          Maturity = finding.Maturity
-          Mode = RunMode.Release
-          Profile = Profile.Release }
+        {
+            BaseSeverity = finding.BaseSeverity
+            Maturity = finding.Maturity
+            Mode = RunMode.Release
+            Profile = Profile.Release
+        }
 
     /// Re-apply the F024 partition rule, gated by the finding's outcome (research D1). Returns the bucket
     /// index: 0 = Blockers, 1 = Warnings, 2 = Passing. A `Satisfied` finding is never a concern (⇒ Passing);
@@ -99,12 +101,14 @@ module Release =
         |> List.map (fun rule ->
             let state = factFor facts rule.Kind
 
-            { Kind = rule.Kind
-              Surface = rule.Surface
-              Outcome = outcomeOf state
-              BaseSeverity = rule.BaseSeverity
-              Maturity = rule.Maturity
-              Reason = reasonFor rule.Kind rule.Surface state })
+            {
+                Kind = rule.Kind
+                Surface = rule.Surface
+                Outcome = outcomeOf state
+                BaseSeverity = rule.BaseSeverity
+                Maturity = rule.Maturity
+                Reason = reasonFor rule.Kind rule.Surface state
+            })
         |> List.sortBy (fun f ->
             let (SurfaceId surfaceId) = f.Surface
             releaseRuleKindOrdinal f.Kind, surfaceId)
@@ -114,8 +118,10 @@ module Release =
         let enforced =
             findings
             |> List.map (fun finding ->
-                { Finding = finding
-                  Decision = deriveEffectiveSeverity (inputFor finding) })
+                {
+                    Finding = finding
+                    Decision = deriveEffectiveSeverity (inputFor finding)
+                })
 
         // Disjoint, exhaustive three-way partition; each list preserves the `evaluate` order (stable).
         let blockers = enforced |> List.filter (fun i -> bucketOf i = 0)
@@ -129,11 +135,13 @@ module Release =
             | Pass -> Clean
             | Fail -> Blocked
 
-        { Verdict = verdict
-          Blockers = blockers
-          Warnings = warnings
-          Passing = passing
-          ExitCodeBasis = exitCodeBasis }
+        {
+            Verdict = verdict
+            Blockers = blockers
+            Warnings = warnings
+            Passing = passing
+            ExitCodeBasis = exitCodeBasis
+        }
 
     let evaluateRelease (rules: ReleaseRule list) (facts: ReleaseFacts) : ReleaseDecision =
         rollup (evaluate rules facts)

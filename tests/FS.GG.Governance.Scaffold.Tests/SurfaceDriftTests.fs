@@ -14,6 +14,8 @@ let private scaffold =
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "Scaffold" "FS.GG.Governance.Scaffold" scaffold
+        [
+            SurfaceDrift.surfaceTest "Scaffold" "FS.GG.Governance.Scaffold" scaffold
 
-          SurfaceDrift.referencesOnly "Scaffold" (fun n -> n = "FS.GG.Governance.Kernel") scaffold ]
+            SurfaceDrift.referencesOnly "Scaffold" (fun n -> n = "FS.GG.Governance.Kernel") scaffold
+        ]

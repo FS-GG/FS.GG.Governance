@@ -31,61 +31,79 @@ let private driveToDone (m: Loop.Model) =
 let tests =
     testList
         "Degrade"
-        [ test "FreshnessSensed Error ⇒ notEvaluated gates + note; verdict/partition/basis/exit UNCHANGED (FR-009 ∧ FR-011)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let _, m2 = toSelected git req
-              let decision = Option.get m2.Decision
-              Expect.equal decision.Verdict Fail "the base-blocking change fails (decided BEFORE the cache senses)"
+        [
+            test
+                "FreshnessSensed Error ⇒ notEvaluated gates + note; verdict/partition/basis/exit UNCHANGED (FR-009 ∧ FR-011)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let _, m2 = toSelected git req
+                let decision = Option.get m2.Decision
+                Expect.equal decision.Verdict Fail "the base-blocking change fails (decided BEFORE the cache senses)"
 
-              let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
-              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
-              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
-              Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
+                let m3, _ = Loop.update (Loop.FreshnessSensed(Error "synthetic sense failure")) m2
+                let m4raw, e4 = Loop.update (Loop.StoreLoaded(Ok EvidenceReuse.empty)) m3
+                let m4, _ = runExecuteEffect fakeExecPort m4raw e4
+                Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
 
-              let auditDoc = Option.get m4.AuditDoc
-              Expect.isFalse (auditDoc.Contains "\"kind\":\"reusable\"") "no gate fabricated reusable"
-              Expect.stringContains auditDoc "notEvaluated" "the affected gates render notEvaluated"
-              Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
-              Expect.stringContains (String.concat " " m4.CacheNotes) "could not be sensed" "the note names the unsensed input (distinct from a defect)"
+                let auditDoc = Option.get m4.AuditDoc
+                Expect.isFalse (auditDoc.Contains "\"kind\":\"reusable\"") "no gate fabricated reusable"
+                Expect.stringContains auditDoc "notEvaluated" "the affected gates render notEvaluated"
+                Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
 
-              // The merge decision is byte-unchanged: same verdict, same partition.
-              Expect.equal (Option.get m4.Decision) decision "the ShipDecision is untouched by the degrade"
-              let mDone = driveToDone m4
-              Expect.equal mDone.Exit Loop.Blocked "exit follows the verdict (Blocked), unchanged by the degrade"
-          }
+                Expect.stringContains
+                    (String.concat " " m4.CacheNotes)
+                    "could not be sensed"
+                    "the note names the unsensed input (distinct from a defect)"
 
-          test "StoreLoaded Error ⇒ recompute-by-default + note; verdict/partition/basis/exit UNCHANGED (L2/L4)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let snap, m2 = toSelected git req
-              let decision = Option.get m2.Decision
-              let baseHead = baseHeadOfSnap (Some snap)
-              let sensed = match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with Ok s -> s | Error e -> failtestf "%s" e
+                // The merge decision is byte-unchanged: same verdict, same partition.
+                Expect.equal (Option.get m4.Decision) decision "the ShipDecision is untouched by the degrade"
+                let mDone = driveToDone m4
+                Expect.equal mDone.Exit Loop.Blocked "exit follows the verdict (Blocked), unchanged by the degrade"
+            }
 
-              let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
-              let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
-              let m4, _ = runExecuteEffect fakeExecPort m4raw e4
-              Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
+            test "StoreLoaded Error ⇒ recompute-by-default + note; verdict/partition/basis/exit UNCHANGED (L2/L4)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let snap, m2 = toSelected git req
+                let decision = Option.get m2.Decision
+                let baseHead = baseHeadOfSnap (Some snap)
 
-              let auditDoc = Option.get m4.AuditDoc
-              Expect.isFalse (auditDoc.Contains "\"kind\":\"reusable\"") "an unreadable store ⇒ never reusable"
-              Expect.stringContains auditDoc "noPriorEvidence" "every gate recompute-by-default with noPriorEvidence"
-              Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
-              Expect.stringContains (String.concat " " m4.CacheNotes) "unreadable" "the note names the malformed store input"
+                let sensed =
+                    match FreshnessSensing.senseFreshness fakeSensor m2.SelectedGates baseHead with
+                    | Ok s -> s
+                    | Error e -> failtestf "%s" e
 
-              Expect.equal (Option.get m4.Decision) decision "the ShipDecision is untouched by the degrade"
-              let mDone = driveToDone m4
-              Expect.equal mDone.Exit Loop.Blocked "exit follows the verdict (Blocked), unchanged by the degrade"
-          }
+                let m3, _ = Loop.update (Loop.FreshnessSensed(Ok sensed)) m2
+                let m4raw, e4 = Loop.update (Loop.StoreLoaded(Error "synthetic malformed store")) m3
+                let m4, _ = runExecuteEffect fakeExecPort m4raw e4
+                Expect.equal m4.Phase Loop.Rolled "the document still projects (no fail)"
 
-          test "the interpreter degrades end-to-end over a malformed store — still writes, verdict/exit unchanged (L2)" {
-              let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
-              let req = requestFor Loop.DefaultRange Loop.Text
-              let cap = newCapture ()
-              let model = Interpreter.run (fakePortsWith validCatalog git fakeSensor malformedStoreReader cap req) req
+                let auditDoc = Option.get m4.AuditDoc
+                Expect.isFalse (auditDoc.Contains "\"kind\":\"reusable\"") "an unreadable store ⇒ never reusable"
+                Expect.stringContains auditDoc "noPriorEvidence" "every gate recompute-by-default with noPriorEvidence"
+                Expect.isNonEmpty m4.CacheNotes "a non-fatal cache note is recorded"
 
-              Expect.equal model.Exit Loop.Blocked "degraded store ⇒ verdict-driven exit unchanged (Blocked)"
-              Expect.isNonEmpty model.CacheNotes "a cache note surfaced"
-              Expect.isSome (writtenAudit cap) "audit.json still written under degrade"
-          } ]
+                Expect.stringContains
+                    (String.concat " " m4.CacheNotes)
+                    "unreadable"
+                    "the note names the malformed store input"
+
+                Expect.equal (Option.get m4.Decision) decision "the ShipDecision is untouched by the degrade"
+                let mDone = driveToDone m4
+                Expect.equal mDone.Exit Loop.Blocked "exit follows the verdict (Blocked), unchanged by the degrade"
+            }
+
+            test
+                "the interpreter degrades end-to-end over a malformed store — still writes, verdict/exit unchanged (L2)" {
+                let git = gitWithChanges [ 'M', "src/Lib/Thing.fs" ]
+                let req = requestFor Loop.DefaultRange Loop.Text
+                let cap = newCapture ()
+
+                let model =
+                    Interpreter.run (fakePortsWith validCatalog git fakeSensor malformedStoreReader cap req) req
+
+                Expect.equal model.Exit Loop.Blocked "degraded store ⇒ verdict-driven exit unchanged (Blocked)"
+                Expect.isNonEmpty model.CacheNotes "a cache note surfaced"
+                Expect.isSome (writtenAudit cap) "audit.json still written under degrade"
+            }
+        ]

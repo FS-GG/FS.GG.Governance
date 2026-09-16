@@ -33,16 +33,18 @@ type ReviewBudget =
 
 /// Normalized command invocation.
 type RunRequest =
-    { Root: string
-      Command: CommandKind
-      Mode: RunMode
-      Format: OutputFormat
-      Scope: string list
-      Domains: Set<Domain>
-      ReviewBudget: ReviewBudget
-      ReviewStore: string option
-      OutputPath: string option
-      Judge: JudgeId }
+    {
+        Root: string
+        Command: CommandKind
+        Mode: RunMode
+        Format: OutputFormat
+        Scope: string list
+        Domains: Set<Domain>
+        ReviewBudget: ReviewBudget
+        ReviewStore: string option
+        OutputPath: string option
+        Judge: JudgeId
+    }
 
 /// A parse/usage error. These map to exit code 64.
 type ParseError =
@@ -67,12 +69,14 @@ type ExitDecision =
 
 /// Review-budget and cache accounting for one command run.
 type BudgetState =
-    { Requested: string list
-      CacheHits: string list
-      CacheMisses: string list
-      FreshDispatches: string list
-      Pending: string list
-      BudgetExhausted: string list }
+    {
+        Requested: string list
+        CacheHits: string list
+        CacheMisses: string list
+        FreshDispatches: string list
+        Pending: string list
+        BudgetExhausted: string list
+    }
 
 /// Command-specific payload produced after the host run.
 type CommandPayload =
@@ -83,11 +87,13 @@ type CommandPayload =
 
 /// Final value rendered to text/JSON and returned to Program.fs.
 type CommandResult =
-    { Request: RunRequest option
-      Payload: CommandPayload option
-      Budget: BudgetState
-      Failures: Failure list
-      Exit: ExitDecision }
+    {
+        Request: RunRequest option
+        Payload: CommandPayload option
+        Budget: BudgetState
+        Failures: Failure list
+        Exit: ExitDecision
+    }
 
 /// CLI command-state phase.
 type Phase =
@@ -99,13 +105,15 @@ type Phase =
 
 /// Durable CLI MVU model.
 type Model =
-    { Phase: Phase
-      RawArgv: string list
-      Request: RunRequest option
-      Snapshot: ProjectSnapshot option
-      HostModel: FS.GG.Governance.Host.Model<ProjectFact> option
-      Budget: BudgetState
-      Result: CommandResult option }
+    {
+        Phase: Phase
+        RawArgv: string list
+        Request: RunRequest option
+        Snapshot: ProjectSnapshot option
+        HostModel: FS.GG.Governance.Host.Model<ProjectFact> option
+        Budget: BudgetState
+        Result: CommandResult option
+    }
 
 /// Events/results accepted by the CLI MVU boundary.
 type Msg =
@@ -123,9 +131,11 @@ type Effect =
 
 /// Impure ports injected into the command edge and faked in semantic tests.
 type CliPorts =
-    { LoadSnapshot: RunRequest -> Result<ProjectSnapshot, string>
-      RunHost: RunRequest -> ProjectSnapshot -> FS.GG.Governance.Host.Model<ProjectFact> * BudgetState
-      WriteOutput: RunRequest -> CommandResult -> Result<unit, string> }
+    {
+        LoadSnapshot: RunRequest -> Result<ProjectSnapshot, string>
+        RunHost: RunRequest -> ProjectSnapshot -> FS.GG.Governance.Host.Model<ProjectFact> * BudgetState
+        WriteOutput: RunRequest -> CommandResult -> Result<unit, string>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Cli =

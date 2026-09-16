@@ -47,11 +47,13 @@ module Model =
     /// (FR-009, SC-004/SC-007). The MVP key is the always-available declared identity; Phase 11 extends
     /// it with rule/artifact hashes, command version, and base/head. Ids only — no raw YAML, no clock.
     type FreshnessKey =
-        { Check: CheckId
-          Domain: DomainId
-          Cost: Cost
-          Environment: EnvironmentClass
-          Command: CommandId option }
+        {
+            Check: CheckId
+            Domain: DomainId
+            Cost: Cost
+            Environment: EnvironmentClass
+            Command: CommandId option
+        }
 
     // ── The gate (key entity "Gate", FR-001/FR-002) ──
 
@@ -72,16 +74,18 @@ module Model =
     ///   • `FreshnessKey` — the carried declared-input key (above).
     /// A pure, deterministic value — declared ids only (FR-004).
     type Gate =
-        { Id: GateId
-          Domain: DomainId
-          Description: string
-          Prerequisites: GatePrerequisite list
-          Cost: Cost
-          Timeout: TimeoutLimit
-          Owner: Owner
-          Maturity: Maturity
-          ProductCheck: bool
-          FreshnessKey: FreshnessKey }
+        {
+            Id: GateId
+            Domain: DomainId
+            Description: string
+            Prerequisites: GatePrerequisite list
+            Cost: Cost
+            Timeout: TimeoutLimit
+            Owner: Owner
+            Maturity: Maturity
+            ProductCheck: bool
+            FreshnessKey: FreshnessKey
+        }
 
     // ── The aggregate result (FR-001, FR-007, FR-014) ──
 

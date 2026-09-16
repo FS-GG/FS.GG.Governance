@@ -36,11 +36,13 @@ module CurrencyEnforcement =
     /// can block — D5); `Maturity` is the configured dial. The pair (BaseSeverity, Maturity) feeds the F023
     /// truth table verbatim — no new enforcement constant.
     type CurrencyFinding =
-        { ViewId: string
-          Kind: ViewKind
-          Cause: StaleCause
-          BaseSeverity: Severity
-          Maturity: Maturity }
+        {
+            ViewId: string
+            Kind: ViewKind
+            Cause: StaleCause
+            BaseSeverity: Severity
+            Maturity: Maturity
+        }
 
     /// Decide one view's currency by reusing F029 `FreshnessKey.diff` VERBATIM (recorded vs sensed
     /// FreshnessInputs differing only in the source-digest set + generator version, revisions held equal —

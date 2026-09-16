@@ -36,7 +36,9 @@ open FS.GG.Governance.SkillChecks.Tests.Support
 
 let private integrationsDir = Path.Combine(repoRoot, ".specify", "integrations")
 let private overlayPath = Path.Combine(integrationsDir, "overlay.json")
-let private presetDir = Path.Combine(repoRoot, ".specify", "presets", "fsharp-opinionated")
+
+let private presetDir =
+    Path.Combine(repoRoot, ".specify", "presets", "fsharp-opinionated")
 
 /// This repo compiles with nullness checking on and warnings as errors, and the BCL/JSON reads below are
 /// all annotated nullable. Collapsing a null to "" is safe here because every use is a path or a digest
@@ -50,7 +52,10 @@ let private repoFile (rel: string) =
 
 let private sha256Of (path: string) =
     use sha = SHA256.Create()
-    sha.ComputeHash(File.ReadAllBytes path) |> Convert.ToHexString |> _.ToLowerInvariant()
+
+    sha.ComputeHash(File.ReadAllBytes path)
+    |> Convert.ToHexString
+    |> _.ToLowerInvariant()
 
 /// The body a producer command and its generated SKILL.md share: frontmatter dropped (each integration
 /// writes its own) and the leading run of blank/H1 lines dropped (each integration rewrites the title).
@@ -127,7 +132,11 @@ let private presetShipped =
         |> Array.map fileNameOf
         |> Array.choose (fun f ->
             let m = Regex.Match(f, @"^speckit\.([A-Za-z0-9._-]+)\.md$")
-            if m.Success then Some("speckit-" + m.Groups[1].Value.Replace(".", "-")) else None)
+
+            if m.Success then
+                Some("speckit-" + m.Groups[1].Value.Replace(".", "-"))
+            else
+                None)
         |> Set.ofArray
     else
         Set.empty
@@ -136,126 +145,144 @@ let private presetDeclared =
     let yml = Path.Combine(presetDir, "preset.yml")
 
     if File.Exists yml then
-        Regex.Matches(File.ReadAllText yml, "^\\s*file:\\s*[\"']?(commands/[^\"'\\s]+)[\"']?\\s*$", RegexOptions.Multiline)
+        Regex.Matches(
+            File.ReadAllText yml,
+            "^\\s*file:\\s*[\"']?(commands/[^\"'\\s]+)[\"']?\\s*$",
+            RegexOptions.Multiline
+        )
         |> Seq.choose (fun m ->
             let b = fileNameOf m.Groups[1].Value
             let n = Regex.Match(b, @"^speckit\.([A-Za-z0-9._-]+)\.md$")
-            if n.Success then Some("speckit-" + n.Groups[1].Value.Replace(".", "-")) else None)
+
+            if n.Success then
+                Some("speckit-" + n.Groups[1].Value.Replace(".", "-"))
+            else
+                None)
         |> Set.ofSeq
     else
         Set.empty
 
 let private skillIdOf (path: string) =
     let parts = path.Split('/')
-    if parts.Length = 4 && parts[1] = "skills" then Some parts[2] else None
+
+    if parts.Length = 4 && parts[1] = "skills" then
+        Some parts[2]
+    else
+        None
 
 [<Tests>]
 let tests =
     testList
         "IntegrationRecord"
         [
-          // THE REGRESSION. Before `overlay.json` existed this failed with the three preset-overridden
-          // rows unexplained, which is precisely the false red a materializer driven off the manifest
-          // would have reported on a correct tree.
-          test "every integration-manifest row is explained: digest matches, or the overlay record accounts for it" {
-              Expect.isNonEmpty manifestRows "no manifest rows were read — the test found no records to check"
+            // THE REGRESSION. Before `overlay.json` existed this failed with the three preset-overridden
+            // rows unexplained, which is precisely the false red a materializer driven off the manifest
+            // would have reported on a correct tree.
+            test "every integration-manifest row is explained: digest matches, or the overlay record accounts for it" {
+                Expect.isNonEmpty manifestRows "no manifest rows were read — the test found no records to check"
 
-              let unexplained =
-                  manifestRows
-                  |> Array.choose (fun (manifest, rel, declared) ->
-                      let abs = repoFile rel
+                let unexplained =
+                    manifestRows
+                    |> Array.choose (fun (manifest, rel, declared) ->
+                        let abs = repoFile rel
 
-                      if not (File.Exists abs) then
-                          Some $"{manifest}: {rel} — declared but missing from the tree"
-                      elif sha256Of abs = declared then
-                          None
-                      elif superseded.ContainsKey rel then
-                          None // accounted for; the derivation itself is asserted by the next test
-                      else
-                          Some(
-                              $"{manifest}: {rel} — declared {declared.Substring(0, 12)} "
-                              + $"actual {(sha256Of abs).Substring(0, 12)}, "
-                              + "and overlay.json does not record it as superseded"
-                          ))
+                        if not (File.Exists abs) then
+                            Some $"{manifest}: {rel} — declared but missing from the tree"
+                        elif sha256Of abs = declared then
+                            None
+                        elif superseded.ContainsKey rel then
+                            None // accounted for; the derivation itself is asserted by the next test
+                        else
+                            Some(
+                                $"{manifest}: {rel} — declared {declared.Substring(0, 12)} "
+                                + $"actual {(sha256Of abs).Substring(0, 12)}, "
+                                + "and overlay.json does not record it as superseded"
+                            ))
 
-              Expect.isEmpty
-                  unexplained
-                  ($"integration records disagree with the committed bytes and nothing explains it:\n  "
-                   + String.concat "\n  " unexplained
-                   + "\nA row is honest when its digest matches OR overlay.json names the authority that "
-                   + "supersedes it. Regenerate with scripts/materialize-skill-roots.sh.")
-          }
+                Expect.isEmpty
+                    unexplained
+                    ($"integration records disagree with the committed bytes and nothing explains it:\n  "
+                     + String.concat "\n  " unexplained
+                     + "\nA row is honest when its digest matches OR overlay.json names the authority that "
+                     + "supersedes it. Regenerate with scripts/materialize-skill-roots.sh.")
+            }
 
-          // A row may only be EXCUSED from its digest by naming an authority it genuinely derives from.
-          // Without this, `overlay.json` would be a way to silence any mismatch.
-          test "every superseded row derives from the authority the overlay record names" {
-              let failures =
-                  superseded
-                  |> Map.toList
-                  |> List.choose (fun (rel, (authority, _)) ->
-                      let skill = repoFile rel
-                      let src = repoFile authority
+            // A row may only be EXCUSED from its digest by naming an authority it genuinely derives from.
+            // Without this, `overlay.json` would be a way to silence any mismatch.
+            test "every superseded row derives from the authority the overlay record names" {
+                let failures =
+                    superseded
+                    |> Map.toList
+                    |> List.choose (fun (rel, (authority, _)) ->
+                        let skill = repoFile rel
+                        let src = repoFile authority
 
-                      if not (File.Exists skill) then Some $"{rel} — superseded row has no file in the tree"
-                      elif not (File.Exists src) then Some $"{rel} — declared authority {authority} does not exist"
-                      elif producerCore (File.ReadAllText skill) = producerCore (File.ReadAllText src) then None
-                      else Some $"{rel} — body does not derive from its declared authority {authority}")
+                        if not (File.Exists skill) then
+                            Some $"{rel} — superseded row has no file in the tree"
+                        elif not (File.Exists src) then
+                            Some $"{rel} — declared authority {authority} does not exist"
+                        elif producerCore (File.ReadAllText skill) = producerCore (File.ReadAllText src) then
+                            None
+                        else
+                            Some $"{rel} — body does not derive from its declared authority {authority}")
 
-              Expect.isEmpty
-                  failures
-                  ("overlay.json excuses rows from their digest without a producer that backs them:\n  "
-                   + String.concat "\n  " failures)
-          }
+                Expect.isEmpty
+                    failures
+                    ("overlay.json excuses rows from their digest without a producer that backs them:\n  "
+                     + String.concat "\n  " failures)
+            }
 
-          // Staleness guard. The record is DERIVED from the preset, so a preset that gains or loses an
-          // override must move it. A change to an override's CONTENT must not: the record names authorities,
-          // not digests, which is what keeps the next preset change from re-creating the original defect.
-          test "the overlay record's superseded set is exactly the preset's declared override set" {
-              Expect.equal
-                  presetDeclared
-                  presetShipped
-                  "preset.yml and the preset's commands/ directory disagree about which commands the preset provides"
+            // Staleness guard. The record is DERIVED from the preset, so a preset that gains or loses an
+            // override must move it. A change to an override's CONTENT must not: the record names authorities,
+            // not digests, which is what keeps the next preset change from re-creating the original defect.
+            test "the overlay record's superseded set is exactly the preset's declared override set" {
+                Expect.equal
+                    presetDeclared
+                    presetShipped
+                    "preset.yml and the preset's commands/ directory disagree about which commands the preset provides"
 
-              // Counted across BOTH sections, not just `superseded`. An override lands in `superseded`
-              // only when the base integration also installed that skill, so a preset that overrode a
-              // command the manifest does not list would be recorded — correctly — under
-              // `not_in_manifest`. Reading only one section would fail that legitimate tree, and a test
-              // that reds on a correct tree is the defect this item exists to remove.
-              let recordedPreset =
-                  Map.toSeq superseded
-                  |> Seq.append (Map.toSeq notInManifest)
-                  |> Seq.filter (fun (_, (_, kind)) -> kind = "preset-command")
-                  |> Seq.choose (fst >> skillIdOf)
-                  |> Set.ofSeq
+                // Counted across BOTH sections, not just `superseded`. An override lands in `superseded`
+                // only when the base integration also installed that skill, so a preset that overrode a
+                // command the manifest does not list would be recorded — correctly — under
+                // `not_in_manifest`. Reading only one section would fail that legitimate tree, and a test
+                // that reds on a correct tree is the defect this item exists to remove.
+                let recordedPreset =
+                    Map.toSeq superseded
+                    |> Seq.append (Map.toSeq notInManifest)
+                    |> Seq.filter (fun (_, (_, kind)) -> kind = "preset-command")
+                    |> Seq.choose (fst >> skillIdOf)
+                    |> Set.ofSeq
 
-              Expect.equal
-                  recordedPreset
-                  presetShipped
-                  ("overlay.json's recorded preset-override set is stale with respect to the preset. "
-                   + "Re-run scripts/materialize-skill-roots.sh and commit overlay.json.")
-          }
+                Expect.equal
+                    recordedPreset
+                    presetShipped
+                    ("overlay.json's recorded preset-override set is stale with respect to the preset. "
+                     + "Re-run scripts/materialize-skill-roots.sh and commit overlay.json.")
+            }
 
-          // The manifest is not a complete inventory of its own output root: the extension-provided skill
-          // is produced into `.claude/skills` but was never a manifest row. Recorded, so a consumer meets
-          // it as a documented fact rather than as an unattributed directory.
-          test "producer-declared skills that the manifest omits are recorded in not_in_manifest" {
-              let manifestIds = manifestRows |> Array.choose (fun (_, rel, _) -> skillIdOf rel) |> Set.ofArray
+            // The manifest is not a complete inventory of its own output root: the extension-provided skill
+            // is produced into `.claude/skills` but was never a manifest row. Recorded, so a consumer meets
+            // it as a documented fact rather than as an unattributed directory.
+            test "producer-declared skills that the manifest omits are recorded in not_in_manifest" {
+                let manifestIds =
+                    manifestRows |> Array.choose (fun (_, rel, _) -> skillIdOf rel) |> Set.ofArray
 
-              let recordedAbsent = notInManifest |> Map.toSeq |> Seq.choose (fst >> skillIdOf) |> Set.ofSeq
+                let recordedAbsent =
+                    notInManifest |> Map.toSeq |> Seq.choose (fst >> skillIdOf) |> Set.ofSeq
 
-              Expect.isFalse
-                  (recordedAbsent |> Set.exists manifestIds.Contains)
-                  "not_in_manifest lists a skill the manifest does in fact record"
+                Expect.isFalse
+                    (recordedAbsent |> Set.exists manifestIds.Contains)
+                    "not_in_manifest lists a skill the manifest does in fact record"
 
-              for rel, (authority, _) in Map.toList notInManifest do
-                  let skill = repoFile rel
-                  let src = repoFile authority
-                  Expect.isTrue (File.Exists skill) $"{rel} — recorded in not_in_manifest but absent from the tree"
-                  Expect.isTrue (File.Exists src) $"{rel} — declared authority {authority} does not exist"
+                for rel, (authority, _) in Map.toList notInManifest do
+                    let skill = repoFile rel
+                    let src = repoFile authority
+                    Expect.isTrue (File.Exists skill) $"{rel} — recorded in not_in_manifest but absent from the tree"
+                    Expect.isTrue (File.Exists src) $"{rel} — declared authority {authority} does not exist"
 
-                  Expect.equal
-                      (producerCore (File.ReadAllText skill))
-                      (producerCore (File.ReadAllText src))
-                      $"{rel} — body does not derive from its declared authority {authority}"
-          }
+                    Expect.equal
+                        (producerCore (File.ReadAllText skill))
+                        (producerCore (File.ReadAllText src))
+                        $"{rel} — body does not derive from its declared authority {authority}"
+            }
         ]

@@ -17,13 +17,13 @@
 namespace FS.GG.Governance.JsonWriters
 
 open System.Text.Json
-open FS.GG.Governance.Gates.Model              // GateId, GatePrerequisite
-open FS.GG.Governance.GateRun.Model            // GateOutcome
-open FS.GG.Governance.EvidenceReuse.Model      // RecomputeCause
-open FS.GG.Governance.FreshnessKey.Model       // FreshnessKey, Revision, RuleHash, GeneratorVersion, ArtifactHash
-open FS.GG.Governance.Provenance.Model         // BuilderIdentity — JSON-3
-open FS.GG.Governance.CommandKind.Model        // KindedCommandRun — JSON-3
-open FS.GG.Governance.CacheEligibility.Model   // CacheEligibilityReport, CacheEligibilityVerdict
+open FS.GG.Governance.Gates.Model // GateId, GatePrerequisite
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.EvidenceReuse.Model // RecomputeCause
+open FS.GG.Governance.FreshnessKey.Model // FreshnessKey, Revision, RuleHash, GeneratorVersion, ArtifactHash
+open FS.GG.Governance.Provenance.Model // BuilderIdentity — JSON-3
+open FS.GG.Governance.CommandKind.Model // KindedCommandRun — JSON-3
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport, CacheEligibilityVerdict
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module JsonWriters =

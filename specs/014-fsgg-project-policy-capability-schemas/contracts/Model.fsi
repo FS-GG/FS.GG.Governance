@@ -78,13 +78,15 @@ module Model =
     // ── project.yml ──
 
     type ProjectFacts =
-        { SchemaVersion: SchemaVersion
-          Id: ProjectId
-          Domains: DomainId list
-          GovernedRoot: GovernedPath
-          PackageSurfaces: GovernedPath list
-          PolicyRef: GovernedPath option
-          CapabilitiesRef: GovernedPath option }
+        {
+            SchemaVersion: SchemaVersion
+            Id: ProjectId
+            Domains: DomainId list
+            GovernedRoot: GovernedPath
+            PackageSurfaces: GovernedPath list
+            PolicyRef: GovernedPath option
+            CapabilitiesRef: GovernedPath option
+        }
 
     // ── policy.yml (optional) ──
 
@@ -96,66 +98,80 @@ module Model =
     type ReviewBudgetDecl = { MaxReviews: int }
 
     type PolicyFacts =
-        { SchemaVersion: SchemaVersion
-          Profiles: ProfileId list
-          DefaultProfile: ProfileId
-          BranchPolicy: BranchPolicyDecl option
-          ReviewBudget: ReviewBudgetDecl option }
+        {
+            SchemaVersion: SchemaVersion
+            Profiles: ProfileId list
+            DefaultProfile: ProfileId
+            BranchPolicy: BranchPolicyDecl option
+            ReviewBudget: ReviewBudgetDecl option
+        }
 
     // ── capabilities.yml ──
 
     /// One path-pattern → capability-domain binding (FR-004). `Glob` is normalized and kept
     /// within the governed root; `Capability` is dangling-checked against declared domains.
     type PathMapEntry =
-        { Glob: GovernedPath
-          Capability: DomainId }
+        {
+            Glob: GovernedPath
+            Capability: DomainId
+        }
 
     /// A classified region of the tree (FR-011). `Owner`/`Maturity` are preserved (US3
     /// scenario 2).
     type Surface =
-        { Id: SurfaceId
-          Class: SurfaceClass
-          Paths: GovernedPath list
-          Owner: Owner
-          Maturity: Maturity }
+        {
+            Id: SurfaceId
+            Class: SurfaceClass
+            Paths: GovernedPath list
+            Owner: Owner
+            Maturity: Maturity
+        }
 
     /// A declared verification associated with a capability domain (FR-004). `Command`, when
     /// present, references a declared `tooling.yml` command (cross-file, FR-009). Carries the
     /// full per-entry metadata FR-004 requires.
     type Check =
-        { Id: CheckId
-          Domain: DomainId
-          Command: CommandId option
-          Owner: Owner
-          Cost: Cost
-          Environment: EnvironmentClass
-          Maturity: Maturity }
+        {
+            Id: CheckId
+            Domain: DomainId
+            Command: CommandId option
+            Owner: Owner
+            Cost: Cost
+            Environment: EnvironmentClass
+            Maturity: Maturity
+        }
 
     type CapabilityFacts =
-        { SchemaVersion: SchemaVersion
-          Domains: DomainId list
-          PathMap: PathMapEntry list
-          Surfaces: Surface list
-          Checks: Check list }
+        {
+            SchemaVersion: SchemaVersion
+            Domains: DomainId list
+            PathMap: PathMapEntry list
+            Surfaces: Surface list
+            Checks: Check list
+        }
 
     // ── tooling.yml (optional) ──
 
     /// One allow-listed command with its per-command timeout and environment class (FR-005).
     /// `Id` is the cross-file reference target for `Check.Command`.
     type CommandSpec =
-        { Id: CommandId
-          Command: string
-          Timeout: TimeoutLimit
-          Environment: EnvironmentClass }
+        {
+            Id: CommandId
+            Command: string
+            Timeout: TimeoutLimit
+            Environment: EnvironmentClass
+        }
 
     /// An external tool/version expectation (FR-005).
     type ExternalToolReq = { Tool: string; MinVersion: string }
 
     type ToolingFacts =
-        { SchemaVersion: SchemaVersion
-          Commands: CommandSpec list
-          EnvironmentClasses: EnvironmentClass list
-          ExternalTools: ExternalToolReq list }
+        {
+            SchemaVersion: SchemaVersion
+            Commands: CommandSpec list
+            EnvironmentClasses: EnvironmentClass list
+            ExternalTools: ExternalToolReq list
+        }
 
     // ── The aggregate typed facts ──
 
@@ -163,10 +179,12 @@ module Model =
     /// `None` when ABSENT (never when present-but-invalid — that makes the whole result
     /// `Invalid`, FR-015).
     type TypedFacts =
-        { Project: ProjectFacts
-          Policy: PolicyFacts option
-          Capabilities: CapabilityFacts
-          Tooling: ToolingFacts option }
+        {
+            Project: ProjectFacts
+            Policy: PolicyFacts option
+            Capabilities: CapabilityFacts
+            Tooling: ToolingFacts option
+        }
 
     // ── Diagnostics (FR-013, D7) ──
 
@@ -180,9 +198,11 @@ module Model =
     /// Where in a file a diagnostic points (best available): a dotted field path, an offending
     /// id, and/or a 1-based line. `Field`/`Id` are `None` when not applicable.
     type Locator =
-        { Field: string option
-          Id: string option
-          Line: int option }
+        {
+            Field: string option
+            Id: string option
+            Line: int option
+        }
 
     /// The CLOSED set of stable diagnostic ids — one per malformed class named in the spec
     /// (SC-003). The set is closed so tests assert exactly one fixture per id.
@@ -201,10 +221,12 @@ module Model =
 
     /// A stable-id, located, explained record of why a declaration was rejected (FR-013).
     type Diagnostic =
-        { Id: DiagnosticId
-          File: FsggFile
-          Locator: Locator
-          Message: string }
+        {
+            Id: DiagnosticId
+            File: FsggFile
+            Locator: Locator
+            Message: string
+        }
 
     /// The single result of validation (FR-006): typed facts on success, or a non-empty,
     /// deterministically-ordered diagnostic list on failure — NEVER partial facts on failure.

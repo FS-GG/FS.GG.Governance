@@ -18,42 +18,46 @@ let private viewYml =
 let tests =
     testList
         "Declaration.currencyEnforcement"
-        [ test "absent key ⇒ None (opt-in / byte-identity)" {
-              match Declaration.parse (ymlLines viewYml) with
-              | Ok m -> Expect.equal m.CurrencyEnforcement None "absent ⇒ None"
-              | Error e -> failtestf "expected Ok, got %s" e.Reason
-          }
+        [
+            test "absent key ⇒ None (opt-in / byte-identity)" {
+                match Declaration.parse (ymlLines viewYml) with
+                | Ok m -> Expect.equal m.CurrencyEnforcement None "absent ⇒ None"
+                | Error e -> failtestf "expected Ok, got %s" e.Reason
+            }
 
-          test "each canonical value maps to the right Maturity" {
-              let cases =
-                  [ "observe", Observe
-                    "warn", Warn
-                    "block-on-pr", BlockOnPr
-                    "block-on-ship", BlockOnShip
-                    "block-on-release", BlockOnRelease ]
+            test "each canonical value maps to the right Maturity" {
+                let cases =
+                    [
+                        "observe", Observe
+                        "warn", Warn
+                        "block-on-pr", BlockOnPr
+                        "block-on-ship", BlockOnShip
+                        "block-on-release", BlockOnRelease
+                    ]
 
-              for token, expected in cases do
-                  let yml = sprintf "currency-enforcement: %s\n%s" token viewYml
+                for token, expected in cases do
+                    let yml = sprintf "currency-enforcement: %s\n%s" token viewYml
 
-                  match Declaration.parse (ymlLines yml) with
-                  | Ok m -> Expect.equal m.CurrencyEnforcement (Some expected) (sprintf "%s ⇒ %A" token expected)
-                  | Error e -> failtestf "expected Ok for %s, got %s" token e.Reason
-          }
+                    match Declaration.parse (ymlLines yml) with
+                    | Ok m -> Expect.equal m.CurrencyEnforcement (Some expected) (sprintf "%s ⇒ %A" token expected)
+                    | Error e -> failtestf "expected Ok for %s, got %s" token e.Reason
+            }
 
-          test "an unknown value is rejected, not silently dropped" {
-              let yml = "currency-enforcement: block-on-merge\n" + viewYml
+            test "an unknown value is rejected, not silently dropped" {
+                let yml = "currency-enforcement: block-on-merge\n" + viewYml
 
-              match Declaration.parse (ymlLines yml) with
-              | Error e -> Expect.stringContains e.Reason "block-on-merge" "names the offending value"
-              | Ok _ -> failtest "expected rejection of an unknown currency-enforcement value"
-          }
+                match Declaration.parse (ymlLines yml) with
+                | Error e -> Expect.stringContains e.Reason "block-on-merge" "names the offending value"
+                | Ok _ -> failtest "expected rejection of an unknown currency-enforcement value"
+            }
 
-          test "refresh.json is byte-identical with and without the dial (T014/SC-002)" {
-              let renderRepo yml =
-                  withTempRepo yml (fun d -> writeFile d "src.txt" "hello\n") (fun repo ->
-                      let m = runReal repo (requestFor repo)
-                      Loop.render m Loop.Json)
+            test "refresh.json is byte-identical with and without the dial (T014/SC-002)" {
+                let renderRepo yml =
+                    withTempRepo yml (fun d -> writeFile d "src.txt" "hello\n") (fun repo ->
+                        let m = runReal repo (requestFor repo)
+                        Loop.render m Loop.Json)
 
-              let withDial = "currency-enforcement: block-on-ship\n" + refreshYmlOneView
-              Expect.equal (renderRepo withDial) (renderRepo refreshYmlOneView) "the dial never reaches refresh.json"
-          } ]
+                let withDial = "currency-enforcement: block-on-ship\n" + refreshYmlOneView
+                Expect.equal (renderRepo withDial) (renderRepo refreshYmlOneView) "the dial never reaches refresh.json"
+            }
+        ]

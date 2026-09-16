@@ -11,8 +11,8 @@
 
 namespace FS.GG.Governance.GateExecution
 
-open FS.GG.Governance.CommandRecord.Model      // ExitCode, CommandRecord
-open FS.GG.Governance.GateExecution.Model        // GateCommand, ExecutionOutcome, ExecutionPort
+open FS.GG.Governance.CommandRecord.Model // ExitCode, CommandRecord
+open FS.GG.Governance.GateExecution.Model // GateCommand, ExecutionOutcome, ExecutionPort
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =

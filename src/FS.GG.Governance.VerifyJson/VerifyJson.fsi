@@ -27,11 +27,11 @@
 
 namespace FS.GG.Governance.VerifyJson
 
-open FS.GG.Governance.Ship.Model              // ShipDecision
-open FS.GG.Governance.Gates.Model             // GateId
-open FS.GG.Governance.GateRun.Model           // GateOutcome
-open FS.GG.Governance.CacheEligibility.Model  // CacheEligibilityReport
-open FS.GG.Governance.ReleaseReport.Model     // VerifyReleasePreview (F26)
+open FS.GG.Governance.Ship.Model // ShipDecision
+open FS.GG.Governance.Gates.Model // GateId
+open FS.GG.Governance.GateRun.Model // GateOutcome
+open FS.GG.Governance.CacheEligibility.Model // CacheEligibilityReport
+open FS.GG.Governance.ReleaseReport.Model // VerifyReleasePreview (F26)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VerifyJson =
@@ -123,6 +123,6 @@ module VerifyJson =
         preview: VerifyReleasePreview option ->
         generatedViews:
             (FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement.CurrencyFinding *
-             FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
+            FS.GG.Governance.Enforcement.Enforcement.EnforcementDecision) list ->
         missingByGate: Map<string, string list> ->
             string

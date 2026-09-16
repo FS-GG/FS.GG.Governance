@@ -17,78 +17,142 @@ open FS.GG.Governance.EvidenceReuseStore.Tests.Support
 let tests =
     testList
         "Pruning"
-        [ test "superseded removed, subset, newest-first order" {
-              // supersededStore: [ world@newest ; otherWorld@distinct ; world@superseded ] — the 3rd entry's
-              // world is full-matched by the 1st (strictly newer) ⇒ dropped.
-              let pruned = EvidenceReuseStore.prune supersededStore
-              let survivors = EvidenceReuse.entries pruned
-              let original = EvidenceReuse.entries supersededStore
+        [
+            test "superseded removed, subset, newest-first order" {
+                // supersededStore: [ world@newest ; otherWorld@distinct ; world@superseded ] — the 3rd entry's
+                // world is full-matched by the 1st (strictly newer) ⇒ dropped.
+                let pruned = EvidenceReuseStore.prune supersededStore
+                let survivors = EvidenceReuse.entries pruned
+                let original = EvidenceReuse.entries supersededStore
 
-              Expect.equal survivors [ original.[0]; original.[1] ] "the superseded older entry is removed; survivors newest-first subset"
-              Expect.isTrue (survivors |> List.forall (fun e -> List.contains e original)) "survivors are a subset of the input"
-          }
+                Expect.equal
+                    survivors
+                    [ original.[0]; original.[1] ]
+                    "the superseded older entry is removed; survivors newest-first subset"
 
-          testPropertyWithConfig fscheckConfig "survivors are a newest-first subset of the input" (fun (store: ReuseStore) ->
-              let original = EvidenceReuse.entries store
-              let survivors = EvidenceReuse.entries (EvidenceReuseStore.prune store)
-              // subsequence-preserving subset: survivors appear in the input in the same order
-              let rec isSubseq sub super =
-                  match sub, super with
-                  | [], _ -> true
-                  | _, [] -> false
-                  | s :: srest, h :: hrest -> if s = h then isSubseq srest hrest else isSubseq sub hrest
+                Expect.isTrue
+                    (survivors |> List.forall (fun e -> List.contains e original))
+                    "survivors are a subset of the input"
+            }
 
-              isSubseq survivors original)
+            testPropertyWithConfig
+                fscheckConfig
+                "survivors are a newest-first subset of the input"
+                (fun (store: ReuseStore) ->
+                    let original = EvidenceReuse.entries store
+                    let survivors = EvidenceReuse.entries (EvidenceReuseStore.prune store)
+                    // subsequence-preserving subset: survivors appear in the input in the same order
+                    let rec isSubseq sub super =
+                        match sub, super with
+                        | [], _ -> true
+                        | _, [] -> false
+                        | s :: srest, h :: hrest -> if s = h then isSubseq srest hrest else isSubseq sub hrest
 
-          test "no-op on a record-built (already full-match-deduped) store" {
-              let store = storeOf [ inputs "fmt", syntheticRef "fmt"; inputs "lint", syntheticRef "lint" ]
-              Expect.equal (EvidenceReuseStore.prune store) store "record-built store has no dead entry ⇒ unchanged"
-          }
+                    isSubseq survivors original)
 
-          test "no-op on an all-distinct-worlds store" {
-              let store =
-                  ReuseStore
-                      [ { Inputs = inputs "a"; Evidence = syntheticRef "a" }
-                        { Inputs = { inputs "a" with Domain = DomainId "d2" }; Evidence = syntheticRef "b" }
-                        { Inputs = { inputs "a" with Environment = Ci }; Evidence = syntheticRef "c" } ]
+            test "no-op on a record-built (already full-match-deduped) store" {
+                let store =
+                    storeOf [ inputs "fmt", syntheticRef "fmt"; inputs "lint", syntheticRef "lint" ]
 
-              Expect.equal (EvidenceReuseStore.prune store) store "all worlds distinct ⇒ unchanged"
-          }
+                Expect.equal (EvidenceReuseStore.prune store) store "record-built store has no dead entry ⇒ unchanged"
+            }
 
-          testPropertyWithConfig fscheckConfig "verdict-preserving: decide c (prune store) = decide c store for every candidate" (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
-              EvidenceReuse.decide candidate (EvidenceReuseStore.prune store) = EvidenceReuse.decide candidate store)
+            test "no-op on an all-distinct-worlds store" {
+                let store =
+                    ReuseStore
+                        [
+                            {
+                                Inputs = inputs "a"
+                                Evidence = syntheticRef "a"
+                            }
+                            {
+                                Inputs =
+                                    { inputs "a" with
+                                        Domain = DomainId "d2"
+                                    }
+                                Evidence = syntheticRef "b"
+                            }
+                            {
+                                Inputs = { inputs "a" with Environment = Ci }
+                                Evidence = syntheticRef "c"
+                            }
+                        ]
 
-          test "dead-entry criterion is exactly F029 matches — duplicate worlds collapse to the newest" {
-              let world = inputs "build:tests"
-              // three entries of the SAME world (matches), oldest-first input ⇒ newest-first store
-              let store =
-                  ReuseStore
-                      [ { Inputs = world; Evidence = syntheticRef "v3" }
-                        { Inputs = world; Evidence = syntheticRef "v2" }
-                        { Inputs = world; Evidence = syntheticRef "v1" } ]
+                Expect.equal (EvidenceReuseStore.prune store) store "all worlds distinct ⇒ unchanged"
+            }
 
-              let pruned = EvidenceReuseStore.prune store
+            testPropertyWithConfig
+                fscheckConfig
+                "verdict-preserving: decide c (prune store) = decide c store for every candidate"
+                (fun (candidate: FreshnessInputs) (store: ReuseStore) ->
+                    EvidenceReuse.decide candidate (EvidenceReuseStore.prune store) =
+                        EvidenceReuse.decide candidate store)
 
-              match EvidenceReuse.entries pruned with
-              | [ e ] ->
-                  Expect.isTrue (FreshnessKey.matches e.Inputs world) "kept entry is the world"
-                  Expect.equal e.Evidence (syntheticRef "v3") "the NEWEST of the duplicate world survives"
-              | other -> failtestf "expected a single survivor, got %A" other
-          }
+            test "dead-entry criterion is exactly F029 matches — duplicate worlds collapse to the newest" {
+                let world = inputs "build:tests"
+                // three entries of the SAME world (matches), oldest-first input ⇒ newest-first store
+                let store =
+                    ReuseStore
+                        [
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "v3"
+                            }
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "v2"
+                            }
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "v1"
+                            }
+                        ]
 
-          test "totality: empty / singleton / all-superseded never throw" {
-              Expect.equal (EvidenceReuseStore.prune EvidenceReuse.empty) EvidenceReuse.empty "empty ⇒ empty"
+                let pruned = EvidenceReuseStore.prune store
 
-              let singleton = ReuseStore [ { Inputs = inputs "a"; Evidence = syntheticRef "a" } ]
-              Expect.equal (EvidenceReuseStore.prune singleton) singleton "singleton unchanged"
+                match EvidenceReuse.entries pruned with
+                | [ e ] ->
+                    Expect.isTrue (FreshnessKey.matches e.Inputs world) "kept entry is the world"
+                    Expect.equal e.Evidence (syntheticRef "v3") "the NEWEST of the duplicate world survives"
+                | other -> failtestf "expected a single survivor, got %A" other
+            }
 
-              let world = inputs "x"
+            test "totality: empty / singleton / all-superseded never throw" {
+                Expect.equal (EvidenceReuseStore.prune EvidenceReuse.empty) EvidenceReuse.empty "empty ⇒ empty"
 
-              let allSuperseded =
-                  ReuseStore
-                      [ { Inputs = world; Evidence = syntheticRef "n" }
-                        { Inputs = world; Evidence = syntheticRef "o1" }
-                        { Inputs = world; Evidence = syntheticRef "o2" } ]
+                let singleton =
+                    ReuseStore
+                        [
+                            {
+                                Inputs = inputs "a"
+                                Evidence = syntheticRef "a"
+                            }
+                        ]
 
-              Expect.equal (EvidenceReuse.entries (EvidenceReuseStore.prune allSuperseded) |> List.length) 1 "all-superseded collapses to one"
-          } ]
+                Expect.equal (EvidenceReuseStore.prune singleton) singleton "singleton unchanged"
+
+                let world = inputs "x"
+
+                let allSuperseded =
+                    ReuseStore
+                        [
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "n"
+                            }
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "o1"
+                            }
+                            {
+                                Inputs = world
+                                Evidence = syntheticRef "o2"
+                            }
+                        ]
+
+                Expect.equal
+                    (EvidenceReuse.entries (EvidenceReuseStore.prune allSuperseded) |> List.length)
+                    1
+                    "all-superseded collapses to one"
+            }
+        ]

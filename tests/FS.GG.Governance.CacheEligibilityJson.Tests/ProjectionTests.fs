@@ -22,6 +22,7 @@ let private verdictShape (v: System.Text.Json.JsonElement) =
     | "reusable" -> Reusable(EvidenceRef(verdictEvidence v))
     | "mustRecompute" ->
         let c = verdictCause v
+
         match causeKind c with
         | "noPriorEvidence" -> MustRecompute NoPriorEvidence
         | "inputsChanged" ->
@@ -33,6 +34,7 @@ let private verdictShape (v: System.Text.Json.JsonElement) =
                     |> List.tryFind (fun (cat, _) -> categoryToken cat = tok)
                     |> Option.map fst
                     |> Option.defaultWith (fun () -> failwithf "unknown category token %s" tok))
+
             MustRecompute(InputsChanged cats)
         | other -> failwithf "unknown cause kind %s" other
     | other -> failwithf "unknown verdict kind %s" other
@@ -41,66 +43,94 @@ let private verdictShape (v: System.Text.Json.JsonElement) =
 let tests =
     testList
         "Projection"
-        [ test "one entry per report entry, gate + verdict tracing back, in order (L-R1)" {
-              let r = report [ candidate (gid "docs" "lint") baseInputs ] exactStore
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              let es = CacheEligibility.entries r
-              let rendered = entriesOf doc
+        [
+            test "one entry per report entry, gate + verdict tracing back, in order (L-R1)" {
+                let r = report [ candidate (gid "docs" "lint") baseInputs ] exactStore
+                use doc = parse (CacheEligibilityJson.ofReport r)
+                let es = CacheEligibility.entries r
+                let rendered = entriesOf doc
 
-              Expect.equal rendered.Length (List.length es) "exactly one rendered entry per report entry"
+                Expect.equal rendered.Length (List.length es) "exactly one rendered entry per report entry"
 
-              List.iteri
-                  (fun i (e: CacheEligibilityEntry) ->
-                      let rE = rendered.[i]
-                      Expect.equal (entryGate rE) (gateIdValue e.Gate) (sprintf "entry %d gate verbatim" i)
-                      Expect.equal (verdictShape (entryVerdict rE)) e.Verdict (sprintf "entry %d verdict tracing back" i))
-                  es
-          }
+                List.iteri
+                    (fun i (e: CacheEligibilityEntry) ->
+                        let rE = rendered.[i]
+                        Expect.equal (entryGate rE) (gateIdValue e.Gate) (sprintf "entry %d gate verbatim" i)
 
-          testPropertyWithConfig fscheckConfig "entries length + gate sequence equal the report's (L-R1, FsCheck)" (fun (r: CacheEligibilityReport) ->
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              let es = CacheEligibility.entries r
-              let rendered = entriesOf doc
-              rendered.Length = List.length es
-              && (rendered |> List.map entryGate) = (es |> List.map (fun e -> gateIdValue e.Gate)))
+                        Expect.equal
+                            (verdictShape (entryVerdict rE))
+                            e.Verdict
+                            (sprintf "entry %d verdict tracing back" i))
+                    es
+            }
 
-          test "reusable carries its evidence verbatim, no cause field (L-R3)" {
-              let r = report [ candidate (gid "docs" "lint") baseInputs ] (storeOf [ baseInputs, refA ])
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              let v = entryVerdict (List.exactlyOne (entriesOf doc))
-              Expect.equal (verdictKind v) "reusable" "kind reusable"
-              Expect.equal (verdictEvidence v) (EvidenceReuse.referenceValue refA) "evidence is referenceValue ref verbatim"
-              Expect.isFalse (hasField v "cause") "reusable verdict has no cause field"
-          }
+            testPropertyWithConfig
+                fscheckConfig
+                "entries length + gate sequence equal the report's (L-R1, FsCheck)"
+                (fun (r: CacheEligibilityReport) ->
+                    use doc = parse (CacheEligibilityJson.ofReport r)
+                    let es = CacheEligibility.entries r
+                    let rendered = entriesOf doc
 
-          test "mustRecompute / noPriorEvidence, no evidence field (L-R4)" {
-              let r = report [ candidate (gid "security" "scan") baseInputs ] EvidenceReuse.empty
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              let v = entryVerdict (List.exactlyOne (entriesOf doc))
-              Expect.equal (verdictKind v) "mustRecompute" "kind mustRecompute"
-              Expect.isFalse (hasField v "evidence") "mustRecompute verdict has no evidence field"
-              Expect.equal (causeKind (verdictCause v)) "noPriorEvidence" "cause noPriorEvidence"
-          }
+                    rendered.Length = List.length es
+                    && (rendered |> List.map entryGate) = (es |> List.map (fun e -> gateIdValue e.Gate)))
 
-          test "mustRecompute / inputsChanged names exactly the categories in order (L-R4)" {
-              // RuleHash + Head moved against a recorded exact-match base ⇒ InputsChanged [ruleHash; headRevision].
-              let moved = baseInputs |> (fun i -> { i with RuleHash = RuleHash "r2" }) |> (fun i -> { i with Head = Revision "ddd" })
-              let r = report [ candidate (gid "build" "tests") moved ] (storeOf [ baseInputs, refA ])
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              let v = entryVerdict (List.exactlyOne (entriesOf doc))
-              Expect.equal (verdictKind v) "mustRecompute" "kind mustRecompute"
-              let cats = causeCategories (verdictCause v)
-              // assert against the report's own carried order via categoryToken
-              let expected =
-                  match (CacheEligibility.entries r |> List.exactlyOne).Verdict with
-                  | MustRecompute(InputsChanged cs) -> cs |> List.map categoryToken
-                  | other -> failwithf "expected InputsChanged, got %A" other
-              Expect.equal cats expected "categories are categoryToken of the report's cats, in order"
-              Expect.equal cats [ "ruleHash"; "headRevision" ] "the worked-example tokens, in report order"
-          }
+            test "reusable carries its evidence verbatim, no cause field (L-R3)" {
+                let r =
+                    report [ candidate (gid "docs" "lint") baseInputs ] (storeOf [ baseInputs, refA ])
 
-          test "gate id rendered verbatim across a ':' separator (L-R6)" {
-              let r = report [ candidate (gid "build" "tests") baseInputs ] EvidenceReuse.empty
-              use doc = parse (CacheEligibilityJson.ofReport r)
-              Expect.equal (entryGate (List.exactlyOne (entriesOf doc))) "build:tests" "gate id verbatim, never re-parsed"
-          } ]
+                use doc = parse (CacheEligibilityJson.ofReport r)
+                let v = entryVerdict (List.exactlyOne (entriesOf doc))
+                Expect.equal (verdictKind v) "reusable" "kind reusable"
+
+                Expect.equal
+                    (verdictEvidence v)
+                    (EvidenceReuse.referenceValue refA)
+                    "evidence is referenceValue ref verbatim"
+
+                Expect.isFalse (hasField v "cause") "reusable verdict has no cause field"
+            }
+
+            test "mustRecompute / noPriorEvidence, no evidence field (L-R4)" {
+                let r = report [ candidate (gid "security" "scan") baseInputs ] EvidenceReuse.empty
+                use doc = parse (CacheEligibilityJson.ofReport r)
+                let v = entryVerdict (List.exactlyOne (entriesOf doc))
+                Expect.equal (verdictKind v) "mustRecompute" "kind mustRecompute"
+                Expect.isFalse (hasField v "evidence") "mustRecompute verdict has no evidence field"
+                Expect.equal (causeKind (verdictCause v)) "noPriorEvidence" "cause noPriorEvidence"
+            }
+
+            test "mustRecompute / inputsChanged names exactly the categories in order (L-R4)" {
+                // RuleHash + Head moved against a recorded exact-match base ⇒ InputsChanged [ruleHash; headRevision].
+                let moved =
+                    baseInputs
+                    |> (fun i -> { i with RuleHash = RuleHash "r2" })
+                    |> (fun i -> { i with Head = Revision "ddd" })
+
+                let r =
+                    report [ candidate (gid "build" "tests") moved ] (storeOf [ baseInputs, refA ])
+
+                use doc = parse (CacheEligibilityJson.ofReport r)
+                let v = entryVerdict (List.exactlyOne (entriesOf doc))
+                Expect.equal (verdictKind v) "mustRecompute" "kind mustRecompute"
+                let cats = causeCategories (verdictCause v)
+                // assert against the report's own carried order via categoryToken
+                let expected =
+                    match (CacheEligibility.entries r |> List.exactlyOne).Verdict with
+                    | MustRecompute(InputsChanged cs) -> cs |> List.map categoryToken
+                    | other -> failwithf "expected InputsChanged, got %A" other
+
+                Expect.equal cats expected "categories are categoryToken of the report's cats, in order"
+                Expect.equal cats [ "ruleHash"; "headRevision" ] "the worked-example tokens, in report order"
+            }
+
+            test "gate id rendered verbatim across a ':' separator (L-R6)" {
+                let r = report [ candidate (gid "build" "tests") baseInputs ] EvidenceReuse.empty
+                use doc = parse (CacheEligibilityJson.ofReport r)
+
+                Expect.equal
+                    (entryGate (List.exactlyOne (entriesOf doc)))
+                    "build:tests"
+                    "gate id verbatim, never re-parsed"
+            }
+        ]

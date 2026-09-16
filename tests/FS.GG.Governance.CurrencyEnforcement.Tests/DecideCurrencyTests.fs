@@ -15,42 +15,65 @@ open FS.GG.Governance.CurrencyEnforcement.Tests.Support
 let tests =
     testList
         "CurrencyEnforcement.decideCurrency"
-        [ test "matching recorded vs sensed ⇒ Current" {
-              let d = decideCurrency (entry "v") (Some([ art "h1"; art "h2" ], ver "g1")) (Ok([ art "h1"; art "h2" ], ver "g1"))
-              Expect.equal d.Status Current "matching inputs are Current"
-              Expect.equal d.Drifted [] "no drifted categories"
-          }
+        [
+            test "matching recorded vs sensed ⇒ Current" {
+                let d =
+                    decideCurrency
+                        (entry "v")
+                        (Some([ art "h1"; art "h2" ], ver "g1"))
+                        (Ok([ art "h1"; art "h2" ], ver "g1"))
 
-          test "covered-artifacts are compared as a SET (reorder ⇒ Current)" {
-              let d = decideCurrency (entry "v") (Some([ art "h1"; art "h2" ], ver "g1")) (Ok([ art "h2"; art "h1" ], ver "g1"))
-              Expect.equal d.Status Current "set comparison ignores order (F029 FR-004)"
-          }
+                Expect.equal d.Status Current "matching inputs are Current"
+                Expect.equal d.Drifted [] "no drifted categories"
+            }
 
-          test "a drifted source-digest set ⇒ WouldRegenerate [CoveredArtifactsCat]" {
-              let d = decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h2" ], ver "g1"))
-              Expect.equal d.Status (WouldRegenerate [ CoveredArtifactsCat ]) "source-digest drift"
-              Expect.equal d.Drifted [ CoveredArtifactsCat ] "drifted carries the category"
-          }
+            test "covered-artifacts are compared as a SET (reorder ⇒ Current)" {
+                let d =
+                    decideCurrency
+                        (entry "v")
+                        (Some([ art "h1"; art "h2" ], ver "g1"))
+                        (Ok([ art "h2"; art "h1" ], ver "g1"))
 
-          test "a drifted generator version ⇒ WouldRegenerate [GeneratorVersionCat]" {
-              let d = decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h1" ], ver "g2"))
-              Expect.equal d.Status (WouldRegenerate [ GeneratorVersionCat ]) "generator-version drift"
-          }
+                Expect.equal d.Status Current "set comparison ignores order (F029 FR-004)"
+            }
 
-          test "both drifting ⇒ both categories in fixed key-encoding order" {
-              let d = decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h2" ], ver "g2"))
-              Expect.equal d.Drifted [ CoveredArtifactsCat; GeneratorVersionCat ] "covered-artifacts before generator-version"
-          }
+            test "a drifted source-digest set ⇒ WouldRegenerate [CoveredArtifactsCat]" {
+                let d =
+                    decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h2" ], ver "g1"))
 
-          test "a sensed Error ⇒ StaleUnresolved carrying the reason, never Current (FR-008)" {
-              let d = decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Error "provenance lock unreadable")
-              Expect.equal d.Status (StaleUnresolved "provenance lock unreadable") "carries the reason verbatim"
-          }
+                Expect.equal d.Status (WouldRegenerate [ CoveredArtifactsCat ]) "source-digest drift"
+                Expect.equal d.Drifted [ CoveredArtifactsCat ] "drifted carries the category"
+            }
 
-          test "no recorded provenance ⇒ StaleUnresolved, never silently passed (FR-008)" {
-              let d = decideCurrency (entry "v") None (Ok([ art "h1" ], ver "g1"))
+            test "a drifted generator version ⇒ WouldRegenerate [GeneratorVersionCat]" {
+                let d =
+                    decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h1" ], ver "g2"))
 
-              match d.Status with
-              | StaleUnresolved _ -> ()
-              | other -> failtestf "expected StaleUnresolved, got %A" other
-          } ]
+                Expect.equal d.Status (WouldRegenerate [ GeneratorVersionCat ]) "generator-version drift"
+            }
+
+            test "both drifting ⇒ both categories in fixed key-encoding order" {
+                let d =
+                    decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Ok([ art "h2" ], ver "g2"))
+
+                Expect.equal
+                    d.Drifted
+                    [ CoveredArtifactsCat; GeneratorVersionCat ]
+                    "covered-artifacts before generator-version"
+            }
+
+            test "a sensed Error ⇒ StaleUnresolved carrying the reason, never Current (FR-008)" {
+                let d =
+                    decideCurrency (entry "v") (Some([ art "h1" ], ver "g1")) (Error "provenance lock unreadable")
+
+                Expect.equal d.Status (StaleUnresolved "provenance lock unreadable") "carries the reason verbatim"
+            }
+
+            test "no recorded provenance ⇒ StaleUnresolved, never silently passed (FR-008)" {
+                let d = decideCurrency (entry "v") None (Ok([ art "h1" ], ver "g1"))
+
+                match d.Status with
+                | StaleUnresolved _ -> ()
+                | other -> failtestf "expected StaleUnresolved, got %A" other
+            }
+        ]

@@ -11,10 +11,22 @@ open FS.GG.Governance.Snapshot.Tests.Support
 
 let private richRaw =
     { baseRaw with
-        DiffRaw = Ok(znul [ "M"; "src/b.fs" ] + znul [ "A"; "src/a.fs" ] + znul [ "R100"; "old.fs"; "z.fs" ])
+        DiffRaw =
+            Ok(
+                znul [ "M"; "src/b.fs" ]
+                + znul [ "A"; "src/a.fs" ]
+                + znul [ "R100"; "old.fs"; "z.fs" ]
+            )
         StatusRaw = Ok(znul [ "?? u.fs" ] + znul [ "M  d.fs" ])
         BranchRaw = Ok "main"
-        RawCi = Some { Environment = CiEnvironment.Ci; PrLabels = [ "b"; "a" ]; RequiredStatusChecks = [ "y"; "x" ] } }
+        RawCi =
+            Some
+                {
+                    Environment = CiEnvironment.Ci
+                    PrLabels = [ "b"; "a" ]
+                    RequiredStatusChecks = [ "y"; "x" ]
+                }
+    }
 
 /// Keep only generated strings that reduce to a safe, distinct path segment.
 let private safeSegments (raw: string list) : string list =
@@ -31,26 +43,40 @@ let private safeSegments (raw: string list) : string list =
 let tests =
     testList
         "Determinism"
-        [ test "assembling the same RawSensing twice yields a structurally identical snapshot (SC-002)" {
-              Expect.equal (Snapshot.assemble richRaw) (Snapshot.assemble richRaw) "pure ⇒ identical"
-          }
+        [
+            test "assembling the same RawSensing twice yields a structurally identical snapshot (SC-002)" {
+                Expect.equal (Snapshot.assemble richRaw) (Snapshot.assemble richRaw) "pure ⇒ identical"
+            }
 
-          testProperty "permuting diff records yields an identical snapshot (SC-003)"
-          <| fun (raw: string list) ->
-              let segs = safeSegments raw
+            testProperty "permuting diff records yields an identical snapshot (SC-003)"
+            <| fun (raw: string list) ->
+                let segs = safeSegments raw
 
-              let diffOf (order: string list) =
-                  order |> List.map (fun p -> znul [ "A"; "src/" + p + ".fs" ]) |> String.concat ""
+                let diffOf (order: string list) =
+                    order
+                    |> List.map (fun p -> znul [ "A"; "src/" + p + ".fs" ])
+                    |> String.concat ""
 
-              let asm order = Snapshot.assemble { baseRaw with DiffRaw = Ok(diffOf order) }
-              asm segs = asm (List.rev segs)
+                let asm order =
+                    Snapshot.assemble
+                        { baseRaw with
+                            DiffRaw = Ok(diffOf order)
+                        }
 
-          testProperty "permuting status records yields an identical snapshot (SC-003)"
-          <| fun (raw: string list) ->
-              let segs = safeSegments raw
+                asm segs = asm (List.rev segs)
 
-              let statusOf (order: string list) =
-                  order |> List.map (fun p -> znul [ "?? " + p + ".fs" ]) |> String.concat ""
+            testProperty "permuting status records yields an identical snapshot (SC-003)"
+            <| fun (raw: string list) ->
+                let segs = safeSegments raw
 
-              let asm order = Snapshot.assemble { baseRaw with StatusRaw = Ok(statusOf order) }
-              asm segs = asm (List.rev segs) ]
+                let statusOf (order: string list) =
+                    order |> List.map (fun p -> znul [ "?? " + p + ".fs" ]) |> String.concat ""
+
+                let asm order =
+                    Snapshot.assemble
+                        { baseRaw with
+                            StatusRaw = Ok(statusOf order)
+                        }
+
+                asm segs = asm (List.rev segs)
+        ]

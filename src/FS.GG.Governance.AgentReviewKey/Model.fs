@@ -22,13 +22,15 @@ module Model =
     type QuestionText = QuestionText of string
 
     type AgentReviewInputs =
-        { Model: ModelId
-          ModelVersion: ModelVersion
-          Config: ModelConfig
-          PromptHash: ReviewerPromptHash
-          Question: QuestionText
-          Check: RuleHash
-          ReviewedArtifacts: ArtifactHash list }
+        {
+            Model: ModelId
+            ModelVersion: ModelVersion
+            Config: ModelConfig
+            PromptHash: ReviewerPromptHash
+            Question: QuestionText
+            Check: RuleHash
+            ReviewedArtifacts: ArtifactHash list
+        }
 
     type CacheKey = CacheKey of string
 

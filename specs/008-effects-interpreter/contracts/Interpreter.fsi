@@ -42,8 +42,10 @@ type Judge = ReviewTask -> Result<JudgeVerdict, string>
 /// → `ReviewStoreUnavailable` (FR-012). Tests back it with a REAL local-filesystem store
 /// under a temp directory (Principle V).
 type ReviewStore =
-    { Load: string -> Result<RecordedReview option, string>
-      Save: RecordedReview -> Result<unit, string> }
+    {
+        Load: string -> Result<RecordedReview option, string>
+        Save: RecordedReview -> Result<unit, string>
+    }
 
 /// The injected SINK for the F06 edge outputs (FR-015): the interpreter hands it each
 /// `Output` value (the JSON explanation, the JSON contract, the rendered route) to persist
@@ -54,10 +56,12 @@ type OutputSink = Output -> unit
 /// faked/realised in tests (a temp-dir `Read`, a fake `Judge`, a real-fs `Store`, a
 /// capturing `Sink`) so no real network or agent is ever reached (SC-009).
 type Ports =
-    { Read: ArtifactReader
-      Judge: Judge
-      Store: ReviewStore
-      Sink: OutputSink }
+    {
+        Read: ArtifactReader
+        Judge: Judge
+        Store: ReviewStore
+        Sink: OutputSink
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Interpreter =
@@ -83,8 +87,4 @@ module Interpreter =
     /// TOTAL: returns a well-formed `Model` even when every effect fails (no driven input makes
     /// it throw or reach a malformed `Model` — FR-012, SC-006); reaches NO real network/agent
     /// (the ports are injected — FR-017, SC-009).
-    val run:
-        ports: Ports ->
-        config: LoopConfig<'change, 'fact> ->
-        change: 'change ->
-            Model<'fact>
+    val run: ports: Ports -> config: LoopConfig<'change, 'fact> -> change: 'change -> Model<'fact>

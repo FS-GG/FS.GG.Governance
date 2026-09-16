@@ -13,14 +13,16 @@ open FS.GG.Governance.Cli.Tests.RenderSupport
 let tests =
     testList
         "DegradeToPlain"
-        [ test "emit Plain writes the precomputed plain string verbatim" {
-              let console, sw = plainConsole 120
-              RichRender.emit RenderMode.Plain blockedView blockedPlain console
-              Expect.equal (sw.ToString()) blockedPlain "Plain mode is byte-equal to the HumanText projection"
-          }
+        [
+            test "emit Plain writes the precomputed plain string verbatim" {
+                let console, sw = plainConsole 120
+                RichRender.emit RenderMode.Plain blockedView blockedPlain console
+                Expect.equal (sw.ToString()) blockedPlain "Plain mode is byte-equal to the HumanText projection"
+            }
 
-          test "emit Plain output contains no ANSI escape" {
-              let console, sw = colorConsole 120
-              RichRender.emit RenderMode.Plain blockedView blockedPlain console
-              Expect.isFalse (sw.ToString().Contains esc) "the degrade path is ANSI-free even on a color console"
-          } ]
+            test "emit Plain output contains no ANSI escape" {
+                let console, sw = colorConsole 120
+                RichRender.emit RenderMode.Plain blockedView blockedPlain console
+                Expect.isFalse (sw.ToString().Contains esc) "the degrade path is ANSI-free even on a color console"
+            }
+        ]

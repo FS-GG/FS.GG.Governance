@@ -12,15 +12,20 @@ open FS.GG.Governance.Enforcement.Tests.Support
 let tests =
     testList
         "Determinism"
-        [ test "twice-run derivation is byte-identical for every input in the full sweep (SC-004)" {
-              for i in allInputs do
-                  let a = deriveEffectiveSeverity i
-                  let b = deriveEffectiveSeverity i
-                  Expect.equal a.EffectiveSeverity b.EffectiveSeverity (sprintf "effective severity stable for %A" i)
-                  Expect.equal a.Reason b.Reason (sprintf "reason string stable for %A" i)
-          }
+        [
+            test "twice-run derivation is byte-identical for every input in the full sweep (SC-004)" {
+                for i in allInputs do
+                    let a = deriveEffectiveSeverity i
+                    let b = deriveEffectiveSeverity i
+                    Expect.equal a.EffectiveSeverity b.EffectiveSeverity (sprintf "effective severity stable for %A" i)
+                    Expect.equal a.Reason b.Reason (sprintf "reason string stable for %A" i)
+            }
 
-          testPropertyWithConfig fsCheckConfig "twice-run derivation is byte-identical for generated inputs (SC-004)" (fun (i: EnforcementInput) ->
-              let a = deriveEffectiveSeverity i
-              let b = deriveEffectiveSeverity i
-              a.EffectiveSeverity = b.EffectiveSeverity && a.Reason = b.Reason) ]
+            testPropertyWithConfig
+                fsCheckConfig
+                "twice-run derivation is byte-identical for generated inputs (SC-004)"
+                (fun (i: EnforcementInput) ->
+                    let a = deriveEffectiveSeverity i
+                    let b = deriveEffectiveSeverity i
+                    a.EffectiveSeverity = b.EffectiveSeverity && a.Reason = b.Reason)
+        ]

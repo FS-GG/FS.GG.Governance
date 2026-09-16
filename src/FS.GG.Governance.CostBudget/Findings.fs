@@ -27,10 +27,12 @@ module Findings =
         | Synthetic
 
     type CostFinding =
-        { Gate: GateId
-          Kind: CostFindingKind
-          BaseSeverity: Severity
-          Message: string }
+        {
+            Gate: GateId
+            Kind: CostFindingKind
+            BaseSeverity: Severity
+            Message: string
+        }
 
     let kindToken (kind: CostFindingKind) : string =
         match kind with
@@ -59,10 +61,12 @@ module Findings =
         | NoEvidence -> sprintf "gate %s: no prior evidence to reuse" g
 
     let advisory (gate: GateId) (kind: CostFindingKind) : CostFinding =
-        { Gate = gate
-          Kind = kind
-          BaseSeverity = Advisory
-          Message = message gate kind }
+        {
+            Gate = gate
+            Kind = kind
+            BaseSeverity = Advisory
+            Message = message gate kind
+        }
 
     /// The cause-based finding (if any) for one entry: a `Stale` for a changed freshness dimension (whether
     /// the gate recomputed or was over-budget), a `NoEvidence` for a recompute that had nothing to reuse, and
@@ -92,11 +96,17 @@ module Findings =
             cause @ synthetic)
         |> List.sortWith (fun a b ->
             let c = String.CompareOrdinal(gateIdValue a.Gate, gateIdValue b.Gate)
-            if c <> 0 then c else compare (kindRank a.Kind) (kindRank b.Kind))
+
+            if c <> 0 then
+                c
+            else
+                compare (kindRank a.Kind) (kindRank b.Kind))
 
     let enforce (mode: RunMode) (profile: Profile) (finding: CostFinding) : EnforcementDecision =
         deriveEffectiveSeverity
-            { BaseSeverity = finding.BaseSeverity
-              Maturity = Warn
-              Mode = mode
-              Profile = profile }
+            {
+                BaseSeverity = finding.BaseSeverity
+                Maturity = Warn
+                Mode = mode
+                Profile = profile
+            }

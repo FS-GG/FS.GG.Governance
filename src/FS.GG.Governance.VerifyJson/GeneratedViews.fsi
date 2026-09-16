@@ -6,8 +6,8 @@
 
 namespace FS.GG.Governance.VerifyJson
 
-open System.Text.Json                          // Utf8JsonWriter
-open FS.GG.Governance.Enforcement.Enforcement  // EnforcementDecision
+open System.Text.Json // Utf8JsonWriter
+open FS.GG.Governance.Enforcement.Enforcement // EnforcementDecision
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module GeneratedViews =

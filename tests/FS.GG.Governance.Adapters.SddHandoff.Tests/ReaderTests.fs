@@ -23,142 +23,155 @@ let private messageOf (r: Result<Handoff, Diagnostic>) =
 let tests =
     testList
         "Reader"
-        [ test "well-formed v2.x handoff parses to Ok with every node state round-tripping" {
-              match Reader.parse (Fixtures.read "satisfied") with
-              | Error d -> failtestf "expected Ok, got Error %A" d
-              | Ok h ->
-                  Expect.equal h.ContractVersion "2.0.0" "contract version carried"
-                  Expect.equal h.SchemaVersion 1 "schema version carried"
-                  let states = h.Evidence.Nodes |> List.map (fun n -> n.State)
-                  Expect.contains states Real "real node round-trips"
-                  Expect.contains states Skipped "skipped node round-trips"
-                  Expect.equal h.Evidence.Dependencies [ ("test:unit", "build:lib") ] "dependency edge round-trips"
-                  Expect.isSome h.Readiness "readiness block present"
-          }
+        [
+            test "well-formed v2.x handoff parses to Ok with every node state round-tripping" {
+                match Reader.parse (Fixtures.read "satisfied") with
+                | Error d -> failtestf "expected Ok, got Error %A" d
+                | Ok h ->
+                    Expect.equal h.ContractVersion "2.0.0" "contract version carried"
+                    Expect.equal h.SchemaVersion 1 "schema version carried"
+                    let states = h.Evidence.Nodes |> List.map (fun n -> n.State)
+                    Expect.contains states Real "real node round-trips"
+                    Expect.contains states Skipped "skipped node round-trips"
+                    Expect.equal h.Evidence.Dependencies [ ("test:unit", "build:lib") ] "dependency edge round-trips"
+                    Expect.isSome h.Readiness "readiness block present"
+            }
 
-          test "every declared evidence-state token round-trips through parse (FR-003/004)" {
-              // pending/real/synthetic/failed/skipped straight-through; deferred/accepted-deferral map at
-              // the Mapping layer, but Reader must accept and carry them as DeclaredState tokens.
-              match Reader.parse (Fixtures.read "deferred") with
-              | Error d -> failtestf "expected Ok, got Error %A" d
-              | Ok h ->
-                  let byId id = h.Evidence.Nodes |> List.find (fun n -> n.Id = id)
-                  Expect.equal (byId "doc:api").State Deferred "deferred token parsed"
-                  Expect.equal (byId "perf:bench").State AcceptedDeferral "accepted-deferral token parsed"
-          }
+            test "every declared evidence-state token round-trips through parse (FR-003/004)" {
+                // pending/real/synthetic/failed/skipped straight-through; deferred/accepted-deferral map at
+                // the Mapping layer, but Reader must accept and carry them as DeclaredState tokens.
+                match Reader.parse (Fixtures.read "deferred") with
+                | Error d -> failtestf "expected Ok, got Error %A" d
+                | Ok h ->
+                    let byId id =
+                        h.Evidence.Nodes |> List.find (fun n -> n.Id = id)
 
-          test "unknown contractVersion major (3.0.0) yields VersionMismatch (FR-002)" {
-              let r = Reader.parse (Fixtures.read "v2-major")
-              Expect.equal (causeOf r) (Some VersionMismatch) "version-mismatch cause"
-          }
+                    Expect.equal (byId "doc:api").State Deferred "deferred token parsed"
+                    Expect.equal (byId "perf:bench").State AcceptedDeferral "accepted-deferral token parsed"
+            }
 
-          test "malformed JSON yields Malformed and never throws (FR-011)" {
-              let r = Reader.parse (Fixtures.read "malformed")
-              Expect.equal (causeOf r) (Some Malformed) "malformed cause"
-          }
+            test "unknown contractVersion major (3.0.0) yields VersionMismatch (FR-002)" {
+                let r = Reader.parse (Fixtures.read "v2-major")
+                Expect.equal (causeOf r) (Some VersionMismatch) "version-mismatch cause"
+            }
 
-          test "missing required field yields Malformed (FR-011)" {
-              let r = Reader.parse (Fixtures.read "missing-required")
-              Expect.equal (causeOf r) (Some Malformed) "missing-required → malformed cause"
-          }
+            test "malformed JSON yields Malformed and never throws (FR-011)" {
+                let r = Reader.parse (Fixtures.read "malformed")
+                Expect.equal (causeOf r) (Some Malformed) "malformed cause"
+            }
 
-          test "a node declaring state autoSynthetic yields AutoSyntheticDeclared (FR-005)" {
-              let r = Reader.parse (Fixtures.read "autoSynthetic")
-              Expect.equal (causeOf r) (Some AutoSyntheticDeclared) "autoSynthetic declared is its own distinct cause"
-          }
+            test "missing required field yields Malformed (FR-011)" {
+                let r = Reader.parse (Fixtures.read "missing-required")
+                Expect.equal (causeOf r) (Some Malformed) "missing-required → malformed cause"
+            }
 
-          test "diagnostic messages are distinct per cause (SC-004)" {
-              let vm = messageOf (Reader.parse (Fixtures.read "v2-major"))
-              let mal = messageOf (Reader.parse (Fixtures.read "malformed"))
-              let auto = messageOf (Reader.parse (Fixtures.read "autoSynthetic"))
-              Expect.isFalse (vm = mal) "version-mismatch vs malformed messages differ"
-              Expect.isFalse (vm = auto) "version-mismatch vs autoSynthetic messages differ"
-              Expect.isFalse (mal = auto) "malformed vs autoSynthetic messages differ"
-              Expect.isNotEmpty vm "version-mismatch message is descriptive"
-              Expect.isNotEmpty mal "malformed message is descriptive"
-              Expect.isNotEmpty auto "autoSynthetic message is descriptive"
-          }
+            test "a node declaring state autoSynthetic yields AutoSyntheticDeclared (FR-005)" {
+                let r = Reader.parse (Fixtures.read "autoSynthetic")
+                Expect.equal (causeOf r) (Some AutoSyntheticDeclared) "autoSynthetic declared is its own distinct cause"
+            }
 
-          test "parse never throws on garbage input" {
-              let r = Reader.parse { Source = "x"; Json = "  not json at all }{" }
-              Expect.equal (causeOf r) (Some Malformed) "garbage → Malformed, no throw"
-          }
+            test "diagnostic messages are distinct per cause (SC-004)" {
+                let vm = messageOf (Reader.parse (Fixtures.read "v2-major"))
+                let mal = messageOf (Reader.parse (Fixtures.read "malformed"))
+                let auto = messageOf (Reader.parse (Fixtures.read "autoSynthetic"))
+                Expect.isFalse (vm = mal) "version-mismatch vs malformed messages differ"
+                Expect.isFalse (vm = auto) "version-mismatch vs autoSynthetic messages differ"
+                Expect.isFalse (mal = auto) "malformed vs autoSynthetic messages differ"
+                Expect.isNotEmpty vm "version-mismatch message is descriptive"
+                Expect.isNotEmpty mal "malformed message is descriptive"
+                Expect.isNotEmpty auto "autoSynthetic message is descriptive"
+            }
 
-          test "a malformed dependency edge is REJECTED as Malformed, not silently dropped (ADPT-2)" {
-              // AutoSynthetic taint flows along dependency edges; a dropped edge could leave a
-              // downstream verdict resting on a synthetic node un-tainted. Every malformed v2 object
-              // shape must fail the whole handoff, mirroring the strict node fold.
-              let edge (dep: string) =
-                  sprintf
-                      """{ "contractVersion": "2.0.0",
+            test "parse never throws on garbage input" {
+                let r =
+                    Reader.parse
+                        {
+                            Source = "x"
+                            Json = "  not json at all }{"
+                        }
+
+                Expect.equal (causeOf r) (Some Malformed) "garbage → Malformed, no throw"
+            }
+
+            test "a malformed dependency edge is REJECTED as Malformed, not silently dropped (ADPT-2)" {
+                // AutoSynthetic taint flows along dependency edges; a dropped edge could leave a
+                // downstream verdict resting on a synthetic node un-tainted. Every malformed v2 object
+                // shape must fail the whole handoff, mirroring the strict node fold.
+                let edge (dep: string) =
+                    sprintf
+                        """{ "contractVersion": "2.0.0",
                            "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": [ %s ] } }"""
-                      dep
+                        dep
 
-              let cases =
-                  [ """{ "dependent": "a" }""", "missing dependency"
-                    """{ "dependency": "b" }""", "missing dependent"
-                    """{ "dependent": "a", "dependency": 5 }""", "non-string member"
-                    """[ "a", "b" ]""", "legacy tuple"
-                    "\"a:b\"", "scalar in place of an object" ]
+                let cases =
+                    [
+                        """{ "dependent": "a" }""", "missing dependency"
+                        """{ "dependency": "b" }""", "missing dependent"
+                        """{ "dependent": "a", "dependency": 5 }""", "non-string member"
+                        """[ "a", "b" ]""", "legacy tuple"
+                        "\"a:b\"", "scalar in place of an object"
+                    ]
 
-              for dep, label in cases do
-                  let r = Reader.parse { Source = "x"; Json = edge dep }
-                  Expect.equal (causeOf r) (Some Malformed) (sprintf "%s → Malformed, not dropped" label)
-          }
+                for dep, label in cases do
+                    let r = Reader.parse { Source = "x"; Json = edge dep }
+                    Expect.equal (causeOf r) (Some Malformed) (sprintf "%s → Malformed, not dropped" label)
+            }
 
-          test "a present-but-non-array 'dependencies' is Malformed (ADPT-2)" {
-              let json =
-                  """{ "contractVersion": "2.0.0",
+            test "a present-but-non-array 'dependencies' is Malformed (ADPT-2)" {
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": {} } }"""
 
-              let r = Reader.parse { Source = "x"; Json = json }
-              Expect.equal (causeOf r) (Some Malformed) "non-array dependencies → Malformed"
-          }
+                let r = Reader.parse { Source = "x"; Json = json }
+                Expect.equal (causeOf r) (Some Malformed) "non-array dependencies → Malformed"
+            }
 
-          test "an explicit-null or absent 'dependencies' is accepted as no edges (ADPT-2)" {
-              // `dependencies` is optional and carries no edges to drop, so null/absent must NOT be
-              // rejected — only a present, malformed *value* fails closed.
-              let nullDeps =
-                  """{ "contractVersion": "2.0.0",
+            test "an explicit-null or absent 'dependencies' is accepted as no edges (ADPT-2)" {
+                // `dependencies` is optional and carries no edges to drop, so null/absent must NOT be
+                // rejected — only a present, malformed *value* fails closed.
+                let nullDeps =
+                    """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ], "dependencies": null } }"""
 
-              let absentDeps =
-                  """{ "contractVersion": "2.0.0",
+                let absentDeps =
+                    """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ] } }"""
 
-              for json, label in [ nullDeps, "null"; absentDeps, "absent" ] do
-                  match Reader.parse { Source = "x"; Json = json } with
-                  | Error d -> failtestf "expected Ok for %s dependencies, got %A" label d
-                  | Ok h -> Expect.isEmpty h.Evidence.Dependencies (sprintf "%s dependencies → no edges" label)
-          }
+                for json, label in [ nullDeps, "null"; absentDeps, "absent" ] do
+                    match Reader.parse { Source = "x"; Json = json } with
+                    | Error d -> failtestf "expected Ok for %s dependencies, got %A" label d
+                    | Ok h -> Expect.isEmpty h.Evidence.Dependencies (sprintf "%s dependencies → no edges" label)
+            }
 
-          test "a well-formed dependency edge still round-trips (ADPT-2 happy path)" {
-              let json =
-                  """{ "contractVersion": "2.0.0",
+            test "a well-formed dependency edge still round-trips (ADPT-2 happy path)" {
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "evidence": { "nodes": [ { "id": "a", "state": "real" } ],
                                      "dependencies": [
                                        { "dependent": "a", "dependency": "b" },
                                        { "dependent": "c", "dependency": "d" }
                                      ] } }"""
 
-              match Reader.parse { Source = "x"; Json = json } with
-              | Error d -> failtestf "expected Ok, got Error %A" d
-              | Ok h -> Expect.equal h.Evidence.Dependencies [ ("a", "b"); ("c", "d") ] "edges carried in source order"
-          }
+                match Reader.parse { Source = "x"; Json = json } with
+                | Error d -> failtestf "expected Ok, got Error %A" d
+                | Ok h ->
+                    Expect.equal h.Evidence.Dependencies [ ("a", "b"); ("c", "d") ] "edges carried in source order"
+            }
 
-          test "unknown additive (minor) fields are ignored" {
-              let withExtra =
-                  """{ "contractVersion": "2.4.0", "schemaVersion": 1,
+            test "unknown additive (minor) fields are ignored" {
+                let withExtra =
+                    """{ "contractVersion": "2.4.0", "schemaVersion": 1,
                        "futureField": { "anything": 1 },
                        "evidence": { "nodes": [ { "id": "a", "state": "real", "newNodeField": true } ], "dependencies": [] } }"""
-              match Reader.parse { Source = "x"; Json = withExtra } with
-              | Error d -> failtestf "expected Ok ignoring unknown fields, got %A" d
-              | Ok h -> Expect.equal h.ContractVersion "2.4.0" "minor 2.x accepted, unknown fields ignored"
-          }
 
-          test "legacy producer without journey facts stays inside the compatibility window" {
-              let json =
-                  """{ "contractVersion": "2.0.0",
+                match Reader.parse { Source = "x"; Json = withExtra } with
+                | Error d -> failtestf "expected Ok ignoring unknown fields, got %A" d
+                | Ok h -> Expect.equal h.ContractVersion "2.4.0" "minor 2.x accepted, unknown fields ignored"
+            }
+
+            test "legacy producer without journey facts stays inside the compatibility window" {
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "generatorVersion": "FS.GG.SDD.Artifacts/0.29.1",
                        "evidence": { "nodes": [], "dependencies": [] },
                        "readiness": {
@@ -169,14 +182,14 @@ let tests =
                          "perViewState": []
                        } }"""
 
-              match Reader.parse { Source = "legacy"; Json = json } with
-              | Error diagnostic -> failtestf "legacy compatibility input must parse: %A" diagnostic
-              | Ok handoff -> Expect.isNone handoff.JourneyReadiness "absence is explicit, never inferred as zero"
-          }
+                match Reader.parse { Source = "legacy"; Json = json } with
+                | Error diagnostic -> failtestf "legacy compatibility input must parse: %A" diagnostic
+                | Ok handoff -> Expect.isNone handoff.JourneyReadiness "absence is explicit, never inferred as zero"
+            }
 
-          test "SDD 0.30 required journey fact cannot be absent" {
-              let json =
-                  """{ "contractVersion": "2.0.0",
+            test "SDD 0.30 required journey fact cannot be absent" {
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
                        "evidence": { "nodes": [], "dependencies": [] },
                        "readiness": {
@@ -187,15 +200,15 @@ let tests =
                          "perViewState": []
                        } }"""
 
-              let result = Reader.parse { Source = "required"; Json = json }
-              Expect.equal (causeOf result) (Some Malformed) "required absence fails closed"
-              Expect.stringContains (messageOf result) "journeyObligationsUnmet" "the missing fact is named"
-          }
+                let result = Reader.parse { Source = "required"; Json = json }
+                Expect.equal (causeOf result) (Some Malformed) "required absence fails closed"
+                Expect.stringContains (messageOf result) "journeyObligationsUnmet" "the missing fact is named"
+            }
 
-          test "negative and contradictory journey counts fail closed" {
-              let json count disposition =
-                  sprintf
-                      """{ "contractVersion": "2.0.0",
+            test "negative and contradictory journey counts fail closed" {
+                let json count disposition =
+                    sprintf
+                        """{ "contractVersion": "2.0.0",
                            "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
                            "evidence": { "nodes": [], "dependencies": [] },
                            "readiness": {
@@ -205,20 +218,32 @@ let tests =
                              "blockingDiagnosticIds": [],
                              "perViewState": []
                            } }"""
-                      disposition
-                      count
+                        disposition
+                        count
 
-              let negative = Reader.parse { Source = "negative"; Json = json -1 "needsShipCorrection" }
-              Expect.equal (causeOf negative) (Some Malformed) "negative count is malformed"
+                let negative =
+                    Reader.parse
+                        {
+                            Source = "negative"
+                            Json = json -1 "needsShipCorrection"
+                        }
 
-              let contradiction = Reader.parse { Source = "contradiction"; Json = json 1 "shipReady" }
-              Expect.equal (causeOf contradiction) (Some Malformed) "ship ready with unmet journey is malformed"
-          }
+                Expect.equal (causeOf negative) (Some Malformed) "negative count is malformed"
 
-          test "mixed readiness diagnostics preserve only the canonical journey provenance" {
-              // SYNTHETIC: compact mixed-diagnostic handoff isolates canonical journey-id filtering.
-              let json =
-                  """{ "contractVersion": "2.0.0",
+                let contradiction =
+                    Reader.parse
+                        {
+                            Source = "contradiction"
+                            Json = json 1 "shipReady"
+                        }
+
+                Expect.equal (causeOf contradiction) (Some Malformed) "ship ready with unmet journey is malformed"
+            }
+
+            test "mixed readiness diagnostics preserve only the canonical journey provenance" {
+                // SYNTHETIC: compact mixed-diagnostic handoff isolates canonical journey-id filtering.
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
                        "evidence": { "nodes": [], "dependencies": [] },
                        "readiness": {
@@ -239,22 +264,28 @@ let tests =
                            "correction": "recapture", "relatedIds": [ "FR-JOURNEY" ] }
                        ] }"""
 
-              match Reader.parse { Source = "mixed"; Json = json } with
-              | Error diagnostic -> failtestf "mixed diagnostic input must parse: %A" diagnostic
-              | Ok handoff ->
-                  let readiness = handoff.JourneyReadiness |> Option.get
-                  Expect.equal readiness.Disposition JourneyReceiptInvalid "unrelated stale/missing ids cannot reclassify provenance"
-                  Expect.equal
-                      readiness.BlockingDiagnosticIds
-                      [ "evidence.productionJourneyReceiptInvalid" ]
-                      "only canonical journey diagnostics are preserved"
-                  Expect.equal readiness.RelatedIds [ "FR-JOURNEY" ] "unrelated diagnostic provenance is excluded"
-          }
+                match Reader.parse { Source = "mixed"; Json = json } with
+                | Error diagnostic -> failtestf "mixed diagnostic input must parse: %A" diagnostic
+                | Ok handoff ->
+                    let readiness = handoff.JourneyReadiness |> Option.get
 
-          test "zero unmet journeys with a canonical receipt failure is contradictory" {
-              // SYNTHETIC: compact contradictory producer shape exercises the fail-closed boundary.
-              let json =
-                  """{ "contractVersion": "2.0.0",
+                    Expect.equal
+                        readiness.Disposition
+                        JourneyReceiptInvalid
+                        "unrelated stale/missing ids cannot reclassify provenance"
+
+                    Expect.equal
+                        readiness.BlockingDiagnosticIds
+                        [ "evidence.productionJourneyReceiptInvalid" ]
+                        "only canonical journey diagnostics are preserved"
+
+                    Expect.equal readiness.RelatedIds [ "FR-JOURNEY" ] "unrelated diagnostic provenance is excluded"
+            }
+
+            test "zero unmet journeys with a canonical receipt failure is contradictory" {
+                // SYNTHETIC: compact contradictory producer shape exercises the fail-closed boundary.
+                let json =
+                    """{ "contractVersion": "2.0.0",
                        "generatorVersion": "FS.GG.SDD.Artifacts/0.30.0",
                        "evidence": { "nodes": [], "dependencies": [] },
                        "readiness": {
@@ -265,45 +296,59 @@ let tests =
                          "perViewState": []
                        } }"""
 
-              let result = Reader.parse { Source = "zero-contradiction"; Json = json }
-              Expect.equal (causeOf result) (Some Malformed) "zero plus canonical journey failure rejects"
-              Expect.stringContains (messageOf result) "contradicts" "the producer contradiction is actionable"
-          }
+                let result =
+                    Reader.parse
+                        {
+                            Source = "zero-contradiction"
+                            Json = json
+                        }
 
-          test "real v2 projection parses typed performance evidence and flat governed references" {
-              match Reader.parse (Fixtures.read "performance-v2") with
-              | Error d -> failtestf "expected v2 producer-shaped fixture to parse, got %A" d
-              | Ok handoff ->
-                  Expect.equal handoff.PerformanceEvidence.Length 1 "typed performance item parsed"
-                  Expect.equal handoff.PerformanceEvidence.Head.Intent.Value.Id "PI-001" "typed intent carried"
-                  Expect.equal handoff.Evidence.Dependencies [ ("task:T-1", "evidence:EV-PERF") ] "object edge parsed"
-                  Expect.equal handoff.GovernedReferences.Length 1 "flat governed reference parsed"
-          }
+                Expect.equal (causeOf result) (Some Malformed) "zero plus canonical journey failure rejects"
+                Expect.stringContains (messageOf result) "contradicts" "the producer contradiction is actionable"
+            }
 
-          test "publish-smoke handoffs stay valid v2 fixtures" {
-              // The release workflow consumes these separately from the adapter test fixtures. Keep
-              // them behind the same strict Reader so a contract-version bump cannot leave a legacy
-              // edge shape that turns the nominal passing smoke into a false release block.
-              let smokeRoot =
-                  Path.GetFullPath(Path.Combine(__SOURCE_DIRECTORY__, "..", "cli-publish-smoke", "fixtures"))
+            test "real v2 projection parses typed performance evidence and flat governed references" {
+                match Reader.parse (Fixtures.read "performance-v2") with
+                | Error d -> failtestf "expected v2 producer-shaped fixture to parse, got %A" d
+                | Ok handoff ->
+                    Expect.equal handoff.PerformanceEvidence.Length 1 "typed performance item parsed"
+                    Expect.equal handoff.PerformanceEvidence.Head.Intent.Value.Id "PI-001" "typed intent carried"
+                    Expect.equal handoff.Evidence.Dependencies [ ("task:T-1", "evidence:EV-PERF") ] "object edge parsed"
+                    Expect.equal handoff.GovernedReferences.Length 1 "flat governed reference parsed"
+            }
 
-              let fixtures =
-                  [ "failing-handoff", "wi-089-fail"
-                    "light-failing-handoff", "wi-090-light"
-                    "passing-handoff", "wi-089-pass" ]
+            test "publish-smoke handoffs stay valid v2 fixtures" {
+                // The release workflow consumes these separately from the adapter test fixtures. Keep
+                // them behind the same strict Reader so a contract-version bump cannot leave a legacy
+                // edge shape that turns the nominal passing smoke into a false release block.
+                let smokeRoot =
+                    Path.GetFullPath(Path.Combine(__SOURCE_DIRECTORY__, "..", "cli-publish-smoke", "fixtures"))
 
-              for fixture, workItem in fixtures do
-                  let path =
-                      Path.Combine(smokeRoot, fixture, "readiness", workItem, "governance-handoff.json")
+                let fixtures =
+                    [
+                        "failing-handoff", "wi-089-fail"
+                        "light-failing-handoff", "wi-090-light"
+                        "passing-handoff", "wi-089-pass"
+                    ]
 
-                  let input: Reader.HandoffRead = { Source = path; Json = File.ReadAllText path }
+                for fixture, workItem in fixtures do
+                    let path =
+                        Path.Combine(smokeRoot, fixture, "readiness", workItem, "governance-handoff.json")
 
-                  match Reader.parse input with
-                  | Error d -> failtestf "publish-smoke fixture %s must parse as v2: %A" fixture d
-                  | Ok handoff ->
-                      Expect.equal handoff.ContractVersion "2.0.0" (sprintf "%s uses the v2 contract" fixture)
-                      Expect.equal
-                          handoff.Evidence.Dependencies
-                          [ ("test:unit", "build:lib") ]
-                          (sprintf "%s carries the typed dependency edge" fixture)
-          } ]
+                    let input: Reader.HandoffRead =
+                        {
+                            Source = path
+                            Json = File.ReadAllText path
+                        }
+
+                    match Reader.parse input with
+                    | Error d -> failtestf "publish-smoke fixture %s must parse as v2: %A" fixture d
+                    | Ok handoff ->
+                        Expect.equal handoff.ContractVersion "2.0.0" (sprintf "%s uses the v2 contract" fixture)
+
+                        Expect.equal
+                            handoff.Evidence.Dependencies
+                            [ ("test:unit", "build:lib") ]
+                            (sprintf "%s carries the typed dependency edge" fixture)
+            }
+        ]

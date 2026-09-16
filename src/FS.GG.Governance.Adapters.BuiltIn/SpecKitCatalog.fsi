@@ -33,13 +33,15 @@ open FS.GG.Governance.Adapters.Spi
 /// the kernel is unchanged. (`evidence-not-synthetic` is always blocking regardless of the
 /// dial — honesty about evidence is non-negotiable, FR-013.)
 type ConstitutionDial =
-    { /// Rule ids the constitution promotes to `Blocking` at merge (FR-011). Authored in
-      /// constitution.md; varying this set varies which rules bite at the fence (SC-005).
-      BlockingAtMerge: Set<RuleId>
-      /// Opt-in earlier-phase hard-stops (FR-010): each `(name, phase)` adds a fence that
-      /// trips when the change is at that phase — visible in the constitution, no kernel
-      /// change. Empty by default (the inner loop informs; only merge enforces, US3).
-      EarlyFences: (string * Phase) list }
+    {
+        /// Rule ids the constitution promotes to `Blocking` at merge (FR-011). Authored in
+        /// constitution.md; varying this set varies which rules bite at the fence (SC-005).
+        BlockingAtMerge: Set<RuleId>
+        /// Opt-in earlier-phase hard-stops (FR-010): each `(name, phase)` adds a fence that
+        /// trips when the change is at that phase — visible in the constitution, no kernel
+        /// change. Empty by default (the inner loop informs; only merge enforces, US3).
+        EarlyFences: (string * Phase) list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Catalog =

@@ -20,13 +20,17 @@ module Model =
         | ProtectedBoundaryUnknown of surface: SurfaceId
 
     type UnknownGovernedPathFinding =
-        { Id: FindingId
-          Path: GovernedPath
-          Zone: FindingZone
-          Message: string }
+        {
+            Id: FindingId
+            Path: GovernedPath
+            Zone: FindingZone
+            Message: string
+        }
 
     type FindingReport =
-        { Findings: UnknownGovernedPathFinding list }
+        {
+            Findings: UnknownGovernedPathFinding list
+        }
 
     // The stable wire token for each finding id (FR-008). Total: every case is named, so adding
     // a case is a compile error here rather than a silent fall-through.

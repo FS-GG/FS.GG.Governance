@@ -13,7 +13,7 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
-open FS.GG.Governance.Kernel                   // EvidenceState
+open FS.GG.Governance.Kernel // EvidenceState
 open FS.GG.Governance.Adapters.SddHandoff.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

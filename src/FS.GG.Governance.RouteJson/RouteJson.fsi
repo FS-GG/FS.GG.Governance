@@ -20,10 +20,10 @@
 namespace FS.GG.Governance.RouteJson
 
 open FS.GG.Governance.Route.Model
-open FS.GG.Governance.Gates.Model              // GateId (F052 execution embed matched by gate)
-open FS.GG.Governance.CacheEligibility.Model   // F045: CacheEligibilityReport (via the F041 ProjectReference)
-open FS.GG.Governance.GateRun.Model            // F052: GateOutcome (the per-gate execution embed)
-open FS.GG.Governance.ProductSurfaces.Model    // F23: ProductSurfaceReport (the additive productSurfaces section)
+open FS.GG.Governance.Gates.Model // GateId (F052 execution embed matched by gate)
+open FS.GG.Governance.CacheEligibility.Model // F045: CacheEligibilityReport (via the F041 ProjectReference)
+open FS.GG.Governance.GateRun.Model // F052: GateOutcome (the per-gate execution embed)
+open FS.GG.Governance.ProductSurfaces.Model // F23: ProductSurfaceReport (the additive productSurfaces section)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RouteJson =
@@ -95,10 +95,7 @@ module RouteJson =
     /// goldens use), NO `execution` object is written and the output is BYTE-IDENTICAL to the F045-era
     /// projection (FR-009, D6). The embed is gate-scoped: findings never carry it.
     val ofRouteResult:
-        result: RouteResult ->
-        cache: CacheEligibilityReport option ->
-        execution: (GateId * GateOutcome) list ->
-            string
+        result: RouteResult -> cache: CacheEligibilityReport option -> execution: (GateId * GateOutcome) list -> string
 
     /// F23 (additive, non-breaking): the same projection as `ofRouteResult` plus an additive
     /// `productSurfaces` array carrying the F23 product-surface classification. The array is emitted as the

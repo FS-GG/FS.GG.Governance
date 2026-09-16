@@ -36,29 +36,35 @@ module Inheritance =
     let refFacts (checks: Check list) : TypedFacts =
         let domains = checks |> List.map (fun c -> c.Domain) |> List.distinct
 
-        { Project =
-            { SchemaVersion = SchemaVersion 1
-              Id = ProjectId "fsgg-reference-gate-set"
-              Domains = domains
-              GovernedRoot = GovernedPath "."
-              PackageSurfaces = []
-              PolicyRef = None
-              CapabilitiesRef = None }
-          Policy = None
-          Capabilities =
-            { SchemaVersion = SchemaVersion 2
-              Domains = domains
-              PathMap = []
-              Surfaces = []
-              Checks = checks }
-          Tooling = None }
+        {
+            Project =
+                {
+                    SchemaVersion = SchemaVersion 1
+                    Id = ProjectId "fsgg-reference-gate-set"
+                    Domains = domains
+                    GovernedRoot = GovernedPath "."
+                    PackageSurfaces = []
+                    PolicyRef = None
+                    CapabilitiesRef = None
+                }
+            Policy = None
+            Capabilities =
+                {
+                    SchemaVersion = SchemaVersion 2
+                    Domains = domains
+                    PathMap = []
+                    Surfaces = []
+                    Checks = checks
+                }
+            Tooling = None
+        }
 
     // ── Public surface ──
 
     let referenceGatesFor (profile: TemplateProfile) : Gate list =
         match referenceChecks profile with
         | [] -> []
-        | checks -> (Gates.buildRegistry(refFacts checks)).Gates
+        | checks -> (Gates.buildRegistry (refFacts checks)).Gates
 
     let productTemplateProfiles (facts: TypedFacts) : TemplateProfile list =
         facts.Capabilities.Surfaces
@@ -75,19 +81,22 @@ module Inheritance =
     let composeEffectiveGates (inherited: Gate list) (local: Gate list) : Gate list =
         // shared id -> local gate at the STRICTER maturity (local may raise, never lower the floor);
         // inherited-only -> added; local-only -> kept. Sorted by `GateId` ordinal (determinism).
-        let inheritedById = inherited |> List.map (fun g -> gateIdValue g.Id, g) |> Map.ofList
+        let inheritedById =
+            inherited |> List.map (fun g -> gateIdValue g.Id, g) |> Map.ofList
 
         let raisedLocal =
             local
             |> List.map (fun lg ->
                 match Map.tryFind (gateIdValue lg.Id) inheritedById with
-                | Some ig when maturityRank ig.Maturity > maturityRank lg.Maturity -> { lg with Maturity = ig.Maturity }
+                | Some ig when maturityRank ig.Maturity > maturityRank lg.Maturity ->
+                    { lg with Maturity = ig.Maturity }
                 | _ -> lg)
 
         let localIds = local |> List.map (fun g -> gateIdValue g.Id) |> Set.ofList
 
         let inheritedOnly =
-            inherited |> List.filter (fun ig -> not (Set.contains (gateIdValue ig.Id) localIds))
+            inherited
+            |> List.filter (fun ig -> not (Set.contains (gateIdValue ig.Id) localIds))
 
         raisedLocal @ inheritedOnly |> List.sortBy (fun g -> gateIdValue g.Id)
 

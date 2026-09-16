@@ -17,18 +17,22 @@ let repoRoot =
 
 /// A declared generated-view manifest entry (a route projection, by default).
 let entry (viewId: string) : GenerationEntry =
-    { ViewId = viewId
-      Kind = RouteProjection
-      OutputPath = "docs/" + viewId + ".generated.json"
-      Sources = [ ".fsgg/route.yml" ]
-      Generator = [ "fsgg"; "route"; "--json" ]
-      GeneratorBasis = "tool-version" }
+    {
+        ViewId = viewId
+        Kind = RouteProjection
+        OutputPath = "docs/" + viewId + ".generated.json"
+        Sources = [ ".fsgg/route.yml" ]
+        Generator = [ "fsgg"; "route"; "--json" ]
+        GeneratorBasis = "tool-version"
+    }
 
 let art (s: string) : ArtifactHash = ArtifactHash s
 let ver (s: string) : GeneratorVersion = GeneratorVersion s
 
 /// One resolved view decision for the findings-gate / no-hide tests.
 let decision (viewId: string) (status: CurrencyStatus) (drifted: InputCategory list) : ViewDecision =
-    { Entry = entry viewId
-      Status = status
-      Drifted = drifted }
+    {
+        Entry = entry viewId
+        Status = status
+        Drifted = drifted
+    }

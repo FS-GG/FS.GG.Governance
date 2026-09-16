@@ -15,43 +15,47 @@ let private gateExec = typeof<ExecutionOutcome>.Assembly
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "GateExecution" "FS.GG.Governance.GateExecution" gateExec
+        [
+            SurfaceDrift.surfaceTest "GateExecution" "FS.GG.Governance.GateExecution" gateExec
 
-          SurfaceDrift.referencesOnly
-              "GateExecution"
-              (fun n ->
-                  n = "FS.GG.Governance.ExecutionRecord"
-                  || n = "FS.GG.Governance.CommandRecord"
-                  || n = "FS.GG.Governance.Config")
-              gateExec
+            SurfaceDrift.referencesOnly
+                "GateExecution"
+                (fun n ->
+                    n = "FS.GG.Governance.ExecutionRecord"
+                    || n = "FS.GG.Governance.CommandRecord"
+                    || n = "FS.GG.Governance.Config")
+                gateExec
 
-          test "no later-phase / host / network symbol leaked into the production library (SC-007)" {
-              let banned =
-                  [ "FS.GG.Governance.EvidenceCapture"
-                    "FS.GG.Governance.EvidenceReuse"
-                    "FS.GG.Governance.FreshnessKey"
-                    "FS.GG.Governance.FreshnessSensing"
-                    "FS.GG.Governance.EvidenceReuseStore"
-                    "FS.GG.Governance.CacheEligibility"
-                    "FS.GG.Governance.RouteJson"
-                    "FS.GG.Governance.AuditJson"
-                    "FS.GG.Governance.Enforcement"
-                    "FS.GG.Governance.Ship"
-                    "FS.GG.Governance.Snapshot"
-                    "FS.GG.Governance.Routing"
-                    "FS.GG.Governance.Host"
-                    "FS.GG.Governance.Cli"
-                    "System.Net.Http"
-                    "System.Net.Sockets"
-                    "Octokit"
-                    "LibGit2Sharp" ]
+            test "no later-phase / host / network symbol leaked into the production library (SC-007)" {
+                let banned =
+                    [
+                        "FS.GG.Governance.EvidenceCapture"
+                        "FS.GG.Governance.EvidenceReuse"
+                        "FS.GG.Governance.FreshnessKey"
+                        "FS.GG.Governance.FreshnessSensing"
+                        "FS.GG.Governance.EvidenceReuseStore"
+                        "FS.GG.Governance.CacheEligibility"
+                        "FS.GG.Governance.RouteJson"
+                        "FS.GG.Governance.AuditJson"
+                        "FS.GG.Governance.Enforcement"
+                        "FS.GG.Governance.Ship"
+                        "FS.GG.Governance.Snapshot"
+                        "FS.GG.Governance.Routing"
+                        "FS.GG.Governance.Host"
+                        "FS.GG.Governance.Cli"
+                        "System.Net.Http"
+                        "System.Net.Sockets"
+                        "Octokit"
+                        "LibGit2Sharp"
+                    ]
 
-              let referenced =
-                  gateExec.GetReferencedAssemblies()
-                  |> Array.choose (fun a -> Option.ofObj a.Name)
+                let referenced =
+                    gateExec.GetReferencedAssemblies()
+                    |> Array.choose (fun a -> Option.ofObj a.Name)
 
-              for b in banned do
-                  Expect.isFalse
-                      (referenced |> Array.exists (fun n -> n.Contains b))
-                      (sprintf "GateExecution must not reference %s (additive, no host/network leak, SC-007)" b)
-          } ]
+                for b in banned do
+                    Expect.isFalse
+                        (referenced |> Array.exists (fun n -> n.Contains b))
+                        (sprintf "GateExecution must not reference %s (additive, no host/network leak, SC-007)" b)
+            }
+        ]

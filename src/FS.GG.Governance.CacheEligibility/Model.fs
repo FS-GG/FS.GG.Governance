@@ -14,15 +14,19 @@ open FS.GG.Governance.EvidenceReuse.Model
 module Model =
 
     type CandidateGate =
-        { Gate: GateId
-          Inputs: FreshnessInputs }
+        {
+            Gate: GateId
+            Inputs: FreshnessInputs
+        }
 
     type CacheEligibilityVerdict =
         | Reusable of EvidenceRef
         | MustRecompute of RecomputeCause
 
     type CacheEligibilityEntry =
-        { Gate: GateId
-          Verdict: CacheEligibilityVerdict }
+        {
+            Gate: GateId
+            Verdict: CacheEligibilityVerdict
+        }
 
     type CacheEligibilityReport = CacheEligibilityReport of CacheEligibilityEntry list

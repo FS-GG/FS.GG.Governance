@@ -28,34 +28,40 @@ let check
     (environment: EnvironmentClass)
     (maturity: Maturity)
     : Check =
-    { Id = CheckId checkId
-      Domain = DomainId domain
-      Command = command |> Option.map CommandId
-      Owner = Owner ("owner-" + domain)
-      Cost = cost
-      Environment = environment
-      Maturity = maturity
-      Tier = None }
+    {
+        Id = CheckId checkId
+        Domain = DomainId domain
+        Command = command |> Option.map CommandId
+        Owner = Owner("owner-" + domain)
+        Cost = cost
+        Environment = environment
+        Maturity = maturity
+        Tier = None
+    }
 
 /// A real `CommandSpec` from `(commandId, timeoutSeconds)` with inert defaults for the fields the
 /// downstream join never reads. The timeout becomes the gate's projected `timeout`.
 let command (commandId: string) (timeoutSeconds: int) : CommandSpec =
-    { Id = CommandId commandId
-      Command = "fixture --run"
-      Timeout = TimeoutLimit timeoutSeconds
-      Environment = Local }
+    {
+        Id = CommandId commandId
+        Command = "fixture --run"
+        Timeout = TimeoutLimit timeoutSeconds
+        Environment = Local
+    }
 
 /// Build a `Surface` from `(class, id, paths)` with fixed inert defaults for the fields the route
 /// join never reads (`Owner`/`Maturity`).
 let surface (cls: SurfaceClass) (id: string) (paths: string list) : Surface =
-    { Id = SurfaceId id
-      Class = cls
-      Paths = paths |> List.map GovernedPath
-      Owner = Owner "fixture"
-      Maturity = Observe
-      EvidenceTag = None
-      TemplateProfile = None
-      Baseline = None }
+    {
+        Id = SurfaceId id
+        Class = cls
+        Paths = paths |> List.map GovernedPath
+        Owner = Owner "fixture"
+        Maturity = Observe
+        EvidenceTag = None
+        TemplateProfile = None
+        Baseline = None
+    }
 
 /// Assemble a real `TypedFacts` with a governed root, a `glob -> domain` path map (so
 /// `Routing.route` yields genuine `Routed`/`UnmatchedInRoot`/`OutOfScope` outcomes), a declared
@@ -70,36 +76,50 @@ let facts
     (commands: CommandSpec list)
     : TypedFacts =
     let entries =
-        pathMap |> List.map (fun (g, d) -> { Glob = GovernedPath g; Capability = DomainId d })
+        pathMap
+        |> List.map (fun (g, d) ->
+            {
+                Glob = GovernedPath g
+                Capability = DomainId d
+            })
 
     let domains =
-        (entries |> List.map (fun e -> e.Capability)) @ (checks |> List.map (fun c -> c.Domain))
+        (entries |> List.map (fun e -> e.Capability))
+        @ (checks |> List.map (fun c -> c.Domain))
         |> List.distinct
 
-    { Project =
-        { SchemaVersion = SchemaVersion 1
-          Id = ProjectId "fixture"
-          Domains = domains
-          GovernedRoot = GovernedPath root
-          PackageSurfaces = []
-          PolicyRef = None
-          CapabilitiesRef = None }
-      Policy = None
-      Capabilities =
-        { SchemaVersion = SchemaVersion 1
-          Domains = domains
-          PathMap = entries
-          Surfaces = surfaces
-          Checks = checks }
-      Tooling =
-        match commands with
-        | [] -> None
-        | cs ->
-            Some
-                { SchemaVersion = SchemaVersion 1
-                  Commands = cs
-                  EnvironmentClasses = []
-                  ExternalTools = [] } }
+    {
+        Project =
+            {
+                SchemaVersion = SchemaVersion 1
+                Id = ProjectId "fixture"
+                Domains = domains
+                GovernedRoot = GovernedPath root
+                PackageSurfaces = []
+                PolicyRef = None
+                CapabilitiesRef = None
+            }
+        Policy = None
+        Capabilities =
+            {
+                SchemaVersion = SchemaVersion 1
+                Domains = domains
+                PathMap = entries
+                Surfaces = surfaces
+                Checks = checks
+            }
+        Tooling =
+            match commands with
+            | [] -> None
+            | cs ->
+                Some
+                    {
+                        SchemaVersion = SchemaVersion 1
+                        Commands = cs
+                        EnvironmentClasses = []
+                        ExternalTools = []
+                    }
+    }
 
 /// (b) The real F018 registry for these facts — `Gates.buildRegistry`, the genuine producer.
 let registryOf (facts: TypedFacts) : GateRegistry =
@@ -174,8 +194,9 @@ let hasField (el: JsonElement) (name: string) : bool =
 
 /// The `selectingPaths` of a gate element as `(path, matchedGlob)` pairs.
 let selectingPaths (gate: JsonElement) : (string * string) list =
-    [ for p in gate.GetProperty("selectingPaths").EnumerateArray() ->
-          strField p "path", strField p "matchedGlob" ]
+    [
+        for p in gate.GetProperty("selectingPaths").EnumerateArray() -> strField p "path", strField p "matchedGlob"
+    ]
 
 /// Every `path` and `matchedGlob` string emitted anywhere in the document (across all
 /// selectingPaths and all findings) — the positive path-allowlist probe.
@@ -184,7 +205,6 @@ let allEmittedPaths (doc: JsonDocument) : string list =
         selectedGates doc
         |> List.collect (fun g -> selectingPaths g |> List.collect (fun (p, m) -> [ p; m ]))
 
-    let fromFindings =
-        findings doc |> List.map (fun f -> strField f "path")
+    let fromFindings = findings doc |> List.map (fun f -> strField f "path")
 
     fromGates @ fromFindings

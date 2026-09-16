@@ -11,12 +11,16 @@ namespace FS.GG.Governance.Adapters.Spi
 open FS.GG.Governance.Kernel
 
 type Lifted<'project, 'change> =
-    { Rules: CheckRule<'project> list
-      Fences: Fence<'change> list }
+    {
+        Rules: CheckRule<'project> list
+        Fences: Fence<'change> list
+    }
 
 type Composed<'project, 'change> =
-    { Catalog: CheckRule<'project> list
-      Fences: Fence<'change> list }
+    {
+        Catalog: CheckRule<'project> list
+        Fences: Fence<'change> list
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Composition =
@@ -26,8 +30,10 @@ module Composition =
         (narrow: 'change -> 'domChange)
         (adapter: Adapter<'dom, 'artifact, 'domChange>)
         : Lifted<'project, 'change> =
-        { Rules = adapter.Rules |> List.map (Lift.checkRule project)
-          Fences = adapter.Fences |> List.map (Lift.fence narrow) }
+        {
+            Rules = adapter.Rules |> List.map (Lift.checkRule project)
+            Fences = adapter.Fences |> List.map (Lift.fence narrow)
+        }
 
     let compose
         (lifted: Lifted<'project, 'change> list)
@@ -44,7 +50,10 @@ module Composition =
             (lifted |> List.collect (fun l -> l.Fences))
             |> List.fold
                 (fun (seen: Set<string>, acc) (f: Fence<'change>) ->
-                    if seen.Contains f.Name then (seen, acc) else (seen.Add f.Name, f :: acc))
+                    if seen.Contains f.Name then
+                        (seen, acc)
+                    else
+                        (seen.Add f.Name, f :: acc))
                 (Set.empty, [])
             |> snd
             |> List.rev

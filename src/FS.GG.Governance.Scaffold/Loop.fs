@@ -13,8 +13,10 @@ open FS.GG.Governance.Scaffold.Model
 module Loop =
 
     type RunRequest =
-        { Request: ScaffoldRequest
-          Provider: TemplateProvider option }
+        {
+            Request: ScaffoldRequest
+            Provider: TemplateProvider option
+        }
 
     type Effect =
         | InvokeProvider of provider: TemplateProvider * request: ScaffoldRequest
@@ -33,11 +35,13 @@ module Loop =
         | Done
 
     type Model =
-        { Request: ScaffoldRequest
-          Provider: TemplateProvider option
-          Phase: Phase
-          Emission: ProviderEmission option
-          Manifest: ScaffoldManifest option }
+        {
+            Request: ScaffoldRequest
+            Provider: TemplateProvider option
+            Phase: Phase
+            Emission: ProviderEmission option
+            Manifest: ScaffoldManifest option
+        }
 
     // ── pure decision helpers (hidden — absent from Loop.fsi) ──
 
@@ -58,45 +62,53 @@ module Loop =
 
         let segments = rel.Split([| '/'; '\\' |])
 
-        rel <> ""
-        && not rooted
-        && not (segments |> Array.exists (fun s -> s = ".."))
+        rel <> "" && not rooted && not (segments |> Array.exists (fun s -> s = ".."))
 
     let providerTuple (p: TemplateProvider) : ProviderId * ProviderContractVersion = p.Id, p.ContractVersion
 
     let init (request: ScaffoldRequest) (provider: TemplateProvider option) : Model * Effect list =
         match provider with
         | None ->
-            { Request = request
-              Provider = None
-              Phase = Done
-              Emission = None
-              Manifest =
-                Some
-                    { Provider = None
-                      Outcome = NoProvider
-                      Generated = []
-                      Collisions = [] } },
+            {
+                Request = request
+                Provider = None
+                Phase = Done
+                Emission = None
+                Manifest =
+                    Some
+                        {
+                            Provider = None
+                            Outcome = NoProvider
+                            Generated = []
+                            Collisions = []
+                        }
+            },
             []
         | Some p ->
             if compatible p.ContractVersion then
-                { Request = request
-                  Provider = Some p
-                  Phase = Invoking
-                  Emission = None
-                  Manifest = None },
+                {
+                    Request = request
+                    Provider = Some p
+                    Phase = Invoking
+                    Emission = None
+                    Manifest = None
+                },
                 [ InvokeProvider(p, request) ]
             else
-                { Request = request
-                  Provider = Some p
-                  Phase = Done
-                  Emission = None
-                  Manifest =
-                    Some
-                        { Provider = Some(providerTuple p)
-                          Outcome = Refused(ContractMismatch p.ContractVersion)
-                          Generated = []
-                          Collisions = [] } },
+                {
+                    Request = request
+                    Provider = Some p
+                    Phase = Done
+                    Emission = None
+                    Manifest =
+                        Some
+                            {
+                                Provider = Some(providerTuple p)
+                                Outcome = Refused(ContractMismatch p.ContractVersion)
+                                Generated = []
+                                Collisions = []
+                            }
+                },
                 []
 
     let update (msg: Msg) (model: Model) : Model * Effect list =
@@ -109,10 +121,13 @@ module Loop =
                 Phase = Done
                 Manifest =
                     Some
-                        { Provider = tuple
-                          Outcome = Refused refusal
-                          Generated = []
-                          Collisions = collisions } },
+                        {
+                            Provider = tuple
+                            Outcome = Refused refusal
+                            Generated = []
+                            Collisions = collisions
+                        }
+            },
             []
 
         let terminate (refusal: Refusal) : Model * Effect list = terminateWith refusal []
@@ -136,7 +151,8 @@ module Loop =
 
                 { model with
                     Phase = Probing
-                    Emission = Some emission },
+                    Emission = Some emission
+                },
                 [ ProbeCollisions probeSet ]
         | CollisionsProbed(Error e) -> terminate (ProviderErrored e)
         | CollisionsProbed(Ok existing) ->
@@ -158,18 +174,23 @@ module Loop =
                 let generated =
                     emission.Files
                     |> List.map (fun f ->
-                        { RelativePath = f.RelativePath
-                          Ownership = ProviderOwned })
+                        {
+                            RelativePath = f.RelativePath
+                            Ownership = ProviderOwned
+                        })
                     |> List.sortBy (fun g -> g.RelativePath)
 
                 { model with
                     Phase = Done
                     Manifest =
                         Some
-                            { Provider = tuple
-                              Outcome = Scaffolded
-                              Generated = generated
-                              Collisions = [] } },
+                            {
+                                Provider = tuple
+                                Outcome = Scaffolded
+                                Generated = generated
+                                Collisions = []
+                            }
+                },
                 []
             | None ->
                 // Defensive (unreachable): a write ack without a recorded emission.

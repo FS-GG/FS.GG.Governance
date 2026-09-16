@@ -15,27 +15,35 @@ let providerTuple (id: string) (major: int) (minor: int) : ProviderId * Provider
 let generated (paths: string list) : GeneratedPath list =
     paths
     |> List.map (fun p ->
-        { RelativePath = p
-          Ownership = ProviderOwned })
+        {
+            RelativePath = p
+            Ownership = ProviderOwned
+        })
 
 /// A scaffolded manifest for a provider + the generated paths (order as given — the projection sorts).
 let scaffoldedManifest (id: string) (paths: string list) : ScaffoldManifest =
-    { Provider = Some(providerTuple id 1 0)
-      Outcome = Scaffolded
-      Generated = generated paths
-      Collisions = [] }
+    {
+        Provider = Some(providerTuple id 1 0)
+        Outcome = Scaffolded
+        Generated = generated paths
+        Collisions = []
+    }
 
 let refusedManifest (id: string) (refusal: Refusal) (collisions: string list) : ScaffoldManifest =
-    { Provider = Some(providerTuple id 1 0)
-      Outcome = Refused refusal
-      Generated = []
-      Collisions = collisions }
+    {
+        Provider = Some(providerTuple id 1 0)
+        Outcome = Refused refusal
+        Generated = []
+        Collisions = collisions
+    }
 
 let noProviderManifest: ScaffoldManifest =
-    { Provider = None
-      Outcome = NoProvider
-      Generated = []
-      Collisions = [] }
+    {
+        Provider = None
+        Outcome = NoProvider
+        Generated = []
+        Collisions = []
+    }
 
 // ── JsonDocument read helpers ──
 
@@ -64,7 +72,9 @@ let generatedPaths (doc: JsonDocument) : string list =
     generatedEntries doc |> List.map (fun g -> strField g "path")
 
 let collisions (doc: JsonDocument) : string list =
-    [ for c in doc.RootElement.GetProperty("collisions").EnumerateArray() -> reqStr c ]
+    [
+        for c in doc.RootElement.GetProperty("collisions").EnumerateArray() -> reqStr c
+    ]
 
 let stringArrayProp (el: JsonElement) (name: string) : string list =
     [ for x in el.GetProperty(name).EnumerateArray() -> reqStr x ]

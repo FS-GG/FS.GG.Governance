@@ -26,10 +26,7 @@ let cores = Environment.ProcessorCount
 // 24 cores -> 6 (the proven anchor); 2 cores -> 2; 64 cores -> 12.
 let maxNodes = max 2 (min 12 (int (ceil (float cores / 4.0))))
 
-let rawArgs =
-    fsi.CommandLineArgs
-    |> Array.toList
-    |> List.tail // drop the script path itself
+let rawArgs = fsi.CommandLineArgs |> Array.toList |> List.tail // drop the script path itself
 
 // `--print-command` resolves and prints the dotnet command line, then exits without building.
 // It exists so the checked-in guard can assert the *actual emitted* bound rather than scrape source.
@@ -63,12 +60,7 @@ let proc = Process.Start psi
 proc.WaitForExit()
 sw.Stop()
 
-printfn
-    "build.fsx: %s %s completed in %d ms (exit %d)"
-    verb
-    solution
-    sw.ElapsedMilliseconds
-    proc.ExitCode
+printfn "build.fsx: %s %s completed in %d ms (exit %d)" verb solution sw.ElapsedMilliseconds proc.ExitCode
 
 // Preserve the underlying dotnet exit code so a real failure still fails (FR-009).
 exit proc.ExitCode

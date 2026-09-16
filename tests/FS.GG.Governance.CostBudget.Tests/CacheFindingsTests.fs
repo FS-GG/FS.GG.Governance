@@ -27,11 +27,13 @@ let private report =
     Budget.decide
         (Budget.budgetFor Strict Verify |> fun b -> { b with Ceiling = Cheap }) // force a Cheap ceiling
         Verify
-        [ mustRecompute gStale Cheap [ RuleHashCat ]
-          mustRecompute gDeferredStale High [ BaseRevisionCat ]
-          noEvidence gNoEv Cheap
-          reusable gReuseSynth Cheap
-          reusable gReuseClean Cheap ]
+        [
+            mustRecompute gStale Cheap [ RuleHashCat ]
+            mustRecompute gDeferredStale High [ BaseRevisionCat ]
+            noEvidence gNoEv Cheap
+            reusable gReuseSynth Cheap
+            reusable gReuseClean Cheap
+        ]
 
 let private findings = Findings.cacheFindings report (taintOnly [ gReuseSynth ])
 
@@ -42,26 +44,33 @@ let private kindOf (gate: GateId) =
 let tests =
     testList
         "CacheFindings"
-        [ test "a recomputed changed dimension ⇒ Stale naming each changed F029 category" {
-              Expect.equal (kindOf gStale) [ Stale [ RuleHashCat ] ] "ruleHash stale"
-              let msg = findings |> List.find (fun f -> f.Gate = gStale) |> fun f -> f.Message
-              Expect.stringContains msg "ruleHash" "message names the changed dimension via categoryToken"
-              Expect.stringContains msg "a:stale" "message names the gate"
-          }
+        [
+            test "a recomputed changed dimension ⇒ Stale naming each changed F029 category" {
+                Expect.equal (kindOf gStale) [ Stale [ RuleHashCat ] ] "ruleHash stale"
+                let msg = findings |> List.find (fun f -> f.Gate = gStale) |> fun f -> f.Message
+                Expect.stringContains msg "ruleHash" "message names the changed dimension via categoryToken"
+                Expect.stringContains msg "a:stale" "message names the gate"
+            }
 
-          test "a DEFERRED gate whose underlying cause changed inputs ⇒ Stale (cache-invalidated, even though not run)" {
-              Expect.equal (kindOf gDeferredStale) [ Stale [ BaseRevisionCat ] ] "deferred-but-stale"
-          }
+            test
+                "a DEFERRED gate whose underlying cause changed inputs ⇒ Stale (cache-invalidated, even though not run)" {
+                Expect.equal (kindOf gDeferredStale) [ Stale [ BaseRevisionCat ] ] "deferred-but-stale"
+            }
 
-          test "a NoPriorEvidence recompute ⇒ NoEvidence" { Expect.equal (kindOf gNoEv) [ NoEvidence ] "no-evidence finding" }
+            test "a NoPriorEvidence recompute ⇒ NoEvidence" {
+                Expect.equal (kindOf gNoEv) [ NoEvidence ] "no-evidence finding"
+            }
 
-          test "a Synthetic-taint gate ⇒ a distinct SyntheticTaint finding EVEN when the decision is Reuse" {
-              Expect.equal (kindOf gReuseSynth) [ SyntheticTaint ] "synthetic reused is never silently real"
-          }
+            test "a Synthetic-taint gate ⇒ a distinct SyntheticTaint finding EVEN when the decision is Reuse" {
+                Expect.equal (kindOf gReuseSynth) [ SyntheticTaint ] "synthetic reused is never silently real"
+            }
 
-          test "a clean Reuse + Real taint ⇒ NO finding" { Expect.equal (kindOf gReuseClean) [] "clean reuse is silent" }
+            test "a clean Reuse + Real taint ⇒ NO finding" {
+                Expect.equal (kindOf gReuseClean) [] "clean reuse is silent"
+            }
 
-          test "every finding is base-Advisory" {
-              Expect.isTrue (findings |> List.forall (fun f -> f.BaseSeverity = Advisory)) "all advisory"
-              Expect.equal (List.length findings) 4 "exactly four findings (the clean reuse is silent)"
-          } ]
+            test "every finding is base-Advisory" {
+                Expect.isTrue (findings |> List.forall (fun f -> f.BaseSeverity = Advisory)) "all advisory"
+                Expect.equal (List.length findings) 4 "exactly four findings (the clean reuse is silent)"
+            }
+        ]

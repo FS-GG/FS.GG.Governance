@@ -85,10 +85,12 @@ module Pack =
                 | PackedNoArtifact _
                 | PackFailed _ -> NotPackable
 
-            { Surface = surface
-              Outcome = outcome
-              Version = version
-              Reason = reasonFor surface outcome version }
+            {
+                Surface = surface
+                Outcome = outcome
+                Version = version
+                Reason = reasonFor surface outcome version
+            }
 
         let verdicts =
             outcomes
@@ -101,9 +103,11 @@ module Pack =
                 else
                     String.CompareOrdinal(artifactPathOf a.Outcome, artifactPathOf b.Outcome))
 
-        { Verdicts = verdicts
-          Runs = outcomes |> List.map runOf
-          NoPackableProjects = List.isEmpty outcomes }
+        {
+            Verdicts = verdicts
+            Runs = outcomes |> List.map runOf
+            NoPackableProjects = List.isEmpty outcomes
+        }
 
     let factContributions (set: PackEvidenceSet) : Map<ReleaseRuleKind, FactState> =
         if set.NoPackableProjects then
@@ -126,9 +130,11 @@ module Pack =
                 if set.Verdicts |> List.forall predicate then Met else Unmet
 
             Map.ofList
-                [ VersionBump, stateOf versionOk
-                  PackageMetadata, stateOf hasArtifact
-                  Provenance, stateOf hasArtifact ]
+                [
+                    VersionBump, stateOf versionOk
+                    PackageMetadata, stateOf hasArtifact
+                    Provenance, stateOf hasArtifact
+                ]
 
     // ── 088 Breaking-Change (API-Compat) gate (surface in Pack.fsi) ──
 
@@ -150,7 +156,11 @@ module Pack =
         | Some _, None -> NoBaselineDelta
         | Some p, Some b ->
             match sign (SemVer.compareVersions p b) with
-            | 1 -> if majorOf p > majorOf b then MajorBump else MinorOrPatchBump
+            | 1 ->
+                if majorOf p > majorOf b then
+                    MajorBump
+                else
+                    MinorOrPatchBump
             | _ -> NoForwardChange // equal or downgrade — a break here is also under-bumped
 
     let apiCompatibilityFact (signal: ApiBreakSignal) (delta: VersionDelta) : FactState option =
@@ -180,13 +190,16 @@ module Pack =
     let apiCompatCoverage (packages: (SurfaceId * ApiBreakSignal * VersionDelta) list) : ApiCompatCoverage list =
         packages
         |> List.map (fun (surface, signal, delta) ->
-            { Surface = surface
-              Outcome = coverageOutcome signal delta })
+            {
+                Surface = surface
+                Outcome = coverageOutcome signal delta
+            })
         |> List.sortWith (fun a b -> String.CompareOrdinal(surfaceValue a.Surface, surfaceValue b.Surface))
 
     let apiCompatibilityRollup (packages: (ApiBreakSignal * VersionDelta) list) : FactState =
         let facts =
-            packages |> List.choose (fun (signal, delta) -> apiCompatibilityFact signal delta)
+            packages
+            |> List.choose (fun (signal, delta) -> apiCompatibilityFact signal delta)
 
         if facts |> List.contains Unrecoverable then Unrecoverable
         elif facts |> List.contains Unmet then Unmet

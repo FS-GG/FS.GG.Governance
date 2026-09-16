@@ -35,10 +35,12 @@ module Findings =
     /// One cost/cache finding. `BaseSeverity` is `Advisory` for all kinds — `deriveEffectiveSeverity` never
     /// escalates it (FR-010, FR-013). `Message` names the gate and cause; no raw paths/clock/env (FR-011).
     type CostFinding =
-        { Gate: GateId
-          Kind: CostFindingKind
-          BaseSeverity: Severity
-          Message: string }
+        {
+            Gate: GateId
+            Kind: CostFindingKind
+            BaseSeverity: Severity
+            Message: string
+        }
 
     /// Derive the findings from the budgeted report + the per-gate taint. PURE, TOTAL, DETERMINISTIC:
     /// findings sorted by (GateId ordinal, kind tag); identical input -> byte-identical list (SC-004).

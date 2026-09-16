@@ -9,10 +9,10 @@ namespace FS.GG.Governance.JsonTokens
 // `Release` is a case of BOTH `EnvironmentClass` and `Profile` (both opened here), so those two cases
 // are type-qualified to disambiguate; every other case name is unique across the opened DUs.
 
-open FS.GG.Governance.Config.Model              // Cost, Maturity, EnvironmentClass
-open FS.GG.Governance.GateRun.Model             // GateDisposition
-open FS.GG.Governance.Enforcement.Enforcement   // Severity, Profile
-open FS.GG.Governance.Ship.Model                // ExitCodeBasis
+open FS.GG.Governance.Config.Model // Cost, Maturity, EnvironmentClass
+open FS.GG.Governance.GateRun.Model // GateDisposition
+open FS.GG.Governance.Enforcement.Enforcement // Severity, Profile
+open FS.GG.Governance.Ship.Model // ExitCodeBasis
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module JsonTokens =

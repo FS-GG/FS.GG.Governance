@@ -14,16 +14,18 @@ let private freshnessSensingAsm =
 let tests =
     testList
         "SurfaceDrift"
-        [ SurfaceDrift.surfaceTest "FreshnessSensing" "FS.GG.Governance.FreshnessSensing" freshnessSensingAsm
+        [
+            SurfaceDrift.surfaceTest "FreshnessSensing" "FS.GG.Governance.FreshnessSensing" freshnessSensingAsm
 
-          SurfaceDrift.referencesOnly
-              "FreshnessSensing"
-              (fun n ->
-                  n = "FS.GG.Governance.Config"
-                  || n = "FS.GG.Governance.Gates"
-                  || n = "FS.GG.Governance.FreshnessKey"
-                  || n = "FS.GG.Governance.FreshnessResolution"
-                  || n = "FS.GG.Governance.EvidenceReuse"
-                  || n = "FS.GG.Governance.CacheEligibility"
-                  || n = "FS.GG.Governance.Kernel")
-              freshnessSensingAsm ]
+            SurfaceDrift.referencesOnly
+                "FreshnessSensing"
+                (fun n ->
+                    n = "FS.GG.Governance.Config"
+                    || n = "FS.GG.Governance.Gates"
+                    || n = "FS.GG.Governance.FreshnessKey"
+                    || n = "FS.GG.Governance.FreshnessResolution"
+                    || n = "FS.GG.Governance.EvidenceReuse"
+                    || n = "FS.GG.Governance.CacheEligibility"
+                    || n = "FS.GG.Governance.Kernel")
+                freshnessSensingAsm
+        ]

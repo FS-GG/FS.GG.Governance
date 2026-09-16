@@ -30,12 +30,14 @@ type ExitDecision =
     | ToolError of reason: string
 
 type BudgetState =
-    { Requested: string list
-      CacheHits: string list
-      CacheMisses: string list
-      FreshDispatches: string list
-      Pending: string list
-      BudgetExhausted: string list }
+    {
+        Requested: string list
+        CacheHits: string list
+        CacheMisses: string list
+        FreshDispatches: string list
+        Pending: string list
+        BudgetExhausted: string list
+    }
 
 type CommandPayload =
     | RoutePayload of route: Route * handoffGates: FS.GG.Governance.Gates.Model.Gate list
@@ -44,11 +46,13 @@ type CommandPayload =
     | EvidencePayload of ProjectEvidenceReport
 
 type CommandResult =
-    { Request: RunRequest option
-      Payload: CommandPayload option
-      Budget: BudgetState
-      Failures: Failure list
-      Exit: ExitDecision }
+    {
+        Request: RunRequest option
+        Payload: CommandPayload option
+        Budget: BudgetState
+        Failures: Failure list
+        Exit: ExitDecision
+    }
 
 type Phase =
     | Starting
@@ -58,13 +62,15 @@ type Phase =
     | Done
 
 type Model =
-    { Phase: Phase
-      RawArgv: string list
-      Request: RunRequest option
-      Snapshot: ProjectSnapshot option
-      HostModel: FS.GG.Governance.Host.Model<ProjectFact> option
-      Budget: BudgetState
-      Result: CommandResult option }
+    {
+        Phase: Phase
+        RawArgv: string list
+        Request: RunRequest option
+        Snapshot: ProjectSnapshot option
+        HostModel: FS.GG.Governance.Host.Model<ProjectFact> option
+        Budget: BudgetState
+        Result: CommandResult option
+    }
 
 type Msg =
     | Parsed of Result<RunRequest, ParseError list>
@@ -79,9 +85,11 @@ type Effect =
     | Finish of ExitDecision
 
 type CliPorts =
-    { LoadSnapshot: RunRequest -> Result<ProjectSnapshot, string>
-      RunHost: RunRequest -> ProjectSnapshot -> FS.GG.Governance.Host.Model<ProjectFact> * BudgetState
-      WriteOutput: RunRequest -> CommandResult -> Result<unit, string> }
+    {
+        LoadSnapshot: RunRequest -> Result<ProjectSnapshot, string>
+        RunHost: RunRequest -> ProjectSnapshot -> FS.GG.Governance.Host.Model<ProjectFact> * BudgetState
+        WriteOutput: RunRequest -> CommandResult -> Result<unit, string>
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Cli =
@@ -100,17 +108,21 @@ module Cli =
     // referencing this executable.
 
     let emptyBudget =
-        { Requested = []
-          CacheHits = []
-          CacheMisses = []
-          FreshDispatches = []
-          Pending = []
-          BudgetExhausted = [] }
+        {
+            Requested = []
+            CacheHits = []
+            CacheMisses = []
+            FreshDispatches = []
+            Pending = []
+            BudgetExhausted = []
+        }
 
     let allDomains = Set.ofList [ SpecKitDomain; DesignSystemDomain ]
 
     let stableStrings values =
-        values |> List.distinct |> List.sortWith (fun a b -> StringComparer.Ordinal.Compare(a, b))
+        values
+        |> List.distinct
+        |> List.sortWith (fun a b -> StringComparer.Ordinal.Compare(a, b))
 
     let parseCommand (text: string) =
         match text with
@@ -137,15 +149,16 @@ module Cli =
 
     let parseBudget (text: string) =
         match Int32.TryParse(text) with
-        | true, value when value >= 0 ->
-            if value = 0 then Ok CacheOnly else Ok(FreshReviews value)
+        | true, value when value >= 0 -> if value = 0 then Ok CacheOnly else Ok(FreshReviews value)
         | _ -> Error(InvalidReviewBudget text)
 
     let parseDomain (text: string) =
         match text.ToLowerInvariant() with
         | "all" -> Ok allDomains
-        | "speckit" | "spec-kit" -> Ok(Set.singleton SpecKitDomain)
-        | "design" | "design-system" -> Ok(Set.singleton DesignSystemDomain)
+        | "speckit"
+        | "spec-kit" -> Ok(Set.singleton SpecKitDomain)
+        | "design"
+        | "design-system" -> Ok(Set.singleton DesignSystemDomain)
         | other -> Error(UnknownOption("--domain " + other))
 
     let splitScope (value: string) =
@@ -153,20 +166,25 @@ module Cli =
         |> Array.toList
 
     type ParseAcc =
-        { Root: string
-          Mode: RunMode
-          Format: OutputFormat
-          Scope: string list
-          Domains: Set<Domain>
-          ReviewBudget: ReviewBudget
-          ReviewStore: string option
-          OutputPath: string option
-          JudgeModel: string
-          JudgeVersion: string
-          ExplicitPlain: bool
-          Errors: ParseError list }
+        {
+            Root: string
+            Mode: RunMode
+            Format: OutputFormat
+            Scope: string list
+            Domains: Set<Domain>
+            ReviewBudget: ReviewBudget
+            ReviewStore: string option
+            OutputPath: string option
+            JudgeModel: string
+            JudgeVersion: string
+            ExplicitPlain: bool
+            Errors: ParseError list
+        }
 
-    let addError (error: ParseError) (acc: ParseAcc) = { acc with Errors = acc.Errors @ [ error ] }
+    let addError (error: ParseError) (acc: ParseAcc) =
+        { acc with
+            Errors = acc.Errors @ [ error ]
+        }
 
     let requireValue option rest onValue (acc: ParseAcc) =
         match rest with
@@ -180,18 +198,20 @@ module Cli =
 
     let parseOptions (command: CommandKind) (args: string list) =
         let initial: ParseAcc =
-            { Root = "."
-              Mode = Inner
-              Format = Text
-              Scope = []
-              Domains = allDomains
-              ReviewBudget = CacheOnly
-              ReviewStore = None
-              OutputPath = None
-              JudgeModel = Project.defaultJudge.ModelId
-              JudgeVersion = Project.defaultJudge.Version
-              ExplicitPlain = false
-              Errors = [] }
+            {
+                Root = "."
+                Mode = Inner
+                Format = Text
+                Scope = []
+                Domains = allDomains
+                ReviewBudget = CacheOnly
+                ReviewStore = None
+                OutputPath = None
+                JudgeModel = Project.defaultJudge.ModelId
+                JudgeVersion = Project.defaultJudge.Version
+                ExplicitPlain = false
+                Errors = []
+            }
 
         let rec loop (acc: ParseAcc) remaining =
             match remaining with
@@ -207,7 +227,10 @@ module Cli =
                         "--root"
                         tail
                         (fun value acc ->
-                            if isInvalidRoot value then addError (InvalidRoot value) acc else { acc with Root = value })
+                            if isInvalidRoot value then
+                                addError (InvalidRoot value) acc
+                            else
+                                { acc with Root = value })
                         acc
 
                 loop acc tail
@@ -240,7 +263,10 @@ module Cli =
                     requireValue
                         "--scope"
                         tail
-                        (fun value acc -> { acc with Scope = acc.Scope @ splitScope value })
+                        (fun value acc ->
+                            { acc with
+                                Scope = acc.Scope @ splitScope value
+                            })
                         acc
 
                 loop acc tail
@@ -296,22 +322,25 @@ module Cli =
 
         if List.isEmpty acc.Errors then
             let request: RunRequest =
-                { Root = acc.Root
-                  Command = command
-                  Mode = acc.Mode
-                  Format = acc.Format
-                  Scope = acc.Scope |> stableStrings
-                  Domains = acc.Domains
-                  ReviewBudget = acc.ReviewBudget
-                  ReviewStore = acc.ReviewStore
-                  OutputPath = acc.OutputPath
-                  Judge =
-                    { ModelId = acc.JudgeModel
-                      Version = acc.JudgeVersion }
-                  ExplicitPlain = acc.ExplicitPlain }
+                {
+                    Root = acc.Root
+                    Command = command
+                    Mode = acc.Mode
+                    Format = acc.Format
+                    Scope = acc.Scope |> stableStrings
+                    Domains = acc.Domains
+                    ReviewBudget = acc.ReviewBudget
+                    ReviewStore = acc.ReviewStore
+                    OutputPath = acc.OutputPath
+                    Judge =
+                        {
+                            ModelId = acc.JudgeModel
+                            Version = acc.JudgeVersion
+                        }
+                    ExplicitPlain = acc.ExplicitPlain
+                }
 
-            Ok
-                request
+            Ok request
         else
             Error acc.Errors
 
@@ -335,9 +364,9 @@ module Cli =
         facts
         |> List.choose (fun fact ->
             match fact.Value with
-            | GovernanceFact (RuleOutcome.Decided (rule, verdict)) -> Some(rule, Choice1Of3 verdict)
-            | GovernanceFact (RuleOutcome.NeedsReview request) -> Some(request.Rule, Choice2Of3 request.Key)
-            | GovernanceFact (RuleOutcome.Escalated rule) -> Some(rule, Choice3Of3 ())
+            | GovernanceFact(RuleOutcome.Decided(rule, verdict)) -> Some(rule, Choice1Of3 verdict)
+            | GovernanceFact(RuleOutcome.NeedsReview request) -> Some(request.Rule, Choice2Of3 request.Key)
+            | GovernanceFact(RuleOutcome.Escalated rule) -> Some(rule, Choice3Of3())
             | _ -> None)
 
     let hasBlockingFailure (route: Route) (facts: FactSet<ProjectFact>) =
@@ -348,19 +377,20 @@ module Cli =
             Set.contains rule blocking
             && match outcome with
                | Choice1Of3 Pass -> false
-               | Choice1Of3 (Fail _) -> true
-               | Choice1Of3 (Uncertain _) -> true
+               | Choice1Of3(Fail _) -> true
+               | Choice1Of3(Uncertain _) -> true
                | Choice2Of3 _ -> true
                | Choice3Of3 _ -> true)
 
     let commandCatalog (request: RunRequest) : FS.GG.Governance.Adapters.Spi.Composed<ProjectFact, ProjectChange> =
         let options: ProjectOptions =
-            { Domains = request.Domains
-              Judge = request.Judge
-              SpecKitDial = Catalog.defaultDial }
+            {
+                Domains = request.Domains
+                Judge = request.Judge
+                SpecKitDial = Catalog.defaultDial
+            }
 
-        Project.compose
-            options
+        Project.compose options
 
     let explanationsFor (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) =
         let composed = commandCatalog request
@@ -370,8 +400,7 @@ module Cli =
     // gates via the proven `Consumer.consume` (PURE & TOTAL — a bad document becomes a blocking
     // integrity gate, never a throw). This is the SAME consumer ShipCommand/RouteCommand fold; the
     // `route` command now folds it too so a produced handoff drives the verdict.
-    let handoffGatesOf (handoffs: Reader.HandoffRead list) : GatesModel.Gate list =
-        (Consumer.consume handoffs).Gates
+    let handoffGatesOf (handoffs: Reader.HandoffRead list) : GatesModel.Gate list = (Consumer.consume handoffs).Gates
 
     // 090 (T007): map the route run mode to the enforcement run mode for the handoff-gate call. The
     // strict-merge boundary `Gate` maps to the enforcement `Verify` ordinal (research D1): with a
@@ -401,7 +430,11 @@ module Cli =
     // does (research D3) — base `Blocking` iff the maturity is a block level, maturity/mode/profile
     // carried verbatim. No handoff-specific branch: the gate flows through the generic core like every
     // other gate. Total over the closed `Maturity` union (a future maturity is a compile error).
-    let handoffGateToInput (mode: Enforcement.RunMode) (profile: Enforcement.Profile) (gate: GatesModel.Gate) : Enforcement.EnforcementInput =
+    let handoffGateToInput
+        (mode: Enforcement.RunMode)
+        (profile: Enforcement.Profile)
+        (gate: GatesModel.Gate)
+        : Enforcement.EnforcementInput =
         let baseSeverity =
             match gate.Maturity with
             | ConfigModel.Observe
@@ -410,18 +443,26 @@ module Cli =
             | ConfigModel.BlockOnShip
             | ConfigModel.BlockOnRelease -> Enforcement.Blocking
 
-        { BaseSeverity = baseSeverity
-          Maturity = gate.Maturity
-          Mode = mode
-          Profile = profile }
+        {
+            BaseSeverity = baseSeverity
+            Maturity = gate.Maturity
+            Mode = mode
+            Profile = profile
+        }
 
     // 090 (T009/T010): derive each consumed handoff gate's effective severity through the canonical
     // Phase-5 core parameterized by the active profile. The decisions carry the core's self-explaining
     // `Reason`, so a `GovernedBlocking` exit stays attributable to the failing handoff (Invariant 6);
     // the gates themselves are carried on the route payload for rendering.
-    let handoffDecisions (mode: RunMode) (profile: Enforcement.Profile) (gates: GatesModel.Gate list) : Enforcement.EnforcementDecision list =
+    let handoffDecisions
+        (mode: RunMode)
+        (profile: Enforcement.Profile)
+        (gates: GatesModel.Gate list)
+        : Enforcement.EnforcementDecision list =
         let mapped = toEnforcementMode mode
-        gates |> List.map (fun gate -> Enforcement.deriveEffectiveSeverity (handoffGateToInput mapped profile gate))
+
+        gates
+        |> List.map (fun gate -> Enforcement.deriveEffectiveSeverity (handoffGateToInput mapped profile gate))
 
     // The run is blocked by the handoff channel iff ANY consumed gate derives `Blocking` under the
     // active profile (Invariant 4: relaxing one gate never masks another that still blocks). A
@@ -430,7 +471,11 @@ module Cli =
         handoffDecisions mode profile gates
         |> List.exists (fun decision -> decision.EffectiveSeverity = Enforcement.Blocking)
 
-    let payloadFor (request: RunRequest) (host: FS.GG.Governance.Host.Model<ProjectFact>) (handoffGates: GatesModel.Gate list) : CommandPayload =
+    let payloadFor
+        (request: RunRequest)
+        (host: FS.GG.Governance.Host.Model<ProjectFact>)
+        (handoffGates: GatesModel.Gate list)
+        : CommandPayload =
         match request.Command with
         | RouteCommand -> RoutePayload(host.Route, handoffGates)
         | ExplainCommand -> ExplainPayload(explanationsFor request host)
@@ -477,54 +522,71 @@ module Cli =
         let payload = payloadFor request host handoffGates
         let failures = host.Failures
 
-        { Request = Some request
-          Payload = Some payload
-          Budget = budget
-          Failures = failures
-          Exit = exitFor host blocks }
+        {
+            Request = Some request
+            Payload = Some payload
+            Budget = budget
+            Failures = failures
+            Exit = exitFor host blocks
+        }
 
     let usageResult (errors: ParseError list) : CommandResult =
-        { Request = None
-          Payload = None
-          Budget = emptyBudget
-          Failures = []
-          Exit = UsageError errors }
+        {
+            Request = None
+            Payload = None
+            Budget = emptyBudget
+            Failures = []
+            Exit = UsageError errors
+        }
 
     let inputResult (request: RunRequest) (reason: string) : CommandResult =
-        { Request = Some request
-          Payload = None
-          Budget = emptyBudget
-          Failures = []
-          Exit = InputUnavailable reason }
+        {
+            Request = Some request
+            Payload = None
+            Budget = emptyBudget
+            Failures = []
+            Exit = InputUnavailable reason
+        }
 
-    let toolResult (request: RunRequest option) (budget: BudgetState) (failures: Failure list) (reason: string) : CommandResult =
-        { Request = request
-          Payload = None
-          Budget = budget
-          Failures = failures
-          Exit = ToolError reason }
+    let toolResult
+        (request: RunRequest option)
+        (budget: BudgetState)
+        (failures: Failure list)
+        (reason: string)
+        : CommandResult =
+        {
+            Request = request
+            Payload = None
+            Budget = budget
+            Failures = failures
+            Exit = ToolError reason
+        }
 
     let init (argv: string list) =
         match parse argv with
         | Ok request ->
-            { Phase = LoadingSnapshot
-              RawArgv = argv
-              Request = Some request
-              Snapshot = None
-              HostModel = None
-              Budget = emptyBudget
-              Result = None },
+            {
+                Phase = LoadingSnapshot
+                RawArgv = argv
+                Request = Some request
+                Snapshot = None
+                HostModel = None
+                Budget = emptyBudget
+                Result = None
+            },
             [ LoadSnapshot request ]
         | Error errors ->
             let result = usageResult errors
 
-            { Phase = Done
-              RawArgv = argv
-              Request = None
-              Snapshot = None
-              HostModel = None
-              Budget = emptyBudget
-              Result = Some result },
+            {
+                Phase = Done
+                RawArgv = argv
+                Request = None
+                Snapshot = None
+                HostModel = None
+                Budget = emptyBudget
+                Result = Some result
+            },
             [ Finish result.Exit ]
 
     let update (msg: Msg) (model: Model) =
@@ -535,27 +597,35 @@ module Cli =
                 { model with
                     Phase = LoadingSnapshot
                     Request = Some request
-                    Result = None },
+                    Result = None
+                },
                 [ LoadSnapshot request ]
             | Error errors ->
                 let result = usageResult errors
-                { model with Phase = Done; Result = Some result }, [ Finish result.Exit ]
 
-        | SnapshotLoaded (Ok snapshot), Some request ->
+                { model with
+                    Phase = Done
+                    Result = Some result
+                },
+                [ Finish result.Exit ]
+
+        | SnapshotLoaded(Ok snapshot), Some request ->
             { model with
                 Phase = RunningHost
-                Snapshot = Some snapshot },
+                Snapshot = Some snapshot
+            },
             [ RunHost(request, snapshot) ]
 
-        | SnapshotLoaded (Error reason), Some request ->
+        | SnapshotLoaded(Error reason), Some request ->
             let result = inputResult request reason
 
             { model with
                 Phase = RenderingOutput
-                Result = Some result },
+                Result = Some result
+            },
             [ WriteOutput(request, result) ]
 
-        | HostCompleted (host, budget), Some request ->
+        | HostCompleted(host, budget), Some request ->
             // The handoff documents were located at snapshot time (the I/O edge); fold them into the
             // route verdict here (pure). No snapshot ⇒ no handoffs (the host never ran without one).
             let handoffs =
@@ -571,24 +641,45 @@ module Cli =
                 Phase = RenderingOutput
                 HostModel = Some host
                 Budget = budget
-                Result = Some result },
+                Result = Some result
+            },
             [ WriteOutput(request, result) ]
 
-        | OutputWritten (Ok ()), _ ->
+        | OutputWritten(Ok()), _ ->
             match model.Result with
             | Some result -> { model with Phase = Done }, [ Finish result.Exit ]
             | None ->
-                let result = toolResult model.Request model.Budget [] "output completed without a result"
-                { model with Phase = Done; Result = Some result }, [ Finish result.Exit ]
+                let result =
+                    toolResult model.Request model.Budget [] "output completed without a result"
 
-        | OutputWritten (Error reason), _ ->
-            let failures = model.Result |> Option.map (fun result -> result.Failures) |> Option.defaultValue []
+                { model with
+                    Phase = Done
+                    Result = Some result
+                },
+                [ Finish result.Exit ]
+
+        | OutputWritten(Error reason), _ ->
+            let failures =
+                model.Result
+                |> Option.map (fun result -> result.Failures)
+                |> Option.defaultValue []
+
             let result = toolResult model.Request model.Budget failures reason
-            { model with Phase = Done; Result = Some result }, [ Finish result.Exit ]
+
+            { model with
+                Phase = Done
+                Result = Some result
+            },
+            [ Finish result.Exit ]
 
         | _, None ->
             let result = toolResult None model.Budget [] "command state lost its request"
-            { model with Phase = Done; Result = Some result }, [ Finish result.Exit ]
+
+            { model with
+                Phase = Done
+                Result = Some result
+            },
+            [ Finish result.Exit ]
 
     let fallbackResult (model: Model) =
         model.Result
@@ -610,7 +701,7 @@ module Cli =
 
                 let model, effects = update (SnapshotLoaded loaded) model
                 drive model (tail @ effects)
-            | RunHost (request, snapshot) :: tail ->
+            | RunHost(request, snapshot) :: tail ->
                 let completed =
                     try
                         Ok(ports.RunHost request snapshot)
@@ -618,7 +709,7 @@ module Cli =
                         Error ex.Message
 
                 match completed with
-                | Ok (host, budget) ->
+                | Ok(host, budget) ->
                     let model, effects = update (HostCompleted(host, budget)) model
                     drive model (tail @ effects)
                 | Error reason ->
@@ -627,10 +718,11 @@ module Cli =
                     let model =
                         { model with
                             Phase = RenderingOutput
-                            Result = Some result }
+                            Result = Some result
+                        }
 
                     drive model (tail @ [ WriteOutput(request, result) ])
-            | WriteOutput (request, result) :: tail ->
+            | WriteOutput(request, result) :: tail ->
                 let written =
                     try
                         ports.WriteOutput request result

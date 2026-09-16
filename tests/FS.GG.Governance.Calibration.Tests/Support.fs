@@ -20,9 +20,11 @@ open FS.GG.Governance.Calibration.Model
 
 /// Build a per-judge calibration scope from literal F035 identity tokens.
 let judgeId (m: string) (v: string) (h: string) : JudgeIdentity =
-    { Model = ModelId m
-      ModelVersion = ModelVersion v
-      PromptHash = ReviewerPromptHash h }
+    {
+        Model = ModelId m
+        ModelVersion = ModelVersion v
+        PromptHash = ReviewerPromptHash h
+    }
 
 /// A default scope reused where the identity is immaterial to the decision (calibration is per identity, but
 /// `decide` trusts the evidence is pre-filtered to one identity — research D3).
@@ -31,8 +33,10 @@ let defaultJudge: JudgeIdentity = judgeId "gpt" "1" "h"
 /// One judge-vs-human comparison sample pairing literal F038 verdicts (opaque — `decide` counts samples and
 /// reads the evidence-level ObservedAgreement, never a per-sample field).
 let sample (judge: string) (human: string) : ComparisonSample =
-    { JudgeVerdict = RecordedVerdict judge
-      HumanVerdict = RecordedVerdict human }
+    {
+        JudgeVerdict = RecordedVerdict judge
+        HumanVerdict = RecordedVerdict human
+    }
 
 /// A sample where the judge and human reached the same verdict.
 let agreeingSample: ComparisonSample = sample "v" "v"
@@ -43,9 +47,11 @@ let disagreeingSample: ComparisonSample = sample "j" "h"
 /// Assemble `CalibrationEvidence` from a sample list + a supplied observed agreement level, under the default
 /// scope.
 let evidence (samples: ComparisonSample list) (agreement: int) : CalibrationEvidence =
-    { Scope = defaultJudge
-      Samples = samples
-      ObservedAgreement = AgreementLevel agreement }
+    {
+        Scope = defaultJudge
+        Samples = samples
+        ObservedAgreement = AgreementLevel agreement
+    }
 
 /// `n` agreeing samples + a supplied observed agreement level — the worked-example shape.
 let evidenceOf (n: int) (agreement: int) : CalibrationEvidence =
@@ -53,8 +59,10 @@ let evidenceOf (n: int) (agreement: int) : CalibrationEvidence =
 
 /// Assemble `CalibrationThresholds` from a minimum sample count + a minimum agreement level.
 let thresholds (minSamples: int) (minAgreement: int) : CalibrationThresholds =
-    { MinimumSamples = SampleCount minSamples
-      MinimumAgreement = AgreementLevel minAgreement }
+    {
+        MinimumSamples = SampleCount minSamples
+        MinimumAgreement = AgreementLevel minAgreement
+    }
 
 // ── The six worked examples (contracts/calibration-api.md) with their expected `decide` results, as
 //    example-test oracles. T = { MinimumSamples = 3; MinimumAgreement = 80 }. Each value is a real literal. ──
@@ -62,24 +70,30 @@ let thresholds (minSamples: int) (minAgreement: int) : CalibrationThresholds =
 let T: CalibrationThresholds = thresholds 3 80
 
 let workedExamples: (CalibrationThresholds * CalibrationEvidence * CalibrationDecision) list =
-    [ T, evidenceOf 0 95, Uncalibrated NoCalibrationEvidence
-      T, evidenceOf 1 100, Uncalibrated(TooFewSamples(SampleCount 1, SampleCount 3))
-      T, evidenceOf 2 100, Uncalibrated(TooFewSamples(SampleCount 2, SampleCount 3))
-      T, evidenceOf 3 79, Uncalibrated(AgreementBelowThreshold(AgreementLevel 79, AgreementLevel 80))
-      T,
-      evidenceOf 3 80,
-      Calibrated
-          { ObservedSamples = SampleCount 3
-            RequiredSamples = SampleCount 3
-            ObservedAgreement = AgreementLevel 80
-            RequiredAgreement = AgreementLevel 80 }
-      T,
-      evidenceOf 5 95,
-      Calibrated
-          { ObservedSamples = SampleCount 5
-            RequiredSamples = SampleCount 3
-            ObservedAgreement = AgreementLevel 95
-            RequiredAgreement = AgreementLevel 80 } ]
+    [
+        T, evidenceOf 0 95, Uncalibrated NoCalibrationEvidence
+        T, evidenceOf 1 100, Uncalibrated(TooFewSamples(SampleCount 1, SampleCount 3))
+        T, evidenceOf 2 100, Uncalibrated(TooFewSamples(SampleCount 2, SampleCount 3))
+        T, evidenceOf 3 79, Uncalibrated(AgreementBelowThreshold(AgreementLevel 79, AgreementLevel 80))
+        T,
+        evidenceOf 3 80,
+        Calibrated
+            {
+                ObservedSamples = SampleCount 3
+                RequiredSamples = SampleCount 3
+                ObservedAgreement = AgreementLevel 80
+                RequiredAgreement = AgreementLevel 80
+            }
+        T,
+        evidenceOf 5 95,
+        Calibrated
+            {
+                ObservedSamples = SampleCount 5
+                RequiredSamples = SampleCount 3
+                ObservedAgreement = AgreementLevel 95
+                RequiredAgreement = AgreementLevel 80
+            }
+    ]
 
 // ── Oracle: the calibration basis recomputed independently of the implementation under test ──
 
@@ -106,27 +120,30 @@ let private genSample: Gen<ComparisonSample> =
         let! h = genVerdictString
 
         return
-            { JudgeVerdict = RecordedVerdict j
-              HumanVerdict = RecordedVerdict h }
+            {
+                JudgeVerdict = RecordedVerdict j
+                HumanVerdict = RecordedVerdict h
+            }
     }
 
 // Sample lists span the empty list, singletons, and arbitrary length (totality + the no-single-sample floor).
 let private genSamples: Gen<ComparisonSample list> =
-    Gen.oneof
-        [ Gen.constant []
-          genSample |> Gen.map List.singleton
-          Gen.listOf genSample ]
+    Gen.oneof [ Gen.constant []; genSample |> Gen.map List.singleton; Gen.listOf genSample ]
 
 // Counts/levels span the full non-negative AND negative int range, including the degenerate extremes, so
 // totality and the comparator law are exercised across, at, below, and above the threshold (and a lone sample).
 let private genInt: Gen<int> =
     Gen.oneof
-        [ Gen.elements [ -3; -1; 0; 1; 2; 3; 4; 5; 10 ]
-          Gen.choose (-1000, 1000)
-          Gen.elements [ Int32.MinValue; Int32.MaxValue ] ]
+        [
+            Gen.elements [ -3; -1; 0; 1; 2; 3; 4; 5; 10 ]
+            Gen.choose (-1000, 1000)
+            Gen.elements [ Int32.MinValue; Int32.MaxValue ]
+        ]
 
 let private genSampleCount: Gen<SampleCount> = genInt |> Gen.map SampleCount
-let private genAgreementLevel: Gen<AgreementLevel> = genInt |> Gen.map AgreementLevel
+
+let private genAgreementLevel: Gen<AgreementLevel> =
+    genInt |> Gen.map AgreementLevel
 
 let private genJudgeIdentity: Gen<JudgeIdentity> =
     gen {
@@ -135,9 +152,11 @@ let private genJudgeIdentity: Gen<JudgeIdentity> =
         let! h = genVerdictString
 
         return
-            { Model = ModelId m
-              ModelVersion = ModelVersion v
-              PromptHash = ReviewerPromptHash h }
+            {
+                Model = ModelId m
+                ModelVersion = ModelVersion v
+                PromptHash = ReviewerPromptHash h
+            }
     }
 
 let private genEvidence: Gen<CalibrationEvidence> =
@@ -147,9 +166,11 @@ let private genEvidence: Gen<CalibrationEvidence> =
         let! agreement = genAgreementLevel
 
         return
-            { Scope = scope
-              Samples = samples
-              ObservedAgreement = agreement }
+            {
+                Scope = scope
+                Samples = samples
+                ObservedAgreement = agreement
+            }
     }
 
 let private genThresholds: Gen<CalibrationThresholds> =
@@ -158,8 +179,10 @@ let private genThresholds: Gen<CalibrationThresholds> =
         let! minAgreement = genAgreementLevel
 
         return
-            { MinimumSamples = minSamples
-              MinimumAgreement = minAgreement }
+            {
+                MinimumSamples = minSamples
+                MinimumAgreement = minAgreement
+            }
     }
 
 type Generators =
@@ -172,6 +195,8 @@ type Generators =
 
 /// FsCheck config registering the real F040 generators.
 let fscheckConfig =
-    { FsCheckConfig.defaultConfig with arbitrary = [ typeof<Generators> ] }
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot

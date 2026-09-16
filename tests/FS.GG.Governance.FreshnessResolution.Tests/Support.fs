@@ -30,33 +30,31 @@ let gid (domain: string) (check: string) : GateId = GateId(domain + ":" + check)
 /// identity fields + `Cost`, which the join DROPS). The non-identity gate metadata (`Description`, `Timeout`,
 /// `Owner`, `Maturity`, `ProductCheck`) is real but never read by `resolve` — only `Id` and `FreshnessKey`
 /// matter to the join. `Cost` is set explicitly so its drop from the resolved `FreshnessInputs` is observable.
-let gateWith
-    (domain: string)
-    (check: string)
-    (cost: Cost)
-    (env: EnvironmentClass)
-    (command: CommandId option)
-    : Gate =
+let gateWith (domain: string) (check: string) (cost: Cost) (env: EnvironmentClass) (command: CommandId option) : Gate =
     let fk: FreshnessKey =
-        { Check = CheckId check
-          Domain = DomainId domain
-          Cost = cost
-          Environment = env
-          Command = command }
+        {
+            Check = CheckId check
+            Domain = DomainId domain
+            Cost = cost
+            Environment = env
+            Command = command
+        }
 
-    { Id = gid domain check
-      Domain = DomainId domain
-      Description = sprintf "gate %s:%s" domain check
-      Prerequisites =
-        (match command with
-         | Some c -> [ RequiresCommand c ]
-         | None -> [])
-      Cost = cost
-      Timeout = TimeoutLimit 60
-      Owner = Owner "team"
-      Maturity = Observe
-      ProductCheck = false
-      FreshnessKey = fk }
+    {
+        Id = gid domain check
+        Domain = DomainId domain
+        Description = sprintf "gate %s:%s" domain check
+        Prerequisites =
+            (match command with
+             | Some c -> [ RequiresCommand c ]
+             | None -> [])
+        Cost = cost
+        Timeout = TimeoutLimit 60
+        Owner = Owner "team"
+        Maturity = Observe
+        ProductCheck = false
+        FreshnessKey = fk
+    }
 
 // ── Canonical worked-example gates (contracts/freshness-resolution-outcome.md A–E) + commands ──
 
@@ -81,45 +79,47 @@ let artC = ArtifactHash "artC"
 /// sensed-empty value), and the command version for each declared command — so a SINGLE dropped fact is
 /// observable against this baseline.
 let fullSensed: SensedFacts =
-    { RuleHash = Some(RuleHash "rule-1")
-      GeneratorVersion = Some(GeneratorVersion "gen-1")
-      Base = Some(Revision "base-1")
-      Head = Some(Revision "head-1")
-      CoveredArtifacts =
-        Map.ofList
-            [ gBuildTests.Id, [ artA; artB ]
-              gLintStyle.Id, [ artC ]
-              gDocsCheck.Id, [] ]
-      CommandVersions = Map.ofList [ dotnetCmd, CommandVersion "8.0"; eslintCmd, CommandVersion "9.3" ] }
+    {
+        RuleHash = Some(RuleHash "rule-1")
+        GeneratorVersion = Some(GeneratorVersion "gen-1")
+        Base = Some(Revision "base-1")
+        Head = Some(Revision "head-1")
+        CoveredArtifacts = Map.ofList [ gBuildTests.Id, [ artA; artB ]; gLintStyle.Id, [ artC ]; gDocsCheck.Id, [] ]
+        CommandVersions = Map.ofList [ dotnetCmd, CommandVersion "8.0"; eslintCmd, CommandVersion "9.3" ]
+    }
 
 /// A `SensedFacts` bundle that FULLY senses exactly the given gate: every repo-wide fact present, the gate's
 /// covered-artifacts key present (non-empty), and — only when the gate declares a command — that command's
 /// version present. Used by the carry / command-absence / bridge / determinism tests over arbitrary gates.
 let senseFully (g: Gate) : SensedFacts =
-    { RuleHash = Some(RuleHash "rule-1")
-      GeneratorVersion = Some(GeneratorVersion "gen-1")
-      Base = Some(Revision "base-1")
-      Head = Some(Revision "head-1")
-      CoveredArtifacts = Map.ofList [ g.Id, [ artA; artB ] ]
-      CommandVersions =
-        (match g.FreshnessKey.Command with
-         | Some c -> Map.ofList [ c, CommandVersion "8.0" ]
-         | None -> Map.empty) }
+    {
+        RuleHash = Some(RuleHash "rule-1")
+        GeneratorVersion = Some(GeneratorVersion "gen-1")
+        Base = Some(Revision "base-1")
+        Head = Some(Revision "head-1")
+        CoveredArtifacts = Map.ofList [ g.Id, [ artA; artB ] ]
+        CommandVersions =
+            (match g.FreshnessKey.Command with
+             | Some c -> Map.ofList [ c, CommandVersion "8.0" ]
+             | None -> Map.empty)
+    }
 
 /// An INDEPENDENT oracle for the resolved `FreshnessInputs` of a fully-sensed gate (the carry law): the four
 /// identity fields from the gate's carried `FreshnessKey` (NO `Cost`), the six sensed fields from the bundle.
 /// `Option.get` is safe only when the bundle fully senses the gate (the carry tests guarantee this).
 let expectedResolved (g: Gate) (s: SensedFacts) : FreshnessInputs =
-    { Check = g.FreshnessKey.Check
-      Domain = g.FreshnessKey.Domain
-      Command = g.FreshnessKey.Command
-      Environment = g.FreshnessKey.Environment
-      RuleHash = Option.get s.RuleHash
-      CoveredArtifacts = Map.find g.Id s.CoveredArtifacts
-      CommandVersion = g.FreshnessKey.Command |> Option.bind (fun c -> Map.tryFind c s.CommandVersions)
-      GeneratorVersion = Option.get s.GeneratorVersion
-      Base = Option.get s.Base
-      Head = Option.get s.Head }
+    {
+        Check = g.FreshnessKey.Check
+        Domain = g.FreshnessKey.Domain
+        Command = g.FreshnessKey.Command
+        Environment = g.FreshnessKey.Environment
+        RuleHash = Option.get s.RuleHash
+        CoveredArtifacts = Map.find g.Id s.CoveredArtifacts
+        CommandVersion = g.FreshnessKey.Command |> Option.bind (fun c -> Map.tryFind c s.CommandVersions)
+        GeneratorVersion = Option.get s.GeneratorVersion
+        Base = Option.get s.Base
+        Head = Option.get s.Head
+    }
 
 // ── Single-fact mutators (drop EXACTLY one sensed fact from a bundle) ──
 
@@ -129,43 +129,51 @@ let withoutBase (s: SensedFacts) = { s with Base = None }
 let withoutHead (s: SensedFacts) = { s with Head = None }
 
 let withoutCovered (g: GateId) (s: SensedFacts) =
-    { s with CoveredArtifacts = Map.remove g s.CoveredArtifacts }
+    { s with
+        CoveredArtifacts = Map.remove g s.CoveredArtifacts
+    }
 
 let withoutCommandVersion (c: CommandId) (s: SensedFacts) =
-    { s with CommandVersions = Map.remove c s.CommandVersions }
+    { s with
+        CommandVersions = Map.remove c s.CommandVersions
+    }
 
 /// The six gaps for a given command-bearing gate, each paired with its `MissingFact` — the table the
 /// no-fabricate / no-hide tests iterate so EVERY required fact drives an `Unresolved` naming exactly it.
 /// `MissingCommandVersion`'s mutator drops the gate's declared command version (only meaningful for a
 /// command-bearing gate; `id` for a command-less gate, where the case is unreachable, FR-005).
 let gapTable (g: Gate) : (MissingFact * (SensedFacts -> SensedFacts)) list =
-    [ MissingRuleHash, withoutRuleHash
-      MissingCoveredArtifacts, withoutCovered g.Id
-      MissingCommandVersion,
-      (match g.FreshnessKey.Command with
-       | Some c -> withoutCommandVersion c
-       | None -> id)
-      MissingGeneratorVersion, withoutGeneratorVersion
-      MissingBaseRevision, withoutBase
-      MissingHeadRevision, withoutHead ]
+    [
+        MissingRuleHash, withoutRuleHash
+        MissingCoveredArtifacts, withoutCovered g.Id
+        MissingCommandVersion,
+        (match g.FreshnessKey.Command with
+         | Some c -> withoutCommandVersion c
+         | None -> id)
+        MissingGeneratorVersion, withoutGeneratorVersion
+        MissingBaseRevision, withoutBase
+        MissingHeadRevision, withoutHead
+    ]
 
 /// An INDEPENDENT oracle for the missing facts of a gate against a sensed bundle, in FR-002 enum order — used by
 /// the no-hide property as a separate spec of what `resolve` must name (it re-derives the rule, it does not call
 /// the library). Mirrors the data-model.md join table.
 let expectedMissing (g: Gate) (s: SensedFacts) : MissingFact list =
-    [ if Option.isNone s.RuleHash then
-          MissingRuleHash
-      if not (Map.containsKey g.Id s.CoveredArtifacts) then
-          MissingCoveredArtifacts
-      match g.FreshnessKey.Command with
-      | Some c when not (Map.containsKey c s.CommandVersions) -> MissingCommandVersion
-      | _ -> ()
-      if Option.isNone s.GeneratorVersion then
-          MissingGeneratorVersion
-      if Option.isNone s.Base then
-          MissingBaseRevision
-      if Option.isNone s.Head then
-          MissingHeadRevision ]
+    [
+        if Option.isNone s.RuleHash then
+            MissingRuleHash
+        if not (Map.containsKey g.Id s.CoveredArtifacts) then
+            MissingCoveredArtifacts
+        match g.FreshnessKey.Command with
+        | Some c when not (Map.containsKey c s.CommandVersions) -> MissingCommandVersion
+        | _ -> ()
+        if Option.isNone s.GeneratorVersion then
+            MissingGeneratorVersion
+        if Option.isNone s.Base then
+            MissingBaseRevision
+        if Option.isNone s.Head then
+            MissingHeadRevision
+    ]
 
 // ── Real F030 store + F041 bridge helpers (no mocks) ──
 
@@ -188,8 +196,7 @@ let private labelPool = [ "a"; "b"; "z"; "build"; "lint"; "Z" ]
 let private genCommand: Gen<CommandId option> =
     Gen.elements [ None; Some dotnetCmd; Some eslintCmd; Some(CommandId "x:y") ]
 
-let private genCost: Gen<Cost> =
-    Gen.elements [ Cheap; Medium; High; Exhaustive ]
+let private genCost: Gen<Cost> = Gen.elements [ Cheap; Medium; High; Exhaustive ]
 
 let private genEnv: Gen<EnvironmentClass> =
     Gen.elements [ Local; Ci; LocalOrCi; Release ]
@@ -251,12 +258,14 @@ let private genSensedFacts: Gen<SensedFacts> =
         let! cv = genCommandVersions
 
         return
-            { RuleHash = rh
-              GeneratorVersion = gv
-              Base = b
-              Head = h
-              CoveredArtifacts = cov
-              CommandVersions = cv }
+            {
+                RuleHash = rh
+                GeneratorVersion = gv
+                Base = b
+                Head = h
+                CoveredArtifacts = cov
+                CommandVersions = cv
+            }
     }
 
 type Generators =
@@ -267,6 +276,7 @@ type Generators =
 /// FsCheck config registering the real generators.
 let fscheckConfig =
     { FsCheckConfig.defaultConfig with
-        arbitrary = [ typeof<Generators> ] }
+        arbitrary = [ typeof<Generators> ]
+    }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
