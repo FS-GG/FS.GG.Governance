@@ -14,7 +14,7 @@
 # eleven PROJECTIONS were simply MISSING, which is why a byte-comparison-only checker saw nothing wrong.
 #
 # `coordination-coherence` was green throughout, and correctly so: its subject is the KIT-OWNED SUBSET
-# (the four `kit:` rows in .github's registry/repos.yml). A co-tenant skill is not in that subset, so the
+# (the `kit:` rows in .github's registry/repos.yml). A co-tenant skill is not in that subset, so the
 # ten `speckit-*` skills and `spectre-console` were outside the kit materializer AND outside its
 # acceptance check. A `coordination-coherence` green is evidence about four skills; only a `skill-union`
 # green is evidence about the tree.
@@ -53,8 +53,9 @@
 #      `.specify/extensions/agent-context/commands/speckit.agent-context.update.md`, declared by
 #      `.specify/extensions/.registry`. Same body check as (2). Note it is NOT in claude.manifest.json:
 #      it arrives via the extension, not the base integration.
-#   4. The four kit skills (`cross-repo-coordination`, `intra-repo-parallel-work`, `check-board`,
-#      `pnext-item`) — authority: the pinned `FS.GG.Kit` package, materialized by
+#   4. The five kit skills (`cross-repo-coordination`, `initialize-sdd-workspace`,
+#      `intra-repo-parallel-work`, `check-board`, `pnext-item`) — authority: the pinned `FS.GG.Kit`
+#      package, materialized by
 #      `.config/kit/FS.GG.Kit.receiver.proj -t:FsggKitMaterialize` (ADR-0062) and already bound to
 #      canonical in ALL THREE roots by the required `coordination-coherence` gate. This script does not
 #      re-verify them — that gate is their check, and duplicating it here would be a restatement that can
@@ -166,7 +167,7 @@ OVERLAY_RECORD="$SPECIFY/integrations/overlay.json"
 # The kit-owned subset (.github registry/repos.yml `kit:` rows, kind: skill). Named here ONLY to
 # attribute them to `coordination-coherence` rather than leaving them unattributed — this script does not
 # check them, so this list cannot drift into a second, disagreeing definition of the kit.
-KIT_SKILLS="cross-repo-coordination intra-repo-parallel-work check-board pnext-item"
+KIT_SKILLS="cross-repo-coordination initialize-sdd-workspace intra-repo-parallel-work check-board pnext-item"
 # Repo-native co-tenants: this repo is the owner, so there is no external producer to verify against.
 NATIVE_SKILLS="spectre-console"
 

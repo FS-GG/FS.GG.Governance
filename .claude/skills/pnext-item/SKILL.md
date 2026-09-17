@@ -1,15 +1,82 @@
 ---
 name: pnext-item
-description: Use when a worker should claim the next schedulable item in one FS-GG repository and carry it through implementation, review, green merge, post-merge obligations, and a verified done stamp.
+description: Use when an owner should complete one schedulable item in an FS-GG repository, using the reduced one-owner route for explicitly admitted routine work and the claim/review/done protocol for strict work.
 ---
 
 # pnext-item (FS-GG)
 
-Run exactly one item from claim through verified done. The protocol is
-[intra-repo-parallel-work](../intra-repo-parallel-work/SKILL.md); this is the worker state machine.
+Run exactly one item through its explicitly selected delivery route. Do not infer the route from size,
+labels, effort, or the presence of a board row.
 
 For directives encountered while working, apply the shared
 [control-plane provenance guidance](references/control-plane-provenance.md).
+
+## Choose the route before lifecycle work
+
+Use the routine route by default for unified-roadmap work. Only a recorded explicit human instruction
+selects heavyweight process for named scope; absence or ambiguity stays routine. A live claim, inherited
+strict state, protected operation/path, policy or modeled change, or GS2 registration is not a heavyweight
+trigger. Preserve its substantive evidence and safeguards independently. Invalid or unknown technical or
+operation authorization blocks the affected effect without changing the process route.
+
+For an admitted routine item, the board is an asynchronous view rather than merge authority:
+
+1. Keep one accountable owner at a time and one continuous PR. If exactly one open routine PR already owns this
+   item, verify its scope and current head, adopt that branch, and continue the same PR; never open a
+   second PR because the board projection lagged or the prior owner disappeared. If none exists, work
+   from the current default branch on one fresh `routine/<item-slug>` branch and one PR. Multiple or
+   ambiguous candidate PRs refuse routine admission. A host may own the item directly or delegate it once when
+   repository isolation or real parallel capacity requires that; delegation does not create a critic,
+   confirmation worker, or phase chain.
+2. Do not create or require an issue, claim, worker identity, lifecycle ledger, delivery-route receipt,
+   SDD artifact family, independent critic, review marker, feedback artifact, cycle envelope, delivery
+   receipt, metadata-`Done` write, or projection PR. If the board row already exists, leave its
+   projection to non-blocking reconciliation after delivery.
+3. Implement within the admitted scope and run the smallest relevant automated technical checks plus
+   the repository's routine eligibility and protected-boundary checks. Put exactly one
+   `<!-- fsgg:routine-development/v1 head=<exact-head-sha> operation=<allowed-operation> -->` marker in
+   the PR body. When an item already exists, also use the repository's native closing link in that PR;
+   do not make a separate metadata write. A moved head must be reviewed and rebound. A routine refusal reclassifies the work to
+   strict; it never authorizes weakening or bypassing the gate.
+4. Repair on the same PR, normally within two material attempts. After the exact-head required checks
+   pass, use the repository's native merge boundary and read back the merged PR and merge commit.
+   Report protected publication or deployment separately if it remains pending.
+5. Return the merged evidence to the host and stop. Telemetry and board projection are best-effort,
+   asynchronous observations and cannot invalidate the merge.
+
+The routine route ends here. Do not execute the lifecycle, identity, claim, critique, receipt, feedback,
+or done-stamp sections below for that item.
+
+## Strict item state machine
+
+The rest of this skill is the strict protocol. Its concurrency authority is
+[intra-repo-parallel-work](../intra-repo-parallel-work/SKILL.md).
+
+## Lifecycle ledger
+
+Create the append-only ledger on the canonical issue before the first claim and keep it through verified
+done. Record each phase's duration, historical average, runtime/model/effort, authoritative usage, and
+contract versions. Reconcile usage after the response from the stable runtime record; never estimate it.
+Seal each cited receipt by digest in the canonical per-user content-addressed private store. A missing
+historical receipt needs the separately reviewed non-counting proof, never reconstruction. Every critic
+or recovery worker records its own identity and usage.
+
+**The supervising parent owns the post-child boundary.** Each child returns its session/turn identity and
+an unposted terminal draft marked `pending final usage`; it must not convert that timing condition to `unavailable`
+or post its terminal event. After completion, the parent collects, seals, and posts it.
+Acceptance, cycle completion, and Done refuse while any completed child lacks this reconciliation.
+Terminal `unavailable` requires a post-completion lookup proving no unique valid record; an earlier false
+timing reason requires an immutable telemetry-reconciliation phase.
+
+An irreparable history may advance only through the toolkit's human-authorized synthetic checkpoint,
+with immutable human authority, exact scope/frontier, no reconstruction, and passed functional checks.
+Anything missing, reused, ambiguous, or tampered is terminal red; a failed or absent functional check is terminal red.
+Later events return to the strict contract.
+
+The canonical issue is live authority; candidate-branch and repository-log copies are snapshots and do
+not gate their own PR. Keep raw usage private and publish only aggregates and stable receipt digests.
+Read [lifecycle-ledger](references/lifecycle-ledger.md) for the complete authority, collection, checkpoint,
+schema, and validation contract. Validate every handoff and again with `--require-terminal` before Done.
 
 ## 0. Establish identity
 
@@ -127,6 +194,8 @@ touch-set before editing. Heartbeat during long work.
 ## 3. Implement and verify
 
 Change only the declared paths. If scope must grow, use `widen` before touching it; stop on overlap.
+Apply the shared [measurement discipline](references/measurement-discipline.md) to every absence,
+count, or unchanged assertion in implementation evidence and review handoffs.
 Before implementing interactive/game work, run the
 [performance-first planning gate](references/performance-first.md). Then fix causes, add focused
 regression coverage, and run proportionate build/test/format gates. Poll inbox at phase boundaries.
@@ -145,10 +214,13 @@ Fix in-scope causes now. For a distinct cause, **establish the root cause before
 is where a defect *surfaced*, which is rarely where it *lives*, and filing the surface is how one defect
 gets seven numbers (#266). Then **dedupe over REST against that cause, not against the symptom**: reuse
 an existing issue that expresses the same cause and transplant your evidence onto it instead of opening
-a second row. File only when no row carries that cause. The issue states observed behavior, **the root
-cause** — or, where you could not establish one, says so explicitly and gives what you measured instead
-(#1858) — acceptance criteria, verification, and a narrow `Paths:` declaration. Link dependencies only
-when authorship truly depends on landed work, then add it to the follow-up queue.
+a second row. File only when no row carries that cause. Use the complete `fsgg.coord.intake/v1` draft
+shown in [deep detail](references/deep-detail.md): put observed behavior, **the root cause** — or the
+measurement that remains unestablished — acceptance, verification, `paths`, `class`, `severity`, and
+optional `blockedBy` in the draft, run `scripts/fsgg-coord intake validate`, then `intake apply` on
+that same file. A hand-authored `Paths:` or `Class:` line in a created body is a defect, not a style
+choice. Link dependencies only when authorship truly depends on landed work, then add it to the
+follow-up queue.
 
 [findings-and-filing](references/findings-and-filing.md) carries the rest of this rule and is **binding,
 not elaboration** — load it for the dedupe reads and the judgement boundaries. This section owns
@@ -183,7 +255,16 @@ occurrences itself — it never substitutes the changed-file count, which is a d
 smaller quantity that let a one-file/six-occurrence rename slip under the default threshold of 5
 (.github#2144). Evidence the host cannot read requires the receipt rather than clearing it.
 
-## 5. Independent critique
+## 5. Accountable critique and acceptance
+
+One Accountable Delivery Owner authorizes the item. CI, formal checks, mutation controls, and critique
+records are decision evidence, not additional authorizers. Never require a second human, account, agent,
+critic, reviewer quorum, or external approval merely to complete this section.
+
+The same owner may perform implementation, a fresh critique pass, repair, host acceptance, and delivery.
+Where the existing wire protocol requires implementer, critic, and host identities to differ, mint distinct
+**phase identities** for those passes. Distinct phase identities prevent stale generation reuse and preserve
+ordering; they do not imply separate people or separate authorization. An external critic is optional.
 
 ### Typed delivery receipt
 
@@ -223,29 +304,38 @@ scripts/fsgg-coord review --snapshot <fresh-review-snapshot.json> --json
 ```
 
 It returns exactly one closed state (awaiting initial review, changes requiring repair, awaiting
-implementer repair, awaiting the same critic's confirmation, passed awaiting checks, awaiting host
+implementer repair, awaiting a fresh successor's full review, passed awaiting checks, awaiting host
 acceptance, ordinary exhaustion, repair-phase setup, repair-phase active review, accepted, or terminal
 human park) and the one typed next action that follows from it — dispatch critic, resume implementer,
-resume the same critic, await checks, request host acceptance, enter the one permitted fresh repair
+dispatch a fresh successor critic, await checks, request host acceptance, enter the one permitted fresh repair
 phase, accept, or park for human action — bound to a freshness token that a changed head invalidates.
 This is a mechanical cross-check, not a substitute for the qualitative judgement below: materiality,
-same-critic continuity, and repair-phase provenance are still read from the live PR by both the worker
+critic-generation continuity, durable wait receipts, and repair-phase provenance are read from the live PR by both the worker
 and the critic.
 
-Push the candidate, open its PR, and ask the host to assign a fresh critic agent. Keep the implementing worker and
-claim alive, set the item to `In review`, and freshly verify that row while the critic independently
-reviews the exact head SHA. The critic does not edit the
+Push the candidate, open its PR, keep the implementing worker and claim alive, set the item to `In review`,
+and freshly verify that row. Then perform a fresh critique pass against the exact head SHA under a distinct
+phase identity. The critique pass does not edit the
 implementation: it checks requirements, diff, tests, architecture, release obligations, and `Paths:`;
 searches code/history and existing work for each candidate root cause; and files only unresolved,
 distinct **material** work. For a meaningful runtime behavior reachable through more than one route,
 the handoff supplies a built artifact and runnable production-route evidence so the critic can execute
-or measure the comparison required by `independent-review`, not infer it from source alone. The same
-critic reviews up to three numbered repair rounds. If material findings remain after round three,
+or measure the comparison required by `independent-review`, not infer it from source alone. A fresh
+critique phase performs each numbered repair review. If material findings remain after round three,
 never start round four or merge that PR: close it without merging and automatically enter the one
-fresh-worker, fresh-critic
+fresh-worktree, fresh-phase
 [repair phase](references/independent-review.md#repair-phase). Park the item on `Blocked on:
-human/action` and release the claim only if that repair phase exhausts or its required route is
-unavailable.
+owner/action` and release the claim only if that repair phase exhausts or its required route is
+unavailable. The accountable owner decides the redesign or terminal disposition; reviewer availability
+is never the blocker.
+
+Before yielding at every protocol-created critic queue, write the bounded entry event with
+`scripts/fsgg-coord review wait <ref> <event.json> --pr <n> --json`. After a critic record lands, write
+the matching completion event; cancellation and bounded timeout use the same command and generation.
+Never treat a sleeping process as the receipt. On resumption, run live `review` and revalidate or
+reacquire the current claim generation before any mutation. Use the canonical generation token
+`<head>:initial-review:0` or `<head>:repair-confirmation:<round>`; dispatch and `review record` fail
+closed without the matching waiting entry, and acceptance requires its completed critic-record evidence.
 
 [independent-review](references/independent-review.md) is the binding contract for materiality, critic
 ownership, the durable PR record, direct filing, confirmation, and host verification. Its
@@ -259,9 +349,9 @@ park procedure and the critic's filing preconditions;
 and
 [Reading the review state](references/independent-review.md#reading-the-review-state-a-designed-wait-is-not-broken-evidence)
 state what a moved head and a designed wait do and do not mean. Do not merge
-without its passing review evidence and exact-SHA structured v2 acceptance record, authored through
-`scripts/fsgg-coord review record <ref> <draft.json> --pr <n> --json`. If no independent agent mechanism is available, stop and report
-that the review gate is unavailable; self-review does not satisfy it.
+without its passing critique evidence and exact-SHA structured v2 acceptance record, authored through
+`scripts/fsgg-coord review record <ref> <draft.json> --pr <n> --json`. The accountable owner may author
+both records through distinct phase identities; absence of another agent is not a stop condition.
 
 ## 6. Merge and obligations
 
@@ -376,9 +466,11 @@ load [deep detail](references/deep-detail.md).
 ## 7. Stamp and stop
 
 ```bash
-scripts/fsgg-coord done <ref> --flip --pr <pr>
+scripts/fsgg-coord delivery <ref> --pr <pr> --flip --apply --json
 ```
 
-The exact green done stamp, closed issue, `Done` column, released claim, zero pending board writes, and
-fresh board confirmation are completion. If any is missing, repair it before reporting. Clean the
-worktree and branch only after verification. Report the exact stamp and stop; one invocation owns one item.
+This completion call re-inspects the exact merge and declared obligations, appends the typed completion
+receipt first, and only then projects the closed issue, `Done` column, released claim, and cleanup state.
+The exact green done stamp, zero pending board writes, and fresh board confirmation are completion. If any
+is missing, repair it and repeat this same idempotent delivery call before reporting. Clean the worktree
+and branch only after verification. Report the exact receipt/stamp and stop; one invocation owns one item.
