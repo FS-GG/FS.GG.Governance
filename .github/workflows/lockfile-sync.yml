@@ -23,6 +23,7 @@ jobs:
     uses: FS-GG/.github/.github/workflows/lockfile-sync.yml@main
     with:
       restore-target: FS.GG.Governance.sln
+      dotnet-version: 10.0.302
     secrets:
       app-id:          ${{ secrets.FSGG_DISPATCH_APP_ID }}
       app-private-key: ${{ secrets.FSGG_DISPATCH_APP_PRIVATE_KEY }}

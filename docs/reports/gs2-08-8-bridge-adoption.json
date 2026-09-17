@@ -86,7 +86,7 @@
     },
     {
       "caller": ".github/workflows/kit-materialize.yml",
-      "callerSha256": "51e196beb0992e281b90d7f6ada997ae3d1daae6843e7f64de8e21f6e0f79ef2",
+      "callerSha256": "2ef18effb373c13961dcc382748379b82bfd36a6b72f3f61a35197740f85a178",
       "target": "FS-GG/.github/.github/workflows/kit-materialize.yml",
       "ref": "main",
       "observedRevision": "3adada5a9738464291088830c47a30a3a8fc9561",
@@ -95,7 +95,7 @@
     },
     {
       "caller": ".github/workflows/lockfile-sync.yml",
-      "callerSha256": "5206470cccfffe4d38a95253b6297e8f84db8d30a23670c78af0d39443e2313b",
+      "callerSha256": "f3925299d39f171f4eb5dfcc9c6106c0d6dbea7affa8a7d52dc1ff6c4af3ce7b",
       "target": "FS-GG/.github/.github/workflows/lockfile-sync.yml",
       "ref": "main",
       "observedRevision": "3adada5a9738464291088830c47a30a3a8fc9561",
