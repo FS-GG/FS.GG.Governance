@@ -4,18 +4,18 @@
     "net10.0": {
       "FSharp.Compiler.Service": {
         "type": "Direct",
-        "requested": "[43.11.302, )",
-        "resolved": "43.11.302",
-        "contentHash": "tOyFJ3e2hk2EK5hIHwx+Zsxly9Rr/TdTC8WQxjteziYg303ZdvJezWelzehrKxsfFKAIUOghJntPcwpABaXfpQ==",
+        "requested": "[43.12.401, )",
+        "resolved": "43.12.401",
+        "contentHash": "pw8xfO19iFIxBhwtBTud/71bqCJJr/MKdbDrNjtv8x5eov0ArF0xwhVZIVAMMDz3mnoRP/cfvBshga21GjNwWg==",
         "dependencies": {
-          "FSharp.Core": "[10.1.302]"
+          "FSharp.Core": "[10.1.401]"
         }
       },
       "FSharp.Core": {
         "type": "CentralTransitive",
-        "requested": "[10.1.302, )",
-        "resolved": "10.1.302",
-        "contentHash": "bN7XMQrAQg1dyHScJ7FcsznERBkvm74LtIo1O6C5mUzgbDqSwNbDpb3+nBGaJAjDmtC/suK5Vx5pFysKY6Hm+Q=="
+        "requested": "[10.1.401, )",
+        "resolved": "10.1.401",
+        "contentHash": "IGqjL9U8pQl7CaCpFP3f5slZMduE8c7ZBx7HycAQ9dc1tawyniNyw7Fh6L2cShIoQDcaDL+S8/kokhWs8WwnBQ=="
       }
     }
   }

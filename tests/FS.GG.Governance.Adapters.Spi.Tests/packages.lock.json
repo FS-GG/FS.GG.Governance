@@ -226,7 +226,7 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -264,7 +264,7 @@
           "FS.GG.Governance.Route": "[0.1.0, )",
           "FS.GG.Governance.RouteExplain": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.jsontext": {
@@ -387,9 +387,9 @@
       },
       "FSharp.Core": {
         "type": "CentralTransitive",
-        "requested": "[10.1.302, )",
-        "resolved": "10.1.302",
-        "contentHash": "bN7XMQrAQg1dyHScJ7FcsznERBkvm74LtIo1O6C5mUzgbDqSwNbDpb3+nBGaJAjDmtC/suK5Vx5pFysKY6Hm+Q=="
+        "requested": "[10.1.401, )",
+        "resolved": "10.1.401",
+        "contentHash": "IGqjL9U8pQl7CaCpFP3f5slZMduE8c7ZBx7HycAQ9dc1tawyniNyw7Fh6L2cShIoQDcaDL+S8/kokhWs8WwnBQ=="
       },
       "YamlDotNet": {
         "type": "CentralTransitive",

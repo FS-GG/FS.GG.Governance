@@ -328,7 +328,7 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -365,7 +365,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.HumanText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )",
+          "FSharp.Core": "[10.1.401, )",
           "Spectre.Console": "[0.57.2, )"
         }
       },
@@ -382,7 +382,7 @@
           "FS.GG.Governance.Route": "[0.1.0, )",
           "FS.GG.Governance.RouteExplain": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.inheritance": {
@@ -459,7 +459,7 @@
           "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.releasecommand": {
@@ -484,7 +484,7 @@
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.releasedeclaration": {
@@ -497,7 +497,7 @@
           "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )",
+          "FSharp.Core": "[10.1.401, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
@@ -519,7 +519,7 @@
           "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
           "FS.GG.Governance.ReleaseReport": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.releasereport": {
@@ -605,7 +605,7 @@
           "FS.GG.Governance.Routing": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.snapshot": {
@@ -664,9 +664,9 @@
       },
       "FSharp.Core": {
         "type": "CentralTransitive",
-        "requested": "[10.1.302, )",
-        "resolved": "10.1.302",
-        "contentHash": "bN7XMQrAQg1dyHScJ7FcsznERBkvm74LtIo1O6C5mUzgbDqSwNbDpb3+nBGaJAjDmtC/suK5Vx5pFysKY6Hm+Q=="
+        "requested": "[10.1.401, )",
+        "resolved": "10.1.401",
+        "contentHash": "IGqjL9U8pQl7CaCpFP3f5slZMduE8c7ZBx7HycAQ9dc1tawyniNyw7Fh6L2cShIoQDcaDL+S8/kokhWs8WwnBQ=="
       },
       "Spectre.Console": {
         "type": "CentralTransitive",

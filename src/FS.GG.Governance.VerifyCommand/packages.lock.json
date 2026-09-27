@@ -4,9 +4,9 @@
     "net10.0": {
       "FSharp.Core": {
         "type": "Direct",
-        "requested": "[10.1.302, )",
-        "resolved": "10.1.302",
-        "contentHash": "bN7XMQrAQg1dyHScJ7FcsznERBkvm74LtIo1O6C5mUzgbDqSwNbDpb3+nBGaJAjDmtC/suK5Vx5pFysKY6Hm+Q=="
+        "requested": "[10.1.401, )",
+        "resolved": "10.1.401",
+        "contentHash": "IGqjL9U8pQl7CaCpFP3f5slZMduE8c7ZBx7HycAQ9dc1tawyniNyw7Fh6L2cShIoQDcaDL+S8/kokhWs8WwnBQ=="
       },
       "Spectre.Console.Ansi": {
         "type": "Transitive",
@@ -71,7 +71,7 @@
       "fs.gg.governance.codechecks": {
         "type": "Project",
         "dependencies": {
-          "FSharp.Compiler.Service": "[43.11.302, )"
+          "FSharp.Compiler.Service": "[43.12.401, )"
         }
       },
       "fs.gg.governance.commandhost": {
@@ -231,7 +231,7 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -274,7 +274,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.HumanText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )",
+          "FSharp.Core": "[10.1.401, )",
           "Spectre.Console": "[0.57.2, )"
         }
       },
@@ -291,7 +291,7 @@
           "FS.GG.Governance.Route": "[0.1.0, )",
           "FS.GG.Governance.RouteExplain": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.inheritance": {
@@ -368,7 +368,7 @@
           "FS.GG.Governance.DesignChecks": "[0.3.0, )",
           "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.provenance": {
@@ -396,7 +396,7 @@
           "FS.GG.Governance.Config": "[0.2.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "fs.gg.governance.releasedeclaration": {
@@ -409,7 +409,7 @@
           "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.302, )",
+          "FSharp.Core": "[10.1.401, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
@@ -526,7 +526,7 @@
           "FS.GG.Governance.RuleIdentity": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
           "FS.GG.Governance.SurfaceChecks": "[0.2.0, )",
-          "FSharp.Core": "[10.1.302, )"
+          "FSharp.Core": "[10.1.401, )"
         }
       },
       "FS.GG.Contracts": {
@@ -540,11 +540,11 @@
       },
       "FSharp.Compiler.Service": {
         "type": "CentralTransitive",
-        "requested": "[43.11.302, )",
-        "resolved": "43.11.302",
-        "contentHash": "tOyFJ3e2hk2EK5hIHwx+Zsxly9Rr/TdTC8WQxjteziYg303ZdvJezWelzehrKxsfFKAIUOghJntPcwpABaXfpQ==",
+        "requested": "[43.12.401, )",
+        "resolved": "43.12.401",
+        "contentHash": "pw8xfO19iFIxBhwtBTud/71bqCJJr/MKdbDrNjtv8x5eov0ArF0xwhVZIVAMMDz3mnoRP/cfvBshga21GjNwWg==",
         "dependencies": {
-          "FSharp.Core": "[10.1.302]"
+          "FSharp.Core": "[10.1.401]"
         }
       },
       "Spectre.Console": {
