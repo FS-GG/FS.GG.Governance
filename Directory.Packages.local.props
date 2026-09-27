@@ -35,7 +35,7 @@
        as literals here. BCL-only (FSharp.Core); published to the private org GitHub Packages feed
        (see nuget.config). Contract id: fsgg-contracts (registry/dependencies.yml). -->
   <ItemGroup>
-    <PackageVersion Include="FS.GG.Contracts" Version="7.0.0" />
+    <PackageVersion Include="FS.GG.Contracts" Version="7.5.2" />
   </ItemGroup>
 
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
@@ -56,9 +56,9 @@
   <ItemGroup>
     <PackageVersion Include="Expecto" Version="11.1.0" />
     <PackageVersion Include="Expecto.FsCheck" Version="11.1.0" />
-    <PackageVersion Include="FsCheck" Version="3.3.3" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
-    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.0" />
+    <PackageVersion Include="FsCheck" Version="3.4.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
   </ItemGroup>
 
 </Project>
