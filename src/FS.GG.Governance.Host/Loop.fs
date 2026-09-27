@@ -114,8 +114,12 @@ module Loop =
             // Freeze iff all (non-empty) samples agree AND mean confidence >= t.
             match samples |> List.map (fun s -> s.Verdict) |> List.distinct with
             | [ v ] ->
-                let mean =
-                    (samples |> List.sumBy (fun s -> s.Confidence)) / float (List.length samples)
+                let mutable total = 0.0
+
+                for sample in samples do
+                    total <- total + sample.Confidence
+
+                let mean = total / float (List.length samples)
 
                 if mean >= t then Freeze v else StayPending
             | _ -> StayPending
