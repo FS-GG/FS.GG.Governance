@@ -320,9 +320,14 @@ module FSharpEffectBoundary =
             ]
 
     let private indentation (line: string) =
-        line
-        |> Seq.takeWhile (fun c -> c = ' ' || c = '\t')
-        |> Seq.sumBy (fun c -> if c = '\t' then 4 else 1)
+        let mutable index = 0
+        let mutable width = 0
+
+        while index < line.Length && (line.[index] = ' ' || line.[index] = '\t') do
+            width <- width + (if line.[index] = '\t' then 4 else 1)
+            index <- index + 1
+
+        width
 
     let private isBoundary (line: string) =
         Regex.IsMatch(line.TrimStart(), declarationBoundaryPattern)

@@ -23,8 +23,8 @@
     <PackageVersion Include="FS.GG.Kit" Version="0.91.4" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
     <!-- Compiler-backed F# architecture facts for CodeChecks (#368). The package is isolated to
-         that analyzer project; no compiler service enters the governance kernel. Version follows
-         the compiler service shipped by the pinned .NET 10.0.302 SDK. -->
+         that analyzer project; no compiler service enters the governance kernel. Keep this compatible
+         with the org-shared FSharp.Core pin materialized by FS.GG.Kit. -->
     <PackageVersion Include="FSharp.Compiler.Service" Version="43.11.302" />
   </ItemGroup>
 
