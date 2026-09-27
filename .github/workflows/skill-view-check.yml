@@ -340,7 +340,7 @@ jobs:
       # where a git-ignored view root is absent by construction (ADR-0067 §6.1) — is not a
       # misconfiguration. Generating it here would make that leg unfalsifiable in the one environment
       # that reproduces it.
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
