@@ -1,6 +1,6 @@
 # C3-GOVERNANCE-01 — Ordinary V2 receiver adoption
 
-Status: source prepared and disabled. CLI release, custody, installation, and activation remain pending.
+Status: installed. Dedicated custody and immutable Coordination CLI 0.1.5 are pinned; protected-main pushes run secret-free qualification before the bounded settlement job.
 
 FS.GG.Governance is the fixed C3 source repository (`FS-GG/FS.GG.Governance`, repository ID
 `1273065119`) under the code-owned `governance-v1` profile. This change adds only repository-owned
@@ -9,9 +9,8 @@ check, generated workspace content, or protected effect.
 
 ## Prepared source
 
-- The receiver workflow is bound to protected-main pushes, but its only job has an unconditional
-  false guard. It uses read-only GitHub permissions, persists no checkout credential, and contains
-  no credential job, environment binding, secret reference, package download, or settlement command.
+- The activation workflow binds protected-main pushes to a secret-free predecessor receipt and
+  admits the bounded credential job only when that exact receipt selects activation.
 - The source pattern comes from Net receiver commit
   `91c2a57d4e9cab553718bdd9f796a4b1e0e9aaa0`; the observer retains its repaired Audio bytes,
   and the qualifier replaces only the code-owned source profile. Their SHA-256 digests are
@@ -32,18 +31,23 @@ check, generated workspace content, or protected effect.
 - The shared policy ID remains `v2-ci-i1-ordinary-settlement-v1`; the shared Authority anchor retains
   App `5064713`, installation `164553252`, repository `FS-GG/FS.GG.Coordination.Authority`
   (`1351660651`), `contents:write`, metadata read, and the existing writer/integrity ruleset pins.
-- The environment created at `2026-09-28T12:00:45Z` was independently read back, against Governance main
-  `01799b13d22c92258a98435f3cb124e593776cb2`, as `ordinary-v2` environment ID
-  `22921081283`, restricted to the single `main` branch policy ID `61288925`, with no reviewers
-  and zero secrets. No credential is enrolled.
-- No immutable published CLI release with `governance-v1` support is selected. Version and package
-  SHA-256 remain null, and policy explicitly refuses activation rather than borrowing Audio's pin.
-- Governance already pins .NET SDK `10.0.401` in the repository's tracked `global.json`. This
-  receiver leaves that pin unchanged and invokes no .NET setup while disabled.
+- Governance main `e4f5869837eebfb140b31bffb62ee41c3a6b2785` was independently read back with
+  `ordinary-v2` environment ID `22921081283`, restricted to the single `main` branch policy ID
+  `61288925`, with no reviewers and exactly the three dedicated ordinary-v2 secret names. The
+  protected custody bridge run `36433647155` sealed three fixed values; the destination inventory
+  was independently read back.
+- Coordination CLI `0.1.5` is the required package because it contains the combined
+  `governance-v1` source profile at source commit
+  `1268908d2d5a38d30a764c927f3e0591e53138aa`. The immutable release tag points exactly to that
+  source, and the public release package is pinned to SHA-256
+  `3567a92825917a7d537f6c5c545d3a7947bc35edd666fc3a1898de3bf97267c9`. Its retained readback
+  verifies matching package payloads from GitHub Packages and nuget.org and public-only install.
+- Governance already pins .NET SDK `10.0.401` in the repository's tracked `global.json`. The
+  credential job uses that tracked pin to install the immutable CLI and leaves the pin unchanged.
 
 ## Installation boundary
 
-Do not enable the preflight or add a credential job until one reviewed source change verifies all of:
+Activation requires one reviewed source change to verify all of:
 
 1. an immutable published Coordination CLI supports the exact `governance-v1` source profile and its
    served package SHA-256 is pinned;
@@ -52,6 +56,6 @@ Do not enable the preflight or add a credential job until one reviewed source ch
 3. Governance identity, exact current required-check population, producer mappings, and shared
    Authority binding are freshly read back.
 
-The later activation must change policy status, installed state, package evidence, credential
-inventory, observer guard, and the bounded credential job together. This disabled source cannot
-settle work and imports no V1 admission or receiver state.
+The activation changes policy status, installed state, package evidence, credential inventory,
+observer guard, and the bounded credential job together only after that proof. It imports no V1
+admission or receiver state.
