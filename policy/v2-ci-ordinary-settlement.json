@@ -1,7 +1,7 @@
 {
   "schema": "fsgg.github.v2-ci-ordinary-settlement-policy/1",
   "policyId": "v2-ci-i1-ordinary-settlement-v1",
-  "status": "source-qualified-not-installed",
+  "status": "installed",
   "repository": "FS-GG/FS.GG.Governance",
   "repositoryId": 1273065119,
   "selectedSource": {
@@ -114,9 +114,9 @@
     "allowedBranches": [
       "main"
     ],
-    "installed": false,
+    "installed": true,
     "liveObservation": {
-      "observedAt": "2026-09-28T12:06:21Z",
+      "observedAt": "2026-09-28T14:45:08Z",
       "environmentPresent": true,
       "environmentId": 22921081283,
       "environmentNodeId": "EN_kwDOS-Fun88AAAAFVjPxww",
@@ -128,23 +128,72 @@
       "customBranchPolicies": true,
       "canAdminsBypass": true,
       "requiredReviewerCount": 0,
-      "secretCount": 0,
-      "disposition": "main-only-environment-present-custody-pending"
+      "secretCount": 3,
+      "secretNames": [
+        "V2_ORDINARY_APP_ID",
+        "V2_ORDINARY_APP_PRIVATE_KEY",
+        "V2_ORDINARY_AUTHORIZER_PRIVATE_KEY"
+      ],
+      "disposition": "dedicated-custody-enrolled-main-only"
     }
   },
   "packagePin": {
-    "status": "unresolved-governance-profile-release",
-    "version": null,
-    "sha256": null,
-    "servedPackageVerified": false,
+    "status": "published-served-verified",
+    "version": "0.1.5",
+    "sha256": "3567a92825917a7d537f6c5c545d3a7947bc35edd666fc3a1898de3bf97267c9",
+    "servedPackageVerified": true,
+    "sourceCommit": "1268908d2d5a38d30a764c927f3e0591e53138aa",
+    "releaseTag": "v0.1.5",
+    "publisherRunId": 36437778484,
+    "publisherRunAttempt": 2,
+    "publisherRunHeadSha": "8335501d94875fa0410087e6d55d3639fcdb7ec4",
+    "releaseUrl": "https://github.com/FS-GG/FS.GG.Coordination/releases/tag/v0.1.5",
+    "releasePublishedAt": "2026-09-28T14:59:57Z",
+    "assetName": "FS.GG.Coordination.Cli.0.1.5.nupkg",
+    "assetSize": 6435119,
+    "releaseReadbackSha256": "ea9cc6d4bbfb786bd8ca6caf18c41638ee9f5b988823664e437fc1d4e19777f0",
     "requiredCapability": "governance-v1 selected source",
-    "requiredBeforeActivation": true,
-    "refusal": "no immutable published CLI release with governance-v1 support is selected"
+    "requiredBeforeActivation": true
   },
-  "credentialInventory": [],
+  "credentialInventory": [
+    {
+      "name": "V2_ORDINARY_AUTHORIZER_PRIVATE_KEY",
+      "purpose": "sign canonical ordinary-v2 settlement intent",
+      "generation": "new-v2-dedicated",
+      "provisioned": true,
+      "publicIdentity": "ordinary-v2-production-6121c3f2ab38acf3; spki-sha256:6121c3f2ab38acf38a37f782eb7775da78598b9cfabc0054917d3d59fe50e3ee"
+    },
+    {
+      "name": "V2_ORDINARY_APP_ID",
+      "purpose": "identify the repository-scoped ordinary-v2 GitHub App",
+      "generation": "new-v2-dedicated",
+      "provisioned": true,
+      "publicIdentity": "app:5064713; installation:164553252"
+    },
+    {
+      "name": "V2_ORDINARY_APP_PRIVATE_KEY",
+      "purpose": "mint a short-lived repository-scoped installation token",
+      "generation": "new-v2-dedicated",
+      "provisioned": true,
+      "publicIdentity": "app:5064713; installation:164553252"
+    }
+  ],
+  "credentialEnrollmentEvidence": {
+    "status": "sealed-and-independently-read-back",
+    "bridgeRepository": "FS-GG/.github",
+    "bridgeRepositoryId": 1269292704,
+    "bridgeCommit": "1f19bb282b615026cb5fd0318c42a3ac03b16be8",
+    "bridgeWorkflow": ".github/workflows/c3-governance-ordinary-enrollment-bridge.yml",
+    "bridgeRunId": 36433647155,
+    "bridgeRunAttempt": 1,
+    "bridgeConclusion": "success",
+    "ciphertextPacketVerification": "signed-packet-validated",
+    "encryptedPutCount": 3,
+    "readBackAt": "2026-09-28T14:45:08Z"
+  },
   "activationEvidence": {
-    "observedAt": "2026-09-28T12:04:52Z",
-    "sourceMainSha": "01799b13d22c92258a98435f3cb124e593776cb2",
+    "observedAt": "2026-09-28T14:45:08Z",
+    "sourceMainSha": "e4f5869837eebfb140b31bffb62ee41c3a6b2785",
     "sourceRepositoryId": 1273065119,
     "requiredCheckAppId": 15368,
     "requiredGateChecks": [
@@ -157,13 +206,15 @@
       "kit / coordination-kit",
       "skill-view-check",
       "materialize / receiver-validate"
-    ]
+    ],
+    "authorityRepository": "FS-GG/FS.GG.Coordination.Authority",
+    "authorityRepositoryId": 1351660651,
+    "writerRulesetId": 21872113,
+    "writerRulesetEnforcement": "active",
+    "integrityRulesetId": 21872115,
+    "integrityRulesetEnforcement": "active"
   },
-  "activationPrerequisites": [
-    "published immutable Coordination CLI with governance-v1 support and verified package SHA-256",
-    "all three dedicated ordinary-v2 secrets are enrolled and read back",
-    "current source-check population and shared Authority binding are read back again"
-  ],
+  "activationPrerequisites": [],
   "forbiddenCredentialReuse": [
     "CALLABLE_ISOLATED_OPERATION_APP_PRIVATE_KEY",
     "V1_ADMISSION_AUTHORIZER_PRIVATE_KEY",
