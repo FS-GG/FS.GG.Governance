@@ -1,0 +1,46 @@
+{
+  "schema": "fsgg.neutral-capability-catalog/v1",
+  "contractVersion": "1.0.0",
+  "capabilities": [
+    {
+      "id": "build:build",
+      "meaning": "Build selected product components",
+      "requiresExecutable": true
+    },
+    {
+      "id": "evidence:evidence",
+      "meaning": "Validate required evidence and provenance",
+      "requiresExecutable": true
+    },
+    {
+      "id": "lint:lint",
+      "meaning": "Enforce declared formatting/static analysis",
+      "requiresExecutable": true
+    },
+    {
+      "id": "package:package",
+      "meaning": "Produce and verify the declared distributable",
+      "requiresExecutable": true
+    },
+    {
+      "id": "public-surface:public-surface",
+      "meaning": "Validate declared API/CLI/module surface",
+      "requiresExecutable": true
+    },
+    {
+      "id": "release:release",
+      "meaning": "Verify release identities, coherence and applicable publication gates",
+      "requiresExecutable": true
+    },
+    {
+      "id": "security:security",
+      "meaning": "Verify declared dependency/code security policy",
+      "requiresExecutable": true
+    },
+    {
+      "id": "test:test",
+      "meaning": "Execute selected tests and functional journeys",
+      "requiresExecutable": true
+    }
+  ]
+}

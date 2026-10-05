@@ -21,6 +21,8 @@ module FS.GG.Governance.ReferenceGateSet.Tests.ReferenceGateSetDerivationTests
 // Real artifacts only (Principle V): the on-disk reference set and the real loader, no fixtures.
 
 open System.IO
+open System.Text
+open System.Text.Json
 open Expecto
 open FS.GG.Governance.Config
 open FS.GG.Governance.Config.Model
@@ -77,6 +79,22 @@ let derivationGuard =
     <| testList
         "ReferenceGateSetGuardDerivation"
         [
+            test "D5 neutral catalog is the authoritative generated projection" {
+                let path = Path.Combine(FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot, "reference-gates", "neutral-capabilities.json")
+                let expected = CapabilityBindings.catalogJson ()
+                if blessing then File.WriteAllText(path, expected, UTF8Encoding(false))
+                Expect.equal (File.ReadAllBytes path) (Encoding.UTF8.GetBytes expected) "stale catalog refuses the ordinary pre-pack guard"
+                use parsed = JsonDocument.Parse(File.ReadAllText path)
+                let root = parsed.RootElement
+                Expect.equal (root.GetProperty("schema").GetString()) "fsgg.neutral-capability-catalog/v1" "independent schema identity"
+                Expect.equal (root.GetProperty("contractVersion").GetString()) "1.0.0" "exact contract"
+                let actual =
+                    root.GetProperty("capabilities").EnumerateArray()
+                    |> Seq.map (fun c -> c.GetProperty("id").GetString(), c.GetProperty("requiresExecutable").GetBoolean())
+                    |> List.ofSeq
+                Expect.equal actual (CapabilityBindings.catalog |> List.map (fun c -> c.Id, c.RequiresExecutable)) "independent parse of IDs and executable requirements"
+            }
+
             // ── D1 — the published region IS the projection, byte for byte, for EVERY bound profile ──
             // #385 gave the org profile a second bound profile (`fsharp-constitution`), and this test
             // used to name `game` in three places. It now iterates `boundProfiles`, so the set it

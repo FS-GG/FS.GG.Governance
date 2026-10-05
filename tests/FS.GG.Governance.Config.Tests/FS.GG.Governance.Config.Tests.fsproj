@@ -19,6 +19,7 @@
     <Compile Include="ProductSchemaV2Tests.fs" />
     <Compile Include="LoaderTests.fs" />
     <Compile Include="NormalizePathTests.fs" />
+    <Compile Include="CapabilityBindingsTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

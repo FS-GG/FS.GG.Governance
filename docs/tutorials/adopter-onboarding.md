@@ -220,3 +220,16 @@ provider instead of the reference one, see
 > [FS-GG/FS.GG.SDD#845](https://github.com/FS-GG/FS.GG.SDD/issues/845)
 > (FS.GG.Governance#385 AC3); until it lands, a generated product resolves the profile with
 > the same verb as above.
+
+## Neutral capability vocabulary
+
+ReferenceGateSet 1.8.0 adds a generated
+`contentFiles/any/any/neutral-capabilities.json` catalog (contract exactly 1.0.0).
+The imported read-only `FsggNeutralCapabilityCatalog` property locates it in the
+installed package. Read this artifact explicitly from the exact pinned package;
+`FsggResolveReferenceGateSet` continues to resolve only the original six `.fsgg`
+files. Existing schemas and defaults retain their prior meaning. Config 0.3.0's
+pure `CapabilityBindings.resolve` validates normalized declarations and returns
+located refusals or a complete declaration set. It establishes neither process
+success nor evidence acceptance. Publication and new provider adoption remain
+separate from this source candidate. See the [binding design](../governance-design/neutral-capability-bindings.md).

@@ -64,6 +64,12 @@
           PackagePath="contentFiles/any/any/.fsgg/" />
   </ItemGroup>
 
+  <!-- Independent neutral semantic vocabulary: never copied into legacy .fsgg trees. -->
+  <ItemGroup>
+    <None Include="../../reference-gates/neutral-capabilities.json"
+          Pack="true" PackagePath="contentFiles/any/any/" />
+  </ItemGroup>
+
   <!-- ADR-0055: the in-package schema manifest (schema-manifest.json — the four contained
        `schemaVersion` generations as `{ governance, capabilities, policy, tooling }`). It is
        EMITTED by pack-reference-gate-set.fsx and handed in via $(SchemaManifestPath); packed

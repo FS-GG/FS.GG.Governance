@@ -115,3 +115,16 @@ at all** — the derivation gate is its pre-pack filter.
 every profile in `boundProfiles`, but it can only *replace* a marker pair, never create one: a newly
 bound profile reds D1/D3 until a human places the markers and the hand-authored context around them.
 A generator picking its own insertion point in a consumer's file would be the worse contract.
+
+## Neutral capability vocabulary
+
+ReferenceGateSet 1.8.0 adds a generated
+`contentFiles/any/any/neutral-capabilities.json` catalog (contract exactly 1.0.0).
+The imported read-only `FsggNeutralCapabilityCatalog` property locates it in the
+installed package. Read this artifact explicitly from the exact pinned package;
+`FsggResolveReferenceGateSet` continues to resolve only the original six `.fsgg`
+files. Existing schemas and defaults retain their prior meaning. Config 0.3.0's
+pure `CapabilityBindings.resolve` validates normalized declarations and returns
+located refusals or a complete declaration set. It establishes neither process
+success nor evidence acceptance. Publication and new provider adoption remain
+separate from this source candidate. See the [binding design](../docs/governance-design/neutral-capability-bindings.md).
