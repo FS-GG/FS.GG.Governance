@@ -190,7 +190,9 @@ let gateConfiguration =
 // byte-different but version-identical at 1.2.1.1 under the retired 4-segment rule, so a republish
 // --skip-duplicate'd it. MINOR (not PATCH): the content is additive functionality, and consumers
 // re-pin exact to absorb it (Templates#14). PRIOR (ADR-0007): 1.2.1.1.
-let private packageVersion = "1.7.0"
+// 1.8.0 (MINOR, GOV423-C1): additive independently located neutral semantic catalog;
+// original .fsgg content and four-key schema manifest retain their existing contract.
+let private packageVersion = "1.8.0"
 
 // ── Schema manifest (ADR-0055) ──
 // The four `schemaVersion` generations move INTO the package as `schema-manifest.json`, so the

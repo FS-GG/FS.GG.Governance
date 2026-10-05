@@ -9,7 +9,7 @@
        core (MVU/I-O boundary, Principle IV / research D3). -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Config</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <!-- Optional library, but packable like the adapters (overrides Directory.Build.props). -->
     <IsPackable>true</IsPackable>
     <PackageId>FS.GG.Governance.Config</PackageId>
@@ -18,6 +18,8 @@
   <ItemGroup>
     <Compile Include="Model.fsi" />
     <Compile Include="Model.fs" />
+    <Compile Include="CapabilityBindings.fsi" />
+    <Compile Include="CapabilityBindings.fs" />
     <Compile Include="Schema.fsi" />
     <Compile Include="Schema.fs" />
     <Compile Include="Loader.fsi" />

@@ -1,3 +1,340 @@
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+SemanticCapability] get_catalog()
+  [Method] Resolution resolve(ResolutionRequest)
+  [Method] System.String catalogJson()
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+CommandLimits
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+DiagnosticCode
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceFormat
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+Resolution
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+ResolutionRequest
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+ResolvedSet
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+SemanticCapability
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+SemanticCapability] catalog
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind
+  [Method] BindingKind NewCommand(DeclaredCommand)
+  [Method] BindingKind get_SemanticOnly()
+  [Method] Boolean Equals(BindingKind)
+  [Method] Boolean Equals(BindingKind, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsCommand()
+  [Method] Boolean get_IsSemanticOnly()
+  [Method] Int32 CompareTo(BindingKind)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind+Command
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind+Tags
+  [Property] BindingKind SemanticOnly
+  [Property] Boolean IsCommand
+  [Property] Boolean IsSemanticOnly
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind+Command
+  [Method] DeclaredCommand get_Item()
+  [Property] DeclaredCommand Item
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+BindingKind+Tags
+  [Field] Int32 Command
+  [Field] Int32 SemanticOnly
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding
+  [Constructor] Void .ctor(System.String, Boolean, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], BindingKind, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.CapabilityBindingsModule+CommandLimits])
+  [Method] BindingKind get_Binding()
+  [Method] Boolean Equals(CapabilityBinding)
+  [Method] Boolean Equals(CapabilityBinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Required()
+  [Method] Int32 CompareTo(CapabilityBinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_EvidenceIds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_Platforms()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_ToolIds()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.CapabilityBindingsModule+CommandLimits] get_Limits()
+  [Method] System.String ToString()
+  [Method] System.String get_CapabilityId()
+  [Property] BindingKind Binding
+  [Property] Boolean Required
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] EvidenceIds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] Platforms
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] ToolIds
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.CapabilityBindingsModule+CommandLimits] Limits
+  [Property] System.String CapabilityId
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+CommandLimits
+  [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+TimeoutLimit], Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Cost], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass])
+  [Method] Boolean Equals(CommandLimits)
+  [Method] Boolean Equals(CommandLimits, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CommandLimits)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] get_Environments()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Cost] get_Cost()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] get_WorkingDirectory()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+TimeoutLimit] get_Timeout()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] Environments
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+Cost] Cost
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+GovernedPath] WorkingDirectory
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.Config.ModelModule+TimeoutLimit] Timeout
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic
+  [Constructor] Void .ctor(System.String, System.String, DiagnosticCode, System.String)
+  [Method] Boolean Equals(Diagnostic)
+  [Method] Boolean Equals(Diagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DiagnosticCode get_Code()
+  [Method] Int32 CompareTo(Diagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_CapabilityId()
+  [Method] System.String get_Field()
+  [Method] System.String get_Message()
+  [Property] DiagnosticCode Code
+  [Property] System.String CapabilityId
+  [Property] System.String Field
+  [Property] System.String Message
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+DiagnosticCode
+  [Method] Boolean Equals(DiagnosticCode)
+  [Method] Boolean Equals(DiagnosticCode, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDuplicateIdentity()
+  [Method] Boolean get_IsIllegalSemanticOnly()
+  [Method] Boolean get_IsInvalidExecutionLimit()
+  [Method] Boolean get_IsInvalidPath()
+  [Method] Boolean get_IsMalformedInput()
+  [Method] Boolean get_IsMissingRequiredBinding()
+  [Method] Boolean get_IsUnknownRequiredSemanticId()
+  [Method] Boolean get_IsUnresolvedEvidence()
+  [Method] Boolean get_IsUnresolvedPlatform()
+  [Method] Boolean get_IsUnresolvedTool()
+  [Method] Boolean get_IsUnsupportedContractVersion()
+  [Method] Boolean get_IsUnsupportedEvidenceFormat()
+  [Method] DiagnosticCode get_DuplicateIdentity()
+  [Method] DiagnosticCode get_IllegalSemanticOnly()
+  [Method] DiagnosticCode get_InvalidExecutionLimit()
+  [Method] DiagnosticCode get_InvalidPath()
+  [Method] DiagnosticCode get_MalformedInput()
+  [Method] DiagnosticCode get_MissingRequiredBinding()
+  [Method] DiagnosticCode get_UnknownRequiredSemanticId()
+  [Method] DiagnosticCode get_UnresolvedEvidence()
+  [Method] DiagnosticCode get_UnresolvedPlatform()
+  [Method] DiagnosticCode get_UnresolvedTool()
+  [Method] DiagnosticCode get_UnsupportedContractVersion()
+  [Method] DiagnosticCode get_UnsupportedEvidenceFormat()
+  [Method] Int32 CompareTo(DiagnosticCode)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+DiagnosticCode+Tags
+  [Property] Boolean IsDuplicateIdentity
+  [Property] Boolean IsIllegalSemanticOnly
+  [Property] Boolean IsInvalidExecutionLimit
+  [Property] Boolean IsInvalidPath
+  [Property] Boolean IsMalformedInput
+  [Property] Boolean IsMissingRequiredBinding
+  [Property] Boolean IsUnknownRequiredSemanticId
+  [Property] Boolean IsUnresolvedEvidence
+  [Property] Boolean IsUnresolvedPlatform
+  [Property] Boolean IsUnresolvedTool
+  [Property] Boolean IsUnsupportedContractVersion
+  [Property] Boolean IsUnsupportedEvidenceFormat
+  [Property] DiagnosticCode DuplicateIdentity
+  [Property] DiagnosticCode IllegalSemanticOnly
+  [Property] DiagnosticCode InvalidExecutionLimit
+  [Property] DiagnosticCode InvalidPath
+  [Property] DiagnosticCode MalformedInput
+  [Property] DiagnosticCode MissingRequiredBinding
+  [Property] DiagnosticCode UnknownRequiredSemanticId
+  [Property] DiagnosticCode UnresolvedEvidence
+  [Property] DiagnosticCode UnresolvedPlatform
+  [Property] DiagnosticCode UnresolvedTool
+  [Property] DiagnosticCode UnsupportedContractVersion
+  [Property] DiagnosticCode UnsupportedEvidenceFormat
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+DiagnosticCode+Tags
+  [Field] Int32 DuplicateIdentity
+  [Field] Int32 IllegalSemanticOnly
+  [Field] Int32 InvalidExecutionLimit
+  [Field] Int32 InvalidPath
+  [Field] Int32 MalformedInput
+  [Field] Int32 MissingRequiredBinding
+  [Field] Int32 UnknownRequiredSemanticId
+  [Field] Int32 UnresolvedEvidence
+  [Field] Int32 UnresolvedPlatform
+  [Field] Int32 UnresolvedTool
+  [Field] Int32 UnsupportedContractVersion
+  [Field] Int32 UnsupportedEvidenceFormat
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding
+  [Constructor] Void .ctor(System.String, EvidenceFormat, GovernedPath)
+  [Method] Boolean Equals(EvidenceBinding)
+  [Method] Boolean Equals(EvidenceBinding, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EvidenceFormat get_Format()
+  [Method] GovernedPath get_OutputPath()
+  [Method] Int32 CompareTo(EvidenceBinding)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Property] EvidenceFormat Format
+  [Property] GovernedPath OutputPath
+  [Property] System.String Id
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceFormat
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(EvidenceFormat)
+  [Method] Boolean Equals(EvidenceFormat, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(EvidenceFormat)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Method] System.String get_Version()
+  [Property] System.String Id
+  [Property] System.String Version
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+Resolution
+  [Method] Boolean Equals(Resolution)
+  [Method] Boolean Equals(Resolution, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsRejected()
+  [Method] Boolean get_IsResolved()
+  [Method] Int32 CompareTo(Resolution)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] Resolution NewRejected(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic])
+  [Method] Resolution NewResolved(ResolvedSet)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Rejected
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Resolved
+  [NestedType] FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Tags
+  [Property] Boolean IsRejected
+  [Property] Boolean IsResolved
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Rejected
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] Item
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Resolved
+  [Method] ResolvedSet get_Item()
+  [Property] ResolvedSet Item
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+Resolution+Tags
+  [Field] Int32 Rejected
+  [Field] Int32 Resolved
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+ResolutionRequest
+  [Constructor] Void .ctor(System.String, System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[System.String], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceFormat], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding])
+  [Method] Boolean Equals(ResolutionRequest)
+  [Method] Boolean Equals(ResolutionRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ResolutionRequest)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding] get_Bindings()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] get_Evidence()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceFormat] get_SupportedEvidenceFormats()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding] get_Tools()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] get_SupportedEnvironments()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_KnownPlatforms()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_RequiredCapabilityIds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_SemanticOnlyObligationIds()
+  [Method] System.String ToString()
+  [Method] System.String get_ContractVersion()
+  [Method] System.String get_SelectedPlatform()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding] Bindings
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] Evidence
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceFormat] SupportedEvidenceFormats
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding] Tools
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+EnvironmentClass] SupportedEnvironments
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] KnownPlatforms
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] RequiredCapabilityIds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] SemanticOnlyObligationIds
+  [Property] System.String ContractVersion
+  [Property] System.String SelectedPlatform
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+ResolvedSet
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ResolvedSet)
+  [Method] Boolean Equals(ResolvedSet, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ResolvedSet)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding] get_Bindings()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] get_Evidence()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding] get_Tools()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_UnsupportedCapabilityIds()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+CapabilityBinding] Bindings
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] Evidence
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding] Tools
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] UnsupportedCapabilityIds
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+SemanticCapability
+  [Constructor] Void .ctor(System.String, System.String, Boolean)
+  [Method] Boolean Equals(SemanticCapability)
+  [Method] Boolean Equals(SemanticCapability, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_RequiresExecutable()
+  [Method] Int32 CompareTo(SemanticCapability)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Id()
+  [Method] System.String get_Meaning()
+  [Property] Boolean RequiresExecutable
+  [Property] System.String Id
+  [Property] System.String Meaning
+TYPE FS.GG.Governance.Config.CapabilityBindingsModule+ToolBinding
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(ToolBinding)
+  [Method] Boolean Equals(ToolBinding, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 CompareTo(ToolBinding)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_ExactVersion()
+  [Method] System.String get_Id()
+  [Property] System.String ExactVersion
+  [Property] System.String Id
 TYPE FS.GG.Governance.Config.FSharpSurfacePolicyModule
   [Method] Facts get_defaultFacts()
   [Method] LoadResult load(System.String)

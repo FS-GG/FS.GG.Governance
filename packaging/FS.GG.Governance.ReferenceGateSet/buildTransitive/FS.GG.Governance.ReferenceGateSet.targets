@@ -59,6 +59,9 @@
     <FsggReferenceGateSetSource>$([MSBuild]::NormalizeDirectory('$(FsggReferenceGateSetPackageRoot)', 'contentFiles', 'any', 'any', '.fsgg'))</FsggReferenceGateSetSource>
     <FsggReferenceGateSetSchemaManifest>$([MSBuild]::NormalizePath('$(FsggReferenceGateSetPackageRoot)', 'contentFiles', 'any', 'any', 'schema-manifest.json'))</FsggReferenceGateSetSchemaManifest>
 
+    <!-- Read-only package vocabulary; resolving .fsgg does not copy or enforce it. -->
+    <FsggNeutralCapabilityCatalog>$([MSBuild]::NormalizePath('$(FsggReferenceGateSetPackageRoot)', 'contentFiles', 'any', 'any', 'neutral-capabilities.json'))</FsggNeutralCapabilityCatalog>
+
     <FsggReferenceGateSetDestination Condition="'$(FsggReferenceGateSetDestination)' == ''">$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '.fsgg'))</FsggReferenceGateSetDestination>
     <FsggReferenceGateSetOverwrite Condition="'$(FsggReferenceGateSetOverwrite)' == ''">true</FsggReferenceGateSetOverwrite>
   </PropertyGroup>

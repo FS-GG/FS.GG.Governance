@@ -359,6 +359,27 @@ let resolutionGuard =
                             (sprintf "%s: the resolved bytes must be the PACKAGE's bytes (0 drift, no hand copy)" name)
             }
 
+            test "neutral catalog path reads installed package without extending .fsgg" {
+                let consumerDir, packagesDir = restoredConsumer.Value
+                let code, output, error = runDotnet consumerDir packagesDir [ "msbuild"; "Consumer.csproj"; "-getProperty:FsggNeutralCapabilityCatalog"; "-nologo" ]
+                Expect.equal code 0 (sprintf "installed read-only property: %s%s" output error)
+                let path = output.Trim()
+                Expect.isTrue (File.Exists path) "catalog exists in independently restored package"
+                Expect.isTrue (Path.GetFullPath(path).StartsWith(Path.GetFullPath(packagesDir), StringComparison.Ordinal)) "property reads package store"
+                let bytes = File.ReadAllBytes path
+                use archive = ZipFile.OpenRead producedNupkg.Value
+                let entry =
+                    match archive.GetEntry "contentFiles/any/any/neutral-capabilities.json" with
+                    | null -> failtest "independent catalog archive entry not found"
+                    | entry -> entry
+                use stream = entry.Open()
+                use memory = new MemoryStream()
+                stream.CopyTo memory
+                Expect.equal bytes (memory.ToArray()) "installed catalog has once-packed bytes"
+                let resolved = resolveIntoFreshConsumer ()
+                Expect.isFalse (File.Exists(Path.Combine(resolved, ".fsgg", "neutral-capabilities.json"))) "catalog is outside legacy resolution tree"
+            }
+
             // ── R3 — the resolved profile is one the loader accepts ──
             // The acceptance criterion is not "files appeared"; it is that `Config.Loader.loadAndValidate`
             // accepts what the verb produced. Run in-process against the real loader.
