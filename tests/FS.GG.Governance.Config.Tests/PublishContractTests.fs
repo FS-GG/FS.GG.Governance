@@ -16,7 +16,8 @@ let tests =
             start.ArgumentList.Add workflow
             start.ArgumentList.Add "--mutations"
             start.UseShellExecute <- false
-            use child = Process.Start start
+            use child = new Process(StartInfo = start)
+            Expect.isTrue (child.Start()) "Python workflow preflight process started"
             if not (child.WaitForExit 15000) then
                 child.Kill(true)
                 failtest "Config publication static preflight exceeded 15 seconds"
@@ -24,7 +25,8 @@ let tests =
             let archiveStart = ProcessStartInfo("python3")
             archiveStart.ArgumentList.Add(Path.Combine(repoRoot, "tests/config-package-smoke/archive_controls.py"))
             archiveStart.UseShellExecute <- false
-            use archiveChild = Process.Start archiveStart
+            use archiveChild = new Process(StartInfo = archiveStart)
+            Expect.isTrue (archiveChild.Start()) "Python archive control process started"
             if not (archiveChild.WaitForExit 15000) then
                 archiveChild.Kill(true)
                 failtest "synthetic Config archive controls exceeded 15 seconds"
