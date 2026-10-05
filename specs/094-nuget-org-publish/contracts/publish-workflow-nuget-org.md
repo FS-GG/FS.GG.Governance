@@ -75,3 +75,32 @@ Gated and ordered like the CLI path; `id-token: write` + `packages: write`.
   in-scope packages.
 - A reusable/org-shared publish workflow (explicitly rejected for trusted publishing — ADR-0013 §3).
 - Reserving the `FS.GG.` ID prefix (a follow-on admin step — #103).
+
+## Config resolver library extension (GOV-423-C3)
+
+`publish-config` selects one additional ordinary net10.0 library, `FS.GG.Governance.Config`, currently
+source version 0.3.0. It is neither a CLI tool nor a content package. `resolve-version` retains CLI-led
+trigger/tag/version and dry-run selection; Config independently evaluates its own project version.
+No other producer job, package version, trigger or ReferenceGateSet custody changes.
+
+The ordered contract is static preflight, cold locked restore of the Config test project, **all** Config
+Release tests, evaluated Config version, one pack, exactly one scoped archive with captured SHA-256,
+package-only consumer smoke, retention of original archive and manifest, independent both-feed collision
+observation, org push, OIDC login and same-file/hash public push. All login/push steps require
+`needs.resolve-version.outputs.push == 'true'`; omission of dispatch version performs no login/push.
+The consumer verifies package ID/version/source/TFM/dependencies and public resolver/legacy loading,
+with explicit source mapping, exact committed dependency closure and empty caches. See
+[`tests/config-package-smoke/README.md`](../../../tests/config-package-smoke/README.md).
+
+Retention precedes every publication effect. `--skip-duplicate` is not equality evidence. A pre-existing
+version must be independently payload-matched before either push; unreadable results and ambiguous org
+404s refuse pending root observation. An org 404 is resolved only by successful authenticated package/version
+enumeration establishing absence, using the existing package-read authority. Raw signed archives/hashes remain distinct; only an independently
+verified repository signature may be excluded when comparing payload entries. A second-feed failure
+requires observation under the original operation and retained bytes, never automatic repacking.
+
+Source delivery does not admit a whole-workflow dispatch. C1+C2 coherent qualification, compatible
+Contracts selection, both-feed collision admission and reconciliation of retained ReferenceGateSet
+1.8.0 custody remain root-owned release prerequisites. Local Config consumption can enable SDD C2.2
+source preparation; public availability, normal consumer pins, native execution and installed acceptance
+remain separate. No historical published Config API baseline is invented.
