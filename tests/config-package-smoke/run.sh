@@ -14,6 +14,7 @@ python3 "$smoke_dir/archive.py" prepare --package "$package" --version "$2" --sh
   --revision "$4" --lock "$smoke_dir/../../src/FS.GG.Governance.Config/packages.lock.json" \
   --output "$evidence" --contracts-source "$contracts_source" --public-source "$public_source"
 cp "$smoke_dir/consumer/"* "$consumer/"
+mv "$consumer/ConfigConsumer.fsproj.in" "$consumer/ConfigConsumer.fsproj"
 cp "$evidence/NuGet.Config" "$consumer/NuGet.Config"
 export NUGET_PACKAGES="$consumer/packages"
 export NUGET_HTTP_CACHE_PATH="$consumer/http-cache"

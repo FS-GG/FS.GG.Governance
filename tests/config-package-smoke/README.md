@@ -6,6 +6,8 @@ The publisher qualifies the full Config test suite, packs once and passes that e
 bash tests/config-package-smoke/run.sh ARCHIVE VERSION SHA256 SOURCE_REVISION EVIDENCE_DIRECTORY
 ```
 
+The committed `.fsproj.in` template becomes a project only in the temporary consumer directory,
+so repository project/dependency discovery never treats the synthetic consumer as a product YAML owner.
 This consumer runs outside the producer graph in a temporary directory, with an empty package and HTTP
 cache. It maps only Config to the selected local archive, only Contracts to the independently selected
 `CONFIG_CONTRACTS_SOURCE` (default organization feed), and YamlDotNet/FSharp.Core to
