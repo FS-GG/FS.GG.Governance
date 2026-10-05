@@ -3,7 +3,8 @@ name: publish
 # Repo-owned publisher for the intentionally shipped Governance artifacts: the consumer-bearing
 # CLI tool FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28), the compiler-backed
 # FS.GG.Governance.CodeChecks library (spec 117, FS.GG.Governance#368), the pure Kernel foundation
-# plus package-only FS.GG.Governance.Adapters.Spi SDK (#413), and the content-only
+# plus package-only FS.GG.Governance.Adapters.Spi SDK (#413), the Config resolver library (#423),
+# and the content-only
 # FS.GG.Governance.ReferenceGateSet (spec 086/094). Each publishes to BOTH feeds — the org GitHub
 # Packages feed FIRST, then public nuget.org via Trusted Publishing (OIDC, ADR-0013) — byte-identically,
 # no re-pack (spec 094, FS.GG.Governance#41). The CLI's PackAsTool closure bundles
@@ -905,6 +906,118 @@ jobs:
             --source https://api.nuget.org/v3/index.json \
             --api-key "${{ steps.code-checks-nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
+
+  # GOV-423-C3: independent Config library output; CLI still owns trigger/dry-run selection.
+  publish-config:
+    name: Pack + publish FS.GG.Governance.Config
+    needs: [resolve-version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.repository == 'FS-GG/FS.GG.Governance'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Preflight Config publication contract
+        run: python3 tests/config-package-smoke/publish_contract.py .github/workflows/publish.yml --mutations
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+          cache: false
+
+      - name: Restore (locked, cold)
+        uses: ./.github/actions/locked-restore
+        with:
+          target: tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj
+
+      - name: Test complete Config suite
+        run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore
+
+      - name: Resolve Config package version
+        id: config-version
+        run: |
+          set -euo pipefail
+          version="$(dotnet msbuild src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version)"
+          version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] || { echo '::error::invalid Config version'; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Pack Config once
+        run: |
+          set -euo pipefail
+          dotnet pack src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -c Release \
+            -p:Version=${{ steps.config-version.outputs.version }} --no-restore -o artifacts/config-packages
+
+      - name: Identify exact Config archive
+        id: config-package
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(artifacts/config-packages/FS.GG.Governance.Config.*.nupkg)
+          [ "${#packages[@]}" -eq 1 ] || { echo '::error::expected exactly one Config nupkg'; exit 1; }
+          package="${packages[0]}"
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Config package consumer smoke
+        env:
+          CONFIG_VERSION: ${{ steps.config-version.outputs.version }}
+          CONFIG_PACKAGE: ${{ steps.config-package.outputs.path }}
+          CONFIG_SHA256: ${{ steps.config-package.outputs.sha256 }}
+        run: bash tests/config-package-smoke/run.sh "$CONFIG_PACKAGE" "$CONFIG_VERSION" "$CONFIG_SHA256" "$GITHUB_SHA" artifacts/config-evidence
+
+      - name: Retain Config archive and manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: config-package-${{ github.sha }}
+          path: |
+            artifacts/config-packages/FS.GG.Governance.Config.*.nupkg
+            artifacts/config-evidence/
+          if-no-files-found: error
+
+      # Observe both feeds before either effect. Unknown/signature conflicts refuse.
+      - name: Check Config feed collisions
+        if: needs.resolve-version.outputs.push == 'true'
+        run: python3 tests/config-package-smoke/archive.py collision --manifest artifacts/config-evidence/manifest.json --org-source https://nuget.pkg.github.com/FS-GG/index.json --public-source https://api.nuget.org/v3/index.json
+
+      - name: Retain Config feed observations
+        if: always() && needs.resolve-version.outputs.push == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: config-feed-observations-${{ github.sha }}
+          path: artifacts/config-evidence/
+          if-no-files-found: error
+
+      - name: Push Config to org feed
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.config-package.outputs.path }}"
+          expected="${{ steps.config-package.outputs.sha256 }}"
+          [ "$(sha256sum "$package" | cut -d' ' -f1)" = "$expected" ] || exit 1
+          dotnet nuget push "$package" --source https://nuget.pkg.github.com/FS-GG/index.json --api-key "${{ secrets.GITHUB_TOKEN }}" --skip-duplicate
+
+      - name: Trusted Publishing Config login
+        id: config-nuget-login
+        if: needs.resolve-version.outputs.push == 'true'
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
+
+      - name: Verify same Config bytes and push public
+        if: needs.resolve-version.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          package="${{ steps.config-package.outputs.path }}"
+          expected="${{ steps.config-package.outputs.sha256 }}"
+          [ "$(sha256sum "$package" | cut -d' ' -f1)" = "$expected" ] || exit 1
+          dotnet nuget push "$package" --source https://api.nuget.org/v3/index.json --api-key "${{ steps.config-nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
 
   # 094: publish the content-only FS.GG.Governance.ReferenceGateSet to BOTH feeds. Unlike the CLI, this
   # package had NO feed-publish path before (gate.yml only packed it into a throwaway temp feed to guard

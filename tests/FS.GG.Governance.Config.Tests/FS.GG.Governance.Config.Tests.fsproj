@@ -21,6 +21,7 @@
     <Compile Include="NormalizePathTests.fs" />
     <Compile Include="CapabilityBindingsTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
+    <Compile Include="PublishContractTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
