@@ -83,12 +83,22 @@ def prepare(args):
     config = ET.Element('configuration')
     sources = ET.SubElement(config, 'packageSources')
     ET.SubElement(sources, 'clear')
-    for key, value in [('packed-config', str(Path(args.package).resolve().parent)),
-                       ('contracts', args.contracts_source), ('public', args.public_source)]:
-        ET.SubElement(sources, 'add', key=key, value=value)
+    packed_source = str(Path(args.package).resolve().parent)
+    require(packed_source not in [args.contracts_source, args.public_source],
+            'dependency feed must remain separate from the exact packed Config source')
+    # NuGet deduplicates equal source endpoints. Keep one key per endpoint and
+    # union its exact package mappings, so public Contracts can share the public
+    # endpoint without dropping FSharp.Core/YamlDotNet behind a duplicate alias.
+    endpoints = {}
+    for key, value, packages in [('packed-config', packed_source, [PACKAGE]),
+                                 ('contracts', args.contracts_source, ['FS.GG.Contracts']),
+                                 ('public', args.public_source, ['FSharp.Core', 'YamlDotNet'])]:
+        if value not in endpoints:
+            endpoints[value] = (key, [])
+        endpoints[value][1].extend(packages)
     mapping = ET.SubElement(config, 'packageSourceMapping')
-    for key, packages in [('packed-config', [PACKAGE]), ('contracts', ['FS.GG.Contracts']),
-                          ('public', ['FSharp.Core', 'YamlDotNet'])]:
+    for value, (key, packages) in endpoints.items():
+        ET.SubElement(sources, 'add', key=key, value=value)
         source = ET.SubElement(mapping, 'packageSource', key=key)
         for name in packages:
             ET.SubElement(source, 'package', pattern=name)

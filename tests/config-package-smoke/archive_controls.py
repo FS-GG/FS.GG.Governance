@@ -5,6 +5,7 @@ import json
 import io
 import os
 import urllib.error
+import xml.etree.ElementTree as ET
 from unittest import mock
 from types import SimpleNamespace
 from pathlib import Path
@@ -48,6 +49,28 @@ with tempfile.TemporaryDirectory() as root:
     prepare(SimpleNamespace(package=str(path), version=VERSION, sha256=sha, revision=REVISION,
                             lock=str(producer_lock), output=str(evidence),
                             contracts_source='https://contracts.invalid/index.json', public_source='https://public.invalid/index.json'))
+    def mappings(output):
+        config = ET.parse(output / 'NuGet.Config').getroot()
+        endpoints = {s.get('key'): s.get('value') for s in config.findall('./packageSources/add')}
+        assert len(endpoints) == len(set(endpoints.values()))
+        result = {endpoints[s.get('key')]: {p.get('pattern') for p in s}
+                  for s in config.findall('./packageSourceMapping/packageSource')}
+        assert result[root] == {'FS.GG.Governance.Config'}
+        assert set().union(*result.values()) == {'FS.GG.Governance.Config', *closure}
+        assert not any('*' in p for packages in result.values() for p in packages)
+        return result
+    distinct = mappings(evidence)
+    assert distinct['https://contracts.invalid/index.json'] == {'FS.GG.Contracts'}
+    assert distinct['https://public.invalid/index.json'] == {'FSharp.Core', 'YamlDotNet'}
+    shared = Path(root) / 'shared-evidence'
+    shared_args = SimpleNamespace(package=str(path), version=VERSION, sha256=sha, revision=REVISION,
+                                 lock=str(producer_lock), output=str(shared),
+                                 contracts_source='https://public.invalid/index.json', public_source='https://public.invalid/index.json')
+    prepare(shared_args)
+    assert mappings(shared) == {root: {'FS.GG.Governance.Config'},
+                               'https://public.invalid/index.json': set(closure)}
+    refused('packed-source-mapped-as-dependency-feed', lambda: prepare(SimpleNamespace(
+        **{**vars(shared_args), 'contracts_source': root})))
     expected = {'FS.GG.Governance.Config': VERSION, **{n: e['resolved'] for n, e in closure.items()}}
     sources = [root, 'https://contracts.invalid/index.json', 'https://public.invalid/index.json']
     assets = {'libraries': {n + '/' + v: {'type': 'package'} for n, v in expected.items()},
@@ -63,6 +86,13 @@ with tempfile.TemporaryDirectory() as root:
     resolved_args = SimpleNamespace(manifest=str(evidence / 'manifest.json'), assets=str(assets_path),
                                     lock=str(consumer_lock), cache=str(Path(root) / 'cache'), source=sources)
     resolved(resolved_args)
+    # NuGet's equal-endpoint source population contains only one public URL.
+    assets['project']['restore']['sources'] = {root: {}, 'https://public.invalid/index.json': {}}
+    assets_path.write_text(json.dumps(assets))
+    resolved(SimpleNamespace(**{**vars(resolved_args), 'manifest': str(shared / 'manifest.json'),
+                               'source': [root, 'https://public.invalid/index.json', 'https://public.invalid/index.json']}))
+    assets['project']['restore']['sources'] = {s: {} for s in sources}
+    assets_path.write_text(json.dumps(assets))
     refused('source-drift', lambda: resolved(SimpleNamespace(**{**vars(resolved_args), 'source': ['https://unexpected.invalid']})))
     assets['libraries']['FS.GG.Contracts/7.5.2']['type'] = 'project'
     assets_path.write_text(json.dumps(assets))
