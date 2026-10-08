@@ -136,6 +136,86 @@ module Plan =
                             CapturedOutput = NoCapturedOutput
                         }
 
+    type ProviderCommandContext =
+        { RepoRoot: string
+          Environment: EnvironmentClass
+          EnvironmentDelta: EnvironmentDelta
+          RemainingTimeout: TimeoutLimit }
+
+    let providerDiagnostic id field code message : FS.GG.Governance.Config.CapabilityBindings.Diagnostic =
+        { CapabilityId = id; Field = field; Code = code; Message = message }
+
+    let permitsEnvironment allowed observed =
+        allowed = observed || (allowed = LocalOrCi && (observed = Local || observed = Ci))
+
+    let commandForBinding
+        (context: ProviderCommandContext)
+        (gate: Gate)
+        (binding: FS.GG.Governance.Config.CapabilityBindings.CapabilityBinding)
+        : Result<GateCommand, FS.GG.Governance.Config.CapabilityBindings.Diagnostic list> =
+        let id = binding.CapabilityId
+        let reject field code message = Error [ providerDiagnostic id field code message ]
+        let (TimeoutLimit remaining) = context.RemainingTimeout
+        let (TimeoutLimit gateSeconds) = gate.Timeout
+        let names =
+            (context.EnvironmentDelta.Added |> List.map (fun v -> v.Name))
+            @ (context.EnvironmentDelta.Changed |> List.map (fun v -> v.Name))
+            @ (context.EnvironmentDelta.Removed |> List.map (fun v -> v.Name))
+        let invalidName (EnvVarName name) =
+            System.String.IsNullOrWhiteSpace name || name.Contains('=') || name.Contains(char 0)
+        let invalidValue (EnvVarValue value) =
+            System.Object.ReferenceEquals(value, null) || value.Contains(char 0)
+        let badValue =
+            (context.EnvironmentDelta.Added |> List.exists (fun v -> invalidValue v.Value))
+            || (context.EnvironmentDelta.Changed |> List.exists (fun v -> invalidValue v.Old || invalidValue v.New))
+            || (context.EnvironmentDelta.Removed |> List.exists (fun v -> invalidValue v.Old))
+        if gateIdValue gate.Id <> id then
+            reject "binding.capabilityId" FS.GG.Governance.Config.CapabilityBindings.MalformedInput "The binding must match the exact effective gate identity."
+        elif remaining <= 0 || gateSeconds <= 0 then
+            reject "execution.timeout" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "Remaining host and effective gate timeouts must be positive."
+        elif context.Environment = LocalOrCi then
+            reject "execution.environment" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "An observed concrete execution environment is required."
+        elif not (permitsEnvironment gate.FreshnessKey.Environment context.Environment) then
+            reject "execution.environment" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "The effective gate does not admit this execution environment."
+        elif (names |> List.exists invalidName) || badValue || List.length names <> (names |> List.distinct |> List.length) then
+            reject "execution.environmentDelta" FS.GG.Governance.Config.CapabilityBindings.MalformedInput "Environment delta names must be unique and names/values must be valid process inputs."
+        elif System.String.IsNullOrWhiteSpace context.RepoRoot || not (System.IO.Path.IsPathFullyQualified context.RepoRoot) then
+            reject "execution.repoRoot" FS.GG.Governance.Config.CapabilityBindings.InvalidPath "An absolute governed root is required; physical containment is revalidated by the host."
+        else
+            match binding.Binding, binding.Limits with
+            | FS.GG.Governance.Config.CapabilityBindings.Command command, Some limits ->
+                match limits.WorkingDirectory, limits.Timeout, limits.Cost with
+                | Some (GovernedPath relative), Some (TimeoutLimit seconds), Some _ when seconds > 0 ->
+                    let spelling = if System.Object.ReferenceEquals(relative, null) then "" else relative
+                    let segments = spelling.Replace('\\', '/').Split('/')
+                    let (GovernedPath normalized) = normalizePath spelling
+                    // A resolved path is normalized; independently calling this projection on raw
+                    // traversals/absolute paths must not acquire a command by normalizing them away.
+                    if System.String.IsNullOrWhiteSpace relative || normalized <> relative || relative.Contains(':')
+                       || relative.StartsWith('/') || (segments |> Array.contains "..")
+                       || (relative |> Seq.exists System.Char.IsControl) then
+                        reject "limits.workingDirectory" FS.GG.Governance.Config.CapabilityBindings.InvalidPath "A normalized governed relative working directory is required."
+                    elif not (limits.Environments |> List.exists (fun allowed -> permitsEnvironment allowed context.Environment)) then
+                        reject "limits.environments" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "Binding does not admit this execution environment."
+                    elif System.String.IsNullOrWhiteSpace command.Executable || command.Executable.Contains(char 0)
+                         || (command.Arguments |> List.exists (fun argument -> System.Object.ReferenceEquals(argument, null) || argument.Contains(char 0))) then
+                        reject "binding.command" FS.GG.Governance.Config.CapabilityBindings.MalformedInput "Executable and literal arguments must be valid process inputs."
+                    else
+                        try
+                            Ok
+                                { Executable = Executable command.Executable
+                                  Arguments = command.Arguments |> List.map Argument
+                                  WorkingDirectory = WorkingDirectory (System.IO.Path.GetFullPath(System.IO.Path.Combine(context.RepoRoot, relative)))
+                                  Environment = context.EnvironmentDelta
+                                  Timeout = TimeoutLimit (min remaining (min seconds gateSeconds))
+                                  CapturedOutput = NoCapturedOutput }
+                        with :? System.ArgumentException ->
+                            reject "limits.workingDirectory" FS.GG.Governance.Config.CapabilityBindings.InvalidPath "Working directory has an invalid path spelling."
+                | _ -> reject "limits" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "Explicit positive executable limits are required."
+            | FS.GG.Governance.Config.CapabilityBindings.SemanticOnly, _ ->
+                reject "binding" FS.GG.Governance.Config.CapabilityBindings.IllegalSemanticOnly "A semantic-only obligation cannot project an executable command."
+            | _ -> reject "limits" FS.GG.Governance.Config.CapabilityBindings.InvalidExecutionLimit "Explicit executable limits are required."
+
     let priorExitOf (reference: EvidenceRef) : ExitCode option =
         // The reference is the F032 canonical-identity string (F049 `referenceOf`), segments joined by '\n'.
         // The exit code is the `exit=1<len>:<value>` segment (presence digit `1`, decimal byte length, ':',

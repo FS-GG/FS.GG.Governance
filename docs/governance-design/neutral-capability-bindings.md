@@ -79,3 +79,51 @@ Historical 1.7.0 bytes remain immutable. New adoption pins exact 1.8.0; prospect
 catalog-compatible package range is [1.8.0,2.0.0). No installed migration is required
 for the existing route. Publication and package-only receiver qualification remain
 open; no new generated-workspace bytes or lifecycle default change in C1.
+
+## C2 phase 1: complete-request execution planning (Tier 1)
+
+The additive pure planner accepts the complete `Config.CapabilityBindings.ResolutionRequest`,
+actual selected effective `Gate` values (after existing inheritance/profile selection), and explicit
+host execution inputs. It calls `Config.resolve` before selecting any executable subset. Every
+normalized required binding needs an exact selected effective gate; no empty selection, missing
+required gate, unresolved selected binding or malformed declaration becomes success or `NoCommand`.
+The original effective Gate records retain owner, maturity, cost and prerequisites. This function
+cannot establish that the caller supplied all organization floors; the existing host remains their
+selection authority.
+
+`GateRun.Plan.ProviderCommandContext` carries governed root, observed environment class, the
+independently admitted environment delta, and remaining positive host timeout. `commandForBinding`
+projects a validated executable binding directly into existing `GateCommand`: literal executable and
+ordered argv, normalized governed relative working directory, admitted delta, and the minimum of
+binding timeout, gate timeout and remaining host timeout. The projected cost uses the greater of
+binding and effective gate costs. An incompatible gate/binding environment, invalid timeout or
+malformed delta refuses. These pure values do not observe tools, authenticate a root, enforce an
+execution profile, renew a deadline or start a process; the real host must revalidate them before
+dispatch.
+
+`CommandHost.providerExecutionPlan` returns a separate typed plan or located Config diagnostics.
+Executable entries carry current declared evidence bindings and effective cost. Over-ceiling entries
+remain explicitly deferred and non-passing. Recognized command-free obligations retain a separate
+semantic-only classification; they are never an executed/pass result. An effective executable floor
+cannot be downgraded to semantic-only. Optional unknown capabilities stay explicitly unsupported,
+with selected unknown gates classified non-passing. Provider planning has no legacy store or reuse
+input and produces no legacy cache records. Existing `commandFor` and `executionPlan` are unchanged.
+
+Verification uses synthetic normalized request/gate/profile fixtures through the public signature and
+actual Config resolver: whole-request failures outside selection, required gate omission/duplicates,
+empty selection, literal argv/limits/environment, floor cost/maturity preservation, deferral,
+semantic-only and optional unsupported controls, plus existing legacy and surface suites. These
+fixtures establish pure planning only. Native API exercise and tests require separately admitted
+finite recipes; actual Verify/GateExecution observation remains phase 2/SDD C2.3.
+
+The selected later host join uses explicit existing schema2 provenance and independently selected
+policy documents, actual SDD library codecs and request conversion. Phase 1 adds no loader, flags,
+SDD dependency, persisted context schema, package version or execution edge. Phase 2 waits for actual
+once-packed coherent SDD library closure; C2.3 acceptance waits for both scaffold and Verify producers.
+
+The phase-1 candidate passed the complete local GateRun suite (27 tests) and CommandHost suite
+(30 tests), including 25 synthetic planning controls and the unchanged legacy tests. The public
+signature was exercised first through a private FSI prototype using actual Config and domain types;
+its 17 synthetic controls passed. Reflected surface changes add only the selected context/planning
+APIs and their record/union members; all existing API lines remain. This validates pure planning,
+not actual producer provenance, installed tool/environment enforcement, execution or evidence acceptance.

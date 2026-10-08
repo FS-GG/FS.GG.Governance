@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <Compile Include="CommandHostTests.fs" />
+    <Compile Include="ProviderPlanTests.fs" />
     <Compile Include="SurfaceBaselineTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

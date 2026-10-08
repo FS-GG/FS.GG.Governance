@@ -63,7 +63,9 @@ TYPE FS.GG.Governance.GateRun.PlanModule
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] priorExitOf(EvidenceRef)
   [Method] Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[FS.GG.Governance.CommandRecord.ModelModule+Executable,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument]]] lexCommandLine(System.String)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateRun.PlanModule+NoCommand] commandFor(System.String, ToolingFacts, Gate)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic]] commandForBinding(ProviderCommandContext, Gate, CapabilityBinding)
   [NestedType] FS.GG.Governance.GateRun.PlanModule+NoCommand
+  [NestedType] FS.GG.Governance.GateRun.PlanModule+ProviderCommandContext
 TYPE FS.GG.Governance.GateRun.PlanModule+NoCommand
   [Method] Boolean Equals(NoCommand)
   [Method] Boolean Equals(NoCommand, System.Collections.IEqualityComparer)
@@ -97,3 +99,23 @@ TYPE FS.GG.Governance.GateRun.PlanModule+NoCommand+Tags
 TYPE FS.GG.Governance.GateRun.PlanModule+NoCommand+UnresolvedCommand
   [Method] CommandId get_Item()
   [Property] CommandId Item
+TYPE FS.GG.Governance.GateRun.PlanModule+ProviderCommandContext
+  [Constructor] Void .ctor(System.String, EnvironmentClass, EnvironmentDelta, TimeoutLimit)
+  [Method] Boolean Equals(ProviderCommandContext)
+  [Method] Boolean Equals(ProviderCommandContext, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EnvironmentClass get_Environment()
+  [Method] EnvironmentDelta get_EnvironmentDelta()
+  [Method] Int32 CompareTo(ProviderCommandContext)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_RepoRoot()
+  [Method] TimeoutLimit get_RemainingTimeout()
+  [Property] EnvironmentClass Environment
+  [Property] EnvironmentDelta EnvironmentDelta
+  [Property] System.String RepoRoot
+  [Property] TimeoutLimit RemainingTimeout

@@ -21,7 +21,8 @@ let tests =
             SurfaceDrift.referencesOnly
                 "GateRun"
                 (fun n ->
-                    n = "FS.GG.Governance.GateExecution"
+                    n = "FS.GG.Contracts" // Existing Config binding's literal DeclaredCommand owner (GOV423-C2).
+                    || n = "FS.GG.Governance.GateExecution"
                     || n = "FS.GG.Governance.ExecutionRecord"
                     || n = "FS.GG.Governance.CommandRecord"
                     || n = "FS.GG.Governance.EvidenceReuse"

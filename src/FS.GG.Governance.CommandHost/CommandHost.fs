@@ -254,6 +254,73 @@ module CommandHost =
             (selectedGates |> List.map (fun g -> g, classify g)), inputsMap, budgetReport
         | _ -> [], Map.empty, CacheDecisionReport []
 
+    type ProviderGateClassification =
+        | ProviderExecute of command: GateCommand * cost: Cost * evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding list
+        | ProviderSemanticOnly
+        | ProviderDeferred of cost: Cost * ceiling: Cost
+        | ProviderUnsupported of capabilityId: string
+
+    type ProviderExecutionPlan =
+        { Gates: (Gate * ProviderGateClassification) list
+          UnsupportedCapabilityIds: string list }
+
+    let providerExecutionPlan
+        (request: FS.GG.Governance.Config.CapabilityBindings.ResolutionRequest)
+        (context: Plan.ProviderCommandContext)
+        (costCeiling: Cost)
+        (selectedGates: Gate list)
+        : Result<ProviderExecutionPlan, FS.GG.Governance.Config.CapabilityBindings.Diagnostic list> =
+        // Whole original declarations resolve first. Neither gate selection nor legacy cache
+        // can conceal a diagnostic in an unselected binding.
+        match FS.GG.Governance.Config.CapabilityBindings.resolve request with
+        | FS.GG.Governance.Config.CapabilityBindings.Rejected diagnostics -> Error diagnostics
+        | FS.GG.Governance.Config.CapabilityBindings.Resolved resolved ->
+            // mutable: collect independent selected-gate defects before returning one refusal.
+            let diagnostics = ResizeArray<FS.GG.Governance.Config.CapabilityBindings.Diagnostic>()
+            let add id field code message =
+                diagnostics.Add { CapabilityId = id; Field = field; Code = code; Message = message }
+            let ids = selectedGates |> List.map (fun gate -> gateIdValue gate.Id)
+            if List.isEmpty selectedGates then
+                add "" "selectedGates" FS.GG.Governance.Config.CapabilityBindings.MissingRequiredBinding "Provider planning requires an effective gate selection; an empty plan is not acceptance."
+            for id, count in ids |> List.countBy id do
+                if count > 1 then
+                    add id "selectedGates" FS.GG.Governance.Config.CapabilityBindings.DuplicateIdentity "Selected effective gate identities must be unique."
+            for binding in resolved.Bindings |> List.filter (fun binding -> binding.Required) do
+                if not (List.contains binding.CapabilityId ids) then
+                    add binding.CapabilityId "selectedGates" FS.GG.Governance.Config.CapabilityBindings.MissingRequiredBinding "A required capability has no selected effective gate."
+            let classify (gate: Gate) =
+                let id = gateIdValue gate.Id
+                match resolved.Bindings |> List.tryFind (fun binding -> binding.CapabilityId = id) with
+                | None when List.contains id resolved.UnsupportedCapabilityIds -> Some (gate, ProviderUnsupported id)
+                | None ->
+                    add id "binding" FS.GG.Governance.Config.CapabilityBindings.MissingRequiredBinding "An effective selected gate has no admitted provider binding; existing floors cannot disappear."
+                    None
+                | Some binding ->
+                    match binding.Binding with
+                    | FS.GG.Governance.Config.CapabilityBindings.SemanticOnly ->
+                        if not (List.isEmpty gate.Prerequisites) then
+                            add id "binding" FS.GG.Governance.Config.CapabilityBindings.IllegalSemanticOnly "An effective executable gate cannot be downgraded to semantic-only."
+                            None
+                        else Some (gate, ProviderSemanticOnly)
+                    | FS.GG.Governance.Config.CapabilityBindings.Command _ ->
+                        match Plan.commandForBinding context gate binding with
+                        | Error errors ->
+                            diagnostics.AddRange errors
+                            None
+                        | Ok command ->
+                            // commandForBinding has refused missing executable limits.
+                            let declaredCost = binding.Limits.Value.Cost.Value
+                            let cost = if costRank declaredCost > costRank gate.Cost then declaredCost else gate.Cost
+                            if costRank cost > costRank costCeiling then
+                                Some (gate, ProviderDeferred (cost, costCeiling))
+                            else
+                                let evidence = resolved.Evidence |> List.filter (fun item -> List.contains item.Id binding.EvidenceIds)
+                                Some (gate, ProviderExecute (command, cost, evidence))
+            let gates = selectedGates |> List.sortBy (fun gate -> gateIdValue gate.Id) |> List.choose classify
+            if diagnostics.Count > 0 then
+                Error (diagnostics |> Seq.toList |> List.sortBy (fun d -> d.CapabilityId, d.Field, d.Code, d.Message))
+            else Ok { Gates = gates; UnsupportedCapabilityIds = resolved.UnsupportedCapabilityIds }
+
     // ── host-loop combinators (F2 second-extraction pass — genuinely-shared pure forms) ──
 
     // Reify any exception from a Result-returning impure call into `Error e.Message`. A PURE combinator over

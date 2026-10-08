@@ -153,3 +153,29 @@ Root must qualify C1+C2, choose the coherent release set, resolve collision/visi
 preserve original ReferenceGateSet 1.8.0 custody before dispatch/publication. The earlier local archive
 cannot automatically qualify a later rebuilt release archive. Existing runtime versions remain as
 inspected until the real coherent release delta selects their successors.
+
+## C2 selected source phases
+
+The accepted explicit Verify context join is phased within existing GOV-423-C2. Phase 1 prepares
+additive complete-request Config-typed planning in GateRun/CommandHost concurrently with SDD928 C2.2.
+Its public pure API resolves the whole request before selected gates, blocks required gate omission
+and executable-floor downgrade, preserves literal argv/limits/admitted environment, keeps unsupported
+and deferred outcomes non-passing, and bypasses legacy cache reuse. The owning design supplies the
+Tier-1 specification; signatures/API exercise, focused semantic tests and additive surface baselines
+precede implementation/qualification. No C2 completion is recorded for this slice.
+
+Phase 2 uses actual qualified SDD Commands/Artifacts libraries for the explicit schema2-provenance /
+independent-policy Verify loader and existing GateExecution edge, after root selects the exact local
+package closure. No placeholder loader or public package pin is admitted. Phase 3 joins real SDD
+C2.2 output into actual Verify/GateExecution with source/evidence revalidation and bounded execution.
+That actual caller acceptance, coherent source delivery and the separate C3 release decision remain
+open. Original ReferenceGateSet1.8 custody and existing native operation holds are unchanged.
+
+Local phase-1 validation: GateRun 27/27 and CommandHost 30/30 passed, with no failed or skipped
+cases; the 25 new controls use synthetic normalized declarations, effective gates and execution
+inputs through actual Config. Surface/dependency checks matched 3 and 2 cases respectively, and
+both reflected baselines are additive. An initial build failed on strict F# nullness checks; the
+corrected source passed both complete suites in a separately selected qualification window. The
+original failure and successful offline restore evidence remain retained separately. Source merge,
+full Debug/Release coherent CI, actual Verify integration, provider/evidence acceptance and release
+remain pending; GOV-423-C2 stays open.

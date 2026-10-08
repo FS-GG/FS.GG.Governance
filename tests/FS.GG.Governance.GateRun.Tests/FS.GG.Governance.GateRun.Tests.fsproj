@@ -14,6 +14,7 @@
   <ItemGroup>
     <Compile Include="Support.fs" />
     <Compile Include="PlanTests.fs" />
+    <Compile Include="ProviderPlanTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

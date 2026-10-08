@@ -104,6 +104,29 @@ module CommandHost =
         repo: string ->
             (Gate * GateClassification) list * Map<string, FreshnessInputs> * CacheDecisionReport
 
+    /// Provider planning never reuses legacy evidence or equates declaration with pass.
+    type ProviderGateClassification =
+        | ProviderExecute of command: GateCommand * cost: Cost * evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding list
+        | ProviderSemanticOnly
+        | ProviderDeferred of cost: Cost * ceiling: Cost
+        | ProviderUnsupported of capabilityId: string
+
+    /// Declared execution inputs only; no execution/evidence acceptance or cache records.
+    type ProviderExecutionPlan =
+        { Gates: (Gate * ProviderGateClassification) list
+          UnsupportedCapabilityIds: string list }
+
+    /// Resolve the COMPLETE original request before considering selected effective gates.
+    /// Required gate omission, empty selection and selected executable binding failures refuse
+    /// the whole plan. Existing host inheritance/profile selection remains authoritative.
+    /// Deferred/unsupported/semantic-only entries are explicitly non-passing.
+    val providerExecutionPlan:
+        request: FS.GG.Governance.Config.CapabilityBindings.ResolutionRequest ->
+        context: FS.GG.Governance.GateRun.Plan.ProviderCommandContext ->
+        costCeiling: Cost ->
+        selectedGates: Gate list ->
+            Result<ProviderExecutionPlan, FS.GG.Governance.Config.CapabilityBindings.Diagnostic list>
+
     // ---- host-loop combinators (F2 second-extraction pass) ----
 
     /// Reify any exception from a Result-returning impure call into `Error e.Message` (shared host edge guard).
