@@ -6,6 +6,7 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [Method] HandoffLoadOutcome discoverHandoffs(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead] realHandoffs(System.String)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandKind.ModelModule+KindedCommandRun] kindedRunsOf(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+GateId,FS.GG.Governance.CommandRecord.ModelModule+CommandRecord]])
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic]] providerExecutionPlan(ResolutionRequest, ProviderCommandContext, Cost, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Gates.ModelModule+Gate])
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Snapshot.ModelModule+RepoSnapshot,System.String] senseSnapshotResult(FS.GG.Governance.Snapshot.Ports, SnapshotOptions)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String] writeAtomic(System.String, System.String)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[a,System.String] guard[a](Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.FSharpResult`2[a,System.String]])
@@ -21,6 +22,8 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+GateClassification
   [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification
   [Property] SensedFacts emptySensedFacts
 TYPE FS.GG.Governance.CommandHost.CommandHostModule+ExecutionPlanParams
   [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpOption`1[Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CacheEligibility.ModelModule+CacheEligibilityVerdict],System.Tuple`2[Microsoft.FSharp.Collections.FSharpMap`2[System.String,FS.GG.Governance.CostBudget.ModelModule+BudgetReason],FS.GG.Governance.CostBudget.ModelModule+CacheDecisionReport]]])
@@ -124,3 +127,69 @@ TYPE FS.GG.Governance.CommandHost.CommandHostModule+HandoffLoadOutcome+Tags
   [Field] Int32 HandoffsLoaded
   [Field] Int32 HandoffsMalformed
   [Field] Int32 HandoffsUnreadable
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan
+  [Constructor] Void .ctor(Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+Gate,FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification]], Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] Boolean Equals(ProviderExecutionPlan)
+  [Method] Boolean Equals(ProviderExecutionPlan, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderExecutionPlan)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_UnsupportedCapabilityIds()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+Gate,FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification]] get_Gates()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] UnsupportedCapabilityIds
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[FS.GG.Governance.Gates.ModelModule+Gate,FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification]] Gates
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification
+  [Method] Boolean Equals(ProviderGateClassification)
+  [Method] Boolean Equals(ProviderGateClassification, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsProviderDeferred()
+  [Method] Boolean get_IsProviderExecute()
+  [Method] Boolean get_IsProviderSemanticOnly()
+  [Method] Boolean get_IsProviderUnsupported()
+  [Method] Int32 CompareTo(ProviderGateClassification)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderGateClassification NewProviderDeferred(Cost, Cost)
+  [Method] ProviderGateClassification NewProviderExecute(GateCommand, Cost, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding])
+  [Method] ProviderGateClassification NewProviderUnsupported(System.String)
+  [Method] ProviderGateClassification get_ProviderSemanticOnly()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderDeferred
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderExecute
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderUnsupported
+  [NestedType] FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+Tags
+  [Property] Boolean IsProviderDeferred
+  [Property] Boolean IsProviderExecute
+  [Property] Boolean IsProviderSemanticOnly
+  [Property] Boolean IsProviderUnsupported
+  [Property] Int32 Tag
+  [Property] ProviderGateClassification ProviderSemanticOnly
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderDeferred
+  [Method] Cost get_ceiling()
+  [Method] Cost get_cost()
+  [Property] Cost ceiling
+  [Property] Cost cost
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderExecute
+  [Method] Cost get_cost()
+  [Method] GateCommand get_command()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] get_evidence()
+  [Property] Cost cost
+  [Property] GateCommand command
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] evidence
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+ProviderUnsupported
+  [Method] System.String get_capabilityId()
+  [Property] System.String capabilityId
+TYPE FS.GG.Governance.CommandHost.CommandHostModule+ProviderGateClassification+Tags
+  [Field] Int32 ProviderDeferred
+  [Field] Int32 ProviderExecute
+  [Field] Int32 ProviderSemanticOnly
+  [Field] Int32 ProviderUnsupported

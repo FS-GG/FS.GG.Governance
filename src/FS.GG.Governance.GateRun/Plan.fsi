@@ -47,6 +47,23 @@ module Plan =
     /// declared `CommandSpec.Timeout` verbatim; the captured-output target is `NoCapturedOutput`.
     val commandFor: repoRoot: string -> tooling: ToolingFacts -> gate: Gate -> Result<GateCommand, NoCommand>
 
+    /// Explicit host inputs, not an authority or runtime observation. The real host must
+    /// revalidate root/profile/deadline before dispatch; this pure planner does not enforce them.
+    type ProviderCommandContext =
+        { RepoRoot: string
+          Environment: EnvironmentClass
+          EnvironmentDelta: FS.GG.Governance.CommandRecord.Model.EnvironmentDelta
+          RemainingTimeout: TimeoutLimit }
+
+    /// Project a complete-request-resolved executable binding without a string lexer.
+    /// Preserve effective gate limits/floors, literal argv and independently admitted delta.
+    /// Semantic-only or malformed bindings, incompatible environments and exhausted budgets refuse.
+    val commandForBinding:
+        context: ProviderCommandContext ->
+        gate: Gate ->
+        binding: FS.GG.Governance.Config.CapabilityBindings.CapabilityBinding ->
+            Result<GateCommand, FS.GG.Governance.Config.CapabilityBindings.Diagnostic list>
+
     /// Recover a reusable gate's prior `ExitCode` from its stored `EvidenceRef` — the F032 canonical-identity
     /// string (F049 `referenceOf`) embeds the exit code as the documented `exit=1<len>:<value>` segment (see
     /// specs/032-command-records/contracts/command-record-identity-format.md). `None` when the reference is
