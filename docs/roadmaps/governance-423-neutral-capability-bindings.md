@@ -179,3 +179,37 @@ corrected source passed both complete suites in a separately selected qualificat
 original failure and successful offline restore evidence remain retained separately. Source merge,
 full Debug/Release coherent CI, actual Verify integration, provider/evidence acceptance and release
 remain pending; GOV-423-C2 stays open.
+
+## C2 bounded direct-child source window
+
+The additive GateExecution CurrentHost/direct-child component has local qualification for its selected
+weaker scope. Callers explicitly accept UncontainedUnobserved descendants and observed paths without
+atomic binding; stronger requirements refuse. One-use caller custody precedes launch, original monotonic
+work/cleanup ends do not renew, concurrent stream capture is capped before retention, and observations
+separate direct exit, EOF/closure, failure and settlement. Legacy entrypoints/cache behavior remains.
+Runtime signal identity is unqualified; pending/ambiguous ownership is retained rather than signaled.
+
+Qualification: 29 synthetic public API exercise controls, actual Release compilation, three
+surface/dependency/scope checks, ten synthetic workflow controls and ten real direct-process controls.
+A separately admitted held-pipe test passed with direct exit0, streams pending, retained session and
+work/cleanup failures; its private guardian observed/adopted/reaped the finite holder, then reaped the
+runner after EOF. The missing-executable control separately recorded LaunchOutcomeUnknown/no exit/
+Retained and retained its actual CLR caller until selected external SIGKILL retirement. Exact adopted
+runtime and final runner statuses were consumed; this is external-control acceptance, not a normal
+unit-test pass or public Released. Private fixture reaping grants no production descendant guarantee.
+
+Native cases are pending by default, with separate exact opt-ins that schedule only. Default and
+nonexact direct-case routes each skipped ten cases; corrected-source default discovery skipped the two
+remaining cases. These skipped outcomes are not native passes. Positive private qualification requires
+an independently admitted real owner; ordinary hosted full-suite CI supplies no such owner.
+
+Three compile failures and the original held-readiness runtime failure remain retained separately.
+The original held launch/expiry cause remains unknown because its run snapshot was not retained before
+assertion. Successful successors used new original 1-second work/3-second cleanup fixture budgets and
+bounded preassertion snapshots, preserving the finite 10-second holder and original outer deadlines.
+
+This closes the selected component's local fixture window only. Coherent source delivery, actual Verify
+incoming-context/package-backed SDD caller acceptance, stronger enforcing profiles and GOV423-C2 remain
+open. C3 coherent producer publication/readback and C4 public receivers remain separately gated; no
+release, installed support, scope-empty or general reaping claim follows. Original native/installed
+custody holds and the attributed telemetry gap remain unchanged.

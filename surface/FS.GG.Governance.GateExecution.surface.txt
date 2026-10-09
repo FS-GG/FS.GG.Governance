@@ -1,14 +1,467 @@
 TYPE FS.GG.Governance.GateExecution.InterpreterModule
+  [Method] BoundedObservation observe(ExecutionSession)
+  [Method] BoundedObservation run(ExecutionSession)
   [Method] CommandRecord senseExecution(Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], GateCommand)
   [Method] ExitCode get_startFailureExitCode()
   [Method] ExitCode get_timeoutExitCode()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_realPort()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure]] prepare(BoundedRequest)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] release(ExecutionSession)
+  [Method] MonotonicInstant currentInstant()
+  [NestedType] FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession
   [Property] ExitCode startFailureExitCode
   [Property] ExitCode timeoutExitCode
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] realPort
+TYPE FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession
+  [Method] LaunchIdentity get_Identity()
+  [Property] LaunchIdentity Identity
 TYPE FS.GG.Governance.GateExecution.ModelModule
+  [Method] DirectModel initDirect()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] validateBudget(MonotonicInstant, ExecutionBudget)
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] validateCurrentHostPolicy(CurrentHostPolicy)
+  [Method] System.Tuple`2[FS.GG.Governance.GateExecution.ModelModule+DirectModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+DirectEffect]] updateDirect(DirectMsg, DirectModel)
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedObservation
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedRequest
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+CaptureLimits
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+CurrentHostPolicy
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DescendantAcceptance
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DescendantObservation
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectEffect
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectLaunchState
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectModel
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectMsg
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectPhase
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectSettlement
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+ExecutionBudget
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+GateCommand
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+LaunchIdentity
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+MonotonicInstant
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+PathAcceptance
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+StreamObservation
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+StreamState
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure
+  [Method] Boolean Equals(BoundedFailure)
+  [Method] Boolean Equals(BoundedFailure, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAlreadyRun()
+  [Method] Boolean get_IsCancellationRequested()
+  [Method] Boolean get_IsCleanupDeadlineReached()
+  [Method] Boolean get_IsCleanupFailed()
+  [Method] Boolean get_IsInvalidRequest()
+  [Method] Boolean get_IsLaunchFailed()
+  [Method] Boolean get_IsOutputLimitReached()
+  [Method] Boolean get_IsReadFailed()
+  [Method] Boolean get_IsStopIdentityUnknown()
+  [Method] Boolean get_IsUnsupportedGuarantee()
+  [Method] Boolean get_IsWorkDeadlineReached()
+  [Method] Boolean get_IsWrongClockDomain()
+  [Method] BoundedFailure NewCleanupFailed(System.String)
+  [Method] BoundedFailure NewInvalidRequest(System.String)
+  [Method] BoundedFailure NewLaunchFailed(System.String)
+  [Method] BoundedFailure NewReadFailed(System.String)
+  [Method] BoundedFailure get_AlreadyRun()
+  [Method] BoundedFailure get_CancellationRequested()
+  [Method] BoundedFailure get_CleanupDeadlineReached()
+  [Method] BoundedFailure get_OutputLimitReached()
+  [Method] BoundedFailure get_StopIdentityUnknown()
+  [Method] BoundedFailure get_UnsupportedGuarantee()
+  [Method] BoundedFailure get_WorkDeadlineReached()
+  [Method] BoundedFailure get_WrongClockDomain()
+  [Method] Int32 CompareTo(BoundedFailure)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+CleanupFailed
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+InvalidRequest
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+LaunchFailed
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+ReadFailed
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+Tags
+  [Property] Boolean IsAlreadyRun
+  [Property] Boolean IsCancellationRequested
+  [Property] Boolean IsCleanupDeadlineReached
+  [Property] Boolean IsCleanupFailed
+  [Property] Boolean IsInvalidRequest
+  [Property] Boolean IsLaunchFailed
+  [Property] Boolean IsOutputLimitReached
+  [Property] Boolean IsReadFailed
+  [Property] Boolean IsStopIdentityUnknown
+  [Property] Boolean IsUnsupportedGuarantee
+  [Property] Boolean IsWorkDeadlineReached
+  [Property] Boolean IsWrongClockDomain
+  [Property] BoundedFailure AlreadyRun
+  [Property] BoundedFailure CancellationRequested
+  [Property] BoundedFailure CleanupDeadlineReached
+  [Property] BoundedFailure OutputLimitReached
+  [Property] BoundedFailure StopIdentityUnknown
+  [Property] BoundedFailure UnsupportedGuarantee
+  [Property] BoundedFailure WorkDeadlineReached
+  [Property] BoundedFailure WrongClockDomain
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+CleanupFailed
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+InvalidRequest
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+LaunchFailed
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+ReadFailed
+  [Method] System.String get_Item()
+  [Property] System.String Item
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedFailure+Tags
+  [Field] Int32 AlreadyRun
+  [Field] Int32 CancellationRequested
+  [Field] Int32 CleanupDeadlineReached
+  [Field] Int32 CleanupFailed
+  [Field] Int32 InvalidRequest
+  [Field] Int32 LaunchFailed
+  [Field] Int32 OutputLimitReached
+  [Field] Int32 ReadFailed
+  [Field] Int32 StopIdentityUnknown
+  [Field] Int32 UnsupportedGuarantee
+  [Field] Int32 WorkDeadlineReached
+  [Field] Int32 WrongClockDomain
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedObservation
+  [Constructor] Void .ctor(LaunchIdentity, DirectLaunchState, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode], StreamObservation, StreamObservation, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure], Boolean, Boolean, Boolean, DirectSettlement, DescendantObservation)
+  [Method] Boolean Equals(BoundedObservation)
+  [Method] Boolean Equals(BoundedObservation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_CancellationRequested()
+  [Method] Boolean get_OutputLimitReached()
+  [Method] Boolean get_WorkDeadlineReached()
+  [Method] DescendantObservation get_Descendants()
+  [Method] DirectLaunchState get_Launch()
+  [Method] DirectSettlement get_Settlement()
+  [Method] Int32 CompareTo(BoundedObservation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] LaunchIdentity get_Identity()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] get_SecondaryFailures()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] get_DirectExit()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] get_FirstFailure()
+  [Method] StreamObservation get_Stderr()
+  [Method] StreamObservation get_Stdout()
+  [Method] System.String ToString()
+  [Property] Boolean CancellationRequested
+  [Property] Boolean OutputLimitReached
+  [Property] Boolean WorkDeadlineReached
+  [Property] DescendantObservation Descendants
+  [Property] DirectLaunchState Launch
+  [Property] DirectSettlement Settlement
+  [Property] LaunchIdentity Identity
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] SecondaryFailures
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandRecord.ModelModule+ExitCode] DirectExit
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] FirstFailure
+  [Property] StreamObservation Stderr
+  [Property] StreamObservation Stdout
+TYPE FS.GG.Governance.GateExecution.ModelModule+BoundedRequest
+  [Constructor] Void .ctor(GateCommand, LaunchIdentity, CurrentHostPolicy, ExecutionBudget, CaptureLimits, System.Threading.CancellationToken)
+  [Method] Boolean Equals(BoundedRequest)
+  [Method] Boolean Equals(BoundedRequest, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] CaptureLimits get_Limits()
+  [Method] CurrentHostPolicy get_Policy()
+  [Method] ExecutionBudget get_Budget()
+  [Method] GateCommand get_Command()
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] LaunchIdentity get_Identity()
+  [Method] System.String ToString()
+  [Method] System.Threading.CancellationToken get_Cancellation()
+  [Property] CaptureLimits Limits
+  [Property] CurrentHostPolicy Policy
+  [Property] ExecutionBudget Budget
+  [Property] GateCommand Command
+  [Property] LaunchIdentity Identity
+  [Property] System.Threading.CancellationToken Cancellation
+TYPE FS.GG.Governance.GateExecution.ModelModule+CaptureLimits
+  [Constructor] Void .ctor(Int64, Int64, Int64)
+  [Method] Boolean Equals(CaptureLimits)
+  [Method] Boolean Equals(CaptureLimits, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(CaptureLimits)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int64 get_AggregateBytes()
+  [Method] Int64 get_StderrBytes()
+  [Method] Int64 get_StdoutBytes()
+  [Method] System.String ToString()
+  [Property] Int64 AggregateBytes
+  [Property] Int64 StderrBytes
+  [Property] Int64 StdoutBytes
+TYPE FS.GG.Governance.GateExecution.ModelModule+CurrentHostPolicy
+  [Constructor] Void .ctor(System.String, Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String], DescendantAcceptance, PathAcceptance)
+  [Method] Boolean Equals(CurrentHostPolicy)
+  [Method] Boolean Equals(CurrentHostPolicy, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DescendantAcceptance get_Descendants()
+  [Method] Int32 CompareTo(CurrentHostPolicy)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] get_CapturedEnvironment()
+  [Method] PathAcceptance get_Paths()
+  [Method] System.String ToString()
+  [Method] System.String get_Root()
+  [Property] DescendantAcceptance Descendants
+  [Property] Microsoft.FSharp.Collections.FSharpMap`2[System.String,System.String] CapturedEnvironment
+  [Property] PathAcceptance Paths
+  [Property] System.String Root
+TYPE FS.GG.Governance.GateExecution.ModelModule+DescendantAcceptance
+  [Method] Boolean Equals(DescendantAcceptance)
+  [Method] Boolean Equals(DescendantAcceptance, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAcceptUncontainedUnobservedDescendants()
+  [Method] Boolean get_IsRequireContainedWorkload()
+  [Method] DescendantAcceptance get_AcceptUncontainedUnobservedDescendants()
+  [Method] DescendantAcceptance get_RequireContainedWorkload()
+  [Method] Int32 CompareTo(DescendantAcceptance)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DescendantAcceptance+Tags
+  [Property] Boolean IsAcceptUncontainedUnobservedDescendants
+  [Property] Boolean IsRequireContainedWorkload
+  [Property] DescendantAcceptance AcceptUncontainedUnobservedDescendants
+  [Property] DescendantAcceptance RequireContainedWorkload
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DescendantAcceptance+Tags
+  [Field] Int32 AcceptUncontainedUnobservedDescendants
+  [Field] Int32 RequireContainedWorkload
+TYPE FS.GG.Governance.GateExecution.ModelModule+DescendantObservation
+  [Method] Boolean Equals(DescendantObservation)
+  [Method] Boolean Equals(DescendantObservation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] DescendantObservation get_UncontainedUnobserved()
+  [Method] Int32 CompareTo(DescendantObservation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [Property] DescendantObservation UncontainedUnobserved
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectEffect
+  [Method] Boolean Equals(DirectEffect)
+  [Method] Boolean Equals(DirectEffect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLaunchDirectChild()
+  [Method] Boolean get_IsRetireDirectResources()
+  [Method] DirectEffect get_LaunchDirectChild()
+  [Method] DirectEffect get_RetireDirectResources()
+  [Method] Int32 CompareTo(DirectEffect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectEffect+Tags
+  [Property] Boolean IsLaunchDirectChild
+  [Property] Boolean IsRetireDirectResources
+  [Property] DirectEffect LaunchDirectChild
+  [Property] DirectEffect RetireDirectResources
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectEffect+Tags
+  [Field] Int32 LaunchDirectChild
+  [Field] Int32 RetireDirectResources
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectLaunchState
+  [Method] Boolean Equals(DirectLaunchState)
+  [Method] Boolean Equals(DirectLaunchState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLaunchOutcomeUnknown()
+  [Method] Boolean get_IsNotStarted()
+  [Method] Boolean get_IsStarted()
+  [Method] Boolean get_IsStarting()
+  [Method] DirectLaunchState get_LaunchOutcomeUnknown()
+  [Method] DirectLaunchState get_NotStarted()
+  [Method] DirectLaunchState get_Started()
+  [Method] DirectLaunchState get_Starting()
+  [Method] Int32 CompareTo(DirectLaunchState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectLaunchState+Tags
+  [Property] Boolean IsLaunchOutcomeUnknown
+  [Property] Boolean IsNotStarted
+  [Property] Boolean IsStarted
+  [Property] Boolean IsStarting
+  [Property] DirectLaunchState LaunchOutcomeUnknown
+  [Property] DirectLaunchState NotStarted
+  [Property] DirectLaunchState Started
+  [Property] DirectLaunchState Starting
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectLaunchState+Tags
+  [Field] Int32 LaunchOutcomeUnknown
+  [Field] Int32 NotStarted
+  [Field] Int32 Started
+  [Field] Int32 Starting
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectModel
+  [Constructor] Void .ctor(DirectPhase, Boolean, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure])
+  [Method] Boolean Equals(DirectModel)
+  [Method] Boolean Equals(DirectModel, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_LaunchConsumed()
+  [Method] DirectPhase get_Phase()
+  [Method] Int32 CompareTo(DirectModel)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] get_SecondaryFailures()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] get_FirstFailure()
+  [Method] System.String ToString()
+  [Property] Boolean LaunchConsumed
+  [Property] DirectPhase Phase
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] SecondaryFailures
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] FirstFailure
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectMsg
+  [Method] Boolean Equals(DirectMsg)
+  [Method] Boolean Equals(DirectMsg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDirectResourcesSettled()
+  [Method] Boolean get_IsFailureObserved()
+  [Method] Boolean get_IsLaunchObserved()
+  [Method] Boolean get_IsRunRequested()
+  [Method] DirectMsg NewFailureObserved(BoundedFailure)
+  [Method] DirectMsg get_DirectResourcesSettled()
+  [Method] DirectMsg get_LaunchObserved()
+  [Method] DirectMsg get_RunRequested()
+  [Method] Int32 CompareTo(DirectMsg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectMsg+FailureObserved
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectMsg+Tags
+  [Property] Boolean IsDirectResourcesSettled
+  [Property] Boolean IsFailureObserved
+  [Property] Boolean IsLaunchObserved
+  [Property] Boolean IsRunRequested
+  [Property] DirectMsg DirectResourcesSettled
+  [Property] DirectMsg LaunchObserved
+  [Property] DirectMsg RunRequested
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectMsg+FailureObserved
+  [Method] BoundedFailure get_Item()
+  [Property] BoundedFailure Item
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectMsg+Tags
+  [Field] Int32 DirectResourcesSettled
+  [Field] Int32 FailureObserved
+  [Field] Int32 LaunchObserved
+  [Field] Int32 RunRequested
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectPhase
+  [Method] Boolean Equals(DirectPhase)
+  [Method] Boolean Equals(DirectPhase, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLaunching()
+  [Method] Boolean get_IsPrepared()
+  [Method] Boolean get_IsRetiring()
+  [Method] Boolean get_IsRunning()
+  [Method] Boolean get_IsSettled()
+  [Method] DirectPhase get_Launching()
+  [Method] DirectPhase get_Prepared()
+  [Method] DirectPhase get_Retiring()
+  [Method] DirectPhase get_Running()
+  [Method] DirectPhase get_Settled()
+  [Method] Int32 CompareTo(DirectPhase)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectPhase+Tags
+  [Property] Boolean IsLaunching
+  [Property] Boolean IsPrepared
+  [Property] Boolean IsRetiring
+  [Property] Boolean IsRunning
+  [Property] Boolean IsSettled
+  [Property] DirectPhase Launching
+  [Property] DirectPhase Prepared
+  [Property] DirectPhase Retiring
+  [Property] DirectPhase Running
+  [Property] DirectPhase Settled
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectPhase+Tags
+  [Field] Int32 Launching
+  [Field] Int32 Prepared
+  [Field] Int32 Retiring
+  [Field] Int32 Running
+  [Field] Int32 Settled
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectSettlement
+  [Method] Boolean Equals(DirectSettlement)
+  [Method] Boolean Equals(DirectSettlement, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsReleased()
+  [Method] Boolean get_IsRetained()
+  [Method] DirectSettlement get_Released()
+  [Method] DirectSettlement get_Retained()
+  [Method] Int32 CompareTo(DirectSettlement)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectSettlement+Tags
+  [Property] Boolean IsReleased
+  [Property] Boolean IsRetained
+  [Property] DirectSettlement Released
+  [Property] DirectSettlement Retained
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectSettlement+Tags
+  [Field] Int32 Released
+  [Field] Int32 Retained
+TYPE FS.GG.Governance.GateExecution.ModelModule+ExecutionBudget
+  [Constructor] Void .ctor(MonotonicInstant, MonotonicInstant)
+  [Method] Boolean Equals(ExecutionBudget)
+  [Method] Boolean Equals(ExecutionBudget, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ExecutionBudget)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] MonotonicInstant get_CleanupEnd()
+  [Method] MonotonicInstant get_WorkEnd()
+  [Method] System.String ToString()
+  [Property] MonotonicInstant CleanupEnd
+  [Property] MonotonicInstant WorkEnd
 TYPE FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome
   [Constructor] Void .ctor(Byte[], Byte[], ExitCode, SensedDuration)
   [Method] Boolean Equals(ExecutionOutcome)
@@ -53,3 +506,113 @@ TYPE FS.GG.Governance.GateExecution.ModelModule+GateCommand
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CommandRecord.ModelModule+Argument] Arguments
   [Property] TimeoutLimit Timeout
   [Property] WorkingDirectory WorkingDirectory
+TYPE FS.GG.Governance.GateExecution.ModelModule+LaunchIdentity
+  [Constructor] Void .ctor(System.String, System.String)
+  [Method] Boolean Equals(LaunchIdentity)
+  [Method] Boolean Equals(LaunchIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(LaunchIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Launch()
+  [Method] System.String get_Operation()
+  [Property] System.String Launch
+  [Property] System.String Operation
+TYPE FS.GG.Governance.GateExecution.ModelModule+MonotonicInstant
+  [Constructor] Void .ctor(System.Guid, Int64)
+  [Method] Boolean Equals(MonotonicInstant)
+  [Method] Boolean Equals(MonotonicInstant, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(MonotonicInstant)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int64 get_Ticks()
+  [Method] System.Guid get_Domain()
+  [Method] System.String ToString()
+  [Property] Int64 Ticks
+  [Property] System.Guid Domain
+TYPE FS.GG.Governance.GateExecution.ModelModule+PathAcceptance
+  [Method] Boolean Equals(PathAcceptance)
+  [Method] Boolean Equals(PathAcceptance, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAcceptObservedPathsWithoutAtomicBinding()
+  [Method] Boolean get_IsRequireStableAtomicPathBinding()
+  [Method] Int32 CompareTo(PathAcceptance)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] PathAcceptance get_AcceptObservedPathsWithoutAtomicBinding()
+  [Method] PathAcceptance get_RequireStableAtomicPathBinding()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+PathAcceptance+Tags
+  [Property] Boolean IsAcceptObservedPathsWithoutAtomicBinding
+  [Property] Boolean IsRequireStableAtomicPathBinding
+  [Property] Int32 Tag
+  [Property] PathAcceptance AcceptObservedPathsWithoutAtomicBinding
+  [Property] PathAcceptance RequireStableAtomicPathBinding
+TYPE FS.GG.Governance.GateExecution.ModelModule+PathAcceptance+Tags
+  [Field] Int32 AcceptObservedPathsWithoutAtomicBinding
+  [Field] Int32 RequireStableAtomicPathBinding
+TYPE FS.GG.Governance.GateExecution.ModelModule+StreamObservation
+  [Constructor] Void .ctor(StreamState, Int64, System.Collections.Immutable.ImmutableArray`1[System.Byte])
+  [Method] Boolean Equals(StreamObservation)
+  [Method] Boolean Equals(StreamObservation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(StreamObservation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int64 get_ObservedBytes()
+  [Method] StreamState get_State()
+  [Method] System.Collections.Immutable.ImmutableArray`1[System.Byte] get_Prefix()
+  [Method] System.String ToString()
+  [Property] Int64 ObservedBytes
+  [Property] StreamState State
+  [Property] System.Collections.Immutable.ImmutableArray`1[System.Byte] Prefix
+TYPE FS.GG.Governance.GateExecution.ModelModule+StreamState
+  [Method] Boolean Equals(StreamState)
+  [Method] Boolean Equals(StreamState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsClosedBeforeEndOfFile()
+  [Method] Boolean get_IsEndOfFile()
+  [Method] Boolean get_IsPending()
+  [Method] Boolean get_IsStreamReadFailed()
+  [Method] Int32 CompareTo(StreamState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] StreamState get_ClosedBeforeEndOfFile()
+  [Method] StreamState get_EndOfFile()
+  [Method] StreamState get_Pending()
+  [Method] StreamState get_StreamReadFailed()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+StreamState+Tags
+  [Property] Boolean IsClosedBeforeEndOfFile
+  [Property] Boolean IsEndOfFile
+  [Property] Boolean IsPending
+  [Property] Boolean IsStreamReadFailed
+  [Property] Int32 Tag
+  [Property] StreamState ClosedBeforeEndOfFile
+  [Property] StreamState EndOfFile
+  [Property] StreamState Pending
+  [Property] StreamState StreamReadFailed
+TYPE FS.GG.Governance.GateExecution.ModelModule+StreamState+Tags
+  [Field] Int32 ClosedBeforeEndOfFile
+  [Field] Int32 EndOfFile
+  [Field] Int32 Pending
+  [Field] Int32 StreamReadFailed

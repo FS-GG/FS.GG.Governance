@@ -48,3 +48,25 @@ module Interpreter =
     /// recorded, not rejected — no success/exit-code/reuse policy (FR-005). PURE GIVEN THE PORT: it starts no
     /// process itself, so a fake port makes it fully deterministic and I/O-free for testing.
     val senseExecution: port: ExecutionPort -> command: GateCommand -> CommandRecord
+
+    /// Current process clock domain and Stopwatch ticks. No persisted recovery deadline.
+    val currentInstant: unit -> MonotonicInstant
+
+    /// Caller-held ownership, acquired before run. No finalizer or disposal can abandon work.
+    /// This object remains alive after Retained observations; immutable snapshots transfer no custody.
+    [<Sealed>]
+    type ExecutionSession =
+        member Identity: LaunchIdentity
+
+    /// Validate/capture direct ownership without starting a process. Stronger guarantees refuse.
+    val prepare: BoundedRequest -> Result<ExecutionSession, BoundedFailure list>
+
+    /// Consume this session's launch once; return by the original observation budget.
+    /// Unknown stop identity is retained, never signaled through a reconstructed PID.
+    val run: ExecutionSession -> BoundedObservation
+
+    /// Nonblocking fresh facts under original ownership; starts no process and grants no time.
+    val observe: ExecutionSession -> BoundedObservation
+
+    /// Release only actually settled direct handles/readers/registrations; pending ownership refuses.
+    val release: ExecutionSession -> Result<unit, BoundedFailure>
