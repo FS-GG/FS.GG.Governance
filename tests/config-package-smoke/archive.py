@@ -263,10 +263,31 @@ def retain(args):
     (evidence / 'qualification-native.json').write_text(json.dumps(
         {'run': run, 'workflow': workflow, 'jobs': jobs}, indent=2) + '\n')
 
+def original_source(args):
+    require(args.repository == 'FS-GG/FS.GG.Governance' and re.fullmatch(r'[1-9][0-9]*', str(args.run_id)),
+            'invalid original run/repository selection')
+    run = actions_read(args.repository, 'actions/runs/' + str(args.run_id))
+    require(str(run['id']) == str(args.run_id) and run['repository']['full_name'] == args.repository and
+            run['head_repository']['full_name'] == args.repository and run['run_attempt'] == 1 and
+            run['status'] == 'completed' and run['conclusion'] == 'success' and
+            re.fullmatch(r'[0-9a-f]{40}', run['head_sha']), 'original successful first-attempt source unavailable')
+    with Path(args.outputs).open('a') as output:
+        output.write('revision=' + run['head_sha'] + '\n')
+
+
 def recover(args):
     require(re.fullmatch(r'[1-9][0-9]*', str(args.artifact_id)) and re.fullmatch(r'[0-9a-f]{64}', args.sha256), 'invalid original artifact/hash selection')
     run, workflow, jobs = observed_run(args)
     original_job = native_qualification(args.repository, args.revision, args.run_id, args.version, run, workflow, jobs, True)
+    if getattr(args, 'published', False):
+        require(run['conclusion'] == 'success' and original_job['conclusion'] == 'success',
+                'original publication did not complete successfully')
+        for name in ['Check Config feed collisions', 'Push Config to org feed',
+                     'Trusted Publishing Config login', 'Verify same Config bytes and push public']:
+            stages = [stage for stage in original_job['steps'] if stage['name'] == name]
+            accepted = ['success'] if name == 'Check Config feed collisions' else ['success', 'skipped']
+            require(len(stages) == 1 and stages[0]['status'] == 'completed' and stages[0]['conclusion'] in accepted,
+                    'original publication stage absent/failed: ' + name)
     artifact = actions_read(args.repository, 'actions/artifacts/' + str(args.artifact_id))
     require(str(artifact['id']) == str(args.artifact_id) and not artifact['expired'] and
             artifact['name'] == 'config-package-' + args.revision, 'original artifact missing/expired/wrong identity')
@@ -383,6 +404,7 @@ def collision(args):
             else:
                 evidence.append({'feed': feed, 'outcome': 'absent', 'archiveUrl': url})
             (Path(args.manifest).parent / 'feed-observations.json').write_text(json.dumps(evidence, indent=2) + '\n')
+            require(not getattr(args, 'require_present', False), 'published feed archive absent; readback incomplete')
             continue
         name = 'org-existing.nupkg' if feed == args.org_source else 'public-existing.nupkg'
         target = Path(args.manifest).parent / name
@@ -432,12 +454,19 @@ p = sub.add_parser('collision')
 for name in ['manifest', 'org-source', 'public-source']:
     p.add_argument('--' + name, required=True)
 p.add_argument('--outputs')
+p.add_argument('--require-present', action='store_true')
 p.set_defaults(action=collision)
+p = sub.add_parser('original-source')
+for name in ['run-id', 'repository', 'outputs']:
+    p.add_argument('--' + name, required=True)
+p.set_defaults(action=original_source)
 for mode, names in [('retain', ['package', 'sha256', 'version', 'revision', 'repository', 'run-id', 'attempt', 'lock', 'evidence']),
                     ('recover', ['run-id', 'artifact-id', 'sha256', 'version', 'revision', 'repository', 'lock', 'output', 'outputs'])]:
     p = sub.add_parser(mode)
     for name in names:
         p.add_argument('--' + name, required=True)
+    if mode == 'recover':
+        p.add_argument('--published', action='store_true')
     p.set_defaults(action=retain if mode == 'retain' else recover)
 if __name__ == '__main__':
     try:

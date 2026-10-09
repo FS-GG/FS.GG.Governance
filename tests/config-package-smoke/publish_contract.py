@@ -22,7 +22,7 @@ VISIBILITY = "needs.resolve-version.outputs.scope == 'config' || " + GATE
 FIRST = "needs.resolve-version.outputs.recovery == 'false'"
 RECOVERY = "needs.resolve-version.outputs.recovery == 'true'"
 ORDER = ['Checkout', 'Preflight Config publication contract', 'Set up .NET',
-         'Restore (locked, cold)', 'Test complete Config suite', 'Resolve Config package version',
+         'Restore (locked, cold)', 'Test complete Config suite', 'Authenticate original Config source', 'Checkout original Config source', 'Resolve Config package version',
          'Pack Config once', 'Identify exact Config archive', 'Config package consumer smoke',
          'Validate complete Config retention', 'Recover original Config archive',
          'Select qualified Config archive', 'Retain Config archive and manifest', 'Check Config feed collisions',
@@ -48,7 +48,9 @@ def validate(text):
     for name in ['config_run_id', 'config_artifact_id', 'config_package_sha256']:
         require(re.search(r'^      ' + name + r':\n        description: [^\n]+\n        type: string\n        required: false\n', dispatch, re.M), 'recovery input drift: ' + name)
     require("run-name: publish ${{ github.event_name }} scope=${{ inputs.scope || 'all' }} version=${{ inputs.version || 'dry-run' }} recovery=${{ inputs.config_run_id || 'none' }}" in text, 'original native scope/version selection missing')
+    require(re.search(r'^      config_readback:\n        description: [^\n]+\n        type: boolean\n        default: false\n        required: false\n', dispatch, re.M), 'closed readback input/default drift')
     resolver = job_text(text, 'resolve-version')
+    require('readback: ${{ steps.ver.outputs.readback }}' in resolver and 'CONFIG_READBACK: ${{ inputs.config_readback }}' in resolver, 'validated readback binding missing')
     require('recovery: ${{ steps.ver.outputs.recovery }}' in resolver, 'validated recovery output missing')
     require('scope: ${{ steps.ver.outputs.scope }}' in resolver, 'validated scope output missing')
     require('INPUT_SCOPE: ${{ inputs.scope }}' in resolver and 'INPUT_VERSION: ${{ inputs.version }}' in resolver, 'resolver input binding drift')
@@ -77,6 +79,8 @@ def validate(text):
         if name in ['Restore (locked, cold)', 'Test complete Config suite', 'Pack Config once',
                     'Identify exact Config archive', 'Config package consumer smoke', 'Validate complete Config retention']:
             expected = [FIRST]
+        elif name in ['Authenticate original Config source', 'Checkout original Config source']:
+            expected = ["needs.resolve-version.outputs.readback == 'true'"]
         elif name == 'Recover original Config archive':
             expected = [RECOVERY]
         elif name == 'Check Config feed collisions':
@@ -89,28 +93,34 @@ def validate(text):
         require(condition == expected, 'unsupported/missing condition: ' + name)
     require(job.count('dotnet pack ') == 1, 'Config must pack exactly once')
     require(job.count('dotnet nuget push ') == 2 and job.count('NuGet/login@v1') == 1, 'unexpected publication effect')
-    require('python3 tests/config-package-smoke/publish_contract.py .github/workflows/publish.yml --mutations' in steps[ORDER[1]], 'preflight missing before costly work')
-    require('uses: ./.github/actions/locked-restore' in steps[ORDER[3]] and
-            'target: tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj' in steps[ORDER[3]], 'cold locked test restore missing')
-    require('run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore' in steps[ORDER[4]] and
-            '--filter' not in steps[ORDER[4]], 'whole Config suite required')
-    require('src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version' in steps[ORDER[5]], 'Config evaluated version missing')
-    require('needs.resolve-version.outputs.version' not in job, 'CLI version must not control Config package')
-    require('src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -c Release' in steps[ORDER[6]] and
-            '-p:Version=${{ steps.config-version.outputs.version }} --no-restore -o artifacts/config-packages' in steps[ORDER[6]], 'pack project/version/output drift')
-    identify = steps[ORDER[7]]
+    require('python3 tests/config-package-smoke/publish_contract.py .github/workflows/publish.yml --mutations' in steps['Preflight Config publication contract'], 'preflight missing before costly work')
+    require('uses: ./.github/actions/locked-restore' in steps['Restore (locked, cold)'] and
+            'target: tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj' in steps['Restore (locked, cold)'], 'cold locked test restore missing')
+    require('run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore' in steps['Test complete Config suite'] and
+            '--filter' not in steps['Test complete Config suite'], 'whole Config suite required')
+    require('src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version' in steps['Resolve Config package version'], 'Config evaluated version missing')
+    require(job.count('needs.resolve-version.outputs.version') == 1 and 'SELECTED_VERSION: ${{ needs.resolve-version.outputs.version }}' in steps['Resolve Config package version'] and 'if [ "$READBACK" = \'true\' ]; then' in steps['Resolve Config package version'], 'validated original version must be readback-only')
+    require('src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -c Release' in steps['Pack Config once'] and
+            '-p:Version=${{ steps.config-version.outputs.version }} --no-restore -o artifacts/config-packages' in steps['Pack Config once'], 'pack project/version/output drift')
+    identify = steps['Identify exact Config archive']
     for expected in ['id: config-packed', 'packages=(artifacts/config-packages/FS.GG.Governance.Config.*.nupkg)',
                      '[ "${#packages[@]}" -eq 1 ]', 'package="${packages[0]}"', 'sha256sum "$package"']:
         require(expected in identify, 'exact archive identification missing: ' + expected)
-    smoke = steps[ORDER[8]]
+    smoke = steps['Config package consumer smoke']
     for expected in ['steps.config-version.outputs.version', 'steps.config-packed.outputs.path',
                      'steps.config-packed.outputs.sha256', 'bash tests/config-package-smoke/run.sh',
                      '"$CONFIG_PACKAGE" "$CONFIG_VERSION" "$CONFIG_SHA256" "$GITHUB_SHA" artifacts/config-evidence']:
         require(expected in smoke, 'package smoke input drift: ' + expected)
     for expected in ['archive.py retain', '--run-id "$GITHUB_RUN_ID"', '--attempt "$GITHUB_RUN_ATTEMPT"', '--lock src/FS.GG.Governance.Config/packages.lock.json']:
         require(expected in steps['Validate complete Config retention'], 'complete native retention missing: ' + expected)
-    for expected in ['archive.py recover', '--run-id "$CONFIG_RUN_ID"', '--artifact-id "$CONFIG_ARTIFACT_ID"', '--sha256 "$CONFIG_SHA256"', '--revision "$GITHUB_SHA"', '--repository "$GITHUB_REPOSITORY"', '--outputs "$GITHUB_OUTPUT"']:
+    for expected in ['archive.py recover', '--run-id "$CONFIG_RUN_ID"', '--artifact-id "$CONFIG_ARTIFACT_ID"', '--sha256 "$CONFIG_SHA256"', '--revision "$EXPECTED_SOURCE"', '--repository "$GITHUB_REPOSITORY"', '--outputs "$GITHUB_OUTPUT"']:
         require(expected in steps['Recover original Config archive'], 'original recovery authentication missing: ' + expected)
+    require('archive.py original-source' in steps['Authenticate original Config source'] and '--run-id "$CONFIG_RUN_ID"' in steps['Authenticate original Config source'], 'original native source authentication missing')
+    for expected in ['ref: ${{ steps.config-original-source.outputs.revision }}', 'path: original-source', 'persist-credentials: false']:
+        require(expected in steps['Checkout original Config source'], 'original protected source checkout drift')
+    for expected in ['EXPECTED_SOURCE: ${{ steps.config-original-source.outputs.revision || github.sha }}', 'publication=(--published)', "selected_lock='original-source/src/FS.GG.Governance.Config/packages.lock.json'"]:
+        require(expected in steps['Recover original Config archive'], 'published original-source readback guard drift')
+    require('presence=(--require-present)' in steps['Check Config feed collisions'] and 'READBACK: ${{ needs.resolve-version.outputs.readback }}' in steps['Check Config feed collisions'], 'readback must require both feeds present')
     selection = steps['Select qualified Config archive']
     for expected in ['id: config-package', 'steps.config-recovery.outputs.path', 'steps.config-recovery.outputs.sha256', 'steps.config-packed.outputs.path', 'steps.config-packed.outputs.sha256', 'sha256sum "$package"']:
         require(expected in selection, 'verified archive selection drift: ' + expected)
@@ -194,7 +204,7 @@ esac
             require(calls.read_text().splitlines() == expected_calls, 'resolver evaluated wrong project: '+name)
             if success:
                 require(output.read_text().splitlines() == ['scope='+('config' if scope == 'config' else 'all'),
-                                                            'version='+resolved, 'push='+push, 'recovery=false'], 'resolver output drift: '+name)
+                                                            'version='+resolved, 'push='+push, 'recovery=false', 'readback=false'], 'resolver output drift: '+name)
             else:
                 require(output.read_text() == '', 'failed resolver emitted publish outputs: '+name)
         recovery_cases = [
@@ -218,11 +228,31 @@ esac
                    'CONFIG_RUN_ID': run, 'CONFIG_ARTIFACT_ID': artifact, 'CONFIG_PACKAGE_SHA256': sha}
             actual = subprocess.run(['bash', str(root/'resolver.sh')], env=env, text=True, capture_output=True, timeout=3)
             require((actual.returncode == 0) == success, 'recovery resolver outcome drift: ' + name)
-            require(output.read_text().splitlines() == (['scope=config', 'version='+config, 'push=true', 'recovery=true'] if success else []),
+            require(output.read_text().splitlines() == (['scope=config', 'version='+config, 'push=true', 'recovery=true', 'readback=false'] if success else []),
                     'recovery resolver outputs drift: ' + name)
             expected_calls = ['msbuild src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version'] if name in ['complete', 'wrong-version'] else []
             require(calls.read_text().splitlines() == expected_calls, 'recovery resolver launched work before selection validation: ' + name)
-    print(f'Actual resolver controls passed: {len(cases) + len(recovery_cases)}')
+        readback_cases = [
+            ('original', 'config', config, 'true', 'a'*40, '12', True),
+            ('historic-version', 'config', '0.2.0', 'true', 'a'*40, '12', True),
+            ('wrong-scope', 'all', config, 'true', 'a'*40, '12', False),
+            ('missing-version', 'config', '', 'true', 'a'*40, '12', False),
+            ('missing-run', 'config', config, 'true', 'a'*40, '', False),
+            ('invalid-mode', 'config', config, 'maybe', 'a'*40, '12', False),
+        ]
+        for name, scope, version, readback, source, run, success in readback_cases:
+            output.write_text(''); calls.write_text('')
+            env = {'PATH': str(root)+':/usr/bin:/bin', 'LC_ALL': 'C', 'EVENT_NAME': 'workflow_dispatch',
+                   'INPUT_SCOPE': scope, 'INPUT_VERSION': version, 'RELEASE_TAG': '', 'REF_NAME': '',
+                   'GITHUB_OUTPUT': str(output), 'CALLS': str(calls), 'CLI_VERSION': cli, 'CONFIG_VERSION': config,
+                   'CONFIG_RUN_ID': run, 'CONFIG_ARTIFACT_ID': '34', 'CONFIG_PACKAGE_SHA256': 'b'*64,
+                   'CONFIG_READBACK': readback}
+            actual = subprocess.run(['bash', str(root/'resolver.sh')], env=env, text=True, capture_output=True, timeout=3)
+            require((actual.returncode == 0) == success, 'readback resolver outcome drift: ' + name)
+            require(output.read_text().splitlines() == (['scope=config', 'version='+version, 'push=false', 'recovery=true', 'readback=true'] if success else []),
+                    'readback selected a publication effect: ' + name)
+            require(calls.read_text() == '', 'readback invoked current project/build/pack: ' + name)
+    print(f'Actual resolver controls passed: {len(cases) + len(recovery_cases) + len(readback_cases)}')
 
 
 
@@ -257,6 +287,9 @@ def mutations(text):
     identify = re.search(r'^      - name: Identify exact Config archive\n.*?(?=^      - name:)', job, re.M | re.S).group()
     cases = {
         'remove-smoke': job.replace(smoke, ''),
+        'readback-publication-proof': job.replace('publication=(--published)', 'publication=()'),
+        'readback-absence-accepted': job.replace('presence=(--require-present)', 'presence=()'),
+        'readback-current-source': job.replace('--revision "$EXPECTED_SOURCE"', '--revision "$GITHUB_SHA"'),
         'remove-public-hash-guard': job.replace('[ "$(sha256sum "$package" | cut -d\' \' -f1)" = "$expected" ] || exit 1', 'true', 2),
         'remove-dry-run-visibility': job.replace(VISIBILITY, GATE),
         'recovery-pack': job.replace(packs, packs.replace(FIRST, 'always()')),
@@ -279,6 +312,7 @@ def mutations(text):
         whole_cases['unguarded-'+name] = text.replace(body, body.replace(ALL_SCOPE, REPOSITORY, 1))
     resolver = job_text(text, 'resolve-version')
     whole_cases['config-routed-to-cli'] = text.replace(resolver, resolver.replace('project="src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj"', 'project="src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj"'))
+    whole_cases['resolver-readback-push'] = text.replace(resolver, resolver.replace("if [ \"$readback\" = 'true' ]; then push=\"false\"; fi", "if [ \"$readback\" = 'true' ]; then push=\"true\"; fi"))
     whole_cases['resolver-dry-run-push'] = text.replace(resolver, resolver.replace('push="false"', 'push="true"'))
     for name, mutated in whole_cases.items():
         try:
