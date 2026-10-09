@@ -72,7 +72,9 @@ any effect. Retention includes the complete Config TRX, original native Actions 
 producer lock, manifest, consumer lock/assets, `default-consumer-result.json`,
 `contracts-selection.json` and `FS.GG.Contracts.7.6.0.nupkg`. Artifact upload fails when this set is
 incomplete. Retain its native artifact ID/digest and original run/attempt separately from the
-package SHA-256, and keep a verified private copy before effects and through unresolved publication.
+package SHA-256. Retain the verified candidate independently of the runner before effects;
+copy it to durable private custody while the Actions artifact is available and keep that copy
+through unresolved publication.
 An omitted-version run makes its own no-push candidate; it is not a promotion handle.
 
 Forward recovery selects all three inputs `config_run_id`, `config_artifact_id` and

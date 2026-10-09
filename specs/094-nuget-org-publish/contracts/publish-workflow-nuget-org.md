@@ -125,8 +125,9 @@ archive, then the existing collision and org-first/public stages, rechecking the
 each effect. Recovery observations are retained with the original native evidence. Root must observe
 original effects and reservations before selecting recovery; unknown writes or overlapping writers
 fence the affected operation. Artifact IDs/digests, run/attempt and package hashes remain distinct.
-Keep a verified private copy before effects and past unresolved publication; an expiring Actions URL
-is not lasting custody. Independent both-feed payload readback and normal public consumer restore
+Retain the verified candidate independently of the runner before effects through the existing
+artifact upload. Copy it to durable private custody while that artifact is available and retain
+the copy past unresolved publication; an expiring Actions URL is not lasting custody. Independent both-feed payload readback and normal public consumer restore
 remain required before declaring distribution complete.
 
 Source delivery does not admit publication or whole-workflow dispatch. A newly selected manual
