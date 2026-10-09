@@ -83,19 +83,21 @@ source version 0.3.0. It is neither a CLI tool nor a content package. Manual `sc
 `all`/`config` choice, defaulting to `all`. Omitted scope and release/tag runs retain CLI-led version
 selection; Config-only mode is manual-only and evaluates Config without evaluating CLI. An explicit
 manual version must match the selected project; omission remains no-push. Unknown scope fails
-before MSBuild. The resolver exports validated scope, version and push outputs.
+before MSBuild. The resolver exports validated scope, version, push and recovery outputs.
+
+Config-only omitted-version runs also perform and retain read-only both-feed collision/visibility observation with the same hosted identity; all login/push steps remain false. Default all-scope omitted-version behavior stays unchanged.
 
 Config-only mode runs only `resolve-version` and `publish-config`. All eight unrelated jobs,
 including CLI tests/enforcement, all other pack/push jobs and ReferenceGateSet, explicitly require
 validated scope `all`. CLI tests now depend on the resolver; all other dependency edges remain.
 Config independently reevaluates its own package version before packing in either mode. No package
-version, trigger, permission, archive retention or ReferenceGateSet custody rule changes.
+version or trigger changes. Config alone adds `actions: read` for same-repository native qualification and retained-artifact observation.
 
 The ordered contract is static preflight, cold locked restore of the Config test project, **all** Config
 Release tests, evaluated Config version, one pack, exactly one scoped archive with captured SHA-256,
-package-only consumer smoke, retention of original archive and manifest, independent both-feed collision
+package-only consumer smoke, native qualification/closure verification and retention of original archive, test report, manifest, consumer locks/assets and selected Contracts archive, independent both-feed collision
 observation, org push, OIDC login and same-file/hash public push. All login/push steps require
-`needs.resolve-version.outputs.push == 'true'`; omission of dispatch version performs no login/push.
+`needs.resolve-version.outputs.push == 'true'`; effects additionally require independently observed absence on their feed. Matching payload is retained without replacement. Omission of dispatch version performs no login/push.
 The consumer verifies package ID/version/source/TFM/dependencies and public resolver/legacy loading,
 with explicit source mapping, exact committed dependency closure and empty caches. See
 [`tests/config-package-smoke/README.md`](../../../tests/config-package-smoke/README.md).
@@ -107,8 +109,33 @@ enumeration establishing absence, using the existing package-read authority. Raw
 verified repository signature may be excluded when comparing payload entries. A second-feed failure
 requires observation under the original operation and retained bytes, never automatic repacking.
 
-Source delivery does not admit a whole-workflow dispatch. C1+C2 coherent qualification, compatible
-Contracts selection, both-feed collision admission and reconciliation of retained ReferenceGateSet
-1.8.0 custody remain root-owned release prerequisites. Local Config consumption can enable SDD C2.2
-source preparation; public availability, normal consumer pins, native execution and installed acceptance
+Recovery uses only a complete manual Config selection of `config_run_id`, `config_artifact_id` and
+`config_package_sha256`, with an explicit matching Config version at the exact original source SHA.
+The original run must be a completed first attempt of this repository's `publish.yml`, with native
+Config-only scope/version selection and successful resolver, full tests, pack, consumer, complete
+retention verification and artifact upload stages. A failed overall run is eligible only when those
+native stages succeeded. Reruns, no-push candidates and copies uploaded by recovery are ineligible.
+The artifact ID must belong to that original run/source/repository and successful retention window;
+its native Actions digest and pinned nupkg digest must both match. Missing/expired/ambiguous evidence
+refuses. The existing archive reader checks original identity, producer/consumer closure and retained
+selected Contracts 7.6.0 archive/DLL identities. A local receipt alone is never qualification authority.
+
+Recovery performs no restore, tests, pack or consumer regeneration. It reuses the original physical
+archive, then the existing collision and org-first/public stages, rechecking the original hash before
+each effect. Recovery observations are retained with the original native evidence. Root must observe
+original effects and reservations before selecting recovery; unknown writes or overlapping writers
+fence the affected operation. Artifact IDs/digests, run/attempt and package hashes remain distinct.
+Keep a verified private copy before effects and past unresolved publication; an expiring Actions URL
+is not lasting custody. Independent both-feed payload readback and normal public consumer restore
+remain required before declaring distribution complete.
+
+Source delivery does not admit publication or whole-workflow dispatch. A newly selected manual
+Config-only release may proceed after actual C1+C2/C2.3 coherent qualification, selected Contracts
+compatibility, complete candidate-bound Config qualification and both-feed collision admission.
+Its new operation, source and archive identities are independent of the retained ReferenceGateSet
+1.8.0 candidate: it neither consumes nor clears that candidate's custody or any original operation
+hold. Historical recovery, ReferenceGateSet publication/adoption, whole-workflow publication and
+C3 completion retain their existing applicable prerequisites. Root selects the new operation and
+checks known reservations; no unknown Config writer may overlap its package/version/write-set.
+Public availability, normal consumer pins, native execution, installed acceptance and C3/C4 completion
 remain separate. No historical published Config API baseline is invented.

@@ -85,7 +85,7 @@ Catalog payload path: source `reference-gates/neutral-capabilities.json`, archiv
   Acceptance boundary: required binding deletion, missing output, stale/mismatched provenance, unsupported evidence format and conflicting declarations yield refusal/Unknown at their owning boundary, never success; recognized game/F# command-free checks remain command-free. Real executable/argv fixture via GateExecution proves the resolver result reaches a process without a lexer roundtrip; no ecosystem provider qualification claimed. A freshness result may reuse existing evidence contracts but cannot be invented by this resolver.
 
 - [ ] **GOV-423-C3 — Compatible producers are published and independently read back** — route: routine source/release preparation; publication is a separate protected effect.
-  Depends on: C1+C2 coherent qualification and SDD928 compatible producer publication plan. Publish the actual Governance runtime distribution containing the resolver/admission and ReferenceGateSet1.8.0; pin the new SDD Contracts/reference-set association only in the owning SDD release work, not by editing organization synced package props incidentally. Pack once; verify identical artifacts from both required feeds, exact tags/source, package manifests and catalog bytes. The runtime CLI successor is selected against its then-current version and public delta at this milestone; current source is 1.12.1, and C1 does not reserve a stale future CLI version. A content-only package cannot substitute for published enforcement code.
+  Depends on: C1+C2 coherent qualification and SDD928 compatible producer publication plan. An initial independently qualified Config-only distribution step may precede the remaining producer set after actual C1+C2/C2.3 acceptance; it does not consume historical ReferenceGateSet custody or complete C3. Publish the actual Governance runtime distribution containing the resolver/admission and ReferenceGateSet1.8.0; pin the new SDD Contracts/reference-set association only in the owning SDD release work, not by editing organization synced package props incidentally. Pack once; verify identical artifacts from both required feeds, exact tags/source, package manifests and catalog bytes. The runtime CLI successor is selected against its then-current version and public delta at this milestone; current source is 1.12.1, and C1 does not reserve a stale future CLI version. A content-only package cannot substitute for published enforcement code.
 
 - [ ] **GOV-423-C4 — Templates441 consumes published contracts; receiver qualification closes the producer chain** — route: routine; later outline, not dispatched by this plan.
   Depends on C3 and compatible SDD928 publication. Templates adopts exact producer versions and emits four explicit provider bindings; install once-packed artifacts without sibling sources. Qualify actual build/lint/test/entry-point/package/security/public-surface/release evidence and negative binding controls for TypeScript CLI, JavaScript CLI, Rust CLI and Go CLI. Templates publication/readback then gates .github3010 wizard/registry adoption. Governance#423 closure must state the native issue's full acceptance and distinguish producer completion from provider/public receiver acceptance; no checkbox infers installed support.
@@ -148,9 +148,13 @@ This source extension leaves C2/C3/C4 open. Actual Config pack/manifest/dependen
 package consumption and hosted exact-head/coherent qualification remain unrun in the source-only
 implementation window. No package/public pin is inferred from source 0.3.0. A locally qualified archive
 may enable SDD C2.2 source preparation only; its normal pin follows independent public readback.
-Contracts 7.5.2 in Config's committed lock does not prove the SDD Contracts 7.6.0 cross-repository join.
-Root must qualify C1+C2, choose the coherent release set, resolve collision/visibility observations and
-preserve original ReferenceGateSet 1.8.0 custody before dispatch/publication. The earlier local archive
+Config's current committed closure selects published Contracts 7.6.0; a package pin alone does not
+prove candidate-bound compatibility or the actual SDD/Verify join. Root must qualify C1+C2/C2.3,
+select an independent Config-only operation and qualify its exact archive/consumer closure before
+collision admission, org-first same-byte publication and independent both-feed/public readback.
+That initial Config distribution may proceed without consuming the retained ReferenceGateSet 1.8.0
+candidate. Its original custody and operation holds remain reserved for historical recovery,
+ReferenceGateSet publication/first adoption, broader publication and C3 completion. The earlier local archive
 cannot automatically qualify a later rebuilt release archive. Existing runtime versions remain as
 inspected until the real coherent release delta selects their successors.
 
@@ -305,3 +309,19 @@ Source delivery/coherent hosted checks, actual package-backed loader/runtime/evi
 producer acceptance remain open. Program stays legacy and valid provider plans remain explicitly
 non-passing. GOV423-C2, publication/carrier selection and installed adoption remain incomplete;
 existing custody unknowns and the attributed telemetry gap are unchanged.
+
+## C3 bounded Config forward recovery
+
+The existing Config publisher accepts a complete original run/artifact/package-hash selection only
+for explicit manual Config recovery at the same immutable source/version. Native first-attempt
+workflow/job/step and artifact observations establish original qualification and retention; archive
+identity and selected dependency closure are checked by the existing reader. Recovery skips every
+restore/test/pack/consumer-generation step and reuses the original archives and native evidence.
+Unknown original writes, conflicts, incomplete retention and inaccessible observations refuse;
+root observation remains necessary before selecting recovery. Original candidate bytes are retained
+before effects and copied to durable private custody while available. A recovery-uploaded copy is
+not a new candidate, and no-push candidates cannot be promoted by this route.
+
+This source amendment does not qualify a release archive, dispatch, publish, reconcile original
+holds or complete C2/C3/C4. Runtime carrier publication, exact ReferenceGateSet 1.8.0 adoption,
+Templates/public receivers and broader release completion retain their applicable evidence gates.

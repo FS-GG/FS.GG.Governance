@@ -1,4 +1,5 @@
 name: publish
+run-name: publish ${{ github.event_name }} scope=${{ inputs.scope || 'all' }} version=${{ inputs.version || 'dry-run' }} recovery=${{ inputs.config_run_id || 'none' }}
 
 # Repo-owned publisher for the intentionally shipped Governance artifacts: the consumer-bearing
 # CLI tool FS.GG.Governance.Cli (spec 089, FS.GG.Governance#28), the compiler-backed
@@ -44,6 +45,18 @@ on:
         description: "Explicit selected-project version (CLI for all, Config for config). Omit for no push."
         type: string
         required: false
+      config_run_id:
+        description: "Original first-attempt Config publish run (recovery only)."
+        type: string
+        required: false
+      config_artifact_id:
+        description: "Original retained Config artifact ID (recovery only)."
+        type: string
+        required: false
+      config_package_sha256:
+        description: "Original Config nupkg SHA-256 (recovery only)."
+        type: string
+        required: false
 
 # A single tagged release fires BOTH `release: published` and `push: tags v*`. Serialize the paired
 # runs (cancel-in-progress: false) keyed on the version/tag so neither push is cancelled mid-flight;
@@ -81,6 +94,7 @@ jobs:
       scope: ${{ steps.ver.outputs.scope }}
       version: ${{ steps.ver.outputs.version }}
       push: ${{ steps.ver.outputs.push }}
+      recovery: ${{ steps.ver.outputs.recovery }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -101,6 +115,9 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_SCOPE: ${{ inputs.scope }}
+          CONFIG_RUN_ID: ${{ inputs.config_run_id }}
+          CONFIG_ARTIFACT_ID: ${{ inputs.config_artifact_id }}
+          CONFIG_PACKAGE_SHA256: ${{ inputs.config_package_sha256 }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           REF_NAME: ${{ github.ref_name }}
         run: |
@@ -114,6 +131,12 @@ jobs:
           esac
           if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ "$scope" != "all" ]; then
             echo '::error::Config-only selection requires manual dispatch'; exit 1
+          fi
+          recovery="false"
+          if [ -n "${CONFIG_RUN_ID:-}${CONFIG_ARTIFACT_ID:-}${CONFIG_PACKAGE_SHA256:-}" ]; then
+            [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$scope" = "config" ] && [ -n "${INPUT_VERSION:-}" ] || { echo '::error::recovery requires explicit manual Config version'; exit 1; }
+            [[ "${CONFIG_RUN_ID:-}" =~ ^[1-9][0-9]*$ ]] && [[ "${CONFIG_ARTIFACT_ID:-}" =~ ^[1-9][0-9]*$ ]] && [[ "${CONFIG_PACKAGE_SHA256:-}" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::complete original run/artifact/hash required'; exit 1; }
+            recovery="true"
           fi
           project="src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj"
           if [ "$scope" = "config" ]; then
@@ -157,6 +180,7 @@ jobs:
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "push=$push" >> "$GITHUB_OUTPUT"
+          echo "recovery=$recovery" >> "$GITHUB_OUTPUT"
           echo "Resolved: scope=$scope version=$version push=$push (event=$EVENT_NAME)"
 
   # Pre-publish gate #1: the CLI test suite (mirrors SDD's cli-tests). Locked restore so a graph drift
@@ -938,6 +962,7 @@ jobs:
     if: github.repository == 'FS-GG/FS.GG.Governance'
     permissions:
       contents: read
+      actions: read
       packages: write
       id-token: write
     steps:
@@ -954,12 +979,14 @@ jobs:
           cache: false
 
       - name: Restore (locked, cold)
+        if: needs.resolve-version.outputs.recovery == 'false'
         uses: ./.github/actions/locked-restore
         with:
           target: tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj
 
       - name: Test complete Config suite
-        run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore
+        if: needs.resolve-version.outputs.recovery == 'false'
+        run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore --logger "trx;LogFileName=config-tests.trx" --results-directory artifacts/config-evidence/config-tests
 
       - name: Resolve Config package version
         id: config-version
@@ -971,13 +998,15 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Pack Config once
+        if: needs.resolve-version.outputs.recovery == 'false'
         run: |
           set -euo pipefail
           dotnet pack src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -c Release \
             -p:Version=${{ steps.config-version.outputs.version }} --no-restore -o artifacts/config-packages
 
       - name: Identify exact Config archive
-        id: config-package
+        if: needs.resolve-version.outputs.recovery == 'false'
+        id: config-packed
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -988,11 +1017,47 @@ jobs:
           echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Config package consumer smoke
+        if: needs.resolve-version.outputs.recovery == 'false'
         env:
           CONFIG_VERSION: ${{ steps.config-version.outputs.version }}
-          CONFIG_PACKAGE: ${{ steps.config-package.outputs.path }}
-          CONFIG_SHA256: ${{ steps.config-package.outputs.sha256 }}
+          CONFIG_PACKAGE: ${{ steps.config-packed.outputs.path }}
+          CONFIG_SHA256: ${{ steps.config-packed.outputs.sha256 }}
         run: bash tests/config-package-smoke/run.sh "$CONFIG_PACKAGE" "$CONFIG_VERSION" "$CONFIG_SHA256" "$GITHUB_SHA" artifacts/config-evidence
+
+      - name: Validate complete Config retention
+        if: needs.resolve-version.outputs.recovery == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG_PACKAGE: ${{ steps.config-packed.outputs.path }}
+          CONFIG_SHA256: ${{ steps.config-packed.outputs.sha256 }}
+          CONFIG_VERSION: ${{ steps.config-version.outputs.version }}
+        run: python3 tests/config-package-smoke/archive.py retain --package "$CONFIG_PACKAGE" --sha256 "$CONFIG_SHA256" --version "$CONFIG_VERSION" --revision "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --lock src/FS.GG.Governance.Config/packages.lock.json --evidence artifacts/config-evidence
+
+      - name: Recover original Config archive
+        id: config-recovery
+        if: needs.resolve-version.outputs.recovery == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG_RUN_ID: ${{ inputs.config_run_id }}
+          CONFIG_ARTIFACT_ID: ${{ inputs.config_artifact_id }}
+          CONFIG_SHA256: ${{ inputs.config_package_sha256 }}
+          CONFIG_VERSION: ${{ steps.config-version.outputs.version }}
+        run: python3 tests/config-package-smoke/archive.py recover --run-id "$CONFIG_RUN_ID" --artifact-id "$CONFIG_ARTIFACT_ID" --sha256 "$CONFIG_SHA256" --version "$CONFIG_VERSION" --revision "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY" --lock src/FS.GG.Governance.Config/packages.lock.json --output artifacts --outputs "$GITHUB_OUTPUT"
+
+      - name: Select qualified Config archive
+        id: config-package
+        env:
+          RECOVERY: ${{ needs.resolve-version.outputs.recovery }}
+          PACKED_PATH: ${{ steps.config-packed.outputs.path }}
+          PACKED_SHA256: ${{ steps.config-packed.outputs.sha256 }}
+          RECOVERED_PATH: ${{ steps.config-recovery.outputs.path }}
+          RECOVERED_SHA256: ${{ steps.config-recovery.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          if [ "$RECOVERY" = 'true' ]; then package="$RECOVERED_PATH"; expected="$RECOVERED_SHA256"; else package="$PACKED_PATH"; expected="$PACKED_SHA256"; fi
+          [ -n "$package" ] && [ "$(sha256sum "$package" | cut -d' ' -f1)" = "$expected" ] || exit 1
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "sha256=$expected" >> "$GITHUB_OUTPUT"
 
       - name: Retain Config archive and manifest
         uses: actions/upload-artifact@v7
@@ -1005,11 +1070,12 @@ jobs:
 
       # Observe both feeds before either effect. Unknown/signature conflicts refuse.
       - name: Check Config feed collisions
-        if: needs.resolve-version.outputs.push == 'true'
-        run: python3 tests/config-package-smoke/archive.py collision --manifest artifacts/config-evidence/manifest.json --org-source https://nuget.pkg.github.com/FS-GG/index.json --public-source https://api.nuget.org/v3/index.json
+        id: config-collision
+        if: needs.resolve-version.outputs.scope == 'config' || needs.resolve-version.outputs.push == 'true'
+        run: python3 tests/config-package-smoke/archive.py collision --manifest artifacts/config-evidence/manifest.json --org-source https://nuget.pkg.github.com/FS-GG/index.json --public-source https://api.nuget.org/v3/index.json --outputs "$GITHUB_OUTPUT"
 
       - name: Retain Config feed observations
-        if: always() && needs.resolve-version.outputs.push == 'true'
+        if: always() && (needs.resolve-version.outputs.scope == 'config' || needs.resolve-version.outputs.push == 'true')
         uses: actions/upload-artifact@v7
         with:
           name: config-feed-observations-${{ github.sha }}
@@ -1017,7 +1083,7 @@ jobs:
           if-no-files-found: error
 
       - name: Push Config to org feed
-        if: needs.resolve-version.outputs.push == 'true'
+        if: needs.resolve-version.outputs.push == 'true' && steps.config-collision.outputs.org == 'absent'
         run: |
           set -euo pipefail
           package="${{ steps.config-package.outputs.path }}"
@@ -1027,13 +1093,13 @@ jobs:
 
       - name: Trusted Publishing Config login
         id: config-nuget-login
-        if: needs.resolve-version.outputs.push == 'true'
+        if: needs.resolve-version.outputs.push == 'true' && steps.config-collision.outputs.public == 'absent'
         uses: NuGet/login@v1
         with:
           user: ${{ secrets.NUGET_USER || env.NUGET_FALLBACK_USER }}
 
       - name: Verify same Config bytes and push public
-        if: needs.resolve-version.outputs.push == 'true'
+        if: needs.resolve-version.outputs.push == 'true' && steps.config-collision.outputs.public == 'absent'
         run: |
           set -euo pipefail
           package="${{ steps.config-package.outputs.path }}"
