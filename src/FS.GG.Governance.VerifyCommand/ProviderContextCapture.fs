@@ -308,8 +308,8 @@ module ProviderContextCapture =
         for root in roots do compareRoot state root
         checkWork state
     let retire (state:OwnerState) =
-        let descriptors,uncertain=lock state.Sync (fun () -> state.Fds |> Seq.toList,state.CloseUncertain)
-        if not uncertain then
+        let descriptors,uncertain,borrowed=lock state.Sync (fun () -> state.Fds |> Seq.toList,state.CloseUncertain,state.RootLeases.Count>0)
+        if not uncertain && not borrowed then
             for fd in descriptors do closeTracked state fd
             if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
             transition state OwnedResourcesSettled
@@ -353,7 +353,7 @@ module ProviderContextCapture =
         lock state.Sync (fun () ->
             {Operation=state.Request.Operation;Model=state.Model;Roots=state.RootObservations
              Documents=state.Documents |> List.map(fun held -> held.Observation)
-             Settlement=if state.Model.Phase=Released && (state.Activity |> Option.forall(fun task -> task.IsCompleted)) then ResourcesReleased else Retained
+             Settlement=if state.Model.Phase=Released && state.Fds.Count=0 && state.RootLeases.Count=0 && not state.CloseUncertain && (state.Activity |> Option.forall(fun task -> task.IsCompleted)) then ResourcesReleased else Retained
              WorkEndReached=now.Ticks>=state.Request.Budget.WorkEnd.Ticks
              CleanupEndReached=now.Ticks>=state.Request.Budget.CleanupEnd.Ticks
              CancellationObserved=state.Request.Cancellation.IsCancellationRequested})
@@ -411,10 +411,10 @@ module ProviderContextCapture =
         let state=session.State
         lock state.Sync (fun () ->
             let active=state.Activity |> Option.exists(fun task -> not task.IsCompleted)
-            if state.Model.Phase=Released && not active then Ok()
-            elif active || state.CloseUncertain || state.RootLeases.Count>0 then
+            if active || state.CloseUncertain || state.RootLeases.Count>0 then
                 if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 Error OwnedActivitiesPending
+            elif state.Model.Phase=Released && state.Fds.Count=0 then Ok()
             elif state.Fds.Count=0 then
                 if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 transition state ReleaseRequested

@@ -333,6 +333,52 @@ let baseActualCases : (string * (unit -> unit)) list =
               Expect.equal settled.Settlement ResourcesReleased "actual close completion"
               Expect.equal settled.Model.FirstFailure duplicate.Model.FirstFailure "retirement preserves original cause") ]
 let actualCases = baseActualCases @ [
+    "Actual capture cancelled revalidation retains capture and outstanding original lease", fun () ->
+        withFixture(fun r own _ _ _ ->
+            use cancelled=new Threading.CancellationTokenSource()
+            let session=own {r with Cancellation=cancelled.Token}
+            expectReady (capture session)
+            let lease=match borrowRepositoryRoot session with Ok held -> held | Error cause -> failtestf "borrow refused: %A" cause
+            try
+                cancelled.Cancel()
+                let failed=revalidate session
+                Expect.equal failed.Model.FirstFailure (Some CancellationRequested) "original cancellation is sticky"
+                Expect.equal failed.Model.Phase Retiring "capture must keep its originals while borrowed"
+                Expect.equal failed.Settlement Retained "duplicate owner prevents a resource-release claim"
+                Expect.equal (release session) (Error OwnedActivitiesPending) "released shortcut cannot bypass original lease"
+            finally
+                let mutable settled=false
+                while not settled do
+                    match FS.GG.Governance.GateExecution.Interpreter.releaseDirectoryLease lease with
+                    | Ok () -> settled <- true
+                    | Error _ -> Threading.Thread.Sleep 5
+            retireOrRetain session r.Budget
+            Expect.equal (inspect session).Model.FirstFailure (Some CancellationRequested) "late settlement cannot erase first failure"
+            Expect.equal (inspect session).Settlement ResourcesReleased "both original owners actually settled")
+    "Actual capture changed revalidation retains originals until outstanding lease settles", fun () ->
+        withFixture(fun r own provenance _ _ ->
+            let session=own r
+            expectReady (capture session)
+            let lease=match borrowRepositoryRoot session with Ok held -> held | Error cause -> failtestf "borrow refused: %A" cause
+            let mutable first=None
+            try
+                business r.Budget (fun () -> IO.File.AppendAllText(provenance,"-drift"))
+                let failed=revalidate session
+                first <- failed.Model.FirstFailure
+                Expect.isSome first "actual drift refused"
+                Expect.equal failed.Model.Phase Retiring "original capture retained during borrower use"
+                Expect.equal failed.Settlement Retained "snapshot cannot claim duplicate was released"
+                Expect.equal (release session) (Error OwnedActivitiesPending) "capture release fences same outstanding lease"
+            finally
+                let mutable settled=false
+                while not settled do
+                    match FS.GG.Governance.GateExecution.Interpreter.releaseDirectoryLease lease with
+                    | Ok () -> settled <- true
+                    | Error _ -> Threading.Thread.Sleep 5
+            retireOrRetain session r.Budget
+            Expect.equal (inspect session).Model.FirstFailure first "first causal drift survives settlement"
+            Expect.equal (inspect session).Settlement ResourcesReleased "both owners settled")
+
     "Actual capture original root lease binds identity and fences capture release", fun () ->
         withFixture(fun r own _ _ _ ->
             let session=own r
