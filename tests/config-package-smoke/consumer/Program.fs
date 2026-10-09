@@ -33,7 +33,7 @@ let expectRejected candidate =
     | Resolved _ -> failwith "invalid request accepted"
 
 [<EntryPoint>]
-let main _ =
+let main arguments =
     let resolved = expectResolved request
     require (resolved.Bindings.Head.Binding = Command command) "literal ordered argv changed"
     require resolved.Bindings.Head.Required "trusted requirement lowered"
@@ -56,5 +56,31 @@ let main _ =
     match Schema.validate (Loader.readSource (GovernedPath ".") reader) with
     | Valid _ -> ()
     | Invalid diagnostics -> failwithf "legacy loading rejected: %A" diagnostics
+    require (arguments.Length = 3) "receipt path, Config digest and source revision required"
+    let configAssembly = typeof<GovernedPath>.Assembly
+    let contractsAssembly = typeof<Fsgg.Provider.DeclaredCommand>.Assembly
+    let loadedCount name =
+        System.AppDomain.CurrentDomain.GetAssemblies()
+        |> Array.filter (fun assembly -> assembly.GetName().Name = name)
+        |> Array.length
+    let configCount = loadedCount "FS.GG.Governance.Config"
+    let contractsCount = loadedCount "FS.GG.Contracts"
+    require (configCount = 1 && contractsCount = 1) "ambiguous runtime assembly identity"
+    let assemblyDigest (assembly: System.Reflection.Assembly) =
+        assembly.Location
+        |> System.IO.File.ReadAllBytes
+        |> System.Security.Cryptography.SHA256.HashData
+        |> System.Convert.ToHexString
+        |> fun value -> value.ToLowerInvariant()
+    let receipt =
+        {| result = "passed"
+           configSha256 = arguments[1]
+           sourceRevision = arguments[2]
+           configAssemblySha256 = assemblyDigest configAssembly
+           contractsAssemblySha256 = assemblyDigest contractsAssembly
+           contractsAssemblyVersion = string (contractsAssembly.GetName().Version)
+           loadedConfigCount = configCount
+           loadedContractsCount = contractsCount |}
+    System.IO.File.WriteAllText(arguments[0], System.Text.Json.JsonSerializer.Serialize(receipt))
     printfn "Config packaged resolver and legacy loading passed (synthetic requests only)."
     0

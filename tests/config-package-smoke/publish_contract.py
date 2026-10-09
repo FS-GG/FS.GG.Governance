@@ -18,10 +18,14 @@ UNRELATED = ['cli-tests', 'enforcement-smoke', 'publish', 'publish-fsharp-surfac
 REPOSITORY = "github.repository == 'FS-GG/FS.GG.Governance'"
 ALL_SCOPE = REPOSITORY + " && needs.resolve-version.outputs.scope == 'all'"
 GATE = "needs.resolve-version.outputs.push == 'true'"
+VISIBILITY = "needs.resolve-version.outputs.scope == 'config' || " + GATE
+FIRST = "needs.resolve-version.outputs.recovery == 'false'"
+RECOVERY = "needs.resolve-version.outputs.recovery == 'true'"
 ORDER = ['Checkout', 'Preflight Config publication contract', 'Set up .NET',
          'Restore (locked, cold)', 'Test complete Config suite', 'Resolve Config package version',
          'Pack Config once', 'Identify exact Config archive', 'Config package consumer smoke',
-         'Retain Config archive and manifest', 'Check Config feed collisions',
+         'Validate complete Config retention', 'Recover original Config archive',
+         'Select qualified Config archive', 'Retain Config archive and manifest', 'Check Config feed collisions',
          'Retain Config feed observations', 'Push Config to org feed',
          'Trusted Publishing Config login', 'Verify same Config bytes and push public']
 
@@ -41,7 +45,11 @@ def validate(text):
     require(sorted(inventory) == sorted(['resolve-version', 'publish-config'] + UNRELATED), 'unsupported job inventory')
     dispatch = text.split('  workflow_dispatch:', 1)[1].split('\n#', 1)[0]
     require(re.search(r'^      scope:\n        description: [^\n]+\n        type: choice\n        options: \[all, config\]\n        default: all\n        required: false\n', dispatch, re.M), 'closed scope input/default drift')
+    for name in ['config_run_id', 'config_artifact_id', 'config_package_sha256']:
+        require(re.search(r'^      ' + name + r':\n        description: [^\n]+\n        type: string\n        required: false\n', dispatch, re.M), 'recovery input drift: ' + name)
+    require("run-name: publish ${{ github.event_name }} scope=${{ inputs.scope || 'all' }} version=${{ inputs.version || 'dry-run' }} recovery=${{ inputs.config_run_id || 'none' }}" in text, 'original native scope/version selection missing')
     resolver = job_text(text, 'resolve-version')
+    require('recovery: ${{ steps.ver.outputs.recovery }}' in resolver, 'validated recovery output missing')
     require('scope: ${{ steps.ver.outputs.scope }}' in resolver, 'validated scope output missing')
     require('INPUT_SCOPE: ${{ inputs.scope }}' in resolver and 'INPUT_VERSION: ${{ inputs.version }}' in resolver, 'resolver input binding drift')
     expected_needs = {name: ['resolve-version'] for name in UNRELATED}
@@ -57,7 +65,7 @@ def validate(text):
     header = job.split('    steps:', 1)[0]
     require('    needs: [resolve-version]\n' in header, 'Config must depend only on resolve-version')
     require("    if: github.repository == 'FS-GG/FS.GG.Governance'\n" in header, 'repository guard drift')
-    require('      contents: read\n      packages: write\n      id-token: write\n' in header, 'permission drift')
+    require('      contents: read\n      actions: read\n      packages: write\n      id-token: write\n' in header, 'permission drift')
     starts = list(re.finditer(r'^      - name: (.+)$', job, re.M))
     require([m.group(1) for m in starts] == ORDER, 'required step/order drift')
     steps = {m.group(1): job[m.end():starts[i+1].start() if i+1 < len(starts) else len(job)]
@@ -65,10 +73,19 @@ def validate(text):
     for name, body in steps.items():
         require(not re.search(r'^        (continue-on-error|timeout-minutes):', body, re.M), 'unsupported step control: ' + name)
         condition = re.findall(r'^        if: (.+)$', body, re.M)
-        expected = [GATE] if name in ['Check Config feed collisions', 'Push Config to org feed',
-                                      'Trusted Publishing Config login', 'Verify same Config bytes and push public'] else []
-        if name == 'Retain Config feed observations':
-            expected = ["always() && " + GATE]
+        expected = []
+        if name in ['Restore (locked, cold)', 'Test complete Config suite', 'Pack Config once',
+                    'Identify exact Config archive', 'Config package consumer smoke', 'Validate complete Config retention']:
+            expected = [FIRST]
+        elif name == 'Recover original Config archive':
+            expected = [RECOVERY]
+        elif name == 'Check Config feed collisions':
+            expected = [VISIBILITY]
+        elif name in ['Push Config to org feed', 'Trusted Publishing Config login', 'Verify same Config bytes and push public']:
+            feed = 'org' if name == 'Push Config to org feed' else 'public'
+            expected = [GATE + " && steps.config-collision.outputs." + feed + " == 'absent'"]
+        elif name == 'Retain Config feed observations':
+            expected = ["always() && (" + VISIBILITY + ")"]
         require(condition == expected, 'unsupported/missing condition: ' + name)
     require(job.count('dotnet pack ') == 1, 'Config must pack exactly once')
     require(job.count('dotnet nuget push ') == 2 and job.count('NuGet/login@v1') == 1, 'unexpected publication effect')
@@ -82,18 +99,26 @@ def validate(text):
     require('src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -c Release' in steps[ORDER[6]] and
             '-p:Version=${{ steps.config-version.outputs.version }} --no-restore -o artifacts/config-packages' in steps[ORDER[6]], 'pack project/version/output drift')
     identify = steps[ORDER[7]]
-    for expected in ['id: config-package', 'packages=(artifacts/config-packages/FS.GG.Governance.Config.*.nupkg)',
+    for expected in ['id: config-packed', 'packages=(artifacts/config-packages/FS.GG.Governance.Config.*.nupkg)',
                      '[ "${#packages[@]}" -eq 1 ]', 'package="${packages[0]}"', 'sha256sum "$package"']:
         require(expected in identify, 'exact archive identification missing: ' + expected)
     smoke = steps[ORDER[8]]
-    for expected in ['steps.config-version.outputs.version', 'steps.config-package.outputs.path',
-                     'steps.config-package.outputs.sha256', 'bash tests/config-package-smoke/run.sh',
+    for expected in ['steps.config-version.outputs.version', 'steps.config-packed.outputs.path',
+                     'steps.config-packed.outputs.sha256', 'bash tests/config-package-smoke/run.sh',
                      '"$CONFIG_PACKAGE" "$CONFIG_VERSION" "$CONFIG_SHA256" "$GITHUB_SHA" artifacts/config-evidence']:
         require(expected in smoke, 'package smoke input drift: ' + expected)
-    retain = steps[ORDER[9]]
+    for expected in ['archive.py retain', '--run-id "$GITHUB_RUN_ID"', '--attempt "$GITHUB_RUN_ATTEMPT"', '--lock src/FS.GG.Governance.Config/packages.lock.json']:
+        require(expected in steps['Validate complete Config retention'], 'complete native retention missing: ' + expected)
+    for expected in ['archive.py recover', '--run-id "$CONFIG_RUN_ID"', '--artifact-id "$CONFIG_ARTIFACT_ID"', '--sha256 "$CONFIG_SHA256"', '--revision "$GITHUB_SHA"', '--repository "$GITHUB_REPOSITORY"', '--outputs "$GITHUB_OUTPUT"']:
+        require(expected in steps['Recover original Config archive'], 'original recovery authentication missing: ' + expected)
+    selection = steps['Select qualified Config archive']
+    for expected in ['id: config-package', 'steps.config-recovery.outputs.path', 'steps.config-recovery.outputs.sha256', 'steps.config-packed.outputs.path', 'steps.config-packed.outputs.sha256', 'sha256sum "$package"']:
+        require(expected in selection, 'verified archive selection drift: ' + expected)
+    require('--logger "trx;LogFileName=config-tests.trx" --results-directory artifacts/config-evidence/config-tests' in steps['Test complete Config suite'], 'complete native Config test report retention missing')
+    retain = steps['Retain Config archive and manifest']
     require('uses: actions/upload-artifact@v7' in retain and 'if-no-files-found: error' in retain and
             'artifacts/config-packages/FS.GG.Governance.Config.*.nupkg' in retain and 'artifacts/config-evidence/' in retain, 'pre-effect retention missing')
-    require('archive.py collision --manifest artifacts/config-evidence/manifest.json' in steps[ORDER[10]], 'both-feed collision observation missing')
+    require('archive.py collision --manifest artifacts/config-evidence/manifest.json' in steps['Check Config feed collisions'], 'both-feed collision observation missing')
     for name, source, key in [('Push Config to org feed', 'https://nuget.pkg.github.com/FS-GG/index.json', 'secrets.GITHUB_TOKEN'),
                               ('Verify same Config bytes and push public', 'https://api.nuget.org/v3/index.json', 'steps.config-nuget-login.outputs.NUGET_API_KEY')]:
         body = steps[name]
@@ -102,7 +127,7 @@ def validate(text):
                          '[ "$(sha256sum "$package" | cut -d\' \' -f1)" = "$expected" ] || exit 1',
                          'dotnet nuget push "$package" --source ' + source, key]:
             require(expected in body, 'same-file publication drift: ' + name)
-    require('id: config-nuget-login' in steps[ORDER[13]], 'OIDC output identity drift')
+    require('id: config-nuget-login' in steps['Trusted Publishing Config login'], 'OIDC output identity drift')
 
 def resolver_script(text):
     job = job_text(text, 'resolve-version')
@@ -160,7 +185,8 @@ esac
             env = {'PATH': str(root)+':/usr/bin:/bin', 'LC_ALL': 'C', 'EVENT_NAME': event,
                    'INPUT_SCOPE': scope, 'INPUT_VERSION': version, 'RELEASE_TAG': tag, 'REF_NAME': ref,
                    'GITHUB_OUTPUT': str(output), 'CALLS': str(calls), 'CLI_VERSION': cli,
-                   'CONFIG_VERSION': resolved if project == 'Config' else config}
+                   'CONFIG_VERSION': resolved if project == 'Config' else config,
+                   'CONFIG_RUN_ID': '', 'CONFIG_ARTIFACT_ID': '', 'CONFIG_PACKAGE_SHA256': ''}
             result = subprocess.run(['bash', str(root/'resolver.sh')], env=env, text=True,
                                     capture_output=True, timeout=3)
             require((result.returncode == 0) == success, 'resolver outcome drift: '+name+' '+result.stdout+result.stderr)
@@ -168,11 +194,60 @@ esac
             require(calls.read_text().splitlines() == expected_calls, 'resolver evaluated wrong project: '+name)
             if success:
                 require(output.read_text().splitlines() == ['scope='+('config' if scope == 'config' else 'all'),
-                                                            'version='+resolved, 'push='+push], 'resolver output drift: '+name)
+                                                            'version='+resolved, 'push='+push, 'recovery=false'], 'resolver output drift: '+name)
             else:
                 require(output.read_text() == '', 'failed resolver emitted publish outputs: '+name)
-    print(f'Actual resolver controls passed: {len(cases)}')
+        recovery_cases = [
+            ('complete', 'workflow_dispatch', 'config', config, '12', '34', 'a'*64, True),
+            ('missing-run', 'workflow_dispatch', 'config', config, '', '34', 'a'*64, False),
+            ('missing-artifact', 'workflow_dispatch', 'config', config, '12', '', 'a'*64, False),
+            ('missing-hash', 'workflow_dispatch', 'config', config, '12', '34', '', False),
+            ('missing-version', 'workflow_dispatch', 'config', '', '12', '34', 'a'*64, False),
+            ('wrong-scope', 'workflow_dispatch', 'all', config, '12', '34', 'a'*64, False),
+            ('wrong-event', 'push', 'all', config, '12', '34', 'a'*64, False),
+            ('wrong-version', 'workflow_dispatch', 'config', cli, '12', '34', 'a'*64, False),
+            ('invalid-run', 'workflow_dispatch', 'config', config, '$(literal)', '34', 'a'*64, False),
+            ('zero-artifact', 'workflow_dispatch', 'config', config, '12', '0', 'a'*64, False),
+            ('invalid-hash', 'workflow_dispatch', 'config', config, '12', '34', 'A'*64, False),
+        ]
+        for name, event, scope, version, run, artifact, sha, success in recovery_cases:
+            output.write_text(''); calls.write_text('')
+            env = {'PATH': str(root)+':/usr/bin:/bin', 'LC_ALL': 'C', 'EVENT_NAME': event,
+                   'INPUT_SCOPE': scope, 'INPUT_VERSION': version, 'RELEASE_TAG': '', 'REF_NAME': '',
+                   'GITHUB_OUTPUT': str(output), 'CALLS': str(calls), 'CLI_VERSION': cli, 'CONFIG_VERSION': config,
+                   'CONFIG_RUN_ID': run, 'CONFIG_ARTIFACT_ID': artifact, 'CONFIG_PACKAGE_SHA256': sha}
+            actual = subprocess.run(['bash', str(root/'resolver.sh')], env=env, text=True, capture_output=True, timeout=3)
+            require((actual.returncode == 0) == success, 'recovery resolver outcome drift: ' + name)
+            require(output.read_text().splitlines() == (['scope=config', 'version='+config, 'push=true', 'recovery=true'] if success else []),
+                    'recovery resolver outputs drift: ' + name)
+            expected_calls = ['msbuild src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version'] if name in ['complete', 'wrong-version'] else []
+            require(calls.read_text().splitlines() == expected_calls, 'recovery resolver launched work before selection validation: ' + name)
+    print(f'Actual resolver controls passed: {len(cases) + len(recovery_cases)}')
 
+
+
+def push_byte_controls(text):
+    # Execute the actual hash/effect scripts with a fake dotnet that records no network effects.
+    job = job_text(text)
+    def script(name):
+        body = re.search(r'^      - name: ' + re.escape(name) + r'\n.*?(?=^      - name:|\Z)', job, re.M | re.S).group()
+        return textwrap.dedent(body.split('        run: |\n', 1)[1])
+    with tempfile.TemporaryDirectory(prefix='config-feed-hash-') as directory:
+        root = Path(directory); package = root/'selected.nupkg'; calls = root/'calls'
+        package.write_bytes(b'synthetic original archive'); calls.write_text('')
+        import hashlib
+        sha = hashlib.sha256(package.read_bytes()).hexdigest()
+        (root/'dotnet').write_text('#!/bin/bash\nprintf "%s\\n" "$*" >> "$CALLS"\n')
+        (root/'dotnet').chmod(0o700)
+        env = {'PATH': str(root)+':/usr/bin:/bin', 'CALLS': str(calls)}
+        for name, success in [('Push Config to org feed', True), ('Verify same Config bytes and push public', False)]:
+            body = script(name).replace('${{ steps.config-package.outputs.path }}', str(package)).replace('${{ steps.config-package.outputs.sha256 }}', sha)
+            body = body.replace('${{ secrets.GITHUB_TOKEN }}', 'synthetic').replace('${{ steps.config-nuget-login.outputs.NUGET_API_KEY }}', 'synthetic')
+            result = subprocess.run(['bash', '-c', body], env=env, text=True, capture_output=True, timeout=3)
+            require((result.returncode == 0) == success, 'actual between-feed hash guard drift: ' + name)
+            require(len(calls.read_text().splitlines()) == 1, 'changed archive reached public effect')
+            package.write_bytes(b'changed between feed effects')
+    print('Actual between-feed hash control passed: public effect refused after original-file change')
 
 def mutations(text):
     job = job_text(text)
@@ -182,7 +257,13 @@ def mutations(text):
     identify = re.search(r'^      - name: Identify exact Config archive\n.*?(?=^      - name:)', job, re.M | re.S).group()
     cases = {
         'remove-smoke': job.replace(smoke, ''),
-        'dry-run-push': job.replace(org_push, org_push.replace('        if: ' + GATE, '        if: always()')),
+        'remove-public-hash-guard': job.replace('[ "$(sha256sum "$package" | cut -d\' \' -f1)" = "$expected" ] || exit 1', 'true', 2),
+        'remove-dry-run-visibility': job.replace(VISIBILITY, GATE),
+        'recovery-pack': job.replace(packs, packs.replace(FIRST, 'always()')),
+        'recovery-consumer': job.replace(smoke, smoke.replace(FIRST, 'always()')),
+        'remove-original-verifier': job.replace('archive.py recover', 'archive.py prepare'),
+        'recovery-first-run-retention': job.replace('archive.py retain', 'true # archive.py omitted'),
+        'dry-run-push': job.replace(org_push, org_push.replace(GATE, 'always()')),
         'second-pack': job.replace('      - name: Identify exact Config archive', packs + '      - name: Identify exact Config archive'),
         'swap-package-path': job.replace('package="${{ steps.config-package.outputs.path }}"', 'package="other.nupkg"', 1),
         'broken-order': job.replace(identify + smoke, smoke + identify),
@@ -217,6 +298,7 @@ if __name__ == '__main__':
         text = args.workflow.read_text()
         validate(text)
         resolver_controls(text)
+        push_byte_controls(text)
         if args.mutations:
             mutations(text)
         print('Config publication static contract passed')

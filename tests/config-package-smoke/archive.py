@@ -3,7 +3,11 @@
 import argparse
 import base64
 import hashlib
+from datetime import datetime
 import json
+import io
+import shutil
+import stat
 import os
 from pathlib import Path
 import re
@@ -16,6 +20,8 @@ import zipfile
 
 PACKAGE = 'FS.GG.Governance.Config'
 ALLOWED = {'FS.GG.Contracts', 'YamlDotNet', 'FSharp.Core'}
+CONTRACTS_ARCHIVE_SHA256 = 'b1df3ebd6251f5b18aaece4dd0c5449a7825dc7056f925cf2516febc35f9dfc5'
+CONTRACTS_ASSEMBLY_SHA256 = '91f484d28416c5d860a375a91ed70cdda1d3b6d85d504c15ea21e08a9af727ee'
 
 def require(value, message):
     if not value:
@@ -128,6 +134,182 @@ def resolved(args):
             'resolved Contracts assembly missing')
     require(digest(manifest['path']) == manifest['sha256'], 'archive changed during consumption')
 
+
+# Native Actions observations authenticate qualification; local receipts alone cannot.
+QUALIFICATION_STEPS = ['Restore (locked, cold)', 'Test complete Config suite',
+                       'Resolve Config package version', 'Pack Config once',
+                       'Identify exact Config archive', 'Config package consumer smoke',
+                       'Validate complete Config retention']
+
+def actions_read(repository, endpoint, archive=False):
+    require(repository == 'FS-GG/FS.GG.Governance', 'wrong recovery repository')
+    token = os.environ.get('GH_TOKEN')
+    require(token, 'Actions read credential unavailable')
+    request = urllib.request.Request('https://api.github.com/repos/' + repository + '/' + endpoint,
+        headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json',
+                 'X-GitHub-Api-Version': '2022-11-28'})
+    class ArtifactRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, *redirect):
+            redirected = super().redirect_request(request, *redirect)
+            if redirected is not None:
+                redirected.remove_header('Authorization')
+            return redirected
+    with urllib.request.build_opener(ArtifactRedirect()).open(request, timeout=30) as response:
+        limit = 64 * 1024 * 1024 if archive else 4 * 1024 * 1024
+        raw = response.read(limit + 1)
+        require(len(raw) <= limit, 'Actions observation exceeds bounded input')
+    return raw if archive else json.loads(raw)
+
+def native_qualification(repository, revision, run_id, version, run, workflow, jobs, recovery):
+    require(repository == 'FS-GG/FS.GG.Governance', 'wrong recovery repository')
+    require(str(run['id']) == str(run_id) and run['repository']['full_name'] == repository,
+            'original run/repository mismatch')
+    require(run['head_repository']['full_name'] == repository and run['head_sha'] == revision,
+            'original source mismatch')
+    require(run['run_attempt'] == 1, 'original attempt must be one; reruns cannot promote repacked bytes')
+    require(workflow['id'] == run['workflow_id'] and workflow['path'] == '.github/workflows/publish.yml',
+            'wrong original owning workflow')
+    require(run['event'] == 'workflow_dispatch' if recovery else run['event'] in ['workflow_dispatch', 'push', 'release'],
+            'wrong original event')
+    if recovery:
+        require(run['status'] == 'completed', 'original operation still active/unknown')
+        titles = ['publish workflow_dispatch scope=config version=' + v + ' recovery=none'
+                  for v in [version, 'v' + version]]
+        require(run['display_title'] in titles, 'original Config scope/version/first-run selection mismatch')
+    require(jobs['total_count'] == len(jobs['jobs']) and len(jobs['jobs']) <= 100,
+            'ambiguous/incomplete native job population')
+    matches = [j for j in jobs['jobs'] if j['name'] == 'Pack + publish FS.GG.Governance.Config']
+    require(len(matches) == 1, 'missing/ambiguous original Config job')
+    job = matches[0]
+    require(job['run_id'] == run['id'] and job['run_attempt'] == 1 and job['head_sha'] == revision,
+            'original Config job identity mismatch')
+    names = QUALIFICATION_STEPS if recovery else QUALIFICATION_STEPS[:-1]
+    if recovery:
+        names = names + ['Retain Config archive and manifest']
+        resolver = [j for j in jobs['jobs'] if j['name'] == 'Resolve selected scope and project version']
+        require(len(resolver) == 1 and resolver[0]['conclusion'] == 'success', 'original scope resolver failed')
+        require(all(j['name'] in [job['name'], resolver[0]['name']] or j['conclusion'] == 'skipped'
+                    for j in jobs['jobs']), 'original scope includes unrelated work')
+    numbers = []
+    for name in names:
+        found = [step for step in job['steps'] if step['name'] == name]
+        require(len(found) == 1 and found[0]['status'] == 'completed' and found[0]['conclusion'] == 'success',
+                'original native qualification/retention stage missing or failed: ' + name)
+        numbers.append(found[0]['number'])
+    require(numbers == sorted(set(numbers)), 'original qualification ordering drift')
+    return job
+
+def observed_run(args):
+    require(args.repository == 'FS-GG/FS.GG.Governance' and re.fullmatch(r'[0-9a-f]{40}', args.revision), 'invalid repository/source selection')
+    require(re.fullmatch(r'[1-9][0-9]*', str(args.run_id)), 'invalid original run ID')
+    run = actions_read(args.repository, 'actions/runs/' + str(args.run_id))
+    workflow = actions_read(args.repository, 'actions/workflows/' + str(run['workflow_id']))
+    jobs = actions_read(args.repository, 'actions/runs/' + str(args.run_id) + '/attempts/1/jobs?per_page=100')
+    return run, workflow, jobs
+
+def retained_inputs(package, version, sha, revision, lock, evidence):
+    evidence = Path(evidence)
+    inspected = inspect(package, version, sha, revision)
+    manifest = json.loads((evidence / 'manifest.json').read_text())
+    for field in ['package', 'version', 'sha256', 'sourceRevision', 'dependencies', 'entries']:
+        require(manifest[field] == inspected[field], 'retained manifest identity drift: ' + field)
+    producer = json.loads(Path(lock).read_text())['dependencies']['net10.0']
+    require(set(producer) == ALLOWED and manifest['closure'] == producer, 'retained producer dependency closure drift')
+    for name, dependency in producer.items():
+        require(inspected['dependencies'][name].strip('[]() ').split(',')[0].strip() ==
+                dependency['requested'].strip('[]() ').split(',')[0].strip(), 'retained nuspec dependency drift')
+    require(json.loads((evidence / 'versions.json').read_text()) == {n: e['resolved'] for n, e in producer.items()}, 'retained dependency pins changed')
+    source_config = ET.parse(evidence / 'NuGet.Config').getroot()
+    mappings = [package.get('pattern') for package in source_config.findall('./packageSourceMapping/packageSource/package')]
+    require(sorted(mappings) == sorted([PACKAGE, *ALLOWED]), 'retained source mapping drift')
+    expected = {PACKAGE: version, **{n: e['resolved'] for n, e in producer.items()}}
+    consumer = json.loads((evidence / 'packages.lock.json').read_text())['dependencies']['net10.0']
+    require(set(consumer) == set(expected), 'retained consumer lock closure drift')
+    for name, selected in expected.items():
+        require(consumer[name]['resolved'] == selected, 'retained consumer version drift: ' + name)
+        if name in producer:
+            require(consumer[name]['contentHash'] == producer[name]['contentHash'], 'retained dependency bytes drift')
+    assets = json.loads((evidence / 'project.assets.json').read_text())
+    require(set(assets['libraries']) == {n + '/' + v for n, v in expected.items()} and
+            all(item['type'] == 'package' for item in assets['libraries'].values()), 'retained assets closure drift')
+    receipt = json.loads((evidence / 'default-consumer-result.json').read_text())
+    require(receipt['result'] == 'passed' and receipt['configSha256'] == sha and receipt['sourceRevision'] == revision,
+            'retained actual consumer receipt mismatch')
+    require(producer['FS.GG.Contracts']['resolved'] == '7.6.0', 'selected Contracts compatibility not qualified')
+    contracts = json.loads((evidence / 'contracts-selection.json').read_text())
+    require(contracts['version'] == '7.6.0' and contracts['archiveFile'] == 'FS.GG.Contracts.7.6.0.nupkg' and
+            contracts['archiveSha256'] == CONTRACTS_ARCHIVE_SHA256 and
+            contracts['assemblySha256'] == CONTRACTS_ASSEMBLY_SHA256 and
+            contracts['contentHash'] == producer['FS.GG.Contracts']['contentHash'], 'selected published Contracts identity mismatch')
+    require(digest(evidence / contracts['archiveFile']) == contracts['archiveSha256'], 'retained Contracts archive changed')
+    with zipfile.ZipFile(evidence / contracts['archiveFile']) as archive:
+        require(hashlib.sha256(archive.read('lib/net10.0/FS.GG.Contracts.dll')).hexdigest() == contracts['assemblySha256'],
+                'retained Contracts payload changed')
+    require(receipt['loadedConfigCount'] == 1 and receipt['loadedContractsCount'] == 1 and
+            receipt['contractsAssemblySha256'] == contracts['assemblySha256'], 'actual selected Contracts assembly mismatch')
+    require(receipt['configAssemblySha256'] == inspected['entries']['lib/net10.0/' + PACKAGE + '.dll'],
+            'actual Config assembly differs from selected archive')
+    report = evidence / 'config-tests/config-tests.trx'
+    require(report.is_file() and report.stat().st_size > 0, 'complete Config test report absent')
+    return manifest
+
+def retain(args):
+    require(args.attempt == '1', 'only original first attempt can retain a release candidate')
+    retained_inputs(args.package, args.version, args.sha256, args.revision, args.lock, args.evidence)
+    run, workflow, jobs = observed_run(args)
+    native_qualification(args.repository, args.revision, args.run_id, args.version, run, workflow, jobs, False)
+    evidence = Path(args.evidence)
+    shutil.copyfile(args.lock, evidence / 'producer.packages.lock.json')
+    (evidence / 'qualification-native.json').write_text(json.dumps(
+        {'run': run, 'workflow': workflow, 'jobs': jobs}, indent=2) + '\n')
+
+def recover(args):
+    require(re.fullmatch(r'[1-9][0-9]*', str(args.artifact_id)) and re.fullmatch(r'[0-9a-f]{64}', args.sha256), 'invalid original artifact/hash selection')
+    run, workflow, jobs = observed_run(args)
+    original_job = native_qualification(args.repository, args.revision, args.run_id, args.version, run, workflow, jobs, True)
+    artifact = actions_read(args.repository, 'actions/artifacts/' + str(args.artifact_id))
+    require(str(artifact['id']) == str(args.artifact_id) and not artifact['expired'] and
+            artifact['name'] == 'config-package-' + args.revision, 'original artifact missing/expired/wrong identity')
+    link = artifact['workflow_run']
+    require(link['id'] == run['id'] and link['head_sha'] == args.revision and
+            link['repository_id'] == run['repository']['id'] and
+            link['head_repository_id'] == run['head_repository']['id'], 'artifact original run/source/repository mismatch')
+    retention = next(step for step in original_job['steps'] if step['name'] == 'Retain Config archive and manifest')
+    timestamp = lambda value: datetime.fromisoformat(value.replace('Z', '+00:00'))
+    require(timestamp(retention['started_at']) <= timestamp(artifact['created_at']) <= timestamp(retention['completed_at']),
+            'artifact does not belong to original successful retention stage')
+    raw = actions_read(args.repository, 'actions/artifacts/' + str(args.artifact_id) + '/zip', True)
+    require(artifact['digest'] == 'sha256:' + hashlib.sha256(raw).hexdigest(), 'Actions artifact archive digest mismatch')
+    root = Path(args.output)
+    require(not (root / 'config-packages').exists() and not (root / 'config-evidence').exists(), 'recovery output already occupied')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        names = archive.namelist()
+        require(len(names) == len(set(names)) and len(names) <= 2000, 'ambiguous/oversized retained artifact')
+        require(sum(item.file_size for item in archive.infolist()) <= 64 * 1024 * 1024, 'retained artifact expansion exceeds bound')
+        for item in archive.infolist():
+            path = Path(item.filename)
+            require(not path.is_absolute() and '..' not in path.parts and '\\' not in item.filename and
+                    path.parts and path.as_posix() == item.filename.rstrip('/') and path.parts[0] in ['config-packages', 'config-evidence'] and
+                    not stat.S_ISLNK(item.external_attr >> 16), 'unsafe/unexpected retained artifact path')
+        archive.extractall(root)
+    package = root / 'config-packages' / (PACKAGE + '.' + args.version + '.nupkg')
+    evidence = root / 'config-evidence'
+    manifest = retained_inputs(package, args.version, args.sha256, args.revision, args.lock, evidence)
+    require(json.loads((evidence / 'producer.packages.lock.json').read_text()) == json.loads(Path(args.lock).read_text()),
+            'original retained producer lock mismatch')
+    native = json.loads((evidence / 'qualification-native.json').read_text())
+    native_qualification(args.repository, args.revision, args.run_id, args.version,
+                         native['run'], native['workflow'], native['jobs'], False)
+    # Resolve the recovered physical location after verifying all original identities.
+    manifest['path'] = str(package.resolve())
+    (evidence / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    (evidence / 'recovery-observations.json').write_text(json.dumps(
+        {'run': run, 'workflow': workflow, 'jobs': jobs, 'artifact': artifact,
+         'archiveSha256': hashlib.sha256(raw).hexdigest()}, indent=2) + '\n')
+    with Path(args.outputs).open('a') as output:
+        output.write('path=' + str(package.resolve()) + '\nsha256=' + args.sha256 + '\n')
+
+
 def org_absence(version):
     """Authenticated scoped enumeration establishes absence, never a bare 404.
 
@@ -173,6 +355,7 @@ def collision(args):
     and excluded only when identified by NuGet's reserved .signature.p7s entry.
     """
     manifest = json.loads(Path(args.manifest).read_text())
+    require(digest(manifest['path']) == manifest['sha256'], 'archive changed before collision observation')
     evidence = []
     for feed in [args.org_source, args.public_source]:
         def fetch(url, absent=False):
@@ -229,6 +412,10 @@ def collision(args):
         evidence.append({'feed': feed, 'outcome': 'payload-equal', 'rawSha256': digest(target),
                          'repositorySignatureSha256': signature, 'selectedSignatureSha256': selected_signature})
     (Path(args.manifest).parent / 'feed-observations.json').write_text(json.dumps(evidence, indent=2) + '\n')
+    if args.outputs:
+        with Path(args.outputs).open('a') as output:
+            for name, observation in zip(['org', 'public'], evidence):
+                output.write(name + '=' + ('equal' if observation['outcome'] == 'payload-equal' else 'absent') + '\n')
 
 parser = argparse.ArgumentParser(description=__doc__)
 sub = parser.add_subparsers(dest='mode', required=True)
@@ -244,7 +431,14 @@ p.set_defaults(action=resolved)
 p = sub.add_parser('collision')
 for name in ['manifest', 'org-source', 'public-source']:
     p.add_argument('--' + name, required=True)
+p.add_argument('--outputs')
 p.set_defaults(action=collision)
+for mode, names in [('retain', ['package', 'sha256', 'version', 'revision', 'repository', 'run-id', 'attempt', 'lock', 'evidence']),
+                    ('recover', ['run-id', 'artifact-id', 'sha256', 'version', 'revision', 'repository', 'lock', 'output', 'outputs'])]:
+    p = sub.add_parser(mode)
+    for name in names:
+        p.add_argument('--' + name, required=True)
+    p.set_defaults(action=retain if mode == 'retain' else recover)
 if __name__ == '__main__':
     try:
         args = parser.parse_args()
