@@ -46,6 +46,12 @@ let tests =
                             || n = "FS.GG.Governance.VerifyCommand.ProviderContext+Selection"
                             || n = "FS.GG.Governance.VerifyCommand.ProviderContext+SelectionError"
                             || n.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContext+SelectionError+", System.StringComparison.Ordinal)
+                            // Exact additive capture signature shapes; implementation owner/native internals stay hidden.
+                            || n = "FS.GG.Governance.VerifyCommand.ProviderContextCapture"
+                            || ([ "NamespaceAcceptance"; "Limits"; "Request"; "Failure"; "Phase"; "Model"; "Msg"; "Effect"; "ObjectIdentity"; "RootObservation"; "DocumentObservation"; "Settlement"; "Observation"; "CaptureSession" ]
+                                |> List.exists(fun shape -> n = "FS.GG.Governance.VerifyCommand.ProviderContextCapture+"+shape))
+                            || ([ "NamespaceAcceptance"; "Failure"; "Phase"; "Msg"; "Effect"; "Settlement" ]
+                                |> List.exists(fun shape -> n.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContextCapture+"+shape+"+", System.StringComparison.Ordinal)))
                             // 076 Phase C: the three additive, .fsi-curated host fold seam modules (FR-004).
                             || n.Contains "VerifyCommand.SurfaceFoldModule"
                             || n.Contains "VerifyCommand.ViewCurrencyFoldModule"
