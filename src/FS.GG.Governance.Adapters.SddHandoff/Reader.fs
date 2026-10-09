@@ -478,3 +478,106 @@ module Reader =
         | ParseFailure(cause, message) -> diagnostic cause message
         | :? JsonException as ex -> diagnostic Malformed $"handoff JSON could not be parsed: {ex.Message}"
         | ex -> diagnostic Malformed $"handoff JSON could not be parsed: {ex.Message}"
+
+    let sourceDiagnostic cause field message : SourceDiagnostic =
+        { Cause = cause; Field = field; Message = message }
+
+    let validSourcePath (path: string) =
+        not (String.IsNullOrWhiteSpace path)
+        && path = path.Trim()
+        && not (path.Contains('\\') || path.Contains(':') || path |> Seq.exists Char.IsControl)
+        && (path.Split('/') |> Array.forall (fun part -> part <> "" && part <> "." && part <> ".."))
+
+    let sourceShape field (source: HandoffSource) =
+        let (GovernedPath path) = source.Path
+        [ if not (validSourcePath path) then
+              sourceDiagnostic MalformedSource (field + ".path") "source path must be a canonical governed relative path"
+          if String.IsNullOrWhiteSpace source.Digest then
+              sourceDiagnostic MalformedSource (field + ".digest") "source digest must not be empty"
+          elif not (source.Digest.StartsWith("sha256:", StringComparison.Ordinal)) then
+              sourceDiagnostic UnsupportedSourceDigest (field + ".digest") "only sha256:<64 hex digits> source digests are supported"
+          elif source.Digest.Length <> 71 || not (source.Digest.Substring(7) |> Seq.forall Uri.IsHexDigit) then
+              sourceDiagnostic MalformedSource (field + ".digest") "source SHA-256 digest must contain exactly 64 hex digits" ]
+
+    let sourceSetDiagnostics field sources =
+        let malformed = sources |> List.mapi (fun i source -> sourceShape (sprintf "%s[%d]" field i) source) |> List.concat
+        let duplicates =
+            sources
+            |> List.countBy (fun source -> source.Path)
+            |> List.choose (fun (path, count) ->
+                if count > 1 then Some(sourceDiagnostic DuplicateSource field (sprintf "duplicate source path %A" path)) else None)
+        malformed @ duplicates
+
+    let parseWithSources read =
+        match parse read with
+        | Error diagnostic -> Error(HandoffRejected diagnostic)
+        | Ok handoff ->
+            try
+                use document = JsonDocument.Parse read.Json
+                let root = document.RootElement
+                let sourcesFields = root.EnumerateObject() |> Seq.filter (fun p -> p.Name = "sources") |> Seq.toList
+                match sourcesFields with
+                | [] -> Error(SourcesRejected [ sourceDiagnostic MissingSource "sources" "sources[] is required for provider evidence" ])
+                | _ :: _ :: _ -> Error(SourcesRejected [ sourceDiagnostic DuplicateSource "sources" "sources field is duplicated" ])
+                | [field] when field.Value.ValueKind <> JsonValueKind.Array ->
+                    Error(SourcesRejected [ sourceDiagnostic MalformedSource "sources" "sources must be an array" ])
+                | [field] ->
+                    let items = field.Value.EnumerateArray() |> Seq.toList
+                    if List.isEmpty items then
+                        Error(SourcesRejected [ sourceDiagnostic MissingSource "sources" "sources[] must not be empty" ])
+                    else
+                        let parsed =
+                            items |> List.mapi (fun i item ->
+                                let field = sprintf "sources[%d]" i
+                                try
+                                    let item = objectValue field item
+                                    let duplicated = item.EnumerateObject() |> Seq.countBy (fun p -> p.Name) |> Seq.exists (fun (_, count) -> count > 1)
+                                    if duplicated then
+                                        Error [ sourceDiagnostic DuplicateSource field "source object contains duplicate fields" ]
+                                    else
+                                        let source =
+                                            { Path = GovernedPath(property field "path" item |> stringValue (field + ".path"))
+                                              Digest = property field "digest" item |> stringValue (field + ".digest") }
+                                        match sourceShape field source with
+                                        | [] -> Ok { source with Digest = source.Digest.ToLowerInvariant() }
+                                        | diagnostics -> Error diagnostics
+                                with ParseFailure(_, message) -> Error [ sourceDiagnostic MalformedSource field message ])
+                        let sources = parsed |> List.choose (function Ok source -> Some source | _ -> None)
+                        let diagnostics =
+                            (parsed |> List.collect (function Error errors -> errors | _ -> []))
+                            @ sourceSetDiagnostics "sources" sources
+                        if List.isEmpty diagnostics then Ok { Handoff = handoff; Sources = sources }
+                        else Error(SourcesRejected diagnostics)
+            with
+            | ex -> Error(SourcesRejected [ sourceDiagnostic MalformedSource "sources" ("source projection failed: " + ex.Message) ])
+
+    let validateSources captured requiredPaths handoff =
+        let declarations = sourceSetDiagnostics "sources" handoff.Sources
+        let captures = sourceSetDiagnostics "captured" captured
+        let requiredShape =
+            requiredPaths |> List.mapi (fun i (GovernedPath path) ->
+                if validSourcePath path then []
+                else [ sourceDiagnostic MalformedSource (sprintf "requiredPaths[%d]" i) "required input path must be canonical and governed relative" ]) |> List.concat
+        let requiredDuplicates =
+            requiredPaths |> List.countBy id |> List.choose (fun (path, count) ->
+                if count > 1 then Some(sourceDiagnostic DuplicateSource "requiredPaths" (sprintf "duplicate required input path %A" path)) else None)
+        let empty =
+            if List.isEmpty handoff.Sources then [ sourceDiagnostic MissingSource "sources" "sources[] must not be empty" ] else []
+        let diagnostics = declarations @ captures @ requiredShape @ requiredDuplicates @ empty
+        if not (List.isEmpty diagnostics) then Error diagnostics
+        else
+            let matches =
+                handoff.Sources |> List.mapi (fun i source ->
+                    let field = sprintf "sources[%d]" i
+                    match captured |> List.tryFind (fun captured -> captured.Path = source.Path) with
+                    | None -> [ sourceDiagnostic UncapturedSource field "cited source was not captured before dispatch" ]
+                    | Some observed when not (String.Equals(observed.Digest, source.Digest, StringComparison.OrdinalIgnoreCase)) ->
+                        [ sourceDiagnostic SourceDigestMismatch field "cited source digest does not match captured input bytes" ]
+                    | _ -> []) |> List.concat
+            let missing =
+                requiredPaths |> List.choose (fun path ->
+                    if handoff.Sources |> List.exists (fun source -> source.Path = path) then None
+                    else Some(sourceDiagnostic MissingRequiredSource "sources" (sprintf "required input source %A is not cited" path)))
+            match matches @ missing with
+            | [] -> Ok ()
+            | diagnostics -> Error diagnostics

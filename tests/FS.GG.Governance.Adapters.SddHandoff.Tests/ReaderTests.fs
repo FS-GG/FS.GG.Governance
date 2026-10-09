@@ -352,3 +352,109 @@ let tests =
                             (sprintf "%s carries the typed dependency edge" fixture)
             }
         ]
+
+// SYNTHETIC provider source declarations/captured identities. No file capture/run freshness claim.
+let private shaA = "sha256:" + String.replicate 64 "a"
+let private shaB = "sha256:" + String.replicate 64 "b"
+let private inputPath = FS.GG.Governance.Config.Model.GovernedPath "tests/input.json"
+let private identity path digest : HandoffSource = { Path = FS.GG.Governance.Config.Model.GovernedPath path; Digest = digest }
+let private sourceJson path digest =
+    sprintf """{ "path": %s, "digest": %s, "schemaVersion": 1 }"""
+        (System.Text.Json.JsonSerializer.Serialize<string> path) (System.Text.Json.JsonSerializer.Serialize<string> digest)
+let private sourceRead members : Reader.HandoffRead =
+    { Source = "evidence/handoff.json"
+      Json = """{ "contractVersion": "2.0.0", "evidence": { "nodes": [{"id":"test:unit","state":"real"}], "dependencies": [] }, """ + members + " }" }
+let private withSources items = sourceRead ("\"sources\":[" + String.concat "," items + "]")
+let private sourceParsed read =
+    match Reader.parseWithSources read with
+    | Ok handoff -> handoff
+    | Error diagnostic -> failtestf "expected source projection: %A" diagnostic
+let private sourceRefused cause read =
+    match Reader.parseWithSources read with
+    | Error(SourcesRejected diagnostics) ->
+        Expect.isTrue (diagnostics |> List.exists(fun d -> d.Cause = cause)) (sprintf "expected %A: %A" cause diagnostics)
+        Expect.isTrue (diagnostics |> List.forall(fun d -> d.Field <> "" && d.Message <> "")) "located descriptive source refusals"
+    | other -> failtestf "expected source refusal %A, got %A" cause other
+let private validationRefused cause captured required handoff =
+    match Reader.validateSources captured required handoff with
+    | Error diagnostics -> Expect.isTrue (diagnostics |> List.exists(fun d -> d.Cause = cause)) (sprintf "expected %A: %A" cause diagnostics)
+    | Ok () -> failtestf "expected source validation refusal %A" cause
+
+[<Tests>]
+let sourceTests =
+    testList "ProviderSources" [
+        test "existing full producer golden is accepted without a wire-schema change" {
+            let read = Fixtures.read "sdd-0.30-producer-golden"
+            let projected = sourceParsed read
+            Expect.equal (Reader.parse read) (Ok projected.Handoff) "existing producer handoff remains identical"
+            Expect.isNonEmpty projected.Sources "actual producer source fields are projected"
+            Expect.isTrue (projected.Sources |> List.exists(fun s -> s.Path = FS.GG.Governance.Config.Model.GovernedPath "readiness/247-full-shape-golden/work-model.json")) "work-model source retained"
+        }
+        test "source projection preserves legacy handoff and canonical digest" {
+            let read = withSources [ sourceJson "tests/input.json" (shaA.ToUpperInvariant().Replace("SHA256:", "sha256:")) ]
+            let projected = sourceParsed read
+            Expect.equal (Reader.parse read) (Ok projected.Handoff) "same legacy typed handoff"
+            Expect.equal projected.Sources [ identity "tests/input.json" shaA ] "canonical lowercase digest"
+            Expect.equal (Reader.validateSources projected.Sources [ inputPath ] projected) (Ok ()) "exact captured source and required input"
+        }
+        test "missing and empty sources refuse the provider route" {
+            sourceRefused MissingSource (sourceRead "\"other\":true")
+            sourceRefused MissingSource (withSources [])
+            let legacy = sourceRead "\"sources\":null"
+            Expect.isOk (Reader.parse legacy) "legacy ignores sources exactly as before"
+            sourceRefused MalformedSource legacy
+        }
+        test "nonarray and malformed source objects refuse" {
+            for json in [ "null"; "{}"; "42"; "\"source\"" ] do
+                sourceRefused MalformedSource (sourceRead ("\"sources\":" + json))
+            for json in [ "null"; "[]"; "42"; "{}"; "{\"path\":\"tests/input.json\"}"; "{\"digest\":\"" + shaA + "\"}"; "{\"path\":42,\"digest\":\"" + shaA + "\"}" ] do
+                sourceRefused MalformedSource (withSources [ json ])
+        }
+        test "duplicate paths and duplicate JSON fields refuse" {
+            let source = sourceJson "tests/input.json" shaA
+            sourceRefused DuplicateSource (withSources [ source; source ])
+            sourceRefused DuplicateSource (sourceRead ("\"sources\":["+source+"],\"sources\":["+source+"]"))
+            sourceRefused DuplicateSource (withSources [ "{\"path\":\"tests/input.json\",\"path\":\"other.json\",\"digest\":\""+shaA+"\"}" ])
+            sourceRefused DuplicateSource (withSources [ "{\"path\":\"tests/input.json\",\"digest\":\""+shaA+"\",\"digest\":\""+shaB+"\"}" ])
+        }
+        test "noncanonical and escaping paths refuse" {
+            for path in [ ""; " "; "/absolute"; "../input"; "src/../input"; "./input"; "src/./input"; "src//input"; "src/"; "C:/input"; "src\\input"; "input\njson"; " input" ] do
+                sourceRefused MalformedSource (withSources [ sourceJson path shaA ])
+        }
+        test "empty malformed and unsupported digests refuse" {
+            for digest in [ ""; " "; "sha256:"; "sha256:"+String.replicate 63 "a"; "sha256:"+String.replicate 65 "a"; "sha256:"+String.replicate 64 "z" ] do
+                sourceRefused MalformedSource (withSources [ sourceJson "tests/input.json" digest ])
+            for digest in [ "sha512:"+String.replicate 128 "a"; String.replicate 64 "a"; "SHA256:"+String.replicate 64 "a" ] do
+                sourceRefused UnsupportedSourceDigest (withSources [ sourceJson "tests/input.json" digest ])
+        }
+        test "each cited source must match captured input and all required inputs must be cited" {
+            let projected = sourceParsed (withSources [ sourceJson "tests/input.json" shaA ])
+            validationRefused UncapturedSource [] [ inputPath ] projected
+            validationRefused SourceDigestMismatch [ identity "tests/input.json" shaB ] [ inputPath ] projected
+            let second = FS.GG.Governance.Config.Model.GovernedPath "tests/other.json"
+            validationRefused MissingRequiredSource [ identity "tests/input.json" shaA; identity "tests/other.json" shaB ] [ inputPath; second ] projected
+            let missingCapture = sourceParsed (withSources [ sourceJson "tests/input.json" shaA; sourceJson "tests/other.json" shaB ])
+            validationRefused UncapturedSource [ identity "tests/input.json" shaA ] [ inputPath ] missingCapture
+        }
+        test "publicly constructed malformed or ambiguous captured identities cannot authorize evidence" {
+            let projected = sourceParsed (withSources [ sourceJson "tests/input.json" shaA ])
+            validationRefused DuplicateSource [ identity "tests/input.json" shaA; identity "tests/input.json" shaB ] [ inputPath ] projected
+            validationRefused MalformedSource [ identity "../input" shaA ] [ inputPath ] projected
+            validationRefused UnsupportedSourceDigest [ identity "tests/input.json" "other:hash" ] [ inputPath ] projected
+            validationRefused DuplicateSource projected.Sources [ inputPath; inputPath ] projected
+            validationRefused MalformedSource projected.Sources [ FS.GG.Governance.Config.Model.GovernedPath "../input" ] projected
+            validationRefused MissingSource projected.Sources [ inputPath ] { projected with Sources = [] }
+        }
+        test "independent bad source entries are collected without partial success" {
+            let read = withSources [ sourceJson "../input" shaA; sourceJson "tests/input.json" "other:hash" ]
+            match Reader.parseWithSources read with
+            | Error(SourcesRejected diagnostics) -> Expect.equal diagnostics.Length 2 "both independent defects retained"
+            | other -> failtestf "partial source success: %A" other
+        }
+        test "source projection preserves legacy malformed version and synthetic-node diagnostics" {
+            for name, expected in [ "v2-major", VersionMismatch; "autoSynthetic", AutoSyntheticDeclared; "malformed", Malformed ] do
+                match Reader.parseWithSources (Fixtures.read name) with
+                | Error(HandoffRejected diagnostic) -> Expect.equal diagnostic.Cause expected "original legacy refusal"
+                | other -> failtestf "legacy error was lost: %A" other
+        }
+    ]
