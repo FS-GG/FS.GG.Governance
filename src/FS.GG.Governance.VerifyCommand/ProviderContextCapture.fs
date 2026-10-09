@@ -150,7 +150,8 @@ module ProviderContextCapture =
           mutable RootObservations: RootObservation list
           mutable Documents: HeldDocument list
           mutable Activity: System.Threading.Tasks.Task<unit> option
-          mutable CloseUncertain: bool }
+          mutable CloseUncertain: bool
+          RootLeases: System.Collections.Generic.List<FS.GG.Governance.GateExecution.Interpreter.DirectoryLease> }
     exception CaptureFault of Failure
     [<Sealed>]
     type CaptureSession(state: OwnerState) =
@@ -307,8 +308,8 @@ module ProviderContextCapture =
         for root in roots do compareRoot state root
         checkWork state
     let retire (state:OwnerState) =
-        let descriptors,uncertain=lock state.Sync (fun () -> state.Fds |> Seq.toList,state.CloseUncertain)
-        if not uncertain then
+        let descriptors,uncertain,borrowed=lock state.Sync (fun () -> state.Fds |> Seq.toList,state.CloseUncertain,state.RootLeases.Count>0)
+        if not uncertain && not borrowed then
             for fd in descriptors do closeTracked state fd
             if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
             transition state OwnedResourcesSettled
@@ -352,7 +353,7 @@ module ProviderContextCapture =
         lock state.Sync (fun () ->
             {Operation=state.Request.Operation;Model=state.Model;Roots=state.RootObservations
              Documents=state.Documents |> List.map(fun held -> held.Observation)
-             Settlement=if state.Model.Phase=Released && (state.Activity |> Option.forall(fun task -> task.IsCompleted)) then ResourcesReleased else Retained
+             Settlement=if state.Model.Phase=Released && state.Fds.Count=0 && state.RootLeases.Count=0 && not state.CloseUncertain && (state.Activity |> Option.forall(fun task -> task.IsCompleted)) then ResourcesReleased else Retained
              WorkEndReached=now.Ticks>=state.Request.Budget.WorkEnd.Ticks
              CleanupEndReached=now.Ticks>=state.Request.Budget.CleanupEnd.Ticks
              CancellationObserved=state.Request.Cancellation.IsCancellationRequested})
@@ -365,7 +366,7 @@ module ProviderContextCapture =
         if not (List.isEmpty errors) then Error errors
         else
             Ok(CaptureSession({Request=request;Sync=obj();Model=init();Fds=System.Collections.Generic.HashSet<int>()
-                               Roots=[];RootObservations=[];Documents=[];Activity=None;CloseUncertain=false}))
+                               Roots=[];RootObservations=[];Documents=[];Activity=None;CloseUncertain=false;RootLeases=System.Collections.Generic.List<_>()}))
     let inspect (session:CaptureSession) = snapshot session.State
     let capture (session:CaptureSession) =
         let state=session.State
@@ -410,10 +411,10 @@ module ProviderContextCapture =
         let state=session.State
         lock state.Sync (fun () ->
             let active=state.Activity |> Option.exists(fun task -> not task.IsCompleted)
-            if state.Model.Phase=Released && not active then Ok()
-            elif active || state.CloseUncertain then
+            if active || state.CloseUncertain || state.RootLeases.Count>0 then
                 if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 Error OwnedActivitiesPending
+            elif state.Model.Phase=Released && state.Fds.Count=0 then Ok()
             elif state.Fds.Count=0 then
                 if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 transition state ReleaseRequested
@@ -426,3 +427,22 @@ module ProviderContextCapture =
                 transition state ReleaseRequested
                 startActivity state ignore
                 Error OwnedActivitiesPending)
+
+    let borrowRepositoryRoot (session:CaptureSession) =
+        let original = revalidate session
+        let state = session.State
+        lock state.Sync (fun () ->
+            if original.Model.Phase<>Ready || original.Model.FirstFailure.IsSome || state.Model.Phase<>Ready then Error CaptureNotReady
+            else
+                match state.Roots |> List.tryFind(fun root -> root.Path=state.Request.RepositoryRoot) with
+                | None -> Error CaptureNotReady
+                | Some root ->
+                    use handle = new Microsoft.Win32.SafeHandles.SafeFileHandle(nativeint root.Fd, false)
+                    let mutable held = None
+                    let callback () = lock state.Sync (fun () -> held |> Option.iter(fun lease -> state.RootLeases.Remove lease |> ignore))
+                    match FS.GG.Governance.GateExecution.Interpreter.duplicateDirectoryLease handle root.Path state.Request.Budget state.Request.Cancellation callback with
+                    | Error _ -> Error (AcquisitionFailed("repository-root","original directory lease failed"))
+                    | Ok lease ->
+                        held <- Some lease
+                        state.RootLeases.Add lease
+                        Ok lease)

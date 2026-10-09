@@ -54,6 +54,9 @@ module Model =
 
     /// Explicit current-host inputs. The environment is captured once by the caller.
     /// Root bounds only initial cwd selection; it supplies no filesystem/network sandbox.
+    type DirectoryIdentity =
+        { DeviceMajor: uint32; DeviceMinor: uint32; Inode: uint64; MountId: uint64; ReturnedMask: uint32 }
+
     type CurrentHostPolicy =
         { Root: string; CapturedEnvironment: Map<string, string>; Descendants: DescendantAcceptance; Paths: PathAcceptance }
 

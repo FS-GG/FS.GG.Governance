@@ -192,12 +192,225 @@ module Interpreter =
     let currentInstant () : MonotonicInstant =
         { Domain = boundedClockDomain; Ticks = Stopwatch.GetTimestamp() }
 
+    module DirectoryNative =
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int fcntl(int fd, int operation, int argument)
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int statx(int fd, string path, int flags, uint32 mask, [<System.Runtime.InteropServices.Out>] byte[] data)
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int close(int fd)
+
+    [<Sealed>]
+    type DirectoryLease(fd: int, path: string, identity: DirectoryIdentity, budget: ExecutionBudget,
+                        cancellation: System.Threading.CancellationToken, onReleased: unit -> unit) =
+        let sync = obj()
+        let mutable borrowers = 0
+        let mutable closed = false
+        let mutable uncertain = false
+        let uncertainDescriptors = System.Collections.Generic.HashSet<int>()
+        member _.RetainUncertain(fd) = lock sync (fun () -> uncertainDescriptors.Add fd |> ignore; uncertain <- true)
+        member _.RequestedPath = path
+        member _.Identity = identity
+        member _.Budget = budget
+        member _.Cancellation = cancellation
+        member _.Acquire() = lock sync (fun () ->
+            if closed || uncertain || cancellation.IsCancellationRequested || Stopwatch.GetTimestamp() >= budget.WorkEnd.Ticks then
+                Error (InvalidRequest "original-root-lease-unavailable")
+            else borrowers <- borrowers + 1; Ok fd)
+        member _.Return() = lock sync (fun () -> borrowers <- borrowers - 1)
+        member _.Release() = lock sync (fun () ->
+            if closed then Ok ()
+            elif borrowers <> 0 || uncertain then Error (CleanupFailed "root-lease-borrowers-pending")
+            elif Stopwatch.GetTimestamp() >= budget.CleanupEnd.Ticks then Error CleanupDeadlineReached
+            elif DirectoryNative.close(fd) <> 0 then
+                uncertain <- true
+                Error (CleanupFailed "root-lease-close-uncertain")
+            else
+                closed <- true
+                onReleased()
+                Ok ())
+
+    let duplicateDirectoryLease (handle: Microsoft.Win32.SafeHandles.SafeFileHandle) rootPath budget cancellation onReleased =
+        if not (System.OperatingSystem.IsLinux()) || System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture <> System.Runtime.InteropServices.Architecture.X64 then
+            Error (InvalidRequest "held-cwd-requires-linux-x64")
+        elif validateBudget (currentInstant()) budget |> Option.isSome then Error (InvalidRequest "original-root-budget-invalid")
+        else
+            let mutable retained = false
+            try
+              try
+                handle.DangerousAddRef(&retained)
+                let original = handle.DangerousGetHandle().ToInt32()
+                let data = Array.zeroCreate<byte> 256
+                if DirectoryNative.statx(original,"",0x1000,0x1fffu,data) <> 0
+                   || (System.BitConverter.ToUInt16(data,28) &&& 0xf000us) <> 0x4000us
+                   || (System.BitConverter.ToUInt32(data,0) &&& 0x13c3u) <> 0x13c3u then
+                    Error (InvalidRequest "original-root-directory-identity-required")
+                else
+                    let identity =
+                        { DeviceMajor=System.BitConverter.ToUInt32(data,136); DeviceMinor=System.BitConverter.ToUInt32(data,140)
+                          Inode=System.BitConverter.ToUInt64(data,32); MountId=System.BitConverter.ToUInt64(data,144)
+                          ReturnedMask=System.BitConverter.ToUInt32(data,0) }
+                    let fd = DirectoryNative.fcntl(original,1030,3)
+                    if fd < 0 then Error (InvalidRequest "original-root-duplicate-failed")
+                    else Ok (DirectoryLease(fd,rootPath,identity,budget,cancellation,onReleased))
+              with _ -> Error (InvalidRequest "original-root-lease-acquisition-failed")
+            finally
+                if retained then handle.DangerousRelease()
+
+    let releaseDirectoryLease (lease: DirectoryLease) = lease.Release()
+
+    module ChildNative =
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern nativeint gnu_get_libc_version()
+        [<System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)>]
+        type OpenHow =
+            struct
+                val mutable Flags: uint64
+                val mutable Mode: uint64
+                val mutable Resolve: uint64
+                new(flags, resolve) = { Flags=flags; Mode=0UL; Resolve=resolve }
+            end
+        [<System.Runtime.InteropServices.DllImport("libc", EntryPoint="syscall", SetLastError=true)>]
+        extern int64 openat2(int64 number, int directory, string path, OpenHow& how, uint64 size)
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int pipe2([<System.Runtime.InteropServices.Out>] int[] fds, int flags)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int posix_spawn_file_actions_init(nativeint actions)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int posix_spawn_file_actions_destroy(nativeint actions)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int posix_spawn_file_actions_addfchdir_np(nativeint actions, int fd)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int posix_spawn_file_actions_adddup2(nativeint actions, int fd, int target)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int posix_spawn_file_actions_addclose(nativeint actions, int fd)
+        [<System.Runtime.InteropServices.DllImport("libc")>]
+        extern int pidfd_spawn(int& pidfd, string path, nativeint actions, nativeint attributes, nativeint argv, nativeint environment)
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int pidfd_send_signal(int pidfd, int signal, nativeint information, uint32 flags)
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
+        extern int waitid(int kind, uint32 identity, [<System.Runtime.InteropServices.Out>] byte[] information, int options)
+
+    // Small direct-child backend, not a supervisor. All resources stay in this same session owner.
+    type NativeChild(root: DirectoryLease, cwd: int, executable: string, arguments: string list, environment: Map<string,string>) =
+        let sync = obj()
+        let fds = System.Collections.Generic.HashSet<int>()
+        let mutable pidfd = -1
+        let mutable stdout: Stream option = None
+        let mutable stderr: Stream option = None
+        let mutable uncertain = false
+        let mutable returned = false
+        do fds.Add cwd |> ignore
+        let own fd = lock sync (fun () -> fds.Add fd |> ignore); fd
+        let close fd = lock sync (fun () ->
+            if fds.Contains fd then
+                // A failed close is not retried through a potentially recycled integer.
+                if DirectoryNative.close fd <> 0 then uncertain <- true; failwith "native-close-uncertain"
+                fds.Remove fd |> ignore)
+        let pipe () =
+            let pair = [|-1; -1|]
+            if ChildNative.pipe2(pair, 0x80000) <> 0 then failwith "native-pipe"
+            own pair[0] |> ignore
+            own pair[1] |> ignore
+            pair
+        let stream fd : Stream =
+            new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(nativeint fd, false), FileAccess.Read, 4096, false) :> Stream
+        member _.Cancellation = root.Cancellation
+        member _.Stdout = stdout.Value
+        member _.Stderr = stderr.Value
+        member _.Start() =
+            let actions = System.Runtime.InteropServices.Marshal.AllocHGlobal 80
+            let allocated = System.Collections.Generic.List<nativeint>()
+            let mutable initialized = false
+            let table values =
+                let strings = values |> List.map(fun value ->
+                    let pointer = System.Runtime.InteropServices.Marshal.StringToCoTaskMemUTF8 value
+                    allocated.Add pointer
+                    pointer)
+                let pointer = System.Runtime.InteropServices.Marshal.AllocCoTaskMem ((strings.Length+1)*8)
+                allocated.Add pointer
+                strings |> List.iteri(fun i value -> System.Runtime.InteropServices.Marshal.WriteIntPtr(pointer,i*8,value))
+                System.Runtime.InteropServices.Marshal.WriteIntPtr(pointer,strings.Length*8,nativeint 0)
+                pointer
+            let require result = if result <> 0 then failwith "native-spawn-actions"
+            try
+                require (ChildNative.posix_spawn_file_actions_init actions)
+                initialized <- true
+                let outPipe = pipe()
+                let errPipe = pipe()
+                // Streams are owned before spawn; acquisition never loses an already running child.
+                stdout <- Some (stream outPipe[0])
+                stderr <- Some (stream errPipe[0])
+                require (ChildNative.posix_spawn_file_actions_addfchdir_np(actions,cwd))
+                require (ChildNative.posix_spawn_file_actions_adddup2(actions,outPipe[1],1))
+                require (ChildNative.posix_spawn_file_actions_adddup2(actions,errPipe[1],2))
+                for fd in Array.append outPipe errPipe do
+                    require (ChildNative.posix_spawn_file_actions_addclose(actions,fd))
+                let argv = table (executable::arguments)
+                let envp = table (environment |> Map.toList |> List.map(fun (name,value) -> name+"="+value))
+                let mutable selected = -1
+                let result = ChildNative.pidfd_spawn(&selected,executable,actions,nativeint 0,argv,envp)
+                if selected >= 0 then pidfd <- own selected
+                close outPipe[1]
+                close errPipe[1]
+                if result <> 0 then
+                    if selected >= 0 then failwith "native-spawn-outcome-unknown"
+                    Error (LaunchFailed ("pidfd-spawn-errno="+string result))
+                elif selected < 0 then failwith "native-spawn-identity-unavailable"
+                else Ok ()
+            finally
+                if initialized && ChildNative.posix_spawn_file_actions_destroy actions <> 0 then uncertain <- true
+                System.Runtime.InteropServices.Marshal.FreeHGlobal actions
+                for pointer in allocated do System.Runtime.InteropServices.Marshal.FreeCoTaskMem pointer
+        member _.Wait() =
+            let information = Array.zeroCreate<byte> 128
+            let mutable observing = true
+            while observing do
+                let result = ChildNative.waitid(3,uint32 pidfd,information,4)
+                if result = 0 then observing <- false
+                elif System.Runtime.InteropServices.Marshal.GetLastPInvokeError() <> 4 then failwith "native-pidfd-wait"
+            // si_pid is namespace-local observation only, never a reconstructed signaling identity.
+            let code = System.BitConverter.ToInt32(information,8)
+            let status = System.BitConverter.ToInt32(information,24)
+            if code = 1 then ExitCode status
+            elif code = 2 || code = 3 then ExitCode (128+status)
+            else failwith "native-pidfd-exit-kind"
+        member _.Stop() =
+            lock sync (fun () ->
+                if pidfd < 0 then Error StopIdentityUnknown
+                elif ChildNative.pidfd_send_signal(pidfd,9,nativeint 0,0u) = 0 then Ok ()
+                elif System.Runtime.InteropServices.Marshal.GetLastPInvokeError() = 3 then Ok ()
+                else Error (CleanupFailed "pidfd-stop-failed"))
+        member _.CloseStreams() =
+            // Readers retain their streams until settled; pidfd stop ends cooperative direct writers.
+            stdout |> Option.iter(fun value -> value.Dispose())
+            stderr |> Option.iter(fun value -> value.Dispose())
+        member _.Dispose() =
+            lock sync (fun () ->
+                if uncertain then failwith "native-resources-close-uncertain"
+                stdout |> Option.iter(fun value -> value.Dispose())
+                stderr |> Option.iter(fun value -> value.Dispose())
+                for fd in fds |> Seq.toArray do close fd
+                if not returned then returned <- true; root.Return())
+
     // Local mutation is confined to this retained I/O owner. No lock spans a BCL blocking operation.
     // Every Task is assigned to its owner before Start; no finalizer/disposal abandons retained work.
     [<Sealed>]
-    type ExecutionSession(request: BoundedRequest, startInfo: ProcessStartInfo, beforeStart: unit -> Result<unit, BoundedFailure>) =
+    type ExecutionSession(request: BoundedRequest, startInfo: ProcessStartInfo, beforeStart: unit -> Result<unit, BoundedFailure>, ?nativeChild: NativeChild) =
+        let cancellationRequested () = request.Cancellation.IsCancellationRequested || (nativeChild |> Option.exists(fun child -> child.Cancellation.IsCancellationRequested))
         let gate = obj ()
         let ownedChild = new Process(StartInfo = startInfo)
+        let startChild () =
+            match nativeChild with
+            | Some child -> child.Start()
+            | None -> if ownedChild.Start() then Ok () else Error (LaunchFailed "start-returned-false")
+        let stdoutStream () = match nativeChild with Some child -> child.Stdout | None -> ownedChild.StandardOutput.BaseStream
+        let stderrStream () = match nativeChild with Some child -> child.Stderr | None -> ownedChild.StandardError.BaseStream
+        let waitChild () =
+            match nativeChild with
+            | Some child -> child.Wait()
+            | None -> ownedChild.WaitForExit(); ExitCode ownedChild.ExitCode
+        let stopChild () = match nativeChild with Some child -> child.Stop() | None -> Error StopIdentityUnknown
         let stdoutPrefix = Array.zeroCreate<byte> (int (min request.Limits.StdoutBytes request.Limits.AggregateBytes))
         let stderrPrefix = Array.zeroCreate<byte> (int (min request.Limits.StderrBytes request.Limits.AggregateBytes))
         let mutable stdoutRetained = 0
@@ -305,8 +518,9 @@ module Interpreter =
                     // This task remains owned if close blocks or fails. Closing a pipe never establishes EOF.
                     startOwned (fun t -> closeTask <- Some t) (fun () ->
                         try
-                            ownedChild.StandardOutput.BaseStream.Dispose()
-                            ownedChild.StandardError.BaseStream.Dispose()
+                            match nativeChild with
+                            | Some child -> child.CloseStreams()
+                            | None -> stdoutStream().Dispose(); stderrStream().Dispose()
                         with _ -> lock gate (fun () -> fail (CleanupFailed "pipe-close"))))
 
         let canRelease () =
@@ -335,6 +549,7 @@ module Interpreter =
                             match closing with Some t -> t.Wait() | None -> ()
                             let safe = lock gate (fun () -> canRelease ())
                             if safe then
+                                nativeChild |> Option.iter(fun child -> child.Dispose())
                                 ownedChild.Dispose()
                                 lock gate (fun () ->
                                     if stdoutState = Pending then stdoutState <- ClosedBeforeEndOfFile
@@ -375,7 +590,7 @@ module Interpreter =
                     let model, effects = updateDirect RunRequested workflow
                     workflow <- model
                     if effects = [LaunchDirectChild] then
-                        if request.Cancellation.IsCancellationRequested then
+                        if cancellationRequested() then
                             cancelled <- true
                             fail CancellationRequested
                             false
@@ -395,17 +610,19 @@ module Interpreter =
                                     | Error cause -> lock gate (fun () -> launch <- NotStarted; fail cause)
                                     | Ok () ->
                                         // Revalidate cancellation/deadline after mutable path checks, before Start.
-                                        let permitted = lock gate (fun () -> not request.Cancellation.IsCancellationRequested && now () < workEnd)
+                                        let permitted = lock gate (fun () -> not (cancellationRequested()) && now () < workEnd)
                                         if not permitted then
                                             lock gate (fun () ->
                                                 launch <- NotStarted
-                                                if request.Cancellation.IsCancellationRequested then cancelled <- true; fail CancellationRequested
+                                                if cancellationRequested() then cancelled <- true; fail CancellationRequested
                                                 else expired <- true; fail WorkDeadlineReached)
-                                        elif ownedChild.Start() then
+                                        else
+                                          match startChild() with
+                                          | Ok () ->
                                             lock gate (fun () ->
                                                 launch <- Started
                                                 workflow <- updateDirect LaunchObserved workflow |> fst
-                                                if request.Cancellation.IsCancellationRequested && not cancelled then
+                                                if cancellationRequested() && not cancelled then
                                                     cancelled <- true
                                                     fail CancellationRequested
                                                 if now () >= workEnd && not expired then
@@ -413,20 +630,19 @@ module Interpreter =
                                                     fail WorkDeadlineReached
                                                 if workflow.FirstFailure.IsSome && not stopIdentityReported then
                                                     stopIdentityReported <- true
-                                                    fail StopIdentityUnknown
-                                                startOwned (fun t -> stdoutTask <- Some t) (fun () -> readStream true ownedChild.StandardOutput.BaseStream)
-                                                startOwned (fun t -> stderrTask <- Some t) (fun () -> readStream false ownedChild.StandardError.BaseStream)
+                                                    (match stopChild() with Error cause -> fail cause | Ok () -> ())
+                                                startOwned (fun t -> stdoutTask <- Some t) (fun () -> readStream true (stdoutStream()))
+                                                startOwned (fun t -> stderrTask <- Some t) (fun () -> readStream false (stderrStream()))
                                                 startOwned (fun t -> exitTask <- Some t) (fun () ->
                                                     try
-                                                        ownedChild.WaitForExit()
-                                                        let observed = ExitCode ownedChild.ExitCode
+                                                        let observed = waitChild()
                                                         lock gate (fun () ->
                                                             exit <- Some observed
                                                             if now () >= workEnd && not expired then
                                                                 expired <- true
                                                                 fail WorkDeadlineReached)
                                                     with _ -> lock gate (fun () -> fail (CleanupFailed "direct-exit-observation"))))
-                                        else lock gate (fun () -> launch <- NotStarted; fail (LaunchFailed "start-returned-false"))
+                                          | Error cause -> lock gate (fun () -> launch <- NotStarted; fail cause)
                                 with _ ->
                                     lock gate (fun () ->
                                         if launch = Started then
@@ -442,16 +658,16 @@ module Interpreter =
             while observing && now () < request.Budget.CleanupEnd.Ticks do
                 let retiring =
                     lock gate (fun () ->
-                        if request.Cancellation.IsCancellationRequested && not cancelled then cancelled <- true; fail CancellationRequested
+                        if cancellationRequested() && not cancelled then cancelled <- true; fail CancellationRequested
                         let usefulPending = exit.IsNone || not (completed stdoutTask && completed stderrTask)
                         if usefulPending && now () >= workEnd && not expired then expired <- true; fail WorkDeadlineReached
                         workflow.FirstFailure.IsSome)
                 if retiring then
                     lock gate (fun () ->
-                        // Runtime generation-safe signaling is unqualified: no Kill/PID signal is attempted.
+                        // Native profile signals only its held pidfd; CurrentHost still refuses stop identity.
                         if launch = Started && exit.IsNone && not stopIdentityReported then
                             stopIdentityReported <- true
-                            fail StopIdentityUnknown)
+                            (match stopChild() with Error cause -> fail cause | Ok () -> ()))
                     requestClose ()
                 requestRelease ()
                 observing <- lock gate (fun () -> not (released && completed releaseTask))
@@ -636,3 +852,101 @@ module Interpreter =
                                 | Ok _ -> Ok ()
                         Ok (ExecutionSession(request, startInfo, beforeStart))
         with _ -> Error [InvalidRequest "request-preparation-failed"]
+
+    let prepareHeldCwd (root: DirectoryLease) (GovernedPath relativeCwd) (request: BoundedRequest) =
+        let mutable borrowed = false
+        let mutable cwd = -1
+        let handback () =
+            if cwd >= 0 then
+                if DirectoryNative.close cwd <> 0 then
+                    root.RetainUncertain cwd
+                    borrowed <- false // Original root owns the uncertain borrow; it cannot release.
+                cwd <- -1
+            if borrowed then root.Return(); borrowed <- false
+        try
+            let now = currentInstant()
+            let (Executable executable) = request.Command.Executable
+            let (WorkingDirectory selectedCwd) = request.Command.WorkingDirectory
+            let (TimeoutLimit seconds) = request.Command.Timeout
+            let relativeValid =
+                validText 4096 relativeCwd && not (System.String.IsNullOrWhiteSpace relativeCwd)
+                && not (Path.IsPathFullyQualified relativeCwd) && not (relativeCwd.Contains '\\')
+                && (relativeCwd = "." || (relativeCwd.Split('/') |> Array.forall(fun part -> part <> "" && part <> "." && part <> "..")))
+            let normalizedCwd = if relativeValid then Path.GetFullPath(Path.Combine(root.RequestedPath,relativeCwd)) else ""
+            let failures =
+                [ if not (System.OperatingSystem.IsLinux()) || System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture <> System.Runtime.InteropServices.Architecture.X64 then
+                      yield InvalidRequest "held-cwd-requires-linux-x64"
+                  match validateBudget now request.Budget with Some cause -> yield cause | None -> ()
+                  if request.Budget.WorkEnd.Domain <> root.Budget.WorkEnd.Domain || request.Budget.CleanupEnd.Domain <> root.Budget.CleanupEnd.Domain
+                     || request.Budget.WorkEnd.Ticks > root.Budget.WorkEnd.Ticks || request.Budget.CleanupEnd.Ticks > root.Budget.CleanupEnd.Ticks then
+                      yield InvalidRequest "held-root-original-budget-exceeded"
+                  if request.Policy.Root <> root.RequestedPath then yield InvalidRequest "held-root-selection-differs"
+                  if request.Policy.Descendants <> AcceptUncontainedUnobservedDescendants then yield (InvalidRequest "descendant-containment-unavailable")
+                  if request.Policy.Paths <> RequireStableAtomicPathBinding then yield InvalidRequest "explicit-held-cwd-policy-required"
+                  if not relativeValid || (selectedCwd <> relativeCwd && selectedCwd <> normalizedCwd) then yield InvalidRequest "held-cwd-selection-invalid"
+                  if not (validText 128 request.Identity.Operation && validText 128 request.Identity.Launch)
+                     || System.String.IsNullOrWhiteSpace request.Identity.Operation || System.String.IsNullOrWhiteSpace request.Identity.Launch then
+                      yield InvalidRequest "original-launch-identity-invalid"
+                  if not (validText 4096 executable) || not (Path.IsPathFullyQualified executable) then yield InvalidRequest "absolute-executable-required"
+                  if request.Command.Arguments |> List.exists(fun (Argument value) -> not (validText 32768 value)) then yield InvalidRequest "literal-argument-invalid"
+                  if seconds <= 0 then yield InvalidRequest "command-timeout-invalid"
+                  if request.Limits.StdoutBytes < 0L || request.Limits.StderrBytes < 0L || request.Limits.AggregateBytes < 0L
+                     || request.Limits.StdoutBytes > int64 System.Int32.MaxValue || request.Limits.StderrBytes > int64 System.Int32.MaxValue
+                     || request.Limits.AggregateBytes > int64 System.Int32.MaxValue then yield InvalidRequest "capture-limits-invalid" ]
+            if not failures.IsEmpty then Error (failures |> List.distinct |> List.truncate 8)
+            else
+                match capturedEnvironment request.Policy.CapturedEnvironment request.Command.Environment with
+                | Error cause -> Error [cause]
+                | Ok environment ->
+                    // The pidfd_spawn exec-failure cleanup fix is required, not inferred from symbol existence.
+                    let versionText = System.Runtime.InteropServices.Marshal.PtrToStringAnsi(ChildNative.gnu_get_libc_version())
+                    let mutable version = Unchecked.defaultof<System.Version>
+                    if not (System.Version.TryParse(versionText, &version)) || version < System.Version(2,40) then
+                        failwith "pidfd-spawn-requires-glibc-exec-failure-fix"
+                    // Symbol checks precede acquisition; unsupported libc never falls back to BCL launch.
+                    let library = System.Runtime.InteropServices.NativeLibrary.Load "libc.so.6"
+                    try
+                        for symbol in ["pidfd_spawn";"posix_spawn_file_actions_addfchdir_np";"pidfd_send_signal";"waitid"] do
+                            System.Runtime.InteropServices.NativeLibrary.GetExport(library,symbol) |> ignore
+                    finally System.Runtime.InteropServices.NativeLibrary.Free library
+                    match root.Acquire() with
+                    | Error cause -> Error [cause]
+                    | Ok rootFd ->
+                        borrowed <- true
+                        let mutable how = ChildNative.OpenHow(0x290000UL,0x0dUL)
+                        let selected = ChildNative.openat2(437L,rootFd,relativeCwd,&how,24UL)
+                        if selected < 0L then
+                            handback()
+                            Error [InvalidRequest "held-cwd-acquisition-failed"]
+                        else
+                            cwd <- int selected
+                            let heldIdentity fd =
+                                let bytes = Array.zeroCreate<byte> 256
+                                if DirectoryNative.statx(fd,"",0x1000,0x1fffu,bytes) <> 0 then failwith "held-directory-stat"
+                                { DeviceMajor=System.BitConverter.ToUInt32(bytes,136); DeviceMinor=System.BitConverter.ToUInt32(bytes,140)
+                                  Inode=System.BitConverter.ToUInt64(bytes,32); MountId=System.BitConverter.ToUInt64(bytes,144)
+                                  ReturnedMask=System.BitConverter.ToUInt32(bytes,0) }
+                            let originalCwd = heldIdentity cwd
+                            let visibleIdentity path =
+                                let bytes = Array.zeroCreate<byte> 256
+                                if DirectoryNative.statx(-100,path,0x100,0x1fffu,bytes) <> 0 then None
+                                else Some { DeviceMajor=System.BitConverter.ToUInt32(bytes,136); DeviceMinor=System.BitConverter.ToUInt32(bytes,140)
+                                            Inode=System.BitConverter.ToUInt64(bytes,32); MountId=System.BitConverter.ToUInt64(bytes,144)
+                                            ReturnedMask=System.BitConverter.ToUInt32(bytes,0) }
+                            let beforeStart () =
+                                match validateBudget (currentInstant()) request.Budget with
+                                | Some cause -> Error cause
+                                | None when root.Cancellation.IsCancellationRequested -> Error CancellationRequested
+                                | None when visibleIdentity root.RequestedPath <> Some root.Identity || visibleIdentity normalizedCwd <> Some originalCwd ->
+                                    Error (InvalidRequest "original-held-directory-binding-changed")
+                                | None -> Ok ()
+                            let child = NativeChild(root,cwd,executable,request.Command.Arguments |> List.map(fun (Argument value) -> value),environment)
+                            let startInfo = buildStartInfo request.Command
+                            startInfo.WorkingDirectory <- normalizedCwd
+                            let session = ExecutionSession(request,startInfo,beforeStart,nativeChild=child)
+                            borrowed <- false
+                            cwd <- -1
+                            Ok session
+        with _ ->
+            handback()
+            Error [InvalidRequest "held-cwd-native-preparation-failed"]
