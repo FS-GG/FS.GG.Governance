@@ -8,11 +8,14 @@ The release surface this feature adds. Modeled on `FS-GG/FS.GG.SDD/.github/workf
 |---|---|
 | `release: types: [published]` | publish on a GitHub Release |
 | `push: tags: ['v*']` | publish on an annotated version tag |
-| `workflow_dispatch` | manual run / dry-run (optional `version` input for validation) |
+| `workflow_dispatch` | manual run / dry-run; `scope=all` (default) or `config`, optional matching `version` |
 
 ## Version source
 
-- Read from `src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj` via `dotnet msbuild -getProperty:Version`.
+- Default `all` and tag/release routes read `src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj` via `dotnet msbuild -getProperty:Version`.
+- Manual `scope=config` evaluates only Config's project. Explicit `version` must match that version;
+  omitted version performs qualification/pack with no push. Unknown scope and forced Config selection
+  on a nonmanual event refuse before project evaluation. See the [Config extension](../../094-nuget-org-publish/contracts/publish-workflow-nuget-org.md#config-resolver-library-extension-gov-423-c3).
 - A `v<semver>` tag MUST equal the fsproj `<Version>` (e.g. tag `v1.1.0` ↔ `<Version>1.1.0`). Mismatch fails the run (no hardcoded version anywhere).
 
 ## Permissions
@@ -22,8 +25,8 @@ The release surface this feature adds. Modeled on `FS-GG/FS.GG.SDD/.github/workf
 
 ## Jobs (ordered; push is last and gated)
 
-1. **resolve-version** — read + echo the fsproj `<Version>`; fail if unreadable or (on a tag) mismatched.
-2. **cli-tests** — locked restore (`--locked-mode`) + `dotnet test tests/FS.GG.Governance.Cli.Tests/...` (mirrors SDD's `cli-tests`).
+1. **resolve-version** — validate/export scope, read + echo the selected fsproj `<Version>`; fail if unreadable or mismatched. All eight non-Config jobs require validated `all` scope; Config-only mode runs only this resolver and `publish-config`.
+2. **cli-tests** — depends on the resolver, then locked restore (`--locked-mode`) + `dotnet test tests/FS.GG.Governance.Cli.Tests/...` (mirrors SDD's `cli-tests`).
 3. **enforcement-smoke** — the green-by-omission guard (see `cli-enforcement.md`): pack → `dotnet tool install` into a temp dir → run `fsgg-governance route --mode gate` against the committed fixtures → assert exit `2`/`0` → assert `Adapters.SddHandoff.dll` present in the package. MUST pass before push.
 4. **publish** (`packages: write`) — `dotnet pack -c Release` the CLI, then:
    ```sh

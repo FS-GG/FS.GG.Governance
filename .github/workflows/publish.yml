@@ -34,8 +34,14 @@ on:
     tags: ['v*']
   workflow_dispatch:
     inputs:
+      scope:
+        description: "Packages to qualify/publish. Config selects only the resolver library."
+        type: choice
+        options: [all, config]
+        default: all
+        required: false
       version:
-        description: "Explicit version to publish (e.g. 1.1.0). Omit for a pack-only dry run (no push)."
+        description: "Explicit selected-project version (CLI for all, Config for config). Omit for no push."
         type: string
         required: false
 
@@ -63,15 +69,16 @@ env:
   NUGET_FALLBACK_USER: Paradigma11
 
 jobs:
-  # Source of truth is the EVALUATED CLI fsproj <Version> (msbuild -getProperty, not a grep). A
+  # Source of truth is the evaluated selected project version; all/tag routes remain CLI-led. A
   # version-bearing tag (v<semver>) MUST equal it; mismatch fails (no hardcoded version anywhere). A
   # dry-run dispatch (no version input) packs but does not push (FR-007 fail-safe: never silently skip).
   resolve-version:
-    name: Resolve version (CLI fsproj)
+    name: Resolve selected scope and project version
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.repository == 'FS-GG/FS.GG.Governance'
     outputs:
+      scope: ${{ steps.ver.outputs.scope }}
       version: ${{ steps.ver.outputs.version }}
       push: ${{ steps.ver.outputs.push }}
     steps:
@@ -93,15 +100,28 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_VERSION: ${{ inputs.version }}
+          INPUT_SCOPE: ${{ inputs.scope }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           strip_v() { printf '%s' "${1#v}"; }
 
-          version="$(dotnet msbuild src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj -getProperty:Version)"
+          scope="${INPUT_SCOPE:-all}"
+          case "$scope" in
+            all|config) ;;
+            *) echo "::error::unknown publication scope '$scope'"; exit 1 ;;
+          esac
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ "$scope" != "all" ]; then
+            echo '::error::Config-only selection requires manual dispatch'; exit 1
+          fi
+          project="src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj"
+          if [ "$scope" = "config" ]; then
+            project="src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj"
+          fi
+          version="$(dotnet msbuild "$project" -getProperty:Version)"
           version="$(printf '%s' "$version" | tr -d '[:space:]')"
-          [ -n "$version" ] || { echo "::error::could not read <Version> from FS.GG.Governance.Cli.fsproj (build defect)."; exit 1; }
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] || { echo "::error::invalid <Version> from $project"; exit 1; }
 
           push=""
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
@@ -114,7 +134,7 @@ jobs:
               push="true"
             else
               push="false"
-              echo "::notice::dry run — packing FS.GG.Governance.Cli $version but NOT pushing (manual dispatch with no version input)."
+              echo "::notice::dry run — packing scope=$scope version=$version but NOT pushing (manual dispatch with no version input)."
             fi
           else
             # release: published OR push: tags v* — a real publish from the fsproj version.
@@ -134,9 +154,10 @@ jobs:
             push="true"
           fi
 
+          echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "push=$push" >> "$GITHUB_OUTPUT"
-          echo "Resolved: version=$version push=$push (event=$EVENT_NAME)"
+          echo "Resolved: scope=$scope version=$version push=$push (event=$EVENT_NAME)"
 
   # Pre-publish gate #1: the CLI test suite (mirrors SDD's cli-tests). Locked restore so a graph drift
   # fails here, not quietly downstream. `publish` does not start until this is green.
@@ -144,7 +165,8 @@ jobs:
     name: CLI tests (publish gate)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    needs: [resolve-version]
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -184,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [resolve-version, cli-tests]
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -219,7 +241,7 @@ jobs:
     needs: [resolve-version, cli-tests, enforcement-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
@@ -314,7 +336,7 @@ jobs:
     needs: [resolve-version]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
@@ -404,7 +426,7 @@ jobs:
     needs: [resolve-version]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
@@ -572,7 +594,7 @@ jobs:
     needs: [resolve-version, publish-kernel]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
@@ -772,7 +794,7 @@ jobs:
     needs: [resolve-version]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
@@ -907,7 +929,7 @@ jobs:
             --api-key "${{ steps.code-checks-nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
 
-  # GOV-423-C3: independent Config library output; CLI still owns trigger/dry-run selection.
+  # GOV-423-C3: independent Config library output; validated scope selects all or Config alone.
   publish-config:
     name: Pack + publish FS.GG.Governance.Config
     needs: [resolve-version]
@@ -1029,7 +1051,7 @@ jobs:
     needs: [resolve-version]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
