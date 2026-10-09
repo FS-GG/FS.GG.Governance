@@ -45,6 +45,8 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule
   [Method] System.String render(Model, OutputFormat)
   [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] init(RunRequest)
   [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] update(Msg, Model)
+  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] initProviderPlanning(RunRequest, ProviderPlanningInput)
+  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] updateProviderPlanning(Msg, ProviderModel)
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ArtifactKind
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect
@@ -55,6 +57,8 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+OutputFormat
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Phase
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderPlanningInput
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+RunRequest
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ScopeSelector
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+UsageError
@@ -585,6 +589,42 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Phase+Tags
   [Field] Int32 Rolled
   [Field] Int32 Selected
   [Field] Int32 Sensed'
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
+  [Constructor] Void .ctor(Model, ProviderPlanningInput, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic])
+  [Method] Boolean Equals(ProviderModel)
+  [Method] Boolean Equals(ProviderModel, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderModel)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan] get_Plan()
+  [Method] Model get_Legacy()
+  [Method] ProviderPlanningInput get_Input()
+  [Method] System.String ToString()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan] Plan
+  [Property] Model Legacy
+  [Property] ProviderPlanningInput Input
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderPlanningInput
+  [Constructor] Void .ctor(ResolutionRequest, ProviderCommandContext)
+  [Method] Boolean Equals(ProviderPlanningInput)
+  [Method] Boolean Equals(ProviderPlanningInput, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(ProviderPlanningInput)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ProviderCommandContext get_CommandContext()
+  [Method] ResolutionRequest get_ResolutionRequest()
+  [Method] System.String ToString()
+  [Property] ProviderCommandContext CommandContext
+  [Property] ResolutionRequest ResolutionRequest
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+RunRequest
   [Constructor] Void .ctor(System.String, ScopeSelector, Profile, OutputFormat, System.String, System.String, Boolean, Boolean, System.String, System.String)
   [Method] Boolean Equals(RunRequest)

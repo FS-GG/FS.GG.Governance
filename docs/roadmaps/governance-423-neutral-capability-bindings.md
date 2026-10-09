@@ -283,3 +283,25 @@ native read or uncertain descriptor close: those physical retention paths remain
 API/primitive checks and static review do not substitute for that coverage. Full loader/Program wiring,
 strong provider profile and coherent SDD package joins remain open, so GOV423-C2 is not complete.
 Original custody unknowns and the attributed telemetry gap remain retained.
+
+
+### GOV423-C2 Verify planning transition (2026-10-09)
+
+The [provider Loop join](../governance-design/neutral-capability-bindings.md#gov423-c2-verify-planning-transition-2026-10-09)
+is locally validated. Eight synthetic normalized-input tests exercise actual Verify selection and
+complete-request refusal. Actual Release compilation and the full Verify suite passed: 208 tests,
+zero failures/errors; 15 physical capture cases remain pending. Legacy goldens and three surface/
+dependency checks passed. Reflected changes add two entry points and two records while preserving
+legacy constructors.
+
+The shared catalog runtime harness observed stable declared product source/test/surface/config
+identities and process exit/stream closure. Full-suite tests used its explicitly selected PID
+namespace backend; this is test-process custody, not provider environment qualification. Two
+preceding test-source compiler failures, a malformed runner invocation and two identity refusals
+from generated readiness sidecars remain retained separately. The final identity scope excludes
+runtime readiness output; earlier failed results remain failed.
+
+Source delivery/coherent hosted checks, actual package-backed loader/runtime/evidence joins and
+producer acceptance remain open. Program stays legacy and valid provider plans remain explicitly
+non-passing. GOV423-C2, publication/carrier selection and installed adoption remain incomplete;
+existing custody unknowns and the attributed telemetry gap are unchanged.

@@ -250,3 +250,23 @@ native read or uncertain descriptor close: those physical retention paths remain
 API/primitive checks and static review do not substitute for that coverage. Full loader/Program wiring,
 strong provider profile and coherent SDD package joins remain open, so GOV423-C2 is not complete.
 Original custody unknowns and the attributed telemetry gap remain retained.
+
+
+### GOV423-C2 Verify planning transition (2026-10-09)
+
+[`Loop.initProviderPlanning` and `Loop.updateProviderPlanning`](../../src/FS.GG.Governance.VerifyCommand/Loop.fsi)
+join the complete normalized Config request to Verify's actual routing and inherited/effective gate
+selection. Separate `ProviderModel` state preserves legacy `Model` and `RunRequest` constructors.
+The command context supplies declared host inputs without establishing runtime authority; the
+cost ceiling comes from the existing Verify profile policy.
+
+On `Loaded(Valid ...)`, the provider transition reuses legacy pure selection but withholds its
+effects until the existing complete-request planner returns. Invalid declarations retain exact
+Config diagnostics and exit `InputUnavailable`, before empty selection or freshness/store/reuse.
+Valid plans retain literal argv, effective floors and executable/semantic-only/deferred/unsupported
+classifications, then exit `Blocked` with an explicit execution/evidence-acceptance-not-connected
+diagnostic. It emits no legacy execution or store effects and writes no provider cache records.
+
+Program and Interpreter remain on the legacy route. Package-backed parsing, independent policy
+conversion, pre-dispatch revalidation, qualified provider execution and evidence consumers remain
+open. This planning join does not supply actual producer-to-Verify acceptance or complete C2.
