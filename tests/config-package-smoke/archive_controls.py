@@ -47,10 +47,20 @@ unsafe = urllib.request.HTTPRedirectHandler().redirect_request(*redirect_args)
 assert unsafe.get_header('Authorization') == 'Basic synthetic-control-only'
 safe = CredentialSafeRedirect().redirect_request(*redirect_args)
 assert safe.get_header('Authorization') is None and safe.get_header('Accept') == 'application/octet-stream'
+for destination, authenticated in [
+    ('https://nuget.pkg.github.com/next', True),
+    ('https://NUGET.PKG.GITHUB.COM:443/next', True),
+    ('https://nuget.pkg.github.com:444/next', False),
+    ('http://nuget.pkg.github.com/next', False),
+    ('https://storage.invalid/next', False),
+]:
+    redirected = CredentialSafeRedirect().redirect_request(request, None, 302, 'Found', {}, destination)
+    assert (redirected.get_header('Authorization') == 'Basic synthetic-control-only') == authenticated
+    assert redirected.get_header('Accept') == 'application/octet-stream'
 with mock.patch('urllib.request.build_opener') as opener:
     credential_safe_open(request, timeout=30)
     assert isinstance(opener.call_args.args[0], CredentialSafeRedirect)
-print('Faithful urllib redirect control passed: archive reader removes redirected Authorization')
+print('Faithful urllib redirect controls passed: same-origin Authorization retained; cross-origin removed')
 
 with tempfile.TemporaryDirectory() as root:
     path = Path(root) / 'FS.GG.Governance.Config.0.3.0.nupkg'
@@ -312,6 +322,27 @@ with tempfile.TemporaryDirectory(prefix='config-recovery-controls-') as director
         with mock.patch('archive.credential_safe_open', side_effect=both_equal):
             collision(SimpleNamespace(**{**vars(args),'outputs':str(equal_outputs),'require_present':True}))
         assert equal_outputs.read_text().splitlines() == ['org=equal','public=equal']
+        # The service index cannot authorize sending Basic credentials to another origin.
+        for archive_base, authenticated in [
+            ('https://org.invalid/flat/', True),
+            ('https://ORG.INVALID:443/flat/', True),
+            ('https://org.invalid:444/flat/', False),
+            ('http://org.invalid/flat/', False),
+            ('https://storage.invalid/flat/?signed=synthetic-private-query', False),
+        ]:
+            observed = []
+            def indexed_endpoint(request, timeout):
+                observed.append((request.full_url, request.get_header('Authorization')))
+                if request.full_url in [org, public]:
+                    base = archive_base if request.full_url == org else public + '/flat/'
+                    return io.BytesIO(json.dumps({'resources':[{'@type':'PackageBaseAddress/3.0.0','@id':base}]}).encode())
+                return io.BytesIO(selected.read_bytes())
+            with mock.patch('archive.credential_safe_open', side_effect=indexed_endpoint):
+                collision(SimpleNamespace(**{**vars(args),'require_present':True}))
+            assert observed[0][1].startswith('Basic ')
+            assert (observed[1][1] is not None) == authenticated
+            assert observed[2][1] is None and observed[3][1] is None
+        print('Index endpoint controls passed: org credentials restricted to org origin')
         with mock.patch('archive.credential_safe_open', side_effect=urllib.error.HTTPError(org, 403, 'synthetic unknown', {}, None)):
             refused('inaccessible-feed', lambda: collision(args))
         observation = json.loads(Path(manifest).with_name('feed-observations.json').read_text())[-1]

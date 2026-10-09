@@ -141,10 +141,17 @@ QUALIFICATION_STEPS = ['Restore (locked, cold)', 'Test complete Config suite',
                        'Identify exact Config archive', 'Config package consumer smoke',
                        'Validate complete Config retention']
 
+def origin(url):
+    parsed = urllib.parse.urlsplit(url)
+    require(parsed.scheme.lower() in ('http', 'https') and parsed.hostname, 'invalid feed origin')
+    return (parsed.scheme.lower(), parsed.hostname.lower(),
+            parsed.port if parsed.port is not None else (443 if parsed.scheme.lower() == 'https' else 80))
+
+
 class CredentialSafeRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, *redirect):
         redirected = super().redirect_request(request, *redirect)
-        if redirected is not None:
+        if redirected is not None and origin(request.full_url) != origin(redirected.full_url):
             redirected.remove_header('Authorization')
         return redirected
 
@@ -386,7 +393,7 @@ def collision(args):
     for feed in [args.org_source, args.public_source]:
         def fetch(url, stage, absent=False):
             headers = {}
-            if feed == args.org_source:
+            if feed == args.org_source and origin(url) == origin(args.org_source):
                 actor, token = os.environ['FSGG_PACKAGES_ACTOR'], os.environ['FSGG_PACKAGES_READ_TOKEN']
                 headers['Authorization'] = 'Basic ' + base64.b64encode((actor + ':' + token).encode()).decode()
             try:
