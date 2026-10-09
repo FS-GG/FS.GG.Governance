@@ -20,6 +20,7 @@
     <Compile Include="ProviderContextCaptureTests.fs" />
     <Compile Include="ParseTests.fs" />
     <Compile Include="LoopTests.fs" />
+    <Compile Include="ProviderPlanningTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="CurrencyTests.fs" />
     <Compile Include="ReuseTests.fs" />

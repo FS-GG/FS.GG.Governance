@@ -103,6 +103,12 @@ module Loop =
         | EmptyPaths
         | UnrecognizedProfile of string
 
+    /// Complete normalized provider request plus independently admitted execution inputs.
+    /// Planning does not supply runtime custody or evidence acceptance.
+    type ProviderPlanningInput =
+        { ResolutionRequest: FS.GG.Governance.Config.CapabilityBindings.ResolutionRequest
+          CommandContext: FS.GG.Governance.GateRun.Plan.ProviderCommandContext }
+
     /// Additive invocation wrapper; the old RunRequest and legacy parse/run entry points stay intact.
     type Invocation =
         { Request: RunRequest
@@ -282,6 +288,13 @@ module Loop =
             Exit: ExitDecision
         }
 
+    /// Separate provider state preserves every legacy Model constructor.
+    type ProviderModel =
+        { Legacy: Model
+          Input: ProviderPlanningInput
+          Plan: FS.GG.Governance.CommandHost.CommandHost.ProviderExecutionPlan option
+          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list }
+
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
     /// exceptions. Tolerates a leading `verify` verb. `--paths` and `--since` together ⇒ `PathsAndSinceTogether`;
     /// an unrecognized `--profile` (via F023 `recognizeProfile`) ⇒ `UnrecognizedProfile`; a `--mode` flag ⇒
@@ -295,6 +308,15 @@ module Loop =
     /// Initial state plus the first requested effect(s) for a valid request (Principle IV `init`).
     /// `ExplicitPaths` emits `LoadCatalog` directly; `Since`/`DefaultRange` emit `SenseScope` first.
     val init: request: RunRequest -> Model * Effect list
+
+    /// Join complete-request planning to the real Verify selection/inheritance transition.
+    /// Malformed declarations refuse as InputUnavailable before empty selection or legacy reuse.
+    /// Valid plans remain Blocked pending provider runtime/evidence acceptance; no legacy execution.
+    val initProviderPlanning: request: RunRequest -> provider: ProviderPlanningInput -> ProviderModel * Effect list
+
+    /// Reuses actual Verify selection/inheritance, then plans the complete request before returning
+    /// any empty-selection, freshness, store or execution effects. Valid plans remain non-passing.
+    val updateProviderPlanning: msg: Msg -> model: ProviderModel -> ProviderModel * Effect list
 
     /// The pure transition that IS the whole composition: on sensed scope it loads the catalog; on a valid
     /// catalog it runs `Routing.route` -> `Gates.buildRegistry` -> `Findings.findUnknownGovernedPaths` ->

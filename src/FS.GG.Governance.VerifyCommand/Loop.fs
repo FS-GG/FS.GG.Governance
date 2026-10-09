@@ -93,6 +93,12 @@ module Loop =
         | EmptyPaths
         | UnrecognizedProfile of string
 
+    /// Complete normalized provider request plus independently admitted execution inputs.
+    /// Planning does not supply runtime custody or evidence acceptance.
+    type ProviderPlanningInput =
+        { ResolutionRequest: FS.GG.Governance.Config.CapabilityBindings.ResolutionRequest
+          CommandContext: FS.GG.Governance.GateRun.Plan.ProviderCommandContext }
+
     type Invocation =
         { Request: RunRequest
           Provider: ProviderContext.Selection option }
@@ -414,6 +420,16 @@ module Loop =
                 SenseProvenance
                 SenseScope request.Scope
             ]
+
+    type ProviderModel =
+        { Legacy: Model
+          Input: ProviderPlanningInput
+          Plan: CommandHost.ProviderExecutionPlan option
+          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list }
+
+    let initProviderPlanning request provider =
+        let model, effects = init request
+        { Legacy = model; Input = provider; Plan = None; Diagnostics = [] }, effects
 
     // ── update — the whole composition; TOTAL, never throws ──
 
@@ -1146,3 +1162,29 @@ module Loop =
         match format with
         | Text -> renderText model
         | Json -> renderJson model
+
+    let updateProviderPlanning msg model =
+        if model.Legacy.Phase = Done then
+            model, []
+        else
+            let legacy, effects = update msg model.Legacy
+            match msg with
+            | Loaded(Valid _) ->
+                // The legacy transition owns routing, inherited floors and effective selection.
+                // Its effects are data only: provider admission happens before any are returned.
+                let budget = FS.GG.Governance.CostBudget.Budget.budgetFor legacy.Request.Profile Verify
+                match CommandHost.providerExecutionPlan model.Input.ResolutionRequest model.Input.CommandContext budget.Ceiling legacy.SelectedGates with
+                | Error diagnostics ->
+                    let message =
+                        diagnostics
+                        |> List.map (fun d -> sprintf "%s.%s: %s" d.CapabilityId d.Field d.Message)
+                        |> String.concat "; "
+                    let rejected, _ = fail InputUnavailable ("provider planning rejected: " + message) { legacy with Decision = None }
+                    { model with Legacy = rejected; Diagnostics = diagnostics }, []
+                | Ok plan ->
+                    let blocked, _ =
+                        fail Blocked
+                            "provider planning completed; execution and evidence acceptance are not connected"
+                            { legacy with Decision = None }
+                    { model with Legacy = blocked; Plan = Some plan }, []
+            | _ -> { model with Legacy = legacy }, effects
