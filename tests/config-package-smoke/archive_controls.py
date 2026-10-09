@@ -252,6 +252,30 @@ with tempfile.TemporaryDirectory(prefix='config-recovery-controls-') as director
     changed_artifact('missing-native-evidence', lambda name, value: None if name.endswith('qualification-native.json') else value)
     changed_artifact('failed-consumer-receipt', lambda name, value: value.replace(b'"passed"', b'"failed"') if name.endswith('default-consumer-result.json') else value)
     changed_artifact('wrong-dependency-closure', lambda name, value: value.replace(b'7.6.0', b'7.7.0') if name.endswith('producer.packages.lock.json') else value)
+    # Readback derives original source from native metadata, then requires original publication.
+    from archive import original_source
+    published = copy.deepcopy(base_observations)
+    published['actions/runs/12']['conclusion'] = 'success'
+    published_job = published['actions/runs/12/attempts/1/jobs?per_page=100']['jobs'][0]
+    published_job['conclusion'] = 'success'
+    publication_names = ['Check Config feed collisions', 'Push Config to org feed',
+                         'Trusted Publishing Config login', 'Verify same Config bytes and push public']
+    published_job['steps'] += [{'name': name, 'number': 20+i, 'status': 'completed', 'conclusion': 'success'}
+                              for i,name in enumerate(publication_names)]
+    source_args = SimpleNamespace(repository=repository['full_name'],run_id='12',outputs=str(root/'native-source.outputs'))
+    with mock.patch('archive.actions_read', return_value=published['actions/runs/12']):
+        original_source(source_args)
+    assert Path(source_args.outputs).read_text() == 'revision='+REVISION+'\n'
+    execute('published-readback', published, {'published': True})
+    refused('readback-failed-original-publication', lambda: execute('failed-original-publication', changes={'published': True}))
+    for name in publication_names:
+        mutated = copy.deepcopy(published)
+        next(stage for stage in mutated['actions/runs/12/attempts/1/jobs?per_page=100']['jobs'][0]['steps'] if stage['name']==name)['conclusion'] = 'failure'
+        refused('readback-failed-'+name, lambda name=name, mutated=mutated: execute('readback-failed-'+name, mutated, {'published':True}))
+    for field,value in [('status','in_progress'),('run_attempt',2),('conclusion','failure'),('head_sha','$(literal)')]:
+        mutated = {**published['actions/runs/12'],field:value}
+        with mock.patch('archive.actions_read', return_value=mutated):
+            refused('readback-source-'+field, lambda: original_source(source_args))
     # Reuse the actual existing both-feed observer against synthetic feed bytes.
     manifest = str(Path(positive.output, 'config-evidence/manifest.json'))
     org, public = 'https://org.invalid/index.json', 'https://public.invalid/index.json'
@@ -264,6 +288,15 @@ with tempfile.TemporaryDirectory(prefix='config-recovery-controls-') as director
     with mock.patch.dict(os.environ, {'FSGG_PACKAGES_ACTOR':'synthetic', 'FSGG_PACKAGES_READ_TOKEN':'synthetic'}):
         with mock.patch('urllib.request.urlopen', side_effect=feed_response): collision(args)
         assert Path(args.outputs).read_text().splitlines() == ['org=equal', 'public=absent']
+        with mock.patch('urllib.request.urlopen', side_effect=feed_response):
+            refused('readback-absent-public-feed', lambda: collision(SimpleNamespace(**{**vars(args),'require_present':True})))
+        def both_equal(request,timeout):
+            if request.full_url in [org,public]: return feed_response(request,timeout)
+            return io.BytesIO(selected.read_bytes())
+        equal_outputs = root/'both-equal.outputs'
+        with mock.patch('urllib.request.urlopen', side_effect=both_equal):
+            collision(SimpleNamespace(**{**vars(args),'outputs':str(equal_outputs),'require_present':True}))
+        assert equal_outputs.read_text().splitlines() == ['org=equal','public=equal']
         with mock.patch('urllib.request.urlopen', side_effect=urllib.error.HTTPError(org, 403, 'synthetic unknown', {}, None)):
             refused('inaccessible-feed', lambda: collision(args))
         def ambiguous(request, timeout):

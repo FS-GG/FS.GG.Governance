@@ -140,3 +140,20 @@ C3 completion retain their existing applicable prerequisites. Root selects the n
 checks known reservations; no unknown Config writer may overlap its package/version/write-set.
 Public availability, normal consumer pins, native execution, installed acceptance and C3/C4 completion
 remain separate. No historical published Config API baseline is invented.
+
+## Independent Config distribution readback
+
+Manual `scope=config` and `config_readback=true` select a read-only observation of the original
+explicit version and complete original run/artifact/package-hash group. Source identity is derived
+from the native successful first-attempt run, not from the current verifier workflow head or a
+caller-provided source alias. The original source checkout supplies its immutable producer lock;
+the existing artifact verifier then authenticates original workflow, source, scope, native tests,
+consumer, retention, successful publication and exact archived bytes.
+
+This selection forces `push=false`, skips all first-run generation, and obtains no OIDC login or
+feed write. The existing observer additionally requires both feeds present and payload-equal;
+absence is a failed distribution readback. Signature normalization still requires independent
+NuGet repository-signature verification. The existing retention steps preserve originals, downloaded
+feed archives and observations. All eight unrelated jobs remain excluded. No publication retry,
+repack, replacement archive or alternate release controller is admitted; normal public consumer
+acceptance and applicable broader producer/receiver gates remain separate.

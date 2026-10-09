@@ -93,3 +93,18 @@ synthetic Actions/feed responses. One retained fixture reaches verified archive 
 zero pack/consumer calls; wrong native identities, stage failures, archive loss, byte changes,
 closure drift and collision uncertainty refuse. These are source checks, not observations of
 hosted retention, permissions, feed visibility or OIDC availability.
+
+Independent hosted readback uses manual `scope=config`, `config_readback=true`, the original
+`config_run_id`, `config_artifact_id`, `config_package_sha256`, and explicit original version.
+It obtains the original successful first-attempt source from native run metadata, checks out that
+immutable source only to read its producer lock, and reuses original artifact authentication.
+The current workflow head is verifier code, never substituted for the package's original source.
+Native original publication, qualification and retention stages must be successful or explicitly
+settled without an effect; the original overall run and Config job must have succeeded.
+
+Readback performs no restore, tests, pack, consumer generation, login or push. Both archive endpoints
+must return payload-equal bytes under the existing signature-verification rules: absence, unequal
+payload, unverifiable signature or unreadable feed fails readback. Original and downloaded feed
+archives plus native/artifact/signature observations are retained through the existing artifact steps.
+This is a new read-only observation, not a publication retry or recovery effect. Its success does
+not substitute for the independent normal public-feed consumer or complete C3/C4.

@@ -57,6 +57,11 @@ on:
         description: "Original Config nupkg SHA-256 (recovery only)."
         type: string
         required: false
+      config_readback:
+        description: "Read only: compare the original Config artifact to both published feeds."
+        type: boolean
+        default: false
+        required: false
 
 # A single tagged release fires BOTH `release: published` and `push: tags v*`. Serialize the paired
 # runs (cancel-in-progress: false) keyed on the version/tag so neither push is cancelled mid-flight;
@@ -95,6 +100,7 @@ jobs:
       version: ${{ steps.ver.outputs.version }}
       push: ${{ steps.ver.outputs.push }}
       recovery: ${{ steps.ver.outputs.recovery }}
+      readback: ${{ steps.ver.outputs.readback }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -118,6 +124,7 @@ jobs:
           CONFIG_RUN_ID: ${{ inputs.config_run_id }}
           CONFIG_ARTIFACT_ID: ${{ inputs.config_artifact_id }}
           CONFIG_PACKAGE_SHA256: ${{ inputs.config_package_sha256 }}
+          CONFIG_READBACK: ${{ inputs.config_readback }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           REF_NAME: ${{ github.ref_name }}
         run: |
@@ -132,6 +139,11 @@ jobs:
           if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ "$scope" != "all" ]; then
             echo '::error::Config-only selection requires manual dispatch'; exit 1
           fi
+          readback="${CONFIG_READBACK:-false}"
+          case "$readback" in true|false) ;; *) echo '::error::invalid readback selection'; exit 1 ;; esac
+          if [ "$readback" = 'true' ]; then
+            [ -n "${CONFIG_RUN_ID:-}" ] || { echo '::error::readback requires original artifact selection'; exit 1; }
+          fi
           recovery="false"
           if [ -n "${CONFIG_RUN_ID:-}${CONFIG_ARTIFACT_ID:-}${CONFIG_PACKAGE_SHA256:-}" ]; then
             [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$scope" = "config" ] && [ -n "${INPUT_VERSION:-}" ] || { echo '::error::recovery requires explicit manual Config version'; exit 1; }
@@ -142,9 +154,13 @@ jobs:
           if [ "$scope" = "config" ]; then
             project="src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj"
           fi
-          version="$(dotnet msbuild "$project" -getProperty:Version)"
-          version="$(printf '%s' "$version" | tr -d '[:space:]')"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] || { echo "::error::invalid <Version> from $project"; exit 1; }
+          if [ "$readback" = 'true' ]; then
+            version="$(strip_v "$INPUT_VERSION")"
+          else
+            version="$(dotnet msbuild "$project" -getProperty:Version)"
+            version="$(printf '%s' "$version" | tr -d '[:space:]')"
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] || { echo "::error::invalid selected version"; exit 1; }
 
           push=""
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
@@ -177,10 +193,12 @@ jobs:
             push="true"
           fi
 
+          if [ "$readback" = 'true' ]; then push="false"; fi
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "push=$push" >> "$GITHUB_OUTPUT"
           echo "recovery=$recovery" >> "$GITHUB_OUTPUT"
+          echo "readback=$readback" >> "$GITHUB_OUTPUT"
           echo "Resolved: scope=$scope version=$version push=$push (event=$EVENT_NAME)"
 
   # Pre-publish gate #1: the CLI test suite (mirrors SDD's cli-tests). Locked restore so a graph drift
@@ -988,11 +1006,34 @@ jobs:
         if: needs.resolve-version.outputs.recovery == 'false'
         run: dotnet test tests/FS.GG.Governance.Config.Tests/FS.GG.Governance.Config.Tests.fsproj -c Release --no-restore --logger "trx;LogFileName=config-tests.trx" --results-directory artifacts/config-evidence/config-tests
 
+      - name: Authenticate original Config source
+        id: config-original-source
+        if: needs.resolve-version.outputs.readback == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONFIG_RUN_ID: ${{ inputs.config_run_id }}
+        run: python3 tests/config-package-smoke/archive.py original-source --run-id "$CONFIG_RUN_ID" --repository "$GITHUB_REPOSITORY" --outputs "$GITHUB_OUTPUT"
+
+      - name: Checkout original Config source
+        if: needs.resolve-version.outputs.readback == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.config-original-source.outputs.revision }}
+          path: original-source
+          persist-credentials: false
+
       - name: Resolve Config package version
         id: config-version
+        env:
+          READBACK: ${{ needs.resolve-version.outputs.readback }}
+          SELECTED_VERSION: ${{ needs.resolve-version.outputs.version }}
         run: |
           set -euo pipefail
-          version="$(dotnet msbuild src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version)"
+          if [ "$READBACK" = 'true' ]; then
+            version="$SELECTED_VERSION"
+          else
+            version="$(dotnet msbuild src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj -getProperty:Version)"
+          fi
           version="$(printf '%s' "$version" | tr -d '[:space:]')"
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]] || { echo '::error::invalid Config version'; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -1042,7 +1083,13 @@ jobs:
           CONFIG_ARTIFACT_ID: ${{ inputs.config_artifact_id }}
           CONFIG_SHA256: ${{ inputs.config_package_sha256 }}
           CONFIG_VERSION: ${{ steps.config-version.outputs.version }}
-        run: python3 tests/config-package-smoke/archive.py recover --run-id "$CONFIG_RUN_ID" --artifact-id "$CONFIG_ARTIFACT_ID" --sha256 "$CONFIG_SHA256" --version "$CONFIG_VERSION" --revision "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY" --lock src/FS.GG.Governance.Config/packages.lock.json --output artifacts --outputs "$GITHUB_OUTPUT"
+          READBACK: ${{ needs.resolve-version.outputs.readback }}
+          EXPECTED_SOURCE: ${{ steps.config-original-source.outputs.revision || github.sha }}
+        run: |
+          set -euo pipefail
+          publication=(); selected_lock='src/FS.GG.Governance.Config/packages.lock.json'
+          if [ "$READBACK" = 'true' ]; then publication=(--published); selected_lock='original-source/src/FS.GG.Governance.Config/packages.lock.json'; fi
+          python3 tests/config-package-smoke/archive.py recover --run-id "$CONFIG_RUN_ID" --artifact-id "$CONFIG_ARTIFACT_ID" --sha256 "$CONFIG_SHA256" --version "$CONFIG_VERSION" --revision "$EXPECTED_SOURCE" --repository "$GITHUB_REPOSITORY" --lock "$selected_lock" "${publication[@]}" --output artifacts --outputs "$GITHUB_OUTPUT"
 
       - name: Select qualified Config archive
         id: config-package
@@ -1072,7 +1119,12 @@ jobs:
       - name: Check Config feed collisions
         id: config-collision
         if: needs.resolve-version.outputs.scope == 'config' || needs.resolve-version.outputs.push == 'true'
-        run: python3 tests/config-package-smoke/archive.py collision --manifest artifacts/config-evidence/manifest.json --org-source https://nuget.pkg.github.com/FS-GG/index.json --public-source https://api.nuget.org/v3/index.json --outputs "$GITHUB_OUTPUT"
+        env:
+          READBACK: ${{ needs.resolve-version.outputs.readback }}
+        run: |
+          set -euo pipefail
+          presence=(); if [ "$READBACK" = 'true' ]; then presence=(--require-present); fi
+          python3 tests/config-package-smoke/archive.py collision --manifest artifacts/config-evidence/manifest.json --org-source https://nuget.pkg.github.com/FS-GG/index.json --public-source https://api.nuget.org/v3/index.json "${presence[@]}" --outputs "$GITHUB_OUTPUT"
 
       - name: Retain Config feed observations
         if: always() && (needs.resolve-version.outputs.scope == 'config' || needs.resolve-version.outputs.push == 'true')
