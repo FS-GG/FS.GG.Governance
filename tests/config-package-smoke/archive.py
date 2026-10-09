@@ -141,6 +141,17 @@ QUALIFICATION_STEPS = ['Restore (locked, cold)', 'Test complete Config suite',
                        'Identify exact Config archive', 'Config package consumer smoke',
                        'Validate complete Config retention']
 
+class CredentialSafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, *redirect):
+        redirected = super().redirect_request(request, *redirect)
+        if redirected is not None:
+            redirected.remove_header('Authorization')
+        return redirected
+
+def credential_safe_open(request, timeout):
+    return urllib.request.build_opener(CredentialSafeRedirect()).open(request, timeout=timeout)
+
+
 def actions_read(repository, endpoint, archive=False):
     require(repository == 'FS-GG/FS.GG.Governance', 'wrong recovery repository')
     token = os.environ.get('GH_TOKEN')
@@ -148,13 +159,7 @@ def actions_read(repository, endpoint, archive=False):
     request = urllib.request.Request('https://api.github.com/repos/' + repository + '/' + endpoint,
         headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json',
                  'X-GitHub-Api-Version': '2022-11-28'})
-    class ArtifactRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, request, *redirect):
-            redirected = super().redirect_request(request, *redirect)
-            if redirected is not None:
-                redirected.remove_header('Authorization')
-            return redirected
-    with urllib.request.build_opener(ArtifactRedirect()).open(request, timeout=30) as response:
+    with credential_safe_open(request, timeout=30) as response:
         limit = 64 * 1024 * 1024 if archive else 4 * 1024 * 1024
         raw = response.read(limit + 1)
         require(len(raw) <= limit, 'Actions observation exceeds bounded input')
@@ -346,7 +351,7 @@ def org_absence(version):
             headers = {'Authorization': 'Bearer ' + os.environ['FSGG_PACKAGES_READ_TOKEN'],
                        'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
             try:
-                with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+                with credential_safe_open(urllib.request.Request(url, headers=headers), timeout=30) as response:
                     raw = response.read()
             except urllib.error.HTTPError as error:
                 raise ValueError('authenticated org enumeration unreadable: HTTP ' + str(error.code)) from None
@@ -379,24 +384,33 @@ def collision(args):
     require(digest(manifest['path']) == manifest['sha256'], 'archive changed before collision observation')
     evidence = []
     for feed in [args.org_source, args.public_source]:
-        def fetch(url, absent=False):
+        def fetch(url, stage, absent=False):
             headers = {}
             if feed == args.org_source:
                 actor, token = os.environ['FSGG_PACKAGES_ACTOR'], os.environ['FSGG_PACKAGES_READ_TOKEN']
                 headers['Authorization'] = 'Basic ' + base64.b64encode((actor + ':' + token).encode()).decode()
             try:
-                with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+                with credential_safe_open(urllib.request.Request(url, headers=headers), timeout=30) as response:
                     return response.read()
             except urllib.error.HTTPError as error:
                 if absent and error.code == 404:
                     return None
-                raise ValueError('feed observation unreadable: HTTP ' + str(error.code)) from None
-        index = json.loads(fetch(feed))
+                host = urllib.parse.urlsplit(error.geturl()).hostname
+                evidence.append({'feed': feed, 'stage': stage, 'outcome': 'unreadable', 'httpStatus': error.code,
+                                 'requestHost': urllib.parse.urlsplit(url).hostname, 'responseHost': host})
+                (Path(args.manifest).parent / 'feed-observations.json').write_text(json.dumps(evidence, indent=2) + '\n')
+                raise ValueError('feed observation unreadable at ' + stage + ' (response host ' + str(host) + '): HTTP ' + str(error.code)) from None
+            except urllib.error.URLError as error:
+                evidence.append({'feed': feed, 'stage': stage, 'outcome': 'unreadable',
+                                 'requestHost': urllib.parse.urlsplit(url).hostname, 'transportError': type(error).__name__})
+                (Path(args.manifest).parent / 'feed-observations.json').write_text(json.dumps(evidence, indent=2) + '\n')
+                raise ValueError('feed observation transport unavailable at ' + stage) from None
+        index = json.loads(fetch(feed, 'service-index'))
         bases = [r['@id'] for r in index['resources'] if r['@type'].startswith('PackageBaseAddress/')]
         require(len(bases) == 1, 'feed has no unambiguous archive endpoint; root observation required')
         package_id, version = PACKAGE.lower(), manifest['version'].lower()
         url = bases[0].rstrip('/') + '/' + package_id + '/' + version + '/' + package_id + '.' + version + '.nupkg'
-        raw = fetch(url, absent=True)
+        raw = fetch(url, 'package-archive', absent=True)
         if raw is None:
             if feed == args.org_source:
                 absence = org_absence(manifest['version'])
