@@ -73,6 +73,10 @@ module Model =
         | AcceptObservedPathsWithoutAtomicBinding
         | RequireStableAtomicPathBinding
 
+    /// Physical directory identity; observations grant no handle or execution authority.
+    type DirectoryIdentity =
+        { DeviceMajor: uint32; DeviceMinor: uint32; Inode: uint64; MountId: uint64; ReturnedMask: uint32 }
+
     /// Explicit current-host inputs. The environment is captured once by the caller.
     /// Root bounds only initial cwd selection; it supplies no filesystem/network sandbox.
     type CurrentHostPolicy =

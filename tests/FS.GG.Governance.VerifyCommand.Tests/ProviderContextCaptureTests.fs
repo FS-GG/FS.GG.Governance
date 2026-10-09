@@ -234,7 +234,7 @@ let expectReady (observation:Observation) =
 let changed (observation:Observation) =
     Expect.isSome observation.Model.FirstFailure "changed input cannot pass"
     Expect.notEqual observation.Model.Phase Ready "failed comparison cannot stay ready"
-let actualCases : (string * (unit -> unit)) list =
+let baseActualCases : (string * (unit -> unit)) list =
     [ "Actual capture explicit two roots immutable bytes and revalidation", fun () ->
           withFixture(fun r own _ _ original ->
               let session=own r
@@ -332,6 +332,40 @@ let actualCases : (string * (unit -> unit)) list =
               let settled=inspect session
               Expect.equal settled.Settlement ResourcesReleased "actual close completion"
               Expect.equal settled.Model.FirstFailure duplicate.Model.FirstFailure "retirement preserves original cause") ]
+let actualCases = baseActualCases @ [
+    "Actual capture original root lease binds identity and fences capture release", fun () ->
+        withFixture(fun r own _ _ _ ->
+            let session=own r
+            expectReady (capture session)
+            let lease=
+                match borrowRepositoryRoot session with
+                | Ok held -> held
+                | Error cause -> failtestf "held original root borrow refused: %A" cause
+            try
+                let observed=inspect session
+                let root=observed.Roots |> List.find(fun root -> root.RequestedPath=r.RepositoryRoot)
+                Expect.equal lease.RequestedPath r.RepositoryRoot "same caller-selected original root"
+                Expect.equal lease.Identity.Inode root.HeldIdentity.Inode "same held inode"
+                Expect.equal lease.Identity.MountId root.HeldIdentity.MountId "same held mount"
+                Expect.equal lease.Budget r.Budget "original ends are not renewed"
+                Expect.equal (release session) (Error OwnedActivitiesPending) "capture cannot retire while actual root lease remains"
+                Expect.equal (inspect session).Model.Phase Ready "borrow fence does not replace original session"
+            finally
+                let mutable released=false
+                while not released do
+                    match FS.GG.Governance.GateExecution.Interpreter.releaseDirectoryLease lease with
+                    | Ok () -> released <- true
+                    | Error _ -> Threading.Thread.Sleep 5)
+    "Actual capture root lease refuses original file drift", fun () ->
+        withFixture(fun r own provenance _ _ ->
+            let session=own r
+            expectReady (capture session)
+            business r.Budget (fun () -> IO.File.AppendAllText(provenance,"-changed"))
+            Expect.isError (borrowRepositoryRoot session) "must revalidate original captured bytes before root transfer")
+    "Actual capture root lease refuses before actual readiness", fun () ->
+        withFixture(fun r own _ _ _ ->
+            let session=own r
+            Expect.isError (borrowRepositoryRoot session) "prepared receipt is not ready-root authority") ]
 [<Tests>]
 let nativeTests =
     testList "ProviderContextCapture Actual" (actualCases |> List.map(fun (name,run) ->

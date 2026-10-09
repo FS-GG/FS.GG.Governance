@@ -337,3 +337,137 @@ let realTests =
                 refused {request with Policy={request.Policy with Root=dir+"-other"}} (InvalidRequest "cwd-outside-selected-root"))
         }
     ]
+
+module HeldCwdNative =
+    [<System.Runtime.InteropServices.DllImport("libc", EntryPoint="open", SetLastError=true)>]
+    extern int openRoot(string path, int flags)
+
+let heldRequest dir code =
+    let original = boundedRequest dir code 5000 9000
+    let outer name =
+        match Int64.TryParse(Environment.GetEnvironmentVariable name) with
+        | true, ticks -> ticks
+        | _ -> failtest "actual outer native observation ends are required"
+    { original with
+        Policy={original.Policy with Paths=RequireStableAtomicPathBinding}
+        Budget={WorkEnd={original.Budget.WorkEnd with Ticks=min original.Budget.WorkEnd.Ticks (outer "FSGG_CAPTURE_OUTER_WORK_TICKS")}
+                CleanupEnd={original.Budget.CleanupEnd with Ticks=min original.Budget.CleanupEnd.Ticks (outer "FSGG_CAPTURE_OUTER_CLEANUP_TICKS")}} }
+
+let withHeldRoot request body =
+    use original = new Microsoft.Win32.SafeHandles.SafeFileHandle(nativeint(HeldCwdNative.openRoot(request.Policy.Root,0x290000)),true)
+    let mutable returned = false
+    let root =
+        match Interpreter.duplicateDirectoryLease original request.Policy.Root request.Budget request.Cancellation (fun () -> returned <- true) with
+        | Ok value -> value
+        | Error cause -> failtestf "original root lease refused: %A" cause
+    original.Dispose()
+    try body root
+    finally
+        // A failed assertion never drops an actual original owner. The selected outer namespace
+        // bounds this hold; no borrowed execution/cleanup time or reconstructed PID is used.
+        while not returned do
+            match Interpreter.releaseDirectoryLease root with
+            | Ok () -> ()
+            | Error _ -> Thread.Sleep 5
+
+let withHeldSession root relative request body =
+    let session =
+        match Interpreter.prepareHeldCwd root (FS.GG.Governance.Config.Model.GovernedPath relative) request with
+        | Ok value -> value
+        | Error causes -> failtestf "held-cwd preparation refused: %A" causes
+    try body session
+    finally
+        Interpreter.release session |> ignore
+        while (Interpreter.observe session).Settlement <> Released do Thread.Sleep 5
+
+[<Tests>]
+let heldCwdTests =
+    let register = if Environment.GetEnvironmentVariable("FSGG_HELD_CWD_NATIVE")="1" then testList else ptestList
+    testSequenced <| register "HeldCwdDirectChildActual" [
+        test "actual literal arguments and captured environment use original cwd" {
+            withTempDir(fun dir ->
+                let initial=heldRequest dir "import os,sys;print(repr(sys.argv[1:]));print(os.getcwd());print(os.environ.get('ADMITTED'));print('PATH' in os.environ)"
+                let request={initial with Command={initial.Command with Arguments=initial.Command.Arguments @ [Argument "";Argument "with spaces";Argument "$(literal);&"]}
+                                          Policy={initial.Policy with CapturedEnvironment=Map.ofList ["ADMITTED","original"]}}
+                withHeldRoot request (fun root -> withHeldSession root "." request (fun session ->
+                    let actual=Interpreter.run session
+                    Expect.equal actual.DirectExit (Some(ExitCode 0)) "owned pidfd wait reports real exit"
+                    Expect.equal actual.FirstFailure None "no causal failure"
+                    Expect.equal actual.Settlement Released "direct owner settled within original window"
+                    Expect.equal actual.Stdout.State EndOfFile "real stdout EOF"
+                    Expect.equal actual.Stderr.State EndOfFile "real stderr EOF"
+                    Expect.equal actual.Descendants UncontainedUnobserved "direct profile does not upgrade descendants"
+                    let output=Encoding.UTF8.GetString(actual.Stdout.Prefix |> Seq.toArray)
+                    Expect.stringContains output "['', 'with spaces', '$(literal);&']" "literal argv"
+                    Expect.stringContains output dir "held original cwd"
+                    Expect.stringContains output "original\nFalse" "exact captured environment has no ambient PATH")))
+        }
+        test "actual missing executable releases each prepared owner without pidfd leak" {
+            withTempDir(fun dir ->
+                let initial=heldRequest dir "pass"
+                withHeldRoot initial (fun root ->
+                    let missing={initial with Command={initial.Command with Executable=Executable(Path.Combine(dir,"missing"))}}
+                    let runOne () = withHeldSession root "." missing (fun session ->
+                        let actual=Interpreter.run session
+                        Expect.equal actual.Launch NotStarted "glibc exec failure starts no retained direct workload"
+                        Expect.equal actual.DirectExit None "no invented tool exit"
+                        Expect.equal actual.Settlement Released "all start-failure resources settle"
+                        match actual.FirstFailure with Some(LaunchFailed _) -> () | cause -> failtestf "unexpected start cause %A" cause)
+                    runOne()
+                    let before=Directory.GetFiles("/proc/self/fd").Length
+                    for _ in 1..12 do runOne()
+                    Expect.equal (Directory.GetFiles("/proc/self/fd").Length) before "real exec-failure pidfds do not accumulate"))
+        }
+        test "root lease refuses release while prepared child still borrows cwd" {
+            withTempDir(fun dir ->
+                let request=heldRequest dir "pass"
+                withHeldRoot request (fun root -> withHeldSession root "." request (fun session ->
+                    Expect.isError (Interpreter.releaseDirectoryLease root) "lease keeps actual borrower"
+                    Interpreter.release session |> ignore
+                    while (Interpreter.observe session).Settlement<>Released do Thread.Sleep 1
+                    Expect.isOk (Interpreter.releaseDirectoryLease root) "settled borrower returns same root lease")))
+        }
+        test "actual root replacement refuses dispatch and settles original preparation" {
+            withTempDir(fun dir ->
+                let rootPath=Path.Combine(dir,"root")
+                Directory.CreateDirectory(rootPath) |> ignore
+                let request=heldRequest rootPath "raise SystemExit(99)"
+                withHeldRoot request (fun root -> withHeldSession root "." request (fun session ->
+                    Directory.Move(rootPath,rootPath+"-original")
+                    Directory.CreateDirectory(rootPath) |> ignore
+                    let actual=Interpreter.run session
+                    Expect.equal actual.Launch NotStarted "replacement is not reopened for dispatch"
+                    Expect.equal actual.FirstFailure (Some(InvalidRequest "original-held-directory-binding-changed")) "visible original binding refused"
+                    Expect.equal actual.Settlement Released "actual prepared fds settle")))
+        }
+        test "actual cancellation signals owned pidfd and reaps direct child" {
+            withTempDir(fun dir ->
+                use cancellation=new CancellationTokenSource()
+                let request={heldRequest dir "import time;time.sleep(20)" with Cancellation=cancellation.Token}
+                withHeldRoot request (fun root -> withHeldSession root "." request (fun session ->
+                    cancellation.CancelAfter 100
+                    let actual=Interpreter.run session
+                    Expect.equal actual.FirstFailure (Some CancellationRequested) "original cancellation remains causal"
+                    Expect.equal actual.DirectExit (Some(ExitCode 137)) "held pidfd signals actual direct child"
+                    Expect.equal actual.Settlement Released "owned wait and readers settle"
+                    Expect.isFalse (List.contains StopIdentityUnknown actual.SecondaryFailures) "no numeric identity reconstruction")))
+        }
+        test "actual output cap kills only owned direct child and keeps bounded prefix" {
+            withTempDir(fun dir ->
+                let initial=heldRequest dir "import os,time;os.write(1,b'x'*8192);time.sleep(20)"
+                let request={initial with Limits={StdoutBytes=32L;StderrBytes=32L;AggregateBytes=48L}}
+                withHeldRoot request (fun root -> withHeldSession root "." request (fun session ->
+                    let actual=Interpreter.run session
+                    Expect.equal actual.FirstFailure (Some OutputLimitReached) "overflow stays causal"
+                    Expect.isLessThanOrEqual actual.Stdout.Prefix.Length 32 "fixed prefix bound"
+                    Expect.equal actual.DirectExit (Some(ExitCode 137)) "owned direct stop"
+                    Expect.equal actual.Settlement Released "direct activities settle")))
+        }
+        test "held cwd containment and unsupported descendants refuse before launch" {
+            withTempDir(fun dir ->
+                let request=heldRequest dir "pass"
+                withHeldRoot request (fun root ->
+                    Expect.isError (Interpreter.prepareHeldCwd root (FS.GG.Governance.Config.Model.GovernedPath "..") request) "cwd escape refused"
+                    Expect.isError (Interpreter.prepareHeldCwd root (FS.GG.Governance.Config.Model.GovernedPath ".") {request with Policy={request.Policy with Descendants=RequireContainedWorkload}}) "descendant containment unavailable"))
+        }
+    ]

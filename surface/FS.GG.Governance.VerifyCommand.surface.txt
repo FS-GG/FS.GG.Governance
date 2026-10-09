@@ -837,6 +837,7 @@ TYPE FS.GG.Governance.VerifyCommand.ProviderContext+SelectionError+Tags
   [Field] Int32 MissingValue
 TYPE FS.GG.Governance.VerifyCommand.ProviderContextCapture
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.ProviderContextCapture+Failure] validateRequest(MonotonicInstant, Request)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.InterpreterModule+DirectoryLease,FS.GG.Governance.VerifyCommand.ProviderContextCapture+Failure] borrowRepositoryRoot(CaptureSession)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.VerifyCommand.ProviderContextCapture+CaptureSession,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.ProviderContextCapture+Failure]] prepare(Request)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.VerifyCommand.ProviderContextCapture+Failure] release(CaptureSession)
   [Method] Model init()

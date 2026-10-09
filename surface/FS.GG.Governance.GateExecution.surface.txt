@@ -5,13 +5,24 @@ TYPE FS.GG.Governance.GateExecution.InterpreterModule
   [Method] ExitCode get_startFailureExitCode()
   [Method] ExitCode get_timeoutExitCode()
   [Method] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] get_realPort()
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.InterpreterModule+DirectoryLease,FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] duplicateDirectoryLease(Microsoft.Win32.SafeHandles.SafeFileHandle, System.String, ExecutionBudget, System.Threading.CancellationToken, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Core.Unit])
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure]] prepare(BoundedRequest)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.GateExecution.ModelModule+BoundedFailure]] prepareHeldCwd(DirectoryLease, GovernedPath, BoundedRequest)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] release(ExecutionSession)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.GateExecution.ModelModule+BoundedFailure] releaseDirectoryLease(DirectoryLease)
   [Method] MonotonicInstant currentInstant()
+  [NestedType] FS.GG.Governance.GateExecution.InterpreterModule+DirectoryLease
   [NestedType] FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession
   [Property] ExitCode startFailureExitCode
   [Property] ExitCode timeoutExitCode
   [Property] Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome] realPort
+TYPE FS.GG.Governance.GateExecution.InterpreterModule+DirectoryLease
+  [Method] DirectoryIdentity get_Identity()
+  [Method] ExecutionBudget get_Budget()
+  [Method] System.String get_RequestedPath()
+  [Property] DirectoryIdentity Identity
+  [Property] ExecutionBudget Budget
+  [Property] System.String RequestedPath
 TYPE FS.GG.Governance.GateExecution.InterpreterModule+ExecutionSession
   [Method] LaunchIdentity get_Identity()
   [Property] LaunchIdentity Identity
@@ -33,6 +44,7 @@ TYPE FS.GG.Governance.GateExecution.ModelModule
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectMsg
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectPhase
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectSettlement
+  [NestedType] FS.GG.Governance.GateExecution.ModelModule+DirectoryIdentity
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+ExecutionBudget
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome
   [NestedType] FS.GG.Governance.GateExecution.ModelModule+GateCommand
@@ -446,6 +458,28 @@ TYPE FS.GG.Governance.GateExecution.ModelModule+DirectSettlement
 TYPE FS.GG.Governance.GateExecution.ModelModule+DirectSettlement+Tags
   [Field] Int32 Released
   [Field] Int32 Retained
+TYPE FS.GG.Governance.GateExecution.ModelModule+DirectoryIdentity
+  [Constructor] Void .ctor(UInt32, UInt32, UInt64, UInt64, UInt32)
+  [Method] Boolean Equals(DirectoryIdentity)
+  [Method] Boolean Equals(DirectoryIdentity, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(DirectoryIdentity)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] UInt32 get_DeviceMajor()
+  [Method] UInt32 get_DeviceMinor()
+  [Method] UInt32 get_ReturnedMask()
+  [Method] UInt64 get_Inode()
+  [Method] UInt64 get_MountId()
+  [Property] UInt32 DeviceMajor
+  [Property] UInt32 DeviceMinor
+  [Property] UInt32 ReturnedMask
+  [Property] UInt64 Inode
+  [Property] UInt64 MountId
 TYPE FS.GG.Governance.GateExecution.ModelModule+ExecutionBudget
   [Constructor] Void .ctor(MonotonicInstant, MonotonicInstant)
   [Method] Boolean Equals(ExecutionBudget)

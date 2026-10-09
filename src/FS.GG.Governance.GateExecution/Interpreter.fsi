@@ -70,3 +70,24 @@ module Interpreter =
 
     /// Release only actually settled direct handles/readers/registrations; pending ownership refuses.
     val release: ExecutionSession -> Result<unit, BoundedFailure>
+
+    /// Opaque duplicate of an actually held original root. Direct lease only; no finalizer abandons custody.
+    [<Sealed>]
+    type DirectoryLease =
+        member RequestedPath: string
+        member Identity: DirectoryIdentity
+        member Budget: ExecutionBudget
+
+    /// Duplicate the live directory handle, never reopen a replacement pathname.
+    /// The original owner callback is invoked only after the duplicate and all borrowers settle.
+    val duplicateDirectoryLease:
+        handle: Microsoft.Win32.SafeHandles.SafeFileHandle -> rootPath: string -> budget: ExecutionBudget ->
+        cancellation: System.Threading.CancellationToken -> onReleased: (unit -> unit) -> Result<DirectoryLease, BoundedFailure>
+    val releaseDirectoryLease: DirectoryLease -> Result<unit, BoundedFailure>
+
+    /// Explicit cooperative Linux-x64 held-cwd direct-child profile, reusing original bounded session semantics.
+    /// Requires uncontained descendants, stable path binding, and a live root lease. No ambient environment.
+    /// Unsupported native ABI refuses without BCL fallback; cwd remains held through pidfd_spawn/fchdir.
+    val prepareHeldCwd:
+        root: DirectoryLease -> relativeCwd: FS.GG.Governance.Config.Model.GovernedPath ->
+        request: BoundedRequest -> Result<ExecutionSession, BoundedFailure list>

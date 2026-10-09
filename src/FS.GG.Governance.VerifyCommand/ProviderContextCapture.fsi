@@ -88,3 +88,8 @@ module ProviderContextCapture =
     val inspect: CaptureSession -> Observation
     /// Only settled activities/descriptors can release. Late settlement cannot erase original failure.
     val release: CaptureSession -> Result<unit, Failure>
+
+    /// Revalidate the same owner, duplicate its original held repository root, and retain a managed lease.
+    /// Capture release refuses while the borrowed lease or its direct execution borrowers remain owned.
+    val borrowRepositoryRoot:
+        CaptureSession -> Result<FS.GG.Governance.GateExecution.Interpreter.DirectoryLease, Failure>
