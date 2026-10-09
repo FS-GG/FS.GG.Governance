@@ -152,6 +152,30 @@ module Model =
             Message: string
         }
 
+    /// Strict provider projection of existing sources[] fields. Digests are sha256:64 hex.
+    type HandoffSource = { Path: GovernedPath; Digest: string }
+
+    /// Additive wrapper; the legacy Handoff constructor and parse contract stay unchanged.
+    type SourceHandoff = { Handoff: Handoff; Sources: HandoffSource list }
+
+    type SourceDiagnosticCause =
+        | MissingSource
+        | MalformedSource
+        | DuplicateSource
+        | UnsupportedSourceDigest
+        | UncapturedSource
+        | SourceDigestMismatch
+        | MissingRequiredSource
+
+    /// Located provider source refusal; no filesystem observation or freshness authority.
+    type SourceDiagnostic =
+        { Field: string; Cause: SourceDiagnosticCause; Message: string }
+
+    /// Legacy parse failures remain exactly typed and are never converted into source success.
+    type SourceParseError =
+        | HandoffRejected of Diagnostic
+        | SourcesRejected of SourceDiagnostic list
+
     /// The pinned contract MAJOR the consumer recognizes (= 2). A handoff whose `ContractVersion` major
     /// differs yields a `VersionMismatch` diagnostic and no mapped result (FR-002).
     val supportedContractMajor: int

@@ -35,11 +35,16 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+GovernedReference
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDisposition
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyReadiness
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceEvaluation
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+PerformanceGateState
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnosticCause
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceHandoff
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError
   [Property] Int32 supportedContractMajor
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+DeclaredNode
   [Constructor] Void .ctor(System.String, DeclaredState, Boolean, Microsoft.FSharp.Core.FSharpOption`1[System.String])
@@ -252,6 +257,22 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffDiagnostic
   [Property] System.String Correction
   [Property] System.String Id
   [Property] System.String Message
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource
+  [Constructor] Void .ctor(GovernedPath, System.String)
+  [Method] Boolean Equals(HandoffSource)
+  [Method] Boolean Equals(HandoffSource, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GovernedPath get_Path()
+  [Method] Int32 CompareTo(HandoffSource)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] System.String ToString()
+  [Method] System.String get_Digest()
+  [Property] GovernedPath Path
+  [Property] System.String Digest
 TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+JourneyProvenanceDisposition
   [Method] Boolean Equals(JourneyProvenanceDisposition)
   [Method] Boolean Equals(JourneyProvenanceDisposition, System.Collections.IEqualityComparer)
@@ -388,10 +409,127 @@ TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+ReadinessBlock
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`2[System.String,System.String]] PerViewState
   [Property] System.String ShipDisposition
   [Property] System.String VerificationReadiness
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic
+  [Constructor] Void .ctor(System.String, SourceDiagnosticCause, System.String)
+  [Method] Boolean Equals(SourceDiagnostic)
+  [Method] Boolean Equals(SourceDiagnostic, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Int32 CompareTo(SourceDiagnostic)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] SourceDiagnosticCause get_Cause()
+  [Method] System.String ToString()
+  [Method] System.String get_Field()
+  [Method] System.String get_Message()
+  [Property] SourceDiagnosticCause Cause
+  [Property] System.String Field
+  [Property] System.String Message
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnosticCause
+  [Method] Boolean Equals(SourceDiagnosticCause)
+  [Method] Boolean Equals(SourceDiagnosticCause, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDuplicateSource()
+  [Method] Boolean get_IsMalformedSource()
+  [Method] Boolean get_IsMissingRequiredSource()
+  [Method] Boolean get_IsMissingSource()
+  [Method] Boolean get_IsSourceDigestMismatch()
+  [Method] Boolean get_IsUncapturedSource()
+  [Method] Boolean get_IsUnsupportedSourceDigest()
+  [Method] Int32 CompareTo(SourceDiagnosticCause)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SourceDiagnosticCause get_DuplicateSource()
+  [Method] SourceDiagnosticCause get_MalformedSource()
+  [Method] SourceDiagnosticCause get_MissingRequiredSource()
+  [Method] SourceDiagnosticCause get_MissingSource()
+  [Method] SourceDiagnosticCause get_SourceDigestMismatch()
+  [Method] SourceDiagnosticCause get_UncapturedSource()
+  [Method] SourceDiagnosticCause get_UnsupportedSourceDigest()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnosticCause+Tags
+  [Property] Boolean IsDuplicateSource
+  [Property] Boolean IsMalformedSource
+  [Property] Boolean IsMissingRequiredSource
+  [Property] Boolean IsMissingSource
+  [Property] Boolean IsSourceDigestMismatch
+  [Property] Boolean IsUncapturedSource
+  [Property] Boolean IsUnsupportedSourceDigest
+  [Property] Int32 Tag
+  [Property] SourceDiagnosticCause DuplicateSource
+  [Property] SourceDiagnosticCause MalformedSource
+  [Property] SourceDiagnosticCause MissingRequiredSource
+  [Property] SourceDiagnosticCause MissingSource
+  [Property] SourceDiagnosticCause SourceDigestMismatch
+  [Property] SourceDiagnosticCause UncapturedSource
+  [Property] SourceDiagnosticCause UnsupportedSourceDigest
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnosticCause+Tags
+  [Field] Int32 DuplicateSource
+  [Field] Int32 MalformedSource
+  [Field] Int32 MissingRequiredSource
+  [Field] Int32 MissingSource
+  [Field] Int32 SourceDigestMismatch
+  [Field] Int32 UncapturedSource
+  [Field] Int32 UnsupportedSourceDigest
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceHandoff
+  [Constructor] Void .ctor(Handoff, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource])
+  [Method] Boolean Equals(SourceHandoff)
+  [Method] Boolean Equals(SourceHandoff, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Handoff get_Handoff()
+  [Method] Int32 CompareTo(SourceHandoff)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource] get_Sources()
+  [Method] System.String ToString()
+  [Property] Handoff Handoff
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource] Sources
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError
+  [Method] Boolean Equals(SourceParseError)
+  [Method] Boolean Equals(SourceParseError, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsHandoffRejected()
+  [Method] Boolean get_IsSourcesRejected()
+  [Method] Int32 CompareTo(SourceParseError)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] SourceParseError NewHandoffRejected(Diagnostic)
+  [Method] SourceParseError NewSourcesRejected(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic])
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+HandoffRejected
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+SourcesRejected
+  [NestedType] FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+Tags
+  [Property] Boolean IsHandoffRejected
+  [Property] Boolean IsSourcesRejected
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+HandoffRejected
+  [Method] Diagnostic get_Item()
+  [Property] Diagnostic Item
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+SourcesRejected
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic] Item
+TYPE FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError+Tags
+  [Field] Int32 HandoffRejected
+  [Field] Int32 SourcesRejected
 TYPE FS.GG.Governance.Adapters.SddHandoff.PerformanceModule
   [Method] PerformanceEvaluation evaluate(Boolean, GovernanceHandoffPerformanceEvidence)
 TYPE FS.GG.Governance.Adapters.SddHandoff.ReaderModule
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Adapters.SddHandoff.ModelModule+Handoff,FS.GG.Governance.Adapters.SddHandoff.ModelModule+Diagnostic] parse(HandoffRead)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceHandoff,FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceParseError] parseWithSources(HandoffRead)
+  [Method] Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+SourceDiagnostic]] validateSources(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.ModelModule+GovernedPath], SourceHandoff)
   [NestedType] FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead
 TYPE FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead
   [Constructor] Void .ctor(System.String, System.String)

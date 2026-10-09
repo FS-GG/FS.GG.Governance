@@ -11,6 +11,7 @@
 
 namespace FS.GG.Governance.Adapters.SddHandoff
 
+open FS.GG.Governance.Config.Model
 open FS.GG.Governance.Adapters.SddHandoff.Model
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -28,3 +29,15 @@ module Reader =
     ///     rejection — NOT generic `Malformed`, research D4).
     /// Unknown additive (minor) fields are ignored (ADR-0002 versioning posture). NEVER throws.
     val parse: read: HandoffRead -> Result<Handoff, Diagnostic>
+
+    /// Strict additive sources[] projection over the same document accepted by legacy parse.
+    /// Requires a nonempty source list, canonical governed relative paths, unique paths/fields,
+    /// and sha256:64-hex digests (projected to lowercase). No source bytes are read or accepted.
+    val parseWithSources: read: HandoffRead -> Result<SourceHandoff, SourceParseError>
+
+    /// Every cited source must equal an independently captured path/digest, and every required
+    /// input path must be cited. Malformed/duplicate caller inputs also refuse. No I/O or verdict.
+    val validateSources:
+        captured: HandoffSource list ->
+        requiredPaths: GovernedPath list ->
+        handoff: SourceHandoff -> Result<unit, SourceDiagnostic list>
