@@ -207,3 +207,46 @@ parsing; no loader, filesystem discovery, provider profile acceptance, SDD packa
 installed behavior is claimed. Exact-head coherent hosted validation and delivery remain separate.
 The real C2 caller, C2.3 producer journey and C3 release gates stay open. Original operation/custody
 unknowns and the attributed telemetry gap remain unchanged.
+
+
+### GOV423-C2 retained provider document capture (Tier 1; local qualification)
+
+The independently selected capture slice adds `ProviderContextCapture` to the existing Verify host.
+Its caller holds an opaque one-use session before any acquisition, including original monotonic work
+and cleanup ends, cancellation, fixed byte caps and explicit cooperative namespace custody. It
+captures provenance under the selected repository root and policy under its independently selected
+absolute parent. Policy bytes never derive authority from workspace provenance or digest equality.
+
+Linux-x64 acquisition requires qualified `openat2`/`statx` and procfs: hold directory roots, resolve
+regular files beneath them without links or mount crossings, acquire `O_PATH`, check actual type,
+then reopen the same held object through an internally formed owned-descriptor binding. There is no
+BCL pathname fallback, process-global cwd change or data open of an unverified device/FIFO.
+
+Pure Model/Msg/Effect transitions precede the interpreter. Fixed buffers charge per-file and aggregate
+bytes before storage. After capturing the complete set, compare original held files and current
+pathname bindings again; revalidation repeats that comparison before dependent use without accepting
+replacement bytes. Immutable observations distinguish sticky first/distinct secondary failures,
+original deadlines/cancellation and actual resource settlement. Pending activities retain the same
+caller owner. Later retirement can release settled resources without retroactive bounded success.
+
+This observes held objects under explicitly cooperative file/namespace custody. It does not freeze
+contents or prove simultaneous multi-file consistency, absence of earlier ABA, hostile-writer safety,
+execution containment or atomic cwd launch binding. Stronger namespace requirements refuse. No
+Loop/Program wiring, SDD package pin, provider profile or whole GOV423-C2 acceptance is supplied.
+
+Local qualification passed 36 synthetic public API controls, a separate 35-control Linux primitive
+gate, the complete Verify Release compile and three surface controls. The default Verify suite passed
+200 tests and left all 15 physical capture cases pending. A separately admitted, supervised invocation
+then passed all 15 physical cases: held-root/file acquisition, immutable bytes and revalidation,
+per-file/aggregate caps, digest refusal, symlink/type refusal, file and root changes, cancellation,
+original deadline expiry and one-use retirement. Both managed invocations observed actual terminal
+exit, EOF and known-leader-only retirement within their original selected windows. Two earlier managed
+compile failures remain preserved; the successful successor does not reclassify them.
+
+Physical cases remain pending by default. The environment opt-in schedules only; the separate local
+fixture route retains the actual caller session and unsignaled runtime/outer owner on incomplete
+settlement, including retirement or projection exceptions. These 15 cases do not force a blocked
+native read or uncertain descriptor close: those physical retention paths remain unqualified.
+API/primitive checks and static review do not substitute for that coverage. Full loader/Program wiring,
+strong provider profile and coherent SDD package joins remain open, so GOV423-C2 is not complete.
+Original custody unknowns and the attributed telemetry gap remain retained.

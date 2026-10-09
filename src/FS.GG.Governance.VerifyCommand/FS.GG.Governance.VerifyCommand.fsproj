@@ -44,6 +44,8 @@
     <Compile Include="EvidenceSweep.fs" />
     <Compile Include="ProviderContext.fsi" />
     <Compile Include="ProviderContext.fs" />
+    <Compile Include="ProviderContextCapture.fsi" />
+    <Compile Include="ProviderContextCapture.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
