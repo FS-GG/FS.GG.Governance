@@ -213,3 +213,30 @@ incoming-context/package-backed SDD caller acceptance, stronger enforcing profil
 open. C3 coherent producer publication/readback and C4 public receivers remain separately gated; no
 release, installed support, scope-empty or general reaping claim follows. Original native/installed
 custody holds and the attributed telemetry gap remain unchanged.
+
+
+### GOV423-C2 explicit selector source slice (2026-10-09)
+
+Tier1 additive host API: `ProviderContext.select` validates the five explicit provenance/policy/path-digest/platform options together; `Loop.parseInvocation` wraps the existing `RunRequest` without changing legacy `parse`, constructors or execution. Raw locators, digest spelling, platform and legacy argv are retained; no reads, discovery, schema fallback or recorded policy authority are added. Duplicate/incomplete/missing/empty/malformed selection returns located provider usage errors. Legacy diagnostics remain separately typed and token boundaries remain intact, including `--paths` and missing legacy values.
+
+Order: specification and signatures, full additive API/semantic exercise, then production body and focused legacy/parser/public-surface checks. This slice leaves Program on legacy parsing pending the actual SDD package loader. It is not provider-mode availability, actual Verify caller acceptance or completion of C2. Commands/Artifacts once-packed coherent closure and physical capture/execution-profile joins remain pending; CurrentHost observed-path/uncontained guarantees cannot silently replace stronger loader requirements. C2.3 real producer/Verify journey and C3 publication/carrier gates remain separate. No generated defaults or installed behavior change; existing callers require no migration.
+
+Local qualification passed the API-first exercise's 62 synthetic selector/wrapper controls, actual
+Release compilation, all three surface/dependency checks and the complete Verify suite: 164/164
+passed, including all 62 selector cases. The reflected baseline is additive; all previous exported
+members remain. Cold locked restore also verified all 21 normalized package content hashes against
+the committed locks, using the separately retained raw archives. No package publication follows.
+
+Three earlier API compiler failures remain retained separately. The first full-suite attempt stopped
+at an observed resource bound without retaining its dimension or test outcomes. A sequenced successor
+recorded a fourth CLR exceeding the three-CLR limit; its retirement exit0 was not a test pass. The
+successful successor retained the same source, compiled outputs and reviewed baseline, explicitly
+sequenced Expecto scheduling, and allowed four CLR processes for CLI/VSTest/testhost plus the real
+FCS SDK resolver. Other resource bounds remained unchanged. The resolver path is supported by exact
+package-commit source; the failed fourth process's historical argv remains unknown.
+
+This validates the additive selector/wrapper and legacy semantics only. Program remains on legacy
+parsing; no loader, filesystem discovery, provider profile acceptance, SDD package availability or
+installed behavior is claimed. Exact-head coherent hosted validation and delivery remain separate.
+The real C2 caller, C2.3 producer journey and C3 release gates stay open. Original operation/custody
+unknowns and the attributed telemetry gap remain unchanged.

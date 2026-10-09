@@ -42,6 +42,8 @@
          command's exported surface is unchanged (SurfaceDriftTests). -->
     <Compile Include="CodeSweep.fs" />
     <Compile Include="EvidenceSweep.fs" />
+    <Compile Include="ProviderContext.fsi" />
+    <Compile Include="ProviderContext.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />

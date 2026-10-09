@@ -42,6 +42,10 @@ let tests =
                             || n.Contains "VerifyCommand.Loop+"
                             || n.Contains "VerifyCommand.Interpreter+"
                             || n.Contains "VerifyCommand.Program"
+                            || n = "FS.GG.Governance.VerifyCommand.ProviderContext"
+                            || n = "FS.GG.Governance.VerifyCommand.ProviderContext+Selection"
+                            || n = "FS.GG.Governance.VerifyCommand.ProviderContext+SelectionError"
+                            || n.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContext+SelectionError+", System.StringComparison.Ordinal)
                             // 076 Phase C: the three additive, .fsi-curated host fold seam modules (FR-004).
                             || n.Contains "VerifyCommand.SurfaceFoldModule"
                             || n.Contains "VerifyCommand.ViewCurrencyFoldModule"
