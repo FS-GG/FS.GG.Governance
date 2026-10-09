@@ -10,10 +10,10 @@
     "repositoryId": 1273065119
   },
   "sourceImplementation": {
-    "repository": "FS-GG/FS.GG.Net",
-    "commit": "91c2a57d4e9cab553718bdd9f796a4b1e0e9aaa0",
-    "adaptation": "governance-v1-code-owned-source-profile",
-    "observerSha256": "6e63f6f724fb267e77ef02f41b4c58a833e0dc5b08c003f07fd16c89e4f7fd55",
+    "repository": "FS-GG/FS.GG.Coordination",
+    "commit": "8eef1ab7f205132553632e03dc650e7ecdd03679",
+    "adaptation": "governance-v1-code-owned-source-profile; main-storage extension with local profile preserved",
+    "observerSha256": "7f5500d810ab9169d967f8c19fbcb01d706ebf82fdeea6e4a6927b0b19eef29a",
     "qualificationSha256": "b08b0335bfb9b490e4c9e603d09ed3c49c6810ece63e4ee12102a33be1db055f"
   },
   "operationClass": "ordinary-post-merge-delivery-settlement",
@@ -139,22 +139,18 @@
   },
   "packagePin": {
     "status": "published-served-verified",
-    "version": "0.1.5",
-    "sha256": "3567a92825917a7d537f6c5c545d3a7947bc35edd666fc3a1898de3bf97267c9",
+    "version": "0.3.0",
+    "sha256": "a8cd6d602e1203257e1241df0b5dfdb9d867334b46dc406d8cdaa8e6d2b3019c",
+    "sourceCommit": "8eef1ab7f205132553632e03dc650e7ecdd03679",
     "servedPackageVerified": true,
-    "sourceCommit": "1268908d2d5a38d30a764c927f3e0591e53138aa",
-    "releaseTag": "v0.1.5",
-    "publisherRunId": 36437778484,
-    "publisherRunAttempt": 3,
-    "publisherConclusion": "success",
-    "publisherRunHeadSha": "8335501d94875fa0410087e6d55d3639fcdb7ec4",
-    "releaseUrl": "https://github.com/FS-GG/FS.GG.Coordination/releases/tag/v0.1.5",
-    "releasePublishedAt": "2026-09-28T14:59:57Z",
-    "assetName": "FS.GG.Coordination.Cli.0.1.5.nupkg",
-    "assetSize": 6435119,
-    "releaseReadbackSha256": "ea9cc6d4bbfb786bd8ca6caf18c41638ee9f5b988823664e437fc1d4e19777f0",
+    "requiredBeforeActivation": true,
     "requiredCapability": "governance-v1 selected source",
-    "requiredBeforeActivation": true
+    "releasePublishedAt": "2026-10-09T19:55:53Z",
+    "assetSize": 8694990,
+    "publisherRunId": 37983508705,
+    "releaseUrl": "https://github.com/FS-GG/FS.GG.Coordination/releases/tag/v0.3.0",
+    "releaseTag": "v0.3.0",
+    "assetName": "FS.GG.Coordination.Cli.0.3.0.nupkg"
   },
   "credentialInventory": [
     {
