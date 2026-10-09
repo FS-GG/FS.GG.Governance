@@ -64,7 +64,7 @@ Gated and ordered like the CLI path; `id-token: write` + `packages: write`.
   nothing is silently skipped (FR-006; ADR-0013 §5).
 - **Idempotent** — `--skip-duplicate` on both feeds; re-publishing an existing version is a no-op
   success (FR-007). A failed nuget.org push after a durable org-feed push is retry-safe.
-- **Dry-run safe** — `workflow_dispatch` with no `version` packs both packages but pushes to no feed
+- **Dry-run safe** — `workflow_dispatch` with no `version` packs the selected scope but pushes to no feed
   (FR-008).
 - **Drift-safe** — no edits to org-synced `Directory.Build.props` / `Directory.Packages.props` /
   `.config/dotnet-tools.json`; any tool install is job-scoped (spec 088 D6).
@@ -79,9 +79,17 @@ Gated and ordered like the CLI path; `id-token: write` + `packages: write`.
 ## Config resolver library extension (GOV-423-C3)
 
 `publish-config` selects one additional ordinary net10.0 library, `FS.GG.Governance.Config`, currently
-source version 0.3.0. It is neither a CLI tool nor a content package. `resolve-version` retains CLI-led
-trigger/tag/version and dry-run selection; Config independently evaluates its own project version.
-No other producer job, package version, trigger or ReferenceGateSet custody changes.
+source version 0.3.0. It is neither a CLI tool nor a content package. Manual `scope` is a closed
+`all`/`config` choice, defaulting to `all`. Omitted scope and release/tag runs retain CLI-led version
+selection; Config-only mode is manual-only and evaluates Config without evaluating CLI. An explicit
+manual version must match the selected project; omission remains no-push. Unknown scope fails
+before MSBuild. The resolver exports validated scope, version and push outputs.
+
+Config-only mode runs only `resolve-version` and `publish-config`. All eight unrelated jobs,
+including CLI tests/enforcement, all other pack/push jobs and ReferenceGateSet, explicitly require
+validated scope `all`. CLI tests now depend on the resolver; all other dependency edges remain.
+Config independently reevaluates its own package version before packing in either mode. No package
+version, trigger, permission, archive retention or ReferenceGateSet custody rule changes.
 
 The ordered contract is static preflight, cold locked restore of the Config test project, **all** Config
 Release tests, evaluated Config version, one pack, exactly one scoped archive with captured SHA-256,

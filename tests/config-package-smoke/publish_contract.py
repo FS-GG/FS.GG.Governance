@@ -6,10 +6,17 @@ Unknown step controls/conditions refuse. Independent required ordering prevents
 failed qualification or ambiguous package output from reaching a publication leg.
 """
 import argparse
+import subprocess
+import tempfile
+import textwrap
 from pathlib import Path
 import re
 import sys
 
+UNRELATED = ['cli-tests', 'enforcement-smoke', 'publish', 'publish-fsharp-surface-command',
+             'publish-kernel', 'publish-adapter-spi', 'publish-code-checks', 'publish-reference-gate-set']
+REPOSITORY = "github.repository == 'FS-GG/FS.GG.Governance'"
+ALL_SCOPE = REPOSITORY + " && needs.resolve-version.outputs.scope == 'all'"
 GATE = "needs.resolve-version.outputs.push == 'true'"
 ORDER = ['Checkout', 'Preflight Config publication contract', 'Set up .NET',
          'Restore (locked, cold)', 'Test complete Config suite', 'Resolve Config package version',
@@ -22,14 +29,30 @@ def require(value, message):
     if not value:
         raise ValueError(message)
 
-def job_text(text):
-    matches = list(re.finditer(r'^  publish-config:\s*$', text, re.M))
-    require(len(matches) == 1, 'expected exactly one publish-config job')
+def job_text(text, name="publish-config"):
+    matches = list(re.finditer(r'^  ' + re.escape(name) + r':\s*$', text, re.M))
+    require(len(matches) == 1, 'expected exactly one ' + name + ' job')
     start = matches[0].end()
     end = re.search(r'^  [a-z][a-z0-9-]*:\s*$', text[start:], re.M)
     return text[start:start + end.start()] if end else text[start:]
 
 def validate(text):
+    inventory = re.findall(r'^  ([a-z][a-z0-9-]*):\s*$', text.split('jobs:', 1)[1], re.M)
+    require(sorted(inventory) == sorted(['resolve-version', 'publish-config'] + UNRELATED), 'unsupported job inventory')
+    dispatch = text.split('  workflow_dispatch:', 1)[1].split('\n#', 1)[0]
+    require(re.search(r'^      scope:\n        description: [^\n]+\n        type: choice\n        options: \[all, config\]\n        default: all\n        required: false\n', dispatch, re.M), 'closed scope input/default drift')
+    resolver = job_text(text, 'resolve-version')
+    require('scope: ${{ steps.ver.outputs.scope }}' in resolver, 'validated scope output missing')
+    require('INPUT_SCOPE: ${{ inputs.scope }}' in resolver and 'INPUT_VERSION: ${{ inputs.version }}' in resolver, 'resolver input binding drift')
+    expected_needs = {name: ['resolve-version'] for name in UNRELATED}
+    expected_needs.update({'enforcement-smoke': ['resolve-version', 'cli-tests'],
+                           'publish': ['resolve-version', 'cli-tests', 'enforcement-smoke'],
+                           'publish-adapter-spi': ['resolve-version', 'publish-kernel']})
+    for name in UNRELATED:
+        header = job_text(text, name).split('    steps:', 1)[0]
+        require(re.findall(r'^    if: (.+)$', header, re.M) == [ALL_SCOPE], 'unrelated job scope guard drift: ' + name)
+        needs = re.findall(r'^    needs: \[(.+)\]$', header, re.M)
+        require(len(needs) == 1 and [x.strip() for x in needs[0].split(',')] == expected_needs[name], 'validated resolver dependency missing: ' + name)
     job = job_text(text)
     header = job.split('    steps:', 1)[0]
     require('    needs: [resolve-version]\n' in header, 'Config must depend only on resolve-version')
@@ -81,6 +104,76 @@ def validate(text):
             require(expected in body, 'same-file publication drift: ' + name)
     require('id: config-nuget-login' in steps[ORDER[13]], 'OIDC output identity drift')
 
+def resolver_script(text):
+    job = job_text(text, 'resolve-version')
+    require(job.count('        run: |') == 1, 'one resolver script required')
+    run = job.split('        run: |\n', 1)[1]
+    lines = []
+    for line in run.splitlines():
+        if line.strip() and not line.startswith('          '):
+            break
+        lines.append(line)
+    return textwrap.dedent('\n'.join(lines)) + '\n'
+
+def resolver_controls(text):
+    # SYNTHETIC project versions, no SDK/feed/effects. Execute the ACTUAL workflow script.
+    script = resolver_script(text)
+    cli = '1.1.0'
+    config = '0.3.0'
+    cases = [
+        ('config-dry-run', 'workflow_dispatch', 'config', '', '', '', config, 'false', True, 'Config'),
+        ('config-match', 'workflow_dispatch', 'config', config, '', '', config, 'true', True, 'Config'),
+        ('config-prefixed-match', 'workflow_dispatch', 'config', 'v'+config, '', '', config, 'true', True, 'Config'),
+        ('config-mismatch', 'workflow_dispatch', 'config', cli, '', '', config, '', False, 'Config'),
+        ('config-whitespace-input', 'workflow_dispatch', 'config', ' ', '', '', config, '', False, 'Config'),
+        ('config-invalid-input', 'workflow_dispatch', 'config', 'vNext', '', '', config, '', False, 'Config'),
+        ('unknown-scope', 'workflow_dispatch', 'other', '', '', '', config, '', False, None),
+        ('omitted-scope-dry-run', 'workflow_dispatch', '', '', '', '', cli, 'false', True, 'Cli'),
+        ('all-dry-run', 'workflow_dispatch', 'all', '', '', '', cli, 'false', True, 'Cli'),
+        ('all-match', 'workflow_dispatch', 'all', cli, '', '', cli, 'true', True, 'Cli'),
+        ('all-mismatch', 'workflow_dispatch', 'all', config, '', '', cli, '', False, 'Cli'),
+        ('push-tag-match', 'push', '', '', '', 'v'+cli, cli, 'true', True, 'Cli'),
+        ('release-tag-match', 'release', '', '', 'v'+cli, '', cli, 'true', True, 'Cli'),
+        ('push-tag-mismatch', 'push', '', '', '', 'v'+config, cli, '', False, 'Cli'),
+        ('release-invalid-tag', 'release', '', '', 'vNext', '', cli, '', False, 'Cli'),
+        ('tag-forced-config', 'push', 'config', '', '', 'v'+cli, cli, '', False, None),
+        ('config-empty-project-version', 'workflow_dispatch', 'config', '', '', '', '', '', False, 'Config'),
+        ('config-invalid-project-version', 'workflow_dispatch', 'config', '', '', '', 'not-a-version', '', False, 'Config'),
+    ]
+    with tempfile.TemporaryDirectory(prefix='config-resolver-') as directory:
+        root = Path(directory)
+        (root/'dotnet').write_text("""#!/bin/bash
+printf '%s\\n' "$*" >> "$CALLS"
+case "$2" in
+  src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj) printf '%s\\n' "$CLI_VERSION" ;;
+  src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj) printf '%s\\n' "$CONFIG_VERSION" ;;
+  *) exit 91 ;;
+esac
+""")
+        (root/'dotnet').chmod(0o700)
+        (root/'resolver.sh').write_text(script)
+        for name, event, scope, version, tag, ref, resolved, push, success, project in cases:
+            output = root/'outputs'
+            calls = root/'calls'
+            output.write_text('')
+            calls.write_text('')
+            env = {'PATH': str(root)+':/usr/bin:/bin', 'LC_ALL': 'C', 'EVENT_NAME': event,
+                   'INPUT_SCOPE': scope, 'INPUT_VERSION': version, 'RELEASE_TAG': tag, 'REF_NAME': ref,
+                   'GITHUB_OUTPUT': str(output), 'CALLS': str(calls), 'CLI_VERSION': cli,
+                   'CONFIG_VERSION': resolved if project == 'Config' else config}
+            result = subprocess.run(['bash', str(root/'resolver.sh')], env=env, text=True,
+                                    capture_output=True, timeout=3)
+            require((result.returncode == 0) == success, 'resolver outcome drift: '+name+' '+result.stdout+result.stderr)
+            expected_calls = [f'msbuild src/FS.GG.Governance.{project}/FS.GG.Governance.{project}.fsproj -getProperty:Version'] if project else []
+            require(calls.read_text().splitlines() == expected_calls, 'resolver evaluated wrong project: '+name)
+            if success:
+                require(output.read_text().splitlines() == ['scope='+('config' if scope == 'config' else 'all'),
+                                                            'version='+resolved, 'push='+push], 'resolver output drift: '+name)
+            else:
+                require(output.read_text() == '', 'failed resolver emitted publish outputs: '+name)
+    print(f'Actual resolver controls passed: {len(cases)}')
+
+
 def mutations(text):
     job = job_text(text)
     smoke = re.search(r'^      - name: Config package consumer smoke\n.*?(?=^      - name:)', job, re.M | re.S).group()
@@ -94,11 +187,22 @@ def mutations(text):
         'swap-package-path': job.replace('package="${{ steps.config-package.outputs.path }}"', 'package="other.nupkg"', 1),
         'broken-order': job.replace(identify + smoke, smoke + identify),
         'ambiguous-output': job.replace('[ "${#packages[@]}" -eq 1 ]', '[ "${#packages[@]}" -ge 1 ]'),
+        'remove-retention': job.replace(re.search(r'^      - name: Retain Config archive and manifest\n.*?(?=^      - name:)', job, re.M | re.S).group(), ''),
+        'remove-collision': job.replace(re.search(r'^      - name: Check Config feed collisions\n.*?(?=^      - name:)', job, re.M | re.S).group(), ''),
+        'change-file-hash': job.replace('expected="${{ steps.config-package.outputs.sha256 }}"', 'expected="replacement"', 1),
         'ignored-smoke-failure': job.replace('      - name: Config package consumer smoke\n', '      - name: Config package consumer smoke\n        continue-on-error: true\n')
     }
-    for name, mutated in cases.items():
+    whole_cases = {name: text.replace(job, mutated) for name, mutated in cases.items()}
+    for name in UNRELATED:
+        body = job_text(text, name)
+        whole_cases['unguarded-'+name] = text.replace(body, body.replace(ALL_SCOPE, REPOSITORY, 1))
+    resolver = job_text(text, 'resolve-version')
+    whole_cases['config-routed-to-cli'] = text.replace(resolver, resolver.replace('project="src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj"', 'project="src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj"'))
+    whole_cases['resolver-dry-run-push'] = text.replace(resolver, resolver.replace('push="false"', 'push="true"'))
+    for name, mutated in whole_cases.items():
         try:
-            validate(text.replace(job, mutated))
+            validate(mutated)
+            resolver_controls(mutated)
         except ValueError:
             print('refused mutation: ' + name)
         else:
@@ -112,8 +216,9 @@ if __name__ == '__main__':
     try:
         text = args.workflow.read_text()
         validate(text)
+        resolver_controls(text)
         if args.mutations:
             mutations(text)
         print('Config publication static contract passed')
-    except (ValueError, OSError) as error:
+    except (ValueError, OSError, subprocess.TimeoutExpired) as error:
         sys.exit('Config publication refused: ' + str(error))

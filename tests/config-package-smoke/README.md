@@ -1,5 +1,12 @@
 # Config package qualification
 
+Manual `scope=config` selects only the version resolver and Config job. The resolver evaluates
+Config's own project version; omit `version` for a pack/qualification run with no collision lookup,
+login or push. An explicit version must match Config. Manual omitted scope/default `all` and
+release/tag runs retain CLI-led selection; Config-only selection is manual-only. All eight other
+jobs require validated scope `all`, including ReferenceGateSet, so Config-only mode packs or pushes
+no other artifact. Root release admission and original archive/custody requirements still apply.
+
 The publisher qualifies the full Config test suite, packs once and passes that exact archive to:
 
 ```sh
@@ -38,8 +45,13 @@ bash -n tests/config-package-smoke/run.sh
 
 The first command checks the actual job through a deliberately restricted YAML projection, refusing
 unsupported step controls/conditions. It does not replace general workflow validation or expression
-execution. Seven mutations exercise missing smoke, dry-run push, second pack, wrong path, ordering,
-ambiguous output and ignored smoke failure. Synthetic archive controls exercise identity/version/digest,
+execution. Twenty mutations exercise each unrelated-job guard, resolver project selection and dry-run push,
+plus missing consumer/retention/collision, second pack, wrong file/hash, ordering, ambiguous output
+and ignored failure. Eighteen controls execute the actual extracted Bash resolver with a stub
+`dotnet` returning distinct CLI/Config versions, recording exact calls and outputs. They cover
+manual selection/version cases, omitted/default scope, unknown scope, invalid/empty versions and
+existing tag/release matching/refusal. These synthetic controls need no SDK or feed credentials;
+they do not dispatch Actions or substitute for hosted expression validation. Synthetic archive controls exercise identity/version/digest,
 source revision, dependency boundary, TFM, assembly/API, payload and empty/multiple archive refusals;
 their dummy assembly is explicitly not package qualification. These controls also run through
 `PublishContractTests.fs` in the full Config suite. The publisher runs workflow preflight before restore.
