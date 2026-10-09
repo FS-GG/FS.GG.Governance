@@ -23,7 +23,12 @@ export DOTNET_CLI_USE_MSBUILD_SERVER=0
 export MSBUILDDISABLENODEREUSE=1
 export NUGET_PACKAGES="$consumer/packages"
 export NUGET_HTTP_CACHE_PATH="$consumer/http-cache"
-export NuGetPackageSourceCredentials_contracts="Username=${FSGG_PACKAGES_ACTOR:-unused};Password=${FSGG_PACKAGES_READ_TOKEN:-unused};ValidAuthenticationTypes=Basic"
+# Associate GitHub credentials only with the exact admitted organization feed.
+if [[ "$contracts_source" == 'https://nuget.pkg.github.com/FS-GG/index.json' ]]; then
+  export NuGetPackageSourceCredentials_contracts="Username=${FSGG_PACKAGES_ACTOR:-unused};Password=${FSGG_PACKAGES_READ_TOKEN:-unused};ValidAuthenticationTypes=Basic"
+else
+  unset NuGetPackageSourceCredentials_contracts
+fi
 readarray -t versions < <(python3 - "$evidence/versions.json" <<'PY'
 import json, sys
 v = json.load(open(sys.argv[1]))
