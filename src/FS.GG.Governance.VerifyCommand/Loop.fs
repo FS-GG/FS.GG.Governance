@@ -93,6 +93,14 @@ module Loop =
         | EmptyPaths
         | UnrecognizedProfile of string
 
+    type Invocation =
+        { Request: RunRequest
+          Provider: ProviderContext.Selection option }
+
+    type InvocationError =
+        | LegacyUsage of UsageError
+        | ProviderUsage of ProviderContext.SelectionError
+
     type ExitDecision =
         | Success
         | Blocked
@@ -237,7 +245,7 @@ module Loop =
         }
 
 
-    let parse (argv: string list) : Result<RunRequest, UsageError> =
+    let parseCore allowProvider (argv: string list) : Result<RunRequest, UsageError> =
         // Tolerate (and drop) a leading `verify` verb — the verb this command implements.
         let tokens =
             match argv with
@@ -278,6 +286,9 @@ module Loop =
                 let paths, after = takePaths [] more
                 go { acc with Paths = Some paths } after
             // NO `--mode` flag (FR-017): it falls through to UnknownFlag, like any other unknown flag.
+            // Selection already validated all five options. Keep their original token boundaries,
+            // so --paths grouping and a missing legacy option value are never rewritten by removal.
+            | flag :: _value :: more when allowProvider && List.contains flag [ "--provider-provenance"; "--provider-provenance-sha256"; "--provider-policy"; "--provider-policy-sha256"; "--provider-platform" ] -> go acc more
             | flag :: _ when flag.StartsWith "--" -> Error(UnknownFlag flag)
             // CLI-5: a stray non-`--` positional is an UnexpectedArgument, not a mis-labelled "unknown flag".
             | other :: _ -> Error(UnexpectedArgument other)
@@ -331,6 +342,16 @@ module Loop =
                                 acc.ProvenanceOut
                                 |> Option.defaultValue (CommandHost.under repo "readiness/provenance.json")
                         }
+
+    let parse argv = parseCore false argv
+
+    let parseInvocation argv =
+        match ProviderContext.select argv with
+        | Error error -> Error(ProviderUsage error)
+        | Ok selection ->
+            match parseCore (Option.isSome selection) argv with
+            | Error error -> Error(LegacyUsage error)
+            | Ok request -> Ok { Request = request; Provider = selection }
 
     // ── init (Principle IV) — initial Model + first effect ──
 

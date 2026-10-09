@@ -103,6 +103,16 @@ module Loop =
         | EmptyPaths
         | UnrecognizedProfile of string
 
+    /// Additive invocation wrapper; the old RunRequest and legacy parse/run entry points stay intact.
+    type Invocation =
+        { Request: RunRequest
+          Provider: ProviderContext.Selection option }
+
+    /// Keep legacy diagnostics exactly typed; provider selection has its own located refusals.
+    type InvocationError =
+        | LegacyUsage of UsageError
+        | ProviderUsage of ProviderContext.SelectionError
+
     /// The process-level outcome category. `Blocked` (1) is a distinct non-zero exit — an unmet
     /// effective-blocking check at `RunMode.Verify` — kept apart from the tool-failure categories.
     type ExitDecision =
@@ -277,6 +287,10 @@ module Loop =
     /// an unrecognized `--profile` (via F023 `recognizeProfile`) ⇒ `UnrecognizedProfile`; a `--mode` flag ⇒
     /// `UnknownFlag "--mode"` (FR-017). Omitted profile defaults to `Standard`.
     val parse: argv: string list -> Result<RunRequest, UsageError>
+
+    /// Validate explicit provider options, then parse the original token stream with their boundaries
+    /// retained. This pure API creates no ports; Program remains on legacy parse until loader admission.
+    val parseInvocation: argv: string list -> Result<Invocation, InvocationError>
 
     /// Initial state plus the first requested effect(s) for a valid request (Principle IV `init`).
     /// `ExplicitPaths` emits `LoadCatalog` directly; `Since`/`DefaultRange` emit `SenseScope` first.
