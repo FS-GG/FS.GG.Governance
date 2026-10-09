@@ -21,6 +21,7 @@
     <Compile Include="FailureTests.fs" />
     <Compile Include="IdentityTests.fs" />
     <Compile Include="CloseLoopTests.fs" />
+    <Compile Include="BoundedExecutionTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

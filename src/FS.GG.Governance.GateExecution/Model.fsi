@@ -53,3 +53,114 @@ module Model =
     /// the sole seam through which the feature touches a process (FR-010); `Interpreter.realPort` is the real
     /// implementation, and tests supply a deterministic fake of this exact shape.
     type ExecutionPort = GateCommand -> ExecutionOutcome
+
+    /// The selected weaker scope. Descendants are neither contained nor observed.
+    type DescendantAcceptance =
+        | AcceptUncontainedUnobservedDescendants
+        | RequireContainedWorkload
+
+    /// A current-process monotonic clock reading; never persisted or renewed by recovery.
+    type MonotonicInstant = { Domain: System.Guid; Ticks: int64 }
+
+    /// Original work and total cleanup ends in one owning process's clock domain.
+    type ExecutionBudget = { WorkEnd: MonotonicInstant; CleanupEnd: MonotonicInstant }
+
+    /// Independent byte limits, charged before retention; diagnostics share the aggregate limit.
+    type CaptureLimits = { StdoutBytes: int64; StderrBytes: int64; AggregateBytes: int64 }
+
+    /// Explicit acceptance of observations without stable inode or atomic cwd binding.
+    type PathAcceptance =
+        | AcceptObservedPathsWithoutAtomicBinding
+        | RequireStableAtomicPathBinding
+
+    /// Explicit current-host inputs. The environment is captured once by the caller.
+    /// Root bounds only initial cwd selection; it supplies no filesystem/network sandbox.
+    type CurrentHostPolicy =
+        { Root: string; CapturedEnvironment: Map<string, string>; Descendants: DescendantAcceptance; Paths: PathAcceptance }
+
+    /// Original operation/launch identity; not an execution grant or a numeric PID.
+    type LaunchIdentity = { Operation: string; Launch: string }
+
+    /// A one-use direct-child request; no provider or persisted context data.
+    type BoundedRequest =
+        { Command: GateCommand
+          Identity: LaunchIdentity
+          Policy: CurrentHostPolicy
+          Budget: ExecutionBudget
+          Limits: CaptureLimits
+          Cancellation: System.Threading.CancellationToken }
+
+    /// Separate causal failures; a real child exit 124 is never interpreted as timeout.
+    type BoundedFailure =
+        | InvalidRequest of string
+        | UnsupportedGuarantee
+        | WrongClockDomain
+        | WorkDeadlineReached
+        | CancellationRequested
+        | OutputLimitReached
+        | LaunchFailed of string
+        | ReadFailed of string
+        | StopIdentityUnknown
+        | CleanupDeadlineReached
+        | CleanupFailed of string
+        | AlreadyRun
+
+    type DirectLaunchState = NotStarted | Starting | Started | LaunchOutcomeUnknown
+
+    /// EOF differs from a locally closed pipe and from an outstanding owned read.
+    type StreamState = Pending | EndOfFile | ClosedBeforeEndOfFile | StreamReadFailed
+
+    /// Immutable captured prefixes; no returned snapshot aliases a writer's buffer.
+    type StreamObservation =
+        { State: StreamState
+          ObservedBytes: int64
+          Prefix: System.Collections.Immutable.ImmutableArray<byte> }
+
+    /// Released describes direct resources only, never descendants or reaping.
+    type DirectSettlement = Released | Retained
+
+    type DescendantObservation = UncontainedUnobserved
+
+    /// Bounded facts; retained custody stays with the same caller-held session.
+    type BoundedObservation =
+        { Identity: LaunchIdentity
+          Launch: DirectLaunchState
+          DirectExit: ExitCode option
+          Stdout: StreamObservation
+          Stderr: StreamObservation
+          FirstFailure: BoundedFailure option
+          SecondaryFailures: BoundedFailure list
+          CancellationRequested: bool
+          WorkDeadlineReached: bool
+          OutputLimitReached: bool
+          Settlement: DirectSettlement
+          Descendants: DescendantObservation }
+
+    /// Pure workflow state: an I/O edge interprets only the emitted effects.
+    type DirectPhase = Prepared | Launching | Running | Retiring | Settled
+
+    type DirectModel =
+        { Phase: DirectPhase
+          LaunchConsumed: bool
+          FirstFailure: BoundedFailure option
+          SecondaryFailures: BoundedFailure list }
+
+    type DirectMsg =
+        | RunRequested
+        | LaunchObserved
+        | FailureObserved of BoundedFailure
+        | DirectResourcesSettled
+
+    type DirectEffect = LaunchDirectChild | RetireDirectResources
+
+    /// Pure initial state; acquiring it starts no process.
+    val initDirect: unit -> DirectModel
+
+    /// One-use launch and sticky first cause; interpretation stays at the edge.
+    val updateDirect: DirectMsg -> DirectModel -> DirectModel * DirectEffect list
+
+    /// Pure original-end validation, including domain and ordering; no clock read or renewal.
+    val validateBudget: now: MonotonicInstant -> ExecutionBudget -> BoundedFailure option
+
+    /// Pure rejection of stronger descendant/path guarantees; no fallback or launch.
+    val validateCurrentHostPolicy: CurrentHostPolicy -> BoundedFailure option

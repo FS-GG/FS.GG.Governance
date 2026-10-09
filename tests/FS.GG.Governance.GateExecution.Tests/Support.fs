@@ -389,3 +389,92 @@ let fscheckConfig =
     }
 // 074: findRepoRoot consolidated into the shared RepositoryHelpers (sln||slnx superset).
 let repoRoot = FS.GG.Governance.Tests.Common.RepositoryHelpers.repoRoot
+
+
+// New bounded-path fixtures: an explicit test-only owner retains every session until direct
+// settlement. Unsettled sessions remain strongly held through test-runner life, including failures.
+// This is not production admission or a cleanup receipt. Native selection must additionally retain
+// the actual independent outer runner/group owner; disposable commands below finish themselves.
+let retainedBoundedFixtures = System.Collections.Concurrent.ConcurrentDictionary<Guid, FS.GG.Governance.GateExecution.Interpreter.ExecutionSession>()
+
+let boundedRequest (dir: string) (python: string) (workMilliseconds: int) (cleanupMilliseconds: int) : BoundedRequest =
+    let now = FS.GG.Governance.GateExecution.Interpreter.currentInstant ()
+    let endAt milliseconds : MonotonicInstant =
+        { now with Ticks = now.Ticks + int64 milliseconds * System.Diagnostics.Stopwatch.Frequency / 1000L }
+    { Command = Build.command(executable="/usr/bin/python3", arguments=[Argument "-c"; Argument python],
+                              workingDirectory=dir, environment={Added=[];Changed=[];Removed=[]}, timeout=10)
+      Identity = {Operation="test-bounded-direct-child";Launch=Guid.NewGuid().ToString("N")}
+      Policy = {Root=dir;CapturedEnvironment=Map.empty;Descendants=AcceptUncontainedUnobservedDescendants
+                Paths=AcceptObservedPathsWithoutAtomicBinding}
+      Budget = {WorkEnd=endAt workMilliseconds;CleanupEnd=endAt cleanupMilliseconds}
+      Limits = {StdoutBytes=4096L;StderrBytes=4096L;AggregateBytes=8192L}
+      Cancellation = System.Threading.CancellationToken.None }
+
+let acquireBoundedFixture request =
+    match FS.GG.Governance.GateExecution.Interpreter.prepare request with
+    | Error causes -> failtestf "bounded fixture preparation refused: %A" causes
+    | Ok session ->
+        let owner = Guid.NewGuid()
+        retainedBoundedFixtures.[owner] <- session
+        owner, session
+
+let awaitBoundedFixture (owner: Guid) (session: FS.GG.Governance.GateExecution.Interpreter.ExecutionSession) =
+    // Observation of the original owner grants no execution or cleanup time. The self-finishing
+    // fixture's independent outer recipe reserves this later observation, not a component retry.
+    let wait = System.Diagnostics.Stopwatch.StartNew()
+    let mutable observed = FS.GG.Governance.GateExecution.Interpreter.observe session
+    while observed.Settlement <> Released && wait.Elapsed.TotalSeconds < 4.0 do
+        System.Threading.Thread.Sleep 5
+        observed <- FS.GG.Governance.GateExecution.Interpreter.observe session
+    if observed.Settlement <> Released then
+        // Unknown ownership must not be dropped merely because an assertion finished. Keep
+        // the actual caller/runner alive for the separately selected outer supervisor to retire.
+        // This backstop grants no component time and cannot produce a passing fixture result.
+        while observed.Settlement <> Released do
+            System.Threading.Thread.Sleep 20
+            observed <- FS.GG.Governance.GateExecution.Interpreter.observe session
+    let mutable removed = session
+    retainedBoundedFixtures.TryRemove(owner, &removed) |> ignore
+    observed
+
+let withBoundedFixture request body =
+    let owner, session = acquireBoundedFixture request
+    try body session
+    finally awaitBoundedFixture owner session |> ignore
+
+// A control channel joins observations to an independently admitted private guardian. These
+// environment values schedule/select a fixture; they are not custody or execution authority.
+let boundedFixtureControl () =
+    let required name =
+        match System.Environment.GetEnvironmentVariable(name) |> Option.ofObj with
+        | Some value when not (String.IsNullOrWhiteSpace value) -> value
+        | _ -> failtest "actual bounded fixture control directory and operation are required"
+    let directory = required "FSGG_BOUNDED_FIXTURE_CONTROL"
+    let operation = required "FSGG_BOUNDED_FIXTURE_OPERATION"
+    if not (System.IO.Path.IsPathFullyQualified directory) || not (System.IO.Directory.Exists directory) then
+        failtest "actual absolute bounded fixture control directory is required"
+    directory, operation
+
+let publishBoundedFixtureControl (directory: string) (operation: string) (launch: string) (kind: string) (detail: string) =
+    let observation =
+        {| operation = operation; launch = launch; kind = kind; detail = detail
+           ownerPid = System.Environment.ProcessId |}
+    let text = System.Text.Json.JsonSerializer.Serialize observation
+    let destination = System.IO.Path.Combine(directory, kind + ".json")
+    let staging = destination + ".pending"
+    do
+        use output = new System.IO.FileStream(staging, System.IO.FileMode.CreateNew, System.IO.FileAccess.Write, System.IO.FileShare.None)
+        let bytes = System.Text.Encoding.UTF8.GetBytes text
+        output.Write(bytes, 0, bytes.Length)
+        output.Flush(true)
+    System.IO.File.Move(staging, destination)
+
+let publishBoundedRunSnapshot directory operation launch kind (result: BoundedObservation) =
+    // Deliberately omit captured bytes, environment, paths and exception payloads. Model causes
+    // are already bounded codes; this selected fixture snapshot preserves actual observed facts.
+    let detail =
+        sprintf "launch=%A; directExit=%A; stdout=%A/%d; stderr=%A/%d; first=%A; secondary=%A; settlement=%A; descendants=%A"
+            result.Launch result.DirectExit result.Stdout.State result.Stdout.ObservedBytes
+            result.Stderr.State result.Stderr.ObservedBytes result.FirstFailure result.SecondaryFailures
+            result.Settlement result.Descendants
+    publishBoundedFixtureControl directory operation launch kind detail

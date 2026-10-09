@@ -127,3 +127,56 @@ signature was exercised first through a private FSI prototype using actual Confi
 its 17 synthetic controls passed. Reflected surface changes add only the selected context/planning
 APIs and their record/union members; all existing API lines remain. This validates pure planning,
 not actual producer provenance, installed tool/environment enforcement, execution or evidence acceptance.
+
+## C2 bounded direct-child component (Tier 1; local qualification)
+
+The additive GateExecution API selects CurrentHost/direct-child execution only when the caller
+explicitly accepts both uncontained, unobserved descendants and observed paths without atomic binding.
+Stronger requirements refuse before launch. Captured environment plus validated deltas, initial absolute
+cwd and literal argv are applied. Root bounds initial cwd selection only; refreshed path/link/metadata
+checks establish observed pathname selection, never stable inode identity or atomic check-to-start
+binding. The executable must be fully qualified and is passed unchanged, avoiding parent PATH search.
+There is no sandbox, aggregate resource enforcement, descendant census or reaping guarantee. Existing
+provider Verify has not accepted this weaker scope. Legacy execution and outcome/cache APIs stay intact.
+
+`prepare` acquires a caller-held one-use ExecutionSession before launch. Pure workflow transitions
+separate state from requested I/O. The edge retains the Process, launch/read/retirement activities,
+finite buffers and registrations under the original monotonic work/cleanup ends; observation never
+renews either budget. Per-stream and aggregate byte caps apply before retention, and returned prefixes
+are immutable. Direct exit, EOF/closure/read failure, timeout/cancellation, first cause, distinct secondary
+causes and direct settlement remain separate. A real exit124 is not timeout evidence.
+
+`Released` requires actual direct exit and all owned activities/handles settled. Otherwise the caller
+retains the same session, including after a deadline. Later settlement does not erase the original
+bounded failure. Direct exit and EOF never prove descendant cleanup. Runtime signal identity remains
+unqualified, so this port does not signal an ambiguous process or invent termination evidence.
+
+Local qualification passed the public API exercise's 29 synthetic controls, actual Release compilation,
+three surface/dependency/scope checks and ten synthetic workflow controls. Ten separately admitted real
+controls exercised literal argv, captured environment/deltas/cwd, actual exit124, concurrent binary
+streams, caps, timeout/late settlement, cancellation, one-use launch and prelaunch refusals. A separate
+held-pipe test passed after an actual controlled holder was observed alive and adopted by its private
+guardian. The run snapshot recorded direct exit0 with pending streams, retained custody and work/cleanup
+failures; the guardian then reaped the holder and finally the runner after EOF.
+
+The missing-executable control was accepted separately as external retirement. Its actual run recorded
+LaunchOutcomeUnknown, no direct exit, Retained, launch failure and original deadline causes. The actual
+CLR caller held the session until the independent guardian performed the selected SIGKILL and consumed
+the exact adopted-runtime and final runner statuses. This was not a normal unit-test pass or public
+`Released`, and does not qualify arbitrary ambiguous production launches. Guardian adoption/reaping is
+private fixture evidence and never upgrades CurrentHost's UncontainedUnobserved descendant result.
+
+The original two component compile failures, one later fixture-layout compile failure and the initial
+held-readiness failure remain retained separately from successful successors. The initial held attempt
+lacked a preassertion run snapshot; its underlying launch/expiry cause remains unknown. Corrected fixtures
+construct fresh original 1-second work/3-second cleanup budgets once and record bounded run facts before
+assertions; the controlled holder has a separate finite 10-second fallback within the outer window.
+
+Native cases remain pending by default. Exact scheduling switches for the ten direct cases, held-pipe
+case and unknown external control supply neither execution authority nor custody. Default/nonexact
+scheduling checks skipped all ten direct cases; corrected-source default discovery skipped both remaining
+cases, with zero passed native cases. Separate positive qualification used actual independently admitted
+owners. Hosted full-suite CI has no such fixture owner and cannot establish positive native acceptance.
+Source delivery/full Debug+Release coherent validation, actual Verify/package-backed caller joins,
+stronger profile acceptance and C3 publication remain separate; GOV423-C2 stays open. Historic installed
+custody/operation unknowns and the attributed native telemetry gap are unchanged.
