@@ -613,4 +613,4 @@ let controlledTests =
             Expect.equal second.Model.FirstFailure (Some CaptureAlreadyConsumed) "no second acquisition"
             Expect.equal second.Documents first.Documents "same bounded original bytes"
             releaseControlled session)
-    ]
+    ] |> testSequenced
