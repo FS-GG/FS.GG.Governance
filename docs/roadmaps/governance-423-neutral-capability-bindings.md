@@ -328,8 +328,8 @@ Templates/public receivers and broader release completion retain their applicabl
 
 ### GOV423-C2 controlled retention source window (2026-10-15)
 
-Owner: Governance source lane. Status: source prepared; hosted qualification pending. C2 remains
-unchecked. This extends the existing capture milestone and preserves all earlier failures and custody
+Owner: Governance source lane. Status: [source window delivered](https://github.com/FS-GG/FS.GG.Governance/pull/459)
+at `8a6a74c701ccc713f28723fad5eea539acaada38`; C2 remains unchecked. This extends the existing capture milestone and preserves all earlier failures and custody
 unknowns. The historical 15-case report above describes #449; #453 subsequently added held-root lease
 coverage and reported 20 physical controls. Those reports do not qualify blocked kernel reads or
 uncertain physical closes.
@@ -341,16 +341,21 @@ signature remain preserved. A post-read work check prevents a late read from acc
 Synthetic sessions cannot duplicate native leases; production's outstanding lease fences stay intact.
 The surface guard explicitly rejects exported operation/test types and entry points.
 
-Local validation is limited to source, exact touch set, diff and relative links. No local CLR or native
-fixture execution is admitted. Normal PR CI may qualify compilation and controlled/default tests with
-physical capture still pending. Preserve its first failing run and exact successor head; hosted green
-establishes source qualification only. The source PR and its exact checks supply delivery evidence;
-publication, installed adoption and physical acceptance remain separate.
+Local validation covered source, exact touch set, diff and relative links; no local CLR or native
+fixture ran. [Hosted qualification](https://github.com/FS-GG/FS.GG.Governance/actions/runs/38692065699)
+passed the required source matrix and advisory API job at `8c242c6133b36206f9ff83fc287684840788a777`.
+VerifyCommand passed 219 tests in each of Debug and Release, with all 20 physical cases skipped.
+The first `b086c148` build failed on two nullable reflection accesses; its successor repaired the
+guard. After rebase, the first routine event refused the stale head marker; the subsequent authentic
+edited event passed after rebinding. Both failures remain preserved. The protected delivery helper
+accepted routine eligibility and coherent validation, then one guarded apply delivered #459.
+This establishes source qualification and delivery only; publication, installed adoption, physical
+blocked-read/uncertain-close acceptance and the rest of C2 remain open.
 
 The remaining physical gate needs an accountable supplying owner, an authentic regular-file blocked
 read accepted by production acquisition, independently observed uncertain close and demonstrated
 whole-worker/resource teardown. No backend is qualified by this window. Keep those physical cases
 pending and retain the original caller owner and failure evidence. The existing provider loader,
 Program/Verify integration, stronger profiles, coherent SDD consumer joins and C3/C4 milestones remain
-open. Atlas capture remains an asynchronous owning-archive follow-up for the programme integrator:
-`governance/provider-capture-retention-boundary`.
+open. The owning Atlas archive records `governance/provider-capture-retention-boundary`; retrieve it
+with the Atlas helper and verify its immutable source citations before reuse.
