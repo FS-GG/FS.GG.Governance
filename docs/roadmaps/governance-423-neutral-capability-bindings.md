@@ -325,3 +325,32 @@ not a new candidate, and no-push candidates cannot be promoted by this route.
 This source amendment does not qualify a release archive, dispatch, publish, reconcile original
 holds or complete C2/C3/C4. Runtime carrier publication, exact ReferenceGateSet 1.8.0 adoption,
 Templates/public receivers and broader release completion retain their applicable evidence gates.
+
+### GOV423-C2 controlled retention source window (2026-10-15)
+
+Owner: Governance source lane. Status: source prepared; hosted qualification pending. C2 remains
+unchecked. This extends the existing capture milestone and preserves all earlier failures and custody
+unknowns. The historical 15-case report above describes #449; #453 subsequently added held-root lease
+coverage and reported 20 physical controls. Those reports do not qualify blocked kernel reads or
+uncertain physical closes.
+
+The bounded seven-path change adds internal per-session native/clock operations, immutable ownership
+facts and ten finite controls through the actual capture interpreter. Native result/errno association,
+original task registration, one-use acquisition, byte caps, cooperative comparisons and the public
+signature remain preserved. A post-read work check prevents a late read from accepting new bytes.
+Synthetic sessions cannot duplicate native leases; production's outstanding lease fences stay intact.
+The surface guard explicitly rejects exported operation/test types and entry points.
+
+Local validation is limited to source, exact touch set, diff and relative links. No local CLR or native
+fixture execution is admitted. Normal PR CI may qualify compilation and controlled/default tests with
+physical capture still pending. Preserve its first failing run and exact successor head; hosted green
+establishes source qualification only. The source PR and its exact checks supply delivery evidence;
+publication, installed adoption and physical acceptance remain separate.
+
+The remaining physical gate needs an accountable supplying owner, an authentic regular-file blocked
+read accepted by production acquisition, independently observed uncertain close and demonstrated
+whole-worker/resource teardown. No backend is qualified by this window. Keep those physical cases
+pending and retain the original caller owner and failure evidence. The existing provider loader,
+Program/Verify integration, stronger profiles, coherent SDD consumer joins and C3/C4 milestones remain
+open. Atlas capture remains an asynchronous owning-archive follow-up for the programme integrator:
+`governance/provider-capture-retention-boundary`.

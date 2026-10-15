@@ -29,6 +29,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="FS.GG.Governance.VerifyCommand.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 076 Phase C: the three optional host folds extracted out of Loop.fs, compiled BEFORE it (leaves
          the base pipeline calls). Each is .fsi-curated and host-`Model`-free. -->
     <Compile Include="SurfaceFold.fsi" />

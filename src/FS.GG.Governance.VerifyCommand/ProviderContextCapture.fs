@@ -133,6 +133,38 @@ module ProviderContextCapture =
         [<System.Runtime.InteropServices.DllImport("libc", SetLastError=true)>]
         extern int close(int fd)
 
+    type internal Operations =
+        { Current: unit -> FS.GG.Governance.GateExecution.Model.MonotonicInstant
+          OpenAt: int -> string -> uint64 -> uint64 -> int64 * int
+          Stat: int -> byte[] -> int * int
+          OpenRead: string -> int * int
+          Read: int -> byte[] -> int64 * int
+          Seek: int -> int64 * int
+          Close: int -> int * int }
+    type internal Ownership =
+        { PendingActivity: bool; RetainedDescriptors: int; CloseUncertain: bool; BorrowedRoots: int }
+    let nativeOperations : Operations =
+        { Current = FS.GG.Governance.GateExecution.Interpreter.currentInstant
+          OpenAt = fun directory path flags resolve ->
+              let mutable how=Native.OpenHow(flags,resolve)
+              let result=Native.openat2(437L,directory,path,&how,24UL)
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError()
+          Stat = fun fd bytes ->
+              let result=Native.statx(fd,"",4352,0x17ffu,bytes)
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError()
+          OpenRead = fun path ->
+              let result=Native.openReadOnly(path,0x80000)
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError()
+          Read = fun fd bytes ->
+              let result=Native.read(fd,bytes,uint64 bytes.Length)
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError()
+          Seek = fun fd ->
+              let result=Native.lseek(fd,0L,0)
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError()
+          Close = fun fd ->
+              let result=Native.close fd
+              result,System.Runtime.InteropServices.Marshal.GetLastPInvokeError() }
+
     type Metadata =
         { Identity: ObjectIdentity; Mode: uint16; Size: uint64
           ModifiedSeconds: int64; ModifiedNanoseconds: uint32
@@ -143,6 +175,8 @@ module ProviderContextCapture =
           PathFd: int; DataFd: int; Metadata: Metadata; Observation: DocumentObservation }
     type OwnerState =
         { Request: Request
+          Operations: Operations
+          NativeLeaseAllowed: bool
           Sync: obj
           mutable Model: Model
           Fds: System.Collections.Generic.HashSet<int>
@@ -158,32 +192,31 @@ module ProviderContextCapture =
         member _.Operation = state.Request.Operation
         member _.State = state
 
-    let current () = FS.GG.Governance.GateExecution.Interpreter.currentInstant()
+    let current (state:OwnerState) = state.Operations.Current()
     let transition (state:OwnerState) msg = lock state.Sync (fun () -> state.Model <- update msg state.Model |> fst)
     let report (state:OwnerState) cause = transition state (FailureObserved cause)
-    let errno () = System.Runtime.InteropServices.Marshal.GetLastPInvokeError() |> string
     let fault role detail = raise (CaptureFault(AcquisitionFailed(role,detail)))
     let checkWork (state:OwnerState) =
-        let now=current()
+        let now=current state
         if state.Request.Cancellation.IsCancellationRequested then raise (CaptureFault CancellationRequested)
         if now.Ticks>=state.Request.Budget.WorkEnd.Ticks then raise (CaptureFault WorkDeadlineReached)
         if lock state.Sync (fun () -> Option.isSome state.Model.FirstFailure) then raise (CaptureFault OperationInProgress)
-    let own (state:OwnerState) role fd =
-        if fd<0 then fault role ("native acquisition errno="+errno())
+    let own (state:OwnerState) role (fd,error) =
+        if fd<0 then fault role ("native acquisition errno="+string error)
         lock state.Sync (fun () -> state.Fds.Add fd |> ignore)
         fd
     let pathOpen (state:OwnerState) role directory path flags resolve =
         checkWork state
-        let mutable how=Native.OpenHow(flags,resolve)
-        let fd=Native.openat2(437L,directory,path,&how,24UL)
+        let fd,error=state.Operations.OpenAt directory path flags resolve
         if fd<0L then
-            if System.Runtime.InteropServices.Marshal.GetLastPInvokeError()=38 then raise (CaptureFault(NativePrerequisiteUnavailable "openat2 unavailable"))
-            fault role ("openat2 errno="+errno())
-        own state role (int fd)
+            if error=38 then raise (CaptureFault(NativePrerequisiteUnavailable "openat2 unavailable"))
+            fault role ("openat2 errno="+string error)
+        own state role (int fd,error)
     let metadata (state:OwnerState) role fd =
         checkWork state
         let bytes=Array.zeroCreate<byte> 256
-        if Native.statx(fd,"",4352,0x17ffu,bytes)<>0 then fault role ("statx errno="+errno())
+        let result,error=state.Operations.Stat fd bytes
+        if result<>0 then fault role ("statx errno="+string error)
         let u32 offset=System.BitConverter.ToUInt32(bytes,offset)
         let u64 offset=System.BitConverter.ToUInt64(bytes,offset)
         let mask=u32 0
@@ -211,8 +244,9 @@ module ProviderContextCapture =
         root
     let closeTracked (state:OwnerState) fd =
         // Linux close failure is not retried: numeric fd reuse cannot establish continued ownership.
-        if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then raise (CaptureFault CleanupDeadlineReached)
-        if Native.close fd=0 then lock state.Sync (fun () -> state.Fds.Remove fd |> ignore)
+        if (current state).Ticks>=state.Request.Budget.CleanupEnd.Ticks then raise (CaptureFault CleanupDeadlineReached)
+        let result,_=state.Operations.Close fd
+        if result=0 then lock state.Sync (fun () -> state.Fds.Remove fd |> ignore)
         else
             lock state.Sync (fun () -> state.CloseUncertain <- true)
             raise (CaptureFault OwnedActivitiesPending)
@@ -220,13 +254,14 @@ module ProviderContextCapture =
         let observed=metadata state role fd
         if observed.Mode &&& 0xf000us <> 0x8000us || not (sameObject original observed) then fault role "held object is not the selected regular file"
         checkWork state
-        let data=own state role (Native.openReadOnly("/proc/self/fd/"+string fd,0x80000))
+        let data=own state role (state.Operations.OpenRead ("/proc/self/fd/"+string fd))
         let reopened=metadata state role data
         if not (sameObject original reopened) then fault role "procfd reopen changed object"
         data
     let reset (state:OwnerState) role fd =
         checkWork state
-        if Native.lseek(fd,0L,0)<>0L then fault role ("held regular-file reset errno="+errno())
+        let result,error=state.Operations.Seek fd
+        if result<>0L then fault role ("held regular-file reset errno="+string error)
     let rawDigest (bytes: byte[]) count =
         System.Security.Cryptography.SHA256.HashData(System.ReadOnlySpan<byte>(bytes,0,count))
         |> System.Convert.ToHexString |> fun digest -> digest.ToLowerInvariant()
@@ -240,9 +275,11 @@ module ProviderContextCapture =
         reset state role fd
         while reading do
             checkWork state
-            let amount=Native.read(fd,scratch,uint64 scratch.Length)
-            if amount<0L then fault role ("read errno="+errno())
-            elif amount=0L then reading <- false
+            let amount,error=state.Operations.Read fd scratch
+            if amount<0L then fault role ("read errno="+string error)
+            // A returning read cannot add bytes after its original work end or an observed failure.
+            checkWork state
+            if amount=0L then reading <- false
             elif amount>int64 (capacity-count) then raise (CaptureFault(ByteLimitExceeded role))
             else
                 System.Array.Copy(scratch,0,bytes,count,int amount)
@@ -256,9 +293,10 @@ module ProviderContextCapture =
         reset state document.Role document.DataFd
         while reading do
             checkWork state
-            let amount=Native.read(document.DataFd,scratch,uint64 scratch.Length)
-            if amount<0L then fault document.Role ("comparison read errno="+errno())
-            elif amount=0L then reading <- false
+            let amount,error=state.Operations.Read document.DataFd scratch
+            if amount<0L then fault document.Role ("comparison read errno="+string error)
+            checkWork state
+            if amount=0L then reading <- false
             elif amount>int64 (document.Observation.Bytes.Length-count) then raise (CaptureFault(InputChanged document.Role))
             else
                 for index=0 to int amount-1 do
@@ -311,7 +349,7 @@ module ProviderContextCapture =
         let descriptors,uncertain,borrowed=lock state.Sync (fun () -> state.Fds |> Seq.toList,state.CloseUncertain,state.RootLeases.Count>0)
         if not uncertain && not borrowed then
             for fd in descriptors do closeTracked state fd
-            if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
+            if (current state).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
             transition state OwnedResourcesSettled
     let runOwned (state:OwnerState) action =
         try action()
@@ -336,7 +374,7 @@ module ProviderContextCapture =
         let mutable waiting=true
         while waiting do
             let completed=lock state.Sync (fun () -> state.Activity |> Option.forall(fun task -> task.IsCompleted))
-            let now=current()
+            let now=current state
             if now.Ticks>=state.Request.Budget.CleanupEnd.Ticks then
                 report state CleanupDeadlineReached
                 waiting <- false
@@ -349,7 +387,7 @@ module ProviderContextCapture =
                 if state.Request.Cancellation.IsCancellationRequested then report state CancellationRequested
                 System.Threading.Thread.Sleep 1
     let snapshot (state:OwnerState) =
-        let now=current()
+        let now=current state
         lock state.Sync (fun () ->
             {Operation=state.Request.Operation;Model=state.Model;Roots=state.RootObservations
              Documents=state.Documents |> List.map(fun held -> held.Observation)
@@ -357,16 +395,23 @@ module ProviderContextCapture =
              WorkEndReached=now.Ticks>=state.Request.Budget.WorkEnd.Ticks
              CleanupEndReached=now.Ticks>=state.Request.Budget.CleanupEnd.Ticks
              CancellationObserved=state.Request.Cancellation.IsCancellationRequested})
-    let prepare (request:Request) =
-        let errors=validateRequest (current()) request
+    let prepareWith nativeLeaseAllowed (operations:Operations) (request:Request) =
+        let errors=validateRequest (operations.Current()) request
         let platform=System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)
                      && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture=System.Runtime.InteropServices.Architecture.X64
                      && request.Selection.Platform="linux-x64"
-        let errors=if platform then errors else errors @ [UnsupportedPlatform]
+        let errors=if not nativeLeaseAllowed || platform then errors else errors @ [UnsupportedPlatform]
         if not (List.isEmpty errors) then Error errors
         else
-            Ok(CaptureSession({Request=request;Sync=obj();Model=init();Fds=System.Collections.Generic.HashSet<int>()
+            Ok(CaptureSession({Request=request;Operations=operations;NativeLeaseAllowed=nativeLeaseAllowed;Sync=obj();Model=init();Fds=System.Collections.Generic.HashSet<int>()
                                Roots=[];RootObservations=[];Documents=[];Activity=None;CloseUncertain=false;RootLeases=System.Collections.Generic.List<_>()}))
+    let prepare request = prepareWith true nativeOperations request
+    let internal prepareControlled operations request = prepareWith false operations request
+    let internal ownership (session:CaptureSession) : Ownership =
+        let state=session.State
+        lock state.Sync (fun () ->
+            {PendingActivity=state.Activity |> Option.exists(fun task -> not task.IsCompleted)
+             RetainedDescriptors=state.Fds.Count;CloseUncertain=state.CloseUncertain;BorrowedRoots=state.RootLeases.Count})
     let inspect (session:CaptureSession) = snapshot session.State
     let capture (session:CaptureSession) =
         let state=session.State
@@ -412,15 +457,15 @@ module ProviderContextCapture =
         lock state.Sync (fun () ->
             let active=state.Activity |> Option.exists(fun task -> not task.IsCompleted)
             if active || state.CloseUncertain || state.RootLeases.Count>0 then
-                if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
+                if (current state).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 Error OwnedActivitiesPending
             elif state.Model.Phase=Released && state.Fds.Count=0 then Ok()
             elif state.Fds.Count=0 then
-                if (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
+                if (current state).Ticks>=state.Request.Budget.CleanupEnd.Ticks then report state CleanupDeadlineReached
                 transition state ReleaseRequested
                 transition state OwnedResourcesSettled
                 Ok()
-            elif (current()).Ticks>=state.Request.Budget.CleanupEnd.Ticks then
+            elif (current state).Ticks>=state.Request.Budget.CleanupEnd.Ticks then
                 report state CleanupDeadlineReached
                 Error CleanupDeadlineReached
             else
@@ -433,6 +478,7 @@ module ProviderContextCapture =
         let state = session.State
         lock state.Sync (fun () ->
             if original.Model.Phase<>Ready || original.Model.FirstFailure.IsSome || state.Model.Phase<>Ready then Error CaptureNotReady
+            elif not state.NativeLeaseAllowed then Error (NativePrerequisiteUnavailable "controlled sessions cannot duplicate native directory leases")
             else
                 match state.Roots |> List.tryFind(fun root -> root.Path=state.Request.RepositoryRoot) with
                 | None -> Error CaptureNotReady

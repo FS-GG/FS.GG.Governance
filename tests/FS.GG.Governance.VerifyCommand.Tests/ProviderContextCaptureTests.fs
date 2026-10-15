@@ -416,3 +416,201 @@ let actualCases = baseActualCases @ [
 let nativeTests =
     testList "ProviderContextCapture Actual" (actualCases |> List.map(fun (name,run) ->
         if nativeEnabled then testCase name run else ptestCase name run))
+
+// Controlled real interpreter: synthetic descriptors and finite gates, no kernel acquisition.
+// Every paused activity is unblocked and joined in finally, even after an assertion fails.
+type private ControlledFixture(blockRead: int, failClose: bool) =
+    let entered = new Threading.ManualResetEventSlim(false)
+    let resume = new Threading.ManualResetEventSlim(false)
+    let descriptors = Collections.Generic.Dictionary<int, string>()
+    let positions = Collections.Generic.Dictionary<int, int>()
+    let closes = Collections.Generic.List<int>()
+    let mutable next = 1000
+    let mutable reads = 0
+    let mutable ticks = 10L
+    let mutable changed = false
+    let payload = Text.Encoding.UTF8.GetBytes "bounded-document"
+    let digest = Security.Cryptography.SHA256.HashData(payload) |> Convert.ToHexString |> fun s -> s.ToLowerInvariant()
+    let allocate path =
+        next <- next + 1
+        descriptors.Add(next,path)
+        positions.Add(next,0)
+        next
+    let write (bytes:byte[]) offset (value:byte[]) = Array.Copy(value,0,bytes,offset,value.Length)
+    let operations : Operations =
+        { Current = fun () -> {now with Ticks=Threading.Interlocked.Read(&ticks)}
+          OpenAt = fun directory path _ _ ->
+              let absolute = if directory = -100 then path else descriptors[directory]+"/"+path
+              int64 (allocate absolute),0
+          Stat = fun fd bytes ->
+              let path=descriptors[fd]
+              let directory=path="/repo" || path="/host"
+              write bytes 0 (BitConverter.GetBytes 0x17ffu)
+              write bytes 28 (BitConverter.GetBytes (if directory then 0x4000us else 0x8000us))
+              let identity = if path="/repo" then 1UL elif path="/host" then 2UL elif path.Contains("provenance") then 3UL else 4UL
+              write bytes 32 (BitConverter.GetBytes (if changed && not directory then identity+10UL else identity))
+              write bytes 40 (BitConverter.GetBytes (if directory then 0UL else uint64 payload.Length))
+              write bytes 144 (BitConverter.GetBytes 1UL)
+              0,0
+          OpenRead = fun path ->
+              let original=Int32.Parse(path.Substring(path.LastIndexOf('/')+1))
+              allocate descriptors[original],0
+          Read = fun fd bytes ->
+              reads <- reads + 1
+              if reads=blockRead then
+                  entered.Set()
+                  if not (resume.Wait(TimeSpan.FromSeconds 5.)) then failwith "finite controlled read gate expired"
+              let position=positions[fd]
+              let count=min bytes.Length (payload.Length-position)
+              Array.Copy(payload,position,bytes,0,count)
+              positions[fd] <- position+count
+              int64 count,0
+          Seek = fun fd -> positions[fd] <- 0; 0L,0
+          Close = fun fd -> closes.Add fd; (if failClose then -1,5 else 0,0) }
+    member _.Operations = operations
+    member _.Request = {request with Selection={request.Selection with ProvenanceSha256=digest;PolicySha256=digest}}
+    member _.Advance value = Threading.Interlocked.Exchange(&ticks,value) |> ignore
+    member _.ChangeBinding() = changed <- true
+    member _.CloseAttempts = closes |> Seq.toList
+    member _.ReuseUncertainIdentity() =
+        // Simulate another owner's reuse of the failed close's numeric descriptor.
+        descriptors[closes[0]] <- "/unrelated-owner"
+        positions[closes[0]] <- 0
+    member _.WaitBlocked() = Expect.isTrue (entered.Wait(TimeSpan.FromSeconds 3.)) "controlled read entered within finite bound"
+    member _.Resume() = resume.Set()
+    interface IDisposable with
+        member _.Dispose() = resume.Dispose(); entered.Dispose()
+
+let private controlledSession (fixture:ControlledFixture) request =
+    match prepareControlled fixture.Operations request with
+    | Ok session -> session
+    | Error errors -> failtestf "controlled prepare refused: %A" errors
+let private joined (task:Threading.Tasks.Task<'a>) =
+    Expect.isTrue (task.Wait(TimeSpan.FromSeconds 8.)) "actual controlled activity returned within finite bound"
+    task.GetAwaiter().GetResult()
+let private settleControlled session =
+    Expect.isTrue
+        (Threading.SpinWait.SpinUntil((fun () -> not (ownership session).PendingActivity),TimeSpan.FromSeconds 3.))
+        "actual owner task finished"
+let private releaseControlled session =
+    release session |> ignore
+    settleControlled session
+    Expect.equal (release session) (Ok ()) "settled finite owner releases"
+    Expect.equal (inspect session).Settlement ResourcesReleased "all release predicates hold"
+let private pausedControl action =
+    use fixture = new ControlledFixture(3,false)
+    let session=controlledSession fixture fixture.Request
+    let caller=Threading.Tasks.Task.Run(fun () -> capture session)
+    try
+        fixture.WaitBlocked()
+        action fixture session caller
+    finally
+        fixture.Resume()
+        joined caller |> ignore
+        settleControlled session
+
+[<Tests>]
+let controlledTests =
+    testList "ProviderContextCapture Controlled interpreter" [
+        testCase "finite success and original-object revalidation" (fun () ->
+            use fixture = new ControlledFixture(0,false)
+            let session=controlledSession fixture fixture.Request
+            Expect.equal (capture session).Model.Phase Ready "real comparison flow ready"
+            Expect.equal (revalidate session).Model.Phase Ready "same objects revalidated"
+            Expect.equal (inspect session).Documents.Length 2 "complete selected set"
+            releaseControlled session)
+        testCase "pending read retains original task descriptors and bounded evidence" (fun () ->
+            pausedControl (fun fixture session caller ->
+                let before=inspect session
+                Expect.equal before.Documents.Length 1 "first document retained before policy block"
+                Expect.isTrue (before.Documents[0].Bytes.Length<=fixture.Request.Limits.PerFileBytes) "bounded original evidence"
+                Expect.isTrue (ownership session).PendingActivity "registered actual activity"
+                fixture.Advance 100L
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> (inspect session).Model.FirstFailure=Some WorkDeadlineReached),TimeSpan.FromSeconds 2.)) "original work end observed"
+                fixture.Advance 200L
+                let retained=joined caller
+                Expect.equal retained.Settlement Retained "cleanup expiry retains custody"
+                Expect.equal retained.Model.FirstFailure (Some WorkDeadlineReached) "first cause retained"
+                Expect.contains retained.Model.SecondaryFailures CleanupDeadlineReached "later cleanup cause retained"
+                Expect.isGreaterThan (ownership session).RetainedDescriptors 0 "descriptors retained"
+                Expect.equal (release session) (Error OwnedActivitiesPending) "release refuses pending read"
+                fixture.Resume()
+                settleControlled session
+                let late=inspect session
+                Expect.equal late.Documents before.Documents "no replacement output after failed read"
+                Expect.equal late.Model.FirstFailure retained.Model.FirstFailure "late read cannot erase first cause"
+                Expect.equal late.Settlement Retained "expired cleanup cannot release descriptors"
+                Expect.equal (release session) (Error CleanupDeadlineReached) "original cleanup end never renews"))
+        testCase "cancellation before cleanup settles actual activity" (fun () ->
+            use fixture = new ControlledFixture(1,false)
+            use cancelled = new Threading.CancellationTokenSource()
+            let session=controlledSession fixture {fixture.Request with Cancellation=cancelled.Token}
+            let caller=Threading.Tasks.Task.Run(fun () -> capture session)
+            try
+                fixture.WaitBlocked()
+                cancelled.Cancel()
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> (inspect session).Model.FirstFailure=Some CancellationRequested),TimeSpan.FromSeconds 2.)) "cancellation observed"
+            finally fixture.Resume(); joined caller |> ignore; settleControlled session
+            Expect.equal (inspect session).Model.FirstFailure (Some CancellationRequested) "first cause survives retirement"
+            releaseControlled session)
+        testCase "pending revalidation cannot replace task or create readiness" (fun () ->
+            pausedControl (fun fixture session caller ->
+                let retry=Threading.Tasks.Task.Run(fun () -> revalidate session)
+                try
+                    Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> (inspect session).Model.FirstFailure=Some OperationInProgress),TimeSpan.FromSeconds 2.)) "pending revalidation recorded before expiry"
+                finally fixture.Advance 200L
+                let rejected=joined retry
+                Expect.equal rejected.Model.Phase Retiring "pending revalidation refuses"
+                Expect.equal rejected.Model.FirstFailure (Some OperationInProgress) "pending task is original cause"
+                Expect.equal rejected.Settlement Retained "same owner retained"
+                joined caller |> ignore))
+        testCase "pending borrow refuses and keeps same owner" (fun () ->
+            pausedControl (fun fixture session caller ->
+                fixture.Advance 200L
+                Expect.isError (borrowRepositoryRoot session) "pending owner gives no lease"
+                Expect.equal (ownership session).BorrowedRoots 0 "no native borrowing attempted"
+                Expect.isTrue (ownership session).PendingActivity "original task remains"
+                joined caller |> ignore))
+        testCase "uncertain close stays sticky and synthetic identity is never retried" (fun () ->
+            use fixture = new ControlledFixture(0,true)
+            let session=controlledSession fixture fixture.Request
+            let observation=capture session
+            Expect.equal observation.Model.FirstFailure (Some OwnedActivitiesPending) "failed native-shaped close retained"
+            let attempts=fixture.CloseAttempts
+            Expect.equal attempts.Length 1 "one close attempt"
+            fixture.ReuseUncertainIdentity()
+            for _ in 1..3 do
+                Expect.equal (release session) (Error OwnedActivitiesPending) "uncertain numeric identity cannot retire"
+                Expect.isError (borrowRepositoryRoot session) "uncertainty cannot create lease"
+            Expect.equal fixture.CloseAttempts attempts "no numeric descriptor retry"
+            Expect.isTrue (ownership session).CloseUncertain "sticky uncertainty"
+            Expect.equal (inspect session).Settlement Retained "no false settlement")
+        testCase "byte limit first cause survives completed retirement" (fun () ->
+            use fixture = new ControlledFixture(0,false)
+            let session=controlledSession fixture {fixture.Request with Limits={PerFileBytes=1;AggregateBytes=2}}
+            Expect.equal (capture session).Model.FirstFailure (Some(ByteLimitExceeded "provenance")) "actual read enforces cap"
+            Expect.isEmpty (inspect session).Documents "over-limit bytes never become observations"
+            releaseControlled session)
+        testCase "digest failure precedes close uncertainty" (fun () ->
+            use fixture = new ControlledFixture(0,true)
+            let session=controlledSession fixture {fixture.Request with Selection={fixture.Request.Selection with ProvenanceSha256=String('0',64)}}
+            let observation=capture session
+            Expect.equal observation.Model.FirstFailure (Some(RawDigestMismatch "provenance")) "original digest failure preserved"
+            Expect.contains observation.Model.SecondaryFailures OwnedActivitiesPending "independent close failure preserved"
+            Expect.equal (release session) (Error OwnedActivitiesPending) "uncertainty retains owner")
+        testCase "changed original binding refuses revalidation" (fun () ->
+            use fixture = new ControlledFixture(0,false)
+            let session=controlledSession fixture fixture.Request
+            Expect.equal (capture session).Model.Phase Ready "ready before drift"
+            fixture.ChangeBinding()
+            Expect.equal (revalidate session).Model.FirstFailure (Some(InputChanged "provenance")) "original-object comparison rejects drift"
+            releaseControlled session)
+        testCase "one-use acquisition cannot replace retained original evidence" (fun () ->
+            use fixture = new ControlledFixture(0,false)
+            let session=controlledSession fixture fixture.Request
+            let first=capture session
+            let second=capture session
+            Expect.equal second.Model.FirstFailure (Some CaptureAlreadyConsumed) "no second acquisition"
+            Expect.equal second.Documents first.Documents "same bounded original bytes"
+            releaseControlled session)
+    ] |> testSequenced

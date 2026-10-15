@@ -93,3 +93,19 @@ module ProviderContextCapture =
     /// Capture release refuses while the borrowed lease or its direct execution borrowers remain owned.
     val borrowRepositoryRoot:
         CaptureSession -> Result<FS.GG.Governance.GateExecution.Interpreter.DirectoryLease, Failure>
+
+    /// Per-session inert interpreter controls. Each return pairs the native result with its immediate errno.
+    /// Installed before acquisition; never selected by production prepare or a process-global switch.
+    type internal Operations =
+        { Current: unit -> FS.GG.Governance.GateExecution.Model.MonotonicInstant
+          OpenAt: int -> string -> uint64 -> uint64 -> int64 * int
+          Stat: int -> byte[] -> int * int
+          OpenRead: string -> int * int
+          Read: int -> byte[] -> int64 * int
+          Seek: int -> int64 * int
+          Close: int -> int * int }
+    type internal Ownership =
+        { PendingActivity: bool; RetainedDescriptors: int; CloseUncertain: bool; BorrowedRoots: int }
+    /// No platform/native call; request validation still uses this session's original clock and ends.
+    val internal prepareControlled: Operations -> Request -> Result<CaptureSession, Failure list>
+    val internal ownership: CaptureSession -> Ownership
