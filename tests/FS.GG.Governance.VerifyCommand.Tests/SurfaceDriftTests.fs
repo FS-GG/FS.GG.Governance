@@ -67,11 +67,12 @@ let tests =
 
             test "capture operation injection and ownership facts remain internal" {
                 let exported=verifyCommand.GetExportedTypes()
+                let names=exported |> Array.choose(fun t -> Option.ofObj t.FullName)
                 for shape in ["Operations"; "Ownership"; "Native"; "OwnerState"] do
                     Expect.isFalse
-                        (exported |> Array.exists(fun t -> t.FullName.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContextCapture+"+shape,System.StringComparison.Ordinal)))
+                        (names |> Array.exists(fun name -> name.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContextCapture+"+shape,System.StringComparison.Ordinal)))
                         ("capture implementation shape escaped: "+shape)
-                let captureModule=verifyCommand.GetType("FS.GG.Governance.VerifyCommand.ProviderContextCapture",true)
+                let captureModule=exported |> Array.find(fun t -> t.Name="ProviderContextCapture")
                 let publicMethods=captureModule.GetMethods(System.Reflection.BindingFlags.Public ||| System.Reflection.BindingFlags.Static)
                 for name in ["prepareControlled"; "ownership"] do
                     Expect.isFalse (publicMethods |> Array.exists(fun method -> method.Name=name)) ("test access escaped: "+name)
