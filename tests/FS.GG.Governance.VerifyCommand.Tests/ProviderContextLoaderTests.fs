@@ -24,11 +24,12 @@ let coherentRecord () =
         | Ok value -> value
         | Error errors -> failtestf "%A" errors
     let original = ProviderLoaderFixture.synthetic ()
-    { original with Declaration =
-        { original.Declaration with
-            Policy = { Id = policy.Identity.Id; Version = policy.Identity.Version; Digest = policy.Identity.Digest }
-            EvidenceMap = { Id = policy.EvidenceMapIdentity.Id; Version = policy.EvidenceMapIdentity.Version; Digest = policy.EvidenceMapIdentity.Digest }
-            Admission = { original.Declaration.Admission with RequiredCapabilityIds = policy.RequiredCapabilityIds } } }
+    { original with
+        Declaration =
+            { original.Declaration with
+                Policy = { Id = policy.Identity.Id; Version = policy.Identity.Version; Digest = policy.Identity.Digest }
+                EvidenceMap = { Id = policy.EvidenceMapIdentity.Id; Version = policy.EvidenceMapIdentity.Version; Digest = policy.EvidenceMapIdentity.Digest }
+                Admission = { original.Declaration.Admission with RequiredCapabilityIds = policy.RequiredCapabilityIds } } }
 let provenanceBytes record =
     match FS.GG.SDD.Artifacts.CatalogScaffoldProvenance.serialize record with
     | Ok text -> bytes text
