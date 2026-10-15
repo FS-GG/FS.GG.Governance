@@ -65,6 +65,18 @@ let tests =
                         unexpected)
             }
 
+            test "capture operation injection and ownership facts remain internal" {
+                let exported=verifyCommand.GetExportedTypes()
+                for shape in ["Operations"; "Ownership"; "Native"; "OwnerState"] do
+                    Expect.isFalse
+                        (exported |> Array.exists(fun t -> t.FullName.StartsWith("FS.GG.Governance.VerifyCommand.ProviderContextCapture+"+shape,System.StringComparison.Ordinal)))
+                        ("capture implementation shape escaped: "+shape)
+                let captureModule=verifyCommand.GetType("FS.GG.Governance.VerifyCommand.ProviderContextCapture",true)
+                let publicMethods=captureModule.GetMethods(System.Reflection.BindingFlags.Public ||| System.Reflection.BindingFlags.Static)
+                for name in ["prepareControlled"; "ownership"] do
+                    Expect.isFalse (publicMethods |> Array.exists(fun method -> method.Name=name)) ("test access escaped: "+name)
+            }
+
             test "VerifyCommand references VerifyJson (not AuditJson) and no kernel/host/cli" {
                 let referenced =
                     verifyCommand.GetReferencedAssemblies()

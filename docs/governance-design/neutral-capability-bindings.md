@@ -270,3 +270,28 @@ diagnostic. It emits no legacy execution or store effects and writes no provider
 Program and Interpreter remain on the legacy route. Package-backed parsing, independent policy
 conversion, pre-dispatch revalidation, qualified provider execution and evidence consumers remain
 open. This planning join does not supply actual producer-to-Verify acceptance or complete C2.
+
+### Controlled capture retention boundary (2026-10-15)
+
+The [capture interpreter](../../src/FS.GG.Governance.VerifyCommand/ProviderContextCapture.fs)
+keeps native operations and its monotonic clock on each original session. Production `prepare`
+selects the existing Linux calls; friend-visible test construction installs inert operations before
+acquisition. Each native result carries the errno captured immediately by its wrapper. No global
+switch changes an existing session. Controlled sessions refuse native root-lease duplication;
+production retains the held-root lease and direct-execution borrower fences introduced in
+[#453](https://github.com/FS-GG/FS.GG.Governance/pull/453).
+
+A task remains registered before acquisition and stays with the same caller owner after work or
+cleanup expiry. A returning read rechecks the original work boundary before accepting its bytes.
+Inspection neither waits for that task nor renews its ends. Settlement still requires released
+model state, zero retained descriptors and root leases, no close uncertainty and completed actual
+activity. A failed close is never retried, including after another owner reuses its numeric identity.
+
+The ten [controlled interpreter cases](../../tests/FS.GG.Governance.VerifyCommand.Tests/ProviderContextCaptureTests.fs)
+cover finite success/revalidation, pending reads with prior bounded evidence, cancellation, pending
+revalidation and borrowing, uncertain close, caps, failure ordering, binding drift and one-use capture.
+Paused inert reads have finite gates released and joined in `finally`; uncertain closes use only
+synthetic descriptors. These controls exercise the real interpreter but do not demonstrate a blocked
+kernel read, a physical close failure or whole-worker teardown. The existing physical fixture stays
+opt-in and must not run an indefinitely retained uncertain-close case without separately qualified
+teardown. Physical retention, provider loader/Verify acceptance and C2 completion remain open.
