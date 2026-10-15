@@ -50,6 +50,8 @@
     <Compile Include="ProviderContext.fs" />
     <Compile Include="ProviderContextCapture.fsi" />
     <Compile Include="ProviderContextCapture.fs" />
+    <Compile Include="ProviderContextLoader.fsi" />
+    <Compile Include="ProviderContextLoader.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
@@ -59,6 +61,8 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FS.GG.SDD.Commands" />
+    <PackageReference Include="FS.GG.SDD.Artifacts" />
   </ItemGroup>
 
   <!--
