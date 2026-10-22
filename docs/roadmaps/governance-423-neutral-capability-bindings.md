@@ -466,3 +466,48 @@ whole-worker and resource teardown by the outer runtime for those two cases, wit
 accountable supplier. (d) Real SDD to Verify to GateExecution acceptance with source and evidence
 revalidation. (e) Stronger profiles, C3/C4 and the original custody holds. The inert controls above
 and hosted source qualification discharge none of these.
+
+
+### GOV423-C2 Verify capture-lifetime host composition (2026-10-22)
+
+Owner: Governance source lane, Delivery [#468](https://github.com/FS-GG/FS.GG.Governance/issues/468),
+implementing the decision recorded above (#465, PR #467 `fef152ac`). C2 remains unchecked. This section
+supersedes the earlier statements that `Program.main` returns input-unavailable for provider mode: provider mode
+now runs through the host below. Legacy invocations never reach it.
+
+**Composition.** `ProviderHost` (internal, `FS.GG.Governance.VerifyCommand`) is the outer capture-lifetime owner,
+and `Program.main` is `runHosted` over the real clock, environment, `ProviderContextCapture.prepare` and
+signal-driven cancellation. For one provider invocation it: reads the original work and cleanup ends the outer
+admitted runtime supplies (`FSGG_VERIFY_WORK_SECONDS` and `FSGG_VERIFY_CLEANUP_SECONDS`, whole seconds from host
+start, cleanup not before work; absent or inconsistent ends admit nothing and start nothing); prepares the single
+`CaptureSession` and retains it before any acquisition; captures once; hands the same session to
+`runWithCapturedProvider` (loader and planning); and then is the only caller of `release`. It derives the planning
+context from the observed `CI` variable, an empty environment delta and the whole seconds left in the work window.
+Exceptions during the invocation are contained and still reach settlement.
+
+**Settlement and exit mapping.** After the invocation the host calls `release` until it returns `Ok`. It never
+disposes, finalizes, replaces, renews or signals around a session whose release is refused.
+
+| Outcome | Host behaviour | Exit |
+|---|---|---|
+| `release` returns `Ok` without a prior unsettled report | none | the invocation's own exit (1 blocked, 3 input unavailable); a passing 0 on a session with a recorded failure becomes 4 |
+| Not released, original cleanup end not reached | wait and retry, silent | pending |
+| Not released at or after the original cleanup end, a read may be pending (activity, uncertain close or borrowed lease) | report once; keep the session; stay resident; keep retrying | none until the outer runtime ends the worker, or 4 if the session is released after that report |
+| Not released after the cleanup end, nothing pending (retained descriptors only) | report once; exit | 4 |
+
+The exit is the existing tool-error code. Signals (SIGINT, SIGTERM) in provider mode request cancellation of the
+capture and do not terminate the host; whole-worker termination and resource reclamation remain with the outer
+admitted runtime. If the outer runtime never ends a worker whose read is pending, the host stays resident: that is
+the recorded decision, not a defect of this slice.
+
+**Controls.** `ProviderContextCaptureTests.fs` drives the host over the real capture interpreter with finite
+synthetic descriptors and gates: settled, refused (unadmitted ends, invalid request, failed capture), cancellation
+(before capture and with a read in flight), deadline (a read returning inside the window, and one pending past
+the cleanup end), uncertain close, a fault during planning, and legacy isolation, plus pure tests of admission,
+the planning context and the exit mapping. Each guard was mutated in a scratch copy (matrix in the PR).
+
+**Not claimed.** Nothing here is a real blocked regular-file read, an independently observed uncertain physical
+close, demonstrated whole-worker teardown, the named accountable supplier for it, or the real SDD to Verify to
+GateExecution journey. The 20 physical cases remain pending. Prerequisite (a) of the decision (host composition
+source and its non-zero exit mapping) is implemented by this slice; (b) through (e) are unchanged. The
+`borrowRepositoryRoot` execution lease is not used because provider planning executes nothing.
