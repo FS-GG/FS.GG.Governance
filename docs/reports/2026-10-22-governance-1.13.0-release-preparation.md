@@ -45,6 +45,17 @@ neither in the CLI closure nor selected by `publish.yml`. A release from
 bytes that carry it. GOV-423-C2 remains open in the roadmap. Packaging the
 Verify host is a separate delivery.
 
+## Publisher repair found by the dry run
+
+A non-pushing dispatch (`scope=all`, no `version`) on the first head of this PR
+(run `39753274513`) failed in `resolve-version`: every `setup-dotnet` step in
+`publish.yml` requested `10.0.x`, but `global.json` pins SDK `10.0.401` with
+`rollForward: disable` (#382), so `dotnet msbuild` found no compatible SDK
+before any pack or push. `gate.yml` already uses the literal `10.0.401`.
+This release therefore also pins the ten `publish.yml` `setup-dotnet` steps to
+`10.0.401`, matching `gate.yml`. No other publisher logic changes;
+`tests/config-package-smoke/publish_contract.py --mutations` still passes.
+
 ## Publication notes for the admitting owner
 
 * `publish.yml` resolves the version from the CLI `.fsproj`. A `v*` tag push or

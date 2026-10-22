@@ -108,7 +108,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           # No NuGet cache. This job never restores — it only evaluates <Version> via `dotnet msbuild
           # -getProperty` — so the cache was dead weight. It is also removed to keep this file uniform:
           # a stray `cache: true` here is the line somebody copies into a job that DOES restore, which
@@ -216,7 +216,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           # No NuGet cache: the locked restore below is cold by construction (#169), so a cache would
           # be restored and never read. A warm folder would turn this locked restore — the release
           # path's lock gate — into a record-vs-record comparison that never contacts the feed.
@@ -256,7 +256,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           # No NuGet cache — see the cold restore below (#169).
           cache: false
 
@@ -297,7 +297,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           # No NuGet cache: the locked restore below is cold by construction (#169), so a cache would be
           # restored and never read.
           cache: false
@@ -389,7 +389,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: false
       - name: Restore (locked, cold)
         uses: ./.github/actions/locked-restore
@@ -480,7 +480,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: false
 
       - name: Restore Kernel (locked, cold)
@@ -648,7 +648,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: false
 
       - name: Restore adapter package gate (locked, cold)
@@ -848,7 +848,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: false
 
       # Validate the committed CodeChecks test graph against cold feed bytes before packing. This suite
@@ -993,7 +993,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           cache: false
 
       - name: Restore (locked, cold)
@@ -1182,7 +1182,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "10.0.401"
           # No NuGet cache — see the cold restore below (#169).
           cache: false
 
