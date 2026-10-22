@@ -86,6 +86,33 @@ let tests = testList "ProviderContextLoader" [
         match ProviderContextLoader.decode (selection provenance policyBytes) provenance policyBytes with
         | Error errors -> Expect.isNonEmpty errors "actual package refusal"
         | Ok _ -> failtest "Unsupported schema accepted")
+    testCase "legacy schema-1 provenance is refused and never becomes legacy mode" (fun _ ->
+        let provenance = bytes (FS.GG.SDD.Artifacts.ScaffoldProvenance.serialize (coherentRecord ()).Ownership)
+        let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
+        ProviderContextLoader.decode selected provenance coherentPolicyBytes |> refusedAt "$.provenance.schemaVersion")
+    testCase "recorded admission budgets above the independent policy ceilings are refused" (fun _ ->
+        let record = coherentRecord ()
+        let budgets = { record.Declaration.Budgets with AdmittedPreflightSeconds = 31 }
+        let provenance = provenanceBytes { record with Declaration = { record.Declaration with Budgets = budgets } }
+        let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
+        ProviderContextLoader.decode selected provenance coherentPolicyBytes |> refusedAt "$.policy.budgets")
+    testCase "binding to an environment the independent policy does not map is refused at request admission" (fun _ ->
+        let record = coherentRecord ()
+        let declared = record.Declaration.Descriptor.Capabilities.Head
+        let binding =
+            match declared.Binding with
+            | Fsgg.ProviderCatalog.Command(command, settings) ->
+                Fsgg.ProviderCatalog.Command(command, { settings with EnvironmentIds = [ "unselected-environment" ] })
+            | other -> other
+        let changed = { record.Declaration.Descriptor with Capabilities = [ { declared with Binding = binding } ] }
+        let descriptor = ProviderLoaderFixture.reseal changed
+        let provenance = provenanceBytes { record with Declaration = { record.Declaration with Descriptor = descriptor; Admission = { record.Declaration.Admission with Descriptor = descriptor } } }
+        let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
+        match ProviderContextLoader.decode selected provenance coherentPolicyBytes with
+        | Ok _ -> failtest "An unmapped environment must not produce a request"
+        | Error errors ->
+            Expect.isNonEmpty errors "rejected"
+            Expect.isTrue (errors |> List.exists (fun d -> d.Path = "$.descriptor.capabilities.build:build.environments")) (sprintf "located admission diagnostic: %A" errors))
     testCase "Program provider path decodes actual bytes and drives nonpassing planning without legacy execution" (fun _ ->
         let provenance = provenanceBytes (coherentRecord ())
         let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
@@ -109,7 +136,8 @@ let tests = testList "ProviderContextLoader" [
                "--provider-platform"; selected.Platform; "--paths"; "src/a.fs" |]
         let code = Program.runWithProviderLoader load (fun _ -> ports) ignore actualArgv
         Expect.equal loads 1 "single package-backed admission"
-        Expect.isTrue (code = 1 || code = 3) "planning refuses or remains blocked, never passes"
+        Expect.notEqual code 0 "planning never passes"
+        Expect.isTrue (code = 1 || code = 3) "planning refuses or remains blocked"
         Expect.isFalse execution "no execution"
         Expect.isFalse cache "no legacy reuse"
         Expect.isEmpty cap.Writes "no passing artifact")

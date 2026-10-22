@@ -100,6 +100,8 @@ module ProviderLoaderFixture =
             Skills = []
         }
 
+    let reseal (d: ProviderCatalog.Descriptor) = { d with DescriptorDigest = digest (ProviderCatalogIntegrity.descriptorBytes d) }
+
     let sealedCatalog () : ProviderCatalog.Catalog =
         let d = { descriptor with DescriptorDigest = digest (ProviderCatalogIntegrity.descriptorBytes descriptor) }
         let c = { SchemaVersion = 2; Id = "synthetic-catalog"; Revision = "qualification"; Digest = digest [||]; Providers = [d] }
