@@ -826,7 +826,7 @@ jobs:
             --skip-duplicate
 
   # 117/#368: publish the compiler-backed architecture sensor as its own stable library package. Its
-  # package version is the evaluated CodeChecks fsproj <Version> (currently 1.0.0), independent of the
+  # package version is the evaluated CodeChecks fsproj <Version>, independent of the
   # producer's CLI/tag version just as ReferenceGateSet has its own schema-derived version. The shared
   # resolve-version job still owns whether this run is a dry run or a real release. The job packs once,
   # records that exact file's digest, pushes it to the org feed first, verifies the bytes are unchanged,
@@ -972,12 +972,16 @@ jobs:
             --skip-duplicate
 
   # GOV-423-C3: independent Config library output; validated scope selects all or Config alone.
+  # Config is selected ONLY by an explicit `scope=config` dispatch. An `all` run (including every tag or
+  # release event) never selects it: its version is independent of the CLI and, once published, a repack at
+  # a later SHA embeds a different nuspec repository commit, which the collision check must refuse as a
+  # payload conflict. Releasing a new Config version is its own scope=config dispatch.
   publish-config:
     name: Pack + publish FS.GG.Governance.Config
     needs: [resolve-version]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository == 'FS-GG/FS.GG.Governance'
+    if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'config'
     permissions:
       contents: read
       actions: read

@@ -74,20 +74,24 @@ A non-pushing dispatch (`scope=all`, no `version`) on the first head of this PR
 `rollForward: disable` (#382), so `dotnet msbuild` found no compatible SDK
 before any pack or push. `gate.yml` already uses the literal `10.0.401`.
 This release therefore also pins the ten `publish.yml` `setup-dotnet` steps to
-`10.0.401`, matching `gate.yml`. No other publisher logic changes;
-`tests/config-package-smoke/publish_contract.py --mutations` still passes.
+`10.0.401`, matching `gate.yml`. The only other publisher change is the
+`publish-config` scope guard described below; `publish_contract.py --mutations`
+passes with both.
 
 ## Publication notes for the admitting owner
 
 * `publish.yml` resolves the version from the CLI `.fsproj`. A `v*` tag push or
   a published GitHub Release is a real publish; a dispatch with `version` is a
   real publish; a dispatch without `version` packs and pushes nothing.
-* The `all` scope also runs `publish-config`. Config 0.3.0 is already on both
-  feeds with nuspec repository commit `8b3a6d41`; the job packs again at the
-  release SHA, so its `collision` check compares unequal payloads and is
-  expected to refuse (`pre-existing version payload conflict`). The other jobs
-  are independent and are not cancelled by it. The decision on how to handle
-  this is recorded on #464, not made here.
+* `publish-config` is now selected only by an explicit `scope=config` dispatch.
+  Config 0.3.0 is already on both feeds with nuspec repository commit
+  `8b3a6d41`, and a repack at a later SHA embeds a different commit, which the
+  Config collision check refuses as a payload conflict. `publish_contract.py`
+  evaluates the actual job conditions and proves an `all` run (which is also
+  every tag or release event) selects no Config job and a `config` run selects
+  only Config; two mutants (Config selected in `all`, Config never selected
+  for `config`) are refused independently by that control. A new Config
+  version is released by its own `scope=config` dispatch.
 * Strict occupancy is not built into the `all` route (only Config has an
   observation step). Immediately before the push observe, on both feeds,
   that `FS.GG.Governance.Cli` 1.13.0, `FS.GG.Governance.FSharpSurfaceCommand`
