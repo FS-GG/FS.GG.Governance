@@ -13,14 +13,24 @@ Base: `main` `c80e8903d99ddb41fa63d577eb07efa874cfa3b4` (contains #442 at
 | Artifact | Source version | Published | Decision |
 |---|---|---|---|
 | `FS.GG.Governance.Cli` | **1.13.0** (was 1.12.1) | 1.12.1 | MINOR |
+| `FS.GG.Governance.FSharpSurfaceCommand` | **1.13.0** (was 1.12.1) | 1.12.1 | lockstep with the CLI |
+| `FS.GG.Governance.CodeChecks` | **1.0.1** (was 1.0.0) | 1.0.0 | PATCH |
 | `FS.GG.Governance.ReferenceGateSet` | 1.8.0 (`pack-reference-gate-set.fsx`, set by #442) | 1.7.0 | MINOR, already selected in source |
 | `FS.GG.Governance.Config` | 0.3.0 | 0.3.0 | unchanged, already published |
-| `FS.GG.Governance.FSharpSurfaceCommand` | 1.12.1 | 1.12.1 | unchanged |
-| `FS.GG.Governance.Kernel` / `Adapters.Spi` / `CodeChecks` | 0.1.1 / 0.1.1 / 1.0.0 | same | unchanged |
+| `FS.GG.Governance.Kernel` / `Adapters.Spi` | 0.1.1 / 0.1.1 | same | unchanged |
+
+`publish.yml` packs `FSharpSurfaceCommand` at the resolved CLI version
+(`-p:Version=<resolve-version output>`), so an `all` run publishes it as 1.13.0
+regardless of its project file; its `<Version>` and the two install-version
+literals in `FSharpSurfaceCommandTests.fs` are moved to match (the v1.12.1
+release was likewise lockstep, `bd09e437`). That package's closure also gained
+Config `CapabilityBindings` and the DesignChecks/SurfaceChecks changes.
 
 Why MINOR for the CLI, not PATCH or MAJOR. The `surface/*.surface.txt`
 baselines changed by 1801 insertions and zero deletions
-(`git diff --stat v1.12.1 HEAD -- surface`): Config (`CapabilityBindings`),
+(`git diff --stat v1.12.1 HEAD -- surface`; 1163 of those lines are in
+assemblies of the CLI closure, the other 638 are the unshipped VerifyCommand
+baseline): Config (`CapabilityBindings`),
 GateExecution (bounded CurrentHost sessions and the cooperative held-cwd
 profile, #447 and #453), GateRun (complete neutral capability request
 planning, #446), CommandHost and Adapters.SddHandoff (strict provider source
@@ -31,10 +41,21 @@ command surface (`Cli.fsi`) is unchanged apart from Fantomas formatting, and
 legacy callers keep their behavior, so there is no basis for MAJOR. Nothing is
 only a bug fix, so PATCH under-states the delta.
 
-Unchanged packages keep their published versions. Their only source changes
-since publication are the Fantomas 8 formatting pass (#427); they carry no
-behavior change, so no new identity is warranted and the publisher's existing
-`--skip-duplicate` / accepted-bytes handling applies.
+Dependency movement inside the CLI closure (`Cli/packages.lock.json`):
+FS.GG.Contracts 7.0.0 -> 7.6.0 (same major), Config 0.2.0 -> 0.3.0,
+FSharp.Core 10.1.302 -> 10.1.401, Adapters.Spi 0.1.0 -> 0.1.1. None changes the
+MINOR conclusion.
+
+CodeChecks: since 1.0.0 was published (`17c54591`) its declared dependencies
+moved (FSharp.Compiler.Service 43.11.302 -> 43.12.401, FSharp.Core 10.1.302 ->
+10.1.401, #434) in addition to the Fantomas 8 formatting pass (#427). Publishing
+that source under 1.0.0 would be silently dropped by `--skip-duplicate` and leave
+the feed disagreeing with the tagged source, so it moves to 1.0.1.
+
+Kernel and Adapters.Spi have only the Fantomas 8 formatting change since their
+publication (`fafab248`, `b20edb3c`) and no declared dependency change, so they
+keep 0.1.1; their jobs retain the org-accepted bytes for the public push by
+design. Config and ReferenceGateSet are covered above.
 
 ## What the release does not ship
 
@@ -68,5 +89,8 @@ This release therefore also pins the ten `publish.yml` `setup-dotnet` steps to
   are independent and are not cancelled by it. The decision on how to handle
   this is recorded on #464, not made here.
 * Strict occupancy is not built into the `all` route (only Config has an
-  observation step). Observe the exact versions on both feeds and the complete
-  remote tag namespace immediately before the push.
+  observation step). Immediately before the push observe, on both feeds,
+  that `FS.GG.Governance.Cli` 1.13.0, `FS.GG.Governance.FSharpSurfaceCommand`
+  1.13.0, `FS.GG.Governance.CodeChecks` 1.0.1 and
+  `FS.GG.Governance.ReferenceGateSet` 1.8.0 are absent, and enumerate the
+  complete remote tag namespace requiring `v1.13.0` absent.
