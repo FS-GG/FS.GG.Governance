@@ -426,6 +426,10 @@ type private ControlledFixture(blockRead: int, failClose: bool, provenancePayloa
     let statEntered = new Threading.ManualResetEventSlim(false)
     let statResume = new Threading.ManualResetEventSlim(false)
     let mutable statGate : (string -> bool) option = None
+    // Optional finite gate on the next descriptor-acquiring call; when released it fails without a descriptor.
+    let openEntered = new Threading.ManualResetEventSlim(false)
+    let openResume = new Threading.ManualResetEventSlim(false)
+    let mutable openGate = false
     let descriptors = Collections.Generic.Dictionary<int, string>()
     let positions = Collections.Generic.Dictionary<int, int>()
     let closes = Collections.Generic.List<int>()
@@ -444,8 +448,14 @@ type private ControlledFixture(blockRead: int, failClose: bool, provenancePayloa
     let operations : Operations =
         { Current = fun () -> {now with Ticks=Threading.Interlocked.Read(&ticks)}
           OpenAt = fun directory path _ _ ->
-              let absolute = if directory = -100 then path else descriptors[directory]+"/"+path
-              int64 (allocate absolute),0
+              if openGate then
+                  openGate <- false
+                  openEntered.Set()
+                  if not (openResume.Wait(TimeSpan.FromSeconds 5.)) then failwith "finite controlled open gate expired"
+                  -1L,5
+              else
+                  let absolute = if directory = -100 then path else descriptors[directory]+"/"+path
+                  int64 (allocate absolute),0
           Stat = fun fd bytes ->
               let path=descriptors[fd]
               let directory=path="/repo" || path="/host"
@@ -496,8 +506,12 @@ type private ControlledFixture(blockRead: int, failClose: bool, provenancePayloa
     member _.ArmMetadataGate(selected: string -> bool) = statGate <- Some selected
     member _.WaitMetadataBlocked() = Expect.isTrue (statEntered.Wait(TimeSpan.FromSeconds 3.)) "controlled metadata read entered within finite bound"
     member _.ResumeMetadata() = statResume.Set()
+    /// Blocks the first descriptor acquisition (holding no descriptor); on resume it fails with an errno.
+    member _.ArmOpenFailureGate() = openGate <- true
+    member _.WaitOpenBlocked() = Expect.isTrue (openEntered.Wait(TimeSpan.FromSeconds 3.)) "controlled open entered within finite bound"
+    member _.ResumeOpen() = openResume.Set()
     interface IDisposable with
-        member _.Dispose() = resume.Dispose(); entered.Dispose(); statResume.Dispose(); statEntered.Dispose()
+        member _.Dispose() = resume.Dispose(); entered.Dispose(); statResume.Dispose(); statEntered.Dispose(); openResume.Dispose(); openEntered.Dispose()
 
 let private controlledSession (fixture:ControlledFixture) request =
     match prepareControlled fixture.Operations request with
@@ -981,8 +995,11 @@ type private HostFault =
     /// The clock throws once on the capturing thread while the capture activity is already running.
     | CaptureCallerFault
 
-let private hostEffects (fixture: ControlledFixture) env (fault: HostFault) (cancellation: Threading.CancellationToken) (prepares: int ref) (cancellationReads: int ref) (sessions: ResizeArray<CaptureSession>) (pause: int -> unit) : ProviderHost.Effects =
+/// `onSettleNow` runs on the second host clock read of an invocation whose capture failed: the read `settle`
+/// makes right after a refused release, so it can finish the pending activity inside that window.
+let private hostEffects (fixture: ControlledFixture) env (fault: HostFault) (onSettleNow: unit -> unit) (cancellation: Threading.CancellationToken) (prepares: int ref) (cancellationReads: int ref) (sessions: ResizeArray<CaptureSession>) (pause: int -> unit) : ProviderHost.Effects =
     let pauses = ref 0
+    let nowReads = ref 0
     let callerThread = Threading.Thread.CurrentThread.ManagedThreadId
     let armed = ref false
     let operations =
@@ -995,7 +1012,10 @@ let private hostEffects (fixture: ControlledFixture) env (fault: HostFault) (can
     { Environment = fun name ->
           if fault = SupplyFault && name = "CI" then failwith "synthetic environment fault after capture"
           env |> List.tryFind (fun (key, _) -> key = name) |> Option.map snd
-      Now = fixture.Operations.Current
+      Now = fun () ->
+          nowReads.Value <- nowReads.Value + 1
+          if nowReads.Value = 2 then onSettleNow ()
+          fixture.Operations.Current()
       TicksPerSecond = 10L
       Cancellation = fun () -> cancellationReads.Value <- cancellationReads.Value + 1; cancellation
       Prepare = fun r ->
@@ -1009,7 +1029,7 @@ let private hostEffects (fixture: ControlledFixture) env (fault: HostFault) (can
       Pause = fun () -> pauses.Value <- pauses.Value + 1; pause pauses.Value }
 
 /// `swallowResident`: a pause hook may raise ResidentObserved to end a host that would otherwise stay resident.
-let private hostRunIn (sessions: ResizeArray<CaptureSession>) (fixture: ControlledFixture) env cancellation (pause: int -> unit) (fault: HostFault) argv =
+let private hostRunWith (onSettleNow: unit -> unit) (sessions: ResizeArray<CaptureSession>) (fixture: ControlledFixture) env cancellation (pause: int -> unit) (fault: HostFault) argv =
     let messages = ResizeArray<string>()
     let atPlanning = ResizeArray<Phase * Settlement>()
     let prepares = ref 0
@@ -1033,11 +1053,14 @@ let private hostRunIn (sessions: ResizeArray<CaptureSession>) (fixture: Controll
             atPlanning.Add((observed.Model.Phase, observed.Settlement))
         if fault = PortsFault then failwith "synthetic ports construction fault"
         ports
-    let effects = hostEffects fixture env fault cancellation prepares cancellationReads sessions (fun k -> pauseCount.Value <- k; pause k)
+    let effects = hostEffects fixture env fault onSettleNow cancellation prepares cancellationReads sessions (fun k -> pauseCount.Value <- k; pause k)
     let code = try Some(Program.runHosted effects makePorts messages.Add argv) with ResidentObserved -> None
     { Code = code; Messages = List.ofSeq messages; Sessions = lock sessions (fun () -> List.ofSeq sessions); Prepares = prepares.Value
       CancellationReads = cancellationReads.Value; PortsBuilt = built.Value; AtPlanning = List.ofSeq atPlanning
       Executed = executed.Value; Pauses = pauseCount.Value }
+
+let private hostRunIn sessions fixture env cancellation pause fault argv =
+    hostRunWith ignore sessions fixture env cancellation pause fault argv
 
 let private hostRun fixture env cancellation pause fault argv =
     hostRunIn (ResizeArray<CaptureSession>()) fixture env cancellation pause fault argv
@@ -1164,7 +1187,9 @@ let hostCompositionTests =
             Expect.equal run.Prepares 0 "no session prepared"
             Expect.equal run.CancellationReads 0 "no signal wiring for legacy mode"
             Expect.isEmpty run.Sessions "nothing to release"
-            Expect.isSome run.Code "legacy run decided its own exit"
+            let baselinePorts = Support.fakePorts Support.validCatalog Support.gitSrcChange (Support.newCapture ())
+            let baseline = Program.runWithProviderLoader (fun _ _ -> failtest "legacy mode must not load a provider") (fun _ -> baselinePorts) ignore [| "--repo"; "/repo"; "--paths"; "src/a.fs" |]
+            Expect.equal run.Code (Some baseline) "the host leaves the legacy exit unchanged"
             Expect.isFalse (run.Messages |> List.exists (fun m -> m.Contains "tool-error")) (sprintf "no host-contained fault: %A" run.Messages))
         testCase "refused: unadmitted ends stop before any session exists" (fun () ->
             use fixture = newLoaderFixture ()
@@ -1328,7 +1353,7 @@ let hostCompositionTests =
                 let prepares = ref 0
                 let reads = ref 0
                 let messages = ResizeArray<string>()
-                let effects = hostEffects fixture admittedEnv NoFault Threading.CancellationToken.None prepares reads sessions noPause
+                let effects = hostEffects fixture admittedEnv NoFault ignore Threading.CancellationToken.None prepares reads sessions noPause
                 let invocationRequest =
                     match Loop.parseInvocation (List.ofArray (hostArgv selection)) with
                     | Ok invocation -> invocation.Request
@@ -1346,4 +1371,125 @@ let hostCompositionTests =
                 code
             Expect.equal (attempt false) 0 "clean session: the invocation's pass stands"
             Expect.equal (attempt true) (Loop.exitCode Loop.ToolError) "recorded failure: pass becomes a tool error")
+        testCase "deadline: a held call that returns without a descriptor after the cleanup end lets the host release late, and the exit is still a tool error" (fun () ->
+            use fixture = new ControlledFixture(0, false)
+            fixture.ArmOpenFailureGate()
+            use paused = new Threading.ManualResetEventSlim(false)
+            use proceed = new Threading.ManualResetEventSlim(false)
+            let sessions = ResizeArray<CaptureSession>()
+            // From the third wait on, the host is held in its pause until the test has let the held call finish,
+            // so the next release attempt deterministically sees a settled owner through the ordinary loop.
+            let pause k = if k >= 3 then (paused.Set(); proceed.Wait(TimeSpan.FromSeconds 5.) |> ignore)
+            let host =
+                Threading.Tasks.Task.Run(fun () ->
+                    hostRunIn sessions fixture admittedEnv Threading.CancellationToken.None pause NoFault (hostArgv fixture.Request.Selection))
+            try
+                fixture.WaitOpenBlocked()
+                fixture.Advance 100L
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> lock sessions (fun () -> Seq.toList sessions) |> List.exists(fun s -> (inspect s).Model.FirstFailure = Some WorkDeadlineReached)), TimeSpan.FromSeconds 2.)) "original work end observed by the capture"
+                fixture.Advance 200L
+                Expect.isTrue (paused.Wait(TimeSpan.FromSeconds 4.)) "host is in its bounded wait for release"
+                Expect.isFalse host.IsCompleted "the host does not exit while the held call may still be pending"
+                let session = lock sessions (fun () -> List.head (Seq.toList sessions))
+                Expect.isTrue (ownership session).PendingActivity "the held call is still pending"
+                fixture.ResumeOpen()
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> not (ownership session).PendingActivity), TimeSpan.FromSeconds 3.)) "held call returned"
+            finally
+                fixture.ResumeOpen()
+                proceed.Set()
+            let run = joined host
+            let session = List.exactlyOne run.Sessions
+            Expect.equal run.Code (Some 4) "released only after it was reported unsettled: still a tool error, not the invocation's own exit"
+            Expect.equal (unsettledReports run).Length 1 (sprintf "reported exactly once: %A" run.Messages)
+            Expect.equal (inspect session).Settlement ResourcesReleased "the same owner was released once the held call returned"
+            Expect.isEmpty fixture.CloseAttempts "the failed call left no descriptor to close"
+            Expect.equal (inspect session).Model.FirstFailure (Some WorkDeadlineReached) "first cause retained"
+            Expect.isFalse (run.Messages |> List.exists (fun m -> m.Contains "no read pending")) (sprintf "not reported as retained: %A" run.Messages))
+        testCase "a release that races the last owned activity finishing is not reported as retained" (fun () ->
+            use fixture = new ControlledFixture(0, false)
+            fixture.ArmOpenFailureGate()
+            let sessions = ResizeArray<CaptureSession>()
+            // Runs between the refused release and the pending-read check: the activity finishes in exactly that window.
+            let finishActivity () =
+                fixture.ResumeOpen()
+                let session = lock sessions (fun () -> List.head (Seq.toList sessions))
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> not (ownership session).PendingActivity), TimeSpan.FromSeconds 3.)) "owned activity finished inside the window"
+            let host =
+                Threading.Tasks.Task.Run(fun () ->
+                    hostRunWith finishActivity sessions fixture admittedEnv Threading.CancellationToken.None noPause NoFault (hostArgv fixture.Request.Selection))
+            try
+                fixture.WaitOpenBlocked()
+                fixture.Advance 100L
+                Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> lock sessions (fun () -> Seq.toList sessions) |> List.exists(fun s -> (inspect s).Model.FirstFailure = Some WorkDeadlineReached)), TimeSpan.FromSeconds 2.)) "original work end observed by the capture"
+                fixture.Advance 200L
+                let run = joined host
+                let session = List.exactlyOne run.Sessions
+                Expect.equal (inspect session).Settlement ResourcesReleased "the session did settle"
+                Expect.equal run.Code (Some(Loop.exitCode Loop.InputUnavailable)) "so the invocation's own exit stands"
+                Expect.isEmpty (unsettledReports run) "nothing was ever unsettled"
+                Expect.isFalse (run.Messages |> List.exists (fun m -> m.Contains "retained")) (sprintf "no false retained report: %A" run.Messages)
+            finally fixture.ResumeOpen())
+        testCase "a second supply call cannot replace the held owner" (fun () ->
+            use fixture = newLoaderFixture ()
+            let selection = loaderSelection (loaderRequest fixture)
+            let sessions = ResizeArray<CaptureSession>()
+            let prepares = ref 0
+            let reads = ref 0
+            let messages = ResizeArray<string>()
+            let effects = hostEffects fixture admittedEnv NoFault ignore Threading.CancellationToken.None prepares reads sessions noPause
+            let invocationRequest =
+                match Loop.parseInvocation (List.ofArray (hostArgv selection)) with
+                | Ok invocation -> invocation.Request
+                | Error error -> failtestf "argv rejected: %A" error
+            let drive supply =
+                match supply invocationRequest selection with
+                | Ok _ ->
+                    match supply invocationRequest selection with
+                    | Error message ->
+                        Expect.stringContains message "already held" "second owner refused with its cause"
+                        3
+                    | Ok _ -> failtest "a second owner was prepared"
+                | Error message -> failtestf "first capture refused: %s" message
+            Expect.equal (ProviderHost.run effects messages.Add drive) 3 "invocation exit unchanged"
+            Expect.equal prepares.Value 1 "exactly one owner was ever prepared"
+            Expect.equal (inspect (List.exactlyOne (List.ofSeq sessions))).Settlement ResourcesReleased "the one owner was released")
+        testCase "only provider-mode faults are contained: a legacy fault propagates and a fault before any session is a tool error" (fun () ->
+            use fixture = newLoaderFixture ()
+            let selection = loaderSelection (loaderRequest fixture)
+            let sessions = ResizeArray<CaptureSession>()
+            let messages = ResizeArray<string>()
+            let effects = hostEffects fixture admittedEnv NoFault ignore Threading.CancellationToken.None (ref 0) (ref 0) sessions noPause
+            Expect.throws (fun () -> ProviderHost.run effects messages.Add (fun _ -> failwith "legacy fault") |> ignore) "a fault that never asked for a capture is not rewritten"
+            Expect.isEmpty messages "and nothing is reported on its behalf"
+            let invocationRequest =
+                match Loop.parseInvocation (List.ofArray (hostArgv selection)) with
+                | Ok invocation -> invocation.Request
+                | Error error -> failtestf "argv rejected: %A" error
+            let throwingPrepare = { effects with Prepare = fun _ -> failwith "synthetic prepare fault" }
+            let code = ProviderHost.run throwingPrepare messages.Add (fun supply -> supply invocationRequest selection |> ignore; 0)
+            Expect.equal code (Loop.exitCode Loop.ToolError) "provider-mode fault with no session is a tool error"
+            Expect.isTrue (messages |> Seq.exists (fun m -> m.Contains "synthetic prepare fault")) (sprintf "reported: %A" (List.ofSeq messages))
+            Expect.isEmpty sessions "no owner was ever created")
+    ] |> testSequenced
+
+module private SignalSupport =
+    [<Runtime.InteropServices.DllImport("libc", SetLastError = true)>]
+    extern int kill(int pid, int signal)
+
+[<Tests>]
+let hostSignalTests =
+    testList "ProviderHost signal-driven cancellation" [
+        testCase "SIGTERM requests cancellation even after a full collection, and the registration is released on dispose" (fun () ->
+            if not (OperatingSystem.IsLinux()) then skiptest "Linux process signals only"
+            let signals = new ProviderHost.SignalCancellation()
+            let token = signals.Token
+            Expect.isFalse token.IsCancellationRequested "nothing requested yet"
+            // An unreferenced PosixSignalRegistration is finalized and silently unregisters its handler.
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            GC.Collect()
+            Expect.equal (SignalSupport.kill(Environment.ProcessId, 15)) 0 "signal delivered to this process"
+            Expect.isTrue (Threading.SpinWait.SpinUntil((fun () -> token.IsCancellationRequested), TimeSpan.FromSeconds 5.)) "the handler survived collection and requested cancellation"
+            GC.KeepAlive signals
+            (signals :> IDisposable).Dispose())
     ] |> testSequenced

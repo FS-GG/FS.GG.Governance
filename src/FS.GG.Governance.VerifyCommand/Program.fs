@@ -81,10 +81,11 @@ let internal runWithCapturedProvider
 
 // The Verify host composition root (#468). Provider mode is hosted by `ProviderHost`: it owns the one capture
 // session from before acquisition through release, so the adapter above stays a pure caller-owned-session user.
-// Legacy invocations never reach the supplier and behave exactly as before.
+// Legacy invocations never reach the supplier: no admission, signal wiring, session or fault containment.
 let internal runHosted (effects: ProviderHost.Effects) makePorts report argv =
     ProviderHost.run effects report (fun supply -> runWithCapturedProvider supply makePorts report argv)
 
 [<EntryPoint>]
 let main argv =
-    runHosted (ProviderHost.systemEffects ()) Interpreter.realPorts (eprintfn "%s") argv
+    use signals = new ProviderHost.SignalCancellation()
+    runHosted (ProviderHost.systemEffects signals) Interpreter.realPorts (eprintfn "%s") argv

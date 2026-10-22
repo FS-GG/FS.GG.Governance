@@ -495,8 +495,10 @@ disposes, finalizes, replaces, renews or signals around a session whose release 
 | Not released at or after the original cleanup end, a read may be pending (activity, uncertain close or borrowed lease) | report once; keep the session; stay resident; keep retrying | none until the outer runtime ends the worker, or 4 if the session is released after that report |
 | Not released after the cleanup end, nothing pending (retained descriptors only) | report once; exit | 4 |
 
-The exit is the existing tool-error code. Signals (SIGINT, SIGTERM) in provider mode request cancellation of the
-capture and do not terminate the host; whole-worker termination and resource reclamation remain with the outer
+The exit is the existing tool-error code. Before declaring a session retained with nothing pending, the owner makes
+one last `release` attempt so a session that did settle is never reported as retained. Signals (SIGINT, SIGTERM) in
+provider mode request cancellation of the capture and do not terminate the host (cancellation reaches only the
+capture: once planning starts, a signal is swallowed until planning returns); whole-worker termination and resource reclamation remain with the outer
 admitted runtime. If the outer runtime never ends a worker whose read is pending, the host stays resident: that is
 the recorded decision, not a defect of this slice.
 
@@ -506,7 +508,8 @@ synthetic descriptors and gates: settled, refused (unadmitted ends, invalid requ
 the cleanup end), uncertain close, a fault during planning, and legacy isolation, plus pure tests of admission,
 the planning context and the exit mapping. Each guard was mutated in a scratch copy (matrix in the PR).
 
-**Not claimed.** Nothing here is a real blocked regular-file read, an independently observed uncertain physical
+**Not claimed.** The `FSGG_VERIFY_WORK_SECONDS` / `FSGG_VERIFY_CLEANUP_SECONDS` interface is a Governance source-owner choice;
+acknowledgement by the carrier or runtime owner that supplies the ends is not recorded. Nothing here is a real blocked regular-file read, an independently observed uncertain physical
 close, demonstrated whole-worker teardown, the named accountable supplier for it, or the real SDD to Verify to
 GateExecution journey. The 20 physical cases remain pending. Prerequisite (a) of the decision (host composition
 source and its non-zero exit mapping) is implemented by this slice; (b) through (e) are unchanged. The

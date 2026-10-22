@@ -60,6 +60,14 @@ module internal ProviderHost =
     /// be pending, this does not return: it keeps the session, reports once, and waits for the outer runtime.
     val run: Effects -> report: (string -> unit) -> drive: (Supply -> int) -> int
 
-    /// Real clock, environment, capture preparation and signal-driven cancellation (SIGINT/SIGTERM request
-    /// cancellation only; the host still settles or stays resident).
-    val systemEffects: unit -> Effects
+    /// Process-signal cancellation, registered only when provider mode asks for its token. Dispose unregisters.
+    /// SIGINT and SIGTERM request cancellation of the capture; they do not terminate the host, which still
+    /// settles its session (or stays resident). The owner (main) must keep this object alive.
+    [<Sealed>]
+    type SignalCancellation =
+        new: unit -> SignalCancellation
+        member Token: System.Threading.CancellationToken
+        interface System.IDisposable
+
+    /// Real clock, environment, capture preparation and signal-driven cancellation.
+    val systemEffects: SignalCancellation -> Effects

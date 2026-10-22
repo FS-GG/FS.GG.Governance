@@ -89,8 +89,13 @@ module internal ProviderHost =
                 let owned = Capture.ownership session
                 let readMayBePending = owned.PendingActivity || owned.CloseUncertain || owned.BorrowedRoots > 0
                 if pastCleanup && not readMayBePending then
-                    report (toolError (sprintf "provider capture session is retained after the original cleanup end (%A) with no read pending; exiting" cause))
-                    RetainedWithoutPendingRead
+                    // The refused attempt may have raced the last owned activity finishing; one more attempt
+                    // from the owner decides, so a session that did settle is never reported as retained.
+                    match Capture.release session with
+                    | Ok() -> if reported then ReleasedAfterUnsettledReport else Released
+                    | Error final ->
+                        report (toolError (sprintf "provider capture session is retained after the original cleanup end (%A) with no read pending; exiting" final))
+                        RetainedWithoutPendingRead
                 else
                     if pastCleanup && not reported then
                         report (
@@ -105,7 +110,8 @@ module internal ProviderHost =
     let run (effects: Effects) (report: string -> unit) (drive: Supply -> int) : int =
         let start = effects.Now()
         let held: (Capture.CaptureSession * ExecutionBudget) option ref = ref None
-        let supply: Supply =
+        let providerStarted = ref false
+        let acquire: Supply =
             fun request selection ->
                 match admit effects start with
                 | Error message -> Error message
@@ -131,10 +137,18 @@ module internal ProviderHost =
                             Error(
                                 sprintf "provider capture did not reach a ready state: %A (secondary %A)" observation.Model.FirstFailure observation.Model.SecondaryFailures
                             )
+        let supply: Supply =
+            fun request selection ->
+                providerStarted.Value <- true
+                if held.Value.IsSome then
+                    Error "provider capture owner is already held for this invocation; a replacement is never prepared"
+                else
+                    acquire request selection
         let inner =
             try
                 drive supply
-            with ex ->
+            with ex when providerStarted.Value ->
+                // Only provider mode owns a session to settle; legacy faults propagate exactly as before.
                 report (toolError (ex.GetType().Name + ": " + ex.Message))
                 Loop.exitCode Loop.ToolError
         match held.Value with
@@ -148,25 +162,41 @@ module internal ProviderHost =
                 report (toolError (sprintf "provider invocation exit %d is replaced by %d: the capture session did not settle cleanly" inner code))
             code
 
-    let systemEffects () : Effects =
-        let cancellation =
+    [<Sealed>]
+    type SignalCancellation() =
+        let source = new CancellationTokenSource()
+        // Both registrations are instance state: an unreferenced PosixSignalRegistration is finalized and
+        // silently unregisters its handler, so the owner of this object (main) keeps them alive.
+        let mutable interrupt: ConsoleCancelEventHandler option = None
+        let mutable terminate: Runtime.InteropServices.PosixSignalRegistration option = None
+        let token =
             lazy
-                (let source = new CancellationTokenSource()
-                 // Cancellation is a request the capture observes. The handlers keep the host alive so it can
+                (// Cancellation is a request the capture observes. The handlers keep the host alive so it can
                  // settle its session; if that cannot happen, the outer runtime terminates the whole worker.
-                 Console.CancelKeyPress.Add(fun args ->
-                     args.Cancel <- true
-                     source.Cancel())
-                 let register signal =
-                     Runtime.InteropServices.PosixSignalRegistration.Create(
-                         signal,
-                         fun context ->
-                             context.Cancel <- true
-                             source.Cancel()
+                 let onInterrupt =
+                     ConsoleCancelEventHandler(fun _ args ->
+                         args.Cancel <- true
+                         source.Cancel())
+                 Console.CancelKeyPress.AddHandler onInterrupt
+                 interrupt <- Some onInterrupt
+                 terminate <-
+                     Some(
+                         Runtime.InteropServices.PosixSignalRegistration.Create(
+                             Runtime.InteropServices.PosixSignal.SIGTERM,
+                             fun context ->
+                                 context.Cancel <- true
+                                 source.Cancel()
+                         )
                      )
-                     |> ignore
-                 register Runtime.InteropServices.PosixSignal.SIGTERM
                  source.Token)
+        member _.Token = token.Force()
+        interface IDisposable with
+            member _.Dispose() =
+                interrupt |> Option.iter (fun handler -> Console.CancelKeyPress.RemoveHandler handler)
+                terminate |> Option.iter (fun registration -> registration.Dispose())
+                source.Dispose()
+
+    let systemEffects (signals: SignalCancellation) : Effects =
         { Environment =
             fun name ->
                 match Environment.GetEnvironmentVariable name with
@@ -174,6 +204,6 @@ module internal ProviderHost =
                 | value -> Some value
           Now = FS.GG.Governance.GateExecution.Interpreter.currentInstant
           TicksPerSecond = Diagnostics.Stopwatch.Frequency
-          Cancellation = fun () -> cancellation.Force()
+          Cancellation = fun () -> signals.Token
           Prepare = Capture.prepare
           Pause = fun () -> Thread.Sleep 10 }
