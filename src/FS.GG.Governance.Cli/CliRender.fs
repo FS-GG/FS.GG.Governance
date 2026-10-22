@@ -62,7 +62,7 @@ module CliRender =
 
     let renderParseError error =
         match error with
-        | MissingCommand -> "missing command: expected route, explain, contract, evidence, watch, or tui"
+        | MissingCommand -> "missing command: expected route, explain, contract, evidence, watch, tui, or verify"
         | UnknownCommand value -> "unknown command: " + value
         | UnknownOption value -> "unknown option: " + value
         | UnexpectedArgument value -> "unexpected argument: " + value

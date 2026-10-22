@@ -95,5 +95,14 @@ let tests =
 
                 Expect.equal run.ExitCode 0 (run.Stdout + run.Stderr)
                 Expect.stringContains run.Stdout "\"command\":\"route\"" "route command"
+
+                // #470: the packed tool carries the Verify host (no second executable or package id).
+                let verify = runProcess exe [ "verify"; "--bogus" ]
+                Expect.equal verify.ExitCode 2 (verify.Stdout + verify.Stderr)
+
+                Expect.stringContains
+                    verify.Stderr
+                    "fsgg verify: unknown flag: --bogus"
+                    "installed tool reaches the Verify host"
             }
         ]

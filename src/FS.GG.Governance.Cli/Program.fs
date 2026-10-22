@@ -272,8 +272,8 @@ module Program =
             Console.Error.WriteLine "fsgg-governance tui: route evaluation produced no report"
             Cli.exitCode (InputUnavailable "route evaluation produced no report")
 
-    [<EntryPoint>]
-    let main argv =
+    /// The one-shot dispatcher and the read-only watch/tui surfaces (everything except `verify`).
+    let private runDispatcher (argv: string[]) : int =
         // F27 wiring (063): the read-only watch/tui surfaces are interactive loops, not the one-shot
         // snapshot→host→output MVU — intercept them at the edge before building the one-shot ports.
         match Cli.parse (argv |> Array.toList) with
@@ -293,3 +293,11 @@ module Program =
                 Console.Error.WriteLine(CliRender.render result)
 
             Cli.exitCode result.Exit
+
+    [<EntryPoint>]
+    let main argv =
+        // #470: `verify` is the pre-PR Verify host, which owns its own argument grammar, exit codes and capture
+        // lifetime. Forward everything after the verb unchanged, before the dispatcher's one-shot parser.
+        match argv |> Array.toList with
+        | "verify" :: rest -> FS.GG.Governance.VerifyCommand.Program.run (Array.ofList rest)
+        | _ -> runDispatcher argv

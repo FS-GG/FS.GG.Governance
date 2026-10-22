@@ -57,6 +57,9 @@ let private securityOrPurityBoundaries =
             "FS.GG.Governance.HumanRender"
             "FS.GG.Governance.ProjectSensing"
             "FS.GG.Governance.RoutePipeline"
+            // #470: the Verify host library (capture-lifetime owner, signal edge and provider admission)
+            // is shipped inside the Cli tool, never as its own package or executable.
+            "FS.GG.Governance.VerifyCommand"
         ]
 
 // The two built-in adapter namespaces intentionally share this one low-cost organizational assembly.

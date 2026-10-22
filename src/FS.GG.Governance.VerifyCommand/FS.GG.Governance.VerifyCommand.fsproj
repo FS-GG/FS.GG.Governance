@@ -22,10 +22,16 @@
        (parse/init/update/render/exitCode over Model/Msg/Effect, including the ExitCodeBasis -> exit mapping)
        + an EDGE `Interpreter` (injected, fakeable Ports; realPorts/step/run) + a thin Program. Compile order
        Loop -> Interpreter -> Program. IsPackable=false this slice (the single-packed-`fsgg`-tool unification
-       is a deferred follow-up). -->
+       is a deferred follow-up).
+
+       #470: that unification. This project is now an internal LIBRARY (no OutputType=Exe, still
+       IsPackable=false: no PackageId commitment, ADR-0003) whose single process entry is `Program.run argv`;
+       the published `fsgg-governance` tool (FS.GG.Governance.Cli) references it and dispatches
+       `fsgg-governance verify <args>` to that entry, so the host ships inside the existing tool package with
+       no new package identity. Behaviour is the former executable's, unchanged. An executable may not
+       reference another executable (ExeLeafTests), which is why this project stopped being one. -->
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.VerifyCommand</RootNamespace>
-    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

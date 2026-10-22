@@ -752,7 +752,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+UsageError+UnrecognizedProfile
   [Method] System.String get_Item()
   [Property] System.String Item
 TYPE FS.GG.Governance.VerifyCommand.Program
-  [Method] Int32 main(System.String[])
+  [Method] Int32 run(System.String[])
   [Method] System.String categoryToken(ExitDecision)
   [Method] System.String usageMessage(UsageError)
 TYPE FS.GG.Governance.VerifyCommand.ProviderContext
