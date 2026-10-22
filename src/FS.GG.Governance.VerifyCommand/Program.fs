@@ -79,10 +79,13 @@ let internal runWithCapturedProvider
                 | Ok resolution -> Ok ({ ResolutionRequest = resolution; CommandContext = context }: Loop.ProviderPlanningInput)
     runWithProviderLoader load makePorts report argv
 
+// The Verify host composition root (#468). Provider mode is hosted by `ProviderHost`: it owns the one capture
+// session from before acquisition through release, so the adapter above stays a pure caller-owned-session user.
+// Legacy invocations never reach the supplier: no admission, signal wiring, session or fault containment.
+let internal runHosted (effects: ProviderHost.Effects) makePorts report argv =
+    ProviderHost.run effects report (fun supply -> runWithCapturedProvider supply makePorts report argv)
+
 [<EntryPoint>]
 let main argv =
-    // Standalone capture cannot yet establish its externally owned lifetime/teardown contract.
-    // Preserve that exact missing prerequisite instead of starting an unowned native activity.
-    let unavailable _ _ =
-        Error "provider capture requires an independently admitted caller-owned lifetime and teardown boundary; standalone provider execution is unavailable"
-    runWithProviderLoader unavailable Interpreter.realPorts (eprintfn "%s") argv
+    use signals = new ProviderHost.SignalCancellation()
+    runHosted (ProviderHost.systemEffects signals) Interpreter.realPorts (eprintfn "%s") argv
