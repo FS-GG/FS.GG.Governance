@@ -12,7 +12,8 @@
        F052 freshness/reuse/execution cores — PLUS the new VerifyJson (NOT AuditJson; verify projects its own
        document). There is NO `Declaration` adapter and NO new sensing (the F055 release declaration surface
        was release-specific); "validate generated views/evidence currency" IS the existing F043/F041
-       evaluation surfaced and acted on. It adds NO new third-party dependency: git sensing is delegated to
+       evaluation surfaced and acted on. Its only package references are the first-party FS.GG.SDD Commands/Artifacts 2.3.0 pair used by the explicit
+       provider loader (ProviderContextLoader); it adds NO new third-party dependency: git sensing is delegated to
        Snapshot, catalog reads to Config, enforcement/rollup to Enforcement/Ship, serialization to VerifyJson;
        the only new impure primitives are a `System.IO` write (the ArtifactWriter port) and `Environment.Exit`
        at the Program edge — both BCL. No YamlDotNet.
@@ -50,6 +51,8 @@
     <Compile Include="ProviderContext.fs" />
     <Compile Include="ProviderContextCapture.fsi" />
     <Compile Include="ProviderContextCapture.fs" />
+    <Compile Include="ProviderContextLoader.fsi" />
+    <Compile Include="ProviderContextLoader.fs" />
     <Compile Include="Loop.fsi" />
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
@@ -59,6 +62,8 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FS.GG.SDD.Commands" />
+    <PackageReference Include="FS.GG.SDD.Artifacts" />
   </ItemGroup>
 
   <!--

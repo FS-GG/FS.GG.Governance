@@ -359,3 +359,33 @@ pending and retain the original caller owner and failure evidence. The existing 
 Program/Verify integration, stronger profiles, coherent SDD consumer joins and C3/C4 milestones remain
 open. The owning Atlas archive records `governance/provider-capture-retention-boundary`; retrieve it
 with the Atlas helper and verify its immutable source citations before reuse.
+
+
+### GOV423-C2 phase-2 package loader preparation (2026-10-15)
+
+Source preparation targets the retained SDD Commands/Artifacts 2.3.0 candidate from
+run `37951954780`, artifact `11626413573`, source
+`c8aea9289a6cc410f076823bf1219a02314f00a7`. As of 2026-10-22 SDD 2.3.0 is published from that
+exact candidate (FS-GG/FS.GG.SDD#1113) and a cold locked restore of the org feed matches the
+committed lock hashes and the retained archive digests for Commands, Artifacts and Knowledge. The package-backed adapter decodes immutable observations from the
+original Ready capture session, strictly parses schema-2 provenance and independently selected
+policy, binds policy/platform/admission correspondence, and recomputes the whole Config request
+before catalog selection, cache or execution. Literal argv stays typed throughout.
+
+The provider interpreter drives the existing non-passing Verify planning transition. Program
+parses all explicit provider selectors and supplies a caller-owned-session adapter; it never
+acquires or releases that session. Standalone `main` explicitly returns input-unavailable for
+provider mode because an independently admitted outer capture lifetime and teardown owner are
+not yet supplied. This is an unresolved production-entry prerequisite, not usable provider-mode
+availability. Legacy invocations retain the existing interpreter path.
+
+Focused source controls cover actual package codecs, raw digests, strict UTF-8/schema refusal,
+independent policy/platform correspondence and the Program-to-planning join. Fixtures are
+synthetic declarations and observations, not execution evidence. Local CLR, restore/lock
+regeneration, compilation and test execution were held under the programme resource limit when
+this section was first written; they have since run (2026-10-22: locked restore, build, and the
+Verify suite in Debug and Release, with the hosted gate set on the reviewed head). The
+`ProviderContextLoader.load` capture-readiness selection and the `CapabilityBindings.Rejected`
+branch of `decode` remain without direct tests until a caller-owned ready capture fixture exists.
+Package-only qualification, physical capture acceptance, production owner integration, source/evidence revalidation and
+the real SDD-to-Verify/GateExecution journey remain open. C2 remains unchecked.

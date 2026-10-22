@@ -36,6 +36,9 @@
        (see nuget.config). Contract id: fsgg-contracts (registry/dependencies.yml). -->
   <ItemGroup>
     <PackageVersion Include="FS.GG.Contracts" Version="7.6.0" />
+    <!-- SDD 2.3.0 is published (FS-GG/FS.GG.SDD#1113) from the retained candidate used by the explicit provider loader; each lock file pins its content hash. -->
+    <PackageVersion Include="FS.GG.SDD.Commands" Version="2.3.0" />
+    <PackageVersion Include="FS.GG.SDD.Artifacts" Version="2.3.0" />
   </ItemGroup>
 
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.

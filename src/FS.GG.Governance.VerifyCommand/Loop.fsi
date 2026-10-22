@@ -302,7 +302,7 @@ module Loop =
     val parse: argv: string list -> Result<RunRequest, UsageError>
 
     /// Validate explicit provider options, then parse the original token stream with their boundaries
-    /// retained. This pure API creates no ports; Program remains on legacy parse until loader admission.
+    /// retained. This pure API creates no ports; Program routes provider requests without falling back to legacy execution.
     val parseInvocation: argv: string list -> Result<Invocation, InvocationError>
 
     /// Initial state plus the first requested effect(s) for a valid request (Principle IV `init`).

@@ -107,3 +107,7 @@ module Interpreter =
     /// result `Msg` back into `Loop.update`, and stop at `Done`. Returns the terminal `Loop.Model` (carrying
     /// the decided `ExitDecision` — including a `Blocked` verdict). TOTAL — never throws.
     val run: ports: Ports -> request: Loop.RunRequest -> Loop.Model
+
+    /// Drive the actual provider planning transition with the existing effect interpreter.
+    /// Valid declarations remain non-passing; no provider execution or evidence acceptance is supplied.
+    val runProviderPlanning: ports: Ports -> request: Loop.RunRequest -> provider: Loop.ProviderPlanningInput -> Loop.ProviderModel

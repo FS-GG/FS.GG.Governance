@@ -497,3 +497,9 @@ module Interpreter =
         // Drive init → update* to Done: execute every requested Effect via `step`, feed each result Msg back
         // into the pure `update`, accumulate new effects, repeat. Stops at Done or quiescence. NEVER throws.
         CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0
+
+    let runProviderPlanning (ports: Ports) (request: Loop.RunRequest) (provider: Loop.ProviderPlanningInput) : Loop.ProviderModel =
+        let model, effects = Loop.initProviderPlanning request provider
+        CommandHost.drive
+            (fun (m: Loop.ProviderModel) -> m.Legacy.Phase = Loop.Done)
+            (step ports) Loop.updateProviderPlanning model effects
