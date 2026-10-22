@@ -6,6 +6,8 @@
 #   • passing handoff + `--mode gate`  → exit 0 (Success)
 #   • failing handoff + light (`inner`) → exit 0 (no block; gates enforce only at gate)
 #   • structural backstop: the consumer assembly is bundled in the packed tool (tools/**)
+#   • #470: the Verify host (VerifyCommand + the SDD Commands/Artifacts pair) is bundled too, and the installed
+#     `fsgg-governance verify` answers with the host's own usage (2), input-unavailable (3) and provider-admission (3)
 # A consumer-less build (the predecessor failure mode) returns 0 on the failing fixture and FAILS here,
 # so it can never reach the push job. Non-zero exit on ANY failed assertion.
 #
@@ -36,7 +38,8 @@ note "CLI version (from fsproj) = $VERSION"
 
 PKG_DIR="$(mktemp -d)"
 TOOL_DIR="$(mktemp -d)"
-cleanup() { rm -rf "$PKG_DIR" "$TOOL_DIR"; }
+NOT_A_REPO="$(mktemp -d)"
+cleanup() { rm -rf "$PKG_DIR" "$TOOL_DIR" "$NOT_A_REPO"; }
 trap cleanup EXIT
 
 note "packing $PKG_ID $VERSION ($CONFIG) …"
@@ -111,8 +114,6 @@ assert_exit 0 "light profile + failing + gate NO-BLOCK" "$TOOL" route --root "$L
 # #470: `verify` reaches the packaged Verify host with its own grammar and exit codes. An unknown flag is a Verify
 # usage error (2, never the dispatcher's 64); a directory that is not a git repository is input-unavailable (3).
 assert_exit 2 "verify: unknown flag is a Verify usage error" "$TOOL" verify --bogus
-NOT_A_REPO="$(mktemp -d)"
-trap 'rm -rf "$PKG_DIR" "$TOOL_DIR" "$NOT_A_REPO"' EXIT
 assert_exit 3 "verify: non-repository is input-unavailable" "$TOOL" verify --repo "$NOT_A_REPO"
 # Provider mode is hosted: with no outer-runtime ends admitted it starts nothing and exits 3 naming the variable.
 PROVIDER_OUT="$(env -u FSGG_VERIFY_WORK_SECONDS -u FSGG_VERIFY_CLEANUP_SECONDS "$TOOL" verify --repo "$NOT_A_REPO" \

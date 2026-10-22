@@ -35,7 +35,9 @@ dispatcher is its missing-command help text, which now lists `verify`.
   `v1.14.0` absent. `CodeChecks` 1.0.1, `ReferenceGateSet` 1.8.0, Kernel and Adapters.Spi 0.1.1 already exist and are
   skipped as duplicates.
 * The CLI tool package now bundles `FS.GG.Governance.VerifyCommand` and the SDD 2.3.0 `Commands`/`Artifacts`/
-  `Knowledge` assemblies; it still declares no package dependency and creates no new package id.
+  `Knowledge` assemblies (and, through CodeChecks, the F# compiler library with its language resources); it still
+  declares no package dependency and creates no new package id. Measured by independent review: about 16 MB and 257
+  files against 3.8 MB and 175 files for 1.13.0.
 * Acceptance after publication is a cold install of the published tool and a `fsgg-governance verify` run, not the
   green workflow alone.
 

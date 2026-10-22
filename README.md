@@ -203,7 +203,8 @@ it keeps the Verify host's own grammar (`--repo`, `--paths`, `--since`, `--profi
 `3` input unavailable, `4` tool error); provider mode takes the outer runtime's ends from
 `FSGG_VERIFY_WORK_SECONDS` / `FSGG_VERIFY_CLEANUP_SECONDS`.
 
-**`fsgg`** — the capability-platform host commands (each its own MVU executable),
+**`fsgg`** — the capability-platform host commands (each an MVU host; `verify` ships as the
+`fsgg-governance verify` verb above rather than as its own executable),
 covering the full route → verify → ship → release lifecycle:
 
 | Command | Purpose |
@@ -216,7 +217,8 @@ covering the full route → verify → ship → release lifecycle:
 | `fsgg evidence` | evidence JSON projection |
 | `fsgg cache-eligibility` | cache-eligibility verdict |
 
-`route`, `evidence`, and `cache-eligibility` are packed and installable as .NET tools;
+`route`, `evidence`, and `cache-eligibility` are packed and installable as .NET tools, and
+`verify` is installable inside `fsgg-governance` (`fsgg-governance verify <args>`, #470);
 the others currently run from source. Until the single-tool multiplexer lands, they
 install under **distinct** command names so two of them never collide — `route` owns the
 bare `fsgg` command, `evidence` installs as `fsgg-evidence`, and `cache-eligibility` as
@@ -227,8 +229,8 @@ bare `fsgg` command, `evidence` installs as `fsgg-evidence`, and `cache-eligibil
 The two lineages use **two different exit-code families** — the same integer can mean
 different things, so read them against the right column.
 
-**`fsgg` verb hosts** (the MVU executables — `verify`/`ship`/`route`/`release`/
-`evidence`/`cache-eligibility`). Each host declares its own exit-code DU (there is no
+**`fsgg` verb hosts** (the MVU hosts — `verify`/`ship`/`route`/`release`/
+`evidence`/`cache-eligibility`; `verify` also answers as `fsgg-governance verify`, with these codes). Each host declares its own exit-code DU (there is no
 shared `ExitDecision` type); they agree on this `0`–`4` scheme:
 
 | Code | Meaning |

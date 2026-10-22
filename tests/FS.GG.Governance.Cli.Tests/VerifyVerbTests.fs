@@ -88,7 +88,7 @@ let tests =
                 withTempDir (fun dir ->
                     let r = runCli [ "verify"; "--repo"; dir ]
                     Expect.equal r.ExitCode 3 (r.Stdout + r.Stderr)
-                    Expect.stringContains r.Stderr "fsgg verify [input-unavailable]" "legacy Verify diagnostic")
+                    Expect.stringContains r.Stderr "notARepository" "legacy Verify diagnostic")
             }
 
             test "provider mode is hosted: without the outer runtime's ends nothing is admitted or started (3)" {
