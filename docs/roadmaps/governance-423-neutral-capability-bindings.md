@@ -401,8 +401,8 @@ document only; `Program.main` still returns input-unavailable for provider mode.
 **Direct controls.** `ProviderContextCaptureTests.fs` now drives `ProviderContextLoader.load` and
 `Program.runWithCapturedProvider` over a ready session produced by the real capture interpreter with
 the existing inert per-session operations. That ready-capture fixture stays private to the capture
-tests; it serves the coherent schema-2 provenance and policy bytes and has two optional finite gates
-(a metadata read held inside a revalidation window). Nothing is acquired from the kernel. Load cases:
+tests; it serves the coherent schema-2 provenance and policy bytes and has two finite gates, the
+existing read gate and a new metadata-read gate held inside a revalidation window. Nothing is acquired from the kernel. Load cases:
 decode from the captured bytes and leave the caller's session unchanged (model, bytes, roots,
 ownership and close attempts), case-insensitive digest selection, selected platform, undecodable
 captured bytes, never-captured, failed-capture, drifted-binding, released, in-flight revalidation,
@@ -414,7 +414,7 @@ caller's session. Three `decode` cases reach the `CapabilityBindings.Rejected` b
 missing evidence, semantic-only downgrade of an independently required obligation).
 
 **Negative-control scope.** Each control was mutated in a scratch copy of the guarded source
-(see the PR for the recorded matrix). The guards proven independently load-bearing are: the
+(the matrix is recorded in PR #467; the list below is the durable statement). The guards proven independently load-bearing are: the
 in-flight revalidation phase, work end, cancellation, selected path, selected digest, role, the
 case-insensitive digest comparison, the captured-byte routing into `decode`, the `Rejected`
 mapping, the adapter's context/root/binding checks, its diagnostic and supplier-message
@@ -427,14 +427,15 @@ proven. Removing the phase and root guards together shows the settlement guard l
 **Decision: the Verify invocation owns the capture; the outer admitted runtime owns teardown.**
 For one `fsgg verify` provider invocation, the Verify host composition root in
 `FS.GG.Governance.VerifyCommand` (the entry that today supplies the standalone refusal) is the
-outer capture-lifetime owner. It must build the capture request from the invocation's own original
-work and cleanup ends, prepare the single `CaptureSession` before any acquisition, keep it for the
+outer capture-lifetime owner. It must build the capture request from the original work and cleanup
+ends the outer admitted runtime gives the invocation, prepare the single `CaptureSession` before any acquisition, keep it for the
 whole invocation (capture, `load`, planning and any later `borrowRepositoryRoot` execution lease)
 and be the only code that calls `release`. It never disposes, finalizes, replaces, renews or
 signals around an unsettled session. If `release` is not `Ok` by the original cleanup end, it keeps
-the session, reports a non-passing result and leaves whole-worker termination and resource
-reclamation to the outer admitted runtime that supplied those ends (today the root-admitted
-supervised route; for portable execution the workspace executor carrier).
+the session, reports a non-passing result and stays resident rather than exiting while a read may
+be pending; whole-worker termination and resource reclamation belong to the outer admitted runtime
+that supplied those ends (today the root-admitted supervised route; for portable execution the
+workspace executor carrier). The exit mapping for any return is open prerequisite (a).
 
 Basis: (1) the capture contract already requires the caller to hold the actual owner before
 acquisition and after any incomplete return, forbids any disposal, finalizer or replacement owner
@@ -449,8 +450,8 @@ packages; the independent policy and its capture belong to the Governance verifi
 provenance grants no policy authority. SDD#928 C3.1-03 consumes this join and does not own it.
 (5) #423 makes Governance the supplier of semantic obligations and checks to the workspace
 execution contract; process lifecycle and whole-worker teardown stay with the runtime carrier, as
-the physical fixture already models by retaining the session with an unsignaled outer owner while
-an independent guardian reaps. Rejected: a library finalizer or `IDisposable` auto-release, a
+the physical capture fixture retains the session with an unsignaled outer owner, and the
+GateExecution held-pipe control has an independent guardian observe and reap. Rejected: a library finalizer or `IDisposable` auto-release, a
 `main` that exits on timeout while a read may be pending, an SDD- or provider-owned capture, and a
 detached Verify background supervisor.
 
