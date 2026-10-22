@@ -17,6 +17,7 @@ UNRELATED = ['cli-tests', 'enforcement-smoke', 'publish', 'publish-fsharp-surfac
              'publish-kernel', 'publish-adapter-spi', 'publish-code-checks', 'publish-reference-gate-set']
 REPOSITORY = "github.repository == 'FS-GG/FS.GG.Governance'"
 ALL_SCOPE = REPOSITORY + " && needs.resolve-version.outputs.scope == 'all'"
+CONFIG_SCOPE = REPOSITORY + " && needs.resolve-version.outputs.scope == 'config'"
 GATE = "needs.resolve-version.outputs.push == 'true'"
 VISIBILITY = "needs.resolve-version.outputs.scope == 'config' || " + GATE
 FIRST = "needs.resolve-version.outputs.recovery == 'false'"
@@ -66,7 +67,7 @@ def validate(text):
     job = job_text(text)
     header = job.split('    steps:', 1)[0]
     require('    needs: [resolve-version]\n' in header, 'Config must depend only on resolve-version')
-    require("    if: github.repository == 'FS-GG/FS.GG.Governance'\n" in header, 'repository guard drift')
+    require(re.findall(r'^    if: (.+)$', header, re.M) == [CONFIG_SCOPE], 'Config must be selected only by scope=config')
     require('      contents: read\n      actions: read\n      packages: write\n      id-token: write\n' in header, 'permission drift')
     starts = list(re.finditer(r'^      - name: (.+)$', job, re.M))
     require([m.group(1) for m in starts] == ORDER, 'required step/order drift')
@@ -138,6 +139,34 @@ def validate(text):
                          'dotnet nuget push "$package" --source ' + source, key]:
             require(expected in body, 'same-file publication drift: ' + name)
     require('id: config-nuget-login' in steps['Trusted Publishing Config login'], 'OIDC output identity drift')
+
+def selected_jobs(text, scope):
+    """Evaluate each job-level `if` for the resolver-validated scope, synthetic repository only.
+
+    Supported grammar is a conjunction of the repository literal and one scope literal; anything else refuses.
+    """
+    chosen = []
+    for name in ['publish-config'] + UNRELATED:
+        header = job_text(text, name).split('    steps:', 1)[0]
+        conditions = re.findall(r'^    if: (.+)$', header, re.M)
+        require(len(conditions) == 1, 'single job condition required: ' + name)
+        value = True
+        for clause in conditions[0].split(' && '):
+            if clause == REPOSITORY:
+                continue
+            match = re.fullmatch(r"needs\.resolve-version\.outputs\.scope == '(all|config)'", clause)
+            require(match is not None, 'unsupported job condition: ' + name)
+            value = value and match.group(1) == scope
+        if value:
+            chosen.append(name)
+    return chosen
+
+def selection_controls(text):
+    # Causal control: the ACTUAL job conditions select Config only for scope=config and never in an
+    # `all` run (which is also the scope of every tag/release event), and select all other publishers only for `all`.
+    require(selected_jobs(text, 'all') == UNRELATED, 'an all-scope run must select exactly the non-Config publishers')
+    require(selected_jobs(text, 'config') == ['publish-config'], 'a config-scope run must select only Config')
+    print('Actual job-selection controls passed: all-scope run selects no Config job')
 
 def resolver_script(text):
     job = job_text(text, 'resolve-version')
@@ -310,6 +339,19 @@ def mutations(text):
     for name in UNRELATED:
         body = job_text(text, name)
         whole_cases['unguarded-'+name] = text.replace(body, body.replace(ALL_SCOPE, REPOSITORY, 1))
+    config_header = job_text(text).split('    steps:', 1)[0]
+    config_selection = {
+        'config-selected-in-all': text.replace(config_header, config_header.replace(CONFIG_SCOPE, REPOSITORY, 1)),
+        'config-selected-for-all-only': text.replace(config_header, config_header.replace("scope == 'config'", "scope == 'all'", 1)),
+    }
+    whole_cases.update(config_selection)
+    for name, mutated in config_selection.items():
+        try:
+            selection_controls(mutated)
+        except ValueError:
+            print('selection control independently refused: ' + name)
+        else:
+            raise ValueError('selection control missed mutation: ' + name)
     resolver = job_text(text, 'resolve-version')
     whole_cases['config-routed-to-cli'] = text.replace(resolver, resolver.replace('project="src/FS.GG.Governance.Config/FS.GG.Governance.Config.fsproj"', 'project="src/FS.GG.Governance.Cli/FS.GG.Governance.Cli.fsproj"'))
     whole_cases['resolver-readback-push'] = text.replace(resolver, resolver.replace("if [ \"$readback\" = 'true' ]; then push=\"false\"; fi", "if [ \"$readback\" = 'true' ]; then push=\"true\"; fi"))
@@ -318,6 +360,7 @@ def mutations(text):
         try:
             validate(mutated)
             resolver_controls(mutated)
+            selection_controls(mutated)
         except ValueError:
             print('refused mutation: ' + name)
         else:
@@ -332,6 +375,7 @@ if __name__ == '__main__':
         text = args.workflow.read_text()
         validate(text)
         resolver_controls(text)
+        selection_controls(text)
         push_byte_controls(text)
         if args.mutations:
             mutations(text)
