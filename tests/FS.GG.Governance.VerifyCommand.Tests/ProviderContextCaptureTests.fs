@@ -419,9 +419,13 @@ let nativeTests =
 
 // Controlled real interpreter: synthetic descriptors and finite gates, no kernel acquisition.
 // Every paused activity is unblocked and joined in finally, even after an assertion fails.
-type private ControlledFixture(blockRead: int, failClose: bool) =
+type private ControlledFixture(blockRead: int, failClose: bool, provenancePayload: byte[], policyPayload: byte[]) =
     let entered = new Threading.ManualResetEventSlim(false)
     let resume = new Threading.ManualResetEventSlim(false)
+    // Optional finite gate on one later metadata read, armed only after a ready capture.
+    let statEntered = new Threading.ManualResetEventSlim(false)
+    let statResume = new Threading.ManualResetEventSlim(false)
+    let mutable statGate : (string -> bool) option = None
     let descriptors = Collections.Generic.Dictionary<int, string>()
     let positions = Collections.Generic.Dictionary<int, int>()
     let closes = Collections.Generic.List<int>()
@@ -429,8 +433,8 @@ type private ControlledFixture(blockRead: int, failClose: bool) =
     let mutable reads = 0
     let mutable ticks = 10L
     let mutable changed = false
-    let payload = Text.Encoding.UTF8.GetBytes "bounded-document"
-    let digest = Security.Cryptography.SHA256.HashData(payload) |> Convert.ToHexString |> fun s -> s.ToLowerInvariant()
+    let digestOf (value: byte[]) = Security.Cryptography.SHA256.HashData(value) |> Convert.ToHexString |> fun s -> s.ToLowerInvariant()
+    let payloadAt (path: string) = if path.Contains "provenance" then provenancePayload else policyPayload
     let allocate path =
         next <- next + 1
         descriptors.Add(next,path)
@@ -445,11 +449,17 @@ type private ControlledFixture(blockRead: int, failClose: bool) =
           Stat = fun fd bytes ->
               let path=descriptors[fd]
               let directory=path="/repo" || path="/host"
+              match statGate with
+              | Some selected when selected path ->
+                  statGate <- None
+                  statEntered.Set()
+                  if not (statResume.Wait(TimeSpan.FromSeconds 5.)) then failwith "finite controlled metadata gate expired"
+              | _ -> ()
               write bytes 0 (BitConverter.GetBytes 0x17ffu)
               write bytes 28 (BitConverter.GetBytes (if directory then 0x4000us else 0x8000us))
               let identity = if path="/repo" then 1UL elif path="/host" then 2UL elif path.Contains("provenance") then 3UL else 4UL
               write bytes 32 (BitConverter.GetBytes (if changed && not directory then identity+10UL else identity))
-              write bytes 40 (BitConverter.GetBytes (if directory then 0UL else uint64 payload.Length))
+              write bytes 40 (BitConverter.GetBytes (if directory then 0UL else uint64 (payloadAt path).Length))
               write bytes 144 (BitConverter.GetBytes 1UL)
               0,0
           OpenRead = fun path ->
@@ -461,14 +471,18 @@ type private ControlledFixture(blockRead: int, failClose: bool) =
                   entered.Set()
                   if not (resume.Wait(TimeSpan.FromSeconds 5.)) then failwith "finite controlled read gate expired"
               let position=positions[fd]
+              let payload=payloadAt descriptors[fd]
               let count=min bytes.Length (payload.Length-position)
               Array.Copy(payload,position,bytes,0,count)
               positions[fd] <- position+count
               int64 count,0
           Seek = fun fd -> positions[fd] <- 0; 0L,0
           Close = fun fd -> closes.Add fd; (if failClose then -1,5 else 0,0) }
+    new(blockRead: int, failClose: bool) =
+        let payload = Text.Encoding.UTF8.GetBytes "bounded-document"
+        new ControlledFixture(blockRead, failClose, payload, payload)
     member _.Operations = operations
-    member _.Request = {request with Selection={request.Selection with ProvenanceSha256=digest;PolicySha256=digest}}
+    member _.Request = {request with Selection={request.Selection with ProvenanceSha256=digestOf provenancePayload;PolicySha256=digestOf policyPayload}}
     member _.Advance value = Threading.Interlocked.Exchange(&ticks,value) |> ignore
     member _.ChangeBinding() = changed <- true
     member _.CloseAttempts = closes |> Seq.toList
@@ -478,8 +492,12 @@ type private ControlledFixture(blockRead: int, failClose: bool) =
         positions[closes[0]] <- 0
     member _.WaitBlocked() = Expect.isTrue (entered.Wait(TimeSpan.FromSeconds 3.)) "controlled read entered within finite bound"
     member _.Resume() = resume.Set()
+    /// Blocks the next metadata read whose descriptor path satisfies the predicate.
+    member _.ArmMetadataGate(selected: string -> bool) = statGate <- Some selected
+    member _.WaitMetadataBlocked() = Expect.isTrue (statEntered.Wait(TimeSpan.FromSeconds 3.)) "controlled metadata read entered within finite bound"
+    member _.ResumeMetadata() = statResume.Set()
     interface IDisposable with
-        member _.Dispose() = resume.Dispose(); entered.Dispose()
+        member _.Dispose() = resume.Dispose(); entered.Dispose(); statResume.Dispose(); statEntered.Dispose()
 
 let private controlledSession (fixture:ControlledFixture) request =
     match prepareControlled fixture.Operations request with
@@ -612,5 +630,323 @@ let controlledTests =
             let second=capture session
             Expect.equal second.Model.FirstFailure (Some CaptureAlreadyConsumed) "no second acquisition"
             Expect.equal second.Documents first.Documents "same bounded original bytes"
+            releaseControlled session)
+    ] |> testSequenced
+
+// Direct ProviderContextLoader.load and Program.runWithCapturedProvider controls. The ready capture is the
+// real interpreter over the private controlled fixture above (synthetic descriptors, no kernel acquisition),
+// so the fixture stays private to the capture tests. The caller owns every session throughout: nothing below
+// lets the loader or the adapter acquire, renew, revalidate or release it.
+let private provenanceDocument () = ProviderContextLoaderTests.provenanceBytes (ProviderContextLoaderTests.coherentRecord ())
+let private newLoaderFixture () = new ControlledFixture(0,false,provenanceDocument (),ProviderContextLoaderTests.coherentPolicyBytes)
+// The coherent provenance exceeds the default synthetic per-file cap; the cap is part of the request, not the loader.
+let private loaderRequest (fixture:ControlledFixture) =
+    {fixture.Request with Limits={PerFileBytes=1 <<< 20;AggregateBytes=1 <<< 21}}
+let private loaderSelection (request:Request) : ProviderContext.Selection = {request.Selection with Platform="fixture-platform"}
+let private readySession (fixture:ControlledFixture) request =
+    let session=controlledSession fixture request
+    let observed=capture session
+    Expect.equal observed.Model.Phase Ready (sprintf "ready capture fixture: %A" observed.Model)
+    Expect.equal observed.Documents.Length 2 "both selected documents retained"
+    session
+let private load selection session = ProviderContextLoader.load selection session
+let private refusedOnly path (result:Result<_,Fsgg.ProviderCatalog.Diagnostic list>) =
+    match result with
+    | Ok _ -> failtest "loader admitted a capture or declaration it must refuse"
+    | Error errors ->
+        Expect.equal (errors |> List.map(fun d -> d.Path)) [path] (sprintf "single located refusal: %A" errors)
+        Expect.equal (errors |> List.map(fun d -> d.Code)) ["verify.providerContextInvalid"] "stable refusal code"
+let private admitted result =
+    match result with
+    | Ok request -> request
+    | Error errors -> failtestf "ready capture was not admitted: %A" errors
+
+[<Tests>]
+let loaderOverReadyCaptureTests =
+    testList "ProviderContextLoader over a ready controlled capture" [
+        testCase "ready retained capture yields the request decoded from its captured bytes and stays caller-owned" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            let before=inspect session
+            let ownedBefore=ownership session
+            let closesBefore=fixture.CloseAttempts
+            let expected=ProviderContextLoader.decode selection (provenanceDocument ()) ProviderContextLoaderTests.coherentPolicyBytes |> admitted
+            let first=load selection session |> admitted
+            Expect.equal first expected "load decodes exactly the captured provenance and policy bytes"
+            Expect.equal first.RequiredCapabilityIds ["build:build"] "independently selected floor survives"
+            Expect.equal (load selection session |> admitted) first "load is repeatable: it consumes nothing"
+            let after=inspect session
+            Expect.equal after.Model before.Model "model unchanged"
+            Expect.equal after.Documents before.Documents "retained bytes unchanged"
+            Expect.equal after.Roots before.Roots "root observations unchanged"
+            Expect.equal after.Settlement Retained "load never settles the caller's session"
+            Expect.equal (ownership session) ownedBefore "descriptors and activity unchanged"
+            Expect.equal fixture.CloseAttempts closesBefore "load closes nothing"
+            releaseControlled session)
+        testCase "selected digests compare case-insensitively against captured raw digests" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            let selection=loaderSelection request
+            let upper={selection with ProvenanceSha256=selection.ProvenanceSha256.ToUpperInvariant();PolicySha256=selection.PolicySha256.ToUpperInvariant()}
+            Expect.notEqual upper selection "selection really differs in case"
+            Expect.equal (load upper session |> admitted) (load selection session |> admitted) "same request for the same captured objects"
+            releaseControlled session)
+        testCase "selected platform is applied to the captured declaration, not taken from the capture request" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            load {loaderSelection request with Platform="other-platform"} session |> refusedOnly "$.platform"
+            releaseControlled session)
+        testCase "captured provenance that the actual package cannot decode is refused through load" (fun () ->
+            use fixture = new ControlledFixture(0,false,Text.Encoding.UTF8.GetBytes "{\"schemaVersion\":99}",ProviderContextLoaderTests.coherentPolicyBytes)
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            match load (loaderSelection request) session with
+            | Ok _ -> failtest "unsupported captured schema must not become a request"
+            | Error errors -> Expect.isNonEmpty errors "actual package refusal of the captured bytes"
+            releaseControlled session)
+        testCase "session that was never captured is not ready and is not acquired by load" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=controlledSession fixture request
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            Expect.isFalse (inspect session).Model.CaptureConsumed "load never starts the one-use capture"
+            Expect.isEmpty (inspect session).Documents "no document was read for the loader"
+            Expect.equal (ownership session).RetainedDescriptors 0 "no descriptor was acquired"
+            Expect.equal (capture session).Model.Phase Ready "caller can still capture the same owner afterwards"
+            releaseControlled session)
+        testCase "capture that failed keeps its first cause and is not admitted" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=controlledSession fixture {request with Limits={PerFileBytes=8;AggregateBytes=16}}
+            let failed=capture session
+            Expect.equal failed.Model.FirstFailure (Some(ByteLimitExceeded "provenance")) "actual cap failure"
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            Expect.equal (inspect session).Model.FirstFailure failed.Model.FirstFailure "load cannot erase or replace the first cause"
+            releaseControlled session)
+        testCase "capture whose original binding drifted is not admitted after failed revalidation" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            load (loaderSelection request) session |> admitted |> ignore
+            fixture.ChangeBinding()
+            Expect.equal (revalidate session).Model.FirstFailure (Some(InputChanged "provenance")) "original-object comparison rejects drift"
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            releaseControlled session)
+        testCase "released session is no longer admissible" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            releaseControlled session
+            Expect.equal (inspect session).Settlement ResourcesReleased "caller released its own owner"
+            load (loaderSelection request) session |> refusedOnly "$.capture")
+        testCase "revalidation in flight is not ready even when every root binding was just refreshed" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            fixture.ArmMetadataGate(fun path -> path.Contains "provenance")
+            let revalidating=Threading.Tasks.Task.Run(fun () -> revalidate session)
+            try
+                fixture.WaitMetadataBlocked()
+                let observed=inspect session
+                Expect.equal observed.Model.Phase Revalidating "actual revalidation window"
+                Expect.isTrue (observed.Roots |> List.forall(fun root -> root.CurrentBindingMatches=Some true)) "only the phase can refuse here"
+                Expect.isTrue (observed.Model.CaptureConsumed && observed.Model.FirstFailure.IsNone && observed.Settlement=Retained) "no other readiness guard applies"
+                load (loaderSelection request) session |> refusedOnly "$.capture"
+            finally
+                fixture.ResumeMetadata()
+                joined revalidating |> ignore
+            Expect.equal (inspect session).Model.Phase Ready "revalidation completed on the same owner"
+            load (loaderSelection request) session |> admitted |> ignore
+            releaseControlled session)
+        testCase "original work end reached after ready is refused without cancelling or renewing" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            load (loaderSelection request) session |> admitted |> ignore
+            fixture.Advance request.Budget.WorkEnd.Ticks
+            let observed=inspect session
+            Expect.isTrue (observed.Model.Phase=Ready && observed.WorkEndReached && not observed.CleanupEndReached && not observed.CancellationObserved) "only the work end differs"
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            Expect.equal (inspect session).Model observed.Model "load does not mutate the model"
+            fixture.Advance 10L
+            releaseControlled session)
+        testCase "original cleanup end reached after ready is refused" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            fixture.Advance request.Budget.CleanupEnd.Ticks
+            let observed=inspect session
+            Expect.isTrue (observed.Model.Phase=Ready && observed.CleanupEndReached) "cleanup end observed"
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            Expect.equal (inspect session).Settlement Retained "load never releases past the original cleanup end")
+        testCase "cancellation after ready is refused" (fun () ->
+            use fixture = newLoaderFixture ()
+            use cancelled = new Threading.CancellationTokenSource()
+            let request={loaderRequest fixture with Cancellation=cancelled.Token}
+            let session=readySession fixture request
+            load (loaderSelection request) session |> admitted |> ignore
+            cancelled.Cancel()
+            let observed=inspect session
+            Expect.isTrue (observed.Model.Phase=Ready && observed.CancellationObserved && not observed.WorkEndReached) "only cancellation differs"
+            load (loaderSelection request) session |> refusedOnly "$.capture"
+            releaseControlled session)
+        testCase "selected provenance path must be the compared captured provenance path" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            load {loaderSelection request with ProvenancePath=".fsgg/other-provenance.json"} session |> refusedOnly "$.capture.documents"
+            releaseControlled session)
+        testCase "selected policy path must be the compared captured policy path" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            load {loaderSelection request with PolicyPath="/host/other-policy.json"} session |> refusedOnly "$.capture.documents"
+            releaseControlled session)
+        testCase "captured documents cannot be presented under each other's role" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            let selection=loaderSelection request
+            let swapped=
+                {selection with
+                    ProvenancePath=selection.PolicyPath; ProvenanceSha256=selection.PolicySha256
+                    PolicyPath=selection.ProvenancePath; PolicySha256=selection.ProvenanceSha256}
+            load swapped session |> refusedOnly "$.capture.documents"
+            releaseControlled session)
+        testCase "selected raw digests must equal the captured document digests before any decoding" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let session=readySession fixture request
+            let selection=loaderSelection request
+            load {selection with ProvenanceSha256=String('0',64)} session |> refusedOnly "$.capture.documents"
+            load {selection with PolicySha256=String('0',64)} session |> refusedOnly "$.capture.documents"
+            releaseControlled session)
+    ] |> testSequenced
+
+type private AdapterRun =
+    { Code: int
+      Messages: string list
+      PortsBuilt: int
+      Supplied: (Loop.RunRequest * ProviderContext.Selection) list
+      Executed: bool
+      Reused: bool
+      Writes: int }
+
+let private adapterArgv repo (selection:ProviderContext.Selection) =
+    [| "--repo"; repo
+       "--provider-provenance"; selection.ProvenancePath; "--provider-provenance-sha256"; selection.ProvenanceSha256
+       "--provider-policy"; selection.PolicyPath; "--provider-policy-sha256"; selection.PolicySha256
+       "--provider-platform"; selection.Platform; "--paths"; "src/a.fs" |]
+
+let private boundContext repo : FS.GG.Governance.GateRun.Plan.ProviderCommandContext = {ProviderPlanningTests.context with RepoRoot=repo}
+
+/// Drives the real adapter; the supplier hands back the caller-owned session and never loses it.
+let private runAdapter supply argv =
+    let supplied=ResizeArray<Loop.RunRequest * ProviderContext.Selection>()
+    let messages=ResizeArray<string>()
+    let built=ref 0
+    let executed=ref false
+    let reused=ref false
+    let cap=Support.newCapture ()
+    let ports=Support.fakePorts Support.validCatalog Support.gitSrcChange cap
+    let ports={ports with Execute=(fun _ -> executed.Value <- true; failwith "provider planning cannot execute")
+                          Store=(fun _ -> reused.Value <- true; failwith "provider planning cannot reuse")}
+    let supplier request selection =
+        supplied.Add((request,selection))
+        supply request selection
+    let code=Program.runWithCapturedProvider supplier (fun _ -> built.Value <- built.Value+1; ports) messages.Add argv
+    { Code=code; Messages=List.ofSeq messages; PortsBuilt=built.Value; Supplied=List.ofSeq supplied
+      Executed=executed.Value; Reused=reused.Value; Writes=cap.Writes.Length }
+
+let private refusedBeforePorts (run:AdapterRun) fragment =
+    Expect.equal run.Code (Loop.exitCode Loop.InputUnavailable) "input unavailable"
+    Expect.equal run.PortsBuilt 0 "real ports stay unbuilt after an adapter refusal"
+    Expect.isFalse (run.Executed || run.Reused) "no execution or cache reuse"
+    Expect.equal run.Writes 0 "no artifact"
+    Expect.isTrue (run.Messages |> List.exists(fun m -> m.Contains "input-unavailable" && m.Contains(fragment:string))) (sprintf "reported cause '%s' in %A" fragment run.Messages)
+
+[<Tests>]
+let capturedProviderAdapterTests =
+    testList "Program.runWithCapturedProvider over a ready controlled capture" [
+        testCase "bound ready session reaches nonpassing provider planning and is left to its caller" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            let before=inspect session
+            let closesBefore=fixture.CloseAttempts
+            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+            Expect.equal run.PortsBuilt 1 "ports are built only after the declaration was admitted"
+            Expect.isFalse (run.Messages |> List.exists(fun m -> m.Contains "provider command context" || m.Contains "provider declaration admission")) (sprintf "no adapter refusal: %A" run.Messages)
+            Expect.isTrue (run.Code=1 || run.Code=3) "planning stays nonpassing"
+            Expect.isFalse (run.Executed || run.Reused) "no execution or legacy reuse"
+            Expect.equal run.Writes 0 "no passing artifact"
+            let (suppliedRequest,suppliedSelection)=List.exactlyOne run.Supplied
+            Expect.equal suppliedSelection selection "every selector reaches the supplier unchanged"
+            Expect.equal suppliedRequest.Repo "/repo" "supplier sees the selected repository"
+            let after=inspect session
+            Expect.equal after.Model before.Model "adapter neither revalidated nor retired the session"
+            Expect.equal after.Settlement Retained "adapter never releases the caller's session"
+            Expect.equal fixture.CloseAttempts closesBefore "adapter closes nothing"
+            releaseControlled session)
+        testCase "supplier refusal is reported verbatim and nothing else starts" (fun () ->
+            let selection=loaderSelection request
+            let run=runAdapter (fun _ _ -> Error "no admitted outer owner") (adapterArgv "/repo" selection)
+            refusedBeforePorts run "no admitted outer owner")
+        testCase "command context for another repository cannot be paired with a captured root" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/synthetic")) (adapterArgv "/repo" selection)
+            refusedBeforePorts run "provider command context does not bind the original captured repository root"
+            releaseControlled session)
+        testCase "selected repository that is not an original captured root is refused even with a matching context" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/other")) (adapterArgv "/other" selection)
+            refusedBeforePorts run "provider command context does not bind the original captured repository root"
+            releaseControlled session)
+        testCase "root whose current binding is not freshly confirmed is refused by the adapter itself" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            fixture.ArmMetadataGate(fun path -> path = "/repo")
+            let revalidating=Threading.Tasks.Task.Run(fun () -> revalidate session)
+            try
+                fixture.WaitMetadataBlocked()
+                Expect.isTrue ((inspect session).Roots |> List.forall(fun root -> root.CurrentBindingMatches=None)) "bindings pending in the revalidation window"
+                let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+                refusedBeforePorts run "provider command context does not bind the original captured repository root"
+            finally
+                fixture.ResumeMetadata()
+                joined revalidating |> ignore
+            releaseControlled session)
+        testCase "loader refusal of the supplied session is reported and nothing else starts" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            fixture.ChangeBinding()
+            Expect.equal (revalidate session).Model.FirstFailure (Some(InputChanged "provenance")) "supplied session lost readiness"
+            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+            refusedBeforePorts run "provider declaration admission rejected"
+            Expect.isTrue (run.Messages |> List.exists(fun m -> m.Contains "$.capture")) "located loader diagnostic retained"
+            releaseControlled session)
+        testCase "selected policy that differs from the captured policy is refused by the loader through the adapter" (fun () ->
+            use fixture = newLoaderFixture ()
+            let request=loaderRequest fixture
+            let selection=loaderSelection request
+            let session=readySession fixture request
+            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" {selection with PolicySha256=String('0',64)})
+            refusedBeforePorts run "provider declaration admission rejected"
+            Expect.isTrue (run.Messages |> List.exists(fun m -> m.Contains "$.capture.documents")) "captured-document selection refusal retained"
             releaseControlled session)
     ] |> testSequenced

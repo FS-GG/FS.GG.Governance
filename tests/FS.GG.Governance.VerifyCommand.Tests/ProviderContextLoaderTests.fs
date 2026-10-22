@@ -46,6 +46,21 @@ let argv =
        "--provider-policy"; "/independent/policy.json"; "--provider-policy-sha256"; String('b', 64)
        "--provider-platform"; "linux" |]
 
+// The whole-request resolver refuses after package admission accepted the descriptor: these reach the
+// `CapabilityBindings.Rejected` branch of `decode`, so no request is produced and the located field is retained.
+let rejectedByResolver name (change: Fsgg.ProviderCatalog.CapabilityDeclaration -> Fsgg.ProviderCatalog.CapabilityDeclaration) field =
+    testCase name (fun _ ->
+        let record = coherentRecord ()
+        let changed = { record.Declaration.Descriptor with Capabilities = [ change record.Declaration.Descriptor.Capabilities.Head ] }
+        let descriptor = ProviderLoaderFixture.reseal changed
+        let provenance = provenanceBytes { record with Declaration = { record.Declaration with Descriptor = descriptor; Admission = { record.Declaration.Admission with Descriptor = descriptor } } }
+        let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
+        match ProviderContextLoader.decode selected provenance coherentPolicyBytes with
+        | Ok _ -> failtest "A resolver-rejected declaration must not produce a request"
+        | Error errors ->
+            Expect.equal (errors |> List.map (fun d -> d.Path)) [ "$.bindings.build:build." + field ] (sprintf "located resolver diagnostic: %A" errors)
+            Expect.equal (errors |> List.map (fun d -> d.Code)) [ "verify.providerContextInvalid" ] "stable refusal code")
+
 [<Tests>]
 let tests = testList "ProviderContextLoader" [
     testCase "coherent synthetic bytes use actual codecs and preserve complete literal request" (fun _ ->
@@ -113,6 +128,9 @@ let tests = testList "ProviderContextLoader" [
         | Error errors ->
             Expect.isNonEmpty errors "rejected"
             Expect.isTrue (errors |> List.exists (fun d -> d.Path = "$.descriptor.capabilities.build:build.environments")) (sprintf "located admission diagnostic: %A" errors))
+    rejectedByResolver "required executable declaration without a declared tool is rejected by the whole-request resolver" (fun c -> { c with ToolIds = [] }) "toolIds"
+    rejectedByResolver "required executable declaration without evidence is rejected by the whole-request resolver" (fun c -> { c with EvidenceIds = [] }) "evidenceIds"
+    rejectedByResolver "independently required obligation cannot be downgraded to semantic-only by the provider" (fun c -> { c with Binding = Fsgg.ProviderCatalog.SemanticOnly }) "binding"
     testCase "Program provider path decodes actual bytes and drives nonpassing planning without legacy execution" (fun _ ->
         let provenance = provenanceBytes (coherentRecord ())
         let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
