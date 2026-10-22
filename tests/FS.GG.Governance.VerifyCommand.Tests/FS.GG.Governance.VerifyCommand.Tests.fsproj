@@ -17,12 +17,13 @@
   <ItemGroup>
     <Compile Include="Support.fs" />
     <Compile Include="ProviderContextTests.fs" />
-    <Compile Include="ProviderContextCaptureTests.fs" />
     <Compile Include="ParseTests.fs" />
     <Compile Include="LoopTests.fs" />
     <Compile Include="ProviderPlanningTests.fs" />
     <Compile Include="ProviderLoaderFixture.fs" />
     <Compile Include="ProviderContextLoaderTests.fs" />
+    <!-- Compiled after the loader fixtures: its private controlled capture drives direct load/adapter controls (#465). -->
+    <Compile Include="ProviderContextCaptureTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="CurrencyTests.fs" />
     <Compile Include="ReuseTests.fs" />

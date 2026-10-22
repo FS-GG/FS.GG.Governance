@@ -375,9 +375,10 @@ before catalog selection, cache or execution. Literal argv stays typed throughou
 The provider interpreter drives the existing non-passing Verify planning transition. Program
 parses all explicit provider selectors and supplies a caller-owned-session adapter; it never
 acquires or releases that session. Standalone `main` explicitly returns input-unavailable for
-provider mode because an independently admitted outer capture lifetime and teardown owner are
-not yet supplied. This is an unresolved production-entry prerequisite, not usable provider-mode
-availability. Legacy invocations retain the existing interpreter path.
+provider mode because the outer capture lifetime and teardown boundary is not yet implemented.
+The owner is decided in the 2026-10-22 section below; the production entry is still a
+prerequisite, not usable provider-mode availability. Legacy invocations retain the existing
+interpreter path.
 
 Focused source controls cover actual package codecs, raw digests, strict UTF-8/schema refusal,
 independent policy/platform correspondence and the Program-to-planning join. Fixtures are
@@ -386,6 +387,82 @@ regeneration, compilation and test execution were held under the programme resou
 this section was first written; they have since run (2026-10-22: locked restore, build, and the
 Verify suite in Debug and Release, with the hosted gate set on the reviewed head). The
 `ProviderContextLoader.load` capture-readiness selection and the `CapabilityBindings.Rejected`
-branch of `decode` remain without direct tests until a caller-owned ready capture fixture exists.
-Package-only qualification, physical capture acceptance, production owner integration, source/evidence revalidation and
+branch of `decode` were untested at the PR #462 merge (`c80e8903`); the section below records
+their direct controls. Package-only qualification, physical capture acceptance, production owner integration, source/evidence revalidation and
 the real SDD-to-Verify/GateExecution journey remain open. C2 remains unchecked.
+
+### GOV423-C2 direct loader controls and capture-lifetime owner decision (2026-10-22)
+
+Owner: Governance source lane, Delivery [#465](https://github.com/FS-GG/FS.GG.Governance/issues/465),
+the remainder named by the closed [#463](https://github.com/FS-GG/FS.GG.Governance/issues/463).
+Source base: PR #462 merge `c80e8903`. C2 remains unchecked. This section changes tests and this
+document only; `Program.main` still returns input-unavailable for provider mode.
+
+**Direct controls.** `ProviderContextCaptureTests.fs` now drives `ProviderContextLoader.load` and
+`Program.runWithCapturedProvider` over a ready session produced by the real capture interpreter with
+the existing inert per-session operations. That ready-capture fixture stays private to the capture
+tests; it serves the coherent schema-2 provenance and policy bytes and has two finite gates, the
+existing read gate and a new metadata-read gate held inside a revalidation window. Nothing is acquired from the kernel. Load cases:
+decode from the captured bytes and leave the caller's session unchanged (model, bytes, roots,
+ownership and close attempts), case-insensitive digest selection, selected platform, undecodable
+captured bytes, never-captured, failed-capture, drifted-binding, released, in-flight revalidation,
+work end, cleanup end and cancellation refusals, and selected path, digest and role mismatches. The
+adapter cases cover a bound session reaching nonpassing planning, supplier refusal, a context for
+another repository, a repository that is not an original captured root, a root without freshly
+confirmed binding, loader refusal retention, and that the adapter never revalidates or releases the
+caller's session. Three `decode` cases reach the `CapabilityBindings.Rejected` branch (missing tool,
+missing evidence, semantic-only downgrade of an independently required obligation).
+
+**Negative-control scope.** Each control was mutated in a scratch copy of the guarded source
+(the matrix is recorded in PR #467; the list below is the durable statement). The guards proven independently load-bearing are: the
+in-flight revalidation phase, work end, cancellation, selected path, selected digest, role, the
+case-insensitive digest comparison, the captured-byte routing into `decode`, the `Rejected`
+mapping, the adapter's context/root/binding checks, its diagnostic and supplier-message
+retention, and its no-release/no-revalidate property. Several readiness guards (captured-once,
+first/secondary failure, settlement, cleanup end, non-empty roots, current root binding,
+comparison count, exactly-two documents) overlap the phase, retirement or work-end state of the
+real interpreter, so no real session isolates them; they are defense in depth, not separately
+proven. Removing the phase and root guards together shows the settlement guard load-bearing.
+
+**Decision: the Verify invocation owns the capture; the outer admitted runtime owns teardown.**
+For one `fsgg verify` provider invocation, the Verify host composition root in
+`FS.GG.Governance.VerifyCommand` (the entry that today supplies the standalone refusal) is the
+outer capture-lifetime owner. It must build the capture request from the original work and cleanup
+ends the outer admitted runtime gives the invocation, prepare the single `CaptureSession` before any acquisition, keep it for the
+whole invocation (capture, `load`, planning and any later `borrowRepositoryRoot` execution lease)
+and be the only code that calls `release`. It never disposes, finalizes, replaces, renews or
+signals around an unsettled session. If `release` is not `Ok` by the original cleanup end, it keeps
+the session, reports a non-passing result and stays resident rather than exiting while a read may
+be pending; whole-worker termination and resource reclamation belong to the outer admitted runtime
+that supplied those ends (today the root-admitted supervised route; for portable execution the
+workspace executor carrier). The exit mapping for any return is open prerequisite (a).
+
+Basis: (1) the capture contract already requires the caller to hold the actual owner before
+acquisition and after any incomplete return, forbids any disposal, finalizer or replacement owner
+from abandoning descriptors or pending activities, and fixes original ends in the process monotonic
+domain that cannot renew; whoever forms the request owns the session. (2) `runWithCapturedProvider`
+already assumes the supplying caller retains every returned session and performs no acquisition,
+renewal or release, so the owner must sit above the adapter, exactly where `main` stubs it.
+(3) The borrowed repository-root lease and direct-execution borrowers fence `release` on the same
+session, so one owner must span planning and execution; a pre-step or separate process would
+create the replacement owner the contract forbids. (4) SDD and providers supply declarations and
+packages; the independent policy and its capture belong to the Governance verifier, and workspace
+provenance grants no policy authority. SDD#928 C3.1-03 consumes this join and does not own it.
+(5) #423 makes Governance the supplier of semantic obligations and checks to the workspace
+execution contract; process lifecycle and whole-worker teardown stay with the runtime carrier, as
+the physical capture fixture retains the session with an unsignaled outer owner, and the
+GateExecution held-pipe control has an independent guardian observe and reap. Rejected: a library finalizer or `IDisposable` auto-release, a
+`main` that exits on timeout while a read may be pending, an SDD- or provider-owned capture, and a
+detached Verify background supervisor.
+
+This decision implements nothing. It is a Governance source-owner decision; acknowledgement by the
+SDD#928 and [.github#4648](https://github.com/FS-GG/.github/issues/4648) owners and by the carrier
+owner is not recorded here.
+
+**Open prerequisites (unchanged by this section).** (a) Host composition source and its non-zero
+exit mapping for an unsettled session. (b) An authentic regular-file blocked read accepted by
+production acquisition, with an independently observed uncertain physical close. (c) Demonstrated
+whole-worker and resource teardown by the outer runtime for those two cases, with a named
+accountable supplier. (d) Real SDD to Verify to GateExecution acceptance with source and evidence
+revalidation. (e) Stronger profiles, C3/C4 and the original custody holds. The inert controls above
+and hosted source qualification discharge none of these.
