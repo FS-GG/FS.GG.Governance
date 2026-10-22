@@ -8,7 +8,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fsgg-fsharp-surface</ToolCommandName>
     <PackageId>FS.GG.Governance.FSharpSurfaceCommand</PackageId>
-    <Version>1.13.0</Version>
+    <Version>1.14.0</Version>
     <Description>FS.GG F# public-surface v1 receipt producer for package-only consumers.</Description>
     <PackageTags>fs-gg;governance;fsharp;public-surface;dotnet-tool</PackageTags>
     <RootNamespace>FS.GG.Governance.FSharpSurfaceCommand</RootNamespace>

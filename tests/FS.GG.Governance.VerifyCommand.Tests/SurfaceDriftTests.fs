@@ -18,7 +18,7 @@ let tests =
         [
             SurfaceDrift.surfaceTest "VerifyCommand" "FS.GG.Governance.VerifyCommand" verifyCommand
 
-            test "the public API surface is exactly Loop + Interpreter + the three 076 fold seams (plus the Exe entry)" {
+            test "the public API surface is exactly Loop + Interpreter + the three 076 fold seams (plus the `Program.run` entry)" {
                 let typeNames =
                     verifyCommand.GetExportedTypes()
                     |> Array.choose (fun t -> Option.ofObj t.FullName)

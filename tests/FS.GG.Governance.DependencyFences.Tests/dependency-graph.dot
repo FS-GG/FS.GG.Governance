@@ -83,7 +83,7 @@ digraph Governance {
   "FS.GG.Governance.SurfaceChecks.Dispatch" [label="FS.GG.Governance.SurfaceChecks.Dispatch\npackaging"];
   "FS.GG.Governance.ValidationMatrix" [label="FS.GG.Governance.ValidationMatrix\npackaging"];
   "FS.GG.Governance.VerdictReuse" [label="FS.GG.Governance.VerdictReuse\npackaging"];
-  "FS.GG.Governance.VerifyCommand" [label="FS.GG.Governance.VerifyCommand\npackaging"];
+  "FS.GG.Governance.VerifyCommand" [label="FS.GG.Governance.VerifyCommand\nsecurity-or-purity"];
   "FS.GG.Governance.VerifyJson" [label="FS.GG.Governance.VerifyJson\npackaging"];
   "FS.GG.Governance.Adapters.BuiltIn" -> "FS.GG.Governance.Adapters.Spi";
   "FS.GG.Governance.Adapters.SddHandoff" -> "FS.GG.Governance.Config";
@@ -140,6 +140,7 @@ digraph Governance {
   "FS.GG.Governance.Cli" -> "FS.GG.Governance.Kernel";
   "FS.GG.Governance.Cli" -> "FS.GG.Governance.ProjectSensing";
   "FS.GG.Governance.Cli" -> "FS.GG.Governance.RoutePipeline";
+  "FS.GG.Governance.Cli" -> "FS.GG.Governance.VerifyCommand";
   "FS.GG.Governance.CommandHost" -> "FS.GG.Governance.Adapters.SddHandoff";
   "FS.GG.Governance.CommandHost" -> "FS.GG.Governance.CacheEligibility";
   "FS.GG.Governance.CommandHost" -> "FS.GG.Governance.CommandKind";

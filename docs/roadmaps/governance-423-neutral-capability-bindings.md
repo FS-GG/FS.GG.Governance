@@ -514,3 +514,25 @@ close, demonstrated whole-worker teardown, the named accountable supplier for it
 GateExecution journey. The 20 physical cases remain pending. Prerequisite (a) of the decision (host composition
 source and its non-zero exit mapping) is implemented by this slice; (b) through (e) are unchanged. The
 `borrowRepositoryRoot` execution lease is not used because provider planning executes nothing.
+
+### GOV423-C2 Verify host shipped through the published tool (2026-10-22, #470)
+
+`FS.GG.Governance.VerifyCommand` was `IsPackable=false` and in no published artifact, so no release
+(1.13.0 included) carried the #462 loader or the #469 host. #470 ships it through the existing
+`FS.GG.Governance.Cli` tool, with no new package id or tool command: `fsgg-governance verify <args>`
+forwards every argument after the verb to `VerifyCommand.Program.run`, before the dispatcher's own parser.
+
+- `VerifyCommand` is now a library (an executable may not reference another executable, `ExeLeafTests`);
+  `Program.main` became `Program.run`, which holds the `SignalCancellation` owner and calls `runHosted` exactly as
+  `main` did. The host, loader, capture, settlement and exit mapping are unchanged (Verify suite 290 passed,
+  20 physical pending).
+- The CLI tool closure now bundles `VerifyCommand` and the SDD `Commands`/`Artifacts`/`Knowledge` 2.3.0 pair with
+  their transitive packages (locked in `Cli/packages.lock.json`); the tool package still declares no dependency.
+- Controls: `VerifyVerbTests` spawn the built host binary (usage grammar and exit 2 versus the dispatcher's 64 for
+  the same bad flag, legacy input-unavailable 3, provider mode unadmitted/inconsistent/admitted ends); the
+  `cli-publish-smoke` and `PackagingTests` installed-tool runs assert the host assemblies are in `tools/**` and
+  `verify` answers from the installed tool. Removing the dispatch fails all six spawned-host tests.
+- Release: Cli and FSharpSurfaceCommand 1.14.0 (new shipped surface through the CLI package).
+
+**Not claimed.** Provider mode being reachable from a published tool is not the 20 physical cases, whole-worker
+teardown, the named carrier of the outer ends or the real SDD to Verify to GateExecution journey; those remain open.

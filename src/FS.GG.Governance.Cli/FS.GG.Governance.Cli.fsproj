@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>FS.GG.Governance.Cli</RootNamespace>
-    <Version>1.13.0</Version>
+    <Version>1.14.0</Version>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fsgg-governance</ToolCommandName>
@@ -13,7 +13,7 @@
          fields (Authors, license, repository/project URL, icon) come from Directory.Build.local.props.
          PackageReadmeFile names the packed README; the <None> items below pack it and the icon at the
          package root. PackAsTool/ToolCommandName above are unchanged. -->
-    <Description>The FS.GG.Governance CLI (`fsgg-governance`): a .NET global tool that enforces the SDD governance handoff — routing a produced governance-handoff.json through the gate and blocking a failing handoff (exit 2). Its packed closure bundles the enforcement adapter, so the installed tool enforces standalone.</Description>
+    <Description>The FS.GG.Governance CLI (`fsgg-governance`): a .NET global tool that enforces the SDD governance handoff — routing a produced governance-handoff.json through the gate and blocking a failing handoff (exit 2). `fsgg-governance verify` runs the pre-PR Verify host, including explicit provider mode. Its packed closure bundles the enforcement adapter, so the installed tool enforces standalone.</Description>
     <PackageTags>fs-gg;governance;fsgg;sdd;cli;dotnet-tool;gate</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <!-- PackageIcon is per-.fsproj (NOT shared in local.props): it needs the matching <None> icon
@@ -62,6 +62,10 @@
          100 (M-ARCH-2): references RoutePipeline (the extracted library) instead of the RouteCommand exe, so
          no executable references another executable. The fully-qualified Interpreter/Loop uses are unchanged. -->
     <ProjectReference Include="../FS.GG.Governance.RoutePipeline/FS.GG.Governance.RoutePipeline.fsproj" />
+    <!-- #470: the Verify host (legacy and explicit provider mode, ProviderHost capture-lifetime owner) ships
+         inside this tool: `fsgg-governance verify <args>` is dispatched to VerifyCommand.Program.run at the
+         Program edge. VerifyCommand is an internal library (never a second executable or package id). -->
+    <ProjectReference Include="../FS.GG.Governance.VerifyCommand/FS.GG.Governance.VerifyCommand.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-// The thin host entry for `fsgg verify` (F056): parse argv → build the real ports → run the interpreter →
+// The thin host entry for `fsgg verify` (F056; shipped as `fsgg-governance verify`, #470): parse argv → build the real ports → run the interpreter →
 // print any diagnostics to stderr → return the mapped exit code. ALL decision logic lives in the pure
 // `Loop`; ALL I/O in the `Interpreter`. A parse rejection exits 2 BEFORE any port is built, so a usage
 // error (including an unrecognized profile or a forbidden `--mode`) writes no artifact and starts no
@@ -85,7 +85,8 @@ let internal runWithCapturedProvider
 let internal runHosted (effects: ProviderHost.Effects) makePorts report argv =
     ProviderHost.run effects report (fun supply -> runWithCapturedProvider supply makePorts report argv)
 
-[<EntryPoint>]
-let main argv =
+/// The one process entry of the Verify host. The published `fsgg-governance` tool forwards the arguments after its
+/// `verify` verb here; the result is the process exit code. The signal owner is held for the whole invocation.
+let run (argv: string[]) : int =
     use signals = new ProviderHost.SignalCancellation()
     runHosted (ProviderHost.systemEffects signals) Interpreter.realPorts (eprintfn "%s") argv

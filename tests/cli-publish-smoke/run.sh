@@ -55,6 +55,13 @@ if command -v unzip >/dev/null 2>&1; then
   printf '%s\n' "$ENTRIES" | grep -Eq 'tools/.*/FS\.GG\.Governance\.Adapters\.SddHandoff\.dll' \
     || fail "consumer assembly FS.GG.Governance.Adapters.SddHandoff.dll is NOT in the packed tool (tools/**) — green-by-omission package"
   note "backstop OK: SddHandoff.dll present in tools/**"
+  # #470: the Verify host ships inside this tool (no second package id): its assembly and the SDD package pair
+  # its provider loader decodes with must be in the same payload.
+  for asm in FS.GG.Governance.VerifyCommand FS.GG.SDD.Commands FS.GG.SDD.Artifacts; do
+    printf '%s\n' "$ENTRIES" | grep -Eq "tools/.*/${asm//./\\.}\\.dll" \
+      || fail "Verify host assembly $asm.dll is NOT in the packed tool (tools/**) — \`fsgg-governance verify\` would not ship"
+  done
+  note "backstop OK: VerifyCommand.dll and the SDD Commands/Artifacts pair present in tools/**"
 else
   note "backstop SKIPPED: unzip unavailable (behavioral assertions below are authoritative)"
 fi
@@ -101,4 +108,21 @@ assert_exit 0 "failing handoff + light NO-BLOCK"     "$TOOL" route --root "$FAIL
 # so this assertion proves the profile — not a relaxed gate — flips the verdict.
 assert_exit 0 "light profile + failing + gate NO-BLOCK" "$TOOL" route --root "$LIGHT_FAIL_FIXTURE" --mode gate
 
-echo "SMOKE PASS: consumer-bearing $PKG_ID $VERSION enforces the handoff profile-aware (strict/absent gate blocks failing, passes passing, light & non-gate modes do not block)."
+# #470: `verify` reaches the packaged Verify host with its own grammar and exit codes. An unknown flag is a Verify
+# usage error (2, never the dispatcher's 64); a directory that is not a git repository is input-unavailable (3).
+assert_exit 2 "verify: unknown flag is a Verify usage error" "$TOOL" verify --bogus
+NOT_A_REPO="$(mktemp -d)"
+trap 'rm -rf "$PKG_DIR" "$TOOL_DIR" "$NOT_A_REPO"' EXIT
+assert_exit 3 "verify: non-repository is input-unavailable" "$TOOL" verify --repo "$NOT_A_REPO"
+# Provider mode is hosted: with no outer-runtime ends admitted it starts nothing and exits 3 naming the variable.
+PROVIDER_OUT="$(env -u FSGG_VERIFY_WORK_SECONDS -u FSGG_VERIFY_CLEANUP_SECONDS "$TOOL" verify --repo "$NOT_A_REPO" \
+  --provider-provenance "$NOT_A_REPO/p.json" --provider-provenance-sha256 "$(printf 'a%.0s' $(seq 64))" \
+  --provider-policy "$NOT_A_REPO/pol.json" --provider-policy-sha256 "$(printf 'b%.0s' $(seq 64))" \
+  --provider-platform linux --paths src/a.fs 2>&1)"
+PROVIDER_RC=$?
+[ "$PROVIDER_RC" -eq 3 ] || fail "verify provider mode without admitted ends: expected exit 3, got $PROVIDER_RC ($PROVIDER_OUT)"
+printf '%s' "$PROVIDER_OUT" | grep -q 'FSGG_VERIFY_WORK_SECONDS is not set' \
+  || fail "verify provider mode did not reach the hosted admission: $PROVIDER_OUT"
+note "OK (verify: provider mode hosted, unadmitted ends start nothing): exit $PROVIDER_RC"
+
+echo "SMOKE PASS: consumer-bearing $PKG_ID $VERSION enforces the handoff profile-aware (strict/absent gate blocks failing, passes passing, light & non-gate modes do not block; the packaged Verify host is reachable via \`verify\`)."

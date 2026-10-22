@@ -168,7 +168,7 @@ let tests =
             test "missing-command help enumerates every dispatchable subcommand incl. watch/tui (#55 F12)" {
                 let help = CliRender.renderParseError MissingCommand
 
-                for cmd in [ "route"; "explain"; "contract"; "evidence"; "watch"; "tui" ] do
+                for cmd in [ "route"; "explain"; "contract"; "evidence"; "watch"; "tui"; "verify" ] do
                     Expect.stringContains help cmd (sprintf "help lists '%s'" cmd)
             }
         ]

@@ -11,6 +11,7 @@
     <Compile Include="SnapshotTests.fs" />
     <Compile Include="OutputTests.fs" />
     <Compile Include="PackagingTests.fs" />
+    <Compile Include="VerifyVerbTests.fs" />
     <Compile Include="ReadOnlyTests.fs" />
     <Compile Include="SurfaceDriftTests.fs" />
     <!-- F27 (P2/P3): the HumanRender edge — rich-over-console / degrade / width, the JSON no-op,

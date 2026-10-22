@@ -191,12 +191,17 @@ the org GitHub Packages feed. One-shot, read-only inspection of a governed root:
 | `contract` | the rule catalog as a contract |
 | `evidence` | a project evidence report |
 | `watch` / `tui` | interactive read-only views over the composed route report |
+| `verify` | the pre-PR Verify host (`VerifyCommand`, #470), including explicit provider mode; forwards every argument after the verb to the host |
 
 Shared flags include `--root`, `--mode {sandbox|inner|gate}`, `--format {text|json}`,
 `--domain {all|speckit|design}`, `--review-budget N`. Exit codes: `0` success, `2`
 governed-blocking, `64` usage, `66` input-unavailable, `70` tool error. In `gate` mode
 the CLI is profile-aware — the policy profile tightens or relaxes how a handoff gate
-maps to an enforcement verdict.
+maps to an enforcement verdict. `verify` is the exception to the shared flags and exit codes:
+it keeps the Verify host's own grammar (`--repo`, `--paths`, `--since`, `--profile`, the
+`--provider-*` selectors, ...) and its verb-host exit codes (`0` pass, `1` blocked, `2` usage,
+`3` input unavailable, `4` tool error); provider mode takes the outer runtime's ends from
+`FSGG_VERIFY_WORK_SECONDS` / `FSGG_VERIFY_CLEANUP_SECONDS`.
 
 **`fsgg`** — the capability-platform host commands (each its own MVU executable),
 covering the full route → verify → ship → release lifecycle:
