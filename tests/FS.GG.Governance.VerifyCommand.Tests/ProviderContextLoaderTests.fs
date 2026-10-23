@@ -147,7 +147,10 @@ let tests = testList "ProviderContextLoader" [
             Expect.equal actual selected "all selectors routed unchanged"
             match ProviderContextLoader.decode actual provenance coherentPolicyBytes with
             | Error errors -> Error(sprintf "%A" errors)
-            | Ok request -> Ok ({ ResolutionRequest = request; CommandContext = ProviderPlanningTests.context }: Loop.ProviderPlanningInput)
+            | Ok request ->
+                let notLaunched (runs: Loop.ProviderGateRun list) =
+                    runs |> List.map (fun run -> ({ Gate = run.Gate; Launch = Loop.NotLaunched "synthetic: no executor"; Evidence = [] }: Loop.ProviderGateObservation))
+                Ok(({ ResolutionRequest = request; CommandContext = ProviderPlanningTests.context }: Loop.ProviderPlanningInput), notLaunched)
         let actualArgv =
             [| "--provider-provenance"; selected.ProvenancePath; "--provider-provenance-sha256"; selected.ProvenanceSha256
                "--provider-policy"; selected.PolicyPath; "--provider-policy-sha256"; selected.PolicySha256

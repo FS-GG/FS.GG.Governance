@@ -302,7 +302,7 @@ let tests =
                                 Path.Combine(packageDirectory, "NuGet.config")
                                 "FS.GG.Governance.FSharpSurfaceCommand"
                                 "--version"
-                                "1.14.0"
+                                "1.15.0"
                             ]
 
                     Expect.equal installExit 0 (sprintf "clean tool install succeeds: %s" installError)
@@ -371,7 +371,7 @@ let tests =
                                 Path.Combine(packageDirectory, "NuGet.config")
                                 "FS.GG.Governance.FSharpSurfaceCommand"
                                 "--version"
-                                "1.14.0"
+                                "1.15.0"
                             ]
 
                     Expect.equal

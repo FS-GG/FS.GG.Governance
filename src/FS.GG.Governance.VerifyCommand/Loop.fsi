@@ -288,12 +288,91 @@ module Loop =
             Exit: ExitDecision
         }
 
+    /// GOV-423-C2 execution join. One admitted executable provider gate, projected from its complete-request
+    /// resolved binding before anything runs: literal argv and the minimum of binding, gate and remaining host
+    /// timeouts (`Command`), the binding's normalized governed working directory, whether the capability is
+    /// required, and the evidence outputs the binding declares. A declaration only; it grants no execution.
+    type ProviderGateRun =
+        { Gate: GateId
+          Required: bool
+          WorkingDirectory: GovernedPath
+          Command: GateCommand
+          Evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding list }
+
+    /// What Governance itself observed at one declared evidence output. A provider report is never trusted.
+    type ProviderEvidenceState =
+        /// The output existed before launch. It cannot be associated with this run, so the gate is not launched
+        /// and Governance does not delete it.
+        | PresentBeforeLaunch
+        /// The run ended without producing the declared output.
+        | AbsentAfterRun
+        /// The output could not be read within Governance's bounds (containment, link, size, encoding, I/O).
+        | Unreadable of reason: string
+        /// Text produced during this run, plus Governance's own digests of every source path the document cites
+        /// (a cited path Governance could not read is absent from the list, so it is refused as uncaptured).
+        | Produced of text: string * capturedSources: FS.GG.Governance.Adapters.SddHandoff.Model.HandoffSource list
+
+    type ProviderEvidenceObservation =
+        { Evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding
+          State: ProviderEvidenceState }
+
+    /// Whether the existing GateExecution host started the command. `NotLaunched` retains the refusal (lease,
+    /// revalidation, preparation or evidence precondition) and means no process was started.
+    type ProviderLaunch =
+        | NotLaunched of reason: string
+        | Launched of FS.GG.Governance.GateExecution.Model.BoundedObservation
+
+    /// The edge's complete facts for one run, fed back to the pure acceptance.
+    type ProviderGateObservation =
+        { Gate: GateId
+          Launch: ProviderLaunch
+          Evidence: ProviderEvidenceObservation list }
+
+    /// Why a provider gate is not accepted. Every case is non-passing; none is converted into success.
+    type ProviderRefusal =
+        | NotObserved
+        | LaunchRefused of reason: string
+        | ExecutionFailed of FS.GG.Governance.GateExecution.Model.BoundedFailure
+        | NoDirectExit
+        | NonZeroExit of code: int
+        | OutputIncomplete
+        | DirectResourcesRetained
+        | EvidenceNotObserved of evidenceId: string
+        | EvidenceStale of evidenceId: string
+        | EvidenceMissing of evidenceId: string
+        | EvidenceUnreadable of evidenceId: string * reason: string
+        | EvidenceFormatUnsupported of evidenceId: string * format: string
+        | EvidenceMalformed of evidenceId: string * reason: string
+        | EvidenceVersionMismatch of evidenceId: string * declared: string * actual: string
+        | EvidenceSourcesRejected of evidenceId: string * reasons: string list
+        | EvidenceNotPassing of evidenceId: string * reasons: string list
+
+    type ProviderGateVerdict =
+        | ProviderAccepted
+        | ProviderRefused of ProviderRefusal list
+
+    /// Provider-mode effects: the unchanged legacy vocabulary plus the one execution request.
+    type ProviderEffect =
+        | LegacyEffect of Effect
+        | ExecuteProviderGates of ProviderGateRun list
+
+    /// Provider-mode messages: the unchanged legacy vocabulary plus the execution observations.
+    type ProviderMsg =
+        | LegacyMsg of Msg
+        | ProviderGatesExecuted of ProviderGateObservation list
+
     /// Separate provider state preserves every legacy Model constructor.
     type ProviderModel =
         { Legacy: Model
           Input: ProviderPlanningInput
           Plan: FS.GG.Governance.CommandHost.CommandHost.ProviderExecutionPlan option
-          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list }
+          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list
+          /// The admitted executable runs requested from the edge (empty until planning succeeds).
+          Runs: ProviderGateRun list
+          /// Whether the one execution request was emitted (after the product surfaces were sensed).
+          ExecutionRequested: bool
+          /// Every requested run with the edge's observation and Governance's verdict, in request order.
+          Results: (ProviderGateRun * ProviderGateObservation * ProviderGateVerdict) list }
 
     /// Parse argv into a normalized request. PURE and TOTAL — usage problems are `UsageError` values, never
     /// exceptions. Tolerates a leading `verify` verb. `--paths` and `--since` together ⇒ `PathsAndSinceTogether`;
@@ -309,14 +388,32 @@ module Loop =
     /// `ExplicitPaths` emits `LoadCatalog` directly; `Since`/`DefaultRange` emit `SenseScope` first.
     val init: request: RunRequest -> Model * Effect list
 
-    /// Join complete-request planning to the real Verify selection/inheritance transition.
-    /// Malformed declarations refuse as InputUnavailable before empty selection or legacy reuse.
-    /// Valid plans remain Blocked pending provider runtime/evidence acceptance; no legacy execution.
-    val initProviderPlanning: request: RunRequest -> provider: ProviderPlanningInput -> ProviderModel * Effect list
+    /// Join the complete provider request to the real Verify selection/inheritance transition.
+    val initProvider: request: RunRequest -> provider: ProviderPlanningInput -> ProviderModel * ProviderEffect list
 
-    /// Reuses actual Verify selection/inheritance, then plans the complete request before returning
-    /// any empty-selection, freshness, store or execution effects. Valid plans remain non-passing.
-    val updateProviderPlanning: msg: Msg -> model: ProviderModel -> ProviderModel * Effect list
+    /// Reuses actual Verify selection/inheritance, then plans the complete request before any execution.
+    /// Malformed declarations, an empty selection or a required capability without a selected gate refuse as
+    /// InputUnavailable; no legacy freshness, store, reuse or execution effect is ever returned. A valid plan
+    /// first senses the product surfaces exactly as legacy Verify does (`SenseSurfaces`), then requests its
+    /// executable runs once (`ExecuteProviderGates`); their observations are accepted by
+    /// `acceptProviderGate`, accepted gates are relocated with `applyExecution`, and a required executable
+    /// capability that is not accepted (refused, deferred or not run) is forced blocking whatever its maturity.
+    /// Semantic-only, deferred and unsupported entries never pass. Surface and view-currency findings fold as in
+    /// legacy Verify. verify.json and its two sidecars (no cache decisions or command records: provider mode never
+    /// consults the reuse store) are then written and summarized through the legacy tail; the exit follows the
+    /// resulting decision.
+    val updateProvider: msg: ProviderMsg -> model: ProviderModel -> ProviderModel * ProviderEffect list
+
+    /// The pure evidence acceptance for one run (GOV-423-C2). Accepted only when the command was launched,
+    /// exited 0 by itself, both streams reached EOF, its direct resources were released with no bounded
+    /// failure, and every declared evidence output was absent before launch, produced by the run, in the one
+    /// supported format (`fsgg.governance-handoff` major 2, parsed strictly with its `sources[]`), cites only
+    /// sources whose bytes Governance digested equal, and declares passing content (at least one `real` node, no
+    /// pending/synthetic/failed/stale node, no blocking readiness/journey/performance projection).
+    val acceptProviderGate: run: ProviderGateRun -> observation: ProviderGateObservation -> ProviderGateVerdict
+
+    /// Actionable one-line text for a refusal.
+    val describeProviderRefusal: refusal: ProviderRefusal -> string
 
     /// The pure transition that IS the whole composition: on sensed scope it loads the catalog; on a valid
     /// catalog it runs `Routing.route` -> `Gates.buildRegistry` -> `Findings.findUnknownGovernedPaths` ->

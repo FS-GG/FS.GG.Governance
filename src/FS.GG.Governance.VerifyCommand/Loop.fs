@@ -58,6 +58,8 @@ open FS.GG.Governance.ReleaseReport.Model // VerifyReleasePreview
 open FS.GG.Governance.ReleaseDeclaration // Declaration (the shared leaf)
 
 module CE = FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcement // F070: stale-view finding vocabulary + fold
+module CB = FS.GG.Governance.Config.CapabilityBindings // GOV-423-C2: provider declarations
+module HM = FS.GG.Governance.Adapters.SddHandoff.Model // GOV-423-C2: handoff evidence vocabulary
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Loop =
@@ -421,15 +423,75 @@ module Loop =
                 SenseScope request.Scope
             ]
 
+    type ProviderGateRun =
+        { Gate: GateId
+          Required: bool
+          WorkingDirectory: GovernedPath
+          Command: GateCommand
+          Evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding list }
+
+    type ProviderEvidenceState =
+        | PresentBeforeLaunch
+        | AbsentAfterRun
+        | Unreadable of reason: string
+        | Produced of text: string * capturedSources: FS.GG.Governance.Adapters.SddHandoff.Model.HandoffSource list
+
+    type ProviderEvidenceObservation =
+        { Evidence: FS.GG.Governance.Config.CapabilityBindings.EvidenceBinding
+          State: ProviderEvidenceState }
+
+    type ProviderLaunch =
+        | NotLaunched of reason: string
+        | Launched of BoundedObservation
+
+    type ProviderGateObservation =
+        { Gate: GateId
+          Launch: ProviderLaunch
+          Evidence: ProviderEvidenceObservation list }
+
+    type ProviderRefusal =
+        | NotObserved
+        | LaunchRefused of reason: string
+        | ExecutionFailed of BoundedFailure
+        | NoDirectExit
+        | NonZeroExit of code: int
+        | OutputIncomplete
+        | DirectResourcesRetained
+        | EvidenceNotObserved of evidenceId: string
+        | EvidenceStale of evidenceId: string
+        | EvidenceMissing of evidenceId: string
+        | EvidenceUnreadable of evidenceId: string * reason: string
+        | EvidenceFormatUnsupported of evidenceId: string * format: string
+        | EvidenceMalformed of evidenceId: string * reason: string
+        | EvidenceVersionMismatch of evidenceId: string * declared: string * actual: string
+        | EvidenceSourcesRejected of evidenceId: string * reasons: string list
+        | EvidenceNotPassing of evidenceId: string * reasons: string list
+
+    type ProviderGateVerdict =
+        | ProviderAccepted
+        | ProviderRefused of ProviderRefusal list
+
+    type ProviderEffect =
+        | LegacyEffect of Effect
+        | ExecuteProviderGates of ProviderGateRun list
+
+    type ProviderMsg =
+        | LegacyMsg of Msg
+        | ProviderGatesExecuted of ProviderGateObservation list
+
     type ProviderModel =
         { Legacy: Model
           Input: ProviderPlanningInput
           Plan: CommandHost.ProviderExecutionPlan option
-          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list }
+          Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list
+          Runs: ProviderGateRun list
+          ExecutionRequested: bool
+          Results: (ProviderGateRun * ProviderGateObservation * ProviderGateVerdict) list }
 
-    let initProviderPlanning request provider =
+    let initProvider request provider =
         let model, effects = init request
-        { Legacy = model; Input = provider; Plan = None; Diagnostics = [] }, effects
+        { Legacy = model; Input = provider; Plan = None; Diagnostics = []; Runs = []; ExecutionRequested = false; Results = [] },
+        effects |> List.map LegacyEffect
 
     // ── update — the whole composition; TOTAL, never throws ──
 
@@ -1163,28 +1225,484 @@ module Loop =
         | Text -> renderText model
         | Json -> renderJson model
 
-    let updateProviderPlanning msg model =
+
+    // ── GOV-423-C2 provider execution join (pure). The edge runs the admitted commands through the existing
+    //    GateExecution host and reports what Governance itself observed; acceptance and the verdict live here. ──
+
+    /// The one evidence format this host can read and accept (the SDD→Governance handoff, contract major 2).
+    let handoffFormatId = "fsgg.governance-handoff"
+
+    let majorOf (version: string) =
+        if System.String.IsNullOrEmpty version then
+            None
+        else
+            match
+                System.Int32.TryParse(
+                    version.Split('.').[0],
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture
+                )
+            with
+            | true, major -> Some major
+            | _ -> None
+
+    // Best-effort retained spelling of a refused document's contractVersion (diagnostic text only).
+    let documentContractVersion (text: string) =
+        try
+            use document = System.Text.Json.JsonDocument.Parse text
+            match document.RootElement.TryGetProperty "contractVersion" with
+            | true, value when value.ValueKind = System.Text.Json.JsonValueKind.String ->
+                value.GetString() |> Option.ofObj |> Option.defaultValue "unknown"
+            | _ -> "unknown"
+        with _ ->
+            "unknown"
+
+    let nodeStateToken (state: HM.DeclaredState) =
+        match state with
+        | HM.Pending -> "pending"
+        | HM.Real -> "real"
+        | HM.Synthetic -> "synthetic"
+        | HM.Failed -> "failed"
+        | HM.Skipped -> "skipped"
+        | HM.Deferred -> "deferred"
+        | HM.AcceptedDeferral -> "acceptedDeferral"
+
+    // Content the handoff itself declares. A parsed, source-bound document is still not passing evidence when it
+    // records no real node, a pending/synthetic/failed/stale node, or any blocking projection the existing
+    // consumer derives (evidence taint, readiness, journey, performance).
+    let handoffContentReasons (read: Reader.HandoffRead) (handoff: HM.Handoff) =
+        [
+            if handoff.Evidence.Nodes |> List.forall (fun node -> node.State <> HM.Real) then
+                yield "the document declares no real evidence node"
+            for node in handoff.Evidence.Nodes do
+                match node.State with
+                | HM.Pending
+                | HM.Synthetic
+                | HM.Failed -> yield sprintf "evidence node '%s' is %s" node.Id (nodeStateToken node.State)
+                | HM.Real
+                | HM.Skipped
+                | HM.Deferred
+                | HM.AcceptedDeferral -> ()
+                if node.Stale then
+                    yield sprintf "evidence node '%s' is stale" node.Id
+            let consumed = Consumer.consume [ read ]
+            for diagnostic in consumed.Diagnostics do
+                yield diagnostic.Message
+            for gate in consumed.Gates do
+                match gate.Maturity with
+                | Observe
+                | Warn -> ()
+                | BlockOnPr
+                | BlockOnShip
+                | BlockOnRelease -> yield gate.Description
+        ]
+        |> List.distinct
+
+    let evidenceRefusals (binding: CB.EvidenceBinding) (state: ProviderEvidenceState) : ProviderRefusal list =
+        let id = binding.Id
+        match state with
+        | PresentBeforeLaunch -> [ EvidenceStale id ]
+        | AbsentAfterRun -> [ EvidenceMissing id ]
+        | Unreadable reason -> [ EvidenceUnreadable(id, reason) ]
+        | Produced(text, captured) ->
+            if binding.Format.Id <> handoffFormatId
+               || majorOf binding.Format.Version <> Some HM.supportedContractMajor then
+                [ EvidenceFormatUnsupported(id, binding.Format.Id + "@" + binding.Format.Version) ]
+            else
+                let (GovernedPath source) = binding.OutputPath
+                let read: Reader.HandoffRead = { Source = source; Json = text }
+
+                match Reader.parseWithSources read with
+                | Error(HM.HandoffRejected diagnostic) ->
+                    match diagnostic.Cause with
+                    | HM.VersionMismatch ->
+                        [ EvidenceVersionMismatch(id, binding.Format.Version, documentContractVersion text) ]
+                    | HM.Malformed
+                    | HM.AutoSyntheticDeclared
+                    | HM.StaleEvidence -> [ EvidenceMalformed(id, diagnostic.Message) ]
+                | Error(HM.SourcesRejected diagnostics) ->
+                    [ EvidenceSourcesRejected(id, diagnostics |> List.map (fun d -> d.Field + ": " + d.Message)) ]
+                | Ok sourced ->
+                    // Every cited source must equal the bytes Governance itself digested after the run.
+                    match Reader.validateSources captured [] sourced with
+                    | Error diagnostics ->
+                        [
+                            EvidenceSourcesRejected(id, diagnostics |> List.map (fun d -> d.Field + ": " + d.Message))
+                        ]
+                    | Ok() ->
+                        match handoffContentReasons read sourced.Handoff with
+                        | [] -> []
+                        | reasons -> [ EvidenceNotPassing(id, reasons) ]
+
+    let acceptProviderGate (run: ProviderGateRun) (observation: ProviderGateObservation) : ProviderGateVerdict =
+        if observation.Gate <> run.Gate then
+            ProviderRefused [ NotObserved ]
+        else
+            let launch =
+                match observation.Launch with
+                | NotLaunched reason -> [ LaunchRefused reason ]
+                | Launched observed ->
+                    [
+                        match observed.FirstFailure with
+                        | Some failure -> yield ExecutionFailed failure
+                        | None -> ()
+                        for failure in observed.SecondaryFailures do
+                            yield ExecutionFailed failure
+                        match observed.DirectExit with
+                        | None -> yield NoDirectExit
+                        | Some(ExitCode 0) -> ()
+                        | Some(ExitCode code) -> yield NonZeroExit code
+                        if observed.Stdout.State <> EndOfFile || observed.Stderr.State <> EndOfFile then
+                            yield OutputIncomplete
+                        if observed.Settlement <> Released then
+                            yield DirectResourcesRetained
+                    ]
+
+            let launched =
+                match observation.Launch with
+                | Launched _ -> true
+                | NotLaunched _ -> false
+
+            let evidence =
+                run.Evidence
+                |> List.collect (fun binding ->
+                    match observation.Evidence |> List.filter (fun item -> item.Evidence = binding) with
+                    | [ item ] when launched -> evidenceRefusals binding item.State
+                    // Nothing ran: only the pre-launch observations that explain why are evidence refusals.
+                    | [ { State = PresentBeforeLaunch | Unreadable _ as state } ] -> evidenceRefusals binding state
+                    | [ _ ] -> []
+                    | _ -> [ EvidenceNotObserved binding.Id ])
+
+            match launch @ evidence with
+            | [] -> ProviderAccepted
+            | refusals -> ProviderRefused refusals
+
+    let describeProviderRefusal (refusal: ProviderRefusal) : string =
+        match refusal with
+        | NotObserved -> "the edge reported no single observation for this run"
+        | LaunchRefused reason -> "not launched: " + reason
+        | ExecutionFailed failure -> sprintf "bounded execution failure %A" failure
+        | NoDirectExit -> "no direct exit was observed"
+        | NonZeroExit code -> sprintf "exited %d" code
+        | OutputIncomplete -> "stdout/stderr did not both reach end of file"
+        | DirectResourcesRetained -> "direct execution resources were not released"
+        | EvidenceNotObserved id -> sprintf "evidence '%s' was not observed by the host" id
+        | EvidenceStale id ->
+            sprintf "evidence '%s' existed before launch; stale output cannot be accepted (remove it to re-run)" id
+        | EvidenceMissing id -> sprintf "evidence '%s' was not produced by the run" id
+        | EvidenceUnreadable(id, reason) -> sprintf "evidence '%s' is unreadable: %s" id reason
+        | EvidenceFormatUnsupported(id, format) ->
+            sprintf "evidence '%s' declares format %s; only %s@2.x is accepted" id format handoffFormatId
+        | EvidenceMalformed(id, reason) -> sprintf "evidence '%s' is malformed: %s" id reason
+        | EvidenceVersionMismatch(id, declared, actual) ->
+            sprintf "evidence '%s' declares contract %s but the document is %s" id declared actual
+        | EvidenceSourcesRejected(id, reasons) ->
+            sprintf "evidence '%s' sources do not match the workspace: %s" id (String.concat "; " reasons)
+        | EvidenceNotPassing(id, reasons) ->
+            sprintf "evidence '%s' does not declare passing evidence: %s" id (String.concat "; " reasons)
+
+    // The admitted executable runs, in plan order. commandForBinding has already refused a binding without
+    // limits or a normalized relative working directory, so the fallbacks below are unreachable by contract.
+    let providerRuns (input: ProviderPlanningInput) (plan: CommandHost.ProviderExecutionPlan) : ProviderGateRun list =
+        plan.Gates
+        |> List.choose (fun (gate, classification) ->
+            match classification with
+            | CommandHost.ProviderExecute(command, _, evidence) ->
+                let binding =
+                    input.ResolutionRequest.Bindings
+                    |> List.tryFind (fun b -> b.CapabilityId = gateIdValue gate.Id)
+
+                Some
+                    {
+                        Gate = gate.Id
+                        Required = binding |> Option.exists (fun b -> b.Required)
+                        WorkingDirectory =
+                            binding
+                            |> Option.bind (fun b -> b.Limits)
+                            |> Option.bind (fun limits -> limits.WorkingDirectory)
+                            |> Option.defaultValue (GovernedPath ".")
+                        Command = command
+                        Evidence = evidence
+                    }
+            | CommandHost.ProviderSemanticOnly
+            | CommandHost.ProviderDeferred _
+            | CommandHost.ProviderUnsupported _ -> None)
+
+    // A required executable capability that is not accepted cannot leave the decision passing, whatever maturity
+    // its effective gate carries: the item is moved to (or kept in) Blockers with an explicit reason.
+    let forceProviderBlocking (profile: Profile) (unaccepted: (Gate * string) list) (decision: ShipDecision) =
+        if List.isEmpty unaccepted then
+            decision
+        else
+            let reasons = unaccepted |> List.map (fun (gate, reason) -> GateItem gate.Id, (gate, reason)) |> Map.ofList
+            let all = decision.Blockers @ decision.Warnings @ decision.Passing
+
+            let forced (gate: Gate) reason =
+                match all |> List.tryFind (fun item -> item.Id = GateItem gate.Id) with
+                | Some item ->
+                    { item with
+                        Decision =
+                            { item.Decision with
+                                EffectiveSeverity = Blocking
+                                Reason = reason + " (the provider floor blocks whatever the profile/maturity decide)"
+                            }
+                    }
+                | None ->
+                    {
+                        Id = GateItem gate.Id
+                        Decision =
+                            {
+                                BaseSeverity = Blocking
+                                Maturity = gate.Maturity
+                                Mode = Verify
+                                Profile = profile
+                                EffectiveSeverity = Blocking
+                                Reason = reason
+                            }
+                    }
+
+            let notForced (item: EnforcedItem) = not (Map.containsKey item.Id reasons)
+
+            let kept =
+                decision.Blockers
+                |> List.map (fun item ->
+                    match Map.tryFind item.Id reasons with
+                    | Some(gate, reason) -> forced gate reason
+                    | None -> item)
+
+            let added =
+                unaccepted
+                |> List.filter (fun (gate, _) -> decision.Blockers |> List.forall (fun item -> item.Id <> GateItem gate.Id))
+                |> List.map (fun (gate, reason) -> forced gate reason)
+
+            { decision with
+                Verdict = Fail
+                Blockers = kept @ added
+                Warnings = decision.Warnings |> List.filter notForced
+                Passing = decision.Passing |> List.filter notForced
+                ExitCodeBasis = ExitCodeBasis.Blocked
+            }
+
+    let projectProvider (observations: ProviderGateObservation list) (model: ProviderModel) : ProviderModel * ProviderEffect list =
+        let legacy = model.Legacy
+
+        match legacy.Decision, model.Plan with
+        | Some decision, Some plan ->
+            let results =
+                model.Runs
+                |> List.map (fun run ->
+                    match observations |> List.filter (fun o -> o.Gate = run.Gate) with
+                    | [ observation ] -> run, observation, acceptProviderGate run observation
+                    | _ ->
+                        let missing: ProviderGateObservation =
+                            { Gate = run.Gate
+                              Launch = NotLaunched "no single observation was reported for this run"
+                              Evidence = [] }
+
+                        run, missing, ProviderRefused [ NotObserved ])
+
+            let accepted =
+                results
+                |> List.choose (fun (run, _, verdict) -> if verdict = ProviderAccepted then Some run.Gate else None)
+                |> Set.ofList
+
+            let outcomes =
+                plan.Gates
+                |> List.map (fun (gate, _) ->
+                    let disposition =
+                        match results |> List.tryFind (fun (run, _, _) -> run.Gate = gate.Id) with
+                        | Some(_, { Launch = Launched observed }, verdict) ->
+                            match observed.DirectExit with
+                            | Some code -> Executed(code, (verdict = ProviderAccepted))
+                            | None -> NotExecuted
+                        | _ -> NotExecuted
+
+                    gate.Id, { GateId = gate.Id; Disposition = disposition })
+
+            let required =
+                model.Input.ResolutionRequest.Bindings
+                |> List.filter (fun binding -> binding.Required)
+                |> List.map (fun binding -> binding.CapabilityId)
+                |> Set.ofList
+
+            let unaccepted =
+                plan.Gates
+                |> List.choose (fun (gate, classification) ->
+                    if not (Set.contains (gateIdValue gate.Id) required) then
+                        None
+                    else
+                        match classification with
+                        | CommandHost.ProviderExecute _ when not (Set.contains gate.Id accepted) ->
+                            Some(gate, "required provider capability was not accepted")
+                        | CommandHost.ProviderDeferred _ ->
+                            Some(gate, "required provider capability was deferred over the cost ceiling and not executed")
+                        | CommandHost.ProviderExecute _
+                        | CommandHost.ProviderSemanticOnly
+                        | CommandHost.ProviderDeferred _
+                        | CommandHost.ProviderUnsupported _ -> None)
+
+            let profile = legacy.Request.Profile
+
+            let folded =
+                applyExecution accepted decision
+                |> forceProviderBlocking profile unaccepted
+                |> SurfaceFold.foldSurfaceVerdict profile legacy.SurfaceFindings
+                |> ViewCurrencyFold.foldViewCurrencyVerdict profile legacy.ViewCurrencyFindings
+
+            let verifyDoc =
+                VerifyJson.ofVerifyDecisionWithGeneratedViews
+                    folded
+                    None
+                    outcomes
+                    legacy.SurfaceFindings
+                    None
+                    (ViewCurrencyFold.viewCurrencyDetail profile legacy.ViewCurrencyFindings)
+                    Map.empty
+
+            let blocking =
+                folded.Blockers
+                |> List.choose (fun item ->
+                    match item.Id with
+                    | GateItem id -> Some id
+                    | FindingItem _ -> None)
+                |> Set.ofList
+
+            let diagnostics =
+                results
+                |> List.choose (fun (run, _, verdict) ->
+                    match verdict with
+                    | ProviderAccepted -> None
+                    | ProviderRefused refusals ->
+                        let category, label =
+                            if Set.contains run.Gate blocking then Blocked, "blocking" else Success, "advisory under its maturity"
+
+                        Some
+                            {
+                                Category = category
+                                Message =
+                                    sprintf
+                                        "provider gate %s not accepted (%s): %s"
+                                        (gateIdValue run.Gate)
+                                        label
+                                        (refusals |> List.map describeProviderRefusal |> String.concat "; ")
+                            })
+
+            // The two sidecars are rewritten too, so no earlier legacy run's documents stand beside this verdict.
+            // Provider mode has no cache decisions and no legacy command records: both are honestly empty.
+            let emptyReport = CacheDecisionReport []
+
+            let snapshot =
+                CommandHost.buildSnapshot
+                    legacy.Sensed
+                    (legacy.Snapshot |> Option.bind (fun s -> s.Range))
+                    legacy.Environment
+                    legacy.Builder
+                    []
+
+            { model with
+                Legacy =
+                    { legacy with
+                        Phase = Rolled
+                        Decision = Some folded
+                        VerifyDoc = Some verifyDoc
+                        Outcomes = outcomes
+                        CacheDecision = Some emptyReport
+                        Audit = Some snapshot
+                        PersistAcked = true
+                        Diagnostics = legacy.Diagnostics @ diagnostics
+                    }
+                Results = results
+            },
+            [
+                LegacyEffect(WriteArtifact(VerifyArtifact, legacy.Request.VerifyOut, verifyDoc))
+                LegacyEffect(
+                    WriteArtifact(
+                        CostBudgetArtifact,
+                        legacy.Request.CostBudgetOut,
+                        FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
+                    )
+                )
+                LegacyEffect(
+                    WriteArtifact(
+                        ProvenanceArtifact,
+                        legacy.Request.ProvenanceOut,
+                        FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+                    )
+                )
+            ]
+        | _ ->
+            let failed, _ = fail ToolError "provider projection reached without a decision and plan" legacy
+            { model with Legacy = failed }, []
+
+    let catalogHint =
+        " (provider mode selects gates from the workspace's own Governance catalog under .fsgg: the verify scope must route to a gate whose id equals each required capability id; Governance never derives that catalog from provider provenance)"
+
+    let updateProvider (msg: ProviderMsg) (model: ProviderModel) : ProviderModel * ProviderEffect list =
         if model.Legacy.Phase = Done then
             model, []
         else
-            let legacy, effects = update msg model.Legacy
             match msg with
-            | Loaded(Valid _) ->
-                // The legacy transition owns routing, inherited floors and effective selection.
-                // Its effects are data only: provider admission happens before any are returned.
-                let budget = FS.GG.Governance.CostBudget.Budget.budgetFor legacy.Request.Profile Verify
-                match CommandHost.providerExecutionPlan model.Input.ResolutionRequest model.Input.CommandContext budget.Ceiling legacy.SelectedGates with
-                | Error diagnostics ->
-                    let message =
-                        diagnostics
-                        |> List.map (fun d -> sprintf "%s.%s: %s" d.CapabilityId d.Field d.Message)
-                        |> String.concat "; "
-                    let rejected, _ = fail InputUnavailable ("provider planning rejected: " + message) { legacy with Decision = None }
-                    { model with Legacy = rejected; Diagnostics = diagnostics }, []
-                | Ok plan ->
-                    let blocked, _ =
-                        fail Blocked
-                            "provider planning completed; execution and evidence acceptance are not connected"
-                            { legacy with Decision = None }
-                    { model with Legacy = blocked; Plan = Some plan }, []
-            | _ -> { model with Legacy = legacy }, effects
+            | ProviderGatesExecuted observations ->
+                // Only the one requested execution is projected; unrequested or repeated reports are inert.
+                if model.ExecutionRequested && model.Results.IsEmpty && model.Legacy.Phase = Selected then
+                    projectProvider observations model
+                else
+                    model, []
+            | LegacyMsg legacyMsg ->
+                match model.Plan, legacyMsg with
+                // After planning only the legacy write/summary tail continues; a late legacy sense, store or
+                // catalog message can never start freshness, reuse or legacy execution.
+                | Some _, Wrote _
+                | Some _, Emitted ->
+                    let legacy, effects = update legacyMsg model.Legacy
+                    { model with Legacy = legacy }, effects |> List.map LegacyEffect
+                // The product surfaces were sensed (legacy stores the findings for the verdict fold); only then is
+                // the one execution requested, so the surface verdict can never be skipped.
+                | Some _, SurfacesSensed findings when not model.ExecutionRequested ->
+                    let legacy = { model.Legacy with SurfaceFindings = findings }
+                    let sensed = { model with Legacy = legacy; ExecutionRequested = true }
+
+                    if List.isEmpty model.Runs then
+                        projectProvider [] sensed
+                    else
+                        sensed, [ ExecuteProviderGates model.Runs ]
+                | Some _, _ -> model, []
+                | None, Loaded(Valid _) ->
+                    // The legacy transition owns routing, inherited floors and effective selection. Its effects
+                    // are data only and are dropped: provider admission happens before any could run.
+                    let legacy, legacyEffects = update legacyMsg model.Legacy
+                    let budget = FS.GG.Governance.CostBudget.Budget.budgetFor legacy.Request.Profile Verify
+
+                    match
+                        CommandHost.providerExecutionPlan
+                            model.Input.ResolutionRequest
+                            model.Input.CommandContext
+                            budget.Ceiling
+                            legacy.SelectedGates
+                    with
+                    | Error diagnostics ->
+                        let message =
+                            diagnostics
+                            |> List.map (fun d -> sprintf "%s.%s: %s" d.CapabilityId d.Field d.Message)
+                            |> String.concat "; "
+
+                        let hint =
+                            if diagnostics |> List.exists (fun d -> d.Field = "selectedGates") then catalogHint else ""
+
+                        let rejected, _ =
+                            fail InputUnavailable ("provider planning rejected: " + message + hint) { legacy with Decision = None }
+
+                        { model with Legacy = rejected; Diagnostics = diagnostics }, []
+                    | Ok plan ->
+                        let runs = providerRuns model.Input plan
+                        let planned = { model with Legacy = legacy; Plan = Some plan; Runs = runs }
+                        // Legacy Verify's own product-surface classification for this scope; its freshness, store
+                        // and execution effects are dropped.
+                        match legacyEffects |> List.filter (function SenseSurfaces _ -> true | _ -> false) with
+                        | [ surfaces ] -> planned, [ LegacyEffect surfaces ]
+                        | _ ->
+                            let failed, _ = fail ToolError "provider planning found no single product-surface classification" legacy
+                            { planned with Legacy = failed }, []
+                | None, _ ->
+                    let legacy, effects = update legacyMsg model.Legacy
+                    { model with Legacy = legacy }, effects |> List.map LegacyEffect

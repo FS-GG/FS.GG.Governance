@@ -25,7 +25,10 @@ module internal ProviderHost =
               ProviderContextCapture.Request ->
                   Result<ProviderContextCapture.CaptureSession, ProviderContextCapture.Failure list>
           /// One bounded wait between release attempts; never a release, disposal or signal.
-          Pause: unit -> unit }
+          Pause: unit -> unit
+          /// The process environment, captured once when provider mode is admitted; provider commands start with
+          /// exactly this environment plus the admitted (empty) delta.
+          EnvironmentSnapshot: unit -> Map<string, string> }
 
     /// Outer admitted runtime supplies seconds after host start; absent or inconsistent ends admit nothing.
     val workSecondsVariable: string
@@ -51,10 +54,15 @@ module internal ProviderHost =
     /// cannot stand on a session with a recorded failure; every other settlement is a tool error (4).
     val exitCode: inner: int -> Settlement -> sessionFailed: bool -> int
 
+    /// What the host lends the adapter for one invocation. The session stays owned by the host; `Execute` runs the
+    /// admitted provider commands under that same owner and its original ends (GOV-423-C2).
+    type Supplied =
+        { Session: ProviderContextCapture.CaptureSession
+          Context: FS.GG.Governance.GateRun.Plan.ProviderCommandContext
+          Execute: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list }
+
     /// Supplier handed to the adapter: it prepares and captures the single session and retains it in the host.
-    type Supply =
-        Loop.RunRequest -> ProviderContext.Selection ->
-            Result<ProviderContextCapture.CaptureSession * FS.GG.Governance.GateRun.Plan.ProviderCommandContext, string>
+    type Supply = Loop.RunRequest -> ProviderContext.Selection -> Result<Supplied, string>
 
     /// Drive one invocation, then settle the session it created (if any). While release is refused and a read may
     /// be pending, this does not return: it keeps the session, reports once, and waits for the outer runtime.

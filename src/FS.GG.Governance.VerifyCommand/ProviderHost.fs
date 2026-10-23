@@ -15,7 +15,8 @@ module internal ProviderHost =
           TicksPerSecond: int64
           Cancellation: unit -> CancellationToken
           Prepare: Capture.Request -> Result<Capture.CaptureSession, Capture.Failure list>
-          Pause: unit -> unit }
+          Pause: unit -> unit
+          EnvironmentSnapshot: unit -> Map<string, string> }
 
     let workSecondsVariable = "FSGG_VERIFY_WORK_SECONDS"
     let cleanupSecondsVariable = "FSGG_VERIFY_CLEANUP_SECONDS"
@@ -69,9 +70,12 @@ module internal ProviderHost =
         | ReleasedAfterUnsettledReport
         | RetainedWithoutPendingRead -> Loop.exitCode Loop.ToolError
 
-    type Supply =
-        Loop.RunRequest -> ProviderContext.Selection ->
-            Result<Capture.CaptureSession * FS.GG.Governance.GateRun.Plan.ProviderCommandContext, string>
+    type Supplied =
+        { Session: Capture.CaptureSession
+          Context: FS.GG.Governance.GateRun.Plan.ProviderCommandContext
+          Execute: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list }
+
+    type Supply = Loop.RunRequest -> ProviderContext.Selection -> Result<Supplied, string>
 
     let private captureLimits : Capture.Limits = { PerFileBytes = 1 <<< 20; AggregateBytes = 1 <<< 21 }
 
@@ -80,14 +84,16 @@ module internal ProviderHost =
     // The sole release site. Release is attempted until it is Ok; an Error is never answered with disposal,
     // replacement, renewal or a signal. Past the original cleanup end a session in which a read may be
     // pending keeps this host resident (reported once); only the outer admitted runtime ends that.
-    let private settle (effects: Effects) (report: string -> unit) (budget: ExecutionBudget) (session: Capture.CaptureSession) =
+    let private settle (effects: Effects) (report: string -> unit) (budget: ExecutionBudget) (idleLeases: int) (session: Capture.CaptureSession) =
         let rec attempt reported =
             match Capture.release session with
             | Ok() -> if reported then ReleasedAfterUnsettledReport else Released
             | Error cause ->
                 let pastCleanup = (effects.Now()).Ticks >= budget.CleanupEnd.Ticks
                 let owned = Capture.ownership session
-                let readMayBePending = owned.PendingActivity || owned.CloseUncertain || owned.BorrowedRoots > 0
+                // A borrowed root lease the provider executor left retained only because the cleanup end passed is
+                // idle (no borrower, no uncertain close): it is a retained descriptor, not a read that may be pending.
+                let readMayBePending = owned.PendingActivity || owned.CloseUncertain || owned.BorrowedRoots > idleLeases
                 if pastCleanup && not readMayBePending then
                     // The refused attempt may have raced the last owned activity finishing; one more attempt
                     // from the owner decides, so a session that did settle is never reported as retained.
@@ -111,6 +117,7 @@ module internal ProviderHost =
         let start = effects.Now()
         let held: (Capture.CaptureSession * ExecutionBudget) option ref = ref None
         let providerStarted = ref false
+        let idleLeases = ref 0
         let acquire: Supply =
             fun request selection ->
                 match admit effects start with
@@ -132,7 +139,22 @@ module internal ProviderHost =
                         held.Value <- Some(session, admission.Budget)
                         let observation = Capture.capture session
                         if observation.Model.Phase = Capture.Ready && observation.Model.FirstFailure.IsNone then
-                            Ok(session, commandContext effects root admission (effects.Now()))
+                            // GOV-423-C2: provider commands run under this same owner, its original ends and the
+                            // environment captured once here; the host still performs every capture release.
+                            let execution: ProviderExecution.Host =
+                                { Session = session
+                                  Environment = effects.EnvironmentSnapshot()
+                                  Cancellation = admission.Cancellation
+                                  Now = effects.Now
+                                  TicksPerSecond = effects.TicksPerSecond
+                                  Pause = effects.Pause
+                                  Report = report
+                                  IdleLeaseRetained = fun () -> idleLeases.Value <- idleLeases.Value + 1 }
+
+                            Ok
+                                { Session = session
+                                  Context = commandContext effects root admission (effects.Now())
+                                  Execute = ProviderExecution.executeWith root (ProviderExecution.launchHeld execution) }
                         else
                             Error(
                                 sprintf "provider capture did not reach a ready state: %A (secondary %A)" observation.Model.FirstFailure observation.Model.SecondaryFailures
@@ -154,7 +176,7 @@ module internal ProviderHost =
         match held.Value with
         | None -> inner
         | Some(session, budget) ->
-            let settlement = settle effects report budget session
+            let settlement = settle effects report budget idleLeases.Value session
             let model = (Capture.inspect session).Model
             let failed = model.FirstFailure.IsSome || not (List.isEmpty model.SecondaryFailures)
             let code = exitCode inner settlement failed
@@ -206,4 +228,13 @@ module internal ProviderHost =
           TicksPerSecond = Diagnostics.Stopwatch.Frequency
           Cancellation = fun () -> signals.Token
           Prepare = Capture.prepare
-          Pause = fun () -> Thread.Sleep 10 }
+          Pause = fun () -> Thread.Sleep 10
+          EnvironmentSnapshot =
+            fun () ->
+                Environment.GetEnvironmentVariables()
+                |> Seq.cast<Collections.DictionaryEntry>
+                |> Seq.choose (fun entry ->
+                    match entry.Key, entry.Value with
+                    | (:? string as name), (:? string as value) -> Some(name, value)
+                    | _ -> None)
+                |> Map.ofSeq }

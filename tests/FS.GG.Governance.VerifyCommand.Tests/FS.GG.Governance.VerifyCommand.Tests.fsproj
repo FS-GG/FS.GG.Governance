@@ -20,10 +20,13 @@
     <Compile Include="ParseTests.fs" />
     <Compile Include="LoopTests.fs" />
     <Compile Include="ProviderPlanningTests.fs" />
+    <Compile Include="ProviderExecutionTests.fs" />
     <Compile Include="ProviderLoaderFixture.fs" />
     <Compile Include="ProviderContextLoaderTests.fs" />
     <!-- Compiled after the loader fixtures: its private controlled capture drives direct load/adapter controls (#465). -->
     <Compile Include="ProviderContextCaptureTests.fs" />
+    <!-- GOV-423-C2: opt-in native journey through the real host, capture and held-cwd execution. -->
+    <Compile Include="ProviderExecutionNativeTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="CurrencyTests.fs" />
     <Compile Include="ReuseTests.fs" />

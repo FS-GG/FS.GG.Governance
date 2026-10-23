@@ -108,6 +108,12 @@ module Interpreter =
     /// the decided `ExitDecision` — including a `Blocked` verdict). TOTAL — never throws.
     val run: ports: Ports -> request: Loop.RunRequest -> Loop.Model
 
-    /// Drive the actual provider planning transition with the existing effect interpreter.
-    /// Valid declarations remain non-passing; no provider execution or evidence acceptance is supplied.
-    val runProviderPlanning: ports: Ports -> request: Loop.RunRequest -> provider: Loop.ProviderPlanningInput -> Loop.ProviderModel
+    /// Drive the provider transition (GOV-423-C2): legacy effects through `step`, and the one admitted
+    /// `ExecuteProviderGates` request through the caller-owned `execute` edge, which runs each command under the
+    /// GateExecution host and reports what it observed. `Ports.Execute` is never used in provider mode.
+    val runProvider:
+        ports: Ports ->
+        execute: (Loop.ProviderGateRun list -> Loop.ProviderGateObservation list) ->
+        request: Loop.RunRequest ->
+        provider: Loop.ProviderPlanningInput ->
+            Loop.ProviderModel

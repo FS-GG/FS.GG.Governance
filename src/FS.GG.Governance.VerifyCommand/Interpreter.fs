@@ -498,8 +498,22 @@ module Interpreter =
         // into the pure `update`, accumulate new effects, repeat. Stops at Done or quiescence. NEVER throws.
         CommandHost.drive (fun (m: Loop.Model) -> m.Phase = Loop.Done) (step ports) Loop.update m0 eff0
 
-    let runProviderPlanning (ports: Ports) (request: Loop.RunRequest) (provider: Loop.ProviderPlanningInput) : Loop.ProviderModel =
-        let model, effects = Loop.initProviderPlanning request provider
+    let runProvider
+        (ports: Ports)
+        (execute: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list)
+        (request: Loop.RunRequest)
+        (provider: Loop.ProviderPlanningInput)
+        : Loop.ProviderModel =
+        let providerStep effect =
+            match effect with
+            | Loop.LegacyEffect legacy -> Loop.LegacyMsg(step ports legacy)
+            | Loop.ExecuteProviderGates runs -> Loop.ProviderGatesExecuted(execute runs)
+
+        let model, effects = Loop.initProvider request provider
+
         CommandHost.drive
             (fun (m: Loop.ProviderModel) -> m.Legacy.Phase = Loop.Done)
-            (step ports) Loop.updateProviderPlanning model effects
+            providerStep
+            Loop.updateProvider
+            model
+            effects

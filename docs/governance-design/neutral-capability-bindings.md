@@ -295,3 +295,86 @@ synthetic descriptors. These controls exercise the real interpreter but do not d
 kernel read, a physical close failure or whole-worker teardown. The existing physical fixture stays
 opt-in and must not run an indefinitely retained uncertain-close case without separately qualified
 teardown. Physical retention, provider loader/Verify acceptance and C2 completion remain open.
+
+## GOV423-C2 provider execution and evidence acceptance (2026-10-23)
+
+This section supersedes the planning-only statements above: a valid provider plan is no longer a fixed
+`Blocked` verdict. `Loop.initProvider` / `Loop.updateProvider` replace `initProviderPlanning` /
+`updateProviderPlanning`, and `Interpreter.runProvider` replaces `runProviderPlanning`. Legacy `Model`, `Msg`,
+`Effect` and every legacy entry point are unchanged; provider mode has its own `ProviderEffect`
+(`LegacyEffect | ExecuteProviderGates`) and `ProviderMsg` (`LegacyMsg | ProviderGatesExecuted`).
+
+**Planning (unchanged rules).** The complete request resolves before selection. Malformed declarations, an empty
+selection or a required capability without a selected effective gate refuse as input-unavailable (3) before
+anything starts. The refusal for a selection gap now says that gates come from the workspace's own `.fsgg`
+catalog. Governance never derives that catalog from provider provenance, so a scaffolded workspace needs its own
+Governance catalog whose verify scope routes to a gate per required capability id.
+
+**Execution.** Each `ProviderExecute` entry becomes one `ProviderGateRun`: the effective gate, the binding's
+`Required` flag and normalized governed working directory, the literal `GateCommand` (argv, minimum of binding,
+gate and remaining host timeouts) and the declared evidence bindings. The edge (`ProviderExecution`, internal)
+runs the gates in plan order under the Verify host's single capture owner:
+
+1. Governance checks that every declared evidence output is absent (no file, directory or link, and no link in any
+   path component). If an output exists, the gate is not launched and the output is neither deleted nor overwritten.
+2. `ProviderContextCapture.borrowRepositoryRoot` revalidates the original captured provenance and policy objects and
+   lends the held repository root.
+3. `GateExecution.Interpreter.prepareHeldCwd` prepares one direct-child session with the captured environment, the
+   admitted (empty) delta, uncontained/unobserved descendants and a stable held-cwd binding. The session's work end is
+   the earlier of the original work end and the command timeout; its cleanup end is the original cleanup end.
+4. The session runs once. It is released by retrying until `Ok`; a refusal after the original cleanup end is reported
+   once and the owner is kept (resident while a read may still be pending). The lease is released the same way, except
+   that a lease refused only because the original cleanup end passed is idle by construction: GateExecution refuses
+   with `CleanupDeadlineReached` only after its borrower and uncertain-close checks. It can never be released, so it
+   is reported and counted. The Verify host's settlement then treats it as a retained descriptor with no pending
+   read, reports, and exits 4 (the #468 "retained, nothing pending" row) instead of staying resident. The host never
+   disposes of an owner, signals around it or replaces it.
+5. Governance reads each output with these checks: no link in any component, a regular file per `statx` before any
+   open (a FIFO, device or socket is refused, never opened), at most 1 MiB, and strict UTF-8. It digests every source
+   the document cites from the workspace itself, under the same checks and at most 16 MiB each.
+
+Before the execution request, the product surfaces in scope are sensed exactly once, through legacy Verify's own
+`SenseSurfaces` classification and port. A blocking surface finding therefore folds into the provider verdict as it
+does in legacy Verify. Semantic-only, deferred and unsupported entries are never executed. The legacy
+`Ports.Execute`, freshness, store and reuse paths are never used in provider mode.
+
+**Acceptance (`Loop.acceptProviderGate`, pure).** A run is accepted only if all of the following hold:
+
+* The command was launched and exited 0 by itself.
+* Both streams reached EOF, the direct resources were released and no bounded failure was recorded.
+* Every declared output was absent before launch and produced by the run.
+* Every declared output is in the one supported format, `fsgg.governance-handoff` with contract major 2. It is
+  parsed strictly with `Reader.parseWithSources`.
+* `Reader.validateSources` finds that every cited source equals the bytes Governance digested.
+* The document declares passing content:
+  * at least one `real` node;
+  * no `pending`, `synthetic`, `failed` or stale node;
+  * no blocking readiness, journey or performance projection from the existing consumer.
+
+Every other outcome is a typed `ProviderRefusal`. None of them can become success. A zero exit alone never
+certifies evidence.
+
+**Verdict.** Accepted gates are relocated with the existing `applyExecution`. A required executable capability that
+is refused, not observed or deferred is forced into `Blockers` with an explicit reason, whatever its maturity. An
+optional gate keeps its profile/maturity placement and its refusal is still reported. Surface and view-currency
+folds are applied as in legacy Verify. `verify.json` (execution outcomes, no cache report) is written through the
+legacy writer, and the summary and exit follow the decision: `0` pass, `1` blocked. `cost-budget.json` and
+`provenance.json` are rewritten in the same step, so no earlier legacy run's sidecars stand beside a provider verdict.
+They are honestly empty of cache decisions and legacy command records. Because provider mode never consults the reuse
+store, `verify.json`'s `currency` section lists each gate under `unresolved` with no missing-fact tokens. A forced
+item's `reason` names the provider floor instead of the profile relaxation it overrides.
+
+**Not claimed.**
+* The profile is cooperative: there is no sandbox, no descendant containment and no hostile-writer isolation, and
+  it is Linux-x64 only.
+* The held-cwd host needs glibc 2.40 or later, so hosted runners with an older glibc report every run as not
+  launched.
+* There is no ecosystem provider qualification.
+* None of the following are claimed: the 20 physical blocked-read and uncertain-close cases, whole-worker teardown
+  with a named supplier, or the runtime carrier of the outer ends.
+* An evidence document's required-input coverage (`requiredPaths`) is not imposed. A document may cite any
+  non-empty set of workspace sources, and each cited source must match.
+* Outputs and cited sources are read by pathname under the selected root, not through the held root descriptor, with
+  link and file-type checks immediately before each read. This is cooperative, not race-free.
+* The captured provenance and policy are revalidated before every launch (`borrowRepositoryRoot`), not again after
+  the last gate.
