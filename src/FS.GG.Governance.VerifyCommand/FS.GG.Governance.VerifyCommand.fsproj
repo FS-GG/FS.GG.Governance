@@ -63,6 +63,8 @@
     <Compile Include="Loop.fs" />
     <Compile Include="Interpreter.fsi" />
     <Compile Include="Interpreter.fs" />
+    <Compile Include="ProviderExecution.fsi" />
+    <Compile Include="ProviderExecution.fs" />
     <!-- #468: the capture-lifetime owner above the adapter; sole caller of ProviderContextCapture.release. -->
     <Compile Include="ProviderHost.fsi" />
     <Compile Include="ProviderHost.fs" />

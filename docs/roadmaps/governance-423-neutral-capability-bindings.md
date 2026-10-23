@@ -536,3 +536,90 @@ forwards every argument after the verb to `VerifyCommand.Program.run`, before th
 
 **Not claimed.** Provider mode being reachable from a published tool is not the 20 physical cases, whole-worker
 teardown, the named carrier of the outer ends or the real SDD to Verify to GateExecution journey; those remain open.
+
+### GOV423-C2 provider execution and evidence acceptance join (2026-10-23)
+
+**Owner and trigger.** Owner: the Governance source lane (fdev). FS-GG/FS.GG.SDD#928 C3.1-03 ran published SDD 2.4.0
+against Governance 1.14.0 ([evidence](https://github.com/FS-GG/FS.GG.SDD/issues/928#issuecomment-6359021512)).
+Provider-mode `fsgg-governance verify` stopped after planning: the positive case exited 1 with
+`provider planning completed; execution and evidence acceptance are not connected`.
+
+**This slice.** It connects that planning to execution and to evidence acceptance. The design is in
+[the design document](../governance-design/neutral-capability-bindings.md#gov423-c2-provider-execution-and-evidence-acceptance-2026-10-23).
+
+* Each admitted executable binding runs once:
+  * as a real child process through the existing GateExecution held-cwd direct-child host;
+  * under the Verify host's single capture owner, after revalidating the captured documents through
+    `borrowRepositoryRoot`;
+  * within the original work and cleanup ends, with the work end capped by the declared timeout.
+* Governance accepts the run only on evidence it observes itself:
+  * the evidence is `fsgg.governance-handoff@2.x`;
+  * it was absent before launch;
+  * it is strictly parsed with `sources[]`;
+  * its sources equal the workspace bytes;
+  * it declares passing content.
+* The refusals already in place are preserved:
+  * provenance digest, policy identity and platform refuse at capture or admission;
+  * an unrouted path and a required capability without a selected gate refuse at planning;
+  * missing time limits refuse at resolution.
+* A required capability that is not accepted blocks whatever its maturity. The legacy Verify route is unchanged.
+
+**Controls (local, this host: Linux-x64, glibc 2.44, SDK 10.0.401).**
+
+| Suite | Result |
+|---|---|
+| `VerifyCommand.Tests` | 333 passed. The 26 skipped are the 20 existing physical capture cases and the 6 new opt-in native cases. |
+| Opt-in native journey (`FSGG_GOV_PROVIDER_EXECUTION_NATIVE=1`) | 6 of 6 passed through the real `Program.runHosted`, real capture and a real POSIX sh fixture launched by `prepareHeldCwd`. |
+| Cli.Tests | 80 passed |
+| DesignChecks.Tests | 57 passed |
+| `tests/cli-publish-smoke/run.sh` | passed on packed CLI 1.15.0 |
+
+The native journey covered these cases:
+
+* positive: the fixture's `run` writes the declared handoff, and Verify exits 0;
+* missing evidence: exits 1;
+* stale (pre-existing) output: never launched over, left untouched, exits 1;
+* mismatched sources: exits 1;
+* real exit 2: exits 1;
+* provenance digest, platform, unrouted path and policy identity: exit 3 with nothing launched.
+
+The rest of the evidence:
+
+* **Mutation matrix.** Eight guards were each mutated in place and every mutation was killed: the evidence
+  refusals, the pre-launch absence check, source validation, the required floor, the Governance-computed digest, the
+  non-zero exit, content acceptance and the format check.
+* **Full Release solution suite.** 3000 passed. It had two failures, both outside this change. One was the
+  DesignChecks packed-tool case, built before the version bump in this branch; it passed after rebuilding. The other
+  was `ReferenceGateSetResolution.R7`. That case compares against the locally installed `fsgg-sdd` 2.2.0 and fails
+  on its extra files, `governance-resolution.proj` and `knowledge-guide.md`. Hosted CI has no such tool and uses the
+  fixture.
+
+**Decisions recorded with this slice.**
+
+* *SDD version skew.* Verify keeps the bundled SDD `Commands`/`Artifacts` 2.3.0 and accepts SDD 2.4.0 provenance.
+  The wire contract is the closed schema-2 provenance codec, the policy parser and `ProviderCapabilityAdmission`, not
+  the producer package version. Between source `c8aea928` (2.3.0) and `c1fee66a` (2.4.0) none of
+  `ScaffoldProvenanceDocument`, `CatalogScaffoldProvenance`, `CatalogScaffoldPolicy`, `ProviderCapabilityAdmission`
+  or the `Fsgg` contracts changed. The 2.4.0 delta (#1116) changes only how scaffold encodes template override argv,
+  and that argv is recorded as data. A future codec change is refused by the strict parsers rather than misread.
+  Moving the bundled pair is a separate release decision.
+* *Workspace Governance catalog.* Provider-mode gates come from the workspace's own `.fsgg` catalog: routing, owners
+  and maturity. Provider provenance never supplies them, and Governance does not synthesize gates from declarations,
+  because that would let provider data create its own floors. A scaffolded workspace therefore needs a Governance
+  catalog that routes its verify scope to a gate whose id equals each required capability id. The planning refusal
+  now says so. Supplying that catalog at creation belongs to workspace composition: Templates#441 and the SDD
+  scaffold composition (C4). It is not part of Verify.
+
+**Still open.** C2 stays unchecked, and none of the following is supplied by this slice:
+
+* Governance 1.15.0 publication with both-feed readback.
+* The installed re-run of the SDD#928 C3.1-03 / SDD928-C2.3 journey, with a fixture whose `run` writes the declared
+  evidence plus its missing, stale and mismatched variants.
+* Prerequisites (b) and (c) above: the physical blocked read, the observed uncertain close, and whole-worker teardown
+  with a named supplier.
+* Stronger execution profiles, which this cooperative held-cwd profile does not provide. Held-cwd execution needs
+  glibc 2.40 or later, so hosted runners with an older glibc report not-launched and block.
+* Required-input coverage for evidence `sources[]` (`requiredPaths`), which is not imposed.
+* C3 and C4.
+
+The release preparation is in [the 1.15.0 report](../reports/2026-10-23-governance-1.15.0-release-preparation.md).

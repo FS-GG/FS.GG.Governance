@@ -29,7 +29,10 @@ let categoryToken (decision: Loop.ExitDecision) : string =
 // The caller of this seam owns any original capture session for the whole invocation.
 // A loader rejection precedes real-port construction, catalog reads and legacy execution.
 let internal runWithProviderLoader
-    (loadProvider: Loop.RunRequest -> ProviderContext.Selection -> Result<Loop.ProviderPlanningInput, string>)
+    (loadProvider:
+        Loop.RunRequest
+            -> ProviderContext.Selection
+            -> Result<Loop.ProviderPlanningInput * (Loop.ProviderGateRun list -> Loop.ProviderGateObservation list), string>)
     (makePorts: string -> Interpreter.Ports)
     (report: string -> unit)
     argv =
@@ -47,8 +50,10 @@ let internal runWithProviderLoader
             | Some selection ->
                 match loadProvider invocation.Request selection with
                 | Error message -> Error message
-                | Ok provider ->
-                    let model = Interpreter.runProviderPlanning (makePorts invocation.Request.Repo) invocation.Request provider
+                | Ok(provider, execute) ->
+                    let model =
+                        Interpreter.runProvider (makePorts invocation.Request.Repo) execute invocation.Request provider
+
                     Ok model.Legacy
         match outcome with
         | Error message ->
@@ -60,14 +65,14 @@ let internal runWithProviderLoader
             Loop.exitCode model.Exit
 
 // The supplying caller retains every returned session, including failures, through its own teardown.
-// This adapter performs no acquisition, renewal, release, disposal or provider execution.
-let internal runWithCapturedProvider
-    (supply: Loop.RunRequest -> ProviderContext.Selection -> Result<ProviderContextCapture.CaptureSession * FS.GG.Governance.GateRun.Plan.ProviderCommandContext, string>)
-    makePorts report argv =
+// This adapter performs no acquisition, renewal, release or disposal; provider commands run only through the
+// supplier's `Execute`, under the supplier's own capture owner (GOV-423-C2).
+let internal runWithCapturedProvider (supply: ProviderHost.Supply) makePorts report argv =
     let load request selection =
         match supply request selection with
         | Error message -> Error message
-        | Ok(session, context) ->
+        | Ok supplied ->
+            let session, context = supplied.Session, supplied.Context
             let observation = ProviderContextCapture.inspect session
             let root = System.IO.Path.GetFullPath request.Repo
             if context.RepoRoot <> root
@@ -76,7 +81,8 @@ let internal runWithCapturedProvider
             else
                 match ProviderContextLoader.load selection session with
                 | Error errors -> Error(sprintf "provider declaration admission rejected: %A" errors)
-                | Ok resolution -> Ok ({ ResolutionRequest = resolution; CommandContext = context }: Loop.ProviderPlanningInput)
+                | Ok resolution ->
+                    Ok(({ ResolutionRequest = resolution; CommandContext = context }: Loop.ProviderPlanningInput), supplied.Execute)
     runWithProviderLoader load makePorts report argv
 
 // The Verify host composition root (#468). Provider mode is hosted by `ProviderHost`: it owns the one capture

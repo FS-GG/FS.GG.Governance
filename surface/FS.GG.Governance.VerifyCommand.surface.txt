@@ -2,7 +2,7 @@ TYPE FS.GG.Governance.VerifyCommand.InterpreterModule
   [Method] Model run(Ports, RunRequest)
   [Method] Msg step(Ports, Effect)
   [Method] Ports realPorts(System.String)
-  [Method] ProviderModel runProviderPlanning(Ports, RunRequest, ProviderPlanningInput)
+  [Method] ProviderModel runProvider(Ports, Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun],Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation]], RunRequest, ProviderPlanningInput)
   [NestedType] FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
 TYPE FS.GG.Governance.VerifyCommand.InterpreterModule+Ports
   [Constructor] Void .ctor(Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[System.String],System.String]], FS.GG.Governance.Snapshot.Ports, FreshnessSensor, Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.EvidenceReuse.ModelModule+ReuseStore],System.String]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.FSharpResult`2[Microsoft.FSharp.Core.Unit,System.String]]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.GateExecution.ModelModule+GateCommand,FS.GG.Governance.GateExecution.ModelModule+ExecutionOutcome], Microsoft.FSharp.Core.FSharpFunc`2[System.Boolean,FS.GG.Governance.HumanText.RenderModeModule+ColorCapability], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.HumanText.ReportViewModule+ReportView,Microsoft.FSharp.Core.Unit], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Config.ModelModule+EnvironmentClass], Microsoft.FSharp.Core.FSharpFunc`2[Microsoft.FSharp.Core.Unit,FS.GG.Governance.Provenance.ModelModule+BuilderIdentity], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+SourceLayout,Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ReleaseFactsSensing.ModelModule+ReleaseExpectations,FS.GG.Governance.ReleaseFactsSensing.ModelModule+SensedRelease]], Microsoft.FSharp.Core.FSharpFunc`2[FS.GG.Governance.ProductSurfaces.ModelModule+ProductSurfaceReport,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.SurfaceChecks.ModelModule+SurfaceFinding]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.CurrencyEnforcement.CurrencyEnforcementModule+CurrencyFinding]], Microsoft.FSharp.Core.FSharpFunc`2[System.String,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ReaderModule+HandoffRead]])
@@ -42,12 +42,14 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule
   [Method] Int32 exitCode(ExitDecision)
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.VerifyCommand.LoopModule+Invocation,FS.GG.Governance.VerifyCommand.LoopModule+InvocationError] parseInvocation(Microsoft.FSharp.Collections.FSharpList`1[System.String])
   [Method] Microsoft.FSharp.Core.FSharpResult`2[FS.GG.Governance.VerifyCommand.LoopModule+RunRequest,FS.GG.Governance.VerifyCommand.LoopModule+UsageError] parse(Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] ProviderGateVerdict acceptProviderGate(ProviderGateRun, ProviderGateObservation)
   [Method] ShipDecision applyExecution(Microsoft.FSharp.Collections.FSharpSet`1[FS.GG.Governance.Gates.ModelModule+GateId], ShipDecision)
+  [Method] System.String describeProviderRefusal(ProviderRefusal)
   [Method] System.String render(Model, OutputFormat)
   [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] init(RunRequest)
   [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+Model,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] update(Msg, Model)
-  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] initProviderPlanning(RunRequest, ProviderPlanningInput)
-  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+Effect]] updateProviderPlanning(Msg, ProviderModel)
+  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect]] initProvider(RunRequest, ProviderPlanningInput)
+  [Method] System.Tuple`2[FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel,Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect]] updateProvider(ProviderMsg, ProviderModel)
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ArtifactKind
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Diagnostic
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Effect
@@ -58,8 +60,17 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Msg
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+OutputFormat
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+Phase
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceObservation
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderPlanningInput
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+RunRequest
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ScopeSelector
   [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+UsageError
@@ -590,8 +601,197 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+Phase+Tags
   [Field] Int32 Rolled
   [Field] Int32 Selected
   [Field] Int32 Sensed'
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect
+  [Method] Boolean Equals(ProviderEffect)
+  [Method] Boolean Equals(ProviderEffect, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsExecuteProviderGates()
+  [Method] Boolean get_IsLegacyEffect()
+  [Method] Int32 CompareTo(ProviderEffect)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderEffect NewExecuteProviderGates(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun])
+  [Method] ProviderEffect NewLegacyEffect(Effect)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+ExecuteProviderGates
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+LegacyEffect
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+Tags
+  [Property] Boolean IsExecuteProviderGates
+  [Property] Boolean IsLegacyEffect
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+ExecuteProviderGates
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun] Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+LegacyEffect
+  [Method] Effect get_Item()
+  [Property] Effect Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEffect+Tags
+  [Field] Int32 ExecuteProviderGates
+  [Field] Int32 LegacyEffect
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceObservation
+  [Constructor] Void .ctor(EvidenceBinding, ProviderEvidenceState)
+  [Method] Boolean Equals(ProviderEvidenceObservation)
+  [Method] Boolean Equals(ProviderEvidenceObservation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] EvidenceBinding get_Evidence()
+  [Method] Int32 CompareTo(ProviderEvidenceObservation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] ProviderEvidenceState get_State()
+  [Method] System.String ToString()
+  [Property] EvidenceBinding Evidence
+  [Property] ProviderEvidenceState State
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState
+  [Method] Boolean Equals(ProviderEvidenceState)
+  [Method] Boolean Equals(ProviderEvidenceState, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsAbsentAfterRun()
+  [Method] Boolean get_IsPresentBeforeLaunch()
+  [Method] Boolean get_IsProduced()
+  [Method] Boolean get_IsUnreadable()
+  [Method] Int32 CompareTo(ProviderEvidenceState)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderEvidenceState NewProduced(System.String, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource])
+  [Method] ProviderEvidenceState NewUnreadable(System.String)
+  [Method] ProviderEvidenceState get_AbsentAfterRun()
+  [Method] ProviderEvidenceState get_PresentBeforeLaunch()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Produced
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Tags
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Unreadable
+  [Property] Boolean IsAbsentAfterRun
+  [Property] Boolean IsPresentBeforeLaunch
+  [Property] Boolean IsProduced
+  [Property] Boolean IsUnreadable
+  [Property] Int32 Tag
+  [Property] ProviderEvidenceState AbsentAfterRun
+  [Property] ProviderEvidenceState PresentBeforeLaunch
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Produced
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource] get_capturedSources()
+  [Method] System.String get_text()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Adapters.SddHandoff.ModelModule+HandoffSource] capturedSources
+  [Property] System.String text
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Tags
+  [Field] Int32 AbsentAfterRun
+  [Field] Int32 PresentBeforeLaunch
+  [Field] Int32 Produced
+  [Field] Int32 Unreadable
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceState+Unreadable
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation
+  [Constructor] Void .ctor(GateId, ProviderLaunch, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceObservation])
+  [Method] Boolean Equals(ProviderGateObservation)
+  [Method] Boolean Equals(ProviderGateObservation, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] GateId get_Gate()
+  [Method] Int32 CompareTo(ProviderGateObservation)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceObservation] get_Evidence()
+  [Method] ProviderLaunch get_Launch()
+  [Method] System.String ToString()
+  [Property] GateId Gate
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderEvidenceObservation] Evidence
+  [Property] ProviderLaunch Launch
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun
+  [Constructor] Void .ctor(GateId, Boolean, GovernedPath, GateCommand, Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding])
+  [Method] Boolean Equals(ProviderGateRun)
+  [Method] Boolean Equals(ProviderGateRun, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_Required()
+  [Method] GateCommand get_Command()
+  [Method] GateId get_Gate()
+  [Method] GovernedPath get_WorkingDirectory()
+  [Method] Int32 CompareTo(ProviderGateRun)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] get_Evidence()
+  [Method] System.String ToString()
+  [Property] Boolean Required
+  [Property] GateCommand Command
+  [Property] GateId Gate
+  [Property] GovernedPath WorkingDirectory
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+EvidenceBinding] Evidence
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict
+  [Method] Boolean Equals(ProviderGateVerdict)
+  [Method] Boolean Equals(ProviderGateVerdict, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsProviderAccepted()
+  [Method] Boolean get_IsProviderRefused()
+  [Method] Int32 CompareTo(ProviderGateVerdict)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderGateVerdict NewProviderRefused(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal])
+  [Method] ProviderGateVerdict get_ProviderAccepted()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict+ProviderRefused
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict+Tags
+  [Property] Boolean IsProviderAccepted
+  [Property] Boolean IsProviderRefused
+  [Property] Int32 Tag
+  [Property] ProviderGateVerdict ProviderAccepted
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict+ProviderRefused
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal] Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict+Tags
+  [Field] Int32 ProviderAccepted
+  [Field] Int32 ProviderRefused
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch
+  [Method] Boolean Equals(ProviderLaunch)
+  [Method] Boolean Equals(ProviderLaunch, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLaunched()
+  [Method] Boolean get_IsNotLaunched()
+  [Method] Int32 CompareTo(ProviderLaunch)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderLaunch NewLaunched(BoundedObservation)
+  [Method] ProviderLaunch NewNotLaunched(System.String)
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+Launched
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+NotLaunched
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+Tags
+  [Property] Boolean IsLaunched
+  [Property] Boolean IsNotLaunched
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+Launched
+  [Method] BoundedObservation get_Item()
+  [Property] BoundedObservation Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+NotLaunched
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+Tags
+  [Field] Int32 Launched
+  [Field] Int32 NotLaunched
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
-  [Constructor] Void .ctor(Model, ProviderPlanningInput, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic])
+  [Constructor] Void .ctor(Model, ProviderPlanningInput, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]])
   [Method] Boolean Equals(ProviderModel)
   [Method] Boolean Equals(ProviderModel, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
@@ -602,14 +802,49 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
   [Method] Int32 GetHashCode()
   [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
   [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] get_Diagnostics()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun] get_Runs()
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]] get_Results()
   [Method] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan] get_Plan()
   [Method] Model get_Legacy()
   [Method] ProviderPlanningInput get_Input()
   [Method] System.String ToString()
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] Diagnostics
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun] Runs
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]] Results
   [Property] Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan] Plan
   [Property] Model Legacy
   [Property] ProviderPlanningInput Input
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg
+  [Method] Boolean Equals(ProviderMsg)
+  [Method] Boolean Equals(ProviderMsg, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsLegacyMsg()
+  [Method] Boolean get_IsProviderGatesExecuted()
+  [Method] Int32 CompareTo(ProviderMsg)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderMsg NewLegacyMsg(Msg)
+  [Method] ProviderMsg NewProviderGatesExecuted(Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation])
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+LegacyMsg
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+ProviderGatesExecuted
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+Tags
+  [Property] Boolean IsLegacyMsg
+  [Property] Boolean IsProviderGatesExecuted
+  [Property] Int32 Tag
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+LegacyMsg
+  [Method] Msg get_Item()
+  [Property] Msg Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+ProviderGatesExecuted
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation] get_Item()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation] Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderMsg+Tags
+  [Field] Int32 LegacyMsg
+  [Field] Int32 ProviderGatesExecuted
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderPlanningInput
   [Constructor] Void .ctor(ResolutionRequest, ProviderCommandContext)
   [Method] Boolean Equals(ProviderPlanningInput)
@@ -626,6 +861,151 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderPlanningInput
   [Method] System.String ToString()
   [Property] ProviderCommandContext CommandContext
   [Property] ResolutionRequest ResolutionRequest
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal
+  [Method] Boolean Equals(ProviderRefusal)
+  [Method] Boolean Equals(ProviderRefusal, System.Collections.IEqualityComparer)
+  [Method] Boolean Equals(System.Object)
+  [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_IsDirectResourcesRetained()
+  [Method] Boolean get_IsEvidenceFormatUnsupported()
+  [Method] Boolean get_IsEvidenceMalformed()
+  [Method] Boolean get_IsEvidenceMissing()
+  [Method] Boolean get_IsEvidenceNotObserved()
+  [Method] Boolean get_IsEvidenceNotPassing()
+  [Method] Boolean get_IsEvidenceSourcesRejected()
+  [Method] Boolean get_IsEvidenceStale()
+  [Method] Boolean get_IsEvidenceUnreadable()
+  [Method] Boolean get_IsEvidenceVersionMismatch()
+  [Method] Boolean get_IsExecutionFailed()
+  [Method] Boolean get_IsLaunchRefused()
+  [Method] Boolean get_IsNoDirectExit()
+  [Method] Boolean get_IsNonZeroExit()
+  [Method] Boolean get_IsNotObserved()
+  [Method] Boolean get_IsOutputIncomplete()
+  [Method] Int32 CompareTo(ProviderRefusal)
+  [Method] Int32 CompareTo(System.Object)
+  [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
+  [Method] Int32 GetHashCode()
+  [Method] Int32 GetHashCode(System.Collections.IEqualityComparer)
+  [Method] Int32 get_Tag()
+  [Method] ProviderRefusal NewEvidenceFormatUnsupported(System.String, System.String)
+  [Method] ProviderRefusal NewEvidenceMalformed(System.String, System.String)
+  [Method] ProviderRefusal NewEvidenceMissing(System.String)
+  [Method] ProviderRefusal NewEvidenceNotObserved(System.String)
+  [Method] ProviderRefusal NewEvidenceNotPassing(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] ProviderRefusal NewEvidenceSourcesRejected(System.String, Microsoft.FSharp.Collections.FSharpList`1[System.String])
+  [Method] ProviderRefusal NewEvidenceStale(System.String)
+  [Method] ProviderRefusal NewEvidenceUnreadable(System.String, System.String)
+  [Method] ProviderRefusal NewEvidenceVersionMismatch(System.String, System.String, System.String)
+  [Method] ProviderRefusal NewExecutionFailed(BoundedFailure)
+  [Method] ProviderRefusal NewLaunchRefused(System.String)
+  [Method] ProviderRefusal NewNonZeroExit(Int32)
+  [Method] ProviderRefusal get_DirectResourcesRetained()
+  [Method] ProviderRefusal get_NoDirectExit()
+  [Method] ProviderRefusal get_NotObserved()
+  [Method] ProviderRefusal get_OutputIncomplete()
+  [Method] System.String ToString()
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceFormatUnsupported
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceMalformed
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceMissing
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceNotObserved
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceNotPassing
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceSourcesRejected
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceStale
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceUnreadable
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceVersionMismatch
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+ExecutionFailed
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+LaunchRefused
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+NonZeroExit
+  [NestedType] FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+Tags
+  [Property] Boolean IsDirectResourcesRetained
+  [Property] Boolean IsEvidenceFormatUnsupported
+  [Property] Boolean IsEvidenceMalformed
+  [Property] Boolean IsEvidenceMissing
+  [Property] Boolean IsEvidenceNotObserved
+  [Property] Boolean IsEvidenceNotPassing
+  [Property] Boolean IsEvidenceSourcesRejected
+  [Property] Boolean IsEvidenceStale
+  [Property] Boolean IsEvidenceUnreadable
+  [Property] Boolean IsEvidenceVersionMismatch
+  [Property] Boolean IsExecutionFailed
+  [Property] Boolean IsLaunchRefused
+  [Property] Boolean IsNoDirectExit
+  [Property] Boolean IsNonZeroExit
+  [Property] Boolean IsNotObserved
+  [Property] Boolean IsOutputIncomplete
+  [Property] Int32 Tag
+  [Property] ProviderRefusal DirectResourcesRetained
+  [Property] ProviderRefusal NoDirectExit
+  [Property] ProviderRefusal NotObserved
+  [Property] ProviderRefusal OutputIncomplete
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceFormatUnsupported
+  [Method] System.String get_evidenceId()
+  [Method] System.String get_format()
+  [Property] System.String evidenceId
+  [Property] System.String format
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceMalformed
+  [Method] System.String get_evidenceId()
+  [Method] System.String get_reason()
+  [Property] System.String evidenceId
+  [Property] System.String reason
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceMissing
+  [Method] System.String get_evidenceId()
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceNotObserved
+  [Method] System.String get_evidenceId()
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceNotPassing
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_reasons()
+  [Method] System.String get_evidenceId()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] reasons
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceSourcesRejected
+  [Method] Microsoft.FSharp.Collections.FSharpList`1[System.String] get_reasons()
+  [Method] System.String get_evidenceId()
+  [Property] Microsoft.FSharp.Collections.FSharpList`1[System.String] reasons
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceStale
+  [Method] System.String get_evidenceId()
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceUnreadable
+  [Method] System.String get_evidenceId()
+  [Method] System.String get_reason()
+  [Property] System.String evidenceId
+  [Property] System.String reason
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+EvidenceVersionMismatch
+  [Method] System.String get_actual()
+  [Method] System.String get_declared()
+  [Method] System.String get_evidenceId()
+  [Property] System.String actual
+  [Property] System.String declared
+  [Property] System.String evidenceId
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+ExecutionFailed
+  [Method] BoundedFailure get_Item()
+  [Property] BoundedFailure Item
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+LaunchRefused
+  [Method] System.String get_reason()
+  [Property] System.String reason
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+NonZeroExit
+  [Method] Int32 get_code()
+  [Property] Int32 code
+TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderRefusal+Tags
+  [Field] Int32 DirectResourcesRetained
+  [Field] Int32 EvidenceFormatUnsupported
+  [Field] Int32 EvidenceMalformed
+  [Field] Int32 EvidenceMissing
+  [Field] Int32 EvidenceNotObserved
+  [Field] Int32 EvidenceNotPassing
+  [Field] Int32 EvidenceSourcesRejected
+  [Field] Int32 EvidenceStale
+  [Field] Int32 EvidenceUnreadable
+  [Field] Int32 EvidenceVersionMismatch
+  [Field] Int32 ExecutionFailed
+  [Field] Int32 LaunchRefused
+  [Field] Int32 NoDirectExit
+  [Field] Int32 NonZeroExit
+  [Field] Int32 NotObserved
+  [Field] Int32 OutputIncomplete
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+RunRequest
   [Constructor] Void .ctor(System.String, ScopeSelector, Profile, OutputFormat, System.String, System.String, Boolean, Boolean, System.String, System.String)
   [Method] Boolean Equals(RunRequest)

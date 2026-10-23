@@ -201,7 +201,12 @@ maps to an enforcement verdict. `verify` is the exception to the shared flags an
 it keeps the Verify host's own grammar (`--repo`, `--paths`, `--since`, `--profile`, the
 `--provider-*` selectors, ...) and its verb-host exit codes (`0` pass, `1` blocked, `2` usage,
 `3` input unavailable, `4` tool error); provider mode takes the outer runtime's ends from
-`FSGG_VERIFY_WORK_SECONDS` / `FSGG_VERIFY_CLEANUP_SECONDS`.
+`FSGG_VERIFY_WORK_SECONDS` / `FSGG_VERIFY_CLEANUP_SECONDS`. Since 1.15.0 (GOV-423-C2) provider mode
+runs each admitted command through the GateExecution held-cwd host (Linux-x64, glibc 2.40+) and
+accepts it only on Governance-observed `fsgg.governance-handoff@2.x` evidence that was absent before
+launch and cites the workspace's current source bytes; a required capability that is not accepted
+blocks. Gates still come from the workspace's own `.fsgg` catalog, which provider provenance never
+supplies.
 
 **`fsgg`** — the capability-platform host commands (each an MVU host; `verify` ships as the
 `fsgg-governance verify` verb above rather than as its own executable),

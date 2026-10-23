@@ -858,6 +858,17 @@ let private adapterArgv repo (selection:ProviderContext.Selection) =
 
 let private boundContext repo : FS.GG.Governance.GateRun.Plan.ProviderCommandContext = {ProviderPlanningTests.context with RepoRoot=repo}
 
+/// The host's loan for a caller-owned session in these controls: an executor that starts nothing and reports every
+/// admitted run as not launched (GOV-423-C2), so no control can pass on a declaration alone.
+let private lent (session: CaptureSession) context : ProviderHost.Supplied =
+    { Session = session
+      Context = context
+      Execute =
+        fun runs ->
+            runs
+            |> List.map (fun run ->
+                ({ Gate = run.Gate; Launch = Loop.NotLaunched "synthetic control lends no executor"; Evidence = [] }: Loop.ProviderGateObservation)) }
+
 /// Drives the real adapter; the supplier hands back the caller-owned session and never loses it.
 let private runAdapter supply argv =
     let supplied=ResizeArray<Loop.RunRequest * ProviderContext.Selection>()
@@ -893,7 +904,7 @@ let capturedProviderAdapterTests =
             let session=readySession fixture request
             let before=inspect session
             let closesBefore=fixture.CloseAttempts
-            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+            let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/repo"))) (adapterArgv "/repo" selection)
             Expect.equal run.PortsBuilt 1 "ports are built only after the declaration was admitted"
             Expect.isFalse (run.Messages |> List.exists(fun m -> m.Contains "provider command context" || m.Contains "provider declaration admission")) (sprintf "no adapter refusal: %A" run.Messages)
             Expect.isTrue (run.Code=1 || run.Code=3) "planning stays nonpassing"
@@ -916,7 +927,7 @@ let capturedProviderAdapterTests =
             let request=loaderRequest fixture
             let selection=loaderSelection request
             let session=readySession fixture request
-            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/synthetic")) (adapterArgv "/repo" selection)
+            let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/synthetic"))) (adapterArgv "/repo" selection)
             refusedBeforePorts run "provider command context does not bind the original captured repository root"
             releaseControlled session)
         testCase "selected repository that is not an original captured root is refused even with a matching context" (fun () ->
@@ -924,7 +935,7 @@ let capturedProviderAdapterTests =
             let request=loaderRequest fixture
             let selection=loaderSelection request
             let session=readySession fixture request
-            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/other")) (adapterArgv "/other" selection)
+            let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/other"))) (adapterArgv "/other" selection)
             refusedBeforePorts run "provider command context does not bind the original captured repository root"
             releaseControlled session)
         testCase "root whose current binding is not freshly confirmed is refused by the adapter itself" (fun () ->
@@ -937,7 +948,7 @@ let capturedProviderAdapterTests =
             try
                 fixture.WaitMetadataBlocked()
                 Expect.isTrue ((inspect session).Roots |> List.forall(fun root -> root.CurrentBindingMatches=None)) "bindings pending in the revalidation window"
-                let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+                let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/repo"))) (adapterArgv "/repo" selection)
                 refusedBeforePorts run "provider command context does not bind the original captured repository root"
             finally
                 fixture.ResumeMetadata()
@@ -950,7 +961,7 @@ let capturedProviderAdapterTests =
             let session=readySession fixture request
             fixture.ChangeBinding()
             Expect.equal (revalidate session).Model.FirstFailure (Some(InputChanged "provenance")) "supplied session lost readiness"
-            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" selection)
+            let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/repo"))) (adapterArgv "/repo" selection)
             refusedBeforePorts run "provider declaration admission rejected"
             Expect.isTrue (run.Messages |> List.exists(fun m -> m.Contains "$.capture")) "located loader diagnostic retained"
             releaseControlled session)
@@ -959,7 +970,7 @@ let capturedProviderAdapterTests =
             let request=loaderRequest fixture
             let selection=loaderSelection request
             let session=readySession fixture request
-            let run=runAdapter (fun _ _ -> Ok(session,boundContext "/repo")) (adapterArgv "/repo" {selection with PolicySha256=String('0',64)})
+            let run=runAdapter (fun _ _ -> Ok(lent session (boundContext "/repo"))) (adapterArgv "/repo" {selection with PolicySha256=String('0',64)})
             refusedBeforePorts run "provider declaration admission rejected"
             Expect.isTrue (run.Messages |> List.exists(fun m -> m.Contains "$.capture.documents")) "captured-document selection refusal retained"
             releaseControlled session)
@@ -1026,7 +1037,8 @@ let private hostEffects (fixture: ControlledFixture) env (fault: HostFault) (onS
               armed.Value <- (fault = CaptureCallerFault)
               Ok session
           | Error failures -> Error failures
-      Pause = fun () -> pauses.Value <- pauses.Value + 1; pause pauses.Value }
+      Pause = fun () -> pauses.Value <- pauses.Value + 1; pause pauses.Value
+      EnvironmentSnapshot = fun () -> Map.empty }
 
 /// `swallowResident`: a pause hook may raise ResidentObserved to end a host that would otherwise stay resident.
 let private hostRunWith (onSettleNow: unit -> unit) (sessions: ResizeArray<CaptureSession>) (fixture: ControlledFixture) env cancellation (pause: int -> unit) (fault: HostFault) argv =
@@ -1086,7 +1098,8 @@ let hostAdmissionTests =
           TicksPerSecond = 10L
           Cancellation = fun () -> reads.Value <- reads.Value + 1; Threading.CancellationToken.None
           Prepare = fun _ -> failwith "admission must not prepare"
-          Pause = fun () -> failwith "admission must not pause" }
+          Pause = fun () -> failwith "admission must not pause"
+          EnvironmentSnapshot = fun () -> failwith "admission must not capture the environment" }
     let admit env = let reads = ref 0 in ProviderHost.admit (effects env reads) now, reads.Value
     let refused env fragment =
         match admit env with
@@ -1128,7 +1141,8 @@ let hostContextAndExitTests =
           TicksPerSecond = 10L
           Cancellation = fun () -> Threading.CancellationToken.None
           Prepare = fun _ -> failwith "unused"
-          Pause = fun () -> failwith "unused" }
+          Pause = fun () -> failwith "unused"
+          EnvironmentSnapshot = fun () -> failwith "unused" }
     let admission = { ProviderHost.Admission.Budget = { WorkEnd = { now with Ticks = 100L }; CleanupEnd = { now with Ticks = 200L } }
                       ProviderHost.Admission.Cancellation = Threading.CancellationToken.None }
     let timeout (context: FS.GG.Governance.GateRun.Plan.ProviderCommandContext) = let (FS.GG.Governance.Config.Model.TimeoutLimit seconds) = context.RemainingTimeout in seconds
@@ -1174,7 +1188,7 @@ let hostCompositionTests =
             // The same declaration through the caller-owned adapter, released by its caller, decides the same exit.
             use baselineFixture = newLoaderFixture ()
             let baselineSession = readySession baselineFixture (loaderRequest baselineFixture)
-            let baseline = runAdapter (fun _ _ -> Ok(baselineSession, boundContext "/repo")) (adapterArgv "/repo" selection)
+            let baseline = runAdapter (fun _ _ -> Ok(lent baselineSession (boundContext "/repo"))) (adapterArgv "/repo" selection)
             releaseControlled baselineSession
             Expect.isTrue (baseline.Code = 1 || baseline.Code = 3) "planning stays nonpassing"
             Expect.equal run.Code (Some baseline.Code) "the host does not alter the invocation's exit when the session settles"
@@ -1360,7 +1374,8 @@ let hostCompositionTests =
                     | Error error -> failtestf "argv rejected: %A" error
                 let drive supply =
                     match supply invocationRequest selection with
-                    | Ok(session, _) ->
+                    | Ok supplied ->
+                        let session = (supplied: ProviderHost.Supplied).Session
                         if drift then
                             fixture.ChangeBinding()
                             Expect.equal (revalidate session).Model.FirstFailure (Some(InputChanged "provenance")) "failure recorded on the held session"

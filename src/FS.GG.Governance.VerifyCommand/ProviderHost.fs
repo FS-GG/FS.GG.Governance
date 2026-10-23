@@ -15,7 +15,8 @@ module internal ProviderHost =
           TicksPerSecond: int64
           Cancellation: unit -> CancellationToken
           Prepare: Capture.Request -> Result<Capture.CaptureSession, Capture.Failure list>
-          Pause: unit -> unit }
+          Pause: unit -> unit
+          EnvironmentSnapshot: unit -> Map<string, string> }
 
     let workSecondsVariable = "FSGG_VERIFY_WORK_SECONDS"
     let cleanupSecondsVariable = "FSGG_VERIFY_CLEANUP_SECONDS"
@@ -69,9 +70,12 @@ module internal ProviderHost =
         | ReleasedAfterUnsettledReport
         | RetainedWithoutPendingRead -> Loop.exitCode Loop.ToolError
 
-    type Supply =
-        Loop.RunRequest -> ProviderContext.Selection ->
-            Result<Capture.CaptureSession * FS.GG.Governance.GateRun.Plan.ProviderCommandContext, string>
+    type Supplied =
+        { Session: Capture.CaptureSession
+          Context: FS.GG.Governance.GateRun.Plan.ProviderCommandContext
+          Execute: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list }
+
+    type Supply = Loop.RunRequest -> ProviderContext.Selection -> Result<Supplied, string>
 
     let private captureLimits : Capture.Limits = { PerFileBytes = 1 <<< 20; AggregateBytes = 1 <<< 21 }
 
@@ -132,7 +136,21 @@ module internal ProviderHost =
                         held.Value <- Some(session, admission.Budget)
                         let observation = Capture.capture session
                         if observation.Model.Phase = Capture.Ready && observation.Model.FirstFailure.IsNone then
-                            Ok(session, commandContext effects root admission (effects.Now()))
+                            // GOV-423-C2: provider commands run under this same owner, its original ends and the
+                            // environment captured once here; the host still performs every capture release.
+                            let execution: ProviderExecution.Host =
+                                { Session = session
+                                  Environment = effects.EnvironmentSnapshot()
+                                  Cancellation = admission.Cancellation
+                                  Now = effects.Now
+                                  TicksPerSecond = effects.TicksPerSecond
+                                  Pause = effects.Pause
+                                  Report = report }
+
+                            Ok
+                                { Session = session
+                                  Context = commandContext effects root admission (effects.Now())
+                                  Execute = ProviderExecution.executeWith root (ProviderExecution.launchHeld execution) }
                         else
                             Error(
                                 sprintf "provider capture did not reach a ready state: %A (secondary %A)" observation.Model.FirstFailure observation.Model.SecondaryFailures
@@ -206,4 +224,13 @@ module internal ProviderHost =
           TicksPerSecond = Diagnostics.Stopwatch.Frequency
           Cancellation = fun () -> signals.Token
           Prepare = Capture.prepare
-          Pause = fun () -> Thread.Sleep 10 }
+          Pause = fun () -> Thread.Sleep 10
+          EnvironmentSnapshot =
+            fun () ->
+                Environment.GetEnvironmentVariables()
+                |> Seq.cast<Collections.DictionaryEntry>
+                |> Seq.choose (fun entry ->
+                    match entry.Key, entry.Value with
+                    | (:? string as name), (:? string as value) -> Some(name, value)
+                    | _ -> None)
+                |> Map.ofSeq }
