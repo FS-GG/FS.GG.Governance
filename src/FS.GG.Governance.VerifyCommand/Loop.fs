@@ -485,11 +485,12 @@ module Loop =
           Plan: CommandHost.ProviderExecutionPlan option
           Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list
           Runs: ProviderGateRun list
+          ExecutionRequested: bool
           Results: (ProviderGateRun * ProviderGateObservation * ProviderGateVerdict) list }
 
     let initProvider request provider =
         let model, effects = init request
-        { Legacy = model; Input = provider; Plan = None; Diagnostics = []; Runs = []; Results = [] },
+        { Legacy = model; Input = provider; Plan = None; Diagnostics = []; Runs = []; ExecutionRequested = false; Results = [] },
         effects |> List.map LegacyEffect
 
     // ── update — the whole composition; TOTAL, never throws ──
@@ -1357,11 +1358,19 @@ module Loop =
                             yield DirectResourcesRetained
                     ]
 
+            let launched =
+                match observation.Launch with
+                | Launched _ -> true
+                | NotLaunched _ -> false
+
             let evidence =
                 run.Evidence
                 |> List.collect (fun binding ->
                     match observation.Evidence |> List.filter (fun item -> item.Evidence = binding) with
-                    | [ item ] -> evidenceRefusals binding item.State
+                    | [ item ] when launched -> evidenceRefusals binding item.State
+                    // Nothing ran: only the pre-launch observations that explain why are evidence refusals.
+                    | [ { State = PresentBeforeLaunch | Unreadable _ as state } ] -> evidenceRefusals binding state
+                    | [ _ ] -> []
                     | _ -> [ EvidenceNotObserved binding.Id ])
 
             match launch @ evidence with
@@ -1435,7 +1444,7 @@ module Loop =
                         Decision =
                             { item.Decision with
                                 EffectiveSeverity = Blocking
-                                Reason = item.Decision.Reason + "; " + reason
+                                Reason = reason + " (the provider floor blocks whatever the profile/maturity decide)"
                             }
                     }
                 | None ->
@@ -1578,6 +1587,18 @@ module Loop =
                                         (refusals |> List.map describeProviderRefusal |> String.concat "; ")
                             })
 
+            // The two sidecars are rewritten too, so no earlier legacy run's documents stand beside this verdict.
+            // Provider mode has no cache decisions and no legacy command records: both are honestly empty.
+            let emptyReport = CacheDecisionReport []
+
+            let snapshot =
+                CommandHost.buildSnapshot
+                    legacy.Sensed
+                    (legacy.Snapshot |> Option.bind (fun s -> s.Range))
+                    legacy.Environment
+                    legacy.Builder
+                    []
+
             { model with
                 Legacy =
                     { legacy with
@@ -1585,12 +1606,30 @@ module Loop =
                         Decision = Some folded
                         VerifyDoc = Some verifyDoc
                         Outcomes = outcomes
+                        CacheDecision = Some emptyReport
+                        Audit = Some snapshot
                         PersistAcked = true
                         Diagnostics = legacy.Diagnostics @ diagnostics
                     }
                 Results = results
             },
-            [ LegacyEffect(WriteArtifact(VerifyArtifact, legacy.Request.VerifyOut, verifyDoc)) ]
+            [
+                LegacyEffect(WriteArtifact(VerifyArtifact, legacy.Request.VerifyOut, verifyDoc))
+                LegacyEffect(
+                    WriteArtifact(
+                        CostBudgetArtifact,
+                        legacy.Request.CostBudgetOut,
+                        FS.GG.Governance.CostBudgetJson.CostBudgetJson.ofReport emptyReport []
+                    )
+                )
+                LegacyEffect(
+                    WriteArtifact(
+                        ProvenanceArtifact,
+                        legacy.Request.ProvenanceOut,
+                        FS.GG.Governance.ProvenanceJson.ProvenanceJson.ofSnapshot snapshot
+                    )
+                )
+            ]
         | _ ->
             let failed, _ = fail ToolError "provider projection reached without a decision and plan" legacy
             { model with Legacy = failed }, []
@@ -1605,7 +1644,7 @@ module Loop =
             match msg with
             | ProviderGatesExecuted observations ->
                 // Only the one requested execution is projected; unrequested or repeated reports are inert.
-                if model.Plan.IsSome && not model.Runs.IsEmpty && model.Results.IsEmpty then
+                if model.ExecutionRequested && model.Results.IsEmpty && model.Legacy.Phase = Selected then
                     projectProvider observations model
                 else
                     model, []
@@ -1617,11 +1656,21 @@ module Loop =
                 | Some _, Emitted ->
                     let legacy, effects = update legacyMsg model.Legacy
                     { model with Legacy = legacy }, effects |> List.map LegacyEffect
+                // The product surfaces were sensed (legacy stores the findings for the verdict fold); only then is
+                // the one execution requested, so the surface verdict can never be skipped.
+                | Some _, SurfacesSensed findings when not model.ExecutionRequested ->
+                    let legacy = { model.Legacy with SurfaceFindings = findings }
+                    let sensed = { model with Legacy = legacy; ExecutionRequested = true }
+
+                    if List.isEmpty model.Runs then
+                        projectProvider [] sensed
+                    else
+                        sensed, [ ExecuteProviderGates model.Runs ]
                 | Some _, _ -> model, []
                 | None, Loaded(Valid _) ->
                     // The legacy transition owns routing, inherited floors and effective selection. Its effects
                     // are data only and are dropped: provider admission happens before any could run.
-                    let legacy, _ = update legacyMsg model.Legacy
+                    let legacy, legacyEffects = update legacyMsg model.Legacy
                     let budget = FS.GG.Governance.CostBudget.Budget.budgetFor legacy.Request.Profile Verify
 
                     match
@@ -1647,11 +1696,13 @@ module Loop =
                     | Ok plan ->
                         let runs = providerRuns model.Input plan
                         let planned = { model with Legacy = legacy; Plan = Some plan; Runs = runs }
-
-                        if List.isEmpty runs then
-                            projectProvider [] planned
-                        else
-                            planned, [ ExecuteProviderGates runs ]
+                        // Legacy Verify's own product-surface classification for this scope; its freshness, store
+                        // and execution effects are dropped.
+                        match legacyEffects |> List.filter (function SenseSurfaces _ -> true | _ -> false) with
+                        | [ surfaces ] -> planned, [ LegacyEffect surfaces ]
+                        | _ ->
+                            let failed, _ = fail ToolError "provider planning found no single product-surface classification" legacy
+                            { planned with Legacy = failed }, []
                 | None, _ ->
                     let legacy, effects = update legacyMsg model.Legacy
                     { model with Legacy = legacy }, effects |> List.map LegacyEffect

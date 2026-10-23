@@ -791,11 +791,12 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderLaunch+Tags
   [Field] Int32 Launched
   [Field] Int32 NotLaunched
 TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
-  [Constructor] Void .ctor(Model, ProviderPlanningInput, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun], Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]])
+  [Constructor] Void .ctor(Model, ProviderPlanningInput, Microsoft.FSharp.Core.FSharpOption`1[FS.GG.Governance.CommandHost.CommandHostModule+ProviderExecutionPlan], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic], Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun], Boolean, Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]])
   [Method] Boolean Equals(ProviderModel)
   [Method] Boolean Equals(ProviderModel, System.Collections.IEqualityComparer)
   [Method] Boolean Equals(System.Object)
   [Method] Boolean Equals(System.Object, System.Collections.IEqualityComparer)
+  [Method] Boolean get_ExecutionRequested()
   [Method] Int32 CompareTo(ProviderModel)
   [Method] Int32 CompareTo(System.Object)
   [Method] Int32 CompareTo(System.Object, System.Collections.IComparer)
@@ -808,6 +809,7 @@ TYPE FS.GG.Governance.VerifyCommand.LoopModule+ProviderModel
   [Method] Model get_Legacy()
   [Method] ProviderPlanningInput get_Input()
   [Method] System.String ToString()
+  [Property] Boolean ExecutionRequested
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.Config.CapabilityBindingsModule+Diagnostic] Diagnostics
   [Property] Microsoft.FSharp.Collections.FSharpList`1[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun] Runs
   [Property] Microsoft.FSharp.Collections.FSharpList`1[System.Tuple`3[FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateRun,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateObservation,FS.GG.Governance.VerifyCommand.LoopModule+ProviderGateVerdict]] Results

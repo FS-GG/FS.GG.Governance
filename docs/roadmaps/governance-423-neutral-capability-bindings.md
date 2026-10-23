@@ -564,34 +564,62 @@ Provider-mode `fsgg-governance verify` stopped after planning: the positive case
   * missing time limits refuse at resolution.
 * A required capability that is not accepted blocks whatever its maturity. The legacy Verify route is unchanged.
 
-**Controls (local, this host: Linux-x64, glibc 2.44, SDK 10.0.401).**
+**Controls (local, this host: Linux-x64, glibc 2.44, SDK 10.0.401), at the reviewed repair head.**
 
 | Suite | Result |
 |---|---|
-| `VerifyCommand.Tests` | 333 passed. The 26 skipped are the 20 existing physical capture cases and the 6 new opt-in native cases. |
-| Opt-in native journey (`FSGG_GOV_PROVIDER_EXECUTION_NATIVE=1`) | 6 of 6 passed through the real `Program.runHosted`, real capture and a real POSIX sh fixture launched by `prepareHeldCwd`. |
+| `VerifyCommand.Tests` | 339 passed. The 30 skipped are the 20 existing physical capture cases and the 10 opt-in native cases. |
+| Opt-in native journey (`FSGG_GOV_PROVIDER_EXECUTION_NATIVE=1`) | 10 of 10 passed, twice, through the real `Program.runHosted`, real capture and a real POSIX sh fixture launched by `prepareHeldCwd`. |
 | Cli.Tests | 80 passed |
 | DesignChecks.Tests | 57 passed |
 | `tests/cli-publish-smoke/run.sh` | passed on packed CLI 1.15.0 |
 
 The native journey covered these cases:
 
-* positive: the fixture's `run` writes the declared handoff, and Verify exits 0;
+* positive: the fixture checks its literal argv and its cwd, its `run` writes the declared handoff, and Verify exits 0;
+* a governed `src` working directory: exits 0, and the fixture exits 6 unless its cwd is `<repo>/src`;
 * missing evidence: exits 1;
 * stale (pre-existing) output: never launched over, left untouched, exits 1;
 * mismatched sources: exits 1;
 * real exit 2: exits 1;
+* a 1 s declared timeout: refused on `WorkDeadlineReached` well inside the 60 s window, exits 1;
+* a child killed at a work end equal to the cleanup end: exits 1 or 4 and never stays resident;
+* a background holder keeping the pipes past the cleanup end: exits 4 with "retained ... no read pending" and is not
+  resident;
 * provenance digest, platform, unrouted path and policy identity: exit 3 with nothing launched.
 
 The rest of the evidence:
 
-* **Mutation matrix.** Eight guards were each mutated in place and every mutation was killed: the evidence
-  refusals, the pre-launch absence check, source validation, the required floor, the Governance-computed digest, the
-  non-zero exit, content acceptance and the format check.
-* **Full Release solution suite.** 3000 passed. It had two failures, both outside this change. One was the
-  DesignChecks packed-tool case, built before the version bump in this branch; it passed after rebuilding. The other
-  was `ReferenceGateSetResolution.R7`. That case compares against the locally installed `fsgg-sdd` 2.2.0 and fails
-  on its extra files, `governance-resolution.proj` and `knowledge-guide.md`. Hosted CI has no such tool and uses the
+* **Independent review.** An fsgg-critic-best review of `2f7d2558` returned REQUEST_CHANGES with two blocking
+  findings, both repaired here:
+  1. An idle lease retained past the cleanup end kept the host resident. The executor now reports such a lease and
+     the host counts it as nothing pending, so it exits 4.
+  2. Provider mode never sensed product surfaces. Surfaces are now sensed once before execution and folded.
+
+  The repairs also addressed the review's should-fix items:
+  * regular-file `statx` checks before evidence and source reads, so a FIFO cannot block;
+  * native coverage of the binding cwd, the declared timeout and the cleanup end;
+  * rewritten sidecars;
+  * not-launched evidence messages;
+  * the forced-reason text.
+* **Mutation matrix.** Thirteen guards were each mutated in place and every mutation was killed:
+  1. evidence refusals;
+  2. the pre-launch absence check;
+  3. source validation;
+  4. the required floor;
+  5. the Governance-computed digest;
+  6. the non-zero exit check;
+  7. content acceptance;
+  8. the format check;
+  9. cited-source containment;
+  10. the binding cwd;
+  11. idle-lease reporting (the bounded native case fails instead of hanging);
+  12. surface sensing;
+  13. the regular-file check.
+* **Full Release solution suite (pre-repair head).** 3000 passed, with two failures outside this change. One was the
+  DesignChecks packed-tool case, built before the version bump; it passed after rebuilding. The other was
+  `ReferenceGateSetResolution.R7`, which compares against the locally installed `fsgg-sdd` 2.2.0 and fails on its
+  extra files, `governance-resolution.proj` and `knowledge-guide.md`. Hosted CI has no such tool and uses the
   fixture.
 
 **Decisions recorded with this slice.**
@@ -600,8 +628,9 @@ The rest of the evidence:
   The wire contract is the closed schema-2 provenance codec, the policy parser and `ProviderCapabilityAdmission`, not
   the producer package version. Between source `c8aea928` (2.3.0) and `c1fee66a` (2.4.0) none of
   `ScaffoldProvenanceDocument`, `CatalogScaffoldProvenance`, `CatalogScaffoldPolicy`, `ProviderCapabilityAdmission`
-  or the `Fsgg` contracts changed. The 2.4.0 delta (#1116) changes only how scaffold encodes template override argv,
-  and that argv is recorded as data. A future codec change is refused by the strict parsers rather than misread.
+  or the `Fsgg` contracts changed. The 2.4.0 delta also carries owner guidance, doctor, upgrade and contained-read
+  changes. On the provenance and admission path its only change is #1116, which changes how scaffold encodes template
+  override argv, and that argv is recorded as data. A future codec change is refused by the strict parsers rather than misread.
   Moving the bundled pair is a separate release decision.
 * *Workspace Governance catalog.* Provider-mode gates come from the workspace's own `.fsgg` catalog: routing, owners
   and maturity. Provider provenance never supplies them, and Governance does not synthesize gates from declarations,

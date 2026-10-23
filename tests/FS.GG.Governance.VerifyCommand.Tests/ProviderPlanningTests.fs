@@ -56,8 +56,9 @@ let refused code candidate selectedFacts paths =
 
 /// Interpret the pure provider tail: legacy writes succeed, summaries are emitted, and the one execution request is
 /// answered by `observe`. Records every execution request so a test can prove none (or exactly one) happened.
-let drivePure (observe: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list) (model: Loop.ProviderModel, effects) =
+let drivePureWith surfaces (observe: Loop.ProviderGateRun list -> Loop.ProviderGateObservation list) (model: Loop.ProviderModel, effects) =
     let requests = ResizeArray<Loop.ProviderGateRun list>()
+    let senses = ref 0
     let writes = ResizeArray<string * string>()
     let rec go (model: Loop.ProviderModel) effects =
         match effects with
@@ -72,11 +73,21 @@ let drivePure (observe: Loop.ProviderGateRun list -> Loop.ProviderGateObservatio
                     writes.Add((path, content))
                     Loop.LegacyMsg(Loop.Wrote(kind, Ok()))
                 | Loop.LegacyEffect(Loop.EmitSummary _) -> Loop.LegacyMsg Loop.Emitted
+                | Loop.LegacyEffect(Loop.SenseSurfaces _) ->
+                    if requests.Count > 0 then failtest "surfaces must be sensed before execution is requested"
+                    senses.Value <- senses.Value + 1
+                    Loop.LegacyMsg(Loop.SurfacesSensed surfaces)
                 | Loop.LegacyEffect other -> failtestf "provider mode must not request legacy effect %A" other
             let next, more = Loop.updateProvider msg model
             go next (rest @ more)
     let terminal = go model effects
+    if terminal.Plan.IsSome then Expect.equal senses.Value 1 "product surfaces sensed exactly once"
     terminal, List.ofSeq requests, List.ofSeq writes
+let drivePure observe start = drivePureWith [] observe start
+/// The verify.json write among the three provider-mode artifacts.
+let verifyWrite (writes: (string * string) list) =
+    Expect.equal (writes |> List.map fst) [ "readiness/verify.json"; "readiness/cost-budget.json"; "readiness/provenance.json" ] "verify.json and both sidecars rewritten"
+    writes |> List.find (fun (path, _) -> path = "readiness/verify.json")
 
 /// A launched run that exited by itself with both streams at EOF and direct resources released (synthetic facts).
 let observedExit (gate: string) (exit: int option) : FS.GG.Governance.GateExecution.Model.BoundedObservation =
@@ -152,6 +163,11 @@ let tests = testList "ProviderPlanningLoop" [
             Expect.equal evidence resolution.Evidence "declared evidence carried, not accepted"
         | other -> failtestf "unexpected %A" other
         match effects with
+        | [ Loop.LegacyEffect(Loop.SenseSurfaces _) ] -> ()
+        | other -> failtestf "expected the product-surface sense first, got %A" other
+        let sensed, effects = Loop.updateProvider (Loop.LegacyMsg(Loop.SurfacesSensed [])) model
+        Expect.isTrue sensed.ExecutionRequested "requested once"
+        match effects with
         | [ Loop.ExecuteProviderGates [ run ] ] ->
             Expect.equal run.Gate (FS.GG.Governance.Gates.Model.GateId "build:build") "the effective gate"
             Expect.equal run.WorkingDirectory (gp "src") "the binding's governed relative working directory"
@@ -159,20 +175,35 @@ let tests = testList "ProviderPlanningLoop" [
             Expect.equal run.Evidence resolution.Evidence "the declared outputs"
             Expect.equal run.Command.Arguments (List.map Argument command.Arguments) "literal argv reaches the edge unchanged"
         | other -> failtestf "expected exactly one execution request, got %A" other
-        let terminal, later = Loop.updateProvider (Loop.LegacyMsg(Loop.StoreLoaded(Ok FS.GG.Governance.EvidenceReuse.EvidenceReuse.empty))) model
-        Expect.equal terminal model "later cache result inert"
-        Expect.isEmpty later "no reuse")
+        let terminal, later = Loop.updateProvider (Loop.LegacyMsg(Loop.StoreLoaded(Ok FS.GG.Governance.EvidenceReuse.EvidenceReuse.empty))) sensed
+        Expect.equal terminal sensed "later cache result inert"
+        Expect.isEmpty later "no reuse"
+        let again, more = Loop.updateProvider (Loop.LegacyMsg(Loop.SurfacesSensed [])) sensed
+        Expect.equal again sensed "a second surface report cannot request a second execution"
+        Expect.isEmpty more "nothing more")
     testCase "accepted execution relocates the gate, writes verify.json and passes" (fun _ ->
         let terminal, requests, writes = drivePure (List.map accepted) (loaded handoffResolution facts [ gp "src/a.fs" ])
         Expect.equal requests.Length 1 "exactly one execution request"
         Expect.equal terminal.Legacy.Exit Loop.Success "accepted evidence passes"
         Expect.equal (terminal.Results |> List.map (fun (_, _, v) -> v)) [ Loop.ProviderAccepted ] "accepted"
-        let path, doc = List.exactlyOne writes
-        Expect.equal path "readiness/verify.json" "verify.json through the legacy writer"
+        let _, doc = verifyWrite writes
         Expect.stringContains doc "build:build" "gate projected"
         match terminal.Legacy.Outcomes with
         | [ _, { Disposition = FS.GG.Governance.GateRun.Model.Executed(ExitCode 0, true) } ] -> ()
         | other -> failtestf "unexpected outcomes %A" other)
+    testCase "a blocking product-surface finding blocks provider mode as it blocks legacy Verify (Strict)" (fun _ ->
+        let strict () =
+            let initial, _ =
+                Loop.initProvider (requestForProfile (Loop.ExplicitPaths [ gp "src/a.fs" ]) Loop.Text FS.GG.Governance.Enforcement.Enforcement.Strict)
+                    { ResolutionRequest = handoffResolution; CommandContext = context }
+            Loop.updateProvider (Loop.LegacyMsg(Loop.Loaded(Valid facts))) initial
+        let terminal, requests, _ = drivePureWith [ blockingSurfaceFinding ] (List.map accepted) (strict ())
+        Expect.equal requests.Length 1 "the accepted gate still ran"
+        Expect.equal (terminal.Results |> List.map (fun (_, _, v) -> v)) [ Loop.ProviderAccepted ] "gate accepted"
+        Expect.equal terminal.Legacy.Exit Loop.Blocked "surface verdict folded"
+        // Control: the same Strict run without the finding passes.
+        let clean, _, _ = drivePureWith [] (List.map accepted) (strict ())
+        Expect.equal clean.Legacy.Exit Loop.Success "only the surface finding blocks")
     testCase "causal control: the same zero exit without its evidence is not accepted" (fun _ ->
         let noEvidence run = { accepted run with Evidence = run.Evidence |> List.map (fun e -> ({ Evidence = e; State = Loop.AbsentAfterRun }: Loop.ProviderEvidenceObservation)) }
         let terminal, _, _ = drivePure (List.map noEvidence) (loaded requiredHandoffResolution facts [ gp "src/a.fs" ])
@@ -189,7 +220,7 @@ let tests = testList "ProviderPlanningLoop" [
         let decision = terminal.Legacy.Decision |> Option.get
         Expect.isTrue (decision.Blockers |> List.exists (fun i -> i.Id = FS.GG.Governance.Ship.Model.GateItem(FS.GG.Governance.Gates.Model.GateId "build:build"))) "moved to blockers"
         Expect.isEmpty decision.Warnings "not left as a warning"
-        Expect.stringContains (snd (List.exactlyOne writes)) "required provider capability was not accepted" "reason projected"
+        Expect.stringContains (snd (verifyWrite writes)) "required provider capability was not accepted" "reason projected"
         // Control: the same refusal on an optional Warn gate stays advisory.
         let optional, _, _ = drivePure (List.map refusedRun) (loaded handoffResolution warnFacts [ gp "src/a.fs" ])
         Expect.equal optional.Legacy.Exit Loop.Success "optional warn gate keeps its maturity"
@@ -234,9 +265,9 @@ let tests = testList "ProviderPlanningLoop" [
         | other -> failtestf "unexpected outcomes %A" other)
     testCase "unknown optional capability remains visibly unsupported" (fun _ ->
         let unknown = { binding with CapabilityId = "future:check" }
-        let model, effects = loaded { resolution with Bindings = [ binding; unknown ] } facts [ gp "src/a.fs" ]
+        let model, _ = loaded { resolution with Bindings = [ binding; unknown ] } facts [ gp "src/a.fs" ]
         Expect.equal (Option.get model.Plan).UnsupportedCapabilityIds [ unknown.CapabilityId ] "unknown retained"
-        match effects with
+        match snd (Loop.updateProvider (Loop.LegacyMsg(Loop.SurfacesSensed [])) model) with
         | [ Loop.ExecuteProviderGates runs ] ->
             Expect.equal (runs |> List.map (fun r -> r.Gate)) [ FS.GG.Governance.Gates.Model.GateId "build:build" ] "only the admitted executable runs"
         | other -> failtestf "unexpected %A" other)
@@ -245,9 +276,12 @@ let tests = testList "ProviderPlanningLoop" [
         let early, none = Loop.updateProvider (Loop.ProviderGatesExecuted []) initial
         Expect.equal early initial "an observation before planning is inert"
         Expect.isEmpty none "nothing requested"
-        let model, _ = loaded requiredHandoffResolution facts [ gp "src/a.fs" ]
+        let model, effects = loaded requiredHandoffResolution facts [ gp "src/a.fs" ]
+        let early, none = Loop.updateProvider (Loop.ProviderGatesExecuted(List.map accepted model.Runs)) model
+        Expect.equal early model "observations before the execution request are inert"
+        Expect.isEmpty none "nothing requested yet"
         let wrongGate run = { accepted run with Gate = FS.GG.Governance.Gates.Model.GateId "other:gate" }
-        let terminal, _, _ = drivePure (List.map wrongGate) (model, [ Loop.ExecuteProviderGates model.Runs ])
+        let terminal, _, _ = drivePure (List.map wrongGate) (model, effects)
         Expect.equal terminal.Legacy.Exit Loop.Blocked "an observation for another gate is not this run"
         Expect.equal (terminal.Results |> List.map (fun (_, _, v) -> v)) [ Loop.ProviderRefused [ Loop.NotObserved ] ] "not observed"
         let again, more = Loop.updateProvider (Loop.ProviderGatesExecuted(List.map accepted model.Runs)) terminal

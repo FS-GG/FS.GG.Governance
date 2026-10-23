@@ -60,6 +60,17 @@ let acceptanceTests =
     testList "ProviderExecution acceptance" [
         testCase "launched, exit 0, EOF, released, fresh source-bound passing handoff is accepted" (fun _ ->
             Expect.equal (Loop.acceptProviderGate run (launchedWith ok (produced goodHandoff cited))) Loop.ProviderAccepted "accepted")
+        testCase "a gate not launched because one output pre-existed reports only that stale output, not missing ones" (fun _ ->
+            let other = { handoffEvidence with Id = "second"; OutputPath = gp "artifacts/second.json" }
+            let two = { run with Evidence = [ handoffEvidence; other ] }
+            let observation: Loop.ProviderGateObservation =
+                { Gate = run.Gate
+                  Launch = Loop.NotLaunched "a declared evidence output was not absent before launch"
+                  Evidence = [ { Evidence = handoffEvidence; State = Loop.PresentBeforeLaunch }; { Evidence = other; State = Loop.AbsentAfterRun } ] }
+            let refusals = refusalsOf (Loop.acceptProviderGate two observation)
+            Expect.isTrue (refusals |> List.exists (function Loop.LaunchRefused _ -> true | _ -> false)) "launch refused"
+            Expect.isTrue (refusals |> List.contains (Loop.EvidenceStale "log")) "stale output named"
+            Expect.isFalse (refusals |> List.exists (function Loop.EvidenceMissing _ -> true | _ -> false)) "nothing ran, so nothing is called missing")
         testCase "not launched is refused with its reason" (fun _ ->
             let observation: Loop.ProviderGateObservation =
                 { Gate = run.Gate; Launch = Loop.NotLaunched "lease refused"; Evidence = [ { Evidence = handoffEvidence; State = Loop.AbsentAfterRun } ] }
@@ -156,6 +167,10 @@ let acceptanceTests =
             Expect.equal (List.distinct texts).Length texts.Length "distinct")
     ]
 
+module FifoNative =
+    [<System.Runtime.InteropServices.DllImport("libc", SetLastError = true)>]
+    extern int mkfifo(string path, uint32 mode)
+
 // ── The evidence edge over a real filesystem, with an in-process fixture launcher that writes the evidence. ──
 
 let withRoot (body: string -> unit) =
@@ -251,6 +266,43 @@ let edgeTests =
                 File.Delete(outputPath root)
                 let _, invalid = observeWith root (launcher [| 0xC3uy; 0x28uy |])
                 invalid |> expectRefused (function Loop.EvidenceUnreadable("log", "not strict UTF-8") -> true | _ -> false) "utf8"))
+        testCase "a FIFO at the output path is refused without blocking on an open" (fun _ ->
+            withRoot (fun root ->
+                let launcher (run: Loop.ProviderGateRun) =
+                    Directory.CreateDirectory(Path.Combine(root, "artifacts")) |> ignore
+                    Expect.equal (FifoNative.mkfifo (outputPath root, 0o600u)) 0 "fixture FIFO created"
+                    Loop.Launched(observedExit (gateIdValue run.Gate) (Some 0))
+                let observed = System.Threading.Tasks.Task.Run(fun () -> observeWith root launcher)
+                Expect.isTrue (observed.Wait(TimeSpan.FromSeconds 10.0)) "evidence observation returned (a FIFO open would block)"
+                snd observed.Result
+                |> expectRefused (function Loop.EvidenceUnreadable("log", "not a regular file") -> true | _ -> false) "fifo"))
+        testCase "a cited source that is a FIFO is uncaptured, without blocking" (fun _ ->
+            withRoot (fun root ->
+                let calls = ref 0
+                let launcher (run: Loop.ProviderGateRun) =
+                    let launched = writingLauncher root calls handoffCiting run
+                    File.Delete(Path.Combine(root, "src", "a.fs"))
+                    Expect.equal (FifoNative.mkfifo (Path.Combine(root, "src", "a.fs"), 0o600u)) 0 "fixture FIFO created"
+                    launched
+                let observed = System.Threading.Tasks.Task.Run(fun () -> observeWith root launcher)
+                Expect.isTrue (observed.Wait(TimeSpan.FromSeconds 10.0)) "source digesting returned"
+                snd observed.Result
+                |> expectRefused (function Loop.EvidenceSourcesRejected("log", reasons) -> reasons |> List.exists (fun r -> r.Contains "not captured") | _ -> false) "fifo source"))
+        testCase "a cited source reached through a linked directory is never digested" (fun _ ->
+            withRoot (fun root ->
+                let outside = root + "-outside"
+                Directory.CreateDirectory outside |> ignore
+                try
+                    File.Copy(Path.Combine(root, "src", "a.fs"), Path.Combine(outside, "a.fs"))
+                    let digest = sourceDigest root
+                    Directory.Delete(Path.Combine(root, "src"), true)
+                    Directory.CreateSymbolicLink(Path.Combine(root, "src"), outside) |> ignore
+                    let calls = ref 0
+                    let _, verdict = observeWith root (writingLauncher root calls (fun _ -> handoffCiting digest))
+                    verdict
+                    |> expectRefused (function Loop.EvidenceSourcesRejected("log", reasons) -> reasons |> List.exists (fun r -> r.Contains "not captured") | _ -> false) "linked source"
+                finally
+                    try Directory.Delete(outside, true) with _ -> ()))
         testCase "a launcher fault is contained as not launched" (fun _ ->
             withRoot (fun root ->
                 let _, verdict = observeWith root (fun _ -> failwith "synthetic launcher fault")
@@ -309,8 +361,23 @@ let journeyTests =
                     Expect.equal actual.Command.Arguments (List.map Argument command.Arguments) "literal argv, no lexer roundtrip"
                     Expect.equal actual.Command.WorkingDirectory (WorkingDirectory(Path.Combine(root, "src"))) "binding cwd under the captured root"
                 | other -> failtestf "unexpected runs %A" other
-                let _, _, doc = cap.Writes |> List.exactlyOne
+                Expect.equal (cap.Writes |> List.map (fun (_, path, _) -> path)) [ "readiness/verify.json"; "readiness/cost-budget.json"; "readiness/provenance.json" ] "verify.json and both sidecars"
+                let _, _, doc = cap.Writes |> List.find (fun (_, path, _) -> path = "readiness/verify.json")
                 Expect.stringContains doc "build:build" "verify.json projects the gate"))
+        testCase "product surfaces are sensed once and a blocking finding blocks despite accepted evidence (Strict, 1)" (fun _ ->
+            withRoot (fun root ->
+                let calls = ref 0
+                let senses = ref 0
+                let cap = newCapture ()
+                let ports = fakePorts providerCatalog gitSrcChange cap
+                let ports = { ports with SenseSurfaces = (fun _ -> senses.Value <- senses.Value + 1; [ blockingSurfaceFinding ]) }
+                let provider: Loop.ProviderPlanningInput = { ResolutionRequest = requiredHandoffResolution; CommandContext = { context with RepoRoot = root } }
+                let model =
+                    Interpreter.runProvider ports (ProviderExecution.executeWith root (writingLauncher root calls handoffCiting)) (requestForProfile (Loop.ExplicitPaths [ gp "src/a.fs" ]) Loop.Json FS.GG.Governance.Enforcement.Enforcement.Strict) provider
+                Expect.equal senses.Value 1 "sensed exactly once"
+                Expect.equal calls.Value 1 "the gate still ran"
+                Expect.equal (model.Results |> List.map (fun (_, _, v) -> v)) [ Loop.ProviderAccepted ] "evidence accepted"
+                Expect.equal (Loop.exitCode model.Legacy.Exit) 1 "surface verdict folded"))
         testCase "missing evidence blocks (1)" (fun _ ->
             withRoot (fun root ->
                 let model, _ = journey root (fun (run: Loop.ProviderGateRun) -> Loop.Launched(observedExit (gateIdValue run.Gate) (Some 0)))

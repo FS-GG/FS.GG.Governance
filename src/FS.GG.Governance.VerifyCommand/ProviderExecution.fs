@@ -60,13 +60,28 @@ module internal ProviderExecution =
     let sha256 (bytes: byte array) =
         "sha256:" + Convert.ToHexString(SHA256.HashData bytes).ToLowerInvariant()
 
-    // Bounded read of one regular file; None when absent.
-    let readRegular (path: string) (limit: int) : Result<byte array option, string> =
-        if Directory.Exists path then
-            Error "not a regular file"
-        elif not (File.Exists path) then
-            Ok None
+    module Native =
+        [<System.Runtime.InteropServices.DllImport("libc", SetLastError = true)>]
+        extern int statx(int dirfd, string path, int flags, uint32 mask, [<System.Runtime.InteropServices.Out>] byte[] data)
+
+    // The file type of `path` itself (never following a final link), from statx STATX_TYPE; None when unobservable.
+    let fileType (path: string) : int option =
+        let data = Array.zeroCreate<byte> 256
+
+        if Native.statx(-100, path, 0x100, 0x1u, data) <> 0 then
+            None
         else
+            Some(int (BitConverter.ToUInt16(data, 28) &&& 0xF000us))
+
+    // Bounded read of one regular file; None when absent. The type is checked before any open, so a FIFO, device
+    // or socket at the path is refused instead of blocking an open/read outside every budget.
+    let readRegular (path: string) (limit: int) : Result<byte array option, string> =
+        match fileType path with
+        | None when File.Exists path || Directory.Exists path || not (isNull (FileInfo path).LinkTarget) ->
+            Error "file type could not be observed"
+        | None -> Ok None
+        | Some kind when kind <> 0x8000 -> Error "not a regular file"
+        | Some _ ->
             use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
 
             if stream.Length > int64 limit then
@@ -160,7 +175,8 @@ module internal ProviderExecution =
           Now: unit -> MonotonicInstant
           TicksPerSecond: int64
           Pause: unit -> unit
-          Report: string -> unit }
+          Report: string -> unit
+          IdleLeaseRetained: unit -> unit }
 
     let toolError message = "fsgg verify [tool-error]: " + message
 
@@ -174,10 +190,10 @@ module internal ProviderExecution =
         (what: string)
         (permanent: BoundedFailure -> bool)
         (release: unit -> Result<unit, BoundedFailure>)
-        =
+        : BoundedFailure option =
         let rec attempt reported =
             match release () with
-            | Ok() -> ()
+            | Ok() -> None
             | Error cause ->
                 let past = (host.Now()).Ticks >= cleanupEnd.Ticks
 
@@ -188,7 +204,9 @@ module internal ProviderExecution =
                         )
                     )
 
-                if not (past && permanent cause) then
+                if past && permanent cause then
+                    Some cause
+                else
                     host.Pause()
                     attempt (reported || past)
 
@@ -244,6 +262,7 @@ module internal ProviderExecution =
                             ("provider execution session " + gateIdValue run.Gate)
                             (fun _ -> false)
                             (fun () -> Gate.release session)
+                        |> ignore
 
                         let observed = Gate.observe session
 
@@ -254,10 +273,17 @@ module internal ProviderExecution =
                 with ex ->
                     Loop.NotLaunched("held-cwd launch fault: " + ex.GetType().Name + ": " + ex.Message)
 
-            settle
-                host
-                original.CleanupEnd
-                "borrowed repository root lease"
-                (fun cause -> cause = CleanupDeadlineReached)
-                (fun () -> Gate.releaseDirectoryLease lease)
+            // The lease refuses with CleanupDeadlineReached only when it has no borrower and no uncertain close
+            // (GateExecution checks those first), so a lease left this way is idle: no read can be pending in it.
+            match
+                settle
+                    host
+                    original.CleanupEnd
+                    "borrowed repository root lease"
+                    (fun cause -> cause = CleanupDeadlineReached)
+                    (fun () -> Gate.releaseDirectoryLease lease)
+            with
+            | Some _ -> host.IdleLeaseRetained()
+            | None -> ()
+
             launched

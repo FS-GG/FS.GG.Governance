@@ -43,11 +43,17 @@ module internal ProviderExecution =
           TicksPerSecond: int64
           /// One bounded wait between release attempts; never a release, disposal or signal.
           Pause: unit -> unit
-          Report: string -> unit }
+          Report: string -> unit
+          /// Told when a borrowed root lease is left retained only because the original cleanup end passed: it
+          /// has no borrower and no uncertain close, so no read can be pending in it. The Verify host counts it so
+          /// its settlement can report "retained with nothing pending" and exit instead of staying resident.
+          IdleLeaseRetained: unit -> unit }
 
     /// The real launcher. Revalidates the original captured documents and borrows the held repository root
     /// (`ProviderContextCapture.borrowRepositoryRoot`), prepares one GateExecution held-cwd session whose work end
     /// is the earlier of the original work end and the command timeout and whose cleanup end is the original
     /// cleanup end, runs it once, then releases the session and the lease. A release refused past the original
-    /// cleanup end is reported once and retried; the host never abandons, signals around or replaces an owner.
+    /// cleanup end is reported once and retried while it can still succeed; a lease refused only by the passed
+    /// cleanup end (idle, never releasable) is reported and handed to `IdleLeaseRetained`. The host never abandons,
+    /// signals around or replaces an owner.
     val launchHeld: host: Host -> run: Loop.ProviderGateRun -> Loop.ProviderLaunch

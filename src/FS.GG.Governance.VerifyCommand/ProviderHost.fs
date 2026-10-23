@@ -84,14 +84,16 @@ module internal ProviderHost =
     // The sole release site. Release is attempted until it is Ok; an Error is never answered with disposal,
     // replacement, renewal or a signal. Past the original cleanup end a session in which a read may be
     // pending keeps this host resident (reported once); only the outer admitted runtime ends that.
-    let private settle (effects: Effects) (report: string -> unit) (budget: ExecutionBudget) (session: Capture.CaptureSession) =
+    let private settle (effects: Effects) (report: string -> unit) (budget: ExecutionBudget) (idleLeases: int) (session: Capture.CaptureSession) =
         let rec attempt reported =
             match Capture.release session with
             | Ok() -> if reported then ReleasedAfterUnsettledReport else Released
             | Error cause ->
                 let pastCleanup = (effects.Now()).Ticks >= budget.CleanupEnd.Ticks
                 let owned = Capture.ownership session
-                let readMayBePending = owned.PendingActivity || owned.CloseUncertain || owned.BorrowedRoots > 0
+                // A borrowed root lease the provider executor left retained only because the cleanup end passed is
+                // idle (no borrower, no uncertain close): it is a retained descriptor, not a read that may be pending.
+                let readMayBePending = owned.PendingActivity || owned.CloseUncertain || owned.BorrowedRoots > idleLeases
                 if pastCleanup && not readMayBePending then
                     // The refused attempt may have raced the last owned activity finishing; one more attempt
                     // from the owner decides, so a session that did settle is never reported as retained.
@@ -115,6 +117,7 @@ module internal ProviderHost =
         let start = effects.Now()
         let held: (Capture.CaptureSession * ExecutionBudget) option ref = ref None
         let providerStarted = ref false
+        let idleLeases = ref 0
         let acquire: Supply =
             fun request selection ->
                 match admit effects start with
@@ -145,7 +148,8 @@ module internal ProviderHost =
                                   Now = effects.Now
                                   TicksPerSecond = effects.TicksPerSecond
                                   Pause = effects.Pause
-                                  Report = report }
+                                  Report = report
+                                  IdleLeaseRetained = fun () -> idleLeases.Value <- idleLeases.Value + 1 }
 
                             Ok
                                 { Session = session
@@ -172,7 +176,7 @@ module internal ProviderHost =
         match held.Value with
         | None -> inner
         | Some(session, budget) ->
-            let settlement = settle effects report budget session
+            let settlement = settle effects report budget idleLeases.Value session
             let model = (Capture.inspect session).Model
             let failed = model.FirstFailure.IsSome || not (List.isEmpty model.SecondaryFailures)
             let code = exitCode inner settlement failed

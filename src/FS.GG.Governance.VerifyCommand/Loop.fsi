@@ -369,6 +369,8 @@ module Loop =
           Diagnostics: FS.GG.Governance.Config.CapabilityBindings.Diagnostic list
           /// The admitted executable runs requested from the edge (empty until planning succeeds).
           Runs: ProviderGateRun list
+          /// Whether the one execution request was emitted (after the product surfaces were sensed).
+          ExecutionRequested: bool
           /// Every requested run with the edge's observation and Governance's verdict, in request order.
           Results: (ProviderGateRun * ProviderGateObservation * ProviderGateVerdict) list }
 
@@ -392,11 +394,14 @@ module Loop =
     /// Reuses actual Verify selection/inheritance, then plans the complete request before any execution.
     /// Malformed declarations, an empty selection or a required capability without a selected gate refuse as
     /// InputUnavailable; no legacy freshness, store, reuse or execution effect is ever returned. A valid plan
-    /// requests its executable runs once (`ExecuteProviderGates`); their observations are accepted by
+    /// first senses the product surfaces exactly as legacy Verify does (`SenseSurfaces`), then requests its
+    /// executable runs once (`ExecuteProviderGates`); their observations are accepted by
     /// `acceptProviderGate`, accepted gates are relocated with `applyExecution`, and a required executable
     /// capability that is not accepted (refused, deferred or not run) is forced blocking whatever its maturity.
-    /// Semantic-only, deferred and unsupported entries never pass. verify.json is then written and summarized
-    /// through the legacy tail; the exit follows the resulting decision.
+    /// Semantic-only, deferred and unsupported entries never pass. Surface and view-currency findings fold as in
+    /// legacy Verify. verify.json and its two sidecars (no cache decisions or command records: provider mode never
+    /// consults the reuse store) are then written and summarized through the legacy tail; the exit follows the
+    /// resulting decision.
     val updateProvider: msg: ProviderMsg -> model: ProviderModel -> ProviderModel * ProviderEffect list
 
     /// The pure evidence acceptance for one run (GOV-423-C2). Accepted only when the command was launched,
