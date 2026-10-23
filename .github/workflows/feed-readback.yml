@@ -1,0 +1,90 @@
+name: feed-readback
+run-name: feed-readback ${{ inputs.version }}
+
+# Read-only, manually dispatched post-publication readback of ONE published Governance tool version from both
+# feeds (GOV-423-C2 / Governance#423 1.15.0 acceptance). It downloads FS.GG.Governance.Cli and
+# FS.GG.Governance.FSharpSurfaceCommand at the selected version from the org GitHub Packages feed (with this
+# run's own read-only token) and from nuget.org, records whole-archive SHA-256 values and compares every archive
+# entry by name and bytes, excepting only nuget.org's repository signature (.signature.p7s). It builds nothing,
+# pushes nothing, creates no tag or release and changes no package or repository state.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Exact published version to read back (SemVer, e.g. 1.15.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: feed-readback-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  readback:
+    name: Read back both feeds and compare archives
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download from both feeds and compare
+        env:
+          VERSION: ${{ inputs.version }}
+          ORG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must be exact SemVer"; exit 1; }
+          mkdir -p readback/org readback/public
+          status=0
+          for id in fs.gg.governance.cli fs.gg.governance.fsharpsurfacecommand; do
+            file="$id.$VERSION.nupkg"
+            org_code=$(curl -sS -L -u "$ORG_ACTOR:$ORG_TOKEN" -o "readback/org/$file" -w '%{http_code}' \
+              "https://nuget.pkg.github.com/FS-GG/download/$id/$VERSION/$file") || org_code=000
+            pub_code=$(curl -sS -L -o "readback/public/$file" -w '%{http_code}' \
+              "https://api.nuget.org/v3-flatcontainer/$id/$VERSION/$file") || pub_code=000
+            echo "$id org=$org_code public=$pub_code"
+            if [ "$org_code" != 200 ] || [ "$pub_code" != 200 ]; then
+              echo "::error::$id $VERSION not readable from both feeds (org $org_code, nuget.org $pub_code)"
+              rm -f "readback/org/$file" "readback/public/$file"
+              status=1
+            fi
+          done
+          (cd readback && find . -type f -name '*.nupkg' -print0 | sort -z | xargs -0 -r sha256sum) | tee readback/sha256sums.txt
+          python3 - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
+          import hashlib, json, os, zipfile
+          root, rows, verdicts = "readback", [], {}
+          for name in sorted(os.listdir(root + "/org")):
+              org, pub = root + "/org/" + name, root + "/public/" + name
+              sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()
+              with zipfile.ZipFile(org) as a, zipfile.ZipFile(pub) as b:
+                  ea = {i.filename: a.read(i.filename) for i in a.infolist()}
+                  eb = {i.filename: b.read(i.filename) for i in b.infolist()}
+              signature = ".signature.p7s"
+              only_org = sorted(set(ea) - set(eb))
+              only_pub = sorted(set(eb) - set(ea) - {signature})
+              differ = sorted(n for n in set(ea) & set(eb) if ea[n] != eb[n])
+              identical = not only_org and not only_pub and not differ
+              verdicts[name] = {"orgSha256": sha(org), "nugetOrgSha256": sha(pub),
+                                "comparedEntries": len(set(ea) & set(eb)), "orgEntries": len(ea),
+                                "nugetOrgEntries": len(eb), "nugetOrgSignature": signature in eb,
+                                "onlyOrg": only_org, "onlyNugetOrg": only_pub, "differ": differ,
+                                "identicalExceptSignature": identical}
+          print("## Feed readback\n\n```json\n" + json.dumps(verdicts, indent=2) + "\n```")
+          json.dump(verdicts, open(root + "/readback.json", "w"), indent=2)
+          if not verdicts or not all(v["identicalExceptSignature"] for v in verdicts.values()):
+              raise SystemExit(1)
+          EOF
+          exit $status
+      - name: Retain the readback record
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: feed-readback-${{ inputs.version }}
+          path: |
+            readback/readback.json
+            readback/sha256sums.txt
+          if-no-files-found: warn
+          retention-days: 30
