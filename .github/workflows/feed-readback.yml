@@ -54,22 +54,28 @@ jobs:
           done
           (cd readback && find . -type f -name '*.nupkg' -print0 | sort -z | xargs -0 -r sha256sum) | tee readback/sha256sums.txt
           python3 - <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
-          import hashlib, json, os, zipfile
+          import hashlib, json, os, re, zipfile
           root, rows, verdicts = "readback", [], {}
           for name in sorted(os.listdir(root + "/org")):
               org, pub = root + "/org/" + name, root + "/public/" + name
               sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()
               with zipfile.ZipFile(org) as a, zipfile.ZipFile(pub) as b:
-                  ea = {i.filename: a.read(i.filename) for i in a.infolist()}
-                  eb = {i.filename: b.read(i.filename) for i in b.infolist()}
+                  na, nb = [i.filename for i in a.infolist()], [i.filename for i in b.infolist()]
+                  duplicates = sorted({n for n in na if na.count(n) > 1} | {n for n in nb if nb.count(n) > 1})
+                  ea = {i.filename: a.read(i) for i in a.infolist()}
+                  eb = {i.filename: b.read(i) for i in b.infolist()}
+              nuspec = [n for n in ea if n.endswith(".nuspec") and "/" not in n]
+              commit = re.search(r'<repository[^>]*commit="([0-9a-f]{40})"', ea[nuspec[0]].decode("utf-8", "replace")) if len(nuspec) == 1 else None
               signature = ".signature.p7s"
               only_org = sorted(set(ea) - set(eb))
               only_pub = sorted(set(eb) - set(ea) - {signature})
               differ = sorted(n for n in set(ea) & set(eb) if ea[n] != eb[n])
-              identical = not only_org and not only_pub and not differ
+              identical = not only_org and not only_pub and not differ and not duplicates
               verdicts[name] = {"orgSha256": sha(org), "nugetOrgSha256": sha(pub),
                                 "comparedEntries": len(set(ea) & set(eb)), "orgEntries": len(ea),
                                 "nugetOrgEntries": len(eb), "nugetOrgSignature": signature in eb,
+                                "nuspecRepositoryCommit": commit.group(1) if commit else None,
+                                "duplicateEntryNames": duplicates,
                                 "onlyOrg": only_org, "onlyNugetOrg": only_pub, "differ": differ,
                                 "identicalExceptSignature": identical}
           print("## Feed readback\n\n```json\n" + json.dumps(verdicts, indent=2) + "\n```")
