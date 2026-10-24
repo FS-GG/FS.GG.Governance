@@ -22,7 +22,8 @@ GATE = "needs.resolve-version.outputs.push == 'true'"
 VISIBILITY = "needs.resolve-version.outputs.scope == 'config' || " + GATE
 FIRST = "needs.resolve-version.outputs.recovery == 'false'"
 RECOVERY = "needs.resolve-version.outputs.recovery == 'true'"
-ORDER = ['Checkout', 'Preflight Config publication contract', 'Set up .NET',
+LOCK = 'Acquire org publication writer lock'  # ADR-0097: first step, bounded wait, its own step timeout
+ORDER = [LOCK, 'Checkout', 'Preflight Config publication contract', 'Set up .NET',
          'Restore (locked, cold)', 'Test complete Config suite', 'Authenticate original Config source', 'Checkout original Config source', 'Resolve Config package version',
          'Pack Config once', 'Identify exact Config archive', 'Config package consumer smoke',
          'Validate complete Config retention', 'Recover original Config archive',
@@ -74,7 +75,7 @@ def validate(text):
     steps = {m.group(1): job[m.end():starts[i+1].start() if i+1 < len(starts) else len(job)]
              for i, m in enumerate(starts)}
     for name, body in steps.items():
-        require(not re.search(r'^        (continue-on-error|timeout-minutes):', body, re.M), 'unsupported step control: ' + name)
+        require(not re.search(r'^        (continue-on-error|timeout-minutes):', body, re.M) or name == LOCK, 'unsupported step control: ' + name)
         condition = re.findall(r'^        if: (.+)$', body, re.M)
         expected = []
         if name in ['Restore (locked, cold)', 'Test complete Config suite', 'Pack Config once',
@@ -92,6 +93,7 @@ def validate(text):
         elif name == 'Retain Config feed observations':
             expected = ["always() && (" + VISIBILITY + ")"]
         require(condition == expected, 'unsupported/missing condition: ' + name)
+    require('uses: FS-GG/.github/.github/actions/publication-writer-lock@' in steps[LOCK] and 'max-wait-minutes: 30\n' in steps[LOCK], 'org publication writer lock step drift')
     require(job.count('dotnet pack ') == 1, 'Config must pack exactly once')
     require(job.count('dotnet nuget push ') == 2 and job.count('NuGet/login@v1') == 1, 'unexpected publication effect')
     require('python3 tests/config-package-smoke/publish_contract.py .github/workflows/publish.yml --mutations' in steps['Preflight Config publication contract'], 'preflight missing before costly work')
