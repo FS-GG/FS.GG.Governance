@@ -279,10 +279,10 @@ jobs:
   # an already-published version an idempotent no-op (version immutability); any other push failure
   # fails the run (FR-007 fail-safe). A dry-run dispatch (push=false) skips the push entirely.
   publish:
-    name: Pack + publish FS.GG.Governance.Cli (fsgg-governance tool)
+    name: Pack + publish FS.GG.Governance.Cli (fsgg-governance tool) [org-publication-writer]
     needs: [resolve-version, cli-tests, enforcement-smoke]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
@@ -291,6 +291,11 @@ jobs:
       # short-lived key from the run's id-token; no NUGET_ORG_API_KEY is stored (ADR-0013).
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -374,16 +379,21 @@ jobs:
   # install from only that local artifact, run the external-project receipt smoke, then push the identical
   # bytes to the org feed first and nuget.org second. The smoke is deliberately before either publication.
   publish-fsharp-surface-command:
-    name: Pack + publish FS.GG.Governance.FSharpSurfaceCommand (fsgg-fsharp-surface tool)
+    name: Pack + publish FS.GG.Governance.FSharpSurfaceCommand (fsgg-fsharp-surface tool) [org-publication-writer]
     needs: [resolve-version]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
       - name: Set up .NET
@@ -464,16 +474,21 @@ jobs:
   # the SPI publisher attempts its clean transitive consumer. Pack Kernel once, send those bytes to the
   # org feed first, then send the same bytes to nuget.org. A repeated run is idempotent.
   publish-kernel:
-    name: Pack + publish FS.GG.Governance.Kernel
+    name: Pack + publish FS.GG.Governance.Kernel [org-publication-writer]
     needs: [resolve-version]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -632,16 +647,21 @@ jobs:
   # packs the candidate once. A real publish sends those bytes to the org feed first, then verifies a
   # cold consumer through that published feed before sending the byte-identical nupkg to nuget.org.
   publish-adapter-spi:
-    name: Pack + publish FS.GG.Governance.Adapters.Spi
+    name: Pack + publish FS.GG.Governance.Adapters.Spi [org-publication-writer]
     needs: [resolve-version, publish-kernel]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -832,16 +852,21 @@ jobs:
   # records that exact file's digest, pushes it to the org feed first, verifies the bytes are unchanged,
   # then pushes the same path to nuget.org. The existing CLI and ReferenceGateSet jobs are untouched.
   publish-code-checks:
-    name: Pack + publish FS.GG.Governance.CodeChecks
+    name: Pack + publish FS.GG.Governance.CodeChecks [org-publication-writer]
     needs: [resolve-version]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
       packages: write
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -977,10 +1002,10 @@ jobs:
   # a later SHA embeds a different nuspec repository commit, which the collision check must refuse as a
   # payload conflict. Releasing a new Config version is its own scope=config dispatch.
   publish-config:
-    name: Pack + publish FS.GG.Governance.Config
+    name: Pack + publish FS.GG.Governance.Config [org-publication-writer]
     needs: [resolve-version]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'config'
     permissions:
       contents: read
@@ -988,6 +1013,11 @@ jobs:
       packages: write
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -1169,10 +1199,10 @@ jobs:
   # its VERSION is schema-derived by pack-reference-gate-set.fsx (ADR-0007), not the CLI <Version>. The
   # pack script self-runs the G1–G7 guard and refuses to pack when red — the hard pre-push gate (FR-004).
   publish-reference-gate-set:
-    name: Pack + publish FS.GG.Governance.ReferenceGateSet (content-only)
+    name: Pack + publish FS.GG.Governance.ReferenceGateSet (content-only) [org-publication-writer]
     needs: [resolve-version]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     if: github.repository == 'FS-GG/FS.GG.Governance' && needs.resolve-version.outputs.scope == 'all'
     permissions:
       contents: read
@@ -1180,6 +1210,11 @@ jobs:
       # Trusted Publishing (OIDC) — same rationale as the CLI publish job (ADR-0013).
       id-token: write
     steps:
+      - name: Acquire org publication writer lock
+        uses: FS-GG/.github/.github/actions/publication-writer-lock@c799a9f9b21d52eb9766cf0950722e3e55145d39 # ADR-0097
+        with:
+          max-wait-minutes: 30
+        timeout-minutes: 32
       - name: Checkout
         uses: actions/checkout@v7
 
