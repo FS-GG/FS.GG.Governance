@@ -120,7 +120,10 @@ directory. Internal deadlines are budgeted under the 180 s hard kill: 75 s for t
   surviving mount/dm/loop/D-state/connection, out-of-order or failed teardown steps).
 * **Physical (opt-in):** nine cases that run the scenarios above, including a janitor control that
   kills the driver while the read is parked, asserts that devices really leaked, and asserts that
-  the janitor restores a clean census. Default runs show them as
+  the janitor restores a clean census. Observed: pid 1 cannot finish exiting while its reader is
+  parked on the suspended device, so the command hangs until the control's 40 s kill; the dm device
+  and the loop device (reported as `/fsgg423b-XXXX/backing.img` by a hung namespace) leak until the
+  janitor loads the error table, resumes and removes them. Default runs show them as
   skipped. With the opt-in set, missing prerequisites fail rather than skip.
 
 ## How Root runs the physical cases in fdev

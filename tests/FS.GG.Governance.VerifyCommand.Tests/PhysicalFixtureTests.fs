@@ -364,6 +364,8 @@ let physicalCases: (string * (unit -> unit)) list =
           let leakedSomething =
               result.Leaked.DmDevices.Length + result.Leaked.LoopDevices.Length + result.Leaked.DStateTasks.Length + result.Leaked.FixtureMounts.Length > 0
           Expect.isTrue leakedSomething (sprintf "the abnormal exit really left state behind (otherwise the control is vacuous); census: %s" (toJson result.Leaked))
+          Expect.isNonEmpty result.Leaked.DmDevices "the suspended dm device leaked"
+          Expect.isNonEmpty result.Leaked.LoopDevices "the loop device leaked (the census matches it by run directory name)"
           Expect.isNonEmpty result.JanitorActions "janitor acted"
           expectAccepted "census after janitor" (judgeCensus "after janitor" result.Restored result.Restored)
           Expect.isEmpty result.Restored.DmDevices "no dm device"
