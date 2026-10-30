@@ -304,6 +304,9 @@ let private listDir (path: string) = try Directory.GetDirectories path |> Array.
 /// process command line and in every fixture mount, dm and loop name.
 let takeCensus (outDir: string) (baseline: string[] option) : Census =
     let token = fixtureToken outDir
+    // `losetup -a` prints the backing path as the caller's mount namespace sees it (a hung namespace shows
+    // `/fsgg423b-XXXX/backing.img`, without the /tmp prefix), so loop devices are matched by directory name.
+    let runName = Path.GetFileName outDir |> Option.ofObj |> Option.defaultValue token
     let self = Process.GetCurrentProcess().Id
     // As pid 1 of the private pid namespace every visible task is the fixture's: no command-line filter.
     let everything = self = 1
@@ -329,7 +332,7 @@ let takeCensus (outDir: string) (baseline: string[] option) : Census =
     let _, dm, _ = runPrivileged "dmsetup" [ "ls" ] 5000
     let dmDevices = dm.Split('\n', StringSplitOptions.RemoveEmptyEntries) |> Array.filter (fun entry -> entry.StartsWith "fsgg423b-")
     let _, loops, _ = runTool "losetup" [ "-a" ] 5000
-    let loopDevices = loops.Split('\n', StringSplitOptions.RemoveEmptyEntries) |> Array.filter (fun entry -> entry.Contains token)
+    let loopDevices = loops.Split('\n', StringSplitOptions.RemoveEmptyEntries) |> Array.filter (fun entry -> entry.Contains runName)
     let connections = listDir "/sys/fs/fuse/connections"
     let inflight =
         [| for block in (try Directory.GetDirectories "/sys/block" with _ -> [||]) do
