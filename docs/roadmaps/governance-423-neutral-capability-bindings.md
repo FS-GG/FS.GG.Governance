@@ -467,6 +467,11 @@ accountable supplier. (d) Real SDD to Verify to GateExecution acceptance with so
 revalidation. (e) Stronger profiles, C3/C4 and the original custody holds. The inert controls above
 and hosted source qualification discharge none of these.
 
+**Physical fixture for (b) (2026-10-30).** A contained kernel-level fixture and its opt-in tests are
+described in [gov423-physical-fixture.md](gov423-physical-fixture.md). It supplies the means, not the
+acceptance: Root's run in fdev and its evidence remain what discharges (b) and, with the SDD#1132
+runner, (c).
+
 
 ### GOV423-C2 Verify capture-lifetime host composition (2026-10-22)
 

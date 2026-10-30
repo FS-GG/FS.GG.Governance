@@ -27,6 +27,12 @@
     <Compile Include="ProviderContextCaptureTests.fs" />
     <!-- GOV-423-C2: opt-in native journey through the real host, capture and held-cwd execution. -->
     <Compile Include="ProviderExecutionNativeTests.fs" />
+    <!-- GOV-423 (b): contained kernel-level blocked-read / uncertain-close fixture. Inert controls always run;
+         the physical cases need FSGG_GOV_PHYSICAL_FIXTURE=1 (see docs/roadmaps/gov423-physical-fixture.md). -->
+    <Compile Include="PhysicalFixtureFuse.fs" />
+    <Compile Include="PhysicalFixtureEvidence.fs" />
+    <Compile Include="PhysicalFixtureRuntime.fs" />
+    <Compile Include="PhysicalFixtureTests.fs" />
     <Compile Include="EndToEndTests.fs" />
     <Compile Include="CurrencyTests.fs" />
     <Compile Include="ReuseTests.fs" />
