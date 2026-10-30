@@ -813,4 +813,10 @@ let runAbnormalExit () : AbnormalExitResult =
     waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
     let restored = takeCensus outDir (Some before.FuseConnectionsBaseline)
     removeTree outDir
-    { ExitCode = code; EvidenceWritten = evidenceWritten; Leaked = leaked; JanitorActions = actions; Restored = restored }
+    let result = { ExitCode = code; EvidenceWritten = evidenceWritten; Leaked = leaked; JanitorActions = actions; Restored = restored }
+    match Environment.GetEnvironmentVariable "FSGG_GOV_PHYSICAL_EVIDENCE_DIR" with
+    | null | "" -> ()
+    | keep ->
+        Directory.CreateDirectory keep |> ignore
+        File.WriteAllText(Path.Combine(keep, "block-abnormal-exit.json"), toJson result)
+    result
