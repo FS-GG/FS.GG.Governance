@@ -34,7 +34,7 @@ let private reader: ReaderResult =
     { ReaderPid = readerPid; WorkEndNs = ms 3000; CleanupEndNs = ms 6000; CaptureStartNs = ms 0; CaptureReturnedNs = ms 6010
       Phase = "Retiring"; FirstFailure = "WorkDeadlineReached"; SecondaryFailures = [| "CleanupDeadlineReached" |]
       Settlement = "Retained"; DocumentCount = 0; PendingActivity = true; RetainedDescriptors = 4; CloseUncertain = false
-      ReleaseAfterReturn = "Error OwnedActivitiesPending"; FinalRelease = "Error CleanupDeadlineReached"; FinalPendingActivity = false
+      ReleaseAfterReturn = "Error OwnedActivitiesPending"; FinalRelease = "Error CleanupDeadlineReached"; FinalPendingActivity = false; ReaderUid = 1000
       ModelDetail = "" }
 
 let private causeOf scenario = (causeFor scenario).Value
@@ -211,6 +211,13 @@ let inertJudges: (string * (unit -> unit)) list =
           expectRejected "stalled observer" "heartbeat" (judgeBlockedRead { blockBlocked with Observer = stalled })
           let fuseStalled = fuseBlocked.Observer |> Array.filter (fun s -> s.State <> "HB" || s.SampleAtNs <= ms 1000)
           expectRejected "stalled observer, FUSE" "heartbeat" (judgeBlockedRead { fuseBlocked with Observer = fuseStalled })
+      "Judge refuses non-observer samples bound to state HB as heartbeats (M8)", fun () ->
+          // The real heartbeats are the observer's own records (Tid 0). Stall the observer, then fill the gap with
+          // samples of a reader thread that merely carry the state "HB".
+          let stalled = blockBlocked.Observer |> Array.filter (fun s -> s.State <> "HB" || s.SampleAtNs <= ms 400 || s.SampleAtNs >= ms 6300)
+          let spoofed = [| for t in 500 .. 250 .. 6200 -> sample t 77 "HB" "" "" |]
+          expectRejected "spoofed heartbeats" "heartbeat" (judgeBlockedRead { blockBlocked with Observer = Array.append stalled spoofed })
+          Expect.isFalse (heartbeatCovers spoofed (ms 500) (ms 6200)) "Tid-bound heartbeats only"
       "Judge accepts a long park when heartbeats cover it", fun () ->
           expectAccepted "covered" (judgeBlockedRead blockBlocked)
       "Judge rejects evidence not bound to a clean commit and tree", fun () ->
@@ -289,7 +296,26 @@ let inertTeardown: (string * (unit -> unit)) list =
       "Evidence round-trips through its JSON record unchanged", fun () ->
           Expect.equal (ofJson<Evidence> (toJson uncertainClose)) uncertainClose "lossless" ]
 
-let private inertCases = inertProtocol @ inertJudges @ inertClose @ inertTeardown
+let inertLock: (string * (unit -> unit)) list =
+    [ "Host lock: a second acquisition refuses while the first is held and succeeds after release", fun () ->
+          if not (OperatingSystem.IsLinux()) then skiptest "flock is Linux-only"
+          let dir = IO.Directory.CreateTempSubdirectory("fsgg423b-locktest-").FullName
+          try
+              let path = IO.Path.Combine(dir, "lock")
+              match tryAcquireHostLock path with
+              | Error why -> failtestf "first acquisition must succeed: %s" why
+              | Ok first ->
+                  (match tryAcquireHostLock path with
+                   | Ok second -> second.Dispose(); first.Dispose(); failtest "a second holder must be refused while the first is held"
+                   | Error why -> Expect.stringContains why "busy" "refusal says why")
+                  first.Dispose()
+                  match tryAcquireHostLock path with
+                  | Ok again -> again.Dispose()
+                  | Error why -> failtestf "re-acquisition after release must succeed: %s" why
+          finally
+              IO.Directory.Delete(dir, true) ]
+
+let private inertCases = inertProtocol @ inertJudges @ inertClose @ inertTeardown @ inertLock
 
 [<Tests>]
 let inertTests = testList "PhysicalFixture inert" (inertCases |> List.map (fun (name, run) -> testCase name run))
@@ -326,6 +352,8 @@ let physicalCases: (string * (unit -> unit)) list =
           let result = run "normal-file"
           Expect.isTrue (readNormally result.Evidence) (sprintf "Ready with two documents; got %s / %s" result.Evidence.Reader.Phase result.Evidence.Reader.FirstFailure)
           Expect.equal result.Evidence.FileType "regular file" "statx regular file"
+          if not (isNull (Environment.GetEnvironmentVariable "SUDO_UID")) || Environment.UserName <> "root" then
+              Expect.notEqual result.Evidence.Reader.ReaderUid 0 "the production reader runs as the invoking user, not root"
           Expect.equal result.Evidence.Reader.FinalRelease "Ok" "public release settles after the caller retires the owner"
           expectAccepted "normal-file teardown" (judgeTeardown result.Evidence result.Outside)
       "Physical: FUSE regular file read blocks and production classifies WorkDeadlineReached, observed independently", fun () ->
@@ -370,6 +398,32 @@ let physicalCases: (string * (unit -> unit)) list =
           expectAccepted "census after janitor" (judgeCensus "after janitor" result.Restored result.Restored)
           Expect.isEmpty result.Restored.DmDevices "no dm device"
           Expect.isEmpty result.Restored.LoopDevices "no loop device"
+      "Physical control: a second run while the host lock is held refuses and leaves a live run's devices alone", fun () ->
+          let name, device, dir = createLiveDevices ()
+          try
+              let holder =
+                  match tryAcquireHostLock (lockPath ()) with
+                  | Ok held -> held
+                  | Error why -> failtestf "could not take the host lock for the control: %s" why
+              try
+                  let refused (label: string) (attempt: unit -> unit) =
+                      try
+                          attempt ()
+                          failtestf "%s ran although the host lock was held" label
+                      with PhysicalRunBusy why -> Expect.stringContains why "busy" (label + " refuses with the reason")
+                  refused "runPhysically" (fun () -> runPhysically "normal-file" |> ignore)
+                  refused "runAbnormalExit" (fun () -> runAbnormalExit () |> ignore)
+                  let _, devices, _ = runPrivileged "dmsetup" [ "ls" ] 10000 |> fun (c, o, e) -> c, o, e
+                  let _, loops, _ = runTool "losetup" [ "-a" ] 10000
+                  Expect.stringContains devices name "the live run's dm device was not janitored away"
+                  Expect.stringContains loops device "the live run's loop device was not janitored away"
+              finally
+                  holder.Dispose()
+          finally
+              janitor () |> ignore
+              IO.Directory.Delete(dir, true)
+          let _, after, _ = runPrivileged "dmsetup" [ "ls" ] 10000
+          Expect.isFalse (after.Contains name) "the test's own devices are cleaned up afterwards"
       "Physical control: block fixture without the suspension does not pass", fun () ->
           let evidence = (run "block-control-no-block").Evidence
           Expect.isTrue (rejected (judgeBlockedRead evidence)) "no block, no pass"

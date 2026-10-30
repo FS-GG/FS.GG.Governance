@@ -31,7 +31,7 @@ in a `reader` process. Everything else is fixture:
 |---|---|
 | `scenario` | pid 1 of a private mount + pid namespace (`sudo unshare --mount --pid --fork --kill-child --mount-proc`). Owns setup, injection, ordered teardown, census and the evidence record. |
 | `daemon` | Raw-protocol FUSE daemon (no libfuse, gcc or bindings). Mounts with `mount(2)`, serves `INIT`, `LOOKUP`, `GETATTR`, `OPEN`, `READ`, `FLUSH`, `RELEASE`, logs every request and reply with a monotonic timestamp. The wire decisions are pure functions (`PhysicalFixtureFuse.fs`). |
-| `reader` | The production capture path against the fixture file. Reports only what production reports (`FirstFailure`, `SecondaryFailures`, `Settlement`, ownership, public `release`). |
+| `reader` | The production capture path against the fixture file, run as the invoking user (`setpriv`, the uid recorded in the evidence) while the other roles stay root. Reports only what production reports (`FirstFailure`, `SecondaryFailures`, `Settlement`, ownership, public `release`). |
 | `observer` | A separate process sampling `/proc/<reader>/task/*/{stat,wchan,stack}` every 10 ms with monotonic timestamps. It shares no state with the daemon or reader. |
 
 The test assembly re-enters itself for each role (`--physical-fixture <role>`, see `Main.fs`), so
@@ -118,7 +118,7 @@ directory. Internal deadlines are budgeted under the 180 s hard kill: 75 s for t
   blank, negated or foreign cause, a park inside an `openat2` lookup, an unreadable stack, a stalled
   observer, an unbound or dirty checkout, a close error without a held `READ`, relabelled unblocked run, `FLUSH` success, unclassified close,
   surviving mount/dm/loop/D-state/connection, out-of-order or failed teardown steps).
-* **Physical (opt-in):** nine cases that run the scenarios above, including a janitor control that
+* **Physical (opt-in):** ten cases that run the scenarios above, including a janitor control that
   kills the driver while the read is parked, asserts that devices really leaked, and asserts that
   the janitor restores a clean census. Observed: pid 1 cannot finish exiting while its reader is
   parked on the suspended device, so the command hangs until the control's 40 s kill; the dm device
@@ -131,6 +131,11 @@ directory. Internal deadlines are budgeted under the 180 s hard kill: 75 s for t
 Prerequisites: passwordless `sudo`, `/dev/fuse`, `unshare`, `dmsetup`, `losetup`, `mkfs.ext4`,
 and the `dm_delay` module (the run loads it with `sudo modprobe dm_delay`). Run one physical run at
 a time: the dm and loop tables are global and the janitor treats every `fsgg423b-` device as its own.
+This is enforced, not just advised: every run, and the janitor control, holds an exclusive host
+`flock` on `/run/lock/fsgg423b.lock` (override with `FSGG_GOV_PHYSICAL_LOCK`; the file is created
+world-writable through `sudo` when needed). A second runner raises `PhysicalRunBusy` and touches no
+device. A physical control proves it by holding the lock while a stand-in "live" dm and loop device
+exist, asserting both entry points refuse and the devices survive.
 Use a clean checkout (the evidence records `Head`, `Tree` and `Dirty`, and the judges refuse a dirty
 tree) and the repository's pinned SDK, which is at `~/.dotnet-10.0.403` in fdev:
 

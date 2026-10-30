@@ -31,6 +31,14 @@ module Sys =
     extern int64 readFd(int fd, byte[] buffer, uint64 count)
     [<DllImport("libc", EntryPoint = "write", SetLastError = true)>]
     extern int64 writeFd(int fd, byte[] buffer, uint64 count)
+    [<DllImport("libc", EntryPoint = "open", SetLastError = true)>]
+    extern int openMode(string path, int flags, int mode)
+    [<DllImport("libc", EntryPoint = "close")>]
+    extern int closeFd(int fd)
+    [<DllImport("libc", SetLastError = true)>]
+    extern int flock(int fd, int operation)
+    [<DllImport("libc")>]
+    extern uint32 geteuid()
     [<DllImport("libc", EntryPoint = "_exit")>]
     extern void exitNow(int code)
     [<DllImport("libc", SetLastError = true)>]
@@ -280,6 +288,7 @@ let runReader (argv: string[]) : int =
                   ReleaseAfterReturn = describeRelease releasedAtReturn
                   FinalRelease = finalRelease
                   FinalPendingActivity = finalPending
+                  ReaderUid = int (Sys.geteuid ())
                   ModelDetail = (sprintf "%A" model).Replace("\n", " ") }
             writeText (Path.Combine(ctl, "reader-returned.json")) (toJson (result "" ownedAtReturn.PendingActivity))
             // Stay alive as the owner until the driver has released the injected cause, polling the public
@@ -386,6 +395,31 @@ let private spawn (role: string) (args: string list) : Process =
     | null -> failwith ("could not start fixture role " + role)
     | proc -> proc
 
+/// The invoking user's ids when the driver runs under sudo from a non-root user.
+let private invokingUser () =
+    match Environment.GetEnvironmentVariable "SUDO_UID", Environment.GetEnvironmentVariable "SUDO_GID" with
+    | null, _ | _, null -> None
+    | "0", _ | _, "0" -> None
+    | uid, gid -> Some(uid, gid)
+
+/// The production reader drops to the invoking user (least privilege): the daemon, observer and driver stay
+/// root because they mount, read kernel stacks and own devices; the production read path needs no privilege.
+/// `outDir` is the home, so a non-root dotnet runtime has somewhere writable.
+let private spawnReader (outDir: string) (args: string list) : Process =
+    match invokingUser () with
+    | None -> spawn "reader" args
+    | Some(uid, gid) ->
+        let psi = ProcessStartInfo("setpriv", UseShellExecute = false)
+        for arg in [ "--reuid"; uid; "--regid"; gid; "--clear-groups"; "--"; processPath
+                     Reflection.Assembly.GetExecutingAssembly().Location; "--physical-fixture"; "reader" ] @ args do
+            psi.ArgumentList.Add arg
+        psi.Environment["DOTNET_EnableDiagnostics"] <- "0"
+        psi.Environment["HOME"] <- outDir
+        psi.Environment["DOTNET_CLI_HOME"] <- outDir
+        match Process.Start psi with
+        | null -> failwith "could not start the unprivileged reader"
+        | proc -> proc
+
 let private readJsonLines<'a when 'a: not null> (path: string) : 'a[] =
     let result = ResizeArray<'a>()
     try
@@ -408,7 +442,7 @@ let private readJsonLines<'a when 'a: not null> (path: string) : 'a[] =
 let private emptyReader: ReaderResult =
     { ReaderPid = 0; WorkEndNs = 0L; CleanupEndNs = 0L; CaptureStartNs = 0L; CaptureReturnedNs = 0L; Phase = "NoReader"
       FirstFailure = "NoReader"; SecondaryFailures = [||]; Settlement = "NoReader"; DocumentCount = 0; PendingActivity = false
-      RetainedDescriptors = 0; CloseUncertain = false; ReleaseAfterReturn = ""; FinalRelease = ""; FinalPendingActivity = false; ModelDetail = "" }
+      RetainedDescriptors = 0; CloseUncertain = false; ReleaseAfterReturn = ""; FinalRelease = ""; FinalPendingActivity = false; ReaderUid = 0; ModelDetail = "" }
 
 let private diskBytes = 32L * 1024L * 1024L
 let private sectors = diskBytes / 512L
@@ -426,6 +460,8 @@ let runScenario (argv: string[]) : int =
     let waitT (ms: int) condition = waitUntil (min ms (leftMs 150)) condition
     let ctl = Path.Combine(outDir, "ctl")
     Directory.CreateDirectory ctl |> ignore
+    // The reader runs as the invoking user and publishes its state into ctl.
+    invokingUser () |> Option.iter (fun (uid, gid) -> runTool "chown" [ uid + ":" + gid; ctl ] 5000 |> ignore)
     let steps = ResizeArray<Step>()
     let dmEvents = ResizeArray<DmEvent>()
     let step name ok detail =
@@ -560,7 +596,7 @@ let runScenario (argv: string[]) : int =
         // --- reader + independent observer
         let root = if sc.Backend = "plain" then plain else mnt
         let reader =
-            spawn "reader" [ root; "provenance.json"; policyPath; ctl; string sc.WorkSeconds; string sc.CleanupSeconds ]
+            spawnReader outDir [ root; "provenance.json"; policyPath; ctl; string sc.WorkSeconds; string sc.CleanupSeconds ]
         spawned.Add reader
         let pidFile = Path.Combine(ctl, "reader.pid")
         step "reader-started" (waitB 30000 (fun () -> File.Exists pidFile && readOrEmpty pidFile <> "")) "reader pid published"
@@ -756,10 +792,46 @@ let private removeTree (outDir: string) =
     let removed, _, _ = runTool "rm" [ "-rf"; "--"; outDir ] 30000
     if removed <> 0 then runTool "sudo" [ "-n"; "rm"; "-rf"; "--"; outDir ] 30000 |> ignore
 
+// ---------------------------------------------------------------- host lock
+
+/// The janitor treats every `fsgg423b-` device as its own, so two physical runs at once would clean away each
+/// other's live devices. Every run (and the abnormal-exit control) therefore holds this exclusive host
+/// `flock` for its whole duration, and a second runner refuses rather than janitoring.
+exception PhysicalRunBusy of string
+
+let defaultLockPath = "/run/lock/fsgg423b.lock"
+let lockPath () =
+    match Environment.GetEnvironmentVariable "FSGG_GOV_PHYSICAL_LOCK" with
+    | null | "" -> defaultLockPath
+    | path -> path
+
+/// Non-blocking exclusive flock on `path`, creating it (world-writable, through sudo when /run/lock needs it).
+/// `Error` carries why: busy (another holder) or unusable. Disposing closes the descriptor, which releases it.
+let tryAcquireHostLock (path: string) : Result<IDisposable, string> =
+    let openLock () = Sys.openMode(path, 0o2 ||| 0o100 ||| 0x80000, 0o666)
+    let mutable fd = openLock ()
+    if fd < 0 then
+        runPrivileged "touch" [ path ] 10000 |> ignore
+        runPrivileged "chmod" [ "0666"; path ] 10000 |> ignore
+        fd <- openLock ()
+    if fd < 0 then Error(sprintf "lock file %s cannot be opened (errno %d)" path (Marshal.GetLastPInvokeError()))
+    elif Sys.flock(fd, 2 ||| 4) <> 0 then
+        let errno = Marshal.GetLastPInvokeError()
+        Sys.closeFd fd |> ignore
+        if errno = 11 then Error(sprintf "busy: another physical run holds %s" path) else Error(sprintf "flock %s failed (errno %d)" path errno)
+    else Ok { new IDisposable with member _.Dispose() = Sys.closeFd fd |> ignore }
+
+let private withHostLock (body: unit -> 'a) : 'a =
+    match tryAcquireHostLock (lockPath ()) with
+    | Error why -> raise (PhysicalRunBusy why)
+    | Ok held ->
+        use _held = held
+        body ()
+
 /// Run one scenario inside `sudo unshare --mount --pid --fork --kill-child`. Exactly one bounded run, one at
 /// a time (dm and loop devices are global). The janitor runs before the run and in a finally after it, and the
 /// outside census is taken on every exit path, including a run that wrote no evidence.
-let runPhysically (name: string) : RunResult =
+let private runPhysicallyLocked (name: string) : RunResult =
     let janitorBefore = janitor ()
     let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
     let before = takeCensus outDir None
@@ -804,7 +876,7 @@ type AbnormalExitResult =
 
 /// Janitor control: block mode, driver exits abruptly once the read is parked in D state. The test asserts
 /// that something really leaked, then that the janitor restores a clean census.
-let runAbnormalExit () : AbnormalExitResult =
+let private runAbnormalExitLocked () : AbnormalExitResult =
     janitor () |> ignore
     let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
     let before = takeCensus outDir None
@@ -829,3 +901,21 @@ let runAbnormalExit () : AbnormalExitResult =
         Directory.CreateDirectory keep |> ignore
         File.WriteAllText(Path.Combine(keep, "block-abnormal-exit.json"), toJson result)
     result
+
+/// One scenario, one run at a time. Raises PhysicalRunBusy without touching any device if the host lock is held.
+let runPhysically (name: string) : RunResult = withHostLock (fun () -> runPhysicallyLocked name)
+
+/// Janitor control, under the same host lock.
+let runAbnormalExit () : AbnormalExitResult = withHostLock runAbnormalExitLocked
+
+/// A stand-in for another run's live devices (a loop device and a dm device in the `fsgg423b-` namespace), used
+/// to prove a refused run leaves them alone. Returns the dm name and loop device; the janitor removes them.
+let createLiveDevices () : string * string * string =
+    let dir = Directory.CreateTempSubdirectory("fsgg423b-live-").FullName
+    let backing = Path.Combine(dir, "b.img")
+    runTool "truncate" [ "-s"; "1M"; backing ] 10000 |> ignore
+    let _, loop, _ = runPrivileged "losetup" [ "--find"; "--show"; backing ] 10000
+    let device = loop.Trim()
+    let name = "fsgg423b-live" + Guid.NewGuid().ToString("N").Substring(0, 8)
+    runPrivileged "dmsetup" [ "create"; "--noudevsync"; "--noudevrules"; name; "--table"; sprintf "0 2048 linear %s 0" device ] 10000 |> ignore
+    name, device, dir

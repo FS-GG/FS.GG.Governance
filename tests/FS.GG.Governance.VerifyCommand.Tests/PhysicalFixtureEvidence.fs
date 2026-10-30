@@ -58,6 +58,8 @@ type ReaderResult =
       /// State after the driver released the injected cause and the reader settled.
       FinalRelease: string
       FinalPendingActivity: bool
+      /// Effective uid of the reader process (non-zero when the invoking user's uid was available).
+      ReaderUid: int
       /// The production model as the interpreter printed it, kept for the human reader of the evidence.
       ModelDetail: string }
 
@@ -78,7 +80,8 @@ type Census =
       /// FUSE connection ids present now and before the fixture started.
       FuseConnections: string[]
       FuseConnectionsBaseline: string[]
-      /// Fixture dm devices with I/O in flight (from /sys/block/dm-*/inflight); a parked bio is still a survivor.
+      /// Fixture dm devices with I/O in flight (from /sys/block/dm-*/inflight). Best effort only: I/O that dm
+      /// queued on a suspended device is not counted there, so detecting a parked bio relies on the dm and loop entries.
       InflightIo: string[] }
 
 [<CLIMutable>]
@@ -189,7 +192,9 @@ let parkedSpans (backend: string) (observerEnd: int64) (samples: Sample[]) : (in
 let heartbeatCovers (samples: Sample[]) (start: int64) (finish: int64) : bool =
     let beats =
         samples
-        |> Array.filter (fun sample -> sample.State = "HB" && sample.SampleAtNs >= start && sample.SampleAtNs <= finish)
+        // A heartbeat is the observer's own record (Tid 0). A sample of any thread that merely carries the
+        // state "HB" is not one.
+        |> Array.filter (fun sample -> sample.Tid = 0 && sample.State = "HB" && sample.SampleAtNs >= start && sample.SampleAtNs <= finish)
         |> Array.map (fun sample -> sample.SampleAtNs)
     Array.concat [ [| start |]; beats; [| finish |] ]
     |> Array.sort
