@@ -77,12 +77,18 @@ type Census =
       LoopDevices: string[]
       /// FUSE connection ids present now and before the fixture started.
       FuseConnections: string[]
-      FuseConnectionsBaseline: string[] }
+      FuseConnectionsBaseline: string[]
+      /// Fixture dm devices with I/O in flight (from /sys/block/dm-*/inflight); a parked bio is still a survivor.
+      InflightIo: string[] }
 
 [<CLIMutable>]
 type Evidence =
     { Schema: string
       Scenario: string
+      /// Commit and tree of the checkout under test, and whether it had uncommitted changes.
+      Head: string
+      Tree: string
+      Dirty: bool
       /// "fuse", "block" or "plain".
       Backend: string
       InjectedCause: string
@@ -103,6 +109,25 @@ type Evidence =
       CensusInside: Census }
 
 let schema = "fsgg.gov423b.physical-fixture/v1"
+
+/// The fixed, scenario-specific statement of the injected cause. A judge accepts only these exact texts,
+/// so a text such as "not injected" cannot pass and a run cannot rename its own cause.
+let causeFor (scenario: string) : string option =
+    match scenario with
+    | "normal-file" -> Some "no fault injected: ordinary regular file in a namespace-private scratch directory (control for the production path)"
+    | "fuse-blocked-read" ->
+        Some "injected: FUSE daemon receives the READ for a regular file and withholds the reply until the driver releases it; synthetic kernel-level fixture, not a field incident"
+    | "fuse-uncertain-close" ->
+        Some "injected: FUSE daemon withholds the READ reply past the work deadline, releases it inside the cleanup window, then answers FLUSH with EIO so the kernel close() fails; synthetic kernel-level fixture, not a field incident"
+    | "fuse-control-no-block" ->
+        Some "no fault injected: the same FUSE daemon answers READ immediately and FLUSH with success (control: the fixture must not pass without the block)"
+    | "block-blocked-read" | "block-abnormal-exit" ->
+        Some "injected: the device-mapper device under a read-only ext4 mount is suspended before the first uncached data read, so the read sleeps in the block layer (killable D state) until the table is swapped to error; synthetic kernel-level fixture, not a field incident"
+    | "block-control-no-block" ->
+        Some "no fault injected: the same loop + dm-delay + ext4 stack is left running (control: the fixture must not pass without the block)"
+    | _ -> None
+
+let private isHex40 (value: string) = not (String.IsNullOrEmpty value) && value.Length = 40 && value |> Seq.forall Uri.IsHexDigit
 
 let private options = JsonSerializerOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)
 let toJson (value: 'a) = JsonSerializer.Serialize(value, options)
@@ -132,10 +157,9 @@ let parkedOnCause (backend: string) (sample: Sample) =
         (sample.State = "S" || sample.State = "D")
         && (text.Contains "request_wait_answer" || text.Contains "fuse")
     | "block" ->
-        // Uninterruptible sleep in the block layer / page-cache IO wait.
-        sample.State = "D"
-        && [ "folio_wait"; "io_schedule"; "wait_on_page"; "blk_"; "dm_"; "filemap"; "submit_bio" ]
-           |> List.exists text.Contains
+        // D state whose kernel stack shows the sleep is inside read(2). A park in another syscall (for
+        // example an openat2 lookup after cache eviction) or an unreadable stack proves nothing.
+        sample.State = "D" && (text.Contains "ksys_read" || text.Contains "vfs_read")
     | _ -> false
 
 /// Maximal [start, end) spans, per thread, in which the sample predicate holds.
@@ -160,6 +184,18 @@ let parkedSpans (backend: string) (observerEnd: int64) (samples: Sample[]) : (in
         | None -> ()
         List.ofSeq spans)
 
+/// The observer emits a heartbeat (state "HB") every 250 ms. A park only counts when heartbeats cover the
+/// whole span with no gap above one second, so a stalled observer cannot look like a sustained park.
+let heartbeatCovers (samples: Sample[]) (start: int64) (finish: int64) : bool =
+    let beats =
+        samples
+        |> Array.filter (fun sample -> sample.State = "HB" && sample.SampleAtNs >= start && sample.SampleAtNs <= finish)
+        |> Array.map (fun sample -> sample.SampleAtNs)
+    Array.concat [ [| start |]; beats; [| finish |] ]
+    |> Array.sort
+    |> Array.pairwise
+    |> Array.forall (fun (a, b) -> b - a <= 1_000_000_000L)
+
 /// The longest uninterrupted park any observed thread had on the cause. Ordinary FUSE round trips
 /// (FLUSH, RELEASE) park for microseconds; an injected block parks for the whole work window.
 let longestParkNs (backend: string) (observerEnd: int64) (samples: Sample[]) : int64 =
@@ -173,7 +209,7 @@ let private failureNamed name (reader: ReaderResult) =
 /// production reader is: the requester is a thread the separate observer saw in the reader's task directory.
 let private fromReader (evidence: Evidence) (event: DaemonEvent) =
     event.RequesterPid = evidence.Reader.ReaderPid
-    || evidence.Observer |> Array.exists (fun sample -> sample.Tid = event.RequesterPid)
+    || evidence.Observer |> Array.exists (fun sample -> sample.Tid <> 0 && sample.Tid = event.RequesterPid)
 
 let private daemonRequest (op: string) (evidence: Evidence) =
     evidence.Daemon |> Array.tryFind (fun event -> event.Event = "request" && event.Op = op && fromReader evidence event)
@@ -183,11 +219,13 @@ let private daemonRead (evidence: Evidence) = daemonRequest "READ" evidence
 let private daemonReplyTo (unique: uint64) (evidence: Evidence) =
     evidence.Daemon |> Array.tryFind (fun event -> event.Event = "reply" && event.Unique = unique)
 
+/// Only the fixed cause of an injecting scenario counts; controls state "no fault injected".
 let private causeStated (evidence: Evidence) =
-    not (String.IsNullOrWhiteSpace evidence.InjectedCause)
-    && evidence.InjectedCause.Length >= 30
-    && not evidence.FieldIncident
-    && evidence.InjectedCause.ToLowerInvariant().Contains "inject"
+    not evidence.FieldIncident
+    && causeFor evidence.Scenario = Some evidence.InjectedCause
+    && evidence.InjectedCause.StartsWith("injected:", StringComparison.Ordinal)
+
+let private identified (evidence: Evidence) = isHex40 evidence.Head && isHex40 evidence.Tree && not evidence.Dirty
 
 /// Authentic blocked regular-file read: the production path reached `read` on a file that statx reports
 /// as a regular file, the cause was injected and is stated, the kernel parked the reading task on it for
@@ -200,7 +238,12 @@ let judgeBlockedRead (evidence: Evidence) : Verdict =
     // For FUSE the parked thread must be the very thread whose READ the daemon holds.
     let onRequestingThread tid = evidence.Backend <> "fuse" || readThread = Some tid
     let coversWorkEnd =
-        spans |> List.exists (fun (tid, start, finish) -> onRequestingThread tid && start <= reader.WorkEndNs - oneSecond && finish >= reader.WorkEndNs)
+        spans
+        |> List.exists (fun (tid, start, finish) ->
+            onRequestingThread tid
+            && start <= reader.WorkEndNs - oneSecond
+            && finish >= reader.WorkEndNs
+            && heartbeatCovers evidence.Observer start finish)
     let read = daemonRead evidence
     let opened = (daemonRequest "OPEN" evidence).IsSome
     let causeJoin =
@@ -226,13 +269,14 @@ let judgeBlockedRead (evidence: Evidence) : Verdict =
     conclude
         [ not evidence.FieldIncident, "evidence presents the fixture as a field incident"
           causeStated evidence, "injected cause is not stated explicitly"
+          identified evidence, "evidence is not bound to a clean 40-hex commit and tree"
           evidence.BlockInjected, "no block was injected"
           evidence.FileType = "regular file", "statx did not report a regular file for the selected document"
           reader.FirstFailure = "WorkDeadlineReached",
           "production outcome is not the classified blocked-read result (WorkDeadlineReached)"
           reader.DocumentCount = 0, "production accepted a document despite the block"
           reader.Settlement = "Retained", "production claimed resources released while the read was blocked"
-          coversWorkEnd, "observer did not see a task parked on the cause across the work window"
+          coversWorkEnd, "observer did not see a task parked on the cause (inside read(2) for the block layer) across the work window with heartbeat coverage"
           fst causeJoin, snd causeJoin ]
 
 /// Uncertain physical close: after the block was released the production close hit the injected FLUSH
@@ -258,6 +302,8 @@ let judgeUncertainClose (evidence: Evidence) : Verdict =
     conclude
         [ evidence.Backend = "fuse", "uncertain close is produced by the FUSE FLUSH injection"
           causeStated evidence, "injected cause is not stated explicitly"
+          evidence.BlockInjected, "no block was injected before the close"
+          isAccepted (judgeBlockedRead evidence), "held READ not proven: the blocked-read judge rejects this run"
           evidence.FileType = "regular file", "statx did not report a regular file"
           flushedEio, "daemon log shows no FLUSH from the production reader answered with EIO"
           flushAfterRead, "FLUSH is not ordered after the released READ"
@@ -275,7 +321,8 @@ let judgeCensus (label: string) (before: Census) (after: Census) : Verdict =
           Array.isEmpty after.FixtureMounts, label + ": a fixture mount survives"
           Array.isEmpty after.DmDevices, label + ": a dm device survives"
           Array.isEmpty after.LoopDevices, label + ": a loop device survives"
-          (Array.sort after.FuseConnections = Array.sort before.FuseConnectionsBaseline), label + ": a FUSE connection survives" ]
+          (Array.sort after.FuseConnections = Array.sort before.FuseConnectionsBaseline), label + ": a FUSE connection survives"
+          Array.isEmpty after.InflightIo, label + ": a fixture dm device has I/O in flight" ]
 
 let requiredTeardownSteps (backend: string) =
     match backend with

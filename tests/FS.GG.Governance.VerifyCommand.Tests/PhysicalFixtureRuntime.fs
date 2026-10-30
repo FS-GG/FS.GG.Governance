@@ -31,6 +31,8 @@ module Sys =
     extern int64 readFd(int fd, byte[] buffer, uint64 count)
     [<DllImport("libc", EntryPoint = "write", SetLastError = true)>]
     extern int64 writeFd(int fd, byte[] buffer, uint64 count)
+    [<DllImport("libc", EntryPoint = "_exit")>]
+    extern void exitNow(int code)
     [<DllImport("libc", SetLastError = true)>]
     extern int mount(string source, string target, string fstype, uint64 flags, string data)
 
@@ -184,7 +186,12 @@ let runObserver (argv: string[]) : int =
     use writer = new StreamWriter(new FileStream(outPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite), UTF8Encoding(false), AutoFlush = true)
     let last = Collections.Generic.Dictionary<int, string>()
     let emit (sample: Sample) = writer.WriteLine(line sample)
+    let mutable lastBeat = 0L
     while not (File.Exists stopFile) do
+        // Heartbeat: proves this observer was running, so a stall cannot masquerade as a sustained park.
+        if monoNs () - lastBeat >= 250_000_000L then
+            lastBeat <- monoNs ()
+            emit { SampleAtNs = lastBeat; Tid = 0; State = "HB"; Wchan = ""; Stack = "" }
         let tids = try Directory.GetDirectories(sprintf "/proc/%d/task" pid) |> Array.choose (fun path -> Path.GetFileName path |> Option.ofObj) with _ -> [||]
         let present = Collections.Generic.HashSet<int>()
         for tid in tids do
@@ -319,18 +326,26 @@ let takeCensus (outDir: string) (baseline: string[] option) : Census =
     let mounts =
         (try File.ReadAllLines "/proc/self/mountinfo" with _ -> [||])
         |> Array.filter (fun entry -> entry.Contains token || entry.Contains "fsgg423b")
-    let _, dm, _ = runPrivileged "dmsetup" [ "ls" ] 10000
+    let _, dm, _ = runPrivileged "dmsetup" [ "ls" ] 5000
     let dmDevices = dm.Split('\n', StringSplitOptions.RemoveEmptyEntries) |> Array.filter (fun entry -> entry.StartsWith "fsgg423b-")
-    let _, loops, _ = runTool "losetup" [ "-a" ] 10000
+    let _, loops, _ = runTool "losetup" [ "-a" ] 5000
     let loopDevices = loops.Split('\n', StringSplitOptions.RemoveEmptyEntries) |> Array.filter (fun entry -> entry.Contains token)
     let connections = listDir "/sys/fs/fuse/connections"
+    let inflight =
+        [| for block in (try Directory.GetDirectories "/sys/block" with _ -> [||]) do
+               if (Path.GetFileName block |> Option.ofObj |> Option.exists (fun n -> n.StartsWith "dm-")) then
+                   let name = readOrEmpty (block + "/dm/name")
+                   let busy = (readOrEmpty (block + "/inflight")).Split([| ' '; '\t' |], StringSplitOptions.RemoveEmptyEntries)
+                   if name.StartsWith "fsgg423b-" && busy |> Array.exists (fun count -> count <> "0") then
+                       yield sprintf "%s %s inflight=%s" (Path.GetFileName block |> Option.ofObj |> Option.defaultValue "") name (String.Join(" ", busy)) |]
     { DStateTasks = dStates.ToArray()
       FixtureProcesses = processes.ToArray()
       FixtureMounts = mounts
       DmDevices = dmDevices
       LoopDevices = loopDevices
       FuseConnections = connections
-      FuseConnectionsBaseline = defaultArg baseline connections }
+      FuseConnectionsBaseline = defaultArg baseline connections
+      InflightIo = inflight }
 
 // ---------------------------------------------------------------- scenarios
 
@@ -343,24 +358,20 @@ type Scenario =
       CleanupSeconds: float
       /// None: release after capture returned. Some ms: release this long after work end, inside the cleanup window.
       ReleaseInsideCleanupAfterMs: int option
-      Cause: string }
+      /// Janitor control only: the driver (pid 1) exits abruptly once the read is parked, skipping all teardown.
+      CrashWhenParked: bool }
 
-let private blockedCause =
-    "injected: FUSE daemon receives the READ for a regular file and withholds the reply until the driver releases it; synthetic kernel-level fixture, not a field incident"
+let private scenario name backend hold flush work cleanup release crash =
+    { Name = name; Backend = backend; Hold = hold; FlushErrno = flush; WorkSeconds = work; CleanupSeconds = cleanup
+      ReleaseInsideCleanupAfterMs = release; CrashWhenParked = crash }
 let scenarios: Scenario list =
-    [ { Name = "normal-file"; Backend = "plain"; Hold = false; FlushErrno = 0; WorkSeconds = 20.0; CleanupSeconds = 20.0; ReleaseInsideCleanupAfterMs = None
-        Cause = "no fault injected: ordinary regular file in a namespace-private scratch directory (control for the production path)" }
-      { Name = "fuse-blocked-read"; Backend = "fuse"; Hold = true; FlushErrno = 0; WorkSeconds = 3.0; CleanupSeconds = 3.0; ReleaseInsideCleanupAfterMs = None
-        Cause = blockedCause }
-      { Name = "fuse-uncertain-close"; Backend = "fuse"; Hold = true; FlushErrno = EIO; WorkSeconds = 4.0; CleanupSeconds = 30.0; ReleaseInsideCleanupAfterMs = Some 1500
-        Cause = "injected: FUSE daemon withholds the READ reply past the work deadline, releases it inside the cleanup window, then answers FLUSH with EIO so the kernel close() fails; synthetic kernel-level fixture, not a field incident" }
-      { Name = "fuse-control-no-block"; Backend = "fuse"; Hold = false; FlushErrno = 0; WorkSeconds = 20.0; CleanupSeconds = 20.0; ReleaseInsideCleanupAfterMs = None
-        Cause = "no fault injected: the same FUSE daemon answers READ immediately and FLUSH with success (control: the fixture must not pass without the block)" }
-      { Name = "block-blocked-read"; Backend = "block"; Hold = true; FlushErrno = 0; WorkSeconds = 3.0; CleanupSeconds = 3.0; ReleaseInsideCleanupAfterMs = None
-        Cause = "injected: the device-mapper device under a read-only ext4 mount is suspended before the first uncached data read, so the read sleeps uninterruptibly in the block layer until the table is swapped to error; synthetic kernel-level fixture, not a field incident" }
-      { Name = "block-control-no-block"; Backend = "block"; Hold = false; FlushErrno = 0; WorkSeconds = 20.0; CleanupSeconds = 20.0; ReleaseInsideCleanupAfterMs = None
-        Cause = "no fault injected: the same loop + dm-delay + ext4 stack is left running (control: the fixture must not pass without the block)" } ]
-
+    [ scenario "normal-file" "plain" false 0 20.0 20.0 None false
+      scenario "fuse-blocked-read" "fuse" true 0 3.0 3.0 None false
+      scenario "fuse-uncertain-close" "fuse" true EIO 4.0 30.0 (Some 1500) false
+      scenario "fuse-control-no-block" "fuse" false 0 20.0 20.0 None false
+      scenario "block-blocked-read" "block" true 0 3.0 3.0 None false
+      scenario "block-control-no-block" "block" false 0 20.0 20.0 None false
+      scenario "block-abnormal-exit" "block" true 0 3.0 3.0 None true ]
 
 // ---------------------------------------------------------------- driver (pid 1 of the private namespace)
 
@@ -399,10 +410,17 @@ let private emptyReader: ReaderResult =
 let private diskBytes = 32L * 1024L * 1024L
 let private sectors = diskBytes / 512L
 
-/// argv: scenarioName outDir
+/// argv: scenarioName outDir head tree dirty
 let runScenario (argv: string[]) : int =
     let sc = scenarios |> List.find (fun s -> s.Name = argv[0])
     let outDir = argv[1]
+    let head, tree, dirty = argv[2], argv[3], argv[4] = "1"
+    // Internal deadlines are budgeted below the orchestrator's 180 s hard kill: the working phase may use
+    // 75 s, teardown waits stop at 150 s and any tool is cut off by 155 s; the census adds two 5 s tools.
+    let clock = Stopwatch.StartNew()
+    let leftMs (limitSeconds: int) = max 1000 (limitSeconds * 1000 - int clock.ElapsedMilliseconds)
+    let waitB (ms: int) condition = waitUntil (min ms (leftMs 75)) condition
+    let waitT (ms: int) condition = waitUntil (min ms (leftMs 150)) condition
     let ctl = Path.Combine(outDir, "ctl")
     Directory.CreateDirectory ctl |> ignore
     let steps = ResizeArray<Step>()
@@ -412,7 +430,7 @@ let runScenario (argv: string[]) : int =
     let dmEvent action (code, out: string, err: string) =
         dmEvents.Add { DmAtNs = monoNs (); DmAction = action; DmExit = code; DmDetail = (out + " " + err).Trim() }
         code = 0
-    let tool exe args = runPrivileged exe args 30000
+    let tool exe args = runPrivileged exe args (min 20000 (leftMs 155))
     let spawned = ResizeArray<Process>()
     let tag = Guid.NewGuid().ToString("N").Substring(0, 8)
     let dmName = "fsgg423b-" + tag
@@ -446,19 +464,22 @@ let runScenario (argv: string[]) : int =
     let releaseCause () =
         if causeReleased then true, "already released"
         else
-            causeReleased <- true
-            match sc.Backend with
-            | "fuse" when sc.Hold ->
-                (match sc.ReleaseInsideCleanupAfterMs with
-                 | Some _ -> true, "READ was released by the daemon release file inside the cleanup window"
-                 | None -> abortConnection ())
-            | "block" when sc.Hold -> releaseDm (), "table swapped to error and resumed"
-            | _ -> true, "no block was injected"
+            let ok, detail =
+                match sc.Backend with
+                | "fuse" when sc.Hold ->
+                    (match sc.ReleaseInsideCleanupAfterMs with
+                     | Some _ -> true, "READ was released by the daemon release file inside the cleanup window"
+                     | None -> abortConnection ())
+                | "block" when sc.Hold -> releaseDm (), "table swapped to error and resumed"
+                | _ -> true, "no block was injected"
+            // Only a release that succeeded counts: the failsafe retries an unreleased cause.
+            if ok then causeReleased <- true
+            ok, detail
     let tearDownMountAndDevices () =
         if not unmounted && (sc.Backend = "fuse" || sc.Backend = "block") then
-            let code, _, err = runPrivileged "umount" [ mnt ] 30000
+            let code, _, err = runPrivileged "umount" [ mnt ] (min 20000 (leftMs 155))
             if code <> 0 then
-                let lazyCode, _, lazyErr = runPrivileged "umount" [ "-l"; mnt ] 30000
+                let lazyCode, _, lazyErr = runPrivileged "umount" [ "-l"; mnt ] (min 20000 (leftMs 155))
                 step "unmount" false (sprintf "plain umount failed (%s); lazy umount rc=%d %s" err lazyCode lazyErr)
             else step "unmount" true "umount ok"
             unmounted <- true
@@ -476,10 +497,10 @@ let runScenario (argv: string[]) : int =
             writeText (Path.Combine(ctl, "observer-stop")) "stop"
             for proc in spawned do
                 if not proc.HasExited then
-                    (try proc.WaitForExit 3000 |> ignore with _ -> ())
+                    (try proc.WaitForExit 1000 |> ignore with _ -> ())
             for proc in spawned do
                 if not proc.HasExited then (try proc.Kill true with _ -> ())
-            let allGone = spawned |> Seq.forall (fun proc -> (try proc.WaitForExit 10000 with _ -> false))
+            let allGone = spawned |> Seq.forall (fun proc -> (try proc.WaitForExit 4000 with _ -> false))
             step "kill-processes" allGone (sprintf "%d processes" spawned.Count)
             exited <- true
 
@@ -501,7 +522,7 @@ let runScenario (argv: string[]) : int =
             Directory.CreateDirectory mnt |> ignore
             let daemon = spawn "daemon" [ mnt; ctl; daemonLog; (if sc.Hold then "1" else "0"); string sc.FlushErrno ]
             spawned.Add daemon
-            step "daemon-ready" (waitUntil 15000 (fun () -> File.Exists(Path.Combine(ctl, "ready")))) "FUSE INIT answered"
+            step "daemon-ready" (waitB 15000 (fun () -> File.Exists(Path.Combine(ctl, "ready")))) "FUSE INIT answered"
             for entry in File.ReadAllLines "/proc/self/mountinfo" do
                 let fields = entry.Split ' '
                 if fields.Length > 4 && fields[4] = mnt then minor <- fields[2].Split(':')[1]
@@ -522,7 +543,7 @@ let runScenario (argv: string[]) : int =
             tool "umount" [ stage ] |> ignore
             tool "dmsetup" [ "create"; "--noudevsync"; "--noudevrules"; dmName; "--table"; sprintf "0 %d delay %s 0 0" sectors loopDevice ]
             |> dmEvent "create" |> ignore
-            tool "dmsetup" [ "mknodes" ] |> ignore
+            tool "dmsetup" [ "mknodes"; dmName ] |> ignore
             tool "mount" [ "-o"; "ro,noatime,nodev,nosuid"; "/dev/mapper/" + dmName; mnt ] |> ignore
             // Cache the directory and inode so the first uncached access is the data read, not the lookup.
             fileType <- (let _, out, _ = runTool "stat" [ "-c"; "%F"; "--"; Path.Combine(mnt, "provenance.json") ] 10000 in out.Trim())
@@ -539,32 +560,41 @@ let runScenario (argv: string[]) : int =
             spawn "reader" [ root; "provenance.json"; policyPath; ctl; string sc.WorkSeconds; string sc.CleanupSeconds ]
         spawned.Add reader
         let pidFile = Path.Combine(ctl, "reader.pid")
-        step "reader-started" (waitUntil 30000 (fun () -> File.Exists pidFile && readOrEmpty pidFile <> "")) "reader pid published"
+        step "reader-started" (waitB 30000 (fun () -> File.Exists pidFile && readOrEmpty pidFile <> "")) "reader pid published"
         let readerPid = readOrEmpty pidFile
         if readerPid <> "" then
             let observer = spawn "observer" [ readerPid; observerLog; Path.Combine(ctl, "observer-stop") ]
             spawned.Add observer
-            step "observer-started" (waitUntil 15000 (fun () -> File.Exists observerLog && FileInfo(observerLog).Length > 0L)) "first sample written"
+            step "observer-started" (waitB 15000 (fun () -> File.Exists observerLog && FileInfo(observerLog).Length > 0L)) "first sample written"
         writeText (Path.Combine(ctl, "go")) "go"
+
+        if sc.CrashWhenParked then
+            // Janitor control: wait until the observer has seen the reader parked inside read(2) in D state,
+            // then die without any teardown, as an OOM kill or a scope stop would.
+            let parkedInRead () =
+                readJsonLines<Sample> observerLog
+                |> Array.exists (fun sample -> sample.State = "D" && (sample.Stack.Contains "ksys_read" || sample.Stack.Contains "vfs_read"))
+            waitB 20000 parkedInRead |> ignore
+            Sys.exitNow 70
 
         // --- wait for the read to reach the cause, optionally release inside the cleanup window
         if sc.Backend = "fuse" && sc.Hold then
             let sawRead () =
                 readJsonLines<DaemonEvent> daemonLog
                 |> Array.exists (fun event -> event.Event = "request" && event.Op = "READ" && Directory.Exists(sprintf "/proc/%s/task/%d" readerPid event.RequesterPid))
-            step "read-reached-daemon" (waitUntil 20000 sawRead) "READ request from the production reader logged"
+            step "read-reached-daemon" (waitB 20000 sawRead) "READ request from the production reader logged"
         match sc.ReleaseInsideCleanupAfterMs with
         | Some delayMs ->
-            waitUntil 20000 (fun () -> File.Exists(Path.Combine(ctl, "reader-budget"))) |> ignore
+            waitB 20000 (fun () -> File.Exists(Path.Combine(ctl, "reader-budget"))) |> ignore
             let fields = (readOrEmpty (Path.Combine(ctl, "reader-budget"))).Split ' '
             let workEnd = if fields.Length = 3 then int64 fields[1] else 0L
-            waitUntil 60000 (fun () -> monoNs () >= workEnd + int64 delayMs * 1_000_000L) |> ignore
+            waitB 20000 (fun () -> monoNs () >= workEnd + int64 delayMs * 1_000_000L) |> ignore
             writeText (Path.Combine(ctl, "release-read")) "release"
             causeReleased <- true
             step "release-cause" true (sprintf "READ released %dms after work end, inside the cleanup window" delayMs)
         | None -> ()
         let returned = Path.Combine(ctl, "reader-returned.json")
-        let returnedInTime = waitUntil (int ((sc.WorkSeconds + sc.CleanupSeconds + 40.0) * 1000.0)) (fun () -> File.Exists returned)
+        let returnedInTime = waitB (int ((sc.WorkSeconds + sc.CleanupSeconds + 30.0) * 1000.0)) (fun () -> File.Exists returned)
         step "capture-returned" returnedInTime "production capture returned to its caller"
 
         // --- teardown
@@ -573,7 +603,7 @@ let runScenario (argv: string[]) : int =
             step "release-cause" ok detail
         writeText (Path.Combine(ctl, "reader-exit")) "exit"
         let finalPath = Path.Combine(ctl, "reader-final.json")
-        let settled = waitUntil 30000 (fun () -> File.Exists finalPath) && reader.WaitForExit 30000
+        let settled = waitT 15000 (fun () -> File.Exists finalPath) && reader.WaitForExit(min 15000 (leftMs 150))
         step "reader-settled" settled "reader published its final state and exited"
         if not settled then
             let ok, detail = abortConnection ()
@@ -601,8 +631,11 @@ let runScenario (argv: string[]) : int =
     let evidence: Evidence =
         { Schema = schema
           Scenario = sc.Name
+          Head = head
+          Tree = tree
+          Dirty = dirty
           Backend = sc.Backend
-          InjectedCause = sc.Cause
+          InjectedCause = (causeFor sc.Name |> Option.defaultValue "")
           FieldIncident = false
           Kernel = kernel.Trim()
           FileType = fileType
@@ -618,7 +651,7 @@ let runScenario (argv: string[]) : int =
     writeText (Path.Combine(outDir, "evidence.json")) (toJson evidence)
     match Environment.GetEnvironmentVariable "SUDO_UID", Environment.GetEnvironmentVariable "SUDO_GID" with
     | null, _ | _, null -> ()
-    | uid, gid -> runTool "chown" [ "-R"; uid + ":" + gid; outDir ] 30000 |> ignore
+    | uid, gid -> runTool "chown" [ "-R"; uid + ":" + gid; outDir ] 5000 |> ignore
     0
 
 // ---------------------------------------------------------------- dispatch (called from Main)
@@ -657,34 +690,122 @@ type RunResult =
       Outside: Census
       ExitCode: int
       Stdout: string
-      Stderr: string }
+      Stderr: string
+      /// Janitor actions taken before and after this run (empty when nothing was left).
+      JanitorBefore: string[]
+      JanitorAfter: string[] }
 
 let private hardTimeoutSeconds = 180
 
-/// Run one scenario inside `sudo unshare --mount --pid --fork --kill-child`. Exactly one bounded run.
-let runPhysically (name: string) : RunResult =
-    let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
-    let before = takeCensus outDir None
+/// Restore a clean kernel state after an abnormal exit (OOM kill, scope stop, hang past the hard kill).
+/// dm devices and loop devices are global kernel objects: nothing in a dead namespace removes them. For each
+/// `fsgg423b-` dm device load the error table, resume (so parked I/O fails instead of waiting), remove it;
+/// then detach every loop device backed under a `/fsgg423b-` scratch directory. Idempotent and bounded.
+let janitor () : string[] =
+    let actions = ResizeArray<string>()
+    let say (text: string) = actions.Add text
+    // Stray fixture processes first. The bracket keeps pkill from matching its own command line.
+    let killed, _, _ = runPrivileged "pkill" [ "-KILL"; "-f"; "[-]-physical-fixture" ] 10000
+    if killed = 0 then say "killed stray fixture processes"
+    let _, listing, _ = runPrivileged "dmsetup" [ "ls" ] 10000
+    let names =
+        listing.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+        |> Array.choose (fun entry ->
+            let name = entry.Split([| ' '; '\t' |], StringSplitOptions.RemoveEmptyEntries)
+            if name.Length > 0 && name[0].StartsWith "fsgg423b-" then Some name[0] else None)
+    for name in names do
+        let table = sprintf "0 %d error" (32L * 1024L * 1024L / 512L)
+        let loaded, _, _ = runPrivileged "dmsetup" [ "load"; "--noudevsync"; name; "--table"; table ] 20000
+        let resumed, _, _ = runPrivileged "dmsetup" [ "resume"; "--noudevsync"; name ] 20000
+        let removed = waitUntil 20000 (fun () -> let code, _, _ = runPrivileged "dmsetup" [ "remove"; "--retry"; "--noudevsync"; name ] 20000 in code = 0)
+        say (sprintf "dm %s: load-error=%d resume=%d removed=%b" name loaded resumed removed)
+    let _, loops, _ = runTool "losetup" [ "-a" ] 10000
+    for entry in loops.Split('\n', StringSplitOptions.RemoveEmptyEntries) do
+        if entry.Contains "/fsgg423b-" then
+            let device = entry.Substring(0, entry.IndexOf ':')
+            let detached = waitUntil 20000 (fun () -> let code, _, _ = runPrivileged "losetup" [ "-d"; device ] 10000 in code = 0)
+            say (sprintf "loop %s detached=%b" device detached)
+    actions.ToArray()
+
+/// The checkout under test: commit, tree and whether it has uncommitted changes. Bound into the evidence.
+let private checkoutIdentity () : string * string * bool =
+    let rec findRoot (dir: string | null) =
+        match dir with
+        | null -> None
+        | d when Directory.Exists(Path.Combine(d, ".git")) || File.Exists(Path.Combine(d, ".git")) -> Some d
+        | d -> findRoot (Path.GetDirectoryName d)
+    match findRoot (Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location)) with
+    | None -> "unknown", "unknown", true
+    | Some root ->
+        let git args = let code, out, _ = runTool "git" ([ "-C"; root ] @ args) 20000 in (if code = 0 then out.Trim() else "unknown")
+        let status = git [ "status"; "--porcelain" ]
+        git [ "rev-parse"; "HEAD" ], git [ "rev-parse"; "HEAD^{tree}" ], (status <> "")
+
+let private scenarioCommand (name: string) (outDir: string) =
     let dll = Reflection.Assembly.GetExecutingAssembly().Location
-    let args =
-        [ "-n"; "timeout"; "-s"; "KILL"; string hardTimeoutSeconds
-          "unshare"; "--mount"; "--pid"; "--fork"; "--kill-child"; "--mount-proc"; "--"
-          "env"; "DOTNET_EnableDiagnostics=0"; "DOTNET_NOLOGO=1"
-          processPath; dll; "--physical-fixture"; "scenario"; name; outDir ]
-    let code, out, err = runTool "sudo" args ((hardTimeoutSeconds + 30) * 1000)
-    let evidencePath = Path.Combine(outDir, "evidence.json")
-    if not (File.Exists evidencePath) then
-        failwithf "scenario %s produced no evidence (exit %d)\nstdout: %s\nstderr: %s" name code out err
-    let evidence = ofJson<Evidence> (File.ReadAllText evidencePath)
-    // Allow the kernel a moment to finish tearing the namespace down before looking from outside.
-    waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
-    let outside = takeCensus outDir (Some before.FuseConnectionsBaseline)
-    match Environment.GetEnvironmentVariable "FSGG_GOV_PHYSICAL_EVIDENCE_DIR" with
-    | null | "" -> ()
-    | keep ->
-        Directory.CreateDirectory keep |> ignore
-        File.Copy(evidencePath, Path.Combine(keep, name + ".evidence.json"), true)
-        File.WriteAllText(Path.Combine(keep, name + ".outside-census.json"), toJson outside)
+    let head, tree, dirty = checkoutIdentity ()
+    [ "-n"; "timeout"; "-s"; "KILL"; string hardTimeoutSeconds
+      "unshare"; "--mount"; "--pid"; "--fork"; "--kill-child"; "--mount-proc"; "--"
+      "env"; "DOTNET_EnableDiagnostics=0"; "DOTNET_NOLOGO=1"
+      processPath; dll; "--physical-fixture"; "scenario"; name; outDir; head; tree; (if dirty then "1" else "0") ]
+
+let private removeTree (outDir: string) =
     let removed, _, _ = runTool "rm" [ "-rf"; "--"; outDir ] 30000
     if removed <> 0 then runTool "sudo" [ "-n"; "rm"; "-rf"; "--"; outDir ] 30000 |> ignore
-    { Evidence = evidence; OutsideBefore = before; Outside = outside; ExitCode = code; Stdout = out; Stderr = err }
+
+/// Run one scenario inside `sudo unshare --mount --pid --fork --kill-child`. Exactly one bounded run, one at
+/// a time (dm and loop devices are global). The janitor runs before the run and in a finally after it, and the
+/// outside census is taken on every exit path, including a run that wrote no evidence.
+let runPhysically (name: string) : RunResult =
+    let janitorBefore = janitor ()
+    let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
+    let before = takeCensus outDir None
+    let attempt =
+        try
+            let code, out, err = runTool "sudo" (scenarioCommand name outDir) ((hardTimeoutSeconds + 30) * 1000)
+            let evidencePath = Path.Combine(outDir, "evidence.json")
+            if File.Exists evidencePath then Choice1Of2(ofJson<Evidence> (File.ReadAllText evidencePath), code, out, err)
+            else Choice2Of2(sprintf "scenario %s produced no evidence (exit %d)\nstdout: %s\nstderr: %s" name code out err)
+        with ex -> Choice2Of2(ex.GetType().Name + ": " + ex.Message)
+    // Allow the kernel a moment to finish tearing the namespace down, then clean up whatever an abnormal exit left.
+    waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
+    let leaked = takeCensus outDir (Some before.FuseConnectionsBaseline)
+    let janitorAfter = janitor ()
+    let outside = takeCensus outDir (Some before.FuseConnectionsBaseline)
+    match attempt with
+    | Choice2Of2 failure ->
+        removeTree outDir
+        failwithf "%s\njanitor after: %A\ncensus before janitor: %s\ncensus after janitor: %s" failure janitorAfter (toJson leaked) (toJson outside)
+    | Choice1Of2(evidence, code, out, err) ->
+        match Environment.GetEnvironmentVariable "FSGG_GOV_PHYSICAL_EVIDENCE_DIR" with
+        | null | "" -> ()
+        | keep ->
+            Directory.CreateDirectory keep |> ignore
+            File.Copy(Path.Combine(outDir, "evidence.json"), Path.Combine(keep, name + ".evidence.json"), true)
+            File.WriteAllText(Path.Combine(keep, name + ".outside-census.json"), toJson outside)
+        removeTree outDir
+        { Evidence = evidence; OutsideBefore = before; Outside = outside; ExitCode = code; Stdout = out; Stderr = err
+          JanitorBefore = janitorBefore; JanitorAfter = janitorAfter }
+
+type AbnormalExitResult =
+    { ExitCode: int
+      /// Census taken after the driver died, before any cleanup: what the abnormal exit left behind.
+      Leaked: Census
+      JanitorActions: string[]
+      /// Census after the janitor ran.
+      Restored: Census }
+
+/// Janitor control: block mode, driver exits abruptly once the read is parked in D state. The test asserts
+/// that something really leaked, then that the janitor restores a clean census.
+let runAbnormalExit () : AbnormalExitResult =
+    janitor () |> ignore
+    let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
+    let before = takeCensus outDir None
+    let code, _, _ = runTool "sudo" (scenarioCommand "block-abnormal-exit" outDir) ((hardTimeoutSeconds + 30) * 1000)
+    Thread.Sleep 1000
+    let leaked = takeCensus outDir (Some before.FuseConnectionsBaseline)
+    let actions = janitor ()
+    waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
+    let restored = takeCensus outDir (Some before.FuseConnectionsBaseline)
+    removeTree outDir
+    { ExitCode = code; Leaked = leaked; JanitorActions = actions; Restored = restored }

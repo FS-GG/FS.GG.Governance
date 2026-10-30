@@ -21,7 +21,7 @@ let private config: Config = { HoldRead = true; FlushErrno = EIO; FileName = "pr
 
 let private emptyCensus: Census =
     { DStateTasks = [||]; FixtureProcesses = [||]; FixtureMounts = [||]; DmDevices = [||]; LoopDevices = [||]
-      FuseConnections = [||]; FuseConnectionsBaseline = [||] }
+      FuseConnections = [||]; FuseConnectionsBaseline = [||]; InflightIo = [||] }
 
 let private readerPid = 4242
 let private readerThread = 77
@@ -37,16 +37,22 @@ let private reader: ReaderResult =
       ReleaseAfterReturn = "Error OwnedActivitiesPending"; FinalRelease = "Error CleanupDeadlineReached"; FinalPendingActivity = false
       ModelDetail = "" }
 
-let private cause = "injected: synthetic kernel-level fixture that withholds the READ reply; not a field incident"
+let private causeOf scenario = (causeFor scenario).Value
+let private cause = causeOf "fuse-blocked-read"
+let private commit = String('a', 40)
+let private treeHash = String('b', 40)
+/// Observer heartbeats every 250 ms across the whole observation, as the real observer writes them.
+let private beats (fromMs: int) (toMs: int) = [| for t in fromMs .. 250 .. toMs -> sample t 0 "HB" "" "" |]
+let private withBeats samples = Array.append (beats 0 7000) samples
 
 let private fuseBlocked: Evidence =
-    { Schema = schema; Scenario = "fuse-blocked-read"; Backend = "fuse"; InjectedCause = cause; FieldIncident = false
+    { Schema = schema; Scenario = "fuse-blocked-read"; Head = commit; Tree = treeHash; Dirty = false; Backend = "fuse"; InjectedCause = cause; FieldIncident = false
       Kernel = "7.2.9"; FileType = "regular file"; BlockInjected = true
       Daemon =
         [| event "request" "OPEN" 11UL 100 readerThread 0
            event "request" "READ" 12UL 300 readerThread 0
            event "reply" "" 12UL 6400 0 -0 |]
-      Observer = [| sample 100 77 "S" "futex_wait_queue" ""; sample 300 77 "S" "request_wait_answer" ""; sample 6400 77 "R" "0" "" |]
+      Observer = withBeats [| sample 100 77 "S" "futex_wait_queue" ""; sample 300 77 "S" "request_wait_answer" ""; sample 6400 77 "R" "0" "" |]
       ObserverEndNs = ms 7000; Dm = [||]; Reader = reader
       Teardown =
         [| { StepAtNs = ms 6401; StepName = "release-cause"; StepOk = true; StepDetail = "" }
@@ -55,11 +61,15 @@ let private fuseBlocked: Evidence =
            { StepAtNs = ms 6700; StepName = "kill-processes"; StepOk = true; StepDetail = "" } |]
       CensusBefore = emptyCensus; CensusInside = emptyCensus }
 
+/// Kernel stack of the thread parked inside read(2), and of one parked in an openat2 lookup.
+let private readStack = "folio_wait_bit_common;filemap_read_folio;filemap_get_pages;filemap_read;vfs_read;ksys_read;do_syscall_64"
+let private lookupStack = "folio_wait_bit_common;ext4_lookup;__lookup_slow;path_openat;do_filp_open;do_sys_openat2;__x64_sys_openat2;do_syscall_64"
+
 let private blockBlocked: Evidence =
     { fuseBlocked with
-        Scenario = "block-blocked-read"; Backend = "block"
+        Scenario = "block-blocked-read"; Backend = "block"; InjectedCause = causeOf "block-blocked-read"
         Daemon = [||]
-        Observer = [| sample 100 77 "S" "futex_wait_queue" ""; sample 300 77 "D" "folio_wait_bit_common" "folio_wait_bit_common;filemap_read"; sample 6400 77 "R" "0" "" |]
+        Observer = withBeats [| sample 100 77 "S" "futex_wait_queue" ""; sample 300 77 "D" "folio_wait_bit_common" readStack; sample 6400 77 "R" "0" "" |]
         Dm =
           [| { DmAtNs = ms -50; DmAction = "suspend"; DmExit = 0; DmDetail = "" }
              { DmAtNs = ms 6400; DmAction = "release"; DmExit = 0; DmDetail = "" } |]
@@ -73,14 +83,14 @@ let private blockBlocked: Evidence =
 
 let private uncertainClose: Evidence =
     { fuseBlocked with
-        Scenario = "fuse-uncertain-close"
+        Scenario = "fuse-uncertain-close"; InjectedCause = causeOf "fuse-uncertain-close"
         Daemon =
           [| event "request" "OPEN" 11UL 100 readerThread 0
              event "request" "READ" 12UL 300 readerThread 0
              event "reply" "" 12UL 5500 0 0
              event "request" "FLUSH" 13UL 5520 readerThread 0
              event "reply" "" 13UL 5521 0 5 |]
-        Observer = [| sample 300 77 "S" "request_wait_answer" ""; sample 5500 77 "R" "0" "" |]
+        Observer = withBeats [| sample 300 77 "S" "request_wait_answer" ""; sample 5500 77 "R" "0" "" |]
         Reader =
           { reader with
               CaptureReturnedNs = ms 5600; SecondaryFailures = [| "OwnedActivitiesPending" |]; PendingActivity = false
@@ -89,9 +99,9 @@ let private uncertainClose: Evidence =
 let private noBlock: Evidence =
     { fuseBlocked with
         Scenario = "fuse-control-no-block"; BlockInjected = false
-        InjectedCause = "no fault injected: control"
+        InjectedCause = causeOf "fuse-control-no-block"
         Daemon = [| event "request" "READ" 12UL 300 readerThread 0; event "reply" "" 12UL 301 0 0 |]
-        Observer = [| sample 100 77 "S" "futex_wait_queue" "" |]
+        Observer = withBeats [| sample 100 77 "S" "futex_wait_queue" "" |]
         Reader = { reader with Phase = "Ready"; FirstFailure = "None"; SecondaryFailures = [||]; Settlement = "ResourcesReleased"; DocumentCount = 2; PendingActivity = false } }
 
 let private rejected verdict = match verdict with Rejected _ -> true | Accepted -> false
@@ -168,6 +178,9 @@ let inertJudges: (string * (unit -> unit)) list =
       "Judge rejects evidence without an explicit injected cause", fun () ->
           expectRejected "blank cause" "injected cause" (judgeBlockedRead { fuseBlocked with InjectedCause = "" })
           expectRejected "cause not naming an injection" "injected cause" (judgeBlockedRead { fuseBlocked with InjectedCause = "the disk was slow today, as seen in production" })
+          expectRejected "negated cause" "injected cause" (judgeBlockedRead { fuseBlocked with InjectedCause = "not injected: " + cause })
+          expectRejected "cause of another scenario" "injected cause" (judgeBlockedRead { fuseBlocked with InjectedCause = causeOf "block-blocked-read" })
+          expectRejected "unknown scenario" "injected cause" (judgeBlockedRead { fuseBlocked with Scenario = "invented" })
       "Judge rejects a file that statx does not report as regular", fun () ->
           expectRejected "directory" "regular file" (judgeBlockedRead { fuseBlocked with FileType = "directory" })
       "Judge rejects blocked-read evidence when the daemon never logged the READ", fun () ->
@@ -175,18 +188,35 @@ let inertJudges: (string * (unit -> unit)) list =
       "Judge rejects blocked-read evidence when the READ did not come from the reader or its threads", fun () ->
           expectRejected "foreign READ" "no READ" (judgeBlockedRead { fuseBlocked with Daemon = [| event "request" "READ" 12UL 300 1 0 |] })
           expectRejected "parked on another thread" "observer"
-              (judgeBlockedRead { fuseBlocked with Observer = [| sample 300 99 "S" "request_wait_answer" ""; sample 6400 99 "R" "0" ""; sample 100 77 "S" "futex_wait_queue" "" |] })
+              (judgeBlockedRead { fuseBlocked with Observer = withBeats [| sample 300 99 "S" "request_wait_answer" ""; sample 6400 99 "R" "0" ""; sample 100 77 "S" "futex_wait_queue" "" |] })
       "Judge rejects a READ the daemon answered before the work deadline", fun () ->
           let answered = Array.append fuseBlocked.Daemon.[0..1] [| event "reply" "" 12UL 1200 0 0 |]
           expectRejected "early reply" "unanswered" (judgeBlockedRead { fuseBlocked with Daemon = answered })
       "Judge rejects when the observer never saw a task parked on the cause", fun () ->
-          expectRejected "no parked" "observer" (judgeBlockedRead { fuseBlocked with Observer = [| sample 100 77 "S" "futex_wait_queue" "" |] })
+          expectRejected "no parked" "observer" (judgeBlockedRead { fuseBlocked with Observer = withBeats [| sample 100 77 "S" "futex_wait_queue" "" |] })
       "Judge rejects when the observed park is shorter than the work window", fun () ->
           expectRejected "short park" "observer"
-              (judgeBlockedRead { fuseBlocked with Observer = [| sample 2800 77 "S" "request_wait_answer" ""; sample 2900 77 "R" "0" "" |] })
+              (judgeBlockedRead { fuseBlocked with Observer = withBeats [| sample 2800 77 "S" "request_wait_answer" ""; sample 2900 77 "R" "0" "" |] })
       "Judge rejects a block-layer claim without uninterruptible sleep", fun () ->
           expectRejected "S state" "observer"
-              (judgeBlockedRead { blockBlocked with Observer = [| sample 300 77 "S" "folio_wait_bit_common" "filemap_read"; sample 6400 77 "R" "0" "" |] })
+              (judgeBlockedRead { blockBlocked with Observer = withBeats [| sample 300 77 "S" "folio_wait_bit_common" readStack; sample 6400 77 "R" "0" "" |] })
+      "Judge rejects a D-state park inside an openat2 lookup as a blocked read (M1)", fun () ->
+          expectRejected "lookup park" "observer"
+              (judgeBlockedRead { blockBlocked with Observer = withBeats [| sample 300 77 "D" "folio_wait_bit_common" lookupStack; sample 6400 77 "R" "0" "" |] })
+      "Judge rejects a block-layer park with an unreadable kernel stack (M2)", fun () ->
+          expectRejected "empty stack" "observer"
+              (judgeBlockedRead { blockBlocked with Observer = withBeats [| sample 300 77 "D" "folio_wait_bit_common" ""; sample 6400 77 "R" "0" "" |] })
+      "Judge rejects a park the observer could not have watched: no heartbeat across it (M4)", fun () ->
+          let stalled = blockBlocked.Observer |> Array.filter (fun s -> s.State <> "HB" || s.SampleAtNs <= ms 400 || s.SampleAtNs >= ms 6300)
+          expectRejected "stalled observer" "heartbeat" (judgeBlockedRead { blockBlocked with Observer = stalled })
+          let fuseStalled = fuseBlocked.Observer |> Array.filter (fun s -> s.State <> "HB" || s.SampleAtNs <= ms 1000)
+          expectRejected "stalled observer, FUSE" "heartbeat" (judgeBlockedRead { fuseBlocked with Observer = fuseStalled })
+      "Judge accepts a long park when heartbeats cover it", fun () ->
+          expectAccepted "covered" (judgeBlockedRead blockBlocked)
+      "Judge rejects evidence not bound to a clean commit and tree", fun () ->
+          expectRejected "no head" "commit" (judgeBlockedRead { fuseBlocked with Head = "unknown" })
+          expectRejected "no tree" "commit" (judgeBlockedRead { fuseBlocked with Tree = "" })
+          expectRejected "dirty" "commit" (judgeBlockedRead { fuseBlocked with Dirty = true })
       "Judge rejects a block-layer claim when the device was never suspended", fun () ->
           expectRejected "no suspend" "suspended" (judgeBlockedRead { blockBlocked with Dm = [||] })
       "Judge rejects a block-layer claim when the device was released before work end", fun () ->
@@ -224,6 +254,11 @@ let inertClose: (string * (unit -> unit)) list =
       "Judge rejects an uncertain close whose FLUSH precedes the released READ", fun () ->
           let early = uncertainClose.Daemon |> Array.map (fun e -> if e.Unique = 13UL && e.Event = "request" then { e with DaemonAtNs = ms 100 } else e)
           expectRejected "flush before read" "ordered" (judgeUncertainClose { uncertainClose with Daemon = early })
+      "Judge rejects an uncertain close with no injected block before it (M3)", fun () ->
+          expectRejected "no block injected" "no block was injected" (judgeUncertainClose { uncertainClose with BlockInjected = false })
+          let early = uncertainClose.Daemon |> Array.map (fun e -> if e.Unique = 12UL && e.Event = "reply" then { e with DaemonAtNs = ms 301 } else e)
+          expectRejected "READ answered at once" "held READ" (judgeUncertainClose { uncertainClose with Daemon = early })
+          expectRejected "park not observed" "held READ" (judgeUncertainClose { uncertainClose with Observer = withBeats [| sample 100 77 "S" "futex_wait_queue" "" |] })
       "Judge rejects an uncertain close claimed for the block-layer backend", fun () ->
           expectRejected "block backend" "FUSE" (judgeUncertainClose { uncertainClose with Backend = "block" }) ]
 
@@ -247,6 +282,8 @@ let inertTeardown: (string * (unit -> unit)) list =
           expectRejected "missing" "missing" (accepted { fuseBlocked with Teardown = fuseBlocked.Teardown |> Array.filter (fun s -> s.StepName <> "unmount") })
           expectRejected "failed" "failed" (accepted { fuseBlocked with Teardown = fuseBlocked.Teardown |> Array.map (fun s -> if s.StepName = "unmount" then { s with StepOk = false } else s) })
           expectRejected "order" "out of order" (accepted { fuseBlocked with Teardown = fuseBlocked.Teardown |> Array.map (fun s -> if s.StepName = "release-cause" then { s with StepAtNs = ms 9000 } else s) })
+      "Judge rejects teardown while a fixture dm device has I/O in flight", fun () ->
+          expectRejected "inflight" "in flight" (accepted (with' { emptyCensus with InflightIo = [| "dm-3 fsgg423b-1 inflight=1 0" |] }))
       "Judge rejects teardown while the reader activity is still pending", fun () ->
           expectRejected "pending" "pending" (accepted { fuseBlocked with Reader = { reader with FinalPendingActivity = true } })
       "Evidence round-trips through its JSON record unchanged", fun () ->
@@ -320,6 +357,16 @@ let physicalCases: (string * (unit -> unit)) list =
           Expect.isLessThan (longestParkNs "fuse" evidence.ObserverEndNs evidence.Observer) 1_000_000_000L "observer saw only microsecond FUSE round trips, no park"
           Expect.isTrue (rejected (judgeUncertainClose evidence)) "no uncertain close either"
           expectAccepted "control teardown" (teardownVerdict "fuse-control-no-block")
+      "Physical control: abnormal exit of the namespace driver leaks devices and the janitor restores a clean census", fun () ->
+          let result = runAbnormalExit ()
+          Expect.equal result.ExitCode 70 "the driver died abruptly mid block-mode (no teardown ran)"
+          let leakedSomething =
+              result.Leaked.DmDevices.Length + result.Leaked.LoopDevices.Length + result.Leaked.DStateTasks.Length + result.Leaked.FixtureMounts.Length > 0
+          Expect.isTrue leakedSomething (sprintf "the abnormal exit really left state behind (otherwise the control is vacuous); census: %s" (toJson result.Leaked))
+          Expect.isNonEmpty result.JanitorActions "janitor acted"
+          expectAccepted "census after janitor" (judgeCensus "after janitor" result.Restored result.Restored)
+          Expect.isEmpty result.Restored.DmDevices "no dm device"
+          Expect.isEmpty result.Restored.LoopDevices "no loop device"
       "Physical control: block fixture without the suspension does not pass", fun () ->
           let evidence = (run "block-control-no-block").Evidence
           Expect.isTrue (rejected (judgeBlockedRead evidence)) "no block, no pass"
