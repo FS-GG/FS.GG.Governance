@@ -741,10 +741,10 @@ let private checkoutIdentity () : string * string * bool =
         let status = git [ "status"; "--porcelain" ]
         git [ "rev-parse"; "HEAD" ], git [ "rev-parse"; "HEAD^{tree}" ], (status <> "")
 
-let private scenarioCommand (name: string) (outDir: string) =
+let private scenarioCommand (name: string) (outDir: string) (killAfterSeconds: int) =
     let dll = Reflection.Assembly.GetExecutingAssembly().Location
     let head, tree, dirty = checkoutIdentity ()
-    [ "-n"; "timeout"; "-s"; "KILL"; string hardTimeoutSeconds
+    [ "-n"; "timeout"; "-s"; "KILL"; string killAfterSeconds
       "unshare"; "--mount"; "--pid"; "--fork"; "--kill-child"; "--mount-proc"; "--"
       "env"; "DOTNET_EnableDiagnostics=0"; "DOTNET_NOLOGO=1"
       processPath; dll; "--physical-fixture"; "scenario"; name; outDir; head; tree; (if dirty then "1" else "0") ]
@@ -762,7 +762,7 @@ let runPhysically (name: string) : RunResult =
     let before = takeCensus outDir None
     let attempt =
         try
-            let code, out, err = runTool "sudo" (scenarioCommand name outDir) ((hardTimeoutSeconds + 30) * 1000)
+            let code, out, err = runTool "sudo" (scenarioCommand name outDir hardTimeoutSeconds) ((hardTimeoutSeconds + 30) * 1000)
             let evidencePath = Path.Combine(outDir, "evidence.json")
             if File.Exists evidencePath then Choice1Of2(ofJson<Evidence> (File.ReadAllText evidencePath), code, out, err)
             else Choice2Of2(sprintf "scenario %s produced no evidence (exit %d)\nstdout: %s\nstderr: %s" name code out err)
@@ -789,6 +789,8 @@ let runPhysically (name: string) : RunResult =
 
 type AbnormalExitResult =
     { ExitCode: int
+      /// True if the driver reached its evidence write, which an abrupt death must never do.
+      EvidenceWritten: bool
       /// Census taken after the driver died, before any cleanup: what the abnormal exit left behind.
       Leaked: Census
       JanitorActions: string[]
@@ -801,11 +803,14 @@ let runAbnormalExit () : AbnormalExitResult =
     janitor () |> ignore
     let outDir = Directory.CreateTempSubdirectory("fsgg423b-").FullName
     let before = takeCensus outDir None
-    let code, _, _ = runTool "sudo" (scenarioCommand "block-abnormal-exit" outDir) ((hardTimeoutSeconds + 30) * 1000)
+    // The dead pid 1 cannot finish exiting while its reader is parked on the suspended device, so the
+    // command hangs until the kill; a short kill keeps the control quick. The janitor is what frees it.
+    let code, _, _ = runTool "sudo" (scenarioCommand "block-abnormal-exit" outDir 40) 70000
+    let evidenceWritten = File.Exists(Path.Combine(outDir, "evidence.json"))
     Thread.Sleep 1000
     let leaked = takeCensus outDir (Some before.FuseConnectionsBaseline)
     let actions = janitor ()
     waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
     let restored = takeCensus outDir (Some before.FuseConnectionsBaseline)
     removeTree outDir
-    { ExitCode = code; Leaked = leaked; JanitorActions = actions; Restored = restored }
+    { ExitCode = code; EvidenceWritten = evidenceWritten; Leaked = leaked; JanitorActions = actions; Restored = restored }

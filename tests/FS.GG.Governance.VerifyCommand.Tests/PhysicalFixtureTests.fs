@@ -359,7 +359,8 @@ let physicalCases: (string * (unit -> unit)) list =
           expectAccepted "control teardown" (teardownVerdict "fuse-control-no-block")
       "Physical control: abnormal exit of the namespace driver leaks devices and the janitor restores a clean census", fun () ->
           let result = runAbnormalExit ()
-          Expect.equal result.ExitCode 70 "the driver died abruptly mid block-mode (no teardown ran)"
+          Expect.isFalse result.EvidenceWritten "the driver died before any teardown or evidence write"
+          Expect.contains [ 70; 137 ] result.ExitCode (sprintf "abrupt exit (70) or hung pid 1 killed by the timeout (137); got %d" result.ExitCode)
           let leakedSomething =
               result.Leaked.DmDevices.Length + result.Leaked.LoopDevices.Length + result.Leaked.DStateTasks.Length + result.Leaked.FixtureMounts.Length > 0
           Expect.isTrue leakedSomething (sprintf "the abnormal exit really left state behind (otherwise the control is vacuous); census: %s" (toJson result.Leaked))
