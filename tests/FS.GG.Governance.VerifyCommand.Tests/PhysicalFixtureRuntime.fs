@@ -793,6 +793,8 @@ type AbnormalExitResult =
       EvidenceWritten: bool
       /// Census taken after the driver died, before any cleanup: what the abnormal exit left behind.
       Leaked: Census
+      /// Raw `losetup -a` and `dmsetup ls` at that moment, so the census can be checked against the kernel's words.
+      RawTablesBeforeJanitor: string
       JanitorActions: string[]
       /// Census after the janitor ran.
       Restored: Census }
@@ -809,11 +811,15 @@ let runAbnormalExit () : AbnormalExitResult =
     let evidenceWritten = File.Exists(Path.Combine(outDir, "evidence.json"))
     Thread.Sleep 1000
     let leaked = takeCensus outDir (Some before.FuseConnectionsBaseline)
+    let raw =
+        let _, loops, _ = runTool "losetup" [ "-a" ] 5000
+        let _, dm, _ = runPrivileged "dmsetup" [ "ls" ] 5000
+        sprintf "token=%s\nlosetup -a:\n%s\ndmsetup ls:\n%s" outDir loops dm
     let actions = janitor ()
     waitUntil 15000 (fun () -> (takeCensus outDir (Some before.FuseConnectionsBaseline)).FixtureProcesses.Length = 0) |> ignore
     let restored = takeCensus outDir (Some before.FuseConnectionsBaseline)
     removeTree outDir
-    let result = { ExitCode = code; EvidenceWritten = evidenceWritten; Leaked = leaked; JanitorActions = actions; Restored = restored }
+    let result = { ExitCode = code; EvidenceWritten = evidenceWritten; Leaked = leaked; RawTablesBeforeJanitor = raw; JanitorActions = actions; Restored = restored }
     match Environment.GetEnvironmentVariable "FSGG_GOV_PHYSICAL_EVIDENCE_DIR" with
     | null | "" -> ()
     | keep ->
