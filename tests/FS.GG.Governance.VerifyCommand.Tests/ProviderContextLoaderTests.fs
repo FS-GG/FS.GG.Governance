@@ -105,6 +105,34 @@ let tests = testList "ProviderContextLoader" [
         let provenance = bytes (FS.GG.SDD.Artifacts.ScaffoldProvenance.serialize (coherentRecord ()).Ownership)
         let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
         ProviderContextLoader.decode selected provenance coherentPolicyBytes |> refusedAt "$.provenance.schemaVersion")
+    testCase "valid source-catalog schema-3 is refused after actual codec parsing" (fun _ ->
+        let catalog = coherentRecord ()
+        let digest = "sha256:" + sha (bytes "synthetic source")
+        let source: FS.GG.SDD.Artifacts.ProviderSource.Observation =
+            { Schema = "fsgg.provider-source-observation/1"
+              SourceSetSha256 = digest; AcquisitionPolicySha256 = digest
+              Source = { Id = "fixture-source"; Origin = FS.GG.SDD.Artifacts.ProviderSource.Explicit
+                         Locator = FS.GG.SDD.Artifacts.ProviderSource.LocalDirectory "/synthetic/source"
+                         ManifestSha256 = digest }
+              Revision = "fixture"; Acquisition = FS.GG.SDD.Artifacts.ProviderSource.LocalCopy
+              ResolvedUri = None; Redirects = []; NetworkHops = []
+              CatalogSha256 = catalog.Declaration.RawCatalogDigest
+              TemplateSource = catalog.Declaration.Descriptor.TemplateSource
+              ArchiveSha256 = catalog.Declaration.Archive.Digest }
+        let text =
+            match FS.GG.SDD.Artifacts.SourceScaffoldProvenance.serialize { SchemaVersion = 3; Source = source; Catalog = catalog } with
+            | Ok value -> value
+            | Error errors -> failtestf "Invalid synthetic source fixture: %A" errors
+        match FS.GG.SDD.Artifacts.ScaffoldProvenanceDocument.parse text with
+        | Ok(FS.GG.SDD.Artifacts.ScaffoldProvenanceDocument.SourceCatalog _) -> ()
+        | other -> failtestf "Expected the actual source-catalog codec: %A" other
+        let provenance = bytes text
+        let selected = { selection provenance coherentPolicyBytes with Platform = "fixture-platform" }
+        let result = ProviderContextLoader.decode selected provenance coherentPolicyBytes
+        result |> refusedAt "$.provenance.schemaVersion"
+        match result with
+        | Error errors -> Expect.equal (errors |> List.map _.Code) [ "verify.providerContextInvalid" ] "stable refusal code"
+        | Ok _ -> failtest "Source provenance cannot grant schema-2 admission")
     testCase "recorded admission budgets above the independent policy ceilings are refused" (fun _ ->
         let record = coherentRecord ()
         let budgets = { record.Declaration.Budgets with AdmittedPreflightSeconds = 31 }

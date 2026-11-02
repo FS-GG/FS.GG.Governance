@@ -45,7 +45,7 @@
           "FS.GG.Governance.Config": "[0.3.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "FS.GG.Contracts": {
@@ -59,9 +59,9 @@
       },
       "FSharp.Core": {
         "type": "CentralTransitive",
-        "requested": "[10.1.401, )",
-        "resolved": "10.1.401",
-        "contentHash": "/lvOK51KD8IangBYkfDVna3/HrE/r4VUnX3dI01KDspctoYXmind3POeoYkqWKeXHwiKlf6Hc9TxwSnoSCWcjw=="
+        "requested": "[10.1.403, )",
+        "resolved": "10.1.403",
+        "contentHash": "SpKxPt90eSC3pfSKGLnSyucXXKVWokv1KVMTy2uQG36seOgJg14qUxjlcaWjZNWgxJtG5MeH9WpI6PQg4OR4tA=="
       }
     }
   }
