@@ -4,9 +4,9 @@
     "net10.0": {
       "Expecto": {
         "type": "Direct",
-        "requested": "[11.1.0, )",
-        "resolved": "11.1.0",
-        "contentHash": "Bigdu4FzlS0wsS4jUADCSfAM8oiXr9ghswxvYha7ge66QN8VnUjOke38AaU2Qg3nS0lE73NKt+4QEWlaGxILLg==",
+        "requested": "[11.1.1, )",
+        "resolved": "11.1.1",
+        "contentHash": "Ux2YKGB0lpZDIQ1Y3FQzP+SihsuTiYazfs+3EMMtOGENieqXO+EQ3KYNDfDHOKX/A0c0d8dISi4Hu2s2QrSPNg==",
         "dependencies": {
           "FSharp.Core": "7.0.200",
           "Mono.Cecil": "[0.11.6, 1.0.0)"
@@ -14,32 +14,32 @@
       },
       "Expecto.FsCheck": {
         "type": "Direct",
-        "requested": "[11.1.0, )",
-        "resolved": "11.1.0",
-        "contentHash": "DLX1YSS+7TwlhSG/6lPqa7Ijwe7msri2BIbVVRXms+C3I7wYTDAvyx56so7X2McqnlhljF06FIm0W2AlYtQFEQ==",
+        "requested": "[11.1.1, )",
+        "resolved": "11.1.1",
+        "contentHash": "JtbKI2A3MS8ZgwLcp3B99VsTGeeOl2bypJekT2gz7AktsxzDZgG/vakuBWS6ku6qShl0Blzy8nGHDGvO2L7R7g==",
         "dependencies": {
-          "Expecto": "11.1.0",
+          "Expecto": "11.1.1",
           "FSharp.Core": "7.0.200",
           "FsCheck": "3.0.0"
         }
       },
       "FsCheck": {
         "type": "Direct",
-        "requested": "[3.4.0, )",
-        "resolved": "3.4.0",
-        "contentHash": "wkWR1DORrKd46W6MEhmS4muo/0kgrtUV/AGW1ohMWemy7WukcRH8T3JjkDpn/daOHk0yVqf0CBvScU17Ab//PA==",
+        "requested": "[3.6.0, )",
+        "resolved": "3.6.0",
+        "contentHash": "XjZ5sWf/QKLqB9aMKG7FvrT/8Ak2fPo0ygRstindBWZWU8P3EcmvYJ5UkX0daIL4+bZeaiD9ThkftGlIx3ZewQ==",
         "dependencies": {
           "FSharp.Core": "5.0.2"
         }
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
-        "requested": "[18.10.1, )",
-        "resolved": "18.10.1",
-        "contentHash": "SxCFvJE/2ltUQgCgv6+Ixagohw4sZc9hM7Wid2foaNM7paBscktoHLoRDz91fW8wbHG87Rg9Ku59/8PXumqUrA==",
+        "requested": "[18.11.0, )",
+        "resolved": "18.11.0",
+        "contentHash": "xf/bR0LNkhK0SnadDRlZIQmC4sac5Wk0e1WAdiQjRN3MSo6gQ9M2c4c1XRNnVGjfOvckh704W5CJ19AL0/Xsdg==",
         "dependencies": {
-          "Microsoft.CodeCoverage": "18.10.1",
-          "Microsoft.TestPlatform.TestHost": "18.10.1"
+          "Microsoft.CodeCoverage": "18.11.0",
+          "Microsoft.TestPlatform.TestHost": "18.11.0"
         }
       },
       "YoloDev.Expecto.TestSdk": {
@@ -76,8 +76,8 @@
       },
       "FS.GG.SDD.Knowledge": {
         "type": "Transitive",
-        "resolved": "2.3.0",
-        "contentHash": "AJdPKGO6ALsV9bZ8b8eRYEMDcNBU4UXSwmASMi2VH7QFJm7VUaZfEKEaqfHrsLxzkGES4ONw15eE7KMAB2bDNQ==",
+        "resolved": "2.5.4",
+        "contentHash": "ol7hlGDTo8hInnOQm4d8w6eq8F8oATuEHl0fvEAXfluJ5Qw70WeK5oBt1A71zCcyiRm7Rf85J/ooZGNMKavB9g==",
         "dependencies": {
           "FSharp.Core": "10.1.401"
         }
@@ -97,8 +97,8 @@
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
-        "resolved": "18.10.1",
-        "contentHash": "tV7tCyp/t+DuwQugLkCeUN7NBFFB4fEGRPr0gkMQ2nQgAvQQjmGlZZi1dsLzbyoe/A0mbnKybmkIh8qhT9p4Zw=="
+        "resolved": "18.11.0",
+        "contentHash": "MhN9wpvL1Es4hfIYslrsVgIsUdDFxuOBTbAl9mGIMvFo8PP5CLf4DrGdNrfwWSyn0lqi6sssm+I/qkkLL3MU+g=="
       },
       "Microsoft.Testing.Extensions.Telemetry": {
         "type": "Transitive",
@@ -143,15 +143,15 @@
       },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
-        "resolved": "18.10.1",
-        "contentHash": "o+PuLDRVp1iwiVAPBADZItXgm9Ck23XtPhE4kZtZVi0uYnMiiz1Dx9Cjh75kJ+ijfqnORL3VOTOaQVKi0f/ixg=="
+        "resolved": "18.11.0",
+        "contentHash": "BXBHYnwSOljKute8UYCMXOLAdB7awxEMppPSpqOF1ZxLD/W/OH+vTBgFaXA7q0aditJTVXSMVenel+wOkEIyNg=="
       },
       "Microsoft.TestPlatform.TestHost": {
         "type": "Transitive",
-        "resolved": "18.10.1",
-        "contentHash": "KYz2omqkoz9E2mWa4fdgT+Ycie1wi5968EmyJlusjlp87RxxtA2FvDm8tcBEYIDzLnkWGnsKjE4d13Z7/rxkQA==",
+        "resolved": "18.11.0",
+        "contentHash": "AKjwKpyRBwoQFQmpcchtoYlfJEBlaY/40uxBRi+qXP4NR7xT8t+XTJtOyEyumfvfJcH5pASs75LwNdXYRr4XNA==",
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "18.10.1"
+          "Microsoft.TestPlatform.ObjectModel": "18.11.0"
         }
       },
       "Mono.Cecil": {
@@ -231,13 +231,13 @@
           "FS.GG.Governance.ProjectSensing": "[0.1.0, )",
           "FS.GG.Governance.RoutePipeline": "[0.1.0, )",
           "FS.GG.Governance.VerifyCommand": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.codechecks": {
         "type": "Project",
         "dependencies": {
-          "FSharp.Compiler.Service": "[43.12.401, )"
+          "FSharp.Compiler.Service": "[43.12.403, )"
         }
       },
       "fs.gg.governance.commandhost": {
@@ -360,7 +360,7 @@
           "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
           "FS.GG.Governance.ProjectSensing": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.evidencejson": {
@@ -419,7 +419,7 @@
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.FreshnessResolution": "[0.1.0, )",
           "FS.GG.Governance.Gates": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.gateexecution": {
@@ -471,7 +471,7 @@
         "type": "Project",
         "dependencies": {
           "FS.GG.Governance.HumanText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )",
+          "FSharp.Core": "[10.1.403, )",
           "Spectre.Console": "[0.57.2, )"
         }
       },
@@ -488,7 +488,7 @@
           "FS.GG.Governance.Route": "[0.1.0, )",
           "FS.GG.Governance.RouteExplain": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.inheritance": {
@@ -565,7 +565,7 @@
           "FS.GG.Governance.DesignChecks": "[0.3.0, )",
           "FS.GG.Governance.Host": "[0.1.0, )",
           "FS.GG.Governance.Kernel": "[0.1.1, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.provenance": {
@@ -593,7 +593,7 @@
           "FS.GG.Governance.Config": "[0.3.0, )",
           "FS.GG.Governance.FreshnessKey": "[0.1.0, )",
           "FS.GG.Governance.JsonText": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.releasedeclaration": {
@@ -606,7 +606,7 @@
           "FS.GG.Governance.ReleaseFactsSensing": "[0.1.0, )",
           "FS.GG.Governance.ReleaseRules": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )",
+          "FSharp.Core": "[10.1.403, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
@@ -688,7 +688,7 @@
           "FS.GG.Governance.RouteJson": "[0.1.0, )",
           "FS.GG.Governance.Routing": "[0.1.0, )",
           "FS.GG.Governance.Snapshot": "[0.1.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.routing": {
@@ -742,7 +742,7 @@
       "fs.gg.governance.tests.common": {
         "type": "Project",
         "dependencies": {
-          "Expecto": "[11.1.0, )",
+          "Expecto": "[11.1.1, )",
           "FS.GG.Governance.CacheEligibility": "[0.1.0, )",
           "FS.GG.Governance.CommandRecord": "[0.1.0, )",
           "FS.GG.Governance.Config": "[0.3.0, )",
@@ -820,9 +820,9 @@
           "FS.GG.Governance.SurfaceChecks.Dispatch": "[0.1.0, )",
           "FS.GG.Governance.ValidationMatrix": "[0.1.0, )",
           "FS.GG.Governance.VerifyJson": "[0.1.0, )",
-          "FS.GG.SDD.Artifacts": "[2.3.0, )",
-          "FS.GG.SDD.Commands": "[2.3.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FS.GG.SDD.Artifacts": "[2.5.4, )",
+          "FS.GG.SDD.Commands": "[2.5.4, )",
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "fs.gg.governance.verifyjson": {
@@ -842,7 +842,7 @@
           "FS.GG.Governance.RuleIdentity": "[0.1.0, )",
           "FS.GG.Governance.Ship": "[0.1.0, )",
           "FS.GG.Governance.SurfaceChecks": "[0.2.0, )",
-          "FSharp.Core": "[10.1.401, )"
+          "FSharp.Core": "[10.1.403, )"
         }
       },
       "FS.GG.Contracts": {
@@ -856,9 +856,9 @@
       },
       "FS.GG.SDD.Artifacts": {
         "type": "CentralTransitive",
-        "requested": "[2.3.0, )",
-        "resolved": "2.3.0",
-        "contentHash": "svdbA3ynClYdVPK8xg4MyWZWHm9xjQX3M+B8NLV5XfH3EwBflVFwff8OfeUvrVJUA8m6jfRGgpXMxuRk2JuDxw==",
+        "requested": "[2.5.4, )",
+        "resolved": "2.5.4",
+        "contentHash": "Jd2vtY35LUZNiRdm8/PBj7n3JXF6WcMDuQorzs9HUjZB9O5MD/DVQFByJy5tpzWIZwhouxYZwx3mDSek3n9rog==",
         "dependencies": {
           "FS.GG.Contracts": "[7.6.0]",
           "FSharp.Core": "10.1.401",
@@ -868,9 +868,9 @@
       },
       "FS.GG.SDD.Commands": {
         "type": "CentralTransitive",
-        "requested": "[2.3.0, )",
-        "resolved": "2.3.0",
-        "contentHash": "71+vMRrCQlwpJh34+mThn0tVJKkl+znRHEmPBOQv3tj9DL9IllRryQQYomvWsUEhIGhlNPxE3fCJ+qFPlS9wug==",
+        "requested": "[2.5.4, )",
+        "resolved": "2.5.4",
+        "contentHash": "QUr45r8dmBo61N0QqhE6NXid4tn2U/dB5ixwTsjuLyHLF9FI0yOVvyqinnMImd5e1fhKQqGLw8r9FwquNHEjGA==",
         "dependencies": {
           "FS.GG.Audio.Skills": "0.1.0",
           "FS.GG.Contracts": "[7.6.0]",
@@ -878,8 +878,8 @@
           "FS.GG.Game.Skills": "0.9.0",
           "FS.GG.Governance.Config": "0.3.0",
           "FS.GG.Rendering.Skills": "0.2.0",
-          "FS.GG.SDD.Artifacts": "2.3.0",
-          "FS.GG.SDD.Knowledge": "2.3.0",
+          "FS.GG.SDD.Artifacts": "2.5.4",
+          "FS.GG.SDD.Knowledge": "2.5.4",
           "FSharp.Core": "10.1.401",
           "FsQuint": "[0.1.0]",
           "YamlDotNet": "18.1.0"
@@ -887,18 +887,18 @@
       },
       "FSharp.Compiler.Service": {
         "type": "CentralTransitive",
-        "requested": "[43.12.401, )",
-        "resolved": "43.12.401",
-        "contentHash": "pw8xfO19iFIxBhwtBTud/71bqCJJr/MKdbDrNjtv8x5eov0ArF0xwhVZIVAMMDz3mnoRP/cfvBshga21GjNwWg==",
+        "requested": "[43.12.403, )",
+        "resolved": "43.12.403",
+        "contentHash": "L8nTnxAsjXY6Fjnap5AVHVptbc7QqkNftmQiO0ylAnXpJHMCqO2u2XxmXo2pw4NfAAwClCwnjbF6BMOU3gibMA==",
         "dependencies": {
-          "FSharp.Core": "[10.1.401]"
+          "FSharp.Core": "[10.1.403]"
         }
       },
       "FSharp.Core": {
         "type": "CentralTransitive",
-        "requested": "[10.1.401, )",
-        "resolved": "10.1.401",
-        "contentHash": "/lvOK51KD8IangBYkfDVna3/HrE/r4VUnX3dI01KDspctoYXmind3POeoYkqWKeXHwiKlf6Hc9TxwSnoSCWcjw=="
+        "requested": "[10.1.403, )",
+        "resolved": "10.1.403",
+        "contentHash": "SpKxPt90eSC3pfSKGLnSyucXXKVWokv1KVMTy2uQG36seOgJg14qUxjlcaWjZNWgxJtG5MeH9WpI6PQg4OR4tA=="
       },
       "Spectre.Console": {
         "type": "CentralTransitive",

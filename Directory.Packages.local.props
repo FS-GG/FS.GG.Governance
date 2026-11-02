@@ -20,12 +20,12 @@
          .config/kit/FS.GG.Kit.receiver.proj, which materializes the kit onto disk; Renovate bumps
          this pin and kit-materialize.yml refreshes the committed kit on that PR. Restored from
          nuget.org (dual-published anonymously, like FS.GG.Coord.Cli) — see the nuget.config source map. -->
-    <PackageVersion Include="FS.GG.Kit" Version="0.94.0" />
+    <PackageVersion Include="FS.GG.Kit" Version="0.114.4" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
     <!-- Compiler-backed F# architecture facts for CodeChecks (#368). The package is isolated to
          that analyzer project; no compiler service enters the governance kernel. Keep this compatible
          with the org-shared FSharp.Core pin materialized by FS.GG.Kit. -->
-    <PackageVersion Include="FSharp.Compiler.Service" Version="43.12.401" />
+    <PackageVersion Include="FSharp.Compiler.Service" Version="43.12.403" />
   </ItemGroup>
 
   <!-- Cross-repo: the org-shared, SDD-owned typed source of truth for every `.fsgg` schema
@@ -36,9 +36,10 @@
        (see nuget.config). Contract id: fsgg-contracts (registry/dependencies.yml). -->
   <ItemGroup>
     <PackageVersion Include="FS.GG.Contracts" Version="7.6.0" />
-    <!-- SDD 2.3.0 is published (FS-GG/FS.GG.SDD#1113) from the retained candidate used by the explicit provider loader; each lock file pins its content hash. -->
-    <PackageVersion Include="FS.GG.SDD.Commands" Version="2.3.0" />
-    <PackageVersion Include="FS.GG.SDD.Artifacts" Version="2.3.0" />
+    <!-- Published SDD 2.5.4 (source 6ffa381ff886a23273650f3056e10a198f05b15f) supplies the explicit
+         provider loader. Each lock file pins the resolved public package content hash (#484). -->
+    <PackageVersion Include="FS.GG.SDD.Commands" Version="2.5.4" />
+    <PackageVersion Include="FS.GG.SDD.Artifacts" Version="2.5.4" />
   </ItemGroup>
 
   <!-- Runtime: rich terminal rendering + a minimal read-only TUI for the F27 human projections.
@@ -57,10 +58,10 @@
        VSTest adapters that let `dotnet test` drive the Expecto runner. None of
        these reach the kernel assembly. -->
   <ItemGroup>
-    <PackageVersion Include="Expecto" Version="11.1.0" />
-    <PackageVersion Include="Expecto.FsCheck" Version="11.1.0" />
-    <PackageVersion Include="FsCheck" Version="3.4.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="Expecto" Version="11.1.1" />
+    <PackageVersion Include="Expecto.FsCheck" Version="11.1.1" />
+    <PackageVersion Include="FsCheck" Version="3.6.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
   </ItemGroup>
 

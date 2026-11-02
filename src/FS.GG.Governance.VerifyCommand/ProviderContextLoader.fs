@@ -32,6 +32,8 @@ module internal ProviderContextLoader =
                     | Error errors -> Error errors
                     | Ok(ScaffoldProvenanceDocument.Legacy _) ->
                         refused "$.provenance.schemaVersion" "Explicit provider mode requires schema-2 catalog provenance."
+                    | Ok(ScaffoldProvenanceDocument.SourceCatalog _) ->
+                        refused "$.provenance.schemaVersion" "Explicit provider mode requires schema-2 catalog provenance."
                     | Ok(ScaffoldProvenanceDocument.Catalog provenance) ->
                         let declaration = provenance.Declaration
                         let admission = declaration.Admission

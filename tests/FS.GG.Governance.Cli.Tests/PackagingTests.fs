@@ -10,13 +10,7 @@ let tests =
         "Packaging"
         [
             test "packaged tool installs from local feed and runs route" {
-                let feed =
-                    Path.Combine(
-                        System.Environment.GetFolderPath System.Environment.SpecialFolder.UserProfile,
-                        ".local",
-                        "share",
-                        "nuget-local"
-                    )
+                let feed = Path.Combine(repoRoot, ".tmp", "f12-tool-feed")
 
                 Directory.CreateDirectory feed |> ignore
 
@@ -30,12 +24,11 @@ let tests =
                 if Directory.Exists toolPath then
                     Directory.Delete(toolPath, true)
 
-                // The repo nuget.config declares packageSourceMapping (FS.GG.Contracts resolves from
-                // the private org GitHub Packages feed). `dotnet tool install --add-source` is REJECTED
+                // The repo nuget.config declares packageSourceMapping. `dotnet tool install --add-source` is REJECTED
                 // whenever a source mapping is in effect, and the mapping would otherwise misroute the
                 // freshly-packed FS.GG.Governance.Cli away from this local feed. So install from a
                 // self-contained temp config that maps: this local feed for the packed FS.GG.Governance.*
-                // tool, the org feed for its FS.GG.Contracts dependency, and nuget.org for the rest.
+                // tool, and public nuget.org for Contracts and the remaining dependencies (#484).
                 let cfgDir = Path.Combine(repoRoot, ".tmp", "f12-tool-cfg")
                 Directory.CreateDirectory cfgDir |> ignore
                 let configFile = Path.Combine(cfgDir, "tool-install.nuget.config")
@@ -48,23 +41,14 @@ let tests =
   <packageSources>
     <clear />
     <add key=\"local\" value=\"%s\" />
-    <add key=\"fsgg-github\" value=\"https://nuget.pkg.github.com/FS-GG/index.json\" protocolVersion=\"3\" />
     <add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" protocolVersion=\"3\" />
   </packageSources>
-  <packageSourceCredentials>
-    <fsgg-github>
-      <add key=\"Username\" value=\"%%FSGG_PACKAGES_ACTOR%%\" />
-      <add key=\"ClearTextPassword\" value=\"%%FSGG_PACKAGES_READ_TOKEN%%\" />
-    </fsgg-github>
-  </packageSourceCredentials>
   <packageSourceMapping>
     <packageSource key=\"local\">
       <package pattern=\"FS.GG.Governance.*\" />
     </packageSource>
-    <packageSource key=\"fsgg-github\">
-      <package pattern=\"FS.GG.Contracts\" />
-    </packageSource>
     <packageSource key=\"nuget.org\">
+      <package pattern=\"FS.GG.Contracts\" />
       <package pattern=\"*\" />
     </packageSource>
   </packageSourceMapping>
